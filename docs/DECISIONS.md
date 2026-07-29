@@ -207,8 +207,10 @@ Contexto / Problema / Alternativas / Decisão / Motivo / Consequências / Próxi
 
 ---
 
-# D-035 · Produto · Aprovada
+# D-035 · Produto · Aprovada · ⚠ emendada por D-039
 **Data:** 2026-07-29 · **Categoria:** Metodologia
+> **Emenda (D-039):** onde se lê "campanha" nesta decisão, leia-se **projeto**. O mérito
+> segue válido; apenas o nível de aplicação mudou com a criação do nível Projeto.
 **Origem:** `EJUP - Cronograma do Expert (6 Meses).pdf` — "Seis meses da marca ao lançamento".
 **Contexto:** toda agência boa tem um método, e quase nenhuma tem o método dentro da ferramenta. Ele vive num PDF usado para vender e depois some; a execução acontece em outro lugar, sem relação com o que foi prometido.
 **Decisão:** **a metodologia é uma entidade de primeira classe**, reutilizável e versionada, aplicada **na criação da campanha** — segundo passo, logo após o objetivo, antes de qualquer conteúdo existir.
@@ -228,8 +230,9 @@ Contexto / Problema / Alternativas / Decisão / Motivo / Consequências / Próxi
 **Motivo:** o maior medo de quem contrata uma agência não é preço, é quanto do próprio tempo isso vai custar. Declarar isso por fase é uma jogada de confiança que nenhuma ferramenta do mercado tem — e o mês com **zero** dias é o argumento de venda mais forte do documento.
 **Consequências:** ao iniciar a fase, o cliente recebe o pedido de agenda com finalidade explícita. Projeto que estoura o orçamento de agenda do cliente é projeto em risco, e passa a ser mensurável.
 
-# D-038 · UX · Aprovada
-**Data:** 2026-07-29 · **Categoria:** Criação de campanha
+# D-038 · UX · Aprovada · ⚠ emendada por D-039
+**Data:** 2026-07-29 · **Categoria:** Criação de projeto
+> **Emenda (D-039):** aplica-se à criação do **projeto**, não da campanha.
 **Decisão:** **o cronograma é revisado e editável antes de existir.** A etapa de revisão é obrigatória; nada é criado até a confirmação.
 **Motivo:** gerar 78 slots de calendário e mostrar depois é violento. A agência precisa ajustar datas e remover entregável que não se aplica àquele cliente antes de confirmar.
 **Consequências:** o template é ponto de partida, nunca contrato. Tudo continua editável depois, com histórico. Metodologia rígida vira camisa de força e a agência abandona a ferramenta em vez do método.

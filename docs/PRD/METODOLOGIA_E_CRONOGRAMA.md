@@ -279,7 +279,7 @@ E a agência cria as suas. **A metodologia própria é o que a Maestro tem e o c
 
 ## Critérios de aceite
 
-- [ ] Criar campanha com metodologia leva **≤ 3 minutos**
+- [ ] Criar projeto com metodologia leva **≤ 3 minutos**
 - [ ] Aplicar a metodologia de 6 fases gera as fases, os slots e as metas em uma operação
 - [ ] Nenhuma fase pode ser salva sem pergunta-guia
 - [ ] Entregáveis de volume geram `CalendarSlot` em `aguardando peça`
