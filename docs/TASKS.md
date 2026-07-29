@@ -63,7 +63,12 @@ Status do Projeto: 🟢 Sprints 0, 1, 2 e 6 concluídos · próximo: Sprint 3 (w
 - [x] **UX Writing** — `UX/UX_WRITING.md` + `UX/strings.pt-BR.json` (188 strings, ICU)
 
 ### Aberto, carregado para o Sprint 3
-- [ ] **Teste com 5 clientes reais de agência** 🔴
+- [ ] **Teste com 5 clientes reais de agência** 🔴 — protocolo pronto em `UX/TESTE_USABILIDADE.md`
+  - [ ] Tornar os 4 protótipos compartilháveis (hoje são privados)
+  - [ ] Convidar 8 para conseguir 5 · 1 por empresa · nenhum de agência
+  - [ ] Piloto com 1 (não conta na amostra)
+  - [ ] 5 sessões de 25 min, presencial, no celular da pessoa
+  - [ ] Síntese em `UX/TESTE_RESULTADOS.md` + decisões D-041+
 - [ ] Atualizar os 4 protótipos para a hierarquia nova (cosmético — nenhum contradiz o modelo)
 
 ## Sprint 3 — Wireframes · ⏳ Próximo
