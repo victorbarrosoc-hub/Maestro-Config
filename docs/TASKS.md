@@ -55,6 +55,8 @@ Status do Projeto: 🟡 Product Discovery → 🟢 Sprint 1
 - [x] Empty states · Error states · Loading states — `GLOBAL_STATES.md`
 - [x] **Modelo do lote de aprovação** — `LOTE_DE_APROVACAO.md` (D-030 a D-034)
 - [x] Protótipo do lote com selo de integridade e termo de aprovação
+- [x] **Metodologia e cronograma** — `PRD/METODOLOGIA_E_CRONOGRAMA.md` (D-035 a D-038)
+- [x] Protótipo da criação de campanha com metodologia
 - [ ] Wireflow da estratégia e do calendário
 - [ ] Wireflow do envio em lote (checklist pré-envio, agora com as verificações de conjunto)
 - [ ] Wireflow do recebimento de alterações (o diff)

@@ -1,0 +1,484 @@
+<title>Maestro — Metodologia e cronograma</title>
+
+<style>
+  :root {
+    --brass-300:#E3C173; --brass-400:#D9AC4C; --brass-500:#C8963A; --brass-700:#855F22;
+    --encore:#35B87A; --coral:#F0784C; --cobalt:#5B8DEF; --violet:#8B7BF0;
+    --f-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --f-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --baton: cubic-bezier(.22,1,.36,1); --upbeat: cubic-bezier(.34,1.4,.64,1);
+
+    --bg:#F4F6F8; --surface:#FFFFFF; --sunken:#E9ECF0; --raised:#FFFFFF;
+    --line:#DCE0E6; --line-soft:#EAEDF1;
+    --fg:#08090B; --muted:#4C535D; --subtle:#6B7280;
+    --accent:#C8963A; --accent-tx:#855F22; --accent-fg:#08090B;
+    --trackA:#855F22; --trackB:#2B55B8;
+    --shadow:0 1px 2px rgba(8,9,11,.05), 0 16px 40px rgba(8,9,11,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#08090B; --surface:#121418; --sunken:#0D0F12; --raised:#181B20;
+      --line:#23272E; --line-soft:#181B20;
+      --fg:#F4F6F8; --muted:#9AA1AC; --subtle:#6B7280;
+      --accent:#D9AC4C; --accent-tx:#E3C173; --accent-fg:#08090B;
+      --trackA:#E3C173; --trackB:#8FB0F6;
+      --shadow:0 16px 40px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#08090B; --surface:#121418; --sunken:#0D0F12; --raised:#181B20;
+    --line:#23272E; --line-soft:#181B20;
+    --fg:#F4F6F8; --muted:#9AA1AC; --subtle:#6B7280;
+    --accent:#D9AC4C; --accent-tx:#E3C173; --accent-fg:#08090B;
+    --trackA:#E3C173; --trackB:#8FB0F6;
+    --shadow:0 16px 40px rgba(0,0,0,.5);
+  }
+  :root[data-theme="light"] {
+    --bg:#F4F6F8; --surface:#FFFFFF; --sunken:#E9ECF0; --raised:#FFFFFF;
+    --line:#DCE0E6; --line-soft:#EAEDF1;
+    --fg:#08090B; --muted:#4C535D; --subtle:#6B7280;
+    --accent:#C8963A; --accent-tx:#855F22; --accent-fg:#08090B;
+    --trackA:#855F22; --trackB:#2B55B8;
+    --shadow:0 1px 2px rgba(8,9,11,.05), 0 16px 40px rgba(8,9,11,.08);
+  }
+
+  body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.6; letter-spacing: -.008em; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 52px 24px 120px; }
+
+  .top { margin-bottom: 32px; }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; color: var(--accent-tx); margin-bottom: 12px; }
+  h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(34px,5vw,46px); line-height: 1.06; letter-spacing: -.025em; margin-bottom: 12px; }
+  .lede { color: var(--muted); font-size: 16px; max-width: 62ch; }
+
+  /* ===== Formulário ===================================================== */
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 26px; box-shadow: var(--shadow); }
+  .step { margin-bottom: 26px; }
+  .step:last-child { margin-bottom: 0; }
+  .slab { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+  .slab .n { font-family: var(--f-mono); font-size: 10.5px; color: var(--accent); }
+  .slab h3 { font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
+  .slab span { font-size: 12.5px; color: var(--subtle); }
+
+  .fields { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 12px; }
+  .fld label { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--subtle); margin-bottom: 6px; }
+  .fld input, .fld select {
+    width: 100%; font: inherit; font-size: 14px; background: var(--sunken); color: var(--fg);
+    border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; outline: none;
+  }
+  .fld input:focus, .fld select:focus { border-color: var(--accent); }
+
+  .meths { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 10px; }
+  .meth {
+    text-align: left; font: inherit; cursor: pointer;
+    background: var(--sunken); border: 1px solid var(--line); border-radius: 13px; padding: 15px 16px;
+    transition: border-color 160ms var(--baton), background 160ms var(--baton), transform 80ms var(--baton);
+  }
+  .meth:hover { border-color: var(--subtle); }
+  .meth:active { transform: scale(.99); }
+  .meth:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .meth[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--sunken)); }
+  .meth h4 { font-size: 14px; font-weight: 600; margin-bottom: 5px; letter-spacing: -.01em; }
+  .meth p { font-size: 12.5px; color: var(--muted); line-height: 1.45; margin-bottom: 9px; }
+  .meth .k { font-family: var(--f-mono); font-size: 10.5px; color: var(--subtle); }
+  .meth[aria-pressed="true"] .k { color: var(--accent-tx); }
+
+  .go { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--line-soft); }
+  .btn { font: inherit; font-size: 14.5px; font-weight: 600; height: 46px; padding: 0 26px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: transform 80ms var(--baton), background 160ms var(--baton); }
+  .btn:active { transform: scale(.985); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn-primary { background: var(--accent); color: var(--accent-fg); }
+  .btn-ghost { background: transparent; border-color: var(--line); color: var(--fg); }
+  .go p { font-size: 12.5px; color: var(--subtle); flex: 1; min-width: 220px; }
+
+  /* ===== Cronograma ===================================================== */
+  .out { display: none; }
+  .out.on { display: block; animation: rise 520ms var(--baton) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px) } }
+
+  .chead { margin: 44px 0 20px; display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: flex-end; justify-content: space-between; }
+  .chead h2 { font-family: var(--f-display); font-weight: 400; font-size: 34px; letter-spacing: -.022em; line-height: 1.1; }
+  .chead .who { font-size: 13.5px; color: var(--muted); margin-top: 7px; }
+  .chead .who b { color: var(--fg); font-weight: 600; }
+  .agenda-tot { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 18px; }
+  .agenda-tot .big { font-family: var(--f-display); font-size: 38px; line-height: 1; color: var(--accent); }
+  .agenda-tot .tx { font-size: 12px; color: var(--muted); line-height: 1.35; max-width: 15ch; }
+  .agenda-tot .tx b { color: var(--fg); font-weight: 600; display: block; font-size: 13px; }
+
+  .start {
+    background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 4px 14px 14px 4px; padding: 15px 18px; margin-bottom: 16px;
+    display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline;
+  }
+  .start .k { font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--subtle); }
+  .start .v { font-size: 14px; font-weight: 600; }
+  .start .d { font-size: 13px; color: var(--muted); }
+
+  .cron { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+  .grid { display: grid; grid-template-columns: 138px repeat(6, minmax(196px, 1fr)); min-width: 1180px; }
+
+  .cell { border-right: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); padding: 13px 14px; }
+  .cell:nth-child(7n) { border-right: 0; }
+  .rowlab { background: var(--sunken); }
+  .rowlab .t { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 5px; }
+  .rowlab .d { font-size: 11px; color: var(--subtle); line-height: 1.45; }
+  .rowlab.a .t { color: var(--trackA); }
+  .rowlab.b .t { color: var(--trackB); }
+
+  .ph { background: var(--sunken); }
+  .ph .m { font-family: var(--f-mono); font-size: 10px; color: var(--subtle); letter-spacing: .04em; margin-bottom: 6px; }
+  .ph .m em { font-style: normal; color: var(--accent-tx); font-weight: 700; }
+  .ph h4 { font-size: 15px; font-weight: 700; letter-spacing: .01em; text-transform: uppercase; margin-bottom: 5px; }
+  .ph .q { font-family: var(--f-display); font-size: 13.5px; font-style: italic; color: var(--muted); line-height: 1.35; }
+
+  ul.dl { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+  ul.dl li { font-size: 12.5px; line-height: 1.45; color: var(--muted); padding-left: 11px; position: relative; }
+  ul.dl li::before { content: "·"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+  ul.dl li b { color: var(--fg); font-weight: 600; }
+
+  .vol { margin-top: 11px; padding-top: 9px; border-top: 1px dashed var(--line); font-size: 11.5px; font-weight: 600; color: var(--fg); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .vol .slots { font-family: var(--f-mono); font-size: 10px; font-weight: 400; color: var(--accent-tx); white-space: nowrap; }
+  .note-ph { margin-top: 9px; font-size: 11px; font-style: italic; color: var(--subtle); }
+
+  .out-b { font-size: 11.5px; color: var(--muted); margin-top: 9px; padding-top: 8px; border-top: 1px dashed var(--line); }
+  .out-b b { color: var(--fg); font-weight: 600; }
+
+  .gate { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+  .gate .badge { display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--accent-fg); background: var(--accent); padding: 3px 7px; border-radius: 5px; margin-bottom: 8px; }
+  .scen { font-size: 12px; line-height: 1.45; margin-bottom: 9px; }
+  .scen .h { font-size: 9.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 3px; }
+  .scen.a .h { color: var(--encore); } .scen.b .h { color: var(--coral); }
+  .scen p { color: var(--muted); }
+
+  .ag { background: var(--sunken); display: flex; align-items: center; gap: 10px; }
+  .ag .num { font-family: var(--f-display); font-size: 26px; line-height: 1; color: var(--fg); }
+  .ag .num.zero { color: var(--subtle); }
+  .ag .num.peak { color: var(--accent); }
+  .ag .tx { font-size: 11px; color: var(--subtle); line-height: 1.35; }
+
+  .totals { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 1px; background: var(--line-soft); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 16px 16px; overflow: hidden; margin-top: -1px; }
+  .tot { background: var(--surface); padding: 16px 18px; }
+  .tot .n { font-family: var(--f-display); font-size: 30px; line-height: 1; margin-bottom: 5px; }
+  .tot .l { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--subtle); line-height: 1.35; }
+  .sig { text-align: right; padding: 14px 18px 0; font-family: var(--f-display); font-style: italic; font-size: 14px; color: var(--muted); }
+
+  .after { margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+  .card .k { font-family: var(--f-mono); font-size: 10.5px; color: var(--accent-tx); margin-bottom: 8px; }
+  .card h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; letter-spacing: -.01em; }
+  .card p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">Sprint 2 · Metodologia como entidade</div>
+    <h1>O método da agência, dentro da ferramenta</h1>
+    <p class="lede">A metodologia é escolhida na criação da campanha — antes de qualquer conteúdo existir. Ela gera as fases, os slots do calendário, as metas do ciclo e os pedidos de agenda do cliente.</p>
+  </header>
+
+  <div class="panel" id="form">
+    <div class="step">
+      <div class="slab"><span class="n">01</span><h3>Cliente e objetivo</h3></div>
+      <div class="fields">
+        <div class="fld"><label for="cli">Cliente</label><input id="cli" type="text" value="Dra. Helena Braga"></div>
+        <div class="fld" style="grid-column: span 2"><label for="obj">Objetivo desta campanha</label><input id="obj" type="text" value="Levar a Helena da definição de marca ao lançamento vendido do curso"></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="slab"><span class="n">02</span><h3>Metodologia</h3><span>o passo que define como se chega lá</span></div>
+      <div class="meths" id="meths">
+        <button class="meth" type="button" data-m="6m" aria-pressed="true">
+          <h4>Seis meses da marca ao lançamento</h4>
+          <p>Marca, autoridade e curso construídos em paralelo, com pré-venda antes da gravação.</p>
+          <div class="k">6 fases · 2 trilhas · 8 dias de agenda</div>
+        </button>
+        <button class="meth" type="button" data-m="social" aria-pressed="false">
+          <h4>Social sempre ativo</h4>
+          <p>Ciclos mensais contínuos, sem data de fim. O contrato padrão de social media.</p>
+          <div class="k">contínua · 1 dia por mês</div>
+        </button>
+        <button class="meth" type="button" data-m="90" aria-pressed="false">
+          <h4>Lançamento 90 dias</h4>
+          <p>Aquecimento, abertura e pós. Para infoproduto, curso ou evento com data marcada.</p>
+          <div class="k">3 fases · 5 dias de agenda</div>
+        </button>
+        <button class="meth" type="button" data-m="livre" aria-pressed="false">
+          <h4>Livre</h4>
+          <p>Sem fases previstas. Para quem não quer método imposto — é uma escolha, não o padrão.</p>
+          <div class="k">1 fase · sem entregáveis</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="slab"><span class="n">03</span><h3>Variáveis da metodologia</h3><span>substituídas em todo o cronograma</span></div>
+      <div class="fields">
+        <div class="fld"><label for="expert">Nome do expert</label><input id="expert" type="text" value="Helena Braga"></div>
+        <div class="fld"><label for="area">Área de atuação</label><input id="area" type="text" value="Direito de Família e Sucessões"></div>
+        <div class="fld"><label for="curso">Nome do curso</label><input id="curso" type="text" value="Sucessão sem Litígio"></div>
+        <div class="fld"><label for="ini">Mês de início</label>
+          <select id="ini">
+            <option>Agosto de 2026</option><option>Setembro de 2026</option><option>Outubro de 2026</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="go">
+      <button class="btn btn-primary" id="gen" type="button">Gerar cronograma</button>
+      <button class="btn btn-ghost" id="reset" type="button">Limpar</button>
+      <p>Nada é criado ainda. Você revisa o cronograma inteiro antes de confirmar a campanha.</p>
+    </div>
+  </div>
+
+  <div class="out" id="out">
+    <div class="chead">
+      <div>
+        <h2 id="ctitle">Seis meses da marca ao lançamento</h2>
+        <p class="who" id="cwho"></p>
+      </div>
+      <div class="agenda-tot">
+        <span class="big">8</span>
+        <span class="tx"><b>dias de agenda</b>do expert em seis meses de projeto</span>
+      </div>
+    </div>
+
+    <div class="start">
+      <span class="k">Ponto de partida</span>
+      <span class="v">EJUPcast gravado</span>
+      <span class="d">antes do contrato — acervo de cortes dos 6 meses</span>
+    </div>
+
+    <div class="cron">
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="totals" id="totals"></div>
+    <p class="sig">Alma clássica, repertório contemporâneo.</p>
+
+    <div class="go" style="border-top:0; padding-top:26px">
+      <button class="btn btn-primary" type="button" id="confirm">Criar campanha com este cronograma</button>
+      <p id="confirmNote">Ao confirmar, a Maestro cria 6 fases, 65 slots no calendário em “aguardando peça”, as metas do ciclo e 4 pedidos de agenda para a Helena.</p>
+    </div>
+
+    <div class="after">
+      <div class="card">
+        <div class="k">D-036</div>
+        <h4>O método vira calendário</h4>
+        <p>“5 reels + 8 carrosséis” na fase 2 gera 13 slots no período dela, todos em “aguardando peça”. Ninguém digita data. A metodologia cria a promessa; a peça aprovada destrava a publicação.</p>
+      </div>
+      <div class="card">
+        <div class="k">D-037</div>
+        <h4>Dias de agenda do cliente</h4>
+        <p>O maior medo de quem contrata não é o preço, é quanto do tempo dele isso vai custar. Declarar 8 dias na capa — e um mês com zero — é o argumento de venda mais forte da página. A Maestro mede consumido × previsto.</p>
+      </div>
+      <div class="card">
+        <div class="k">Obrigatório</div>
+        <h4>Toda fase tem uma pergunta</h4>
+        <p>Um Gantt diz quando. Uma metodologia diz o que estamos tentando descobrir agora. Sem pergunta-guia, a fase vira balde de tarefas — por isso o formulário não deixa salvar sem ela.</p>
+      </div>
+      <div class="card">
+        <div class="k">Fosso</div>
+        <h4>Isso é o ativo da agência</h4>
+        <p>ClickUp guarda tarefas. A Maestro guarda o método. Depois de três clientes rodando na metodologia da casa, trocar de ferramenta significa reconstruir o método.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var PHASES = [
+    { m:'Mês 01', tag:'', nome:'Fundação', q:'Quem é essa marca?',
+      a:['<b>Imersão</b>, benchmark, público e anti-público',
+         '<b>Manual da Marca Pessoal</b> — posicionamento, inimigo e tom de voz',
+         'MIV, templates e setup de gravação travado',
+         '<b>Ensaio fotográfico</b>: imagens para carrosséis e LP',
+         '<b>Decupagem do EJUPcast</b>: mapa de cortes e pautas novas'],
+      nota:'Mês de obra — perfil sem publicação',
+      vol:null, slots:0,
+      b:['<b>Definição da tese do curso</b>, junto com o posicionamento'],
+      bOut:'Promessa em uma frase + público + nível + formato',
+      ag:2, agTx:'imersão + ensaio fotográfico' },
+
+    { m:'Mês 02', tag:'', nome:'Estreia', q:'A marca existe e tem padrão?',
+      a:['<b>Post-manifesto</b> de reposicionamento',
+         'Lote A de reels (8 unidades) em um único dia, somado aos cortes do EJUPcast'],
+      vol:'5 reels + 8 carrosséis', slots:13,
+      b:['<b>Validação de dor</b>: caixinha de perguntas, leitura de comentários e direct'],
+      bOut:'Esqueleto de módulos',
+      ag:1, agTx:'gravação do lote A de reels' },
+
+    { m:'Mês 03', tag:'', nome:'Territorialização', q:'A marca é dona de um assunto?',
+      a:['Criação de <b>2 séries de nome fixo</b> — o expert passa a ser dono de um assunto'],
+      vol:'5 reels + 8 carrosséis', slots:13,
+      b:['Roteirização das aulas, formato, plataforma e preço'],
+      bOut:'Isca + tráfego pago no ar — a lista que compra na pré-venda começa aqui',
+      ag:0, agTx:'nenhum dia de agenda' },
+
+    { m:'Mês 04', tag:'', nome:'Prova', q:'A marca entrega resultado?',
+      a:['Casos anonimizados, bastidores de método e reação à pauta do setor',
+         'Cortes do EJUPcast em pauta nova, ancorados nos casos do mês'],
+      vol:'5 reels + 8 carrosséis', slots:13,
+      b:['<b>Vídeos de venda gravados</b> — 1 dia: vídeos de tráfego pago e vídeo-pitch da página de vendas'],
+      bOut:'Checkout e página prontas',
+      ag:1, agTx:'vídeos de tráfego + pitch da página' },
+
+    { m:'Mês 05', tag:'Decisão', nome:'Pré-venda', q:'O mercado paga antes de gravarmos?',
+      a:['Todo o conteúdo passa a <b>abrir a ferida</b> que o curso resolve — sem vender ainda',
+         'Lote B de reels (8 unidades), já roteirizado para aquecimento e venda',
+         'Stories diários na semana de carrinho aberto'],
+      vol:'5 reels + 8 carrosséis', slots:13,
+      b:['<b>Carrinho da pré-venda aberto por 7 dias</b>, com tráfego pago rodando'],
+      gate:{ q:'O mercado paga antes de gravarmos?', crit:'Leads captados + inscrições pagas definem o formato final' },
+      ag:1, agTx:'lote B + stories da pré-venda' },
+
+    { m:'Mês 06', tag:'Chegada', nome:'Entrega', q:'O que o mercado comprou?',
+      a:['<b>Bastidores da produção</b> e prova social de quem já comprou',
+         'Conteúdo de entrega: o método que o expert acabou de vender'],
+      vol:'5 reels + 8 carrosséis', slots:13,
+      scen:[
+        { k:'a', h:'Cenário A · meta batida', t:'Gravação do curso em 3 dias e entrega na plataforma.' },
+        { k:'b', h:'Cenário B · abaixo da meta', t:'Remodelagem do formato — mentoria, imersão ou workshop.' }
+      ],
+      bOut:'Nos dois casos a pré-venda é honrada, com relatório dos 6 meses, playbook e ciclo 2',
+      ag:3, agTx:'pico de agenda · gravação do curso (cenário A)', peak:true }
+  ];
+
+  var TOTALS = [
+    { n:'65', l:'conteúdos publicados' },
+    { n:'25', l:'reels' },
+    { n:'40', l:'carrosséis' },
+    { n:'1', l:'EJUPcast já gravado · acervo de cortes' },
+    { n:'1', l:'curso gravado, lançado e vendido' }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* som — quinta justa da marca */
+  var ctx = null;
+  function play() {
+    if (reduced) return;
+    try {
+      if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+    } catch (e) { return; }
+    [[440,0],[659.25,.09]].forEach(function (p) {
+      var o = ctx.createOscillator(), h = ctx.createOscillator(), g = ctx.createGain(), hg = ctx.createGain();
+      o.type='sine'; o.frequency.value=p[0];
+      h.type='triangle'; h.frequency.value=p[0]*2; hg.gain.value=.12;
+      var t = ctx.currentTime + p[1];
+      g.gain.setValueAtTime(.0001,t);
+      g.gain.exponentialRampToValueAtTime(.15,t+.008);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.44);
+      o.connect(g); h.connect(hg); hg.connect(g); g.connect(ctx.destination);
+      o.start(t); h.start(t); o.stop(t+.5); h.stop(t+.5);
+    });
+  }
+
+  /* seleção de metodologia */
+  $('meths').addEventListener('click', function (e) {
+    var b = e.target.closest('.meth'); if (!b) return;
+    $('meths').querySelectorAll('.meth').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+  });
+
+  function esc(s) { return String(s).replace(/[&<>]/g, function (m) { return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m]; }); }
+
+  function build() {
+    var g = $('grid');
+    var html = '';
+
+    /* linha 1 — fases */
+    html += '<div class="cell rowlab"><div class="t">Fase</div><div class="d">6 meses, uma pergunta por vez</div></div>';
+    PHASES.forEach(function (p) {
+      html += '<div class="cell ph">' +
+        '<div class="m">' + esc(p.m) + (p.tag ? ' · <em>' + esc(p.tag) + '</em>' : '') + '</div>' +
+        '<h4>' + esc(p.nome) + '</h4>' +
+        '<div class="q">' + esc(p.q) + '</div></div>';
+    });
+
+    /* linha 2 — trilha A */
+    html += '<div class="cell rowlab a"><div class="t">Trilha A<br>Conteúdo e marca</div><div class="d">Cortes do EJUPcast já gravado e pautas novas — autoridade construída mês a mês</div></div>';
+    PHASES.forEach(function (p) {
+      html += '<div class="cell"><ul class="dl">' +
+        p.a.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ul>' +
+        (p.vol ? '<div class="vol"><span>' + esc(p.vol) + '</span><span class="slots">' + p.slots + ' slots</span></div>' : '') +
+        (p.nota ? '<div class="note-ph">' + esc(p.nota) + '</div>' : '') +
+        '</div>';
+    });
+
+    /* linha 3 — trilha B */
+    html += '<div class="cell rowlab b"><div class="t">Trilha B<br>Curso</div><div class="d">Construído em paralelo e vendido antes de ser gravado — nada é produzido no escuro</div></div>';
+    PHASES.forEach(function (p) {
+      var inner = '';
+      if (p.scen) {
+        inner += p.scen.map(function (s) {
+          return '<div class="scen ' + s.k + '"><div class="h">' + esc(s.h) + '</div><p>' + esc(s.t) + '</p></div>';
+        }).join('');
+      }
+      if (p.b) inner += '<ul class="dl">' + p.b.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ul>';
+      if (p.gate) {
+        inner += '<div class="out-b"><span class="badge">Ponto de decisão</span><br><b>' + esc(p.gate.q) + '</b><br>' + esc(p.gate.crit) + '</div>';
+      } else if (p.bOut) {
+        inner += '<div class="out-b"><b>Saída:</b> ' + esc(p.bOut) + '</div>';
+      }
+      html += '<div class="cell' + (p.gate ? ' gate' : '') + '">' + inner + '</div>';
+    });
+
+    /* linha 4 — agenda */
+    html += '<div class="cell rowlab"><div class="t">Agenda do expert</div><div class="d">Dias que o projeto custa do cliente</div></div>';
+    PHASES.forEach(function (p) {
+      var cls = p.ag === 0 ? ' zero' : (p.peak ? ' peak' : '');
+      html += '<div class="cell ag"><span class="num' + cls + '">' + p.ag + '</span>' +
+        '<span class="tx">' + esc(p.agTx) + '</span></div>';
+    });
+
+    g.innerHTML = html;
+    $('totals').innerHTML = TOTALS.map(function (t) {
+      return '<div class="tot"><div class="n">' + esc(t.n) + '</div><div class="l">' + esc(t.l) + '</div></div>';
+    }).join('');
+  }
+
+  $('gen').addEventListener('click', function () {
+    var sel = $('meths').querySelector('.meth[aria-pressed="true"]');
+    var expert = $('expert').value.trim() || 'o expert';
+    var area = $('area').value.trim();
+    var curso = $('curso').value.trim();
+    var ini = $('ini').value;
+
+    if (sel && sel.dataset.m !== '6m') {
+      $('ctitle').textContent = sel.querySelector('h4').textContent;
+      $('cwho').innerHTML = 'Esta metodologia ainda não tem cronograma de exemplo neste protótipo. Escolha <b>Seis meses da marca ao lançamento</b> para ver o modelo completo.';
+      $('out').classList.add('on');
+      $('out').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+      return;
+    }
+
+    $('ctitle').textContent = 'Seis meses da marca ao lançamento';
+    $('cwho').innerHTML = '<b>' + esc(expert) + '</b>' + (area ? ' · ' + esc(area) : '') +
+      (curso ? ' · curso <b>' + esc(curso) + '</b>' : '') + ' · início em ' + esc(ini);
+    $('confirmNote').innerHTML = 'Ao confirmar, a Maestro cria <b>6 fases</b>, <b>65 slots</b> no calendário em “aguardando peça”, as <b>metas do ciclo</b> e <b>4 pedidos de agenda</b> para ' + esc(expert.split(' ')[0]) + '.';
+
+    build();
+    play();
+    $('out').classList.add('on');
+    $('out').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  });
+
+  $('reset').addEventListener('click', function () { $('out').classList.remove('on'); });
+
+  $('confirm').addEventListener('click', function () {
+    play();
+    this.textContent = 'Campanha criada · 65 slots aguardando peça';
+    this.disabled = true;
+    this.style.opacity = '.6';
+  });
+})();
+</script>

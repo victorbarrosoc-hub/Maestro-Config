@@ -35,6 +35,20 @@ de forma independente.
 ### Próximo
 Wireflows restantes do Sprint 2 e teste com 5 clientes reais
 
+### Adicionado (parte 2)
+- `docs/PRD/METODOLOGIA_E_CRONOGRAMA.md` — metodologia como entidade, fases com pergunta-guia, trilhas paralelas, entregáveis, gates, cenários e dias de agenda do cliente
+- Protótipo da criação de campanha com metodologia e do cronograma gerado
+
+### Decisões (parte 2)
+D-035 (metodologia é entidade, aplicada na criação da campanha) ·
+D-036 (entregáveis de volume geram slots de calendário) ·
+D-037 (dias de agenda do cliente são campo obrigatório) ·
+D-038 (cronograma revisado antes de existir)
+
+### Origem (parte 2)
+`EJUP - Cronograma do Expert (6 Meses).pdf`. Segundo documento feito à mão a revelar
+uma entidade que faltava — o primeiro (Cortez) deu o lote, este deu a metodologia.
+
 ---
 
 ## 0.3.0 — 2026-07-29

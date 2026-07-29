@@ -207,6 +207,36 @@ Contexto / Problema / Alternativas / Decisão / Motivo / Consequências / Próxi
 
 ---
 
+# D-035 · Produto · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Metodologia
+**Origem:** `EJUP - Cronograma do Expert (6 Meses).pdf` — "Seis meses da marca ao lançamento".
+**Contexto:** toda agência boa tem um método, e quase nenhuma tem o método dentro da ferramenta. Ele vive num PDF usado para vender e depois some; a execução acontece em outro lugar, sem relação com o que foi prometido.
+**Decisão:** **a metodologia é uma entidade de primeira classe**, reutilizável e versionada, aplicada **na criação da campanha** — segundo passo, logo após o objetivo, antes de qualquer conteúdo existir.
+**Motivo:** para a agência o método vira ativo; para o cliente vira transparência no meio do caminho, quando ainda não há resultado; para o produto é o maior fosso competitivo disponível — ClickUp guarda tarefas, a Maestro guarda o método.
+**Consequências:** campanha sem metodologia usa a metodologia `Livre` (uma fase, sem entregáveis previstos) — sempre escolha explícita, nunca padrão silencioso. Toda fase exige **pergunta-guia**; é a única obrigatoriedade filosófica do produto, e ela separa metodologia de cronograma.
+
+# D-036 · Produto · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Calendário
+**Decisão:** **entregáveis de volume geram `CalendarSlot` automaticamente.** "5 reels + 8 carrosséis" na fase 2 gera 13 slots no período da fase, em `Agendado — aguardando peça`.
+**Motivo:** fecha o circuito que D-022 abriu — a metodologia gera a promessa, a promessa espera a peça, a peça aprovada destrava a publicação. O método vira calendário sem ninguém digitar data.
+**Consequências:** distribuição inicial uniforme no período e sempre editável. Abandonar o cronograma passa a quebrar o calendário, o que é a mitigação natural contra "cronograma bonito e esquecido".
+
+# D-037 · Produto · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Cliente
+**Origem:** o EJUP declara na capa "8 dias de agenda do expert em seis meses" e distribui 2·1·0·1·1·3.
+**Decisão:** **dias de agenda do cliente são campo obrigatório da fase**, somados no topo do cronograma e medidos como consumido × previsto.
+**Motivo:** o maior medo de quem contrata uma agência não é preço, é quanto do próprio tempo isso vai custar. Declarar isso por fase é uma jogada de confiança que nenhuma ferramenta do mercado tem — e o mês com **zero** dias é o argumento de venda mais forte do documento.
+**Consequências:** ao iniciar a fase, o cliente recebe o pedido de agenda com finalidade explícita. Projeto que estoura o orçamento de agenda do cliente é projeto em risco, e passa a ser mensurável.
+
+# D-038 · UX · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Criação de campanha
+**Decisão:** **o cronograma é revisado e editável antes de existir.** A etapa de revisão é obrigatória; nada é criado até a confirmação.
+**Motivo:** gerar 78 slots de calendário e mostrar depois é violento. A agência precisa ajustar datas e remover entregável que não se aplica àquele cliente antes de confirmar.
+**Consequências:** o template é ponto de partida, nunca contrato. Tudo continua editável depois, com histórico. Metodologia rígida vira camisa de força e a agência abandona a ferramenta em vez do método.
+**Fase 2:** ramificação real de cenários (hoje os cenários são texto na fase, visíveis e não executáveis).
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-035, D-036...
+Adicionar seguindo o padrão D-039, D-040...
