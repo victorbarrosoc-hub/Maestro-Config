@@ -1,9 +1,39 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.3
+Version: 0.4
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.4.0 — 2026-07-29
+
+**Status:** Em andamento
+**Objetivo:** Modelo do lote de aprovação (Sprint 2, parte 1).
+
+### Adicionado
+- `docs/UX/LOTE_DE_APROVACAO.md` — o lote como unidade de apresentação, referência visual, selo de integridade, termo de aprovação e regras de exportação
+- Protótipo do lote de aprovação, com selo FNV-1a ao vivo e termo assinável
+
+### Decisões
+D-030 (lote apresenta, peça decide) · D-031 (referência visual abre o lote) ·
+D-032 (selo de integridade em toda aprovação) · D-033 (termo de aprovação promovido para o MVP) ·
+D-034 (exportação é registro, nunca canal de aprovação)
+
+### Origem
+Engenharia reversa de `Cortez - Aprovacao de Conteudo - Ago-Dez 2026.html` — documento
+feito à mão pelo fundador antes da plataforma existir, tratado aqui como protótipo manual
+da Maestro. Cinco elementos dele viraram decisões; um deles (acesso sem conta) confirmou D-027
+de forma independente.
+
+### Impacto
+- Muda o checklist pré-envio (entram verificações de conjunto)
+- Promove assinatura da Fase 2 para o MVP, em forma simples
+- Conteúdo alterado após aprovação passa a derrubar o status e travar o agendamento
+
+### Próximo
+Wireflows restantes do Sprint 2 e teste com 5 clientes reais
 
 ---
 

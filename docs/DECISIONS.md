@@ -171,6 +171,42 @@ Contexto / Problema / Alternativas / Decisão / Motivo / Consequências / Próxi
 
 ---
 
+# D-030 · UX / Aprovação · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Modelo de apresentação
+**Origem:** engenharia reversa do documento `Cortez - Aprovacao de Conteudo - Ago-Dez 2026.html` — o protótipo manual da Maestro, feito à mão antes da plataforma existir.
+**Problema:** o Sprint 1 modelou a experiência do cliente como fila de peças. Peça isolada faz o cliente julgar contra o próprio gosto; conjunto faz julgar contra o plano.
+**Decisão:** **o lote é a unidade de apresentação; a peça continua sendo a unidade de decisão.** O lote traz capa, "como funciona", objetivo do mês, linha do tempo, referência visual, as peças, registro de alterações e termo de aprovação.
+**Motivo:** só a visão de conjunto revela repetição, desequilíbrio de tema e um mês inteiro falando com o público errado.
+**Consequências:** não substitui o fluxo peça a peça — este continua sendo a entrada por deep link. Um modelo, duas entradas, nenhuma lógica duplicada (Regra #3).
+
+# D-031 · UX · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Aprovação
+**Decisão:** **peças já aprovadas em lotes anteriores abrem o lote novo**, como referência visual.
+**Motivo:** calibra o critério do cliente antes do julgamento. Reduz a variação de padrão entre um mês e outro — o problema silencioso de toda relação agência-cliente.
+**Consequências:** no primeiro lote de uma campanha, a seção usa as peças de referência definidas na estratégia. Se não houver nenhuma, o checklist pré-envio avisa.
+
+# D-032 · Produto / Segurança · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Integridade
+**Origem:** o selo FNV-1a do documento da Cortez, que muda no instante em que o conteúdo deixa de ser o original.
+**Decisão:** **toda aprovação carrega o hash do conteúdo aprovado, visível para o cliente** (`SELO 7F3A·2B91`). Calculado sobre copy + IDs de arquivo + metadados de publicação; gravado junto de usuário, versão, IP, device e horário.
+**Motivo:** transforma "o que foi aprovado é o que vai ao ar" de promessa em propriedade verificável do sistema.
+**Consequências:** se o conteúdo mudar após a aprovação, o selo muda, a peça **sai** de `Aprovado` e o agendamento trava sozinho. Custo de implementação baixíssimo sobre um payload que já existe.
+
+# D-033 · Produto · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Aprovação
+**Decisão:** **termo de aprovação do lote entra no MVP**, em forma simples. Registra quem aprovou, quando, quantas peças, o selo e o ID do registro. Comprovante baixável.
+**Motivo:** (1) fecha o ciclo — "acabou" precisa ser um lugar, não uma inferência; (2) a fricção do termo faz a pessoa ler antes de clicar — a única fricção boa do produto; (3) encerra em 5 segundos o conflito "eu nunca aprovei isso"; (4) é o que a agência mostra na reunião, e toda vez que mostra, a Maestro aparece.
+**Consequências:** promovido da Fase 2. **Não** é assinatura com validade jurídica plena (ICP-Brasil/e-CPF) — isso continua na Fase 2. É registro de auditoria bem apresentado, que resolve 95% dos casos reais.
+
+# D-034 · Produto · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Exportação
+**Problema:** D-004 proíbe PDF na aprovação, mas existe necessidade real de ter um documento no final.
+**Decisão:** **a exportação existe como registro, nunca como canal de aprovação.** Permitido baixar o comprovante e exportar o lote já aprovado; proibido aprovar dentro de arquivo exportado ou enviar o lote como anexo para aprovação.
+**Motivo:** preserva D-004 sem negar a necessidade legítima do arquivo final.
+**Consequências:** "retomar" não é recurso, é comportamento padrão — o estado do lote vive no servidor, nunca em rascunho local como fonte de verdade.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-030, D-031...
+Adicionar seguindo o padrão D-035, D-036...

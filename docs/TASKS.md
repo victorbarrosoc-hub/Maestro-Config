@@ -50,16 +50,21 @@ Status do Projeto: 🟡 Product Discovery → 🟢 Sprint 1
 - [x] Protótipo funcional da tela de aprovação do cliente
 - [x] Decisões D-025 a D-029
 
-## Sprint 2 — UX · ⏳ Próximo
+## Sprint 2 — UX · 🟡 Em andamento
 
-- [x] Empty states · Error states · Loading states *(entregues em `GLOBAL_STATES.md`)*
+- [x] Empty states · Error states · Loading states — `GLOBAL_STATES.md`
+- [x] **Modelo do lote de aprovação** — `LOTE_DE_APROVACAO.md` (D-030 a D-034)
+- [x] Protótipo do lote com selo de integridade e termo de aprovação
 - [ ] Wireflow da estratégia e do calendário
-- [ ] Wireflow do envio em lote (checklist pré-envio)
+- [ ] Wireflow do envio em lote (checklist pré-envio, agora com as verificações de conjunto)
 - [ ] Wireflow do recebimento de alterações (o diff)
 - [ ] Onboarding da agência — as 8 etapas
-- [ ] Onboarding do cliente — os 3 cartões
 - [ ] UX Writing de todas as telas do MVP
-- [ ] **Teste com 5 clientes reais de agência na tela de aprovação** 🔴
+- [ ] **Teste com 5 clientes reais de agência** 🔴
+
+### Impacto do lote nos itens abertos
+O modelo do lote (D-030) muda o checklist pré-envio e o wireflow de envio — por isso
+esses itens ficaram para depois da decisão, não antes.
 
 ## Sprint 3 — Wireframes
 
