@@ -98,8 +98,11 @@ Status do Projeto: 🟡 Product Discovery → 🟢 Sprint 1
 - [ ] Produção · Publicação · Resultados
 - [ ] IA · Administração
 
-## Sprint 6 — Banco de Dados
-- [ ] ERD · Modelagem · Relacionamentos · Auditoria · Versionamento
+## Sprint 6 — Banco de Dados · ✅ Antecipado e concluído
+- [x] ERD · Modelagem · Relacionamentos · Auditoria · Versionamento — `ENGINEERING/DATA_MODEL.md`
+- [x] 21 invariantes derivadas das decisões, cada uma um teste
+- [ ] Migrations Prisma + triggers de imutabilidade
+- [ ] Seeds das 3 metodologias de fábrica
 
 ## Sprint 7 — APIs
 - [ ] Auth · Usuários · Organizações · Clientes · Projetos

@@ -260,6 +260,16 @@ Contexto / Problema / Alternativas / Decisão / Motivo / Consequências / Próxi
 
 ---
 
+# D-040 · Arquitetura · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Modelagem
+**Contexto:** ao escrever o schema, `Batch` precisava de um dono. O caminho óbvio era a Campanha.
+**Problema:** um projeto com duas trilhas (EJUP) tem duas campanhas. Se o lote pertence à campanha, um mês de trabalho gera **dois** lotes e **duas** notificações — quebrando a regra central "um lote, uma notificação".
+**Decisão:** **`Batch` pertence ao Projeto + Fase.** Seus itens podem vir de qualquer campanha daquele projeto.
+**Motivo:** o cliente não sabe que campanhas existem (D-039). Ele recebe "as publicações de agosto", não "as publicações da trilha A de agosto".
+**Consequências:** `BatchItem` referencia `Content` de campanhas diferentes; o checklist de conjunto (repetição, aderência ao objetivo) passa a rodar sobre o projeto inteiro, que é onde faz sentido.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-040, D-041...
+Adicionar seguindo o padrão D-041, D-042...
