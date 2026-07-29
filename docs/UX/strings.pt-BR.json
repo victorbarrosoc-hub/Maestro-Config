@@ -1,0 +1,251 @@
+{
+  "$meta": {
+    "locale": "pt-BR",
+    "version": "1.0",
+    "format": "ICU MessageFormat",
+    "doc": "docs/UX/UX_WRITING.md",
+    "rule": "Nenhuma string literal no código. Chave em inglês, valor em pt-BR."
+  },
+
+  "auth": {
+    "login": {
+      "title": "Entrar na Maestro",
+      "email": "Seu e-mail",
+      "submit": "Receber link de acesso",
+      "hint": "A gente manda um link. Você não precisa de senha."
+    },
+    "magic": {
+      "sentTitle": "Link enviado",
+      "sentBody": "Enviamos um link de acesso para {email}. Ele vale por 15 minutos.",
+      "resend": "Enviar de novo",
+      "expiredTitle": "Este link expirou",
+      "expiredBody": "Links valem 15 minutos, por segurança. Enviamos um novo para {email}."
+    },
+    "invite": {
+      "title": "{convidante} convidou você para acompanhar {projeto}",
+      "body": "A {agencia} usa a Maestro para organizar a operação com você. Aqui você vê a estratégia, o cronograma e aprova as publicações antes de irem ao ar.",
+      "cta": "Entrar",
+      "nopass": "Você não precisa criar senha."
+    }
+  },
+
+  "onb": {
+    "agencyTitle": "Vamos montar sua agência",
+    "teamTitle": "Quem trabalha com você?",
+    "teamSkip": "Convidar depois",
+    "clientTitle": "Seu primeiro cliente",
+    "goalTitle": "O que este projeto precisa alcançar?",
+    "goalHint": "Uma frase. É ela que vai orientar todo o resto.",
+    "methodTitle": "Como vocês chegam lá?",
+    "methodSub": "O método da sua agência vira o cronograma do projeto.",
+    "methodOwn": "Já tenho um método",
+    "methodReady": "Usar um método pronto",
+    "methodNone": "Ainda não sei",
+    "methodNoneHint": "Dá pra definir depois — muita agência descobre o método rodando.",
+    "reviewTitle": "Confira antes de criar",
+    "reviewSub": "Nada foi criado ainda. Ajuste o que quiser.",
+    "reviewSubmit": "Criar projeto",
+    "doneTitle": "Pronto. Sua operação começou."
+  },
+
+  "dash": {
+    "waitingTeamTitle": "Esperando a equipe",
+    "waitingTeamSub": "{n, plural, one {# peça} other {# peças}} · {v, plural, one {# vence} other {# vencem}} hoje",
+    "waitingClientTitle": "Esperando o cliente",
+    "waitingClientSub": "{n, plural, one {# peça} other {# peças}} · {cliente} há {dias, plural, one {# dia} other {# dias}}",
+    "next48Title": "Próximas 48 horas",
+    "next48Warn": "{n, plural, one {# publicação sem peça aprovada} other {# publicações sem peça aprovada}}",
+    "gateTitle": "Ponto de decisão aberto",
+    "gateSub": "{projeto} · {pergunta}",
+    "projectsTitle": "Projetos ativos"
+  },
+
+  "project": {
+    "new": "Novo projeto",
+    "methodLabel": "Metodologia",
+    "phaseQuestion": "O que esta etapa responde",
+    "phaseQuestionHint": "Toda fase precisa de uma pergunta. É ela que separa método de cronograma.",
+    "agendaTotal": "{n} dias de agenda do cliente em {meses} meses de projeto",
+    "agendaPhase": "{n, plural, =0 {Nenhum dia seu nesta etapa} one {# dia seu} other {# dias seus}}",
+    "agendaRequest": "{mes} pede {n, plural, one {# dia seu} other {# dias seus}}: {motivo}. Quando fica bom?",
+    "agendaSpent": "{usados} de {previstos} dias usados",
+    "gateTitle": "Ponto de decisão",
+    "gateCriteria": "Critério: {criterio}",
+    "gateBlocked": "A próxima etapa abre quando esta decisão for registrada.",
+    "targets": "{feito} de {meta}",
+    "strategyLocked": "O calendário abre quando o cliente aprovar a estratégia."
+  },
+
+  "content": {
+    "copyLabel": "Copy",
+    "copyPlaceholder": "Escreva a legenda desta peça",
+    "assetEmpty": "Arte em produção",
+    "version": "Versão {n}",
+    "versionRestore": "Restaurar esta versão",
+    "commentInternal": "Comentário interno",
+    "commentInternalHint": "Só a equipe vê. O cliente nunca.",
+    "commentPlaceholder": "Escreva um comentário",
+    "slotNone": "Esta peça ainda não tem data no calendário"
+  },
+
+  "batch": {
+    "prepareTitle": "Preparar lote",
+    "namePlaceholder": "Lote 01 · Agosto",
+    "approvers": "Quem decide",
+    "refs": "Referência visual",
+    "refsHint": "Peças que o cliente já aprovou. Ajudam ele a manter o mesmo critério.",
+    "message": "Recado para o cliente (opcional)",
+    "send": "Enviar lote",
+    "sendAnyway": "Enviar mesmo assim",
+    "sent": "Lote enviado. {cliente} foi avisado por e-mail e WhatsApp.",
+    "client": {
+      "title": "{n, plural, one {# publicação esperando você} other {# publicações esperando você}}",
+      "sub": "Leia cada uma no formato em que vai ao ar, ajuste o que precisar e decida.",
+      "how": "Como funciona",
+      "step1t": "Leia no formato final",
+      "step1b": "É exatamente assim que vai aparecer no feed. Não existe PDF nem anexo.",
+      "step2t": "Edite direto no texto",
+      "step2b": "O que você escrever vira uma sugestão para a agência — nada é sobrescrito.",
+      "step3t": "Aprove ou peça ajuste",
+      "step3b": "Os dois são normais. Pedir ajuste não atrasa nada — ajuda.",
+      "goal": "O que {mes} busca",
+      "refs": "O que você já aprovou",
+      "refsSub": "Serve de padrão — o lote novo deve conversar com isto.",
+      "progress": "{n} de {total} decididas",
+      "seal": "Selo do conteúdo",
+      "log": "Registro de alterações",
+      "logEmpty": "Nada alterado ainda."
+    }
+  },
+
+  "check": {
+    "noAsset": "{peca} está sem arte ou sem legenda",
+    "badFormat": "{peca} está em formato que o {plataforma} não aceita",
+    "copyTooLong": "A legenda de {peca} passa do limite do {plataforma} em {n} caracteres",
+    "noGoal": "Este lote não tem objetivo do mês",
+    "noSlot": "{peca} não tem data no calendário",
+    "under24h": "{peca} vai ao ar em menos de 24h. O cliente pode não responder a tempo.",
+    "noReview": "{peca} não passou pela revisão interna",
+    "repetition": "{a} e {b} têm o mesmo formato e o mesmo tema",
+    "offGoal": "Nenhuma peça deste lote atende ao objetivo declarado",
+    "noRefs": "Este lote não tem referência visual",
+    "muted": "Você ignorou este aviso 3 vezes. Ele volta em 30 dias."
+  },
+
+  "approval": {
+    "metaWhen": "Vai ao ar {data}",
+    "caption": "Legenda",
+    "captionEdited": "editada por você",
+    "notes": "Suas notas",
+    "notesEmpty": "Nenhuma nota ainda. Toque num ponto da imagem para marcar.",
+    "notesPlaceholder": "O que mudar neste ponto?",
+    "hintCarousel": "Arraste para ver os slides · toque na imagem para marcar um ponto",
+    "actionsApprove": "Aprovar",
+    "actionsRequest": "Solicitar alterações",
+    "actionsSend": "Enviar alterações ({n})",
+    "actionsDiscard": "Descartar e aprovar",
+    "afterApprove": "Ao aprovar, a agência é avisada na hora e a peça entra na fila de publicação.",
+    "afterRequest": "A agência recebe suas notas e volta com uma nova versão.",
+    "unseenTitle": "Você ainda não viu {slides}",
+    "unseenBody": "Aprovar mesmo assim? Depois de aprovada, a peça entra na fila de publicação.",
+    "unseenOk": "Aprovar mesmo assim",
+    "discardTitle": "Descartar suas notas?",
+    "discardBody": "Você marcou {n, plural, one {# ponto} other {# pontos}} nesta peça. Aprovar vai apagar essas notas e a agência não vai vê-las.",
+    "doneApprove": "Aprovado. A agência foi avisada.",
+    "doneRequest": "Alterações enviadas. {pessoa} foi avisada.",
+    "undo": "Desfazer",
+    "readonly": "{pessoa} aprovou esta publicação em {data}.",
+    "noPermission": "Você acompanha este projeto. Quem aprova é {pessoa}.",
+    "stale": "Esta publicação foi atualizada por {pessoa}. Ver a nova versão."
+  },
+
+  "term": {
+    "title": "Fechar o lote",
+    "body": "Ao assinar, o documento registra quem aprovou, quando, quantas publicações estavam no lote e o selo do conteúdo naquele momento. Se algo mudar depois, o selo muda e o agendamento trava sozinho.",
+    "name": "Seu nome completo",
+    "sign": "Assinar e fechar o lote",
+    "locked": "{n, plural, one {Falta # publicação} other {Faltam # publicações}} para decidir.",
+    "unlocked": "Tudo decidido. Assine para fechar o lote.",
+    "doneTitle": "Lote fechado.",
+    "doneBody": "{pessoa} aprovou {ok, plural, one {# publicação} other {# publicações}}{ajustes, plural, =0 {} other { e pediu ajuste em #}}. A agência já foi avisada.",
+    "receiptDownload": "Baixar comprovante",
+    "doneNext": "Acabou. Você pode fechar esta página."
+  },
+
+  "notify": {
+    "batchEmailSubject": "{n, plural, one {# publicação esperando você} other {# publicações esperando você}} — {projeto}",
+    "batchEmailBody": "{pessoa} enviou {n, plural, one {# publicação} other {# publicações}} para sua aprovação. {primeiras} vão ao ar {data}.",
+    "batchEmailCta": "Ver as publicações",
+    "batchWhatsapp": "Maestro · {projeto}\n{pessoa} enviou {n} publicações para você aprovar.\n{primeiras} vão ao ar {data}.\n{link}",
+    "approvedEmailSubject": "{cliente} aprovou {n} peças de {projeto}",
+    "approvedEmailBody": "{cliente} aprovou {n} conteúdos há {tempo}. {ajustes}",
+    "approvedWhatsapp": "Maestro · {projeto}\n{cliente} aprovou {n} peças. {ajustes}\n{link}",
+    "remindD2": "Ainda estão esperando você: {n} publicações de {projeto}. A primeira vai ao ar em {dias, plural, one {# dia} other {# dias}}.",
+    "remindD4": "{n} publicações de {projeto} continuam esperando. Depois desta, a gente para de avisar.",
+    "remindStop": "{cliente} não respondeu ao lote há 4 dias. Paramos de lembrar — o próximo passo é seu.",
+    "whatsappAutoreply": "Oi! Para a {pessoa} ver seu comentário, ele precisa estar na publicação:\n{link}"
+  },
+
+  "error": {
+    "uploadTooLarge": "Esse arquivo tem {tamanho}. O limite é {limite}.",
+    "uploadBadFormat": "Esse formato não é aceito. Use JPG, PNG, MP4 ou MOV.",
+    "permission": "Você não tem permissão para {acao}. Peça ao administrador da sua conta.",
+    "network": "Sem conexão. Seu texto está salvo — vamos tentar de novo sozinhos.",
+    "conflict": "{pessoa} editou esta copy enquanto você escrevia. Ver as duas versões.",
+    "integration": "O {plataforma} desconectou. Reconecte para retomar os agendamentos.",
+    "publish": "A publicação de {peca} falhou: {motivo}.",
+    "publishRetry": "Publicar de novo",
+    "staleApproval": "Esta peça mudou depois que você abriu. Veja o que mudou antes de decidir.",
+    "generic": "Não conseguimos completar isso. Tente de novo em instantes. Referência: {id}"
+  },
+
+  "empty": {
+    "projectsTitle": "Nenhum projeto ainda",
+    "projectsBody": "Um projeto reúne a estratégia, o método e o calendário de um cliente.",
+    "projectsCta": "Criar projeto",
+    "contentsTitle": "Sem conteúdos",
+    "contentsBody": "Crie a primeira peça ou puxe do calendário.",
+    "approvalsTitle": "Nada aguardando o cliente",
+    "approvalsBody": "Quando você enviar um lote, ele aparece aqui.",
+    "clientTitle": "Nada esperando por você",
+    "clientBody": "Quando a agência enviar algo, a gente avisa por e-mail e WhatsApp.",
+    "calendarTitle": "Mês sem publicações",
+    "calendarBody": "Os slots aparecem quando o cronograma for criado.",
+    "searchTitle": "Nada encontrado para \"{termo}\"",
+    "searchBody": "Tente outro termo ou verifique o cliente selecionado.",
+    "filteredTitle": "Nenhuma peça com esse filtro",
+    "filteredCta": "Limpar filtros"
+  },
+
+  "confirm": {
+    "deleteProjectTitle": "Excluir \"{nome}\"?",
+    "deleteProjectBody": "{campanhas} campanhas, {conteudos} conteúdos, {comentarios} comentários e todo o histórico serão excluídos. Isso não pode ser desfeito.",
+    "deleteProjectOk": "Excluir projeto",
+    "deleteContentTitle": "Excluir esta peça?",
+    "deleteContentBody": "{versoes} versões e {comentarios} comentários serão perdidos.",
+    "removeApproverTitle": "Remover {pessoa} dos aprovadores?",
+    "removeApproverBody": "As aprovações que {pessoa} já fez continuam registradas.",
+    "cancel": "Cancelar"
+  },
+
+  "status": {
+    "agency": {
+      "DRAFT": "Rascunho",
+      "IN_PRODUCTION": "Em produção",
+      "AWAITING_APPROVAL": "Aguardando aprovação",
+      "CHANGES_REQUESTED": "Alterações solicitadas",
+      "APPROVED": "Aprovado",
+      "SCHEDULED": "Agendado",
+      "PUBLISHED": "Publicado",
+      "FAILED": "Falha na publicação"
+    },
+    "client": {
+      "IN_PRODUCTION": "Em produção",
+      "AWAITING_APPROVAL": "Esperando você",
+      "CHANGES_REQUESTED": "Você pediu ajustes",
+      "APPROVED": "Aprovado",
+      "SCHEDULED": "Vai ao ar em {data}",
+      "PUBLISHED": "No ar"
+    }
+  }
+}

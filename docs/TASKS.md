@@ -50,7 +50,7 @@ Status do Projeto: 🟡 Product Discovery → 🟢 Sprint 1
 - [x] Protótipo funcional da tela de aprovação do cliente
 - [x] Decisões D-025 a D-029
 
-## Sprint 2 — UX · 🟡 Em andamento
+## Sprint 2 — UX · ✅ Concluído
 
 - [x] Empty states · Error states · Loading states — `GLOBAL_STATES.md`
 - [x] **Modelo do lote de aprovação** — `LOTE_DE_APROVACAO.md` (D-030 a D-034)
@@ -60,14 +60,17 @@ Status do Projeto: 🟡 Product Discovery → 🟢 Sprint 1
 - [x] **Hierarquia `Cliente → Projeto → Campanha`** — `PRODUCT_BIBLE/HIERARQUIA.md` (D-039)
 - [x] Propagação da hierarquia em sitemap, arquitetura, permissões, metodologia e CLAUDE.md
 - [x] **Wireflows** — `UX/WIREFLOWS.md`: onboarding, estratégia, calendário, envio em lote, recebimento de alterações
-- [ ] UX Writing de todas as telas do MVP
-- [ ] **Teste com 5 clientes reais de agência** 🔴
-- [ ] Atualizar os 3 protótipos para a hierarquia nova (cosmético — nenhum contradiz o modelo)
+- [x] **UX Writing** — `UX/UX_WRITING.md` + `UX/strings.pt-BR.json` (188 strings, ICU)
 
-## Sprint 3 — Wireframes
+### Aberto, carregado para o Sprint 3
+- [ ] **Teste com 5 clientes reais de agência** 🔴
+- [ ] Atualizar os 4 protótipos para a hierarquia nova (cosmético — nenhum contradiz o modelo)
+
+## Sprint 3 — Wireframes · ⏳ Próximo
 
 - [ ] Login e convite por link mágico
 - [ ] Dashboard
+- [ ] Projetos e cronograma
 - [ ] Campanhas
 - [ ] Estratégia
 - [ ] Calendário

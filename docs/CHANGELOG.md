@@ -9,8 +9,15 @@ Nunca apagar versões anteriores.
 
 ## 0.4.0 — 2026-07-29
 
-**Status:** Em andamento
-**Objetivo:** Modelo do lote de aprovação (Sprint 2, parte 1).
+**Status:** Concluída — Sprint 2 fechado
+**Objetivo:** Lote de aprovação, metodologia, hierarquia e copy do MVP.
+
+### Adicionado (parte 4)
+- `docs/UX/UX_WRITING.md` — inventário de strings por tela, glossário agência ↔ cliente, notificações, erros, vazios e confirmações
+- `docs/UX/strings.pt-BR.json` — 188 strings em ICU MessageFormat, pronto para i18n
+
+O mapa de status do cliente omite `DRAFT` e `FAILED` por construção — os dois estados
+que ele nunca deve ver. Verificado por teste de paridade.
 
 ### Adicionado
 - `docs/UX/LOTE_DE_APROVACAO.md` — o lote como unidade de apresentação, referência visual, selo de integridade, termo de aprovação e regras de exportação
