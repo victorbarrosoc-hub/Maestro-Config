@@ -1,0 +1,219 @@
+# CLAUDE.md — Maestro
+
+Version: 0.2
+Status: Product Discovery → Product Architecture
+Codename: Project Symphony
+Última atualização: 2026-07-29
+
+> Este arquivo é a fonte principal de contexto. Ele fica na raiz para ser carregado
+> automaticamente. Toda a documentação detalhada vive em `/docs`.
+
+---
+
+## IMPORTANTE
+
+A Maestro **não** é um CRUD.
+Não é um gerenciador de tarefas. Não é Trello, ClickUp, Monday ou Asana.
+
+A Maestro é o **Operating System para Agências e Equipes Criativas**.
+
+Todo desenvolvimento deve preservar essa visão.
+Sempre priorizar experiência do usuário, simplicidade, contexto e colaboração.
+
+---
+
+## Visão do Produto
+
+Plataforma SaaS que conecta toda a operação entre agência e cliente em uma única experiência.
+
+Fluxo completo coberto pelo produto:
+
+```
+Briefing → Estratégia → Planejamento → Calendário → Copy → Design → Vídeo
+→ Comentários → Aprovação → Produção → Agendamento → Publicação → Resultados → Relatórios
+```
+
+Tudo isso sem depender de WhatsApp, PDFs ou e-mails desconectados.
+
+---
+
+## Posicionamento
+
+A Maestro não vende software. Ela vende **clareza, organização, transparência, colaboração, tempo e contexto**.
+
+Nunca comunicar como "software de aprovação". Sempre:
+
+> **The Operating System for Creative Operations.**
+> **O Sistema Operacional para Agências.**
+
+---
+
+## Problema
+
+Hoje uma agência opera em: WhatsApp + PDF + Google Docs + Figma + Drive + ClickUp + Trello + Notion + Meta Business + Planilhas + E-mail.
+
+Tudo separado. A Maestro unifica.
+
+---
+
+## Público
+
+**Principal:** agências de marketing, criativas, audiovisual, branding, social media, publicidade.
+**Depois:** times internos de marketing, empresas, franquias, startups.
+
+## Personas
+
+Diretor da Agência · Atendimento · Designer · Copywriter · Videomaker · Cliente · Administrador
+
+---
+
+## Filosofia de UX
+
+A plataforma deve parecer **viva**. Nunca pesada. Nunca burocrática. Sempre agradável.
+
+Referências: Notion · Linear · Figma · Arc Browser · Raycast · Stripe · Apple.
+Nada parecido com ERPs antigos.
+
+---
+
+## Princípios
+
+1. Toda informação possui apenas um lugar.
+2. Toda ação possui contexto.
+3. Comentários acontecem dentro do conteúdo.
+4. Aprovação acontece dentro do fluxo.
+5. A IA ajuda sem interromper.
+6. Tudo possui histórico.
+7. Tudo possui versionamento.
+8. Nada depende de WhatsApp.
+
+---
+
+## Sitemap
+
+Home · Operação · Produção · Inteligência · Organização · Administração · Conta
+
+## Dashboard
+
+Campanhas · Pendências · Timeline · Calendário · Notificações · Resultados rápidos · Próximas publicações
+
+## Estrutura da Campanha
+
+Overview · Briefing · Estratégia · Planejamento · Calendário · Conteúdos · Copy · Design · Vídeos · Comentários · Aprovação · Produção · Agendamento · Publicação · Resultados · Histórico
+
+## Estrutura do Conteúdo
+
+Brief · Objetivo · Copy · Arte · Vídeo · CTA · Hashtags · Comentários · Versões · Histórico · Analytics
+
+---
+
+## Aprovação
+
+- A copy deve ser editável, como Google Docs.
+- A arte deve aceitar comentários por ponto, como Figma.
+- Todo comentário gera histórico, notificação e possui autor.
+- Nunca utilizar PDF para aprovação.
+- Toda aprovação registra a versão exata aprovada.
+
+## Produção
+
+Kanban · Checklist · Arquivos · Versões · Uploads · Status
+
+## Agendamento
+
+Instagram · Facebook · LinkedIn · TikTok · Pinterest · YouTube · X
+Integrações futuras: Meta · LinkedIn · Google · RD Station · HubSpot · Mailchimp
+
+---
+
+## IA
+
+A IA é um pilar, com agentes especializados — não um chatbot único.
+
+CEO Assistant · Campaign Planner · Creative Director · Copy Assistant · Design Reviewer · Approval Assistant · Marketing Analyst · Customer Success
+
+Cada agente possui contexto, prompt, ferramentas, permissões e memória próprios.
+
+**Diferenciais:** resumir comentários, detectar conflitos, validar estratégia, analisar CTA, avaliar coerência, identificar gargalos, sugerir melhorias, gerar insights.
+
+Nunca substituir pessoas. Sempre potencializar.
+
+---
+
+## Microinterações
+
+Animações suaves. Sons discretos. Feedback imediato. Estados claros. Confirmações elegantes.
+A experiência deve lembrar Apple, Linear e Notion.
+
+Ver `docs/BRAND/SOUND_IDENTITY.md` para o sistema sonoro oficial (aprovar, solicitar alterações, publicar).
+
+---
+
+## Permissões
+
+Super Admin · Administrador · Gestor · Atendimento · Designer · Copywriter · Videomaker · Cliente · Cliente Observador
+
+RBAC obrigatório, validado sempre no backend.
+
+## Histórico
+
+Toda alteração registra: usuário, data, hora, versão, IP, comentários e ação realizada.
+Nada pode ser perdido.
+
+---
+
+## Objetivo de Produto
+
+Tornar-se a plataforma padrão utilizada por agências.
+Não competimos em quantidade de funcionalidades — competimos em **qualidade da experiência**.
+
+---
+
+## Stack
+
+**Frontend:** Next.js · React · TypeScript · Tailwind · shadcn/ui · TanStack Query · React Hook Form · Zod · Framer Motion
+**Backend:** NestJS · PostgreSQL · Redis · Prisma · BullMQ · WebSockets
+**Storage:** Cloudflare R2 / S3
+**Infra:** Docker · Cloudflare · Vercel · Railway · AWS quando necessário
+**IA:** Anthropic · OpenAI · MCP · RAG · Embeddings
+
+---
+
+## Como responder neste projeto
+
+Sempre responder como um **Product Team**: Product Manager, Staff Engineer, UX Designer, Tech Lead, Arquiteto.
+
+Nunca responder apenas como chatbot.
+Sempre sugerir melhorias de produto. Questionar decisões quando houver alternativas melhores.
+Priorizar escalabilidade, simplicidade e UX.
+
+---
+
+## Mapa da documentação
+
+```
+/CLAUDE.md                 ← este arquivo (contexto principal)
+/docs
+  ├── PROJECT_RULES.md     ← regras obrigatórias
+  ├── ARCHITECTURE.md      ← arquitetura oficial
+  ├── TASKS.md             ← roadmap e backlog
+  ├── DECISIONS.md         ← registro de decisões (ADR)
+  ├── CHANGELOG.md         ← evolução do produto
+  ├── PRODUCT_BIBLE/       ← visão, personas, jobs, métricas
+  ├── PRD/                 ← requisitos por módulo
+  ├── UX/                  ← jornadas, wireflows, estados, UX writing
+  ├── UI/                  ← design system, componentes, motion
+  ├── ENGINEERING/         ← banco, APIs, eventos, infra
+  ├── AI/                  ← agentes, prompts, orquestrador
+  ├── BRAND/               ← estratégia, identidade visual, verbal e sonora
+  ├── MARKETING/           ← site, posicionamento, GTM
+  └── INVESTOR/            ← deck, mercado, modelo de negócio
+```
+
+---
+
+## Estado Atual
+
+**Concluído:** Visão · Posicionamento · Proposta de Valor · Estrutura Macro · Sitemap inicial · Filosofia do Produto · **Brand Strategy · Identidade Visual · Manual da Marca**
+
+**Próximos passos:** User Flow Master → Wireframes → Design System → PRD → Banco → APIs → Engenharia → MVP

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 48" width="108" height="48" role="img" aria-label="Compasso">
+  <title>Maestro — Elemento gráfico "O Compasso" (4 tempos)</title>
+  <g stroke="#C8963A" stroke-width="6" stroke-linecap="round">
+    <line x1="9"  y1="39" x2="9"  y2="27"/>
+    <line x1="33" y1="39" x2="33" y2="21"/>
+    <line x1="57" y1="39" x2="57" y2="15"/>
+    <line x1="81" y1="39" x2="81" y2="9"/>
+  </g>
+</svg>

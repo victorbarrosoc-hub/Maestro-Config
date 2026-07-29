@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" width="200" height="120" role="img" aria-label="Maestro">
+  <title>Maestro — Lockup vertical</title>
+  <g transform="translate(76 8)">
+    <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5"
+          fill="none" stroke="#C8963A" stroke-width="6"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="100" y="100" text-anchor="middle"
+        font-family="Instrument Serif, Playfair Display, Georgia, 'Times New Roman', serif"
+        font-size="36" letter-spacing="0.2" fill="#08090B">Maestro</text>
+</svg>

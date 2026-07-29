@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Maestro">
+  <title>Maestro — App icon</title>
+  <defs>
+    <linearGradient id="canvas" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#181B20"/>
+      <stop offset="1" stop-color="#08090B"/>
+    </linearGradient>
+  </defs>
+  <!-- Squircle (superelipse aproximada) -->
+  <path d="M256 0C74 0 0 74 0 256s74 256 256 256 256-74 256-256S438 0 256 0Z" fill="url(#canvas)"/>
+  <g transform="translate(101.3 101.3) scale(6.4444)">
+    <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5"
+          fill="none" stroke="#D9AC4C" stroke-width="6"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

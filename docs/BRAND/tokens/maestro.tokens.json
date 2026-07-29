@@ -1,0 +1,197 @@
+{
+  "$schema": "https://design-tokens.org/schema.json",
+  "$description": "Maestro Design Tokens v1.0 — fonte única de verdade para cor, tipografia, espaçamento, raio, sombra e motion.",
+  "color": {
+    "ink": {
+      "50":  { "$value": "#F4F6F8" },
+      "100": { "$value": "#E3E6EA" },
+      "200": { "$value": "#C4C9D0" },
+      "300": { "$value": "#9AA1AC" },
+      "400": { "$value": "#6B7280" },
+      "500": { "$value": "#4C535D" },
+      "600": { "$value": "#333941" },
+      "700": { "$value": "#23272E" },
+      "800": { "$value": "#181B20" },
+      "850": { "$value": "#121418" },
+      "900": { "$value": "#0D0F12" },
+      "950": { "$value": "#08090B" }
+    },
+    "brass": {
+      "50":  { "$value": "#FBF5E9" },
+      "100": { "$value": "#F5E7C9" },
+      "200": { "$value": "#EDD59E" },
+      "300": { "$value": "#E3C173" },
+      "400": { "$value": "#D9AC4C" },
+      "500": { "$value": "#C8963A" },
+      "600": { "$value": "#A87A2C" },
+      "700": { "$value": "#855F22" },
+      "800": { "$value": "#61451A" },
+      "900": { "$value": "#3D2B10" }
+    },
+    "cobalt": {
+      "300": { "$value": "#8FB0F6" },
+      "400": { "$value": "#5B8DEF" },
+      "500": { "$value": "#3B6FE0" },
+      "600": { "$value": "#2B55B8" }
+    },
+    "encore": {
+      "300": { "$value": "#7FD9AE" },
+      "400": { "$value": "#35B87A" },
+      "500": { "$value": "#2A9862" },
+      "600": { "$value": "#1F7449" }
+    },
+    "coral": {
+      "300": { "$value": "#F8A98A" },
+      "400": { "$value": "#F0784C" },
+      "500": { "$value": "#D95E33" },
+      "600": { "$value": "#B04725" }
+    },
+    "violet": {
+      "300": { "$value": "#B3A8F7" },
+      "400": { "$value": "#8B7BF0" },
+      "500": { "$value": "#6D5AD9" },
+      "600": { "$value": "#5544B0" }
+    },
+    "danger": {
+      "300": { "$value": "#F3999C" },
+      "400": { "$value": "#E5484D" },
+      "500": { "$value": "#C62F34" },
+      "600": { "$value": "#9B2427" }
+    }
+  },
+  "semantic": {
+    "light": {
+      "bg":            { "$value": "{color.ink.50}" },
+      "bg-elevated":   { "$value": "#FFFFFF" },
+      "bg-sunken":     { "$value": "{color.ink.100}" },
+      "border":        { "$value": "{color.ink.200}" },
+      "border-strong": { "$value": "{color.ink.300}" },
+      "text":          { "$value": "{color.ink.950}" },
+      "text-muted":    { "$value": "{color.ink.500}" },
+      "text-subtle":   { "$value": "{color.ink.400}" },
+      "accent":        { "$value": "{color.brass.500}" },
+      "accent-text":   { "$value": "{color.brass.700}" },
+      "accent-fg":     { "$value": "{color.ink.950}" }
+    },
+    "dark": {
+      "bg":            { "$value": "{color.ink.950}" },
+      "bg-elevated":   { "$value": "{color.ink.850}" },
+      "bg-sunken":     { "$value": "#000000" },
+      "border":        { "$value": "{color.ink.700}" },
+      "border-strong": { "$value": "{color.ink.600}" },
+      "text":          { "$value": "{color.ink.50}" },
+      "text-muted":    { "$value": "{color.ink.300}" },
+      "text-subtle":   { "$value": "{color.ink.400}" },
+      "accent":        { "$value": "{color.brass.400}" },
+      "accent-text":   { "$value": "{color.brass.300}" },
+      "accent-fg":     { "$value": "{color.ink.950}" }
+    }
+  },
+  "status": {
+    "$description": "Estados do conteúdo. Brass é reservado exclusivamente para 'aguardando aprovação' (D-018).",
+    "rascunho":              { "$value": "{color.ink.400}" },
+    "em-producao":           { "$value": "{color.cobalt.400}" },
+    "aguardando-aprovacao":  { "$value": "{color.brass.400}" },
+    "alteracoes-solicitadas":{ "$value": "{color.coral.400}" },
+    "aprovado":              { "$value": "{color.encore.400}" },
+    "agendado":              { "$value": "{color.cobalt.500}" },
+    "publicado":             { "$value": "{color.violet.400}" },
+    "erro":                  { "$value": "{color.danger.400}" }
+  },
+  "font": {
+    "family": {
+      "display": { "$value": "'Instrument Serif', 'Playfair Display', Georgia, serif" },
+      "sans":    { "$value": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" },
+      "mono":    { "$value": "'JetBrains Mono', 'SF Mono', Menlo, monospace" }
+    },
+    "size": {
+      "display-xl": { "$value": "72px" },
+      "display-l":  { "$value": "56px" },
+      "display-m":  { "$value": "40px" },
+      "h1": { "$value": "32px" },
+      "h2": { "$value": "24px" },
+      "h3": { "$value": "20px" },
+      "h4": { "$value": "17px" },
+      "body-l": { "$value": "16px" },
+      "body":   { "$value": "15px" },
+      "body-s": { "$value": "13px" },
+      "caption":{ "$value": "12px" },
+      "micro":  { "$value": "11px" }
+    },
+    "weight": {
+      "regular":  { "$value": "400" },
+      "medium":   { "$value": "500" },
+      "semibold": { "$value": "600" }
+    },
+    "tracking": {
+      "display": { "$value": "-0.02em" },
+      "heading": { "$value": "-0.015em" },
+      "body":    { "$value": "-0.008em" },
+      "caps":    { "$value": "0.06em" }
+    },
+    "leading": {
+      "tight":   { "$value": "1.1" },
+      "heading": { "$value": "1.25" },
+      "body":    { "$value": "1.55" },
+      "relaxed": { "$value": "1.7" }
+    }
+  },
+  "space": {
+    "$description": "Escala base 4px.",
+    "0": { "$value": "0px" },
+    "1": { "$value": "4px" },
+    "2": { "$value": "8px" },
+    "3": { "$value": "12px" },
+    "4": { "$value": "16px" },
+    "5": { "$value": "20px" },
+    "6": { "$value": "24px" },
+    "8": { "$value": "32px" },
+    "10": { "$value": "40px" },
+    "12": { "$value": "48px" },
+    "16": { "$value": "64px" },
+    "20": { "$value": "80px" },
+    "24": { "$value": "96px" }
+  },
+  "radius": {
+    "xs":   { "$value": "4px" },
+    "sm":   { "$value": "6px" },
+    "md":   { "$value": "10px" },
+    "lg":   { "$value": "14px" },
+    "xl":   { "$value": "20px" },
+    "2xl":  { "$value": "28px" },
+    "full": { "$value": "9999px" }
+  },
+  "shadow": {
+    "$description": "Sombras discretas. Em dark mode, profundidade vem de superfície + borda, não de sombra.",
+    "sm": { "$value": "0 1px 2px rgba(8,9,11,0.06)" },
+    "md": { "$value": "0 4px 12px rgba(8,9,11,0.08)" },
+    "lg": { "$value": "0 12px 32px rgba(8,9,11,0.12)" },
+    "panel": { "$value": "0 24px 64px rgba(8,9,11,0.18)" },
+    "focus": { "$value": "0 0 0 3px rgba(200,150,58,0.35)" }
+  },
+  "motion": {
+    "$description": "Nomes musicais. Ver VISUAL_IDENTITY.md § Motion.",
+    "duration": {
+      "staccato": { "$value": "80ms" },
+      "quarter":  { "$value": "160ms" },
+      "half":     { "$value": "240ms" },
+      "whole":    { "$value": "320ms" },
+      "fermata":  { "$value": "480ms" }
+    },
+    "easing": {
+      "baton":    { "$value": "cubic-bezier(0.22, 1, 0.36, 1)" },
+      "legato":   { "$value": "cubic-bezier(0.65, 0, 0.35, 1)" },
+      "upbeat":   { "$value": "cubic-bezier(0.34, 1.4, 0.64, 1)" },
+      "rest":     { "$value": "cubic-bezier(0.4, 0, 1, 1)" }
+    }
+  },
+  "sound": {
+    "$description": "Ver SOUND_IDENTITY.md. Frequências em Hz.",
+    "brand-note":       { "$value": "440" },
+    "approve":          { "$value": "A4→E5" },
+    "request-changes":  { "$value": "E4" },
+    "publish":          { "$value": "A4→C#5→E5" },
+    "error":            { "$value": "B4→A#4" },
+    "max-loudness":     { "$value": "-18 LUFS" }
+  }
+}

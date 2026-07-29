@@ -1,0 +1,831 @@
+<title>Maestro — Brand Book v1.0</title>
+
+<style>
+  /* ===== Tokens ========================================================= */
+  :root {
+    --ink-50:#F4F6F8; --ink-100:#E3E6EA; --ink-200:#C4C9D0; --ink-300:#9AA1AC;
+    --ink-400:#6B7280; --ink-500:#4C535D; --ink-600:#333941; --ink-700:#23272E;
+    --ink-800:#181B20; --ink-850:#121418; --ink-900:#0D0F12; --ink-950:#08090B;
+    --brass-100:#F5E7C9; --brass-300:#E3C173; --brass-400:#D9AC4C;
+    --brass-500:#C8963A; --brass-600:#A87A2C; --brass-700:#855F22;
+    --cobalt:#5B8DEF; --encore:#35B87A; --coral:#F0784C; --violet:#8B7BF0; --danger:#E5484D;
+
+    --font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+    --ease-baton: cubic-bezier(.22,1,.36,1);
+    --ease-upbeat: cubic-bezier(.34,1.4,.64,1);
+
+    /* semantic — light default */
+    --bg:#F4F6F8; --surface:#FFFFFF; --sunken:#EDF0F3;
+    --line:#DDE2E7; --line-soft:#E9ECF0;
+    --fg:#08090B; --fg-muted:#4C535D; --fg-subtle:#6B7280;
+    --accent:#C8963A; --accent-text:#855F22; --accent-fg:#08090B;
+    --rail-active:#08090B;
+    --shadow: 0 1px 2px rgba(8,9,11,.05), 0 12px 32px rgba(8,9,11,.07);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#08090B; --surface:#121418; --sunken:#0D0F12;
+      --line:#23272E; --line-soft:#181B20;
+      --fg:#F4F6F8; --fg-muted:#9AA1AC; --fg-subtle:#6B7280;
+      --accent:#D9AC4C; --accent-text:#E3C173; --accent-fg:#08090B;
+      --rail-active:#F4F6F8;
+      --shadow: 0 12px 32px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#08090B; --surface:#121418; --sunken:#0D0F12;
+    --line:#23272E; --line-soft:#181B20;
+    --fg:#F4F6F8; --fg-muted:#9AA1AC; --fg-subtle:#6B7280;
+    --accent:#D9AC4C; --accent-text:#E3C173; --accent-fg:#08090B;
+    --rail-active:#F4F6F8;
+    --shadow: 0 12px 32px rgba(0,0,0,.5);
+  }
+  :root[data-theme="light"] {
+    --bg:#F4F6F8; --surface:#FFFFFF; --sunken:#EDF0F3;
+    --line:#DDE2E7; --line-soft:#E9ECF0;
+    --fg:#08090B; --fg-muted:#4C535D; --fg-subtle:#6B7280;
+    --accent:#C8963A; --accent-text:#855F22; --accent-fg:#08090B;
+    --rail-active:#08090B;
+    --shadow: 0 1px 2px rgba(8,9,11,.05), 0 12px 32px rgba(8,9,11,.07);
+  }
+
+  /* ===== Base =========================================================== */
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.6;
+    letter-spacing: -.008em;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  h1,h2,h3,h4 { text-wrap: balance; letter-spacing: -.015em; line-height: 1.2; }
+
+  .wrap {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 760px);
+    gap: 64px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 32px 160px;
+  }
+
+  /* ===== Rail =========================================================== */
+  .rail { position: sticky; top: 0; align-self: start; padding-top: 96px; }
+  .rail-title {
+    font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--fg-subtle); margin-bottom: 16px;
+  }
+  .rail ol { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+  .rail a {
+    display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: baseline;
+    padding: 5px 0; text-decoration: none; font-size: 13px; color: var(--fg-subtle);
+    transition: color 160ms var(--ease-baton);
+  }
+  .rail a:hover, .rail a:focus-visible { color: var(--fg); }
+  .rail a.on { color: var(--rail-active); font-weight: 500; }
+  .rail .n { font-family: var(--font-mono); font-size: 10px; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+  .toggle {
+    margin-top: 32px; background: none; border: 1px solid var(--line);
+    color: var(--fg-muted); font: inherit; font-size: 12px;
+    padding: 6px 12px; border-radius: 9999px; cursor: pointer;
+    transition: border-color 160ms var(--ease-baton), color 160ms var(--ease-baton);
+  }
+  .toggle:hover { border-color: var(--fg-subtle); color: var(--fg); }
+
+  /* ===== Hero =========================================================== */
+  .hero { padding: 120px 0 88px; }
+  .hero-mark { width: 132px; height: 132px; display: block; margin-bottom: 40px; }
+  .hero-mark path { stroke: var(--accent); }
+  .draw { stroke-dasharray: 110; stroke-dashoffset: 110; animation: draw 1100ms var(--ease-baton) 200ms forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  .hero h1 {
+    font-family: var(--font-display); font-weight: 400;
+    font-size: clamp(56px, 9vw, 84px); letter-spacing: -.025em; line-height: 1;
+    margin-bottom: 20px;
+  }
+  .hero .kicker {
+    font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent-text); margin-bottom: 28px;
+  }
+  .hero .lede {
+    font-size: 20px; line-height: 1.5; color: var(--fg-muted);
+    max-width: 34em; margin-bottom: 36px;
+  }
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 8px 24px;
+    font-family: var(--font-mono); font-size: 11px; color: var(--fg-subtle);
+    padding-top: 24px; border-top: 1px solid var(--line);
+  }
+
+  /* ===== Sections ======================================================= */
+  section { padding-top: 88px; scroll-margin-top: 24px; }
+  .head { margin-bottom: 32px; }
+  .head .n {
+    font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+    display: block; margin-bottom: 10px; font-variant-numeric: tabular-nums;
+  }
+  .head h2 {
+    font-family: var(--font-display); font-weight: 400;
+    font-size: 36px; letter-spacing: -.02em; margin-bottom: 10px;
+  }
+  .head p { color: var(--fg-muted); max-width: 56ch; }
+
+  h3 {
+    font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--fg-subtle); margin: 40px 0 14px;
+  }
+  p + p { margin-top: 14px; }
+  section p { max-width: 62ch; color: var(--fg-muted); }
+  section p strong { color: var(--fg); font-weight: 600; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 14px; padding: 24px;
+  }
+  .quiet { color: var(--fg-subtle); font-size: 13px; }
+
+  /* ===== Tables ========================================================= */
+  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 11px 16px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  thead th {
+    font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--fg-subtle); background: var(--sunken); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td code, .mono { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+  td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ===== Color ========================================================== */
+  .ramp { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 6px; margin-bottom: 8px; }
+  .chip { border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+  .chip .fill { height: 60px; }
+  .chip .lbl { padding: 6px 7px; font-family: var(--font-mono); font-size: 9.5px; line-height: 1.45; color: var(--fg-subtle); background: var(--surface); }
+  .chip .lbl b { display: block; color: var(--fg); font-weight: 600; font-size: 10px; }
+
+  .rules { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
+  .rule {
+    display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px 18px;
+  }
+  .rule .tag { font-family: var(--font-mono); font-size: 11px; color: var(--accent); padding-top: 2px; }
+  .rule p { margin: 0; font-size: 13.5px; }
+
+  /* ===== Status pills =================================================== */
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12.5px; font-weight: 500; padding: 5px 12px 5px 10px;
+    border-radius: 9999px; border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
+    background: color-mix(in srgb, var(--c) 12%, transparent);
+    color: color-mix(in srgb, var(--c) 82%, var(--fg));
+  }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c); flex: none; }
+
+  /* ===== Type specimen ================================================== */
+  .spec { border-top: 1px solid var(--line-soft); padding: 18px 0; display: grid; grid-template-columns: 92px 1fr; gap: 20px; align-items: baseline; }
+  .spec .k { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-subtle); }
+  .serif { font-family: var(--font-display); font-weight: 400; letter-spacing: -.02em; }
+
+  /* ===== Logo construction ============================================== */
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+  .frame {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 28px; display: flex; align-items: center; justify-content: center; min-height: 132px;
+  }
+  .frame.dark { background: var(--ink-950); border-color: var(--ink-800); }
+  .frame.light { background: #FFFFFF; border-color: var(--ink-200); }
+  .cap { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-subtle); margin-top: 8px; display: block; }
+
+  .dont { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 10px; }
+  .dont div {
+    border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+    padding: 14px; font-size: 12.5px; color: var(--fg-muted); display: flex; gap: 9px;
+  }
+  .dont span { color: var(--danger); font-weight: 700; flex: none; }
+
+  /* ===== Approval demo ================================================== */
+  .demo {
+    background: var(--ink-950); border: 1px solid var(--ink-800);
+    border-radius: 16px; padding: 28px; color: var(--ink-50);
+  }
+  .demo .label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-400); margin-bottom: 6px; }
+  .demo .piece { font-family: var(--font-display); font-size: 22px; margin-bottom: 4px; }
+  .demo .sub { font-size: 13px; color: var(--ink-400); margin-bottom: 22px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .btn {
+    font: inherit; font-size: 14px; font-weight: 600; letter-spacing: -.01em;
+    height: 44px; padding: 0 24px; border-radius: 10px; cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform 80ms var(--ease-baton), background 160ms var(--ease-baton), border-color 160ms var(--ease-baton);
+  }
+  .btn:active { transform: scale(.98); }
+  .btn-approve { background: var(--brass-400); color: var(--ink-950); }
+  .btn-approve:hover { background: var(--brass-300); }
+  .btn-changes { background: transparent; color: var(--ink-100); border-color: var(--ink-700); }
+  .btn-changes:hover { border-color: var(--ink-500); }
+  .btn:focus-visible { outline: 2px solid var(--brass-400); outline-offset: 3px; }
+
+  .beats { display: flex; align-items: flex-end; gap: 7px; height: 30px; margin-left: 8px; }
+  .beats i { width: 5px; border-radius: 3px; background: var(--ink-700); display: block; transform-origin: bottom; transition: background 160ms var(--ease-baton); }
+  .beats i:nth-child(1){height:12px} .beats i:nth-child(2){height:18px}
+  .beats i:nth-child(3){height:24px} .beats i:nth-child(4){height:30px}
+  .beats.go i { background: var(--brass-400); animation: pulse 480ms var(--ease-upbeat) both; }
+  .beats.go i:nth-child(2){animation-delay:60ms} .beats.go i:nth-child(3){animation-delay:120ms}
+  .beats.go i:nth-child(4){animation-delay:180ms}
+  @keyframes pulse { 0%{transform:scaleY(1)} 40%{transform:scaleY(1.5)} 100%{transform:scaleY(1)} }
+
+  .toast {
+    margin-top: 18px; font-size: 13.5px; padding: 11px 16px; border-radius: 10px;
+    background: var(--ink-850); border: 1px solid var(--ink-700); color: var(--ink-100);
+    opacity: 0; transform: translateY(6px); transition: opacity 240ms var(--ease-baton), transform 240ms var(--ease-baton);
+  }
+  .toast.show { opacity: 1; transform: none; }
+  .toast b { color: var(--encore); font-weight: 600; }
+  .toast.changes b { color: var(--coral); }
+
+  .note {
+    border-left: 2px solid var(--accent); padding: 2px 0 2px 18px;
+    margin: 28px 0; font-size: 14px; color: var(--fg-muted);
+  }
+  .note strong { color: var(--fg); }
+
+  footer {
+    margin-top: 104px; padding-top: 28px; border-top: 1px solid var(--line);
+    font-family: var(--font-mono); font-size: 11px; color: var(--fg-subtle);
+    display: flex; flex-wrap: wrap; gap: 8px 28px;
+  }
+
+  @media (max-width: 900px) {
+    .wrap { grid-template-columns: 1fr; gap: 0; padding: 0 22px 96px; }
+    .rail { position: static; padding-top: 40px; order: 2; margin-top: 56px; border-top: 1px solid var(--line); }
+    .rail ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); }
+    .hero { padding: 72px 0 56px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    .draw { stroke-dashoffset: 0; }
+  }
+</style>
+
+<div class="wrap">
+
+  <nav class="rail" aria-label="Índice">
+    <div class="rail-title">Brand Book v1.0</div>
+    <ol>
+      <li><a href="#ideia"><span class="n">01</span><span>A ideia</span></a></li>
+      <li><a href="#simbolo"><span class="n">02</span><span>Símbolo</span></a></li>
+      <li><a href="#lockups"><span class="n">03</span><span>Lockups</span></a></li>
+      <li><a href="#cor"><span class="n">04</span><span>Cor</span></a></li>
+      <li><a href="#tipografia"><span class="n">05</span><span>Tipografia</span></a></li>
+      <li><a href="#estados"><span class="n">06</span><span>Estados</span></a></li>
+      <li><a href="#motion"><span class="n">07</span><span>Motion</span></a></li>
+      <li><a href="#som"><span class="n">08</span><span>Som</span></a></li>
+      <li><a href="#regras"><span class="n">09</span><span>Inegociáveis</span></a></li>
+    </ol>
+    <button class="toggle" id="themeBtn" type="button">Tema: automático</button>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <svg class="hero-mark" viewBox="0 0 48 48" aria-label="Símbolo da Maestro" role="img">
+        <path class="draw" d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke-width="6"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="kicker">The Operating System for Creative Operations</div>
+      <h1>Maestro</h1>
+      <p class="lede">O maestro é a única pessoa da orquestra que não emite som. Ele só garante que todo mundo toque junto — e é exatamente isso que falta em uma agência.</p>
+      <div class="meta">
+        <span>Versão 1.0</span><span>29 jul 2026</span><span>Codinome: Symphony</span><span>Status: aprovada</span>
+      </div>
+    </header>
+
+    <!-- 01 -->
+    <section id="ideia">
+      <div class="head">
+        <span class="n">01</span>
+        <h2>A ideia</h2>
+        <p>Toda a identidade nasce de um gesto, não de um instrumento.</p>
+      </div>
+
+      <p>Não usamos clave de sol, nota musical, fone de ouvido ou partitura. Tudo isso é literal, é clichê e coloca a marca na prateleira errada — a de apps de música.</p>
+      <p>Usamos o <strong>movimento da regência</strong>: a batida descendente que dá o tempo. É o gesto mais reconhecível do maestro e o mais abstrato dos elementos — vira geometria com facilidade.</p>
+
+      <h3>Três atributos guiam toda decisão</h3>
+      <div class="rules">
+        <div class="rule"><span class="tag">01</span><p><strong>Preciso.</strong> Geometria construída, nada improvisado.</p></div>
+        <div class="rule"><span class="tag">02</span><p><strong>Calmo.</strong> Muito espaço, pouco elemento, contraste alto e limpo.</p></div>
+        <div class="rule"><span class="tag">03</span><p><strong>Quente.</strong> O latão impede que a precisão vire frieza. É o que separa a Maestro de um dashboard financeiro.</p></div>
+      </div>
+
+      <div class="note">
+        <strong>Onde a metáfora para.</strong> Ela sustenta a marca, mas não aparece na navegação. Um botão se chama “Aprovar”, nunca “Reger”. Nomear módulos com termos musicais parece charmoso no primeiro dia e vira atrito no centésimo.
+      </div>
+    </section>
+
+    <!-- 02 -->
+    <section id="simbolo">
+      <div class="head">
+        <span class="n">02</span>
+        <h2>Símbolo — “M Batuta”</h2>
+        <p>Um monograma M cujo vértice central foi substituído pelo arco descendente da regência. Duas leituras simultâneas: a letra e o gesto.</p>
+      </div>
+
+      <div class="grid2">
+        <div>
+          <div class="frame">
+            <svg viewBox="0 0 48 48" width="88" height="88" aria-label="Construção do símbolo" role="img">
+              <g stroke="var(--fg-subtle)" stroke-width=".4" opacity=".5">
+                <line x1="11" y1="2" x2="11" y2="46"/><line x1="37" y1="2" x2="37" y2="46"/>
+                <line x1="24" y1="2" x2="24" y2="46" stroke-dasharray="1.5 1.5"/>
+                <line x1="2" y1="12.5" x2="46" y2="12.5"/><line x1="2" y1="35.5" x2="46" y2="35.5"/>
+                <line x1="2" y1="30.5" x2="46" y2="30.5" stroke-dasharray="1.5 1.5"/>
+              </g>
+              <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="var(--accent)"
+                    stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/>
+            </svg>
+          </div>
+          <span class="cap">Grid 48×48 · espessura 6</span>
+        </div>
+        <div>
+          <div class="frame">
+            <svg viewBox="0 0 48 48" width="88" height="88" aria-label="Área de respiro" role="img">
+              <rect x="2" y="3.5" width="44" height="41" fill="none" stroke="var(--accent)"
+                    stroke-width=".5" stroke-dasharray="2 2" opacity=".8"/>
+              <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="var(--fg)"
+                    stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="cap">Respiro mínimo = 1 espessura de haste</span>
+        </div>
+      </div>
+
+      <h3>Geometria canônica</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Parâmetro</th><th>Valor</th></tr></thead>
+          <tbody>
+            <tr><td>Hastes verticais</td><td class="num">x = 11 · x = 37</td></tr>
+            <tr><td>Topo / base das hastes</td><td class="num">y = 12,5 · y = 35,5</td></tr>
+            <tr><td>Curva central</td><td class="num">quadrática, controle (24; 48,5)</td></tr>
+            <tr><td>Vale da curva</td><td class="num">y = 30,5</td></tr>
+            <tr><td>Espessura</td><td class="num">6 · terminais arredondados</td></tr>
+            <tr><td>Path</td><td><code>M11 35.5V12.5Q24 48.5 37 12.5V35.5</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Tamanho mínimo</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Contexto</th><th>Mínimo</th></tr></thead>
+          <tbody>
+            <tr><td>Símbolo isolado, digital</td><td class="num">20 px</td></tr>
+            <tr><td>Símbolo isolado, impresso</td><td class="num">6 mm</td></tr>
+            <tr><td>Lockup horizontal, digital</td><td class="num">120 px de largura</td></tr>
+            <tr><td>Lockup horizontal, impresso</td><td class="num">32 mm de largura</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Nunca</h3>
+      <div class="dont">
+        <div><span>✗</span>Esticar ou achatar</div>
+        <div><span>✗</span>Girar o símbolo</div>
+        <div><span>✗</span>Gradiente ou efeito metalizado</div>
+        <div><span>✗</span>Contornar (outline)</div>
+        <div><span>✗</span>Trocar a tipografia do wordmark</div>
+        <div><span>✗</span>Usar sem área de respiro</div>
+        <div><span>✗</span>Sobre foto de baixo contraste</div>
+        <div><span>✗</span>Tagline dentro do lockup</div>
+      </div>
+    </section>
+
+    <!-- 03 -->
+    <section id="lockups">
+      <div class="head">
+        <span class="n">03</span>
+        <h2>Lockups</h2>
+        <p>A distância entre símbolo e wordmark é fixa em duas espessuras de haste. Nunca ajustar manualmente.</p>
+      </div>
+
+      <div class="grid2">
+        <div>
+          <div class="frame dark">
+            <svg viewBox="0 0 260 48" width="212" aria-label="Lockup horizontal escuro" role="img">
+              <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="64" y="33.5" font-family="Georgia, serif" font-size="34" fill="#F4F6F8">Maestro</text>
+            </svg>
+          </div>
+          <span class="cap">Horizontal · fundo Ink</span>
+        </div>
+        <div>
+          <div class="frame light">
+            <svg viewBox="0 0 260 48" width="212" aria-label="Lockup horizontal claro" role="img">
+              <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="64" y="33.5" font-family="Georgia, serif" font-size="34" fill="#08090B">Maestro</text>
+            </svg>
+          </div>
+          <span class="cap">Horizontal · fundo claro</span>
+        </div>
+        <div>
+          <div class="frame dark">
+            <svg viewBox="0 0 200 120" width="128" aria-label="Lockup vertical" role="img">
+              <g transform="translate(76 8)">
+                <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <text x="100" y="100" text-anchor="middle" font-family="Georgia, serif" font-size="36" fill="#F4F6F8">Maestro</text>
+            </svg>
+          </div>
+          <span class="cap">Vertical · crachá, avatar, stand</span>
+        </div>
+        <div>
+          <div class="frame">
+            <svg viewBox="0 0 48 48" width="72" height="72" aria-label="App icon" role="img">
+              <rect width="48" height="48" rx="12" fill="#08090B"/>
+              <path d="M13 33.5V15Q24 42 35 15V33.5" fill="none" stroke="#D9AC4C" stroke-width="5.5"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="cap">App icon · espessura ajustada</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 -->
+    <section id="cor">
+      <div class="head">
+        <span class="n">04</span>
+        <h2>Cor</h2>
+        <p>O setor inteiro é azul e violeta. A Maestro é latão sobre tinta.</p>
+      </div>
+
+      <p>O latão é o metal da orquestra: trompete, trombone, tuba. É quente, tem história e artesanato — e é raro em software B2B. <strong>Brass é a cor do momento que importa: quando algo espera por você.</strong></p>
+
+      <h3>Brass — primária</h3>
+      <div class="ramp">
+        <div class="chip"><div class="fill" style="background:#F5E7C9"></div><div class="lbl"><b>100</b>F5E7C9</div></div>
+        <div class="chip"><div class="fill" style="background:#E3C173"></div><div class="lbl"><b>300</b>E3C173</div></div>
+        <div class="chip"><div class="fill" style="background:#D9AC4C"></div><div class="lbl"><b>400</b>D9AC4C</div></div>
+        <div class="chip"><div class="fill" style="background:#C8963A"></div><div class="lbl"><b>500</b>C8963A</div></div>
+        <div class="chip"><div class="fill" style="background:#A87A2C"></div><div class="lbl"><b>600</b>A87A2C</div></div>
+        <div class="chip"><div class="fill" style="background:#855F22"></div><div class="lbl"><b>700</b>855F22</div></div>
+      </div>
+      <span class="cap">500 é a cor da marca · 400 no escuro · 700 para texto sobre fundo claro</span>
+
+      <h3>Ink — canvas</h3>
+      <div class="ramp">
+        <div class="chip"><div class="fill" style="background:#F4F6F8"></div><div class="lbl"><b>50</b>F4F6F8</div></div>
+        <div class="chip"><div class="fill" style="background:#C4C9D0"></div><div class="lbl"><b>200</b>C4C9D0</div></div>
+        <div class="chip"><div class="fill" style="background:#6B7280"></div><div class="lbl"><b>400</b>6B7280</div></div>
+        <div class="chip"><div class="fill" style="background:#333941"></div><div class="lbl"><b>600</b>333941</div></div>
+        <div class="chip"><div class="fill" style="background:#181B20"></div><div class="lbl"><b>800</b>181B20</div></div>
+        <div class="chip"><div class="fill" style="background:#08090B"></div><div class="lbl"><b>950</b>08090B</div></div>
+      </div>
+      <span class="cap">Preto levemente azulado, nunca puro — preto puro cansa e achata a hierarquia</span>
+
+      <h3>Apoio semântico</h3>
+      <div class="ramp">
+        <div class="chip"><div class="fill" style="background:#5B8DEF"></div><div class="lbl"><b>Cobalt</b>produção</div></div>
+        <div class="chip"><div class="fill" style="background:#35B87A"></div><div class="lbl"><b>Encore</b>aprovado</div></div>
+        <div class="chip"><div class="fill" style="background:#F0784C"></div><div class="lbl"><b>Coral</b>alterações</div></div>
+        <div class="chip"><div class="fill" style="background:#8B7BF0"></div><div class="lbl"><b>Violet</b>publicado</div></div>
+        <div class="chip"><div class="fill" style="background:#E5484D"></div><div class="lbl"><b>Danger</b>erro</div></div>
+      </div>
+
+      <h3>Seis regras de cor</h3>
+      <div class="rules">
+        <div class="rule"><span class="tag">R1</span><p><strong>Brass significa “espera por você”.</strong> O status <em>Aguardando aprovação</em> usa Brass e nenhum outro estado pode usá-lo. Quando o cliente abre a Maestro, a cor da marca aponta exatamente para o que depende dele.</p></div>
+        <div class="rule"><span class="tag">R2</span><p><strong>Brass nunca é warning.</strong> Alerta é Coral <code>#F0784C</code>. Brass não carrega urgência negativa.</p></div>
+        <div class="rule"><span class="tag">R3</span><p><strong>Brass é acento, não superfície.</strong> Máximo 10% da tela. Nunca fundo de painel, nunca sidebar inteira. A força do latão vem da escassez.</p></div>
+        <div class="rule"><span class="tag">R4</span><p><strong>Texto brass em fundo claro usa 700.</strong> O 500 sobre branco dá 2,7:1 — reprovado em WCAG AA. O 700 dá 6,5:1.</p></div>
+        <div class="rule"><span class="tag">R5</span><p><strong>Botão brass usa rótulo Ink.</strong> Texto branco sobre brass é proibido.</p></div>
+        <div class="rule"><span class="tag">R6</span><p><strong>Cor nunca é o único portador de informação.</strong> Todo status tem cor <em>e</em> rótulo.</p></div>
+      </div>
+
+      <h3>Contraste verificado · WCAG 2.1</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Combinação</th><th>Ratio</th><th>Nível</th></tr></thead>
+          <tbody>
+            <tr><td><code>ink-950</code> sobre <code>ink-50</code></td><td class="num">17,8:1</td><td>AAA</td></tr>
+            <tr><td><code>brass-400</code> sobre <code>ink-950</code></td><td class="num">9,3:1</td><td>AAA</td></tr>
+            <tr><td><code>ink-950</code> sobre <code>brass-400</code></td><td class="num">9,3:1</td><td>AAA</td></tr>
+            <tr><td><code>brass-700</code> sobre branco</td><td class="num">6,5:1</td><td>AA</td></tr>
+            <tr><td><code>ink-300</code> sobre <code>ink-950</code></td><td class="num">8,1:1</td><td>AAA</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <span class="cap">Mínimo aceito no produto: 4,5:1 para texto · 3:1 para elementos de interface</span>
+    </section>
+
+    <!-- 05 -->
+    <section id="tipografia">
+      <div class="head">
+        <span class="n">05</span>
+        <h2>Tipografia</h2>
+        <p>Elegância de programa de concerto na marca. Clareza absoluta na interface.</p>
+      </div>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th>Papel</th><th>Fonte</th><th>Onde</th></tr></thead>
+          <tbody>
+            <tr><td>Display / Marca</td><td><strong>Instrument Serif</strong></td><td>Wordmark, títulos de marketing, números de relatório</td></tr>
+            <tr><td>Interface</td><td><strong>Inter</strong></td><td>Absolutamente toda a UI</td></tr>
+            <tr><td>Dados</td><td><strong>JetBrains Mono</strong></td><td>IDs, versões, timestamps, métricas</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <span class="cap">Todas open source. Esta página usa fontes do sistema como substitutas — webfonts externas são bloqueadas aqui.</span>
+
+      <div class="note"><strong>Regra dura.</strong> O serif nunca aparece em componente de interface. Nada de botão serif, label serif ou menu serif. O serif é da marca; a interface é da Inter.</div>
+
+      <h3>Escala</h3>
+      <div class="spec"><div class="k">display-l · 56</div><div class="serif" style="font-size:44px">Sua operação, no tempo certo</div></div>
+      <div class="spec"><div class="k">display-m · 40</div><div class="serif" style="font-size:34px">Da ideia ao ar, sem ruído</div></div>
+      <div class="spec"><div class="k">h1 · 32 · 600</div><div style="font-size:28px;font-weight:600;letter-spacing:-.015em">Campanha Verão 26</div></div>
+      <div class="spec"><div class="k">h2 · 24 · 600</div><div style="font-size:22px;font-weight:600;letter-spacing:-.015em">Aguardando aprovação</div></div>
+      <div class="spec"><div class="k">body · 15</div><div style="font-size:15px;color:var(--fg-muted)">O cliente edita a copy diretamente, com sugestão versionada — a edição dele nunca sobrescreve a versão da agência.</div></div>
+      <div class="spec"><div class="k">body-s · 13</div><div style="font-size:13px;color:var(--fg-muted)">Marina Costa aprovou 3 conteúdos há 4 minutos.</div></div>
+      <div class="spec"><div class="k">micro · 11 · caps</div><div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-subtle)">Alterações solicitadas</div></div>
+      <div class="spec"><div class="k">mono · 12</div><div class="mono" style="color:var(--fg-muted)">v4 · 12 mar 2026, 14:38 · 189.45.22.10</div></div>
+
+      <h3>Regras</h3>
+      <div class="rules">
+        <div class="rule"><span class="tag">→</span><p>Máximo <strong>3 tamanhos por tela</strong>. Hierarquia se faz com peso e cor, não com quantidade de tamanhos.</p></div>
+        <div class="rule"><span class="tag">→</span><p>Máximo <strong>72 caracteres</strong> por linha em texto corrido.</p></div>
+        <div class="rule"><span class="tag">→</span><p>Nunca centralizar texto com mais de duas linhas.</p></div>
+        <div class="rule"><span class="tag">→</span><p>Números tabulares em toda métrica, data e contador.</p></div>
+      </div>
+    </section>
+
+    <!-- 06 -->
+    <section id="estados">
+      <div class="head">
+        <span class="n">06</span>
+        <h2>Estados do conteúdo</h2>
+        <p>O mesmo estado tem rótulos diferentes para a agência e para o cliente. Mesma informação, dono diferente.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="pills">
+          <span class="pill" style="--c:#6B7280"><span class="dot"></span>Rascunho</span>
+          <span class="pill" style="--c:#5B8DEF"><span class="dot"></span>Em produção</span>
+          <span class="pill" style="--c:#D9AC4C"><span class="dot"></span>Aguardando aprovação</span>
+          <span class="pill" style="--c:#F0784C"><span class="dot"></span>Alterações solicitadas</span>
+          <span class="pill" style="--c:#35B87A"><span class="dot"></span>Aprovado</span>
+          <span class="pill" style="--c:#5B8DEF"><span class="dot"></span>Agendado</span>
+          <span class="pill" style="--c:#8B7BF0"><span class="dot"></span>Publicado</span>
+          <span class="pill" style="--c:#E5484D"><span class="dot"></span>Falha na publicação</span>
+        </div>
+      </div>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th>Estado</th><th>Para a agência</th><th>Para o cliente</th></tr></thead>
+          <tbody>
+            <tr><td>Rascunho</td><td>Rascunho</td><td class="quiet">não visível</td></tr>
+            <tr><td>Em produção</td><td>Em produção</td><td>Em produção</td></tr>
+            <tr><td><strong>Aguardando aprovação</strong></td><td>Aguardando aprovação</td><td><strong>Esperando você</strong></td></tr>
+            <tr><td>Alterações solicitadas</td><td>Alterações solicitadas</td><td>Você pediu ajustes</td></tr>
+            <tr><td>Aprovado</td><td>Aprovado</td><td>Aprovado</td></tr>
+            <tr><td>Agendado</td><td>Agendado</td><td>Vai ao ar em…</td></tr>
+            <tr><td>Publicado</td><td>Publicado</td><td>No ar</td></tr>
+            <tr><td>Erro</td><td>Falha na publicação</td><td class="quiet">não visível</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">Nunca dizemos <strong>“reprovar”</strong>. O cliente não reprova a agência — ele pede ajuste. A palavra é <strong>Solicitar alterações</strong>, e essa escolha define a relação inteira que o produto quer criar.</div>
+    </section>
+
+    <!-- 07 -->
+    <section id="motion">
+      <div class="head">
+        <span class="n">07</span>
+        <h2>Motion</h2>
+        <p>O movimento é regido: começa decidido e desacelera até parar. Nunca ricocheteia, nunca demora.</p>
+      </div>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th>Token</th><th>Duração</th><th>Uso</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">staccato</td><td class="num">80ms</td><td>Hover, foco, mudança de cor</td></tr>
+            <tr><td class="mono">quarter</td><td class="num">160ms</td><td>Padrão — botão, tooltip, tag</td></tr>
+            <tr><td class="mono">half</td><td class="num">240ms</td><td>Dropdown, popover, toast</td></tr>
+            <tr><td class="mono">whole</td><td class="num">320ms</td><td>Side panel, modal, troca de aba</td></tr>
+            <tr><td class="mono">fermata</td><td class="num">480ms</td><td>Transição de página, aprovação</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <span class="cap">Nada acima de 480ms. Animação longa é a forma mais rápida de fazer um produto parecer lento.</span>
+
+      <h3>Curvas</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Token</th><th>Bezier</th><th>Uso</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">baton</td><td class="mono">.22, 1, .36, 1</td><td>Padrão — o gesto da batuta: rápido, depois assenta</td></tr>
+            <tr><td class="mono">legato</td><td class="mono">.65, 0, .35, 1</td><td>Movimentos contínuos, arraste</td></tr>
+            <tr><td class="mono">upbeat</td><td class="mono">.34, 1.4, .64, 1</td><td>Overshoot leve — exclusivo de confirmações positivas</td></tr>
+            <tr><td class="mono">rest</td><td class="mono">.4, 0, 1, 1</td><td>Saída de elementos</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>O momento da aprovação</h3>
+      <p>É o momento mais importante do produto e o único com tratamento especial. Elegante, não comemorativo — sem confete, sem explosão. Um maestro não pula quando o ensaio dá certo.</p>
+
+      <div class="demo" style="margin-top:20px">
+        <div class="label">Carrossel · Instagram · 12 mar</div>
+        <div class="piece">Lançamento Coleção Verão</div>
+        <div class="sub">Versão 4 · enviada por Ana Prado há 2 horas</div>
+        <div class="btns">
+          <button class="btn btn-approve" id="approve" type="button">Aprovar</button>
+          <button class="btn btn-changes" id="changes" type="button">Solicitar alterações</button>
+          <div class="beats" id="beats" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </div>
+      <span class="cap">Demonstração real — inclui a síntese da quinta justa A4→E5 descrita no capítulo 08</span>
+    </section>
+
+    <!-- 08 -->
+    <section id="som">
+      <div class="head">
+        <span class="n">08</span>
+        <h2>Som</h2>
+        <p>Uma marca que se chama Maestro e é muda perde a piada.</p>
+      </div>
+
+      <p>Toda orquestra do mundo começa da mesma forma: o oboé toca um <strong>Lá 440 Hz</strong> e todos os instrumentos se afinam por ele. Antes de qualquer música existir, existe o alinhamento. É a metáfora exata do produto — e <strong>A440 é a nota da Maestro</strong>.</p>
+      <p>Consequência prática: todo som do produto vive na <strong>escala de Lá maior</strong>. Dois sons disparados juntos nunca colidem — eles sempre formam um acorde.</p>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th>Evento</th><th>Notas</th><th>Duração</th><th>Intenção</th></tr></thead>
+          <tbody>
+            <tr><td>Aprovar</td><td class="mono">A4 → E5</td><td class="num">180ms</td><td>Quinta justa ascendente — o intervalo mais consonante que existe. Soa como “certo”.</td></tr>
+            <tr><td>Solicitar alterações</td><td class="mono">E4</td><td class="num">120ms</td><td>Neutro. Não é erro, é o processo funcionando.</td></tr>
+            <tr><td>Enviar</td><td class="mono">C♯5</td><td class="num">100ms</td><td>Partiu.</td></tr>
+            <tr><td>Publicar</td><td class="mono">A4 → C♯5 → E5</td><td class="num">320ms</td><td>O concerto aconteceu.</td></tr>
+            <tr><td>Comentário</td><td class="mono">A5 ×2</td><td class="num">140ms</td><td>Presença, sem interrupção.</td></tr>
+            <tr><td>Erro</td><td class="mono">B4 → A♯4</td><td class="num">200ms</td><td>Segunda menor. O único som dissonante do sistema — soa errado de propósito.</td></tr>
+            <tr><td>Desfazer</td><td class="mono">E5 → A4</td><td class="num">180ms</td><td>A quinta ao contrário.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">O som de <strong>desfazer</strong> é o som de <strong>aprovar</strong> tocado ao contrário. Ninguém percebe conscientemente. Todo mundo sente.</div>
+
+      <h3>Restrições</h3>
+      <div class="rules">
+        <div class="rule"><span class="tag">R1</span><p>Som só em <strong>ação de consequência</strong>. Nunca em hover, navegação, digitação, scroll ou salvar rascunho.</p></div>
+        <div class="rule"><span class="tag">R2</span><p>Som só responde a ação do usuário. Nada toca sozinho.</p></div>
+        <div class="rule"><span class="tag">R3</span><p>Aprovação em lote toca <strong>um</strong> som no final, não um por peça.</p></div>
+        <div class="rule"><span class="tag">R4</span><p>Máximo <strong>−18 LUFS</strong>. Audível no notebook, discreto no fone.</p></div>
+        <div class="rule"><span class="tag">R5</span><p>Respeita mudo do sistema e <code>prefers-reduced-motion</code>. Som nunca carrega informação exclusiva.</p></div>
+      </div>
+    </section>
+
+    <!-- 09 -->
+    <section id="regras">
+      <div class="head">
+        <span class="n">09</span>
+        <h2>As 12 inegociáveis</h2>
+        <p>Se alguma peça viola uma destas, ela não sai.</p>
+      </div>
+
+      <div class="rules">
+        <div class="rule"><span class="tag">01</span><p>Nunca comunicar a Maestro como “software de aprovação”. Sempre como sistema operacional da operação criativa.</p></div>
+        <div class="rule"><span class="tag">02</span><p>A metáfora musical vive na marca, nunca na navegação.</p></div>
+        <div class="rule"><span class="tag">03</span><p>Nunca “sinfonia de resultados”, “harmonize”, “afine sua agência”. Metáfora forçada mata a marca.</p></div>
+        <div class="rule"><span class="tag">04</span><p>Nunca redesenhar o símbolo. Sempre usar os arquivos originais.</p></div>
+        <div class="rule"><span class="tag">05</span><p>Brass ocupa no máximo 10% de qualquer composição.</p></div>
+        <div class="rule"><span class="tag">06</span><p>Brass significa uma coisa só na interface: <strong>algo espera por você</strong>.</p></div>
+        <div class="rule"><span class="tag">07</span><p>Brass nunca é warning. Alerta é Coral.</p></div>
+        <div class="rule"><span class="tag">08</span><p>Instrument Serif nunca entra em componente de interface.</p></div>
+        <div class="rule"><span class="tag">09</span><p>Nenhuma animação passa de 480ms.</p></div>
+        <div class="rule"><span class="tag">10</span><p>Nunca “reprovar”. Sempre “Solicitar alterações”.</p></div>
+        <div class="rule"><span class="tag">11</span><p>Erro nunca é “algo deu errado”. Sempre o que aconteceu e o que fazer.</p></div>
+        <div class="rule"><span class="tag">12</span><p>Som só em ação de consequência.</p></div>
+      </div>
+
+      <div class="note" style="margin-top:36px">
+        <strong>Governança.</strong> Alterar este manual segue o mesmo rito de qualquer decisão de produto: registrar em <code>DECISIONS.md</code>, atualizar os tokens e o documento na mesma mudança, anotar no <code>CHANGELOG.md</code>. Se código e manual divergirem, <strong>o token vence</strong>.
+      </div>
+    </section>
+
+    <footer>
+      <span>Maestro Brand Book v1.0</span>
+      <span>29 jul 2026</span>
+      <span>docs/BRAND/</span>
+      <span>Próximo: registro INPI · domínio</span>
+    </footer>
+  </main>
+</div>
+
+<script>
+  // ---- Tema -----------------------------------------------------------
+  (function () {
+    var btn = document.getElementById('themeBtn');
+    var modes = ['auto', 'dark', 'light'];
+    var labels = { auto: 'Tema: automático', dark: 'Tema: escuro', light: 'Tema: claro' };
+    var i = 0;
+    btn.addEventListener('click', function () {
+      i = (i + 1) % 3;
+      var m = modes[i];
+      if (m === 'auto') { document.documentElement.removeAttribute('data-theme'); }
+      else { document.documentElement.setAttribute('data-theme', m); }
+      btn.textContent = labels[m];
+    });
+  })();
+
+  // ---- Índice ativo ---------------------------------------------------
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('.rail a'));
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          links.forEach(function (a) { a.classList.remove('on'); });
+          if (map[e.target.id]) map[e.target.id].classList.add('on');
+        }
+      });
+    }, { rootMargin: '-15% 0px -70% 0px' });
+    document.querySelectorAll('section[id]').forEach(function (s) { obs.observe(s); });
+  })();
+
+  // ---- Identidade sonora ----------------------------------------------
+  (function () {
+    var ctx = null;
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function note(freq, start, dur, gainPeak) {
+      var o = ctx.createOscillator();
+      var h = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.type = 'sine';     o.frequency.value = freq;
+      h.type = 'triangle'; h.frequency.value = freq * 2;
+      var hg = ctx.createGain(); hg.gain.value = 0.12;
+      var t = ctx.currentTime + start;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(gainPeak, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); h.connect(hg); hg.connect(g); g.connect(ctx.destination);
+      o.start(t); h.start(t); o.stop(t + dur + 0.05); h.stop(t + dur + 0.05);
+    }
+
+    function play(kind) {
+      if (reduced) return;
+      try {
+        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+      } catch (e) { return; }
+      if (kind === 'approve') {            // A4 → E5, quinta justa
+        note(440.00, 0.00, 0.42, 0.16);
+        note(659.25, 0.09, 0.46, 0.16);
+      } else {                              // E4, nota única abafada
+        note(329.63, 0.00, 0.26, 0.10);
+      }
+    }
+
+    var beats = document.getElementById('beats');
+    var toast = document.getElementById('toast');
+    var timer = null;
+
+    function fire(kind) {
+      play(kind);
+      clearTimeout(timer);
+      toast.classList.remove('show');
+      beats.classList.remove('go');
+      void beats.offsetWidth;
+      if (kind === 'approve') beats.classList.add('go');
+      setTimeout(function () {
+        toast.className = 'toast show' + (kind === 'approve' ? '' : ' changes');
+        toast.innerHTML = kind === 'approve'
+          ? '<b>Aprovado.</b> A agência foi avisada. · Desfazer'
+          : '<b>Alterações enviadas.</b> A agência foi avisada. · Desfazer';
+      }, 240);
+      timer = setTimeout(function () { toast.classList.remove('show'); }, 5200);
+    }
+
+    document.getElementById('approve').addEventListener('click', function () { fire('approve'); });
+    document.getElementById('changes').addEventListener('click', function () { fire('changes'); });
+  })();
+</script>

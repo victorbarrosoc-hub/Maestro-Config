@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 24" width="64" height="24" role="img" aria-label="Tempo ruler">
+  <title>Maestro — Textura "Régua de Tempo" (tile seamless 64×24)</title>
+  <defs>
+    <pattern id="tempo" x="0" y="0" width="64" height="24" patternUnits="userSpaceOnUse">
+      <g stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5">
+        <line x1="4"  y1="20" x2="4"  y2="6"/>
+        <line x1="20" y1="20" x2="20" y2="14"/>
+        <line x1="36" y1="20" x2="36" y2="14"/>
+        <line x1="52" y1="20" x2="52" y2="14"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="64" height="24" fill="url(#tempo)" color="#C8963A"/>
+</svg>
