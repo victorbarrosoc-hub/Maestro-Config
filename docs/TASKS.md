@@ -1,6 +1,6 @@
 # TASKS.md — Maestro Roadmap
 
-Status do Projeto: 🟡 Product Discovery → 🟢 Sprint 1
+Status do Projeto: 🟢 Sprints 0, 1, 2 e 6 concluídos · próximo: Sprint 3 (wireframes) ou Sprint 7 (APIs)
 Última atualização: 2026-07-29
 
 ---
@@ -152,7 +152,8 @@ Status do Projeto: 🟡 Product Discovery → 🟢 Sprint 1
 
 ## Decisões
 
-Ver `DECISIONS.md`. Última: **D-024** (naming/jurídico, em aberto).
+Ver `DECISIONS.md`. 40 registradas. Última: **D-040** (lote pertence ao projeto).
+Única ainda **em aberto**: **D-024** (naming/jurídico) 🔴
 
 ---
 
