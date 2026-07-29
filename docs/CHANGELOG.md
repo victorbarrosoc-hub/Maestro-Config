@@ -1,9 +1,37 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.2
+Version: 0.3
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.3.0 — 2026-07-29
+
+**Status:** Concluída
+**Objetivo:** Arquitetura da Informação e jornada do cliente (Sprint 1).
+
+### Adicionado
+- `docs/UX/SITEMAP.md` — master sitemap, IA, URLs, hierarquia de entidades, dois shells
+- `docs/UX/USER_FLOW_CLIENT.md` — jornada completa do cliente, do convite à fila
+- `docs/UX/USER_FLOW_AGENCY.md` — jornada da agência, onboarding e envio em lote
+- `docs/UX/PERMISSIONS.md` — matriz RBAC de 9 papéis × 50 ações
+- `docs/UX/GLOBAL_STATES.md` — os 8 estados obrigatórios de toda tela
+- Protótipo funcional da tela de aprovação do cliente
+
+### Decisões
+D-025 (marcar é pedir alteração + janela de 60s) · D-026 (cliente é mobile first) ·
+D-027 (cliente nunca cria senha) · D-028 (estratégia não é pulável) ·
+D-029 (aprovação offline sempre marcada)
+
+### Impacto
+- A URL `/c/:contentId` passa a ser o ponto de entrada principal do produto
+- A máquina de estados do conteúdo ganha a distinção "com marcas pendentes"
+- Meta de onboarding da agência definida em 20 minutos
+
+### Próximo
+Sprint 2 — wireflows restantes, UX writing e teste com 5 clientes reais
 
 ---
 

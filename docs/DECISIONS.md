@@ -131,6 +131,46 @@ Contexto / Problema / Alternativas / Decisão / Motivo / Consequências / Próxi
 
 ---
 
+# D-025 · UX / Aprovação · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Aprovação
+**Problema:** o cliente edita a legenda e clica em "Aprovar". Aprovou a versão dele ou a da agência? Ambas as leituras são plausíveis e ambas geram publicação errada.
+**Alternativas:** (a) aprovar sempre vale para a versão da agência — descarta a edição em silêncio; (b) aprovar vale para a versão editada — publica algo que a agência nunca revisou; (c) bloquear a edição durante a aprovação — mata o recurso principal.
+**Decisão:** **qualquer marca do cliente — edição de legenda ou comentário na arte — move a peça para o caminho de alteração.** A ação primária troca de "Aprovar" para "Enviar alterações (n)"; a secundária vira "Descartar minhas notas e aprovar", com confirmação explícita.
+**Motivo:** um caminho para cada intenção (Regra #2) e nenhuma ação silenciosa. O cliente nunca descobre depois que sua observação sumiu.
+**Consequências:** a máquina de estados do conteúdo precisa distinguir "sem marcas" de "com marcas pendentes" no lado do cliente.
+
+**Decisão associada — janela de resfriamento:** a notificação de aprovação para a agência sai com **60 segundos de atraso**. `Desfazer` fica 8s na tela. Desfazer dentro da janela não dispara e-mail nem WhatsApp; a auditoria registra os dois eventos. Desfazer depois da janela notifica a correção.
+**Motivo:** a dúvida vem sempre logo depois do clique. Mesmo modelo do "desfazer envio" do Gmail.
+
+# D-026 · UX · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Responsividade
+**Contexto:** a Regra #7 determina Desktop primeiro.
+**Decisão:** **o shell do cliente é mobile first.** A Regra #7 continua valendo para todo o shell da agência.
+**Motivo:** o cliente abre pelo WhatsApp, no celular, com pressa. Projetar a tela de aprovação para o desktop e depois espremer produziria exatamente a experiência que faz o cliente voltar pro WhatsApp.
+**Consequências:** exceção documentada e limitada. Nenhuma tela da agência pode usar D-026 como justificativa.
+
+# D-027 · UX / Segurança · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Autenticação
+**Decisão:** **o cliente nunca cria senha.** Acesso exclusivamente por link mágico.
+**Motivo:** frequência baixa (1–3× por semana) garante esquecimento; cada campo de formulário perde convidados; "esqueci a senha" é o ticket #1 de portais de cliente; o e-mail já é o fator de recuperação, então a senha adiciona superfície de ataque sem ganho.
+**Consequências:** token de uso único (7 dias no convite, 15 min no reenvio); sessão de 30 dias renovável; a URL `/c/:contentId` **nunca** carrega token — link encaminhado cai na tela de acesso. 2FA opcional e assinatura com validade jurídica ficam para a Fase 2.
+
+# D-028 · Produto · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Onboarding
+**Problema:** o caminho mais rápido para o momento "aha" da agência é pular a estratégia e ir direto para a peça.
+**Decisão:** **a estratégia não é pulável no onboarding.** Conectar o Meta é pulável.
+**Motivo:** se a primeira campanha nascer sem objetivo declarado, o feedback do cliente vira gosto pessoal e a Maestro vira uma ferramenta de aprovação — exatamente o posicionamento que D-001 proíbe. Custo: ~5 minutos. Ganho: o posicionamento inteiro.
+**Consequências:** a meta de onboarding passa a ser 20 minutos até a primeira peça enviada, não 10.
+
+# D-029 · Produto / Auditoria · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Aprovação
+**Contexto:** existe o caso real do cliente que aprova por telefone ou em reunião.
+**Decisão:** `AGENCY_ADMIN` pode **registrar aprovação em nome do cliente**, e o registro fica marcado para sempre como *"Aprovado offline por [agência] em nome de [cliente]"*. O cliente recebe e-mail informando, e o evento tem destaque próprio na auditoria.
+**Motivo:** negar o caso empurra a agência para fora da plataforma; permitir sem marcação destrói o valor do registro de aprovação.
+**Consequências:** nunca é silencioso e nunca é indistinguível de uma aprovação real. É a única exceção à regra "ninguém da agência aprova conteúdo".
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-025, D-026...
+Adicionar seguindo o padrão D-030, D-031...

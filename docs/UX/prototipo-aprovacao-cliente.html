@@ -1,0 +1,672 @@
+<title>Maestro — Tela de aprovação do cliente</title>
+
+<style>
+  :root {
+    --ink-50:#F4F6F8; --ink-100:#E3E6EA; --ink-200:#C4C9D0; --ink-300:#9AA1AC;
+    --ink-400:#6B7280; --ink-500:#4C535D; --ink-600:#333941; --ink-700:#23272E;
+    --ink-800:#181B20; --ink-850:#121418; --ink-900:#0D0F12; --ink-950:#08090B;
+    --brass-300:#E3C173; --brass-400:#D9AC4C; --brass-500:#C8963A; --brass-700:#855F22;
+    --encore:#35B87A; --coral:#F0784C; --cobalt:#5B8DEF;
+
+    --f-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --f-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+    --baton: cubic-bezier(.22,1,.36,1);
+    --upbeat: cubic-bezier(.34,1.4,.64,1);
+
+    /* página (chrome do protótipo) — claro por padrão */
+    --page:#EEF0F3; --page-fg:#08090B; --page-muted:#4C535D; --page-line:#DADEE3;
+    --page-card:#FFFFFF; --page-accent:#855F22;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page:#0D0F12; --page-fg:#F4F6F8; --page-muted:#9AA1AC; --page-line:#23272E;
+      --page-card:#121418; --page-accent:#E3C173;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page:#0D0F12; --page-fg:#F4F6F8; --page-muted:#9AA1AC; --page-line:#23272E;
+    --page-card:#121418; --page-accent:#E3C173;
+  }
+  :root[data-theme="light"] {
+    --page:#EEF0F3; --page-fg:#08090B; --page-muted:#4C535D; --page-line:#DADEE3;
+    --page-card:#FFFFFF; --page-accent:#855F22;
+  }
+
+  body {
+    background: var(--page); color: var(--page-fg);
+    font-family: var(--f-ui); font-size: 15px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 1180px; margin: 0 auto; padding: 56px 24px 96px; }
+
+  .masthead { display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: flex-end; justify-content: space-between; margin-bottom: 12px; }
+  .masthead h1 { font-family: var(--f-display); font-weight: 400; font-size: 38px; letter-spacing: -.02em; line-height: 1.1; }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--page-accent); margin-bottom: 8px; }
+  .masthead p { color: var(--page-muted); max-width: 46ch; font-size: 14.5px; margin-top: 8px; }
+
+  .controls { display: flex; gap: 8px; }
+  .ctl {
+    font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: 9999px; cursor: pointer;
+    background: transparent; border: 1px solid var(--page-line); color: var(--page-muted);
+    transition: color 160ms var(--baton), border-color 160ms var(--baton), background 160ms var(--baton);
+  }
+  .ctl:hover { color: var(--page-fg); border-color: var(--page-muted); }
+  .ctl[aria-pressed="true"] { background: var(--page-fg); color: var(--page); border-color: var(--page-fg); }
+
+  .stage { display: flex; justify-content: center; padding: 40px 0 12px; }
+
+  /* ===== Device ========================================================= */
+  .device {
+    width: 390px; height: 780px; flex: none;
+    background: var(--ink-950);
+    border: 1px solid var(--ink-800);
+    border-radius: 40px; padding: 10px;
+    box-shadow: 0 40px 90px rgba(8,9,11,.35);
+    transition: width 320ms var(--baton), height 320ms var(--baton), border-radius 320ms var(--baton);
+  }
+  .device.wide { width: min(980px, 100%); height: 660px; border-radius: 18px; padding: 0; border-color: var(--ink-700); }
+
+  .screen {
+    height: 100%; background: var(--ink-950); color: var(--ink-50);
+    border-radius: 32px; overflow: hidden;
+    display: flex; flex-direction: column;
+    font-size: 15px;
+  }
+  .device.wide .screen { border-radius: 17px; }
+
+  /* topbar */
+  .topbar {
+    display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 8px;
+    padding: 14px 16px 12px; border-bottom: 1px solid var(--ink-800); flex: none;
+  }
+  .device:not(.wide) .topbar { padding-top: 26px; }
+  .back {
+    background: none; border: 0; color: var(--ink-300); cursor: pointer; padding: 4px;
+    display: grid; place-items: center; border-radius: 8px;
+  }
+  .back:hover { color: var(--ink-50); }
+  .crumb { font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
+  .counter { font-family: var(--f-mono); font-size: 11px; color: var(--ink-400); font-variant-numeric: tabular-nums; }
+
+  /* contexto */
+  .context { padding: 12px 16px; background: var(--ink-900); border-bottom: 1px solid var(--ink-800); flex: none; }
+  .context .obj { font-size: 12.5px; color: var(--ink-200); line-height: 1.45; }
+  .context .obj b { color: var(--brass-400); font-weight: 600; }
+  .context .sub { font-size: 11px; color: var(--ink-400); margin-top: 3px; font-variant-numeric: tabular-nums; }
+
+  .scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+  .device.wide .scroll { display: grid; grid-template-columns: 1.05fr .95fr; gap: 0; align-items: start; }
+  .device.wide .col-l { border-right: 1px solid var(--ink-800); }
+
+  /* meta */
+  .meta { padding: 14px 16px 10px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
+  .badge {
+    font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--ink-300); border: 1px solid var(--ink-700); padding: 3px 8px; border-radius: 9999px;
+  }
+  .when { font-size: 12.5px; color: var(--ink-300); }
+  .when b { color: var(--ink-50); font-weight: 600; }
+
+  /* arte */
+  .artwrap { padding: 4px 16px 0; }
+  .art {
+    position: relative; aspect-ratio: 4/5; border-radius: 12px; overflow: hidden;
+    cursor: crosshair; user-select: none; background: var(--ink-800);
+  }
+  .slides { display: flex; height: 100%; transition: transform 320ms var(--baton); }
+  .slide { flex: 0 0 100%; height: 100%; position: relative; display: grid; place-items: center; padding: 28px; text-align: center; }
+  .slide .st { font-family: var(--f-display); font-size: 30px; line-height: 1.1; letter-spacing: -.02em; }
+  .slide .sp { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; margin-bottom: 12px; opacity: .8; }
+  .slide .sb { font-size: 13px; margin-top: 12px; opacity: .85; max-width: 24ch; }
+  .s1 { background: linear-gradient(155deg,#0E4C4A 0%,#0A3634 55%,#07211F 100%); color:#EAF6F3; }
+  .s2 { background: linear-gradient(155deg,#E8705E 0%,#C74A45 60%,#8E2F33 100%); color:#FFF3EE; }
+  .s3 { background: linear-gradient(155deg,#F0D9B5 0%,#DCBB8C 55%,#B8925F 100%); color:#3A2A16; }
+  .s4 { background: linear-gradient(155deg,#12474D 0%,#0B2E33 60%,#061A1D 100%); color:#E6F4F3; }
+
+  .pin {
+    position: absolute; width: 24px; height: 24px; border-radius: 50% 50% 50% 2px;
+    background: var(--brass-400); color: var(--ink-950);
+    font-size: 11px; font-weight: 700; display: grid; place-items: center;
+    transform: translate(-2px,-22px); box-shadow: 0 2px 8px rgba(0,0,0,.4);
+    animation: pop 240ms var(--upbeat) both;
+  }
+  @keyframes pop { from { transform: translate(-2px,-22px) scale(.4); opacity: 0 } }
+
+  .dots { display: flex; gap: 6px; justify-content: center; align-items: center; padding: 12px 0 4px; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-700); transition: background 160ms var(--baton), width 160ms var(--baton); }
+  .dots i.on { background: var(--brass-400); width: 18px; border-radius: 3px; }
+  .dots i.seen { background: var(--ink-500); }
+  .dots .lbl { font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-400); margin-left: 8px; }
+
+  .hint { text-align: center; font-size: 11.5px; color: var(--ink-500); padding: 0 16px 12px; }
+
+  /* legenda */
+  .block { padding: 14px 16px; border-top: 1px solid var(--ink-800); }
+  .device.wide .col-r .block:first-child { border-top: 0; }
+  .blabel { font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-400); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .blabel em { font-style: normal; color: var(--brass-400); text-transform: none; letter-spacing: 0; font-size: 11px; font-weight: 600; }
+
+  .caption {
+    font-size: 14.5px; line-height: 1.6; color: var(--ink-100);
+    border: 1px solid transparent; border-radius: 10px; padding: 10px 12px; margin: 0 -12px;
+    outline: none; transition: border-color 160ms var(--baton), background 160ms var(--baton);
+    white-space: pre-wrap;
+  }
+  .caption:hover { border-color: var(--ink-800); }
+  .caption:focus { border-color: var(--brass-500); background: var(--ink-900); }
+  .caption.edited { border-color: var(--brass-500); background: var(--ink-900); }
+  .tags { color: var(--cobalt); }
+
+  /* comentários */
+  .cmt { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--ink-850); font-size: 13.5px; }
+  .cmt:last-child { border-bottom: 0; }
+  .cmt .no { width: 20px; height: 20px; border-radius: 50%; background: var(--brass-400); color: var(--ink-950); font-size: 10.5px; font-weight: 700; display: grid; place-items: center; margin-top: 1px; }
+  .cmt .who { font-size: 11px; color: var(--ink-400); margin-top: 2px; }
+  .empty { font-size: 13px; color: var(--ink-500); }
+
+  .composer { display: flex; gap: 8px; margin-top: 10px; }
+  .composer input {
+    flex: 1; font: inherit; font-size: 13.5px; background: var(--ink-900); color: var(--ink-50);
+    border: 1px solid var(--ink-700); border-radius: 9px; padding: 9px 11px; outline: none;
+  }
+  .composer input:focus { border-color: var(--brass-500); }
+  .composer button {
+    font: inherit; font-size: 13px; font-weight: 600; padding: 0 14px; border-radius: 9px; cursor: pointer;
+    background: var(--ink-700); color: var(--ink-50); border: 0;
+  }
+  .composer button:hover { background: var(--ink-600); }
+
+  /* ações */
+  .actions { flex: none; border-top: 1px solid var(--ink-800); background: var(--ink-900); padding: 12px 16px 16px; }
+  .device.wide .actions { padding: 14px 20px; }
+  .btnrow { display: flex; gap: 10px; }
+  .btn {
+    flex: 1; font: inherit; font-size: 14.5px; font-weight: 600; letter-spacing: -.01em;
+    height: 46px; border-radius: 10px; cursor: pointer; border: 1px solid transparent;
+    transition: transform 80ms var(--baton), background 160ms var(--baton), border-color 160ms var(--baton), color 160ms var(--baton);
+  }
+  .btn:active { transform: scale(.985); }
+  .btn:focus-visible { outline: 2px solid var(--brass-400); outline-offset: 2px; }
+  .primary { background: var(--brass-400); color: var(--ink-950); }
+  .primary:hover { background: var(--brass-300); }
+  .secondary { background: transparent; color: var(--ink-100); border-color: var(--ink-700); }
+  .secondary:hover { border-color: var(--ink-500); }
+
+  .after { font-size: 11.5px; color: var(--ink-500); text-align: center; margin-top: 10px; line-height: 1.45; }
+
+  .beats { display: flex; align-items: flex-end; justify-content: center; gap: 6px; height: 0; overflow: hidden; transition: height 160ms var(--baton); }
+  .beats.show { height: 22px; margin-bottom: 10px; }
+  .beats i { width: 4px; border-radius: 2px; background: var(--brass-400); transform-origin: bottom; }
+  .beats i:nth-child(1){height:9px} .beats i:nth-child(2){height:13px}
+  .beats i:nth-child(3){height:18px} .beats i:nth-child(4){height:22px}
+  .beats.show i { animation: pulse 480ms var(--upbeat) both; }
+  .beats.show i:nth-child(2){animation-delay:60ms} .beats.show i:nth-child(3){animation-delay:120ms}
+  .beats.show i:nth-child(4){animation-delay:180ms}
+  @keyframes pulse { 0%{transform:scaleY(1)} 40%{transform:scaleY(1.6)} 100%{transform:scaleY(1)} }
+
+  /* toast */
+  .toast {
+    position: absolute; left: 16px; right: 16px; bottom: 92px;
+    background: var(--ink-800); border: 1px solid var(--ink-700); border-radius: 11px;
+    padding: 12px 14px; font-size: 13.5px; color: var(--ink-100);
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    opacity: 0; transform: translateY(8px); pointer-events: none;
+    transition: opacity 240ms var(--baton), transform 240ms var(--baton);
+    box-shadow: 0 16px 40px rgba(0,0,0,.55);
+  }
+  .toast.show { opacity: 1; transform: none; pointer-events: auto; }
+  .toast b { font-weight: 600; color: var(--encore); }
+  .toast.changes b { color: var(--coral); }
+  .toast button { font: inherit; font-size: 13px; font-weight: 600; background: none; border: 0; color: var(--brass-400); cursor: pointer; padding: 2px 4px; flex: none; }
+  .toast button:hover { color: var(--brass-300); }
+
+  .screen { position: relative; }
+
+  /* diálogo */
+  .veil {
+    position: absolute; inset: 0; background: rgba(8,9,11,.72); backdrop-filter: blur(3px);
+    display: grid; place-items: center; padding: 24px; z-index: 5;
+    opacity: 0; pointer-events: none; transition: opacity 240ms var(--baton);
+  }
+  .veil.show { opacity: 1; pointer-events: auto; }
+  .dialog {
+    background: var(--ink-850); border: 1px solid var(--ink-700); border-radius: 16px;
+    padding: 20px; max-width: 320px; width: 100%;
+    transform: scale(.96); transition: transform 240ms var(--baton);
+  }
+  .veil.show .dialog { transform: none; }
+  .dialog h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; letter-spacing: -.01em; }
+  .dialog p { font-size: 13.5px; color: var(--ink-300); line-height: 1.5; margin-bottom: 18px; }
+  .dialog .btnrow .btn { height: 40px; font-size: 13.5px; }
+
+  /* estado final */
+  .done { padding: 48px 24px; text-align: center; }
+  .done .mark { width: 52px; height: 52px; margin: 0 auto 20px; }
+  .done h2 { font-family: var(--f-display); font-weight: 400; font-size: 30px; margin-bottom: 10px; }
+  .done p { font-size: 14px; color: var(--ink-300); max-width: 30ch; margin: 0 auto 22px; line-height: 1.55; }
+  .done .btn { max-width: 220px; margin: 0 auto; }
+
+  /* ===== Notas ========================================================== */
+  .notes { margin-top: 56px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 14px; }
+  .note { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 14px; padding: 18px 20px; }
+  .note .k { font-family: var(--f-mono); font-size: 10.5px; color: var(--page-accent); margin-bottom: 8px; }
+  .note h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; letter-spacing: -.01em; }
+  .note p { font-size: 13px; color: var(--page-muted); line-height: 1.55; }
+
+  .try { margin-top: 40px; border-top: 1px solid var(--page-line); padding-top: 22px; }
+  .try h3 { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--page-muted); margin-bottom: 12px; }
+  .try ol { padding-left: 20px; display: flex; flex-direction: column; gap: 7px; }
+  .try li { font-size: 13.5px; color: var(--page-muted); }
+  .try li b { color: var(--page-fg); font-weight: 600; }
+
+  @media (max-width: 460px) {
+    .page { padding: 32px 12px 64px; }
+    .device { width: 100%; height: 720px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <div>
+      <div class="eyebrow">Sprint 1 · Protótipo de fluxo</div>
+      <h1>A tela de aprovação</h1>
+      <p>A tela mais importante do produto — e a única que decide se o cliente volta pra Maestro ou pro WhatsApp. Mobile primeiro, porque ele abre pelo celular.</p>
+    </div>
+    <div class="controls">
+      <button class="ctl" id="mCel" type="button" aria-pressed="true">Celular</button>
+      <button class="ctl" id="mDesk" type="button" aria-pressed="false">Desktop</button>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="device" id="device">
+      <div class="screen">
+
+        <div class="topbar">
+          <button class="back" type="button" aria-label="Voltar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="crumb">Verão 26</span>
+          <span class="counter">Peça 2 de 5</span>
+        </div>
+
+        <div class="context">
+          <div class="obj"><b>Objetivo:</b> gerar consideração para a nova coleção</div>
+          <div class="sub">1 a 31 de março · 3 de 12 publicações aprovadas</div>
+        </div>
+
+        <div class="scroll" id="scroll">
+          <div class="col-l">
+            <div class="meta">
+              <span class="badge">Instagram</span>
+              <span class="badge">Carrossel</span>
+              <span class="when">Vai ao ar <b>quinta, 12/03 às 10h</b></span>
+            </div>
+
+            <div class="artwrap">
+              <div class="art" id="art">
+                <div class="slides" id="slides">
+                  <div class="slide s1"><div><div class="sp">Loja Norte</div><div class="st">Verão sem pressa</div><div class="sb">A coleção que respeita o calor</div></div></div>
+                  <div class="slide s2"><div><div class="sp">Peça 01</div><div class="st">Linho lavado</div><div class="sb">Tingimento natural, cai melhor a cada uso</div></div></div>
+                  <div class="slide s3"><div><div class="sp">Peça 02</div><div class="st">Algodão cru</div><div class="sb">Feito em pequenas quantidades</div></div></div>
+                  <div class="slide s4"><div><div class="sp">A partir de</div><div class="st">R$ 249</div><div class="sb">Disponível na loja e no site</div></div></div>
+                </div>
+              </div>
+              <div class="dots" id="dots" aria-hidden="true">
+                <i class="on"></i><i></i><i></i><i></i>
+                <span class="lbl" id="slideLbl">1 de 4</span>
+              </div>
+              <p class="hint">Arraste para ver os slides · toque na imagem para marcar um ponto</p>
+            </div>
+          </div>
+
+          <div class="col-r">
+            <div class="block">
+              <div class="blabel"><span>Legenda</span><em id="editFlag" hidden>editada por você</em></div>
+              <div class="caption" id="caption" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true" aria-label="Legenda editável">O verão não precisa de pressa. A nova coleção chegou com tudo — linho lavado, algodão cru e tingimento natural, feitos em pequenas quantidades por quem faz à mão.
+
+Disponível na loja da Aurora e no site. <span class="tags">#LojaNorte #Verão26 #FeitoÀMão</span></div>
+            </div>
+
+            <div class="block">
+              <div class="blabel"><span>Suas notas</span><em id="noteCount" hidden></em></div>
+              <div id="cmts"><p class="empty">Nenhuma nota ainda. Toque num ponto da imagem para marcar.</p></div>
+              <div class="composer" id="composer" hidden>
+                <input id="cmtInput" type="text" placeholder="O que mudar neste ponto?" aria-label="Comentário no ponto marcado">
+                <button id="cmtSave" type="button">Salvar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <div class="beats" id="beats" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div class="btnrow">
+            <button class="btn primary" id="btnPrimary" type="button">Aprovar</button>
+            <button class="btn secondary" id="btnSecondary" type="button">Solicitar alterações</button>
+          </div>
+          <p class="after" id="after">Ao aprovar, a agência é avisada na hora e a peça entra na fila de publicação.</p>
+        </div>
+
+        <div class="toast" id="toast" role="status" aria-live="polite">
+          <span id="toastMsg"></span>
+          <button id="undo" type="button">Desfazer</button>
+        </div>
+
+        <div class="veil" id="veil">
+          <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+            <h3 id="dlgTitle"></h3>
+            <p id="dlgBody"></p>
+            <div class="btnrow">
+              <button class="btn secondary" id="dlgCancel" type="button">Voltar</button>
+              <button class="btn primary" id="dlgOk" type="button"></button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <section class="try">
+    <h3>O que testar</h3>
+    <ol>
+      <li>Aprove <b>sem passar por todos os slides</b> — a confirmação aparece, mas não bloqueia.</li>
+      <li><b>Edite a legenda</b> ou marque um ponto na imagem — a ação primária troca sozinha para "Enviar alterações".</li>
+      <li>Com notas na peça, tente <b>aprovar mesmo assim</b> — nada some em silêncio.</li>
+      <li>Aprove e use o <b>Desfazer</b> — dentro de 8 segundos, a agência nunca fica sabendo.</li>
+    </ol>
+  </section>
+
+  <section class="notes">
+    <div class="note">
+      <div class="k">D-025</div>
+      <h4>Marcar é pedir alteração</h4>
+      <p>Editar a legenda e clicar em "Aprovar" é ambíguo: aprovou a versão de quem? Qualquer marca do cliente move a peça para o caminho de alteração, e a ação primária troca. Um caminho por intenção.</p>
+    </div>
+    <div class="note">
+      <div class="k">D-025</div>
+      <h4>Janela de 60 segundos</h4>
+      <p>Desfazer fica 8s na tela, mas a notificação para a agência só sai depois de 60s. Hesitar por cinco segundos não vira e-mail nem WhatsApp. A auditoria guarda os dois eventos; ninguém é incomodado.</p>
+    </div>
+    <div class="note">
+      <div class="k">Regra</div>
+      <h4>Mesmo peso, mesmo custo</h4>
+      <p>Aprovar e Solicitar alterações têm a mesma altura, a mesma área de toque e um clique cada. Se reclamar custar mais caro que aprovar, o cliente aprova coisa ruim — e o produto falhou.</p>
+    </div>
+    <div class="note">
+      <div class="k">Contexto</div>
+      <h4>O objetivo na tela</h4>
+      <p>Sem objetivo declarado, o feedback vira gosto pessoal. Com ele, vira avaliação. É a diferença entre um cliente difícil e um cliente útil — e custa uma linha de texto.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var TOTAL = 4;
+  var slide = 0;
+  var seen = [true, false, false, false];
+  var notes = [];
+  var edited = false;
+  var pendingPin = null;
+  var decided = false;
+  var undoTimer = null, notifyTimer = null;
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var slides = $('slides'), dots = $('dots'), art = $('art');
+  var caption = $('caption'), primary = $('btnPrimary'), secondary = $('btnSecondary');
+  var toast = $('toast'), toastMsg = $('toastMsg'), after = $('after');
+  var veil = $('veil'), dlgTitle = $('dlgTitle'), dlgBody = $('dlgBody'), dlgOk = $('dlgOk');
+  var originalCaption = caption.innerHTML;
+
+  /* ---- som ---------------------------------------------------------- */
+  var ctx = null;
+  function note(freq, start, dur, peak) {
+    var o = ctx.createOscillator(), h = ctx.createOscillator();
+    var g = ctx.createGain(), hg = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    h.type = 'triangle'; h.frequency.value = freq * 2; hg.gain.value = 0.12;
+    var t = ctx.currentTime + start;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); h.connect(hg); hg.connect(g); g.connect(ctx.destination);
+    o.start(t); h.start(t); o.stop(t + dur + .05); h.stop(t + dur + .05);
+  }
+  function play(kind) {
+    if (reduced) return;
+    try {
+      if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+    } catch (e) { return; }
+    if (kind === 'approve') { note(440, 0, .42, .16); note(659.25, .09, .46, .16); }
+    else if (kind === 'undo') { note(659.25, 0, .40, .13); note(440, .09, .44, .13); }
+    else { note(329.63, 0, .26, .10); }
+  }
+
+  /* ---- carrossel ----------------------------------------------------- */
+  function go(i) {
+    slide = Math.max(0, Math.min(TOTAL - 1, i));
+    seen[slide] = true;
+    slides.style.transform = 'translateX(' + (-slide * 100) + '%)';
+    var items = dots.querySelectorAll('i');
+    for (var k = 0; k < items.length; k++) {
+      items[k].className = k === slide ? 'on' : (seen[k] ? 'seen' : '');
+    }
+    $('slideLbl').textContent = (slide + 1) + ' de ' + TOTAL;
+  }
+  var x0 = null;
+  art.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+  art.addEventListener('touchend', function (e) {
+    if (x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 40) { go(slide + (dx < 0 ? 1 : -1)); x0 = null; e.preventDefault(); }
+    else { x0 = null; }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight') go(slide + 1);
+    if (e.key === 'ArrowLeft') go(slide - 1);
+    if (e.key === 'Escape') closeDialog();
+  });
+
+  /* ---- pin ----------------------------------------------------------- */
+  art.addEventListener('click', function (e) {
+    if (decided) return;
+    var r = art.getBoundingClientRect();
+    var px = ((e.clientX - r.left) / r.width) * 100;
+    var py = ((e.clientY - r.top) / r.height) * 100;
+    if (pendingPin) pendingPin.remove();
+    var pin = document.createElement('span');
+    pin.className = 'pin';
+    pin.textContent = notes.length + 1;
+    pin.style.left = px + '%';
+    pin.style.top = py + '%';
+    art.appendChild(pin);
+    pendingPin = pin;
+    $('composer').hidden = false;
+    $('cmtInput').focus();
+  });
+
+  $('cmtSave').addEventListener('click', saveNote);
+  $('cmtInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') saveNote(); });
+
+  function saveNote() {
+    var input = $('cmtInput');
+    var text = input.value.trim();
+    if (!text || !pendingPin) return;
+    notes.push({ n: notes.length + 1, text: text });
+    pendingPin = null;
+    input.value = '';
+    $('composer').hidden = true;
+    renderNotes();
+    sync();
+  }
+
+  function renderNotes() {
+    var box = $('cmts');
+    if (!notes.length) {
+      box.innerHTML = '<p class="empty">Nenhuma nota ainda. Toque num ponto da imagem para marcar.</p>';
+      return;
+    }
+    box.innerHTML = notes.map(function (c) {
+      return '<div class="cmt"><span class="no">' + c.n + '</span><div><div>' +
+        c.text.replace(/[<>&]/g, function (m) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;' }[m]; }) +
+        '</div><div class="who">Você · agora</div></div></div>';
+    }).join('');
+  }
+
+  /* ---- edição da legenda --------------------------------------------- */
+  caption.addEventListener('input', function () {
+    edited = caption.innerHTML !== originalCaption;
+    caption.classList.toggle('edited', edited);
+    $('editFlag').hidden = !edited;
+    sync();
+  });
+
+  /* ---- estado das ações ---------------------------------------------- */
+  function marks() { return notes.length + (edited ? 1 : 0); }
+
+  function sync() {
+    var m = marks();
+    $('noteCount').hidden = !notes.length;
+    $('noteCount').textContent = notes.length + (notes.length === 1 ? ' ponto marcado' : ' pontos marcados');
+    if (m > 0) {
+      primary.textContent = 'Enviar alterações (' + m + ')';
+      secondary.textContent = 'Descartar e aprovar';
+      after.textContent = 'A agência recebe suas notas e volta com uma nova versão.';
+    } else {
+      primary.textContent = 'Aprovar';
+      secondary.textContent = 'Solicitar alterações';
+      after.textContent = 'Ao aprovar, a agência é avisada na hora e a peça entra na fila de publicação.';
+    }
+  }
+
+  /* ---- diálogo -------------------------------------------------------- */
+  var dlgAction = null;
+  function openDialog(title, body, ok, fn) {
+    dlgTitle.textContent = title; dlgBody.textContent = body;
+    dlgOk.textContent = ok; dlgAction = fn;
+    veil.classList.add('show');
+  }
+  function closeDialog() { veil.classList.remove('show'); dlgAction = null; }
+  $('dlgCancel').addEventListener('click', closeDialog);
+  dlgOk.addEventListener('click', function () { var f = dlgAction; closeDialog(); if (f) f(); });
+  veil.addEventListener('click', function (e) { if (e.target === veil) closeDialog(); });
+
+  /* ---- decisão -------------------------------------------------------- */
+  primary.addEventListener('click', function () {
+    if (marks() > 0) return commit('changes');
+    var unseen = [];
+    for (var i = 0; i < TOTAL; i++) if (!seen[i]) unseen.push(i + 1);
+    if (unseen.length) {
+      openDialog(
+        'Você ainda não viu ' + (unseen.length === 1 ? 'o slide ' : 'os slides ') + unseen.join(' e '),
+        'Aprovar mesmo assim? Depois de aprovada, a peça entra na fila de publicação.',
+        'Aprovar mesmo assim',
+        function () { commit('approve'); }
+      );
+      return;
+    }
+    commit('approve');
+  });
+
+  secondary.addEventListener('click', function () {
+    if (marks() > 0) {
+      openDialog(
+        'Descartar suas notas?',
+        'Você marcou ' + marks() + (marks() === 1 ? ' ponto' : ' pontos') + ' nesta peça. Aprovar vai apagar essas notas e a agência não vai vê-las.',
+        'Descartar e aprovar',
+        function () { reset(); commit('approve'); }
+      );
+      return;
+    }
+    commit('changes');
+  });
+
+  function reset() {
+    notes = []; edited = false;
+    caption.innerHTML = originalCaption;
+    caption.classList.remove('edited');
+    $('editFlag').hidden = true;
+    var pins = art.querySelectorAll('.pin');
+    for (var i = 0; i < pins.length; i++) pins[i].remove();
+    renderNotes(); sync();
+  }
+
+  function commit(kind) {
+    decided = true;
+    play(kind === 'approve' ? 'approve' : 'changes');
+    caption.setAttribute('contenteditable', 'false');
+    primary.disabled = secondary.disabled = true;
+    primary.style.opacity = secondary.style.opacity = '.45';
+
+    if (kind === 'approve') {
+      var b = $('beats');
+      b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+    }
+
+    setTimeout(function () {
+      toastMsg.innerHTML = kind === 'approve'
+        ? '<b>Aprovado.</b> A agência foi avisada.'
+        : '<b>Alterações enviadas.</b> Ana foi avisada.';
+      toast.className = 'toast show' + (kind === 'approve' ? '' : ' changes');
+    }, 240);
+
+    clearTimeout(undoTimer); clearTimeout(notifyTimer);
+    undoTimer = setTimeout(function () { toast.classList.remove('show'); }, 8000);
+    notifyTimer = setTimeout(function () { finish(kind); }, 9000);
+  }
+
+  $('undo').addEventListener('click', function () {
+    clearTimeout(undoTimer); clearTimeout(notifyTimer);
+    play('undo');
+    toast.classList.remove('show');
+    $('beats').classList.remove('show');
+    decided = false;
+    caption.setAttribute('contenteditable', 'true');
+    primary.disabled = secondary.disabled = false;
+    primary.style.opacity = secondary.style.opacity = '';
+    sync();
+  });
+
+  function finish(kind) {
+    toast.classList.remove('show');
+    var n = kind === 'approve' ? '3 aprovadas, 1 com alterações' : '2 aprovadas, 2 com alterações';
+    $('scroll').innerHTML =
+      '<div class="done">' +
+        '<svg class="mark" viewBox="0 0 48 48" aria-hidden="true">' +
+          '<path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '</svg>' +
+        '<h2>Acabou.</h2>' +
+        '<p>Você avaliou 5 publicações: ' + n + '. A agência já foi avisada.</p>' +
+        '<button class="btn secondary" type="button" onclick="location.reload()">Recomeçar o protótipo</button>' +
+      '</div>';
+    $('scroll').style.display = 'block';
+    document.querySelector('.actions').hidden = true;
+    document.querySelector('.context').hidden = true;
+  }
+
+  /* ---- modo ----------------------------------------------------------- */
+  var device = $('device');
+  $('mCel').addEventListener('click', function () {
+    device.classList.remove('wide');
+    this.setAttribute('aria-pressed', 'true'); $('mDesk').setAttribute('aria-pressed', 'false');
+  });
+  $('mDesk').addEventListener('click', function () {
+    device.classList.add('wide');
+    this.setAttribute('aria-pressed', 'true'); $('mCel').setAttribute('aria-pressed', 'false');
+  });
+
+  sync();
+})();
+</script>

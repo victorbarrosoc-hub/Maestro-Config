@@ -40,22 +40,26 @@ Status do Projeto: 🟡 Product Discovery → 🟢 Sprint 1
 
 ---
 
-## Sprint 1 — Arquitetura da Informação · ⏳ Próximo
+## Sprint 1 — Arquitetura da Informação · ✅ Concluído
 
-- [ ] Master Sitemap
-- [ ] User Flow Master — jornada da agência
-- [ ] User Flow Master — jornada do cliente
-- [ ] Information Architecture
-- [ ] Matriz de permissões (RBAC × telas × ações)
-- [ ] Navegação e estados globais
+- [x] Master Sitemap + Information Architecture — `UX/SITEMAP.md`
+- [x] User Flow Master — jornada do cliente — `UX/USER_FLOW_CLIENT.md`
+- [x] User Flow Master — jornada da agência — `UX/USER_FLOW_AGENCY.md`
+- [x] Matriz de permissões (RBAC × ações) — `UX/PERMISSIONS.md`
+- [x] Navegação e estados globais — `UX/GLOBAL_STATES.md`
+- [x] Protótipo funcional da tela de aprovação do cliente
+- [x] Decisões D-025 a D-029
 
-## Sprint 2 — UX
+## Sprint 2 — UX · ⏳ Próximo
 
-- [ ] Wireflows do ciclo de aprovação
-- [ ] Jornada do cliente (mobile first para o cliente, apesar da Regra #7)
-- [ ] Jornada da agência
-- [ ] Empty states · Error states · Loading states
+- [x] Empty states · Error states · Loading states *(entregues em `GLOBAL_STATES.md`)*
+- [ ] Wireflow da estratégia e do calendário
+- [ ] Wireflow do envio em lote (checklist pré-envio)
+- [ ] Wireflow do recebimento de alterações (o diff)
+- [ ] Onboarding da agência — as 8 etapas
+- [ ] Onboarding do cliente — os 3 cartões
 - [ ] UX Writing de todas as telas do MVP
+- [ ] **Teste com 5 clientes reais de agência na tela de aprovação** 🔴
 
 ## Sprint 3 — Wireframes
 
