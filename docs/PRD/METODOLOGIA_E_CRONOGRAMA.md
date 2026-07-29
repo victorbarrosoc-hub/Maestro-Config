@@ -37,26 +37,26 @@ Três consequências:
 Organization
 └── Methodology            ← template, IP da agência
     ├── Phase[]            fases, com ordem e duração
-    │   ├── Track[]        trilhas paralelas
-    │   │   └── Deliverable[]
+    │   ├── Deliverable[]  por trilha
     │   ├── Gate?          ponto de decisão
     │   └── agendaDays     dias de agenda do cliente
+    ├── Track[]            trilhas paralelas → viram campanhas na aplicação
     ├── Prerequisite[]     o que precisa existir antes de começar
     └── Target[]           metas agregadas do ciclo
 
 Client
-└── Campaign
-    └── Timeline           ← instância aplicada da Methodology
-        └── TimelinePhase[]
-            ├── datas reais (calculadas a partir do início)
-            ├── status
-            ├── CalendarSlot[]  gerados pelos entregáveis
-            └── Gate resolvido?
+└── Project                ← a metodologia é aplicada AQUI
+    ├── Phase[]            instância das fases, com datas reais e status
+    ├── Target[]           metas do ciclo, calculadas do que foi publicado
+    └── Campaign[]         uma por trilha
+        └── CalendarSlot[] gerados pelos entregáveis de volume
 ```
 
-**Decisão (D-035): a metodologia é aplicada na criação da campanha, não depois.**
+**Decisão (D-035, emendada por D-039): a metodologia é aplicada na criação do projeto, não depois.**
 
-Escolher a metodologia é o **segundo passo** da criação, logo após o objetivo. Antes de qualquer conteúdo existir. Uma campanha criada sem metodologia usa a metodologia `Livre`, que é uma fase só, sem entregáveis previstos — mas isso é uma escolha explícita, nunca o padrão silencioso.
+Escolher a metodologia é o **segundo passo** da criação do projeto, logo após o objetivo. Antes de qualquer conteúdo existir. Um projeto criado sem metodologia usa a metodologia `Livre`, que é uma fase só, sem entregáveis previstos — mas isso é uma escolha explícita, nunca o padrão silencioso.
+
+**Aplicar a metodologia cria uma campanha por trilha.** Ver `PRODUCT_BIBLE/HIERARQUIA.md`.
 
 ---
 
@@ -199,11 +199,11 @@ Calculadas a partir do que foi publicado de verdade, nunca digitadas à mão. (R
 ## O fluxo de criação
 
 ```
-Nova campanha
+Novo projeto
    ↓
 1 · Cliente                    já preenchido se veio da página do cliente
    ↓
-2 · Objetivo                   uma frase — o que essa campanha precisa alcançar
+2 · Objetivo                   uma frase — o que esse projeto precisa alcançar
    ↓
 3 · METODOLOGIA                ← o passo novo
    │
@@ -218,9 +218,9 @@ Nova campanha
    ↓
 6 · Revisão                    o cronograma inteiro, ainda editável
    ↓
-[Criar campanha]
+[Criar projeto]
    ↓
-gera: Timeline + Fases + CalendarSlots + metas + pedidos de agenda
+gera: Fases + uma Campanha por trilha + CalendarSlots + metas + pedidos de agenda
 ```
 
 **Decisão (D-038): a etapa 6 é obrigatória e o cronograma é editável antes de existir.**

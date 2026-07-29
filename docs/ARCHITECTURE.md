@@ -89,8 +89,14 @@ campaign/
 A Maestro nasce multi tenant. Cada organização possui usuários, clientes, campanhas, permissões, arquivos e configurações próprios. Nenhum dado é compartilhado entre organizações.
 
 ```
-Organization → Workspace → Client → Campaign → Content → Approval → Publication → Analytics
+Organization → Workspace → Client → Project → Campaign → Content → Approval → Publication → Analytics
+                                        │
+                                        └── Methodology aplicada → Phase[] → CalendarSlot[]
 ```
+
+`Project` é o contrato (objetivo, estratégia, metodologia, cronograma, metas).
+`Campaign` é a execução (calendário, conteúdos, lotes, aprovações). Nada existe nos dois.
+Fonte canônica: `docs/PRODUCT_BIBLE/HIERARQUIA.md` (D-039).
 
 ---
 

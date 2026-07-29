@@ -237,6 +237,26 @@ Contexto / Problema / Alternativas / Decisão / Motivo / Consequências / Próxi
 
 ---
 
+# D-039 · Arquitetura / Produto · Aprovada
+**Data:** 2026-07-29 · **Responsável:** Founder
+**Categoria:** Hierarquia de entidades
+**Contexto:** aplicar a metodologia da EJUP expôs que "Campanha" estava carregando duas coisas de naturezas diferentes — o contrato de seis meses e a execução mensal.
+**Problema:** um programa "da marca ao lançamento" não é uma campanha; uma campanha de Dia das Mães dentro dele é.
+**Alternativas:** (a) renomear Campanha para Projeto — troca de vocabulário, mantém a sobreposição; (b) manter e aceitar a imprecisão; (c) **novo nível intermediário**.
+**Decisão:** **`Cliente → Projeto → Campanha → Conteúdo`.**
+**Motivo:** contrato e execução têm donos, ciclos e públicos diferentes. Forçá-los no mesmo container gera exatamente o estado inconsistente que a Regra #3 proíbe.
+**Consequências:**
+- **Estratégia, metodologia e cronograma existem apenas no Projeto. Calendário, conteúdo e aprovação existem apenas na Campanha.** Nada nos dois.
+- Aplicar uma metodologia **cria uma campanha por trilha** — leitura literal do documento da EJUP.
+- Fases pertencem ao Projeto e atravessam campanhas. `Content { projectId, campaignId, phaseId }`.
+- Todo cliente nasce com um projeto (`Sempre ativo`); cliente com projeto único abre direto nele, mas o projeto permanece na trilha de navegação. Um caminho com atalho, nunca dois caminhos.
+- A palavra "campanha" **não aparece para o cliente** — é vocabulário de execução interna.
+- `Campaign.projectId` é obrigatório. Campanha órfã não existe.
+**Emenda:** D-035 e D-038 passam a se referir à criação do **Projeto**, não da Campanha. As decisões seguem válidas no mérito.
+**Referência:** `docs/PRODUCT_BIBLE/HIERARQUIA.md` é a fonte canônica.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-039, D-040...
+Adicionar seguindo o padrão D-040, D-041...

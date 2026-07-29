@@ -49,6 +49,21 @@ D-038 (cronograma revisado antes de existir)
 `EJUP - Cronograma do Expert (6 Meses).pdf`. Segundo documento feito à mão a revelar
 uma entidade que faltava — o primeiro (Cortez) deu o lote, este deu a metodologia.
 
+### Adicionado (parte 3)
+- `docs/PRODUCT_BIBLE/HIERARQUIA.md` — fonte canônica da hierarquia de entidades
+- `docs/UX/WIREFLOWS.md` — onboarding da agência, estratégia, calendário, envio em lote e recebimento de alterações
+
+### Alterado (parte 3) — **mudança estrutural**
+Novo nível `Projeto` entre Cliente e Campanha (**D-039**). Propagado em:
+`CLAUDE.md` · `ARCHITECTURE.md` · `UX/SITEMAP.md` · `UX/PERMISSIONS.md` · `PRD/METODOLOGIA_E_CRONOGRAMA.md`
+
+- Estratégia, metodologia e cronograma migram para o Projeto
+- Calendário, conteúdo e aprovação permanecem na Campanha
+- Aplicar metodologia cria **uma campanha por trilha**
+- Atribuição de designer/copy/vídeo passa a ser por projeto
+- Novas rotas `/p/:projectId` e `/l/:batchId`
+- D-035 e D-038 emendadas: passam a se referir à criação do Projeto
+
 ---
 
 ## 0.3.0 — 2026-07-29

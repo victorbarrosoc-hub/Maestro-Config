@@ -47,7 +47,7 @@ Version: 1.0 · 2026-07-29 · Sprint 1
 | Ver auditoria | ● | ● | ○ | — | — | — | — | — | — |
 | Gerenciar integrações | ● | ● | ● | — | — | — | — | — | — |
 
-### Clientes e campanhas
+### Clientes, projetos e campanhas
 
 | Ação | SUPER | ADMIN | MANAGER | ACCOUNT | DESIGN | COPY | VIDEO | CLIENT | VIEWER |
 |---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
@@ -55,10 +55,21 @@ Version: 1.0 · 2026-07-29 · Sprint 1
 | Ver cliente | ● | ● | ● | ○ | ○ | ○ | ○ | ○ | ○ |
 | Editar cliente | ● | ● | ● | ○ | — | — | — | — | — |
 | Excluir cliente | ● | ● | — | — | — | — | — | — | — |
+| **Criar projeto** | ● | ● | ● | ○ | — | — | — | — | — |
+| **Ver projeto** | ● | ● | ● | ○ | ○ | ○ | ○ | ○ | ○ |
+| **Editar projeto** | ● | ● | ● | ○ | — | — | — | — | — |
+| **Aplicar/trocar metodologia** | ● | ● | ● | — | — | — | — | — | — |
+| **Editar cronograma e fases** | ● | ● | ● | ○ | — | — | — | — | — |
+| **Resolver ponto de decisão (gate)** | ● | ● | ● | — | — | — | — | ○ | — |
+| **Arquivar projeto** | ● | ● | — | — | — | — | — | — | — |
 | Criar campanha | ● | ● | ● | ○ | — | — | — | — | — |
 | Editar campanha | ● | ● | ● | ○ | — | — | — | — | — |
 | Arquivar campanha | ● | ● | ● | — | — | — | — | — | — |
 | Convidar aprovador do cliente | ● | ● | ● | ○ | — | — | — | — | — |
+
+**Gate é decisão conjunta.** O cliente participa do registro quando o critério envolve dado que
+é dele (ex.: inscrições pagas). Quem abre e fecha o gate é a agência; a resposta fica registrada
+com autor. Nunca a IA decide. (Regra #8)
 
 ### Estratégia e calendário
 
@@ -137,10 +148,14 @@ Nunca é silencioso, nunca é indistinguível de uma aprovação real. (D-029)
 
 | Papel | Vê e age em |
 |---|---|
-| `ACCOUNT` | clientes atribuídos a ele |
-| `DESIGNER` `COPYWRITER` `VIDEOMAKER` | campanhas em que está atribuído |
-| `CLIENT` `CLIENT_VIEWER` | campanhas do seu cliente, e só conteúdo já enviado |
+| `ACCOUNT` | clientes atribuídos a ele, e todos os projetos deles |
+| `DESIGNER` `COPYWRITER` `VIDEOMAKER` | **projetos** em que está atribuído — a atribuição no projeto cascateia para suas campanhas |
+| `CLIENT` `CLIENT_VIEWER` | projetos do seu cliente, e só conteúdo já enviado |
 | `MANAGER` | tudo da organização, exceto faturamento e alteração de papéis |
+
+**A atribuição é no projeto, não na campanha.** Atribuir por campanha parece mais granular e na
+prática só gera designer que não enxerga metade do próprio trabalho. Restrição por campanha fica
+no backlog, junto de permissão granular.
 
 ---
 

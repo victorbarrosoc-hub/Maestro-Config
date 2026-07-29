@@ -57,16 +57,12 @@ Status do Projeto: 🟡 Product Discovery → 🟢 Sprint 1
 - [x] Protótipo do lote com selo de integridade e termo de aprovação
 - [x] **Metodologia e cronograma** — `PRD/METODOLOGIA_E_CRONOGRAMA.md` (D-035 a D-038)
 - [x] Protótipo da criação de campanha com metodologia
-- [ ] Wireflow da estratégia e do calendário
-- [ ] Wireflow do envio em lote (checklist pré-envio, agora com as verificações de conjunto)
-- [ ] Wireflow do recebimento de alterações (o diff)
-- [ ] Onboarding da agência — as 8 etapas
+- [x] **Hierarquia `Cliente → Projeto → Campanha`** — `PRODUCT_BIBLE/HIERARQUIA.md` (D-039)
+- [x] Propagação da hierarquia em sitemap, arquitetura, permissões, metodologia e CLAUDE.md
+- [x] **Wireflows** — `UX/WIREFLOWS.md`: onboarding, estratégia, calendário, envio em lote, recebimento de alterações
 - [ ] UX Writing de todas as telas do MVP
 - [ ] **Teste com 5 clientes reais de agência** 🔴
-
-### Impacto do lote nos itens abertos
-O modelo do lote (D-030) muda o checklist pré-envio e o wireflow de envio — por isso
-esses itens ficaram para depois da decisão, não antes.
+- [ ] Atualizar os 3 protótipos para a hierarquia nova (cosmético — nenhum contradiz o modelo)
 
 ## Sprint 3 — Wireframes
 

@@ -97,9 +97,23 @@ Home · Operação · Produção · Inteligência · Organização · Administra
 
 Campanhas · Pendências · Timeline · Calendário · Notificações · Resultados rápidos · Próximas publicações
 
+## Hierarquia
+
+```
+Organização → Cliente → Projeto → Campanha → Conteúdo
+```
+
+**Projeto** é o contrato: objetivo, estratégia, metodologia, cronograma, metas, dias de agenda do cliente.
+**Campanha** é a execução: calendário, conteúdos, lotes, aprovações.
+Nada existe nos dois. Fonte canônica: `docs/PRODUCT_BIBLE/HIERARQUIA.md` (D-039).
+
+## Estrutura do Projeto
+
+Overview · Briefing · Estratégia · Metodologia e Cronograma · Campanhas · Aprovações · Agendamento · Resultados · Histórico
+
 ## Estrutura da Campanha
 
-Overview · Briefing · Estratégia · Planejamento · Calendário · Conteúdos · Copy · Design · Vídeos · Comentários · Aprovação · Produção · Agendamento · Publicação · Resultados · Histórico
+Calendário · Conteúdos · Lotes · Produção
 
 ## Estrutura do Conteúdo
 

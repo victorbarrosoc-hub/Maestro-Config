@@ -30,17 +30,21 @@ Home ─────────── Dashboard
                  · Notificações
 
 Operação ─────── Clientes
-                 └─ [cliente] · Overview · Campanhas · Marca · Equipe · Contatos
+                 └─ [cliente] · Overview · Projetos · Marca · Equipe · Contatos
 
-                 Campanhas
-                 └─ [campanha]
-                    · Overview        estado, timeline, gargalos
+                 Projetos
+                 └─ [projeto]
+                    · Overview        estado, fase atual, gargalos, dias de agenda
                     · Briefing
                     · Estratégia      objetivo, período, pilares, metas
-                    · Calendário      slots de publicação
-                    · Conteúdos       lista/grade de peças
-                       └─ [conteúdo]  copy · arte · vídeo · comentários · versões · histórico
-                    · Aprovações      o que está com o cliente
+                    · Cronograma      fases, trilhas, entregáveis, gates
+                    · Campanhas       uma por trilha da metodologia
+                       └─ [campanha]
+                          · Calendário   slots de publicação
+                          · Conteúdos    lista/grade de peças
+                             └─ [conteúdo]  copy · arte · vídeo · comentários · versões
+                          · Lotes        o que foi enviado ao cliente
+                    · Aprovações      o que está com o cliente, em todo o projeto
                     · Agendamento
                     · Resultados      (Fase 2)
                     · Histórico
@@ -85,19 +89,24 @@ Organização, Administração e Conta ficam no rodapé da sidebar, sob o avatar
 ```
 Início ───────── Esperando você       ← a razão de existir desta tela
                  Próximas publicações
-                 Campanhas ativas
+                 Onde estamos          fase atual do cronograma
 
-Campanhas ────── [campanha]
+Projeto ──────── [projeto]
                  · Estratégia         leitura — objetivo, período, o que buscamos
+                 · Cronograma         as fases, e quantos dias seus ainda faltam
                  · Calendário         quando cada coisa vai ao ar
-                 · Conteúdos          o que já aprovei, o que falta
-                    └─ [conteúdo]     ▸ TELA DE APROVAÇÃO
+                 · Publicações        o que já aprovei, o que falta
+                    └─ [lote]         ▸ LOTE DE APROVAÇÃO
+                       └─ [peça]      ▸ TELA DE APROVAÇÃO
 
 Conta ────────── Perfil
                  Notificações         e-mail, WhatsApp, frequência
 ```
 
 **Três itens de navegação. Nunca mais que isso.**
+
+A palavra **campanha não existe para o cliente** — é vocabulário de execução interna. Ele vê
+publicações dentro do projeto dele. Se tiver um projeto só, "Projeto" abre direto nele.
 
 O cliente não vê: Produção, Kanban, Arquivos, Equipe, Integrações, Faturamento, Auditoria, custos, prazos internos, quem da equipe fez o quê, status de rascunho.
 
@@ -123,22 +132,30 @@ aprova ou pede alteração
 
 ## Hierarquia de entidades
 
+> Fonte canônica: [`PRODUCT_BIBLE/HIERARQUIA.md`](../PRODUCT_BIBLE/HIERARQUIA.md) (D-039)
+
 ```
 Organization        a agência (tenant)
 └─ Workspace        unidade/filial — existe no banco, sem UI no MVP
    └─ Client        o cliente da agência
-      └─ Campaign   estratégia + período + calendário
-         ├─ Strategy
-         ├─ CalendarSlot   ─────┐  promessa de publicação
-         └─ Content             │
-            ├─ Copy (versões)   │
-            ├─ Asset (versões)  │
-            ├─ Comment          │
-            ├─ Approval ────────┤  vincula-se a uma versão exata
-            └─ Publication ◄────┘  destrava quando aprovado
+      └─ Project    o contrato — objetivo, estratégia, metodologia, cronograma, metas
+         ├─ Phase[]         fases do cronograma, atravessam as campanhas
+         └─ Campaign        o recorte executável — uma por trilha da metodologia
+            ├─ CalendarSlot ─────┐  promessa de publicação
+            └─ Content           │
+               ├─ Copy (versões) │
+               ├─ Asset (versões)│
+               ├─ Comment        │
+               ├─ Approval ──────┤  vincula-se a uma versão exata + selo
+               └─ Publication ◄──┘  destrava quando aprovado
 ```
 
+**A regra que impede sobreposição:** estratégia, metodologia e cronograma existem apenas no
+Projeto; calendário, conteúdo e aprovação existem apenas na Campanha. Nada nos dois.
+
 **O par que define o produto:** `CalendarSlot` é a promessa; `Content` é a entrega. Eles nascem separados e se encontram na aprovação. É isso que permite ver o buraco antes dele acontecer. (D-022)
+
+**E a promessa não é digitada:** os entregáveis de volume da metodologia geram os slots automaticamente na criação do projeto. O método vira calendário. (D-036)
 
 ---
 
@@ -146,13 +163,17 @@ Organization        a agência (tenant)
 
 ```
 /                                    dashboard (agência) ou início (cliente)
-/clientes                            
+/clientes
 /clientes/:clientId
-/campanhas
+/p/:projectId                        ▸ projeto — onde a agência vive
+/p/:projectId/estrategia
+/p/:projectId/cronograma
+/p/:projectId/campanhas
+/p/:projectId/resultados
 /campanhas/:campaignId
-/campanhas/:campaignId/estrategia
 /campanhas/:campaignId/calendario
 /campanhas/:campaignId/conteudos
+/l/:batchId                          ▸ lote de aprovação
 /c/:contentId                        ▸ tela de conteúdo — URL curta e estável
 /c/:contentId?v=4                    versão específica
 /aprovacoes                          fila
