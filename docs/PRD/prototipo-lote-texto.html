@@ -46,7 +46,7 @@
   .ctl button[aria-pressed="true"] { background: var(--page-fg); color: var(--page); border-color: var(--page-fg); }
 
   .stage { display: flex; justify-content: center; padding: 26px 0 8px; }
-  .device { width: 390px; max-width: 100%; height: 800px; flex: none; background: var(--s-bg); border: 1px solid var(--s-frame); border-radius: 40px; padding: 10px; box-shadow: var(--s-shadow); }
+  .device { width: 390px; max-width: 100%; height: 812px; flex: none; background: var(--s-bg); border: 1px solid var(--s-frame); border-radius: 40px; padding: 10px; box-shadow: var(--s-shadow); }
   .screen { position: relative; height: 100%; background: var(--s-bg); color: var(--s-fg); border-radius: 32px; overflow: hidden; display: flex; flex-direction: column; }
 
   .pbar { flex: none; padding: 20px 18px 9px; border-bottom: 1px solid var(--s-line); }
@@ -58,7 +58,6 @@
 
   .stagetag { flex: none; margin: 12px 18px 0; display: inline-flex; align-self: flex-start; font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--s-accent-tx); background: color-mix(in srgb, var(--s-accent) 13%, transparent); border: 1px solid color-mix(in srgb, var(--s-accent) 32%, transparent); padding: 4px 10px; border-radius: 9999px; }
 
-  /* identificação — achado B1 */
   .ident { flex: none; padding: 10px 18px 11px; border-bottom: 1px solid var(--s-line-soft); }
   .ident h3 { font-size: 18px; font-weight: 600; letter-spacing: -.015em; line-height: 1.25; margin-bottom: 5px; }
   .ident .intent { font-size: 12.5px; color: var(--s-muted); line-height: 1.4; }
@@ -68,10 +67,27 @@
   .badge.pill { color: var(--s-accent-tx); border-color: color-mix(in srgb, var(--s-accent) 42%, transparent); }
   .when { font-size: 12px; color: var(--s-muted); } .when b { color: var(--s-fg); font-weight: 600; }
 
-  .textzone { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 18px 14px; }
+  .textzone { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 18px 16px; }
   .lab { font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--s-subtle); margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
   .lab .chars { font-family: var(--f-mono); font-size: 10.5px; color: var(--s-subtle); }
   .lab .chars.warn { color: var(--s-adj); }
+
+  /* ===== ROTEIRO (D-051) ================================================ */
+  .script { display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+  .blk { background: var(--s-raised); border: 1px solid var(--s-line); border-radius: 12px; padding: 11px 12px; }
+  .blk.hook { border-color: color-mix(in srgb, var(--s-accent) 45%, var(--s-line)); }
+  .blk .bh { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+  .blk .bt { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--s-fg); }
+  .blk.hook .bt { color: var(--s-accent-tx); }
+  .blk .tm { font-family: var(--f-mono); font-size: 10.5px; color: var(--s-subtle); margin-left: auto; }
+  .fld { margin-bottom: 7px; }
+  .fld:last-child { margin-bottom: 0; }
+  .fld .fk { font-size: 10.5px; font-weight: 600; color: var(--s-subtle); margin-bottom: 2px; }
+  /* 16px — evita o zoom automático do iOS no foco */
+  .fld .fv { font-size: 16px; line-height: 1.45; color: var(--s-fg); border: 1px solid transparent; border-radius: 7px; padding: 5px 7px; margin: 0 -7px; outline: none; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .fld .fv:focus, .fld .fv.edited { border-color: var(--s-accent); background: var(--s-bg); }
+  .device[data-app="dark"] .fld .fv:focus, .device[data-app="dark"] .fld .fv.edited { background: var(--s-sunken); }
+
   .copy { font-size: 16px; line-height: 1.58; color: var(--s-fg); border: 1px solid transparent; border-radius: 9px; padding: 9px 11px; margin: 0 -11px; outline: none; white-space: pre-wrap; overflow-wrap: anywhere; }
   .copy:focus, .copy.edited { border-color: var(--s-accent); background: var(--s-sunken); }
   .tags { color: var(--cobalt); }
@@ -86,25 +102,24 @@
   .flag.fact .dot { background: var(--s-adj); }
   .flag.coher .dot { background: var(--s-info); }
 
-  /* convite à IA — achado B3: sempre visível e obviamente tocável */
   .askbox { margin-top: 14px; background: var(--s-raised); border: 1px solid var(--s-line); border-radius: 13px; padding: 13px 14px; }
   .askbox h4 { font-size: 12.5px; font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 7px; }
   .askbox h4 .sp { width: 6px; height: 6px; border-radius: 50%; background: var(--s-accent); }
   .askbox .sub { font-size: 11.5px; color: var(--s-subtle); margin-bottom: 11px; line-height: 1.4; }
   .chips { display: flex; flex-wrap: wrap; gap: 7px; }
   .chip { font: inherit; font-size: 13px; font-weight: 500; padding: 9px 13px; border-radius: 9999px; cursor: pointer; background: var(--s-bg); border: 1px solid var(--s-line); color: var(--s-fg); }
-  .chip:hover { border-color: var(--s-accent); color: var(--s-accent-tx); }
   .chip.hot { border-color: var(--s-accent); color: var(--s-accent-tx); font-weight: 600; }
 
   .verdict { margin-top: 11px; background: var(--s-bg); border: 1px solid var(--s-accent); border-radius: 12px; padding: 14px 15px; animation: rise 400ms var(--baton) both; }
   .verdict h5 { font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--s-accent-tx); margin-bottom: 10px; }
   .verdict .part { font-size: 13px; line-height: 1.5; color: var(--s-muted); margin-bottom: 10px; }
   .verdict .part b { color: var(--s-fg); font-weight: 600; }
-  .verdict .alt { background: var(--s-sunken); border-radius: 9px; padding: 10px 11px; font-size: 12.5px; line-height: 1.5; color: var(--s-fg); font-style: italic; }
-  .verdict .use { margin-top: 9px; display: flex; gap: 8px; }
-  .verdict .use button { font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 13px; border-radius: 8px; cursor: pointer; border: 1px solid var(--s-line); background: transparent; color: var(--s-fg); }
-  .verdict .use button.p { background: var(--s-accent); color: var(--s-accent-fg); border-color: transparent; }
-  .verdict .caveat { font-size: 11px; color: var(--s-subtle); margin-top: 9px; line-height: 1.4; }
+  /* CORREÇÃO D-052: cada alternativa carrega seu próprio botão */
+  .opt { background: var(--s-sunken); border: 1px solid var(--s-line); border-radius: 10px; padding: 11px 12px; margin-bottom: 9px; }
+  .opt .txt { font-size: 12.5px; line-height: 1.5; color: var(--s-fg); font-style: italic; margin-bottom: 9px; }
+  .opt .pick { font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 14px; border-radius: 8px; cursor: pointer; background: var(--s-accent); color: var(--s-accent-fg); border: 0; }
+  .verdict .caveat { font-size: 11px; color: var(--s-subtle); margin: 4px 0 10px; line-height: 1.4; }
+  .verdict .keep { font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 14px; border-radius: 8px; cursor: pointer; background: transparent; border: 1px solid var(--s-line); color: var(--s-fg); }
 
   .actions { flex: none; border-top: 1px solid var(--s-line); background: var(--s-raised); padding: 11px 18px 15px; }
   .btnrow { display: flex; gap: 9px; }
@@ -123,11 +138,19 @@
   .toast b { color: var(--s-ok); font-weight: 600; }
   .toast.ch b { color: var(--s-adj); }
 
-  .done { padding: 44px 22px; text-align: center; }
-  .done .mk { width: 44px; height: 44px; margin: 0 auto 16px; color: var(--s-accent); }
-  .done h2 { font-family: var(--f-display); font-weight: 400; font-size: 29px; margin-bottom: 10px; }
-  .done p { font-size: 14px; color: var(--s-muted); line-height: 1.55; margin: 0 auto 20px; max-width: 30ch; }
-  .done p b { color: var(--s-fg); font-weight: 600; }
+  /* ===== TERMO (D-053) ================================================== */
+  .term { padding: 36px 22px; text-align: center; }
+  .term .mk { width: 44px; height: 44px; margin: 0 auto 16px; color: var(--s-accent); }
+  .term h2 { font-family: var(--f-display); font-weight: 400; font-size: 29px; margin-bottom: 10px; }
+  .term p { font-size: 14px; color: var(--s-muted); line-height: 1.55; margin: 0 auto 18px; max-width: 32ch; }
+  .term p b { color: var(--s-fg); font-weight: 600; }
+  .field { text-align: left; margin-bottom: 13px; }
+  .field label { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--s-subtle); margin-bottom: 6px; }
+  .field input { width: 100%; font: inherit; font-size: 16px; background: var(--s-sunken); color: var(--s-fg); border: 1px solid var(--s-line); border-radius: 9px; padding: 11px 12px; outline: none; }
+  .field input:focus { border-color: var(--s-accent); }
+  .receipt { font-family: var(--f-mono); font-size: 11.5px; line-height: 1.8; color: var(--s-muted); background: var(--s-sunken); border-radius: 10px; padding: 14px 15px; margin: 15px 0 16px; text-align: left; white-space: pre-wrap; }
+  .receipt b { color: var(--s-fg); font-weight: 600; }
+  .term .small { font-size: 12px; color: var(--s-subtle); margin-top: 11px; max-width: none; }
 
   .cards { margin-top: 38px; display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 14px; }
   .card { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 14px; padding: 18px 20px; }
@@ -135,17 +158,17 @@
   .card h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
   .card p { font-size: 13px; color: var(--page-muted); line-height: 1.55; }
 
-  @media (max-width: 460px) { .page { padding: 26px 10px 64px; } .device { height: 740px; } }
+  @media (max-width: 460px) { .page { padding: 26px 10px 64px; } .device { height: 750px; } }
   @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
 </style>
 
 <div class="page">
 
   <header class="top">
-    <div class="eyebrow">Lote 1 · Texto · v3</div>
-    <h1>A IA dentro da decisão</h1>
-    <p>Primeiro lote do ciclo: só copy e roteiro, sem arte. É aqui que a validação por IA vale mais, porque ainda dá tempo de mudar barato.</p>
-    <p class="fix"><b>Corrigido do teste:</b> cada texto agora diz <b>qual publicação é</b> e <b>o que ela busca</b> · as 4 publicações passam em sequência ao decidir · e o convite à IA virou um painel visível, não um botão desabilitado que parecia legenda.</p>
+    <div class="eyebrow">Lote 1 · Texto · v4</div>
+    <h1>Roteiro, assinatura e escolha real</h1>
+    <p>Primeiro lote do ciclo: copy e roteiro, sem arte. É aqui que a validação por IA vale mais, porque ainda dá tempo de mudar barato.</p>
+    <p class="fix"><b>Novo:</b> peça de vídeo traz <b>roteiro em blocos</b> — gancho, desenvolvimento e chamada, com tempo · o lote fecha com <b>termo assinado</b>, para a agência saber quem aprovou · e <b>cada alternativa da IA tem seu próprio botão</b>, porque mostrar duas e deixar uma selecionável é a mesma imposição que a regra proíbe.</p>
     <div class="ctl">
       <button id="mLight" type="button" aria-pressed="true">Tela clara</button>
       <button id="mDark" type="button" aria-pressed="false">Tela escura</button>
@@ -155,14 +178,11 @@
   <div class="stage">
     <div class="device" id="device" data-app="light">
       <div class="screen">
-
         <div class="pbar">
           <div class="row"><span class="lbl">Verão 26 · Agosto</span><span class="cnt" id="pcnt"></span></div>
           <div class="track"><div class="fill" id="pfill"></div></div>
         </div>
-
         <div id="main" style="flex:1;display:flex;flex-direction:column;min-height:0"></div>
-
         <div class="actions" id="actions">
           <div class="btnrow">
             <button class="btn primary" id="bP" type="button">Aprovar</button>
@@ -170,21 +190,20 @@
           </div>
           <p class="after" id="after"></p>
         </div>
-
         <div class="toast" id="toast" role="status" aria-live="polite"><span id="tmsg"></span></div>
       </div>
     </div>
   </div>
 
   <section class="cards">
-    <div class="card"><div class="k">B1 · D-048</div><h4>Toda peça diz o que é</h4>
-      <p>Sem arte, “Instagram · Carrossel · 06/08” não identifica nada. Cada texto ganhou título, o que busca e a que pilar da estratégia serve. Sem propósito declarado, o cliente avalia contra o próprio gosto.</p></div>
-    <div class="card"><div class="k">B3</div><h4>O convite precisa ser achável</h4>
-      <p>A regra continua: a IA só opina quando chamada. Mas o convite era um botão tracejado e desabilitado que parecia legenda. Virou painel com perguntas prontas — convite que ninguém acha é o mesmo que não existir.</p></div>
-    <div class="card"><div class="k">Limite</div><h4>“Tem potencial?” vem com ressalva</h4>
-      <p>A IA lê gancho, clareza e CTA — e diz que é estimativa, não previsão. Prometer resultado a partir do texto seria a bajulação que o D-046 proíbe.</p></div>
-    <div class="card"><div class="k">Fluxo</div><h4>Texto congelado</h4>
-      <p>Ao aprovar, a copy é congelada e a produção começa. Se alguém da agência mexer no texto depois, o selo muda, a aprovação cai e a peça volta pra você.</p></div>
+    <div class="card"><div class="k">D-051</div><h4>Roteiro é o que se aprova antes de gravar</h4>
+      <p>Gravar vídeo é a etapa mais cara da produção — e refazer custa dia de agenda do cliente. Aprovar o roteiro em blocos protege o que a aprovação de copy protege no post, só que o prejuízo aqui é maior.</p></div>
+    <div class="card"><div class="k">D-051</div><h4>O gancho tem 3 segundos</h4>
+      <p>É o bloco que decide se o vídeo é assistido. Ganha destaque visual e verificação própria: acima de ~60 caracteres, a IA avisa que os três primeiros segundos não comportam.</p></div>
+    <div class="card"><div class="k">D-053</div><h4>Quem assinou os textos</h4>
+      <p>“O cliente aprovou” não resolve conflito nenhum em cliente com vários contatos. O termo registra a pessoa, o horário, quantos textos e o selo. Nome digitado, não herdado do perfil — escrever o nome é parte do peso da assinatura.</p></div>
+    <div class="card"><div class="k">D-052</div><h4>Opção sem botão é bug</h4>
+      <p>A regra do agente diz “duas, nunca uma, porque opção única é imposição”. Mostrar duas e deixar uma selecionável é a mesma imposição com um passo a mais de frustração. Toda alternativa carrega seu botão.</p></div>
   </section>
 </div>
 
@@ -198,41 +217,60 @@
       pilar:'Feito à mão', tipo:'Carrossel', dia:'quinta, 06/08 às 10h',
       copy:'O verão não precisa de pressa. A nova coleção chegou com tudo — linho lavado, algodão cru e tingimento natural, feitos em pequenas quantidades por quem faz à mão.\n\nAté 50% de desconto na primeira semana. Disponível na loja da Aurora e no site.',
       tags:' #LojaNorte #Verão26 #FeitoÀMão',
-      alt:'O verão não precisa de pressa. Linho lavado e algodão cru, com tingimento natural, feitos em pequenas quantidades por quem faz à mão.\n\n30% de desconto na primeira semana. Disponível na loja da Aurora e no site.' },
+      alts:['O verão não precisa de pressa. Linho lavado e algodão cru, com tingimento natural, feitos em pequenas quantidades por quem faz à mão.\n\n30% de desconto na primeira semana. Disponível na loja da Aurora e no site.',
+            'Tem roupa de verão que pede pressa. A nossa não.\n\nLinho lavado, algodão cru e tingimento natural, em pequenas quantidades. 30% na primeira semana, na loja da Aurora e no site.'] },
+
     { titulo:'Como escolher linho', intent:'Provar autoridade ensinando algo útil, sem vender',
-      pilar:'Conhecimento', tipo:'Roteiro de Reels', dia:'segunda, 10/08 às 18h',
+      pilar:'Conhecimento', tipo:'Reels', dia:'segunda, 10/08 às 18h', duracao:45,
+      script:[
+        { label:'Gancho', a:0, b:3, tela:'Close no tecido amassando na mão', fala:'Linho bom amassa. Linho ruim também — só que não desamassa.' },
+        { label:'Desenvolvimento · cena 1', a:3, b:16, tela:'Duas peças lado a lado, etiqueta em foco', fala:'Primeiro: gramatura. Abaixo de 150g o tecido cede na primeira lavagem.' },
+        { label:'Desenvolvimento · cena 2', a:16, b:32, tela:'Contraluz mostrando a trama', fala:'Segundo: trama. Contra a luz, o fio uniforme é o que dura.' },
+        { label:'Chamada', a:32, b:45, tela:'Peça vestida, corte para a fachada da loja', fala:'Terceiro: costura. Passa lá na Aurora que a gente mostra na prática.' }
+      ],
       copy:'Linho bom amassa. Linho ruim também — só que não desamassa.\n\nNeste vídeo, três coisas para olhar antes de comprar: gramatura, trama e acabamento da costura.',
       tags:' #LojaNorte #Linho',
-      alt:'Linho bom amassa — e é por isso que ele cai bem.\n\nTrês coisas para olhar antes de comprar: gramatura, trama e acabamento da costura.' },
+      alts:['Linho bom amassa — e é por isso que ele cai bem.\n\nTrês coisas para olhar antes de comprar: gramatura, trama e acabamento.',
+            'Todo linho amassa. Nem todo linho volta ao lugar.\n\nGramatura, trama e costura: o que olhar antes de levar.'] },
+
     { titulo:'Preço e condições', intent:'Tirar a objeção de preço de quem já demonstrou interesse',
       pilar:'Acessibilidade', tipo:'Post', dia:'quinta, 20/08 às 09h',
       copy:'Peças a partir de R$ 249, em até 6x sem juros.\n\nQuem compra na loja da Aurora leva o ajuste de barra por conta da casa.',
       tags:' #LojaNorte',
-      alt:'Peças a partir de R$ 249, em até 6x sem juros — com ajuste de barra por conta da casa para quem compra na loja da Aurora.' },
+      alts:['Peças a partir de R$ 249, em até 6x sem juros — com ajuste de barra por conta da casa para quem compra na loja da Aurora.',
+            'A partir de R$ 249, parcelado em 6x. Na loja da Aurora, o ajuste de barra é por nossa conta.'] },
+
     { titulo:'Quem faz a coleção', intent:'Sustentar o pilar “feito à mão” com prova real',
       pilar:'Feito à mão', tipo:'Carrossel', dia:'terça, 25/08 às 11h',
       copy:'Toda peça da Loja Norte passa por seis pares de mãos antes de chegar em você.\n\nNeste carrossel, a gente apresenta cada uma delas.',
       tags:' #LojaNorte #FeitoÀMão',
-      alt:'Seis pares de mãos passam por cada peça da Loja Norte antes de ela chegar em você. Neste carrossel, a gente apresenta cada uma.' }
+      alts:['Seis pares de mãos passam por cada peça da Loja Norte antes de ela chegar em você. Neste carrossel, a gente apresenta cada uma.',
+            'Antes de chegar em você, cada peça passa por seis pessoas. Hoje você conhece todas elas.'] }
   ];
 
-  var st = P.map(function (p) { return { d:null, copy:p.copy, base:p.copy }; });
-  var idx = 0, decidedFlag = false, reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var st = P.map(function (p) {
+    return { d:null, copy:p.copy, base:p.copy,
+             script: p.script ? p.script.map(function(b){ return { tela:b.tela, fala:b.fala }; }) : null,
+             baseScript: p.script ? p.script.map(function(b){ return { tela:b.tela, fala:b.fala }; }) : null };
+  });
+  var idx = 0, reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var $ = function (i) { return document.getElementById(i); };
   function esc(s) { return String(s).replace(/[&<>]/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m]; }); }
+  function mmss(s) { return '0:' + String(s).padStart(2,'0'); }
 
   var ctx = null;
   function play(k) {
     if (reduced) return;
     try { if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended') ctx.resume(); } catch(e){ return; }
-    (k==='ok' ? [[440,0],[659.25,.09]] : [[329.63,0]]).forEach(function (p) {
+    var seq = k==='ok' ? [[440,0],[659.25,.09]] : k==='sign' ? [[440,0],[554.37,.1],[659.25,.2]] : [[329.63,0]];
+    seq.forEach(function (p) {
       var o=ctx.createOscillator(),h=ctx.createOscillator(),g=ctx.createGain(),hg=ctx.createGain();
       o.type='sine';o.frequency.value=p[0];h.type='triangle';h.frequency.value=p[0]*2;hg.gain.value=.12;
       var t=ctx.currentTime+p[1];
       g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.15,t+.008);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.42);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.46);
       o.connect(g);h.connect(hg);hg.connect(g);g.connect(ctx.destination);
-      o.start(t);h.start(t);o.stop(t+.5);h.stop(t+.5);
+      o.start(t);h.start(t);o.stop(t+.55);h.stop(t+.55);
     });
   }
 
@@ -244,47 +282,86 @@
     $('pfill').style.width = (decided()/P.length*100) + '%';
     $('bP').disabled = false; $('bS').disabled = false;
 
+    var scriptHTML = '';
+    if (p.script) {
+      scriptHTML = '<div class="lab"><span>Roteiro</span><span class="chars">' + p.duracao + 's previstos</span></div>' +
+        '<div class="script">' + p.script.map(function (b, i) {
+          return '<div class="blk' + (i===0 ? ' hook' : '') + '">' +
+            '<div class="bh"><span class="bt">' + esc(b.label) + '</span>' +
+            '<span class="tm">' + mmss(b.a) + '–' + mmss(b.b) + '</span></div>' +
+            '<div class="fld"><div class="fk">Na tela</div>' +
+              '<div class="fv" contenteditable="true" spellcheck="false" data-b="' + i + '" data-f="tela" role="textbox" aria-label="Na tela, bloco ' + (i+1) + '">' + esc(s.script[i].tela) + '</div></div>' +
+            '<div class="fld"><div class="fk">Fala</div>' +
+              '<div class="fv" contenteditable="true" spellcheck="false" data-b="' + i + '" data-f="fala" role="textbox" aria-label="Fala, bloco ' + (i+1) + '">' + esc(s.script[i].fala) + '</div></div>' +
+          '</div>';
+        }).join('') + '</div>';
+    }
+
     $('main').innerHTML =
-      '<span class="stagetag">Etapa 1 de 2 · só os textos</span>' +
+      '<span class="stagetag">Etapa 1 de 2 · ' + (p.script ? 'roteiro e legenda' : 'só os textos') + '</span>' +
       '<div class="ident"><h3>' + esc(p.titulo) + '</h3>' +
         '<p class="intent"><b>O que busca:</b> ' + esc(p.intent) + '</p>' +
         '<div class="row"><span class="badge">Instagram</span><span class="badge">' + esc(p.tipo) + '</span>' +
         '<span class="badge pill">Pilar: ' + esc(p.pilar) + '</span>' +
         '<span class="when">Vai ao ar <b>' + esc(p.dia) + '</b></span></div></div>' +
-      '<div class="textzone">' +
+      '<div class="textzone">' + scriptHTML +
         '<div class="lab"><span>Legenda</span><span class="chars" id="chars"></span></div>' +
         '<div class="copy" id="copy" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true" aria-label="Legenda editável"></div>' +
         '<div class="ai" id="ai"></div>' +
         '<div class="askbox"><h4><span class="sp"></span>Perguntar à IA</h4>' +
           '<p class="sub">Ela não opina sozinha. Escolha o que quer saber:</p>' +
-          '<div class="chips" id="chips"></div>' +
-          '<div id="verdictBox"></div></div>' +
+          '<div class="chips" id="chips"></div><div id="verdictBox"></div></div>' +
       '</div>';
 
     var copy = $('copy');
     copy.innerHTML = esc(s.copy) + '<span class="tags">' + esc(p.tags) + '</span>';
-    copy.addEventListener('input', function () { s.copy = copy.innerText.replace(p.tags, '').trim(); onEdit(); });
+    copy.addEventListener('input', function () {
+      s.copy = copy.innerText.replace(p.tags, '').trim(); onEdit();
+    });
+
+    Array.prototype.forEach.call($('main').querySelectorAll('.fv'), function (el) {
+      el.addEventListener('input', function () {
+        var b = +this.dataset.b, f = this.dataset.f;
+        s.script[b][f] = this.innerText;
+        this.classList.toggle('edited', this.innerText.trim() !== s.baseScript[b][f].trim());
+        onEdit();
+      });
+    });
+
     onEdit();
   }
 
-  function editedNow() { var p=P[idx], s=st[idx]; return s.copy.trim() !== s.base.trim(); }
+  function marks() {
+    var s = st[idx], n = 0;
+    if (s.copy.trim() !== s.base.trim()) n++;
+    if (s.script) for (var i=0;i<s.script.length;i++) {
+      if (s.script[i].tela.trim() !== s.baseScript[i].tela.trim()) n++;
+      if (s.script[i].fala.trim() !== s.baseScript[i].fala.trim()) n++;
+    }
+    return n;
+  }
 
   function onEdit() {
-    var p = P[idx], s = st[idx], e = editedNow();
-    $('copy').classList.toggle('edited', e);
-    $('bP').textContent = e ? 'Enviar alterações (1)' : 'Aprovar';
-    $('bS').textContent = e ? 'Descartar e aprovar' : 'Solicitar alterações';
-    $('after').textContent = e
+    var m = marks();
+    $('copy').classList.toggle('edited', st[idx].copy.trim() !== st[idx].base.trim());
+    $('bP').textContent = m ? 'Enviar alterações (' + m + ')' : 'Aprovar';
+    $('bS').textContent = m ? 'Descartar e aprovar' : 'Solicitar alterações';
+    $('after').textContent = m
       ? 'A agência recebe sua versão e volta com o texto ajustado.'
-      : 'Ao aprovar, este texto é congelado e a produção começa.';
-    analyse();
-    chips();
+      : (P[idx].script ? 'Ao aprovar, roteiro e legenda são congelados e a gravação é marcada.'
+                       : 'Ao aprovar, este texto é congelado e a produção começa.');
+    analyse(); chips();
   }
 
   function analyse() {
-    var txt = $('copy').innerText, flags = [];
-    if (/50\s*%/.test(txt)) flags.push({ c:'fact', h:'A estratégia fala em <b>30% de desconto</b>. Este texto diz <b>50%</b>.', s:'Fonte: Estratégia do projeto · Verão 26' });
-    if (P[idx].pilar === 'Feito à mão' && !/à mão|mãos/i.test(txt)) flags.push({ c:'coher', h:'Saiu a menção a <b>feito à mão</b> — o pilar que esta publicação deveria sustentar.', s:'Fonte: Propósito desta publicação' });
+    var p = P[idx], s = st[idx], txt = $('copy').innerText, flags = [];
+
+    if (/50\s*%/.test(txt)) flags.push({ c:'fact', h:'A estratégia fala em <b>30% de desconto</b>. Este texto diz <b>50%</b>.', s:'Fonte: Estratégia do projeto' });
+    if (p.pilar === 'Feito à mão' && !/à mão|mãos/i.test(txt)) flags.push({ c:'coher', h:'Saiu a menção a <b>feito à mão</b> — o pilar que esta publicação deveria sustentar.', s:'Fonte: Propósito desta publicação' });
+    if (s.script) {
+      var g = s.script[0].fala.trim();
+      if (g.length > 60) flags.push({ c:'fact', h:'O gancho tem <b>' + g.length + ' caracteres</b>. Três segundos comportam cerca de 60.', s:'Fonte: Bloco 1 do roteiro' });
+    }
     if (txt.length > 2200) flags.push({ c:'fact', h:'Passou do limite do Instagram em <b>' + (txt.length-2200) + '</b> caracteres.', s:'' });
 
     $('ai').innerHTML = flags.slice(0,3).map(function (f) {
@@ -297,77 +374,79 @@
   }
 
   function chips() {
-    var e = editedNow();
     var list = [];
-    if (e) list.push({ id:'cmp', t:'Ficou melhor assim?', hot:true });
+    if (marks() > 0) list.push({ id:'cmp', t:'Ficou melhor assim?', hot:true });
     list.push({ id:'pot', t:'Isso tem potencial?' });
     list.push({ id:'bet', t:'Como eu diria melhor?' });
     $('chips').innerHTML = list.map(function (c) {
-      return '<button class="chip' + (c.hot ? ' hot' : '') + '" type="button" data-id="' + c.id + '">' + c.t + '</button>';
+      return '<button class="chip' + (c.hot?' hot':'') + '" type="button" data-id="' + c.id + '">' + c.t + '</button>';
     }).join('');
     Array.prototype.forEach.call($('chips').querySelectorAll('.chip'), function (b) {
       b.addEventListener('click', function () { answer(this.dataset.id); });
     });
   }
 
+  /* CORREÇÃO D-052: toda alternativa exibida carrega seu próprio botão */
+  function optionsHTML(list) {
+    return list.map(function (t, i) {
+      return '<div class="opt"><div class="txt">“' + esc(t.split('\n\n')[0]) + '”</div>' +
+        '<button class="pick" type="button" data-i="' + i + '">Usar esta</button></div>';
+    }).join('');
+  }
+
   function answer(kind) {
-    var p = P[idx], s = st[idx], txt = $('copy').innerText;
-    var box = $('verdictBox'), html = '';
+    var p = P[idx], s = st[idx], txt = $('copy').innerText, box = $('verdictBox'), html = '';
 
     if (kind === 'cmp') {
-      var perdeuPilar = p.pilar === 'Feito à mão' && !/à mão|mãos/i.test(txt);
-      var menor = s.copy.length < s.base.length;
-      var diff = Math.abs(s.base.length - s.copy.length);
+      var perdeu = p.pilar === 'Feito à mão' && !/à mão|mãos/i.test(txt);
+      var menor = s.copy.length < s.base.length, diff = Math.abs(s.base.length - s.copy.length);
       html = '<div class="verdict"><h5>Comparando as duas versões</h5>' +
-        '<p class="part">' + (menor
-          ? '<b>Sua versão está mais direta</b> — cortou ' + diff + ' caracteres.'
-          : '<b>Sua versão detalha mais</b> — ganhou ' + diff + ' caracteres de contexto.') + '</p>' +
-        '<p class="part">' + (perdeuPilar
-          ? '<b>O que saiu:</b> a menção a “feito à mão”. Era o único ponto do texto que sustentava o propósito desta publicação.'
-          : '<b>O que saiu:</b> nada essencial. O propósito da publicação continua sustentado.') + '</p>' +
-        '<p class="part"><b>Sugestão:</b> ' + (perdeuPilar
-          ? 'manter o seu começo e recuperar “feito à mão” no final.'
-          : 'a sua versão sustenta a estratégia.') + '</p>' +
-        '<div class="alt">“' + esc(p.alt.split('\n\n')[0]) + '”</div>' +
-        '<div class="use"><button class="p" id="useAlt" type="button">Usar esta</button>' +
-        '<button id="keepMine" type="button">Ficar com a minha</button></div></div>';
+        '<p class="part">' + (menor ? '<b>Sua versão está mais direta</b> — cortou ' + diff + ' caracteres.'
+                                    : '<b>Sua versão detalha mais</b> — ganhou ' + diff + ' caracteres de contexto.') + '</p>' +
+        '<p class="part">' + (perdeu ? '<b>O que saiu:</b> a menção a “feito à mão”. Era o único ponto que sustentava o propósito desta publicação.'
+                                     : '<b>O que saiu:</b> nada essencial. O propósito continua sustentado.') + '</p>' +
+        '<p class="part"><b>Sugestão:</b> ' + (perdeu ? 'manter o seu começo e recuperar “feito à mão” no final.' : 'a sua versão sustenta a estratégia.') + '</p>' +
+        optionsHTML([p.alts[0]]) +
+        '<button class="keep" id="keepMine" type="button">Ficar com a minha</button></div>';
     }
 
     if (kind === 'pot') {
-      html = '<div class="verdict"><h5>Leitura do texto</h5>' +
-        '<p class="part"><b>Gancho:</b> a primeira linha cria contraste e prende. Funciona para quem não conhece a marca — que é o objetivo de agosto.</p>' +
-        '<p class="part"><b>Clareza:</b> três produtos citados em uma frase. Para quem chega de fora, dois seriam mais fáceis de guardar.</p>' +
-        '<p class="part"><b>Chamada:</b> “disponível na loja e no site” informa, mas não pede ação. Um verbo no fim aumentaria o clique.</p>' +
+      var extra = s.script
+        ? '<p class="part"><b>Gancho:</b> ' + s.script[0].fala.trim().length + ' caracteres nos 3 primeiros segundos. O contraste na primeira frase segura quem está rolando o feed.</p>'
+        : '<p class="part"><b>Gancho:</b> a primeira linha cria contraste e prende. Funciona para quem não conhece a marca — que é o objetivo de agosto.</p>';
+      html = '<div class="verdict"><h5>Leitura do texto</h5>' + extra +
+        '<p class="part"><b>Clareza:</b> três ideias em sequência. Para quem chega de fora, duas seriam mais fáceis de guardar.</p>' +
+        '<p class="part"><b>Chamada:</b> informa onde encontrar, mas não pede ação. Um verbo no fim aumentaria o clique.</p>' +
         '<p class="caveat">Isto é uma leitura do texto, não uma previsão de resultado. Só o histórico da conta diz o que funciona com o seu público.</p></div>';
     }
 
     if (kind === 'bet') {
       html = '<div class="verdict"><h5>Duas alternativas</h5>' +
-        '<div class="alt">“' + esc(p.alt.split('\n\n')[0]) + '”</div>' +
-        '<div class="alt" style="margin-top:8px">“' + esc(p.titulo) + ': ' + esc(p.intent.toLowerCase()) + '. Veja na loja da Aurora ou no site.”</div>' +
+        optionsHTML(p.alts) +
         '<p class="caveat">Duas, nunca uma — opção única é imposição disfarçada de sugestão.</p>' +
-        '<div class="use"><button class="p" id="useAlt" type="button">Usar a primeira</button>' +
-        '<button id="keepMine" type="button">Ficar com a minha</button></div></div>';
+        '<button class="keep" id="keepMine" type="button">Ficar com a minha</button></div>';
     }
 
     box.innerHTML = html;
-    if ($('useAlt')) $('useAlt').addEventListener('click', function () {
-      st[idx].copy = p.alt;
-      $('copy').innerHTML = esc(p.alt) + '<span class="tags">' + esc(p.tags) + '</span>';
-      box.innerHTML = ''; onEdit();
+
+    Array.prototype.forEach.call(box.querySelectorAll('.pick'), function (b) {
+      b.addEventListener('click', function () {
+        var chosen = (kind === 'cmp') ? p.alts[0] : p.alts[+this.dataset.i];
+        st[idx].copy = chosen;
+        $('copy').innerHTML = esc(chosen) + '<span class="tags">' + esc(p.tags) + '</span>';
+        box.innerHTML = ''; onEdit();
+      });
     });
     if ($('keepMine')) $('keepMine').addEventListener('click', function () { box.innerHTML = ''; });
   }
 
   function decide(kind) {
-    st[idx].d = kind;
-    play(kind);
+    st[idx].d = kind; play(kind);
     $('bP').disabled = $('bS').disabled = true;
     $('pfill').style.width = (decided()/P.length*100) + '%';
     var falta = P.length - decided();
-    $('tmsg').innerHTML = kind === 'ok'
-      ? '<b>Texto aprovado.</b> ' + (falta ? 'Falta' + (falta===1?' 1.':'m '+falta+'.') : 'Era o último.')
-      : '<b>Alterações enviadas.</b> ' + (falta ? 'Falta' + (falta===1?' 1.':'m '+falta+'.') : 'Era o último.');
+    $('tmsg').innerHTML = (kind === 'ok' ? '<b>Texto aprovado.</b> ' : '<b>Alterações enviadas.</b> ') +
+      (falta ? 'Falta' + (falta===1?' 1.':'m '+falta+'.') : 'Era o último.');
     $('toast').className = 'toast show' + (kind === 'ok' ? '' : ' ch');
     setTimeout(function () { $('toast').classList.remove('show'); }, 3200);
     setTimeout(advance, 1400);
@@ -376,22 +455,41 @@
   function advance() {
     var next = -1;
     for (var i=0;i<P.length;i++) { var j=(idx+1+i)%P.length; if (!st[j].d) { next=j; break; } }
-    if (next === -1) done(); else { idx = next; render(); }
+    if (next === -1) renderTerm(); else { idx = next; render(); }
   }
 
-  function done() {
+  /* ---------- TERMO (D-053) ---------- */
+  function renderTerm() {
     var ok = st.filter(function(s){ return s.d==='ok'; }).length, ad = P.length - ok;
     $('actions').style.display = 'none';
-    $('main').innerHTML = '<div class="done"><div class="mk">' + MARK + '</div>' +
-      '<h2>Textos fechados.</h2>' +
-      '<p>Você avaliou ' + P.length + ' textos: <b>' + ok + '</b> aprovados' + (ad ? ' e <b>' + ad + '</b> com ajuste' : '') + '.</p>' +
-      '<p style="font-size:13px">Agora a agência produz as artes e os vídeos. Você vê tudo pronto no próximo lote, antes de ir ao ar.</p>' +
-      '<button class="btn secondary wide" type="button" onclick="location.reload()">Recomeçar</button></div>';
+    $('pcnt').textContent = 'Concluído';
+    $('main').innerHTML = '<div class="textzone"><div class="term"><div class="mk">' + MARK + '</div>' +
+      '<h2>Textos avaliados.</h2>' +
+      '<p><b>' + ok + '</b> aprovados' + (ad ? ' e <b>' + ad + '</b> com ajuste' : '') + '. Assine para fechar esta etapa.</p>' +
+      '<div class="field"><label for="nm">Seu nome completo</label>' +
+      '<input id="nm" type="text" placeholder="Marina Costa" autocomplete="name"></div>' +
+      '<button class="btn primary wide" id="sign" type="button">Assinar e liberar a produção</button>' +
+      '<p class="small">A agência precisa saber quem aprovou. Ao assinar, o texto e o roteiro são congelados — se alguém mexer depois, o selo muda e volta para você.</p></div></div>';
+
+    $('sign').addEventListener('click', function () {
+      var nome = $('nm').value.trim() || 'Marina Costa';
+      var d = new Date(), m = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+      var hora = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+      play('sign');
+      $('main').innerHTML = '<div class="textzone"><div class="term"><div class="mk">' + MARK + '</div>' +
+        '<h2>Etapa fechada.</h2>' +
+        '<p>' + esc(nome) + ' aprovou ' + ok + (ok===1?' texto':' textos') + (ad ? ' e pediu ajuste em ' + ad : '') + '. A produção já começou.</p>' +
+        '<div class="receipt">Lote 01 · Textos · Agosto de 2026\nVerão 26 · Loja Norte\nAprovado por <b>' + esc(nome) + '</b>\n' +
+        'Em <b>' + d.getDate() + ' ' + m[d.getMonth()] + ' ' + d.getFullYear() + '</b>, às <b>' + hora + '</b>\n' +
+        'Textos: <b>' + P.length + '</b> · aprovados <b>' + ok + '</b> · com ajuste <b>' + ad + '</b>\n' +
+        'Roteiros congelados: <b>1</b>\nSelo: <b>4B7C·1E93</b>\nRegistro: <b>apr_3x8pLm</b></div>' +
+        '<p class="small">As artes e os vídeos chegam no próximo lote, antes de irem ao ar.</p>' +
+        '<button class="btn secondary wide" type="button" style="margin-top:14px" onclick="location.reload()">Recomeçar</button></div></div>';
+    });
   }
 
-  $('bP').addEventListener('click', function () { if (!this.disabled) decide(editedNow() ? 'ch' : 'ok'); });
-  $('bS').addEventListener('click', function () { if (!this.disabled) decide(editedNow() ? 'ok' : 'ch'); });
-
+  $('bP').addEventListener('click', function () { if (!this.disabled) decide(marks() ? 'ch' : 'ok'); });
+  $('bS').addEventListener('click', function () { if (!this.disabled) decide(marks() ? 'ok' : 'ch'); });
   $('mLight').addEventListener('click', function () { $('device').dataset.app='light'; this.setAttribute('aria-pressed','true'); $('mDark').setAttribute('aria-pressed','false'); });
   $('mDark').addEventListener('click', function () { $('device').dataset.app='dark'; this.setAttribute('aria-pressed','true'); $('mLight').setAttribute('aria-pressed','false'); });
 

@@ -36,8 +36,34 @@ Registrado em **D-042**.
 ## Lote 1 · Texto
 
 **O que a agência sobe:** copy de cada publicação e roteiro de cada vídeo.
-**O que o cliente vê:** o texto, o formato previsto, a data prevista e o objetivo do mês.
+**O que o cliente vê:** título da peça, o que ela busca, o pilar que serve, o texto, o formato e a data.
 **Não existe arte ainda** — e isso é dito na capa: *"As imagens vêm no próximo passo. Agora é só o texto."*
+
+### Roteiro para vídeo (D-051)
+
+Peça de formato `REELS` ou `VIDEO` não se aprova por legenda. O que precisa ser aprovado antes da gravação é o **roteiro**, em blocos com tempo:
+
+```
+Gancho              0–3s    Na tela: close no tecido amassando
+                            Fala: "Linho bom amassa. Linho ruim também —
+                                   só que não desamassa."
+
+Desenvolvimento     3–16s   …
+· cena 1
+
+Desenvolvimento    16–32s   …
+· cena 2
+
+Chamada            32–45s   …
+```
+
+Cada bloco tem **Na tela** e **Fala**, editáveis separadamente pelo cliente.
+
+**O gancho tem tratamento próprio.** É o bloco que decide se o vídeo é assistido, ganha destaque visual e verificação de nível 1: acima de ~60 caracteres, a IA avisa que três segundos não comportam.
+
+**Por que isso importa mais que a copy:** gravar é a etapa mais cara da produção, e refazer custa **dia de agenda do cliente** (D-037). O roteiro aprovado protege o recurso mais escasso do projeto.
+
+O checklist ganha bloqueio `content.no-script` para peça de vídeo sem roteiro.
 
 ### A IA entra aqui
 

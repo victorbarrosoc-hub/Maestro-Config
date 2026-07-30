@@ -563,7 +563,8 @@ model ContentVersion {
   copy      String
   cta       String?
   hashtags  String?
-  seal      String                          // FNV-1a de copy+assets+meta (D-032)
+  durationS Int?                            // duração prevista, para vídeo (D-051)
+  seal      String                          // FNV-1a de copy+script+assets+meta (D-032)
   createdAt DateTime @default(now())
   createdById String? @db.Uuid
 
@@ -574,6 +575,25 @@ model ContentVersion {
 
   @@unique([contentId, number])
   @@index([contentId])
+}
+
+// Roteiro de vídeo — aprovado no Lote de Texto, antes da gravação (D-051)
+model ScriptBlock {
+  id        String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  versionId String @db.Uuid
+  order     Int
+  label     String                          // "Gancho", "Desenvolvimento · cena 1"
+  startS    Int
+  endS      Int
+  onScreen  String                          // o que aparece
+  speech    String                          // o que se fala
+  note      String?
+
+  version ContentVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@unique([versionId, order])
+  @@index([versionId])
 }
 
 model Asset {

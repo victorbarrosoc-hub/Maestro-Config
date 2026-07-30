@@ -135,7 +135,9 @@
     "offGoal": "Nenhuma peça deste lote atende ao objetivo declarado",
     "noRefs": "Este lote não tem referência visual",
     "muted": "Você ignorou este aviso 3 vezes. Ele volta em 30 dias.",
-    "noIntent": "{peca} não declara o que busca"
+    "noIntent": "{peca} não declara o que busca",
+    "noScript": "{peca} é vídeo e não tem roteiro",
+    "hookTooLong": "O gancho de {peca} tem {n} caracteres. Três segundos comportam cerca de 60."
   },
   "approval": {
     "metaWhen": "Vai ao ar {data}",
@@ -178,7 +180,12 @@
     "doneTitle": "Lote fechado.",
     "doneBody": "{pessoa} aprovou {ok, plural, one {# publicação} other {# publicações}}{ajustes, plural, =0 {} other { e pediu ajuste em #}}. A agência já foi avisada.",
     "receiptDownload": "Baixar comprovante",
-    "doneNext": "Acabou. Você pode fechar esta página."
+    "doneNext": "Acabou. Você pode fechar esta página.",
+    "copyTitle": "Textos avaliados.",
+    "copyBody": "{ok, plural, one {# aprovado} other {# aprovados}}{ajustes, plural, =0 {} other { e # com ajuste}}. Assine para fechar esta etapa.",
+    "copySign": "Assinar e liberar a produção",
+    "copyHint": "A agência precisa saber quem aprovou. Ao assinar, o texto e o roteiro são congelados — se alguém mexer depois, o selo muda e volta para você.",
+    "copyDone": "Etapa fechada."
   },
   "notify": {
     "batchEmailSubject": "{n, plural, one {# publicação esperando você} other {# publicações esperando você}} — {projeto}",
@@ -261,5 +268,16 @@
     "caveat": "Isto é uma leitura do texto, não uma previsão de resultado. Só o histórico da conta diz o que funciona com o seu público.",
     "useThis": "Usar esta",
     "keepMine": "Ficar com a minha"
+  },
+  "script": {
+    "$note": "Roteiro de vídeo no Lote de Texto (D-051)",
+    "label": "Roteiro",
+    "duration": "{n}s previstos",
+    "onScreen": "Na tela",
+    "speech": "Fala",
+    "hook": "Gancho",
+    "body": "Desenvolvimento · cena {n}",
+    "cta": "Chamada",
+    "afterApprove": "Ao aprovar, roteiro e legenda são congelados e a gravação é marcada."
   }
 }

@@ -373,6 +373,41 @@ Os três aparecem no topo da peça, nos dois lotes.
 
 ---
 
+# D-051 · Produto · Aprovada
+**Data:** 2026-07-29 · **Responsável:** Founder · **Categoria:** Lote de Texto
+**Contexto:** o Lote de Texto tratava toda peça como legenda. Para Reels e vídeo isso é insuficiente — o que precisa ser aprovado antes da gravação é o **roteiro**, não a legenda.
+**Decisão:** conteúdo de formato `REELS` ou `VIDEO` carrega **roteiro estruturado em blocos**, aprovado no Lote 1 junto da legenda.
+
+```
+ScriptBlock { order, label, startS, endS, onScreen, speech, note }
+```
+
+Blocos padrão: **Gancho** (0–3s) · **Desenvolvimento** (n cenas) · **Chamada** (final).
+`ContentVersion.durationS` guarda a duração prevista.
+
+**Motivo:** gravar vídeo é a etapa mais cara da produção. Aprovar o roteiro antes protege exatamente o que o D-042 protege na copy — só que o prejuízo aqui é maior, porque refazer gravação custa dia de agenda do cliente (D-037).
+**Consequências:**
+- O cliente edita cada bloco separadamente; o gancho é o campo que mais importa.
+- O checklist ganha bloqueio `content.no-script` para peça de vídeo sem roteiro.
+- A IA de nível 1 passa a verificar o gancho: acima de ~60 caracteres, avisa que os 3 primeiros segundos não comportam.
+- Comentário por timecode continua no backlog — aqui o bloco já dá granularidade suficiente.
+
+# D-052 · UX · Aprovada
+**Data:** 2026-07-29 · **Origem:** teste, print do fundador
+**Achado:** em *"Como eu diria melhor?"* a IA apresentava **duas** alternativas, mas só existia o botão *"Usar a primeira"*. A segunda não era selecionável.
+**Decisão:** **toda alternativa apresentada tem seu próprio botão de usar.** Nenhuma opção é exibida sem caminho de escolha.
+**Motivo:** contradição direta com a própria regra do agente — *"duas, nunca uma, porque opção única é imposição disfarçada de sugestão"*. Mostrar duas e deixar uma selecionável é a mesma imposição, com um passo a mais de frustração.
+**Consequências:** vale para qualquer lista de sugestões da IA, presente ou futura. Item exibido sem ação disponível é bug, não decisão de design.
+
+# D-053 · Produto · Aprovada
+**Data:** 2026-07-29 · **Origem:** teste
+**Achado:** *"No final de aprovar tudo não tem assinatura de quem aprovou, pra eu saber com quem a agência está aprovando os textos."*
+**Decisão:** **o Lote de Texto também fecha com termo de aprovação**, igual ao lote final. Mesmos campos: quem assinou, quando, quantos textos, selo e registro.
+**Motivo:** D-033 já previa o termo por lote, mas o protótipo do Lote 1 terminava sem ele. A pergunta do fundador expõe a necessidade real: a agência precisa saber **qual pessoa do cliente** aprovou o texto — em cliente com vários contatos, "o cliente aprovou" não resolve conflito nenhum.
+**Consequências:** o termo do Lote de Texto congela a copy e o roteiro. Nome digitado, não herdado do perfil — o ato de escrever o nome é parte do peso da assinatura.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-051, D-052...
+Adicionar seguindo o padrão D-054, D-055...

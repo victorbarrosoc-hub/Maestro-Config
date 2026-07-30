@@ -105,6 +105,8 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 - [x] **Ciclo de aprovação** — `PRD/CICLO_DE_APROVACAO.md` (D-042 a D-046)
 - [x] **Approval Assistant** — `AI/APPROVAL_ASSISTANT.md` — primeiro agente no MVP
 - [x] Protótipo do Lote de Texto com IA
+- [x] **Roteiro estruturado para vídeo** no Lote de Texto (D-051)
+- [x] Termo assinado ao fim do Lote de Texto (D-053)
 - [ ] Dashboard · Clientes · Projetos · Campanhas
 - [ ] Conteúdo · Comentários · **Aprovação**
 - [ ] Produção · Publicação · Resultados
@@ -178,7 +180,7 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 
 ## Decisões
 
-Ver `DECISIONS.md`. 50 registradas. Última: **D-050** (a tela de decisão do cliente não rola).
+Ver `DECISIONS.md`. 53 registradas. Última: **D-053** (termo assinado no Lote de Texto).
 Única ainda **em aberto**: **D-024** (naming/jurídico) 🔴
 
 ---
