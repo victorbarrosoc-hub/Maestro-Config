@@ -98,8 +98,11 @@ Status do Projeto: 🟢 Sprints 0, 1, 2 e 6 concluídos · próximo: Sprint 3 (w
 - [ ] Componentes de estado do conteúdo
 - [ ] Componente de aprovação (botões + som + feedback)
 
-## Sprint 5 — PRD
+## Sprint 5 — PRD · 🟡 Em andamento
 
+- [x] **Ciclo de aprovação** — `PRD/CICLO_DE_APROVACAO.md` (D-042 a D-046)
+- [x] **Approval Assistant** — `AI/APPROVAL_ASSISTANT.md` — primeiro agente no MVP
+- [x] Protótipo do Lote de Texto com IA
 - [ ] Dashboard · Clientes · Projetos · Campanhas
 - [ ] Conteúdo · Comentários · **Aprovação**
 - [ ] Produção · Publicação · Resultados

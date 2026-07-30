@@ -288,6 +288,47 @@ Contexto / Problema / Alternativas / Decisão / Motivo / Consequências / Próxi
 
 ---
 
+# D-042 · Produto · Aprovada
+**Data:** 2026-07-29 · **Responsável:** Founder · **Categoria:** Ciclo de aprovação
+**Decisão:** cada ciclo tem **dois lotes** — `COPY` (copys e roteiros) e `FINAL` (artes e vídeos prontos). A produção só começa com a copy aprovada e congelada.
+**Motivo:** produzir arte sobre copy não aprovada é a maior fonte de retrabalho de agência. E o cliente avalia melhor o argumento quando não há imagem para distrair.
+**Consequências:** nova entidade `Cycle` com 8 estados; `Batch` ganha `kind` e `cycleId`. `Content` **não** se duplica — é o mesmo conteúdo em duas passagens de versão. Alterar copy aprovada durante a produção derruba a aprovação do Lote 1 (I-05).
+
+# D-043 · IA · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Approval Assistant
+**Problema:** o fundador pediu que a IA avalie "se ficou melhor ou era melhor antes, e por quê". É valioso e é a funcionalidade mais perigosa do produto.
+**Risco:** o cliente reescreve, a máquina responde "a versão anterior era melhor", ele se sente corrigido por um robô dentro da ferramenta da agência dele — e para de editar. **Cliente que para de editar mata o produto**, porque a participação dele é a proposta de valor inteira.
+**Decisão:** **a IA fala sem ser chamada sobre fatos; sobre gosto, só quando convidada.**
+- Nível 1 (fatos: ortografia, limite, contradição com a estratégia) — automático e inline
+- Nível 2 (coerência com o objetivo, repetição, contradição entre peças) — automático e discreto
+- Nível 3 (opinião, comparação entre versões, potencial) — **apenas atrás de botão**
+**Consequências:** a comparação entre versões nunca aparece sozinha. Quando aparece, segue formato obrigatório: o que ganhou → o que perdeu → recomendação → terceira via. Nunca emite veredito ("era melhor antes"). A IA jamais bloqueia aprovação. Métrica de segurança do agente: se a quantidade de edições do cliente cair depois da IA entrar, o agente sai.
+
+# D-044 · Produto · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Lote final
+**Pedido:** o cliente editar texto direto sobre a arte no Lote 2.
+**Análise:** arte finalizada é pixel achatado. Editar texto dentro dela exige que a Maestro **renderize** a arte, não apenas armazene — sistema de templates, fontes licenciadas no servidor, motor de renderização e editor visual. É um produto dentro do produto.
+**Decisão MVP:** o cliente marca o ponto na arte e escreve o que mudar; a agência aplica e reenvia só aquela peça.
+**Decisão Fase 2:** o designer marca **zonas de texto editáveis** ao subir a arte, e a Maestro rerrenderiza só aquelas zonas. Cobre o caso comum (preço, data, nome, CTA) sem editor visual completo — 80% do valor por 20% do custo.
+**Motivo da recusa no MVP:** prometer edição livre de texto sobre arte é a forma mais rápida de atrasar o lançamento.
+
+# D-045 · Produto · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Agendamento
+**Contexto:** o fundador descreveu "a IA programa as postagens" ao fechar o ciclo.
+**Análise:** data, horário, plataforma e legenda **já foram aprovados** no cronograma e nos dois lotes. Montar a publicação é operação determinística — confiável, testável, sem alucinação. Chamar de IA cria expectativa que atrapalha.
+**Decisão:** o fechamento do Lote 2 **gera os agendamentos deterministicamente**, em estado de revisão. A IA entra apenas como sugestão: melhor horário dentro da janela já aprovada, primeiro comentário com hashtags, aviso de proximidade entre publicações e aviso de data sensível.
+**Consequências:** a agência confirma com um clique. `Agendamento automático` existe como opção **desligada por padrão**. (Regra #8)
+
+# D-046 · UX · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Fim de ciclo
+**Pedido:** barra de progresso avançando + mensagem de que o cliente está mais perto de atingir os objetivos.
+**Problema:** "mais perto de atingir seus objetivos" é afirmação sobre **resultado de negócio**. A Maestro mede **execução**. Um mês pode ser publicado no prazo e não gerar uma venda; dizer o contrário é bajulação que a identidade verbal proíbe e que queima a confiança na primeira comparação com a realidade.
+**Decisão:** a barra mede **etapas do cronograma concluídas**. A mensagem de fim de ciclo é factual: o que foi entregue, qual etapa fechou e qual era a pergunta dela, quantas etapas faltam, o que vem a seguir e **quantos dias de agenda a próxima vai custar**.
+**Motivo:** é verdade, mostra avanço real e ainda entrega a informação que o cliente mais quer (D-037).
+**Fase 2:** quando existirem métricas reais, resultado entra — com número, nunca com adjetivo.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-042, D-043...
+Adicionar seguindo o padrão D-047, D-048...
