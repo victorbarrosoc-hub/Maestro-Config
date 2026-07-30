@@ -69,6 +69,7 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 - [x] **Rodada 2** — 8 achados, 3 bugs (`UX/TESTE_RESULTADOS.md`)
 - [x] Correções: tela cheia com zoom · sem rolagem · título e propósito por peça · convite à IA visível (D-048 a D-050)
 - [ ] **Rodada 3** 🔴 — validar as correções em iPhone real
+- [ ] **Teste do lado da agência** — com a sua própria equipe, não com clientes
   - [ ] Cronometrar em dois trechos: tempo na capa e capa → primeira decisão
   - [ ] Perguntar após a capa: "com suas palavras, o que você vai fazer aqui?"
   - [ ] Registrar as 10 métricas na planilha (a rodada 1 registrou só o achado qualitativo)
@@ -107,6 +108,7 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 - [x] Protótipo do Lote de Texto com IA
 - [x] **Roteiro estruturado para vídeo** no Lote de Texto (D-051)
 - [x] Termo assinado ao fim do Lote de Texto (D-053)
+- [x] **Protótipo do lado da agência** — painel, envio em lote com checklist, diff de alterações
 - [ ] Dashboard · Clientes · Projetos · Campanhas
 - [ ] Conteúdo · Comentários · **Aprovação**
 - [ ] Produção · Publicação · Resultados

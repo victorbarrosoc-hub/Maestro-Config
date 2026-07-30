@@ -1,0 +1,467 @@
+<title>Maestro — O lado da agência</title>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --brass-300:#E3C173; --brass-400:#D9AC4C; --brass-500:#C8963A; --brass-600:#A87A2C; --brass-700:#855F22;
+    --cobalt:#5B8DEF; --encore:#35B87A; --coral:#F0784C; --violet:#8B7BF0; --danger:#E5484D;
+    --f-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --f-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --baton: cubic-bezier(.22,1,.36,1); --upbeat: cubic-bezier(.34,1.4,.64,1);
+    --page:#EEF0F3; --page-fg:#08090B; --page-muted:#4C535D; --page-line:#DADEE3;
+    --page-card:#FFFFFF; --page-accent:#855F22;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --page:#0D0F12; --page-fg:#F4F6F8; --page-muted:#9AA1AC; --page-line:#23272E; --page-card:#121418; --page-accent:#E3C173; }
+  }
+
+  /* Shell da AGÊNCIA — escuro por padrão (D-047) */
+  .app {
+    --a-bg:#08090B; --a-side:#0D0F12; --a-raised:#121418; --a-sunken:#0B0C0F;
+    --a-line:#23272E; --a-line-soft:#181B20;
+    --a-fg:#F4F6F8; --a-muted:#9AA1AC; --a-subtle:#6B7280;
+    --a-accent:#D9AC4C; --a-accent-tx:#E3C173; --a-accent-fg:#08090B;
+    --a-frame:#181B20; --a-shadow: 0 30px 70px rgba(0,0,0,.5);
+  }
+  .app[data-app="light"] {
+    --a-bg:#FFFFFF; --a-side:#F7F8FA; --a-raised:#FFFFFF; --a-sunken:#F1F3F6;
+    --a-line:#E4E8EC; --a-line-soft:#EFF2F5;
+    --a-fg:#14161A; --a-muted:#5A626C; --a-subtle:#868D97;
+    --a-accent:#C8963A; --a-accent-tx:#855F22; --a-accent-fg:#08090B;
+    --a-frame:#D8DDE3; --a-shadow: 0 30px 70px rgba(8,9,11,.14);
+  }
+
+  body { background: var(--page); color: var(--page-fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .page { max-width: 1240px; margin: 0 auto; padding: 44px 20px 90px; }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; color: var(--page-accent); margin-bottom: 10px; }
+  h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(30px,5vw,40px); line-height: 1.08; letter-spacing: -.022em; margin-bottom: 10px; }
+  .top p { color: var(--page-muted); max-width: 64ch; }
+  .note { margin-top: 14px; border-left: 2px solid var(--page-accent); padding: 3px 0 3px 15px; font-size: 14px; color: var(--page-muted); max-width: 68ch; }
+  .note b { color: var(--page-fg); }
+  .ctl { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  .ctl button { font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: 9999px; cursor: pointer; background: transparent; border: 1px solid var(--page-line); color: var(--page-muted); }
+  .ctl button[aria-pressed="true"] { background: var(--page-fg); color: var(--page); border-color: var(--page-fg); }
+
+  /* ===== janela ========================================================= */
+  .stage { display: flex; justify-content: center; padding: 26px 0 8px; }
+  .app { width: 100%; max-width: 1120px; height: 700px; background: var(--a-bg); color: var(--a-fg);
+         border: 1px solid var(--a-frame); border-radius: 16px; overflow: hidden; box-shadow: var(--a-shadow);
+         display: grid; grid-template-columns: 224px 1fr; }
+  @media (max-width: 860px) { .app { grid-template-columns: 1fr; height: 760px; } .side { display: none !important; } }
+
+  .side { background: var(--a-side); border-right: 1px solid var(--a-line); display: flex; flex-direction: column; padding: 16px 12px; }
+  .brand { display: flex; align-items: center; gap: 9px; padding: 4px 8px 18px; }
+  .brand svg { width: 20px; height: 20px; color: var(--a-accent); }
+  .brand span { font-family: var(--f-display); font-size: 19px; letter-spacing: -.01em; }
+  .navlab { font-size: 9.5px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; color: var(--a-subtle); padding: 12px 8px 6px; }
+  .nav { display: flex; flex-direction: column; gap: 1px; }
+  .nav button { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; font: inherit; font-size: 13.5px;
+    padding: 7px 9px; border-radius: 8px; border: 0; background: transparent; color: var(--a-muted); cursor: pointer; }
+  .nav button:hover { background: var(--a-raised); color: var(--a-fg); }
+  .nav button[aria-current="true"] { background: var(--a-raised); color: var(--a-fg); font-weight: 600; }
+  .nav .cnt { margin-left: auto; font-family: var(--f-mono); font-size: 10px; color: var(--a-subtle); }
+  .nav .cnt.hot { color: var(--a-accent-tx); }
+  .sidefoot { margin-top: auto; padding: 10px 8px 2px; border-top: 1px solid var(--a-line); display: flex; align-items: center; gap: 9px; }
+  .av { width: 26px; height: 26px; border-radius: 50%; background: var(--a-accent); color: var(--a-accent-fg); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+  .sidefoot div { font-size: 12px; line-height: 1.25; }
+  .sidefoot small { display: block; color: var(--a-subtle); font-size: 11px; }
+
+  .main { display: flex; flex-direction: column; min-width: 0; }
+  .bar { flex: none; display: flex; align-items: center; gap: 12px; padding: 13px 20px; border-bottom: 1px solid var(--a-line); }
+  .crumb { font-size: 13px; color: var(--a-muted); }
+  .crumb b { color: var(--a-fg); font-weight: 600; }
+  .kbd { margin-left: auto; font-family: var(--f-mono); font-size: 10.5px; color: var(--a-subtle); border: 1px solid var(--a-line); padding: 3px 8px; border-radius: 6px; }
+  .view { flex: 1; overflow-y: auto; padding: 20px; }
+
+  h2.vt { font-family: var(--f-display); font-weight: 400; font-size: 26px; letter-spacing: -.02em; margin-bottom: 4px; }
+  .vsub { font-size: 13.5px; color: var(--a-muted); margin-bottom: 20px; }
+
+  /* ===== dashboard ====================================================== */
+  .blocks { display: flex; flex-direction: column; gap: 12px; }
+  .blk { background: var(--a-raised); border: 1px solid var(--a-line); border-radius: 13px; overflow: hidden; }
+  .blk.warn { border-color: color-mix(in srgb, var(--coral) 45%, var(--a-line)); }
+  .blk .bh { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--a-line-soft); }
+  .blk .bh h3 { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--a-subtle); }
+  .blk .bh .n { font-family: var(--f-mono); font-size: 11px; color: var(--a-muted); margin-left: auto; }
+  .blk .bh .tag { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; background: var(--coral); color: #08090B; }
+  .row { display: grid; grid-template-columns: 1.4fr 1fr auto auto; gap: 12px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--a-line-soft); font-size: 13.5px; }
+  .row:last-child { border-bottom: 0; }
+  .row .who { color: var(--a-subtle); font-size: 12.5px; }
+  .row .t { font-weight: 500; }
+  .row .meta { font-size: 12.5px; color: var(--a-muted); white-space: nowrap; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 500; padding: 3px 10px; border-radius: 9999px;
+          border: 1px solid color-mix(in srgb, var(--c) 38%, transparent); background: color-mix(in srgb, var(--c) 13%, transparent); color: color-mix(in srgb, var(--c) 88%, var(--a-fg)); white-space: nowrap; }
+  .pill .d { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+  .go { font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; background: transparent; border: 1px solid var(--a-line); color: var(--a-fg); white-space: nowrap; }
+  .go:hover { border-color: var(--a-subtle); }
+  .go.p { background: var(--a-accent); color: var(--a-accent-fg); border-color: transparent; }
+
+  .risk { font-family: var(--f-mono); font-size: 11px; }
+  .risk.hi { color: var(--coral); } .risk.md { color: var(--brass-400); } .risk.lo { color: var(--a-subtle); }
+
+  /* ===== preparar lote ================================================== */
+  .split { display: grid; grid-template-columns: 1fr 336px; gap: 16px; align-items: start; }
+  @media (max-width: 980px) { .split { grid-template-columns: 1fr; } }
+  .card { background: var(--a-raised); border: 1px solid var(--a-line); border-radius: 13px; }
+  .card .ch { padding: 12px 16px; border-bottom: 1px solid var(--a-line-soft); display: flex; align-items: center; gap: 10px; }
+  .card .ch h3 { font-size: 12.5px; font-weight: 600; }
+  .card .ch .n { margin-left: auto; font-family: var(--f-mono); font-size: 11px; color: var(--a-subtle); }
+  .item { display: grid; grid-template-columns: 20px 1fr auto; gap: 11px; align-items: start; padding: 11px 16px; border-bottom: 1px solid var(--a-line-soft); }
+  .item:last-child { border-bottom: 0; }
+  .item .chk { width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid var(--a-line); margin-top: 2px; display: grid; place-items: center; cursor: pointer; }
+  .item .chk[aria-checked="true"] { background: var(--a-accent); border-color: transparent; color: var(--a-accent-fg); }
+  .item h4 { font-size: 13.5px; font-weight: 500; margin-bottom: 2px; }
+  .item p { font-size: 12px; color: var(--a-subtle); line-height: 1.4; }
+  .item .fmt { font-size: 11px; color: var(--a-muted); white-space: nowrap; }
+
+  .chk-list { display: flex; flex-direction: column; }
+  .ck { display: grid; grid-template-columns: 16px 1fr; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--a-line-soft); font-size: 12.5px; line-height: 1.45; }
+  .ck:last-child { border-bottom: 0; }
+  .ck .dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; }
+  .ck.block .dot { background: var(--danger); }
+  .ck.warn .dot { background: var(--brass-400); }
+  .ck.ok .dot { background: var(--encore); }
+  .ck.done { opacity: .45; }
+  .ck b { color: var(--a-fg); font-weight: 600; }
+  .ck .k { display: block; font-family: var(--f-mono); font-size: 10px; color: var(--a-subtle); margin-top: 3px; }
+  .ck .new { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--a-accent-tx); border: 1px solid color-mix(in srgb, var(--a-accent) 40%, transparent); padding: 1px 5px; border-radius: 4px; margin-left: 6px; vertical-align: 1px; }
+  .ck .fix { display: block; margin-top: 5px; font: inherit; font-size: 11.5px; font-weight: 600; color: var(--a-accent-tx); background: none; border: 0; padding: 0; cursor: pointer; }
+
+  .sendbox { padding: 14px 16px; border-top: 1px solid var(--a-line); }
+  .btn { width: 100%; font: inherit; font-size: 14px; font-weight: 600; height: 42px; border-radius: 9px; cursor: pointer; border: 1px solid transparent; }
+  .btn.p { background: var(--a-accent); color: var(--a-accent-fg); }
+  .btn.p:disabled { opacity: .4; cursor: default; }
+  .btn.g { background: transparent; border-color: var(--a-line); color: var(--a-fg); margin-top: 8px; }
+  .sendbox .hint { font-size: 11.5px; color: var(--a-subtle); text-align: center; margin-top: 9px; line-height: 1.4; }
+
+  /* ===== diff =========================================================== */
+  .diff { font-family: var(--f-mono); font-size: 12.5px; line-height: 1.7; padding: 12px 16px; }
+  .diff .m { color: var(--coral); } .diff .p { color: var(--encore); }
+  .pins { padding: 4px 16px 12px; display: flex; flex-direction: column; gap: 7px; }
+  .pinrow { display: grid; grid-template-columns: 20px 1fr; gap: 10px; font-size: 13px; align-items: start; }
+  .pinrow .no { width: 19px; height: 19px; border-radius: 50%; background: var(--a-accent); color: var(--a-accent-fg); font-size: 10px; font-weight: 700; display: grid; place-items: center; margin-top: 2px; }
+  .acts { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--a-line-soft); flex-wrap: wrap; }
+  .acts button { font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 14px; border-radius: 8px; cursor: pointer; background: transparent; border: 1px solid var(--a-line); color: var(--a-fg); }
+  .acts button.p { background: var(--a-accent); color: var(--a-accent-fg); border-color: transparent; }
+  .kept { padding: 12px 16px; font-size: 12.5px; color: var(--a-muted); border-top: 1px solid var(--a-line-soft); }
+  .kept b { color: var(--encore); }
+
+  .toast { position: absolute; left: 50%; transform: translate(-50%, 10px); bottom: 22px; background: var(--a-raised); border: 1px solid var(--a-line); border-radius: 11px; padding: 12px 18px; font-size: 13.5px; box-shadow: 0 16px 40px rgba(0,0,0,.4); opacity: 0; pointer-events: none; transition: opacity 240ms var(--baton), transform 240ms var(--baton); }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast b { color: var(--encore); font-weight: 600; }
+  .stage { position: relative; }
+
+  .cards { margin-top: 38px; display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 14px; }
+  .ic { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 14px; padding: 18px 20px; }
+  .ic .k { font-family: var(--f-mono); font-size: 10.5px; color: var(--page-accent); margin-bottom: 8px; }
+  .ic h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .ic p { font-size: 13px; color: var(--page-muted); line-height: 1.55; }
+
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+</style>
+
+<div class="page">
+
+  <header class="top">
+    <div class="eyebrow">O lado da agência · Sprint 5</div>
+    <h1>Onde a agência mora</h1>
+    <p>Tudo que prototipamos até aqui é o que o cliente vê. Esta é a outra metade: o painel, o envio em lote com o checklist automático, e o recebimento das alterações como diff.</p>
+    <p class="note"><b>Escuro por padrão, ao contrário do cliente.</b> A agência passa o dia aqui, com densidade alta e ambiente controlado; o cliente entra a cada 15 dias, muitas vezes na rua. Mesmos tokens, padrões opostos. <b>D-047</b></p>
+    <div class="ctl">
+      <button id="vDash" type="button" aria-pressed="true">Painel</button>
+      <button id="vSend" type="button" aria-pressed="false">Preparar lote</button>
+      <button id="vDiff" type="button" aria-pressed="false">Alterações recebidas</button>
+      <button id="tLight" type="button" aria-pressed="false" style="margin-left:auto">Inverter tema</button>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="app" id="app">
+      <aside class="side">
+        <div class="brand">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Maestro</span>
+        </div>
+        <div class="navlab">Home</div>
+        <div class="nav">
+          <button type="button" data-v="dash" aria-current="true">Painel <span class="cnt hot">6</span></button>
+        </div>
+        <div class="navlab">Operação</div>
+        <div class="nav">
+          <button type="button" data-v="send">Aprovações <span class="cnt hot">7</span></button>
+          <button type="button">Clientes <span class="cnt">4</span></button>
+          <button type="button">Projetos <span class="cnt">6</span></button>
+          <button type="button">Calendário</button>
+        </div>
+        <div class="navlab">Produção</div>
+        <div class="nav">
+          <button type="button" data-v="diff">Alterações <span class="cnt hot">2</span></button>
+          <button type="button">Kanban</button>
+          <button type="button">Arquivos</button>
+        </div>
+        <div class="sidefoot">
+          <span class="av">AP</span>
+          <div>Ana Prado<small>Studio Norte</small></div>
+        </div>
+      </aside>
+
+      <div class="main">
+        <div class="bar"><span class="crumb" id="crumb"></span><span class="kbd">⌘K buscar</span></div>
+        <div class="view" id="view"></div>
+      </div>
+    </div>
+    <div class="toast" id="toast"><span id="tmsg"></span></div>
+  </div>
+
+  <section class="cards">
+    <div class="ic"><div class="k">Painel</div><h4>Três perguntas, nada além</h4>
+      <p>O que depende de mim · o que está travado e com quem · o que vai ao ar e quando. Tela que não responde nenhuma das três não deveria existir. Nenhuma métrica individual de produtividade: a Maestro é ferramenta de clareza, não de fiscalização.</p></div>
+    <div class="ic"><div class="k">D-022 · D-036</div><h4>O alerta mais valioso do produto</h4>
+      <p>“2 publicações sem peça aprovada nas próximas 48h” é o buraco antes de ele acontecer. Só existe porque o slot do calendário e a peça são entidades separadas — e porque a metodologia gerou o slot antes de a peça existir.</p></div>
+    <div class="ic"><div class="k">D-030</div><h4>Três avisos que só o lote permite</h4>
+      <p>Repetição de tema, aderência ao objetivo e ausência de referência visual não existem no nível da peça. Vieram da pergunta “o lote não fica repetitivo?” do documento original da EJUP.</p></div>
+    <div class="ic"><div class="k">Regra #3</div><h4>Reenvio é parcial</h4>
+      <p>Quem já aprovou 2 de 4 não reavalia as 4. E a sugestão do cliente nunca é aplicada sozinha — ela é proposta versionada até alguém da agência aceitar.</p></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (i) { return document.getElementById(i); };
+  function esc(s) { return String(s).replace(/[&<>]/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m]; }); }
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var ctx = null;
+  function play() {
+    if (reduced) return;
+    try { if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended') ctx.resume(); } catch(e){ return; }
+    [[440,0],[659.25,.09]].forEach(function (p) {
+      var o=ctx.createOscillator(),h=ctx.createOscillator(),g=ctx.createGain(),hg=ctx.createGain();
+      o.type='sine';o.frequency.value=p[0];h.type='triangle';h.frequency.value=p[0]*2;hg.gain.value=.12;
+      var t=ctx.currentTime+p[1];
+      g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.15,t+.008);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.44);
+      o.connect(g);h.connect(hg);hg.connect(g);g.connect(ctx.destination);
+      o.start(t);h.start(t);o.stop(t+.5);h.stop(t+.5);
+    });
+  }
+  function toast(html) {
+    $('tmsg').innerHTML = html; $('toast').classList.add('show');
+    setTimeout(function(){ $('toast').classList.remove('show'); }, 4000);
+  }
+
+  /* ---------------- PAINEL ---------------- */
+  function dash() {
+    $('crumb').innerHTML = '<b>Painel</b>';
+    $('view').innerHTML =
+      '<h2 class="vt">Terça, 6 de agosto</h2>' +
+      '<p class="vsub">6 coisas dependem de você hoje.</p>' +
+      '<div class="blocks">' +
+
+      '<div class="blk"><div class="bh"><h3>Esperando a equipe</h3><span class="n">4 peças · 2 vencem hoje</span></div>' +
+        row('Carrossel Coleção', 'Loja Norte · Verão 26', 'Arte pendente', '#5B8DEF', 'vence hoje') +
+        row('Reels Bastidores', 'Café Duarte · Sempre ativo', 'Revisão interna', '#5B8DEF', 'vence hoje') +
+        row('Post Institucional', 'Studio Pilar · Lançamento', 'Copy pendente', '#6B7280', 'sexta') +
+      '</div>' +
+
+      '<div class="blk"><div class="bh"><h3>Esperando o cliente</h3><span class="n">7 peças · ordenado por risco</span></div>' +
+        '<div class="row" style="grid-template-columns:1.4fr 1fr auto auto"><span class="t">Lote 01 · Agosto</span>' +
+          '<span class="who">Loja Norte · Marina Costa</span>' +
+          '<span class="pill" style="--c:#D9AC4C"><span class="d"></span>Esperando há 5 dias</span>' +
+          '<span class="risk hi">risco alto</span></div>' +
+        '<div class="row"><span class="t">Lote 01 · Textos</span><span class="who">Café Duarte · Rafael</span>' +
+          '<span class="pill" style="--c:#D9AC4C"><span class="d"></span>Esperando há 2 dias</span>' +
+          '<span class="risk md">risco médio</span></div>' +
+        '<div class="row"><span class="t">Post Institucional</span><span class="who">Studio Pilar · Camila</span>' +
+          '<span class="pill" style="--c:#D9AC4C"><span class="d"></span>Esperando há 4 horas</span>' +
+          '<span class="risk lo">risco baixo</span></div>' +
+      '</div>' +
+
+      '<div class="blk warn"><div class="bh"><span class="tag">Atenção</span><h3>Próximas 48 horas</h3>' +
+        '<span class="n">9 publicações</span></div>' +
+        '<div class="row"><span class="t">2 publicações sem peça aprovada</span>' +
+          '<span class="who">quinta 08/08 · Loja Norte</span>' +
+          '<span class="pill" style="--c:#F0784C"><span class="d"></span>Slot vazio</span>' +
+          '<button class="go p" type="button" data-go="send">Preparar lote</button></div>' +
+        '<div class="row"><span class="t">7 publicações prontas e agendadas</span>' +
+          '<span class="who">quarta e quinta</span>' +
+          '<span class="pill" style="--c:#8B7BF0"><span class="d"></span>Agendado</span><span></span></div>' +
+      '</div>' +
+
+      '<div class="blk"><div class="bh"><h3>Ponto de decisão aberto</h3><span class="n">bloqueia a etapa seguinte</span></div>' +
+        '<div class="row"><span class="t">O mercado paga antes de gravarmos?</span>' +
+          '<span class="who">Helena Braga · Mês 05 · Pré-venda</span>' +
+          '<span class="pill" style="--c:#D9AC4C"><span class="d"></span>Aguardando decisão</span>' +
+          '<button class="go" type="button">Registrar</button></div>' +
+      '</div>' +
+
+      '</div>';
+
+    Array.prototype.forEach.call($('view').querySelectorAll('[data-go]'), function (b) {
+      b.addEventListener('click', function () { go(this.dataset.go); });
+    });
+  }
+
+  function row(t, who, st, c, meta) {
+    return '<div class="row"><span class="t">' + esc(t) + '</span><span class="who">' + esc(who) + '</span>' +
+      '<span class="pill" style="--c:' + c + '"><span class="d"></span>' + esc(st) + '</span>' +
+      '<span class="meta">' + esc(meta) + '</span></div>';
+  }
+
+  /* ---------------- PREPARAR LOTE ---------------- */
+  var checks = [
+    { lvl:'block', k:'content.no-asset', t:'<b>Carrossel Coleção</b> está sem arte', fix:'Ver a peça', done:false },
+    { lvl:'block', k:'content.no-intent', t:'<b>Post Preço</b> não declara o que busca', fix:'Definir propósito', done:false, isNew:true },
+    { lvl:'warn', k:'batch.repetition', t:'<b>Bastidores 1</b> e <b>Bastidores 2</b> têm o mesmo formato e o mesmo tema', done:false, isNew:true },
+    { lvl:'warn', k:'batch.off-goal', t:'Nenhuma peça deste lote fala com <b>quem ainda não conhece a marca</b>', done:false, isNew:true },
+    { lvl:'warn', k:'batch.no-refs', t:'Este lote não tem <b>referência visual</b>', fix:'Adicionar', done:false, isNew:true },
+    { lvl:'warn', k:'content.under-24h', t:'<b>Reels Linho</b> vai ao ar em menos de 24h', done:false },
+    { lvl:'ok', k:'', t:'Formatos e limites de caracteres conferidos', done:true }
+  ];
+
+  function send() {
+    $('crumb').innerHTML = 'Loja Norte · Verão 26 · <b>Preparar lote</b>';
+    var blocks = checks.filter(function (c) { return c.lvl==='block' && !c.done; }).length;
+
+    $('view').innerHTML =
+      '<h2 class="vt">Lote 01 · Agosto</h2>' +
+      '<p class="vsub">4 peças selecionadas. O cliente recebe <b>uma</b> notificação, nunca uma por peça.</p>' +
+      '<div class="split"><div class="card">' +
+        '<div class="ch"><h3>Peças do lote</h3><span class="n">4 selecionadas</span></div>' +
+        item('Verão sem pressa', 'Apresentar a coleção para quem ainda não conhece', 'Carrossel · 06/08') +
+        item('Como escolher linho', 'Provar autoridade ensinando algo útil', 'Reels · 10/08') +
+        item('Preço e condições', 'Tirar a objeção de preço', 'Post · 20/08') +
+        item('Quem faz a coleção', 'Sustentar o pilar “feito à mão”', 'Carrossel · 25/08') +
+      '</div>' +
+
+      '<div class="card"><div class="ch"><h3>Checklist automático</h3>' +
+        '<span class="n" id="ckn">' + blocks + ' bloqueio' + (blocks===1?'':'s') + '</span></div>' +
+        '<div class="chk-list" id="cklist"></div>' +
+        '<div class="sendbox">' +
+          '<button class="btn p" id="doSend" type="button">Enviar lote</button>' +
+          '<button class="btn g" id="anyway" type="button">Enviar mesmo assim</button>' +
+          '<p class="hint" id="sendHint"></p>' +
+        '</div></div></div>';
+
+    drawChecks();
+  }
+
+  function item(t, intent, fmt) {
+    return '<div class="item"><span class="chk" role="checkbox" aria-checked="true" tabindex="0">' +
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>' +
+      '<div><h4>' + esc(t) + '</h4><p>' + esc(intent) + '</p></div>' +
+      '<span class="fmt">' + esc(fmt) + '</span></div>';
+  }
+
+  function drawChecks() {
+    $('cklist').innerHTML = checks.map(function (c, i) {
+      return '<div class="ck ' + c.lvl + (c.done ? ' done' : '') + '"><span class="dot"></span><div>' + c.t +
+        (c.isNew ? '<span class="new">só no lote</span>' : '') +
+        (c.k ? '<span class="k">' + c.k + '</span>' : '') +
+        (c.fix && !c.done ? '<button class="fix" type="button" data-i="' + i + '">' + c.fix + ' →</button>' : '') +
+        '</div></div>';
+    }).join('');
+
+    Array.prototype.forEach.call($('cklist').querySelectorAll('.fix'), function (b) {
+      b.addEventListener('click', function () {
+        checks[+this.dataset.i].done = true;
+        drawChecks();
+        toast('Resolvido. O checklist reavaliou o lote.');
+      });
+    });
+
+    var blocks = checks.filter(function (c) { return c.lvl==='block' && !c.done; }).length;
+    var warns = checks.filter(function (c) { return c.lvl==='warn' && !c.done; }).length;
+    $('ckn').textContent = blocks ? blocks + ' bloqueio' + (blocks===1?'':'s') : warns + ' aviso' + (warns===1?'':'s');
+    $('doSend').disabled = blocks > 0;
+    $('anyway').style.display = (!blocks && warns) ? 'block' : 'none';
+    $('sendHint').innerHTML = blocks
+      ? 'Bloqueios impedem o envio. Avisos, não — a agência decide.'
+      : (warns ? warns + ' aviso' + (warns===1?'':'s') + ' pendente' + (warns===1?'':'s') + '. Você pode enviar assim mesmo.'
+               : 'Tudo conferido. Marina recebe por e-mail e WhatsApp.');
+
+    $('doSend').onclick = $('anyway').onclick = function () {
+      if ($('doSend').disabled && this === $('doSend')) return;
+      play();
+      toast('<b>Lote enviado.</b> Marina foi avisada por e-mail e WhatsApp — uma notificação, não quatro.');
+      $('doSend').disabled = true; $('anyway').style.display = 'none';
+      $('sendHint').textContent = 'Enviado às ' + new Date().toTimeString().slice(0,5) + '. Selo 7F3A·2B91 gravado.';
+    };
+  }
+
+  /* ---------------- ALTERAÇÕES ---------------- */
+  function diff() {
+    $('crumb').innerHTML = 'Loja Norte · Verão 26 · <b>Alterações recebidas</b>';
+    $('view').innerHTML =
+      '<h2 class="vt">Marina pediu ajuste em 2 de 4</h2>' +
+      '<p class="vsub">Há 4 minutos. Chega como diff, nunca como recado solto.</p>' +
+
+      '<div class="card" style="margin-bottom:14px">' +
+        '<div class="ch"><h3>Como escolher linho · Reels</h3><span class="n">versão 4</span></div>' +
+        '<div class="diff"><div class="m">− Linho bom amassa. Linho ruim também — só que não desamassa.</div>' +
+        '<div class="p">+ Todo linho amassa. Nem todo linho volta ao lugar.</div></div>' +
+        '<div class="pins">' +
+          '<div class="pinrow"><span class="no">1</span><div>“No gancho, tirar a palavra ‘ruim’ — soa agressivo com concorrente.”</div></div>' +
+        '</div>' +
+        '<div class="acts"><button class="p" type="button" data-a="all">Aceitar tudo</button>' +
+          '<button type="button" data-a="one">Revisar um a um</button>' +
+          '<button type="button" data-a="talk">Discutir</button></div>' +
+      '</div>' +
+
+      '<div class="card">' +
+        '<div class="ch"><h3>Quem faz a coleção · Carrossel</h3><span class="n">versão 2</span></div>' +
+        '<div class="pins" style="padding-top:12px">' +
+          '<div class="pinrow"><span class="no">1</span><div>“O nome da Ana está errado — é Anna, com dois enes.”</div></div>' +
+          '<div class="pinrow"><span class="no">2</span><div>“Trocar essa foto pela do ateliê aberto.”</div></div>' +
+        '</div>' +
+        '<div class="acts"><button class="p" type="button" data-a="all">Aceitar tudo</button>' +
+          '<button type="button" data-a="one">Revisar um a um</button>' +
+          '<button type="button" data-a="talk">Discutir</button></div>' +
+      '</div>' +
+
+      '<div class="card" style="margin-top:14px"><div class="kept">' +
+        '<b>Verão sem pressa</b> e <b>Preço e condições</b> continuam aprovadas. ' +
+        'O reenvio leva só as 2 peças alteradas — quem já decidiu não reavalia tudo.</div></div>';
+
+    Array.prototype.forEach.call($('view').querySelectorAll('[data-a]'), function (b) {
+      b.addEventListener('click', function () {
+        var a = this.dataset.a;
+        if (a === 'all') { play(); toast('<b>Aplicado.</b> Versão 5 criada. O selo mudou e a aprovação anterior caiu — a peça volta para Marina.'); }
+        if (a === 'one') toast('Editor aberto com cada sugestão em contexto. Nada é aplicado sem alguém aceitar.');
+        if (a === 'talk') toast('Resposta no thread do comentário. Nem toda nota vira alteração — às vezes a resposta certa é explicar.');
+      });
+    });
+  }
+
+  /* ---------------- navegação ---------------- */
+  function go(v) {
+    ['dash','send','diff'].forEach(function (k) {
+      var b = $({dash:'vDash',send:'vSend',diff:'vDiff'}[k]);
+      b.setAttribute('aria-pressed', String(k === v));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.nav button'), function (b) {
+      b.setAttribute('aria-current', String(b.dataset.v === v));
+    });
+    ({ dash: dash, send: send, diff: diff })[v]();
+    $('view').scrollTop = 0;
+  }
+
+  $('vDash').addEventListener('click', function(){ go('dash'); });
+  $('vSend').addEventListener('click', function(){ go('send'); });
+  $('vDiff').addEventListener('click', function(){ go('diff'); });
+  Array.prototype.forEach.call(document.querySelectorAll('.nav button'), function (b) {
+    if (b.dataset.v) b.addEventListener('click', function(){ go(this.dataset.v); });
+  });
+
+  $('tLight').addEventListener('click', function () {
+    var dark = $('app').dataset.app !== 'light';
+    $('app').dataset.app = dark ? 'light' : 'dark';
+    this.setAttribute('aria-pressed', String(dark));
+  });
+
+  go('dash');
+})();
+</script>
