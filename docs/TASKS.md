@@ -1,6 +1,6 @@
 # TASKS.md — Maestro Roadmap
 
-Status do Projeto: 🟢 Sprints 0, 1, 2 e 6 concluídos · próximo: Sprint 3 (wireframes) ou Sprint 7 (APIs)
+Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andamento · próximo: implementação
 Última atualização: 2026-07-29
 
 ---
@@ -170,7 +170,7 @@ Status do Projeto: 🟢 Sprints 0, 1, 2 e 6 concluídos · próximo: Sprint 3 (w
 
 ## Decisões
 
-Ver `DECISIONS.md`. 40 registradas. Última: **D-040** (lote pertence ao projeto).
+Ver `DECISIONS.md`. 47 registradas. Última: **D-047** (tema claro no shell do cliente).
 Única ainda **em aberto**: **D-024** (naming/jurídico) 🔴
 
 ---
