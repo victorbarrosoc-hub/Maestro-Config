@@ -329,6 +329,21 @@ Contexto / Problema / Alternativas / Decisão / Motivo / Consequências / Próxi
 
 ---
 
+# D-047 · Design · Aprovada
+**Data:** 2026-07-29 · **Responsável:** Founder · **Categoria:** Tema
+**Contexto:** todos os protótipos nasceram em dark. Ao testar, o fundador achou pesado demais.
+**Análise:** D-013 diz "Dark Mode faz parte do MVP" — o que significa que dark **existe** no MVP, não que é o padrão. Os dois shells têm naturezas diferentes:
+- **Agência** — uso diário, muitas horas, densidade alta, ambiente controlado. Dark funciona bem.
+- **Cliente** — entra a cada 10–15 dias, muitas vezes na rua, no sol, com pressa. E o lote é **um documento para ler**, não um painel para operar.
+**Decisão:** **o shell do cliente é claro por padrão.** O shell da agência permanece com dark por padrão. Os dois oferecem os dois temas.
+**Motivo:** papel branco lê melhor que painel preto, e a métrica que importa no cliente é compreensão em 15 segundos, não conforto em 8 horas.
+**Consequências:**
+- Em fundo claro, texto de acento usa `brass-700` (6,5:1) e preenchimento usa `brass-500` com rótulo Ink — regras R4 e R5 já previstas em `VISUAL_IDENTITY.md`, agora efetivamente exercidas.
+- `VISUAL_IDENTITY.md` §6 ganha a nota de tema padrão por shell.
+- Não altera D-013.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-047, D-048...
+Adicionar seguindo o padrão D-048, D-049...

@@ -155,6 +155,16 @@ Brass é a cor do momento que importa: quando algo espera por você.
 
 Escala completa de `ink-50` a `ink-950` em `tokens/maestro.tokens.css`.
 
+### Tema padrão por shell (D-047)
+
+| Shell | Padrão | Por quê |
+|---|---|---|
+| **Agência** | escuro | uso diário, muitas horas, alta densidade, ambiente controlado |
+| **Cliente** | **claro** | entra a cada 10–15 dias, muitas vezes na rua; o lote é documento para ler, não painel para operar |
+
+Os dois shells oferecem os dois temas. Isso não altera D-013 — dark mode continua fazendo
+parte do MVP; ele só deixa de ser o padrão do lado do cliente.
+
 ### Apoio semântico
 
 | Cor | Hex (400) | Significado |
