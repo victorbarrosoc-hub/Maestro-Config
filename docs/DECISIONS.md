@@ -270,6 +270,24 @@ Contexto / Problema / Alternativas / Decisão / Motivo / Consequências / Próxi
 
 ---
 
+# D-041 · UX · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Entrada do cliente
+**Origem:** teste com clientes reais, rodada 1. Ver `UX/TESTE_RESULTADOS.md`.
+**Achado:** as pessoas não entenderam de primeira o que era a tela. Falha da métrica M7.
+**Causa:** o protótipo abria direto na peça. Ele respondia *como fazer* e nunca *o que é isso e por que chegou pra mim*. A faixa de contexto estratégico é linguagem de agência — informa, não orienta.
+**Contexto adicional:** o D-030 estabeleceu o lote como unidade de apresentação, mas deixou o fluxo peça a peça como entrada válida por deep link. Foi exatamente essa entrada que não se explicou. Erro de especificação, não de interface.
+**Decisão:**
+1. **O deep link sempre cai na capa do lote, nunca na peça.** A peça é uma etapa dentro do percurso.
+2. **A orientação é permanente**, não de primeiro acesso. "O que você vai fazer" aparece em todo lote, para todo mundo, sempre.
+3. A capa responde, nesta ordem: **quem enviou · o que é · o que você vai fazer · quanto tempo leva · que não precisa instalar nem criar senha.**
+4. A **referência visual** sobe para a capa (antes ficava depois das peças). Ver o que já foi aprovado torna "publicações" concreto antes de qualquer decisão.
+5. O contexto estratégico deixa de ser o primeiro elemento da tela.
+**Emenda a D-030:** o fluxo peça a peça **não é mais entrada**. Continua existindo como navegação interna do lote.
+**Emenda a `USER_FLOW_CLIENT.md` §3:** os três cartões de orientação deixam de ser onboarding de primeiro acesso e passam a ser seção fixa da capa.
+**Risco introduzido:** a capa adiciona uma tela ao caminho e o critério de tempo é < 2 min. Mitigação: capa legível em ~15 segundos, um toque para começar, e medição separada de tempo-na-capa na rodada 2.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-041, D-042...
+Adicionar seguindo o padrão D-042, D-043...

@@ -124,22 +124,46 @@ clica no link do e-mail
 
 ---
 
-## 3. Orientação — 30 segundos, uma vez
+## 3. Orientação — permanente, não onboarding
 
-Três cartões, puláveis, mostrados só no primeiro acesso.
+> **Corrigido pela rodada 1 do teste com clientes reais (D-041).**
+> A versão anterior previa três cartões só no primeiro acesso. O teste mostrou que
+> isso é insuficiente: as pessoas não entenderam o que era a tela.
 
-> **Aqui você vê o que vai ao ar**
-> Antes de publicar, a agência envia cada peça para você.
+A orientação **não é onboarding**. É seção fixa da capa do lote, e aparece toda vez, para todo mundo.
 
-> **Aprovar ou pedir ajuste — os dois são normais**
-> Se algo não estiver certo, escreva direto no texto ou marque um ponto na imagem.
+O motivo é a frequência: o cliente entra a cada 10 ou 15 dias. Orientação de primeiro acesso é orientação que ninguém lembra. Três linhas custam 15 segundos e eliminam a pergunta *"o que eu faço aqui?"*.
 
-> **A gente avisa quando tiver algo pra você**
-> Por e-mail e WhatsApp. Escolha como prefere em Conta.
+### O que a capa responde, nesta ordem
 
-**Nunca:** tour guiado com setas, tooltip sequencial, vídeo, "vamos começar!". O cliente não pediu treinamento.
+| # | Pergunta na cabeça da pessoa | O que a capa mostra |
+|---|---|---|
+| 1 | Quem me mandou isso? | "Ana Prado enviou…" — pessoa, nunca ferramenta |
+| 2 | O que é? | "4 publicações esperando você" |
+| 3 | O que eu vou fazer? | os três passos, concretos |
+| 4 | Quanto tempo vai me custar? | "Leva uns 10 minutos" |
+| 5 | Vou ter que me cadastrar? | "Não precisa instalar nada nem criar senha" |
 
-O segundo cartão é o mais importante do produto inteiro: **ele autoriza o cliente a pedir alteração.** Sem isso, muita gente aprova por educação.
+### Os três passos
+
+> **1 · Ver cada publicação**
+> Do jeito exato que vai aparecer no Instagram.
+>
+> **2 · Mudar o que quiser**
+> Escreva direto no texto, ou toque num ponto da imagem.
+>
+> **3 · Aprovar ou pedir ajuste**
+> Os dois são normais.
+
+**O passo 3 é a frase mais importante do produto inteiro:** ela autoriza o cliente a pedir alteração. Sem ela, muita gente aprova por educação.
+
+**O passo 2 ficou concreto de propósito.** "Edite direto no texto" descreve; "toque num ponto da imagem" ensina. A descoberta do comentário por ponto era o risco de usabilidade mais provável, e a instrução resolve mais barato que qualquer affordance visual.
+
+### A referência visual também orienta
+
+Três peças já aprovadas, em miniatura, na capa. Elas fazem a palavra "publicações" virar coisa concreta antes de qualquer decisão — e calibram o critério, que era a função original (D-031).
+
+**Nunca:** tour guiado com setas, tooltip sequencial, vídeo, "vamos começar!". O cliente não pediu treinamento — ele precisa de uma moldura.
 
 ---
 
