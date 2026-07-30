@@ -168,11 +168,17 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 
 - [x] Botões mortos a partir da segunda publicação — `commit()` desabilitava e só o *Desfazer* reabilitava; as ações ficam fora do container redesenhado, então o estado sobrevivia à troca de peça
 - [x] Clique fantasma ao arrastar o slide criava marcador sem querer — `touchmove` agora marca flag que suprime o clique seguinte
-- [x] Corte progressivo da diagramação no carrossel — a faixa deslizava 100% por slide, mas `%` em `translateX` se refere à largura do próprio elemento (n slides). Erro acumulava a cada slide. Corrigido com largura explícita e deslocamento de 100%÷n
+- [x] Corte progressivo da diagramação no carrossel — a faixa deslizava 100% por slide, mas `%` em `translateX` se refere à largura do próprio elemento (n slides). Corrigido com largura explícita e deslocamento de 100%÷n
+
+**Rodada 2 do teste — iPhone 13 Pro Max, 2026-07-29**
+
+- [x] Carrossel ainda desalinhado depois da correção acima — a causa real era a **falta de `box-sizing: border-box`**: o padding de 20px somava à base flex e o erro acumulava. Consertei a causa errada da primeira vez
+- [x] Safari amplia a página ao focar campo com fonte < 16px e não volta ao fechar o teclado — todos os campos editáveis foram para 16px
+- [x] Botão *Salvar* da nota morria em silêncio quando não havia marcador pendente — agora habilita conforme o texto
 
 ## Decisões
 
-Ver `DECISIONS.md`. 47 registradas. Última: **D-047** (tema claro no shell do cliente).
+Ver `DECISIONS.md`. 50 registradas. Última: **D-050** (a tela de decisão do cliente não rola).
 Única ainda **em aberto**: **D-024** (naming/jurídico) 🔴
 
 ---
