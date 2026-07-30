@@ -6,7 +6,6 @@
     "doc": "docs/UX/UX_WRITING.md",
     "rule": "Nenhuma string literal no código. Chave em inglês, valor em pt-BR."
   },
-
   "auth": {
     "login": {
       "title": "Entrar na Maestro",
@@ -28,7 +27,6 @@
       "nopass": "Você não precisa criar senha."
     }
   },
-
   "onb": {
     "agencyTitle": "Vamos montar sua agência",
     "teamTitle": "Quem trabalha com você?",
@@ -47,7 +45,6 @@
     "reviewSubmit": "Criar projeto",
     "doneTitle": "Pronto. Sua operação começou."
   },
-
   "dash": {
     "waitingTeamTitle": "Esperando a equipe",
     "waitingTeamSub": "{n, plural, one {# peça} other {# peças}} · {v, plural, one {# vence} other {# vencem}} hoje",
@@ -59,7 +56,6 @@
     "gateSub": "{projeto} · {pergunta}",
     "projectsTitle": "Projetos ativos"
   },
-
   "project": {
     "new": "Novo projeto",
     "methodLabel": "Metodologia",
@@ -75,7 +71,6 @@
     "targets": "{feito} de {meta}",
     "strategyLocked": "O calendário abre quando o cliente aprovar a estratégia."
   },
-
   "content": {
     "copyLabel": "Copy",
     "copyPlaceholder": "Escreva a legenda desta peça",
@@ -85,9 +80,12 @@
     "commentInternal": "Comentário interno",
     "commentInternalHint": "Só a equipe vê. O cliente nunca.",
     "commentPlaceholder": "Escreva um comentário",
-    "slotNone": "Esta peça ainda não tem data no calendário"
+    "slotNone": "Esta peça ainda não tem data no calendário",
+    "title": "Título da publicação",
+    "intent": "O que busca",
+    "intentHint": "Uma frase: o que esta publicação precisa alcançar. Obrigatório.",
+    "pillar": "Pilar"
   },
-
   "batch": {
     "prepareTitle": "Preparar lote",
     "namePlaceholder": "Lote 01 · Agosto",
@@ -106,9 +104,9 @@
       "sub": "{pessoa} enviou as publicações de {mes} para você aprovar antes de irem ao ar.",
       "how": "O que você vai fazer",
       "step1t": "Ver cada publicação",
-      "step1b": "Do jeito exato que vai aparecer no {plataforma}.",
+      "step1b": "Toque na imagem para abrir em tela cheia e dar zoom.",
       "step2t": "Mudar o que quiser",
-      "step2b": "Escreva direto no texto, ou toque num ponto da imagem.",
+      "step2b": "Escreva direto no texto, ou abra a imagem e marque um ponto.",
       "step3t": "Aprovar ou pedir ajuste",
       "step3b": "Os dois são normais. Pedir ajuste não atrasa nada — ajuda.",
       "duration": "Leva uns {min} minutos.",
@@ -125,7 +123,6 @@
       "logEmpty": "Nada alterado ainda."
     }
   },
-
   "check": {
     "noAsset": "{peca} está sem arte ou sem legenda",
     "badFormat": "{peca} está em formato que o {plataforma} não aceita",
@@ -137,15 +134,15 @@
     "repetition": "{a} e {b} têm o mesmo formato e o mesmo tema",
     "offGoal": "Nenhuma peça deste lote atende ao objetivo declarado",
     "noRefs": "Este lote não tem referência visual",
-    "muted": "Você ignorou este aviso 3 vezes. Ele volta em 30 dias."
+    "muted": "Você ignorou este aviso 3 vezes. Ele volta em 30 dias.",
+    "noIntent": "{peca} não declara o que busca"
   },
-
   "approval": {
     "metaWhen": "Vai ao ar {data}",
     "caption": "Legenda",
     "captionEdited": "editada por você",
     "notes": "Suas notas",
-    "notesEmpty": "Nenhuma nota ainda. Toque num ponto da imagem para marcar.",
+    "notesEmpty": "Nenhuma nota. Abra a imagem e toque em “Marcar um ponto”.",
     "notesPlaceholder": "O que mudar neste ponto?",
     "hintCarousel": "Arraste para ver os slides · toque na imagem para marcar um ponto",
     "actionsApprove": "Aprovar",
@@ -164,9 +161,13 @@
     "undo": "Desfazer",
     "readonly": "{pessoa} aprovou esta publicação em {data}.",
     "noPermission": "Você acompanha este projeto. Quem aprova é {pessoa}.",
-    "stale": "Esta publicação foi atualizada por {pessoa}. Ver a nova versão."
+    "stale": "Esta publicação foi atualizada por {pessoa}. Ver a nova versão.",
+    "openFullscreen": "Toque na imagem para abrir em tela cheia",
+    "zoomHint": "Pinça ou toque duplo para ampliar",
+    "markPoint": "Marcar um ponto",
+    "markPointCancel": "Cancelar marcação",
+    "markPointHint": "Toque no ponto da imagem que você quer comentar"
   },
-
   "term": {
     "title": "Fechar o lote",
     "body": "Ao assinar, o documento registra quem aprovou, quando, quantas publicações estavam no lote e o selo do conteúdo naquele momento. Se algo mudar depois, o selo muda e o agendamento trava sozinho.",
@@ -179,7 +180,6 @@
     "receiptDownload": "Baixar comprovante",
     "doneNext": "Acabou. Você pode fechar esta página."
   },
-
   "notify": {
     "batchEmailSubject": "{n, plural, one {# publicação esperando você} other {# publicações esperando você}} — {projeto}",
     "batchEmailBody": "{pessoa} enviou {n, plural, one {# publicação} other {# publicações}} para sua aprovação. {primeiras} vão ao ar {data}.",
@@ -193,7 +193,6 @@
     "remindStop": "{cliente} não respondeu ao lote há 4 dias. Paramos de lembrar — o próximo passo é seu.",
     "whatsappAutoreply": "Oi! Para a {pessoa} ver seu comentário, ele precisa estar na publicação:\n{link}"
   },
-
   "error": {
     "uploadTooLarge": "Esse arquivo tem {tamanho}. O limite é {limite}.",
     "uploadBadFormat": "Esse formato não é aceito. Use JPG, PNG, MP4 ou MOV.",
@@ -206,7 +205,6 @@
     "staleApproval": "Esta peça mudou depois que você abriu. Veja o que mudou antes de decidir.",
     "generic": "Não conseguimos completar isso. Tente de novo em instantes. Referência: {id}"
   },
-
   "empty": {
     "projectsTitle": "Nenhum projeto ainda",
     "projectsBody": "Um projeto reúne a estratégia, o método e o calendário de um cliente.",
@@ -224,7 +222,6 @@
     "filteredTitle": "Nenhuma peça com esse filtro",
     "filteredCta": "Limpar filtros"
   },
-
   "confirm": {
     "deleteProjectTitle": "Excluir \"{nome}\"?",
     "deleteProjectBody": "{campanhas} campanhas, {conteudos} conteúdos, {comentarios} comentários e todo o histórico serão excluídos. Isso não pode ser desfeito.",
@@ -235,7 +232,6 @@
     "removeApproverBody": "As aprovações que {pessoa} já fez continuam registradas.",
     "cancel": "Cancelar"
   },
-
   "status": {
     "agency": {
       "DRAFT": "Rascunho",
@@ -255,5 +251,15 @@
       "SCHEDULED": "Vai ao ar em {data}",
       "PUBLISHED": "No ar"
     }
+  },
+  "ai": {
+    "ask": "Perguntar à IA",
+    "askSub": "Ela não opina sozinha. Escolha o que quer saber:",
+    "askCompare": "Ficou melhor assim?",
+    "askPotential": "Isso tem potencial?",
+    "askBetter": "Como eu diria melhor?",
+    "caveat": "Isto é uma leitura do texto, não uma previsão de resultado. Só o histórico da conta diz o que funciona com o seu público.",
+    "useThis": "Usar esta",
+    "keepMine": "Ficar com a minha"
   }
 }

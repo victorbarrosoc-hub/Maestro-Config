@@ -66,7 +66,9 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 - [x] **Rodada 1** — achado: não entendiam de primeira o que era a tela (`UX/TESTE_RESULTADOS.md`)
 - [x] Correção: capa do lote como entrada única, orientação permanente (D-041)
 - [x] Protótipo v2 — capa → peças → termo
-- [ ] **Rodada 2** 🔴 — validar a capa
+- [x] **Rodada 2** — 8 achados, 3 bugs (`UX/TESTE_RESULTADOS.md`)
+- [x] Correções: tela cheia com zoom · sem rolagem · título e propósito por peça · convite à IA visível (D-048 a D-050)
+- [ ] **Rodada 3** 🔴 — validar as correções em iPhone real
   - [ ] Cronometrar em dois trechos: tempo na capa e capa → primeira decisão
   - [ ] Perguntar após a capa: "com suas palavras, o que você vai fazer aqui?"
   - [ ] Registrar as 10 métricas na planilha (a rodada 1 registrou só o achado qualitativo)

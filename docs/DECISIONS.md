@@ -344,6 +344,35 @@ Contexto / Problema / Alternativas / Decisão / Motivo / Consequências / Próxi
 
 ---
 
+# D-048 · Produto · Aprovada
+**Data:** 2026-07-29 · **Origem:** teste rodada 2, achado B1
+**Achado:** *"Qual postagem estou aprovando? Não tem título, nem propósito, nem o que consigo com ela."*
+**Causa:** no Lote de Texto não existe arte. Sem imagem, "Instagram · Carrossel · quinta 06/08" não identifica nada. E o objetivo, no modelo atual, vive na **fase** — não na peça.
+**Decisão:** **toda peça declara título e propósito próprios.**
+- `Content.title` passa a ser obrigatório e visível ao cliente
+- `Content.intent` — campo novo, uma frase: *o que esta publicação busca*
+- `Content.role` — a que pilar da estratégia ela serve
+Os três aparecem no topo da peça, nos dois lotes.
+**Motivo:** é a mesma classe de erro da rodada 1 — especifiquei o *como fazer* e esqueci o *o que é isso*. Sem propósito declarado por peça, o cliente avalia contra o próprio gosto, que é exatamente o que a estratégia na tela deveria evitar.
+**Consequências:** o checklist pré-envio ganha bloqueio `content.no-intent`. `strings.pt-BR.json` ganha as chaves. A IA de nível 2 passa a comparar a peça contra o **intent** dela, não só contra o objetivo da fase — análise mais precisa.
+
+# D-049 · UX · Aprovada
+**Data:** 2026-07-29 · **Origem:** teste rodada 2, achado A1
+**Achado:** *"Queria que ao clicar na imagem ela ficasse maior e eu pudesse dar zoom."*
+**Conflito:** tocar na imagem já significava "marcar um ponto". As duas ações disputam o mesmo gesto, e a expectativa de todo mundo — vinda de Instagram e WhatsApp — é que tocar amplia.
+**Decisão:** **tocar na arte abre tela cheia com zoom** (pinça e toque duplo, com arrasto quando ampliada). Marcar ponto vira **modo explícito**, acionado por um botão dentro da tela cheia.
+**Motivo:** brigar com a expectativa universal do gesto é perder sempre. E ampliar é pré-requisito para avaliar arte no celular — sem isso o cliente aprova o que não conseguiu ver.
+**Consequências:** a instrução do passo 2 da capa muda de *"toque num ponto da imagem"* para *"abra a imagem e marque um ponto"*. Habilita D-050: com tela cheia disponível, a arte pode ser menor na tela principal.
+
+# D-050 · UX · Aprovada
+**Data:** 2026-07-29 · **Origem:** teste rodada 2, achado A5
+**Achado:** *"Queria todas as informações na mesma tela, sem ter que dar scroll."* (iPhone 13 Pro Max)
+**Decisão:** **a tela de decisão do cliente não rola.** Estrutura de regiões fixas: barra de progresso · identificação da peça · arte (altura limitada) · ações. Só o bloco de texto rola **por dentro**, quando a legenda é longa.
+**Motivo:** a decisão precisa estar sempre visível. Botão que exige rolagem é botão que atrasa a decisão — e o critério do produto é decidir em menos de dois minutos.
+**Consequências:** a arte perde altura na tela principal, o que só é aceitável porque D-049 dá tela cheia. Campos editáveis passam a ter **16px no mínimo** — abaixo disso o Safari do iOS amplia a página sozinho no foco e não volta ao fechar o teclado (achado A3).
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-048, D-049...
+Adicionar seguindo o padrão D-051, D-052...

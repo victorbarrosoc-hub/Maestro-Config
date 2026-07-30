@@ -1,6 +1,8 @@
 <title>Maestro — Lote de texto com IA</title>
 
 <style>
+  *, *::before, *::after { box-sizing: border-box; }
+
   :root {
     --brass-300:#E3C173; --brass-400:#D9AC4C; --brass-500:#C8963A; --brass-600:#A87A2C; --brass-700:#855F22;
     --cobalt:#3B6FE0;
@@ -14,9 +16,7 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) { --page:#0D0F12; --page-fg:#F4F6F8; --page-muted:#9AA1AC; --page-line:#23272E; --page-card:#121418; --page-accent:#E3C173; }
   }
-  :root[data-theme="dark"] { --page:#0D0F12; --page-fg:#F4F6F8; --page-muted:#9AA1AC; --page-line:#23272E; --page-card:#121418; --page-accent:#E3C173; }
 
-  /* Tokens da TELA do cliente — claro por padrão (D-047) */
   .device {
     --s-bg:#FFFFFF; --s-raised:#F7F8FA; --s-sunken:#F1F3F6;
     --s-line:#E4E8EC; --s-line-soft:#EFF2F5;
@@ -35,117 +35,117 @@
   }
 
   body { background: var(--page); color: var(--page-fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-  .page { max-width: 960px; margin: 0 auto; padding: 44px 20px 96px; }
-  .top { margin-bottom: 22px; }
+  .page { max-width: 980px; margin: 0 auto; padding: 44px 20px 96px; }
   .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; color: var(--page-accent); margin-bottom: 10px; }
-  .top h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(30px,5vw,40px); line-height: 1.08; letter-spacing: -.022em; margin-bottom: 10px; }
+  h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(30px,5vw,40px); line-height: 1.08; letter-spacing: -.022em; margin-bottom: 10px; }
   .top p { color: var(--page-muted); max-width: 62ch; }
-  .rule { margin-top: 14px; border-left: 2px solid var(--page-accent); padding: 3px 0 3px 15px; font-size: 14px; color: var(--page-muted); max-width: 64ch; }
-  .rule b { color: var(--page-fg); }
+  .fix { margin-top: 14px; border-left: 2px solid var(--page-accent); padding: 3px 0 3px 15px; font-size: 14px; color: var(--page-muted); max-width: 66ch; }
+  .fix b { color: var(--page-fg); }
   .ctl { display: flex; gap: 8px; margin-top: 18px; }
-  .ctl button { font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: 9999px; cursor: pointer; background: transparent; border: 1px solid var(--page-line); color: var(--page-muted); transition: all 160ms var(--baton); }
-  .ctl button:hover { color: var(--page-fg); border-color: var(--page-muted); }
+  .ctl button { font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: 9999px; cursor: pointer; background: transparent; border: 1px solid var(--page-line); color: var(--page-muted); }
   .ctl button[aria-pressed="true"] { background: var(--page-fg); color: var(--page); border-color: var(--page-fg); }
 
   .stage { display: flex; justify-content: center; padding: 26px 0 8px; }
-  .device { width: 390px; max-width: 100%; height: 796px; flex: none; background: var(--s-bg); border: 1px solid var(--s-frame); border-radius: 40px; padding: 10px; box-shadow: var(--s-shadow); transition: background 240ms var(--baton), border-color 240ms var(--baton); }
+  .device { width: 390px; max-width: 100%; height: 800px; flex: none; background: var(--s-bg); border: 1px solid var(--s-frame); border-radius: 40px; padding: 10px; box-shadow: var(--s-shadow); }
   .screen { position: relative; height: 100%; background: var(--s-bg); color: var(--s-fg); border-radius: 32px; overflow: hidden; display: flex; flex-direction: column; }
 
-  .bar { flex: none; padding: 22px 18px 10px; border-bottom: 1px solid var(--s-line); }
-  .bar .row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
-  .bar .lbl { flex: 1; font-size: 13px; font-weight: 600; }
-  .bar .cnt { font-family: var(--f-mono); font-size: 10.5px; color: var(--s-subtle); }
-  .bar .track { height: 3px; border-radius: 2px; background: var(--s-line); overflow: hidden; }
-  .bar .fill { height: 100%; width: 25%; background: var(--s-accent); border-radius: 2px; }
+  .pbar { flex: none; padding: 20px 18px 9px; border-bottom: 1px solid var(--s-line); }
+  .pbar .row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .pbar .lbl { flex: 1; font-size: 13px; font-weight: 600; }
+  .pbar .cnt { font-family: var(--f-mono); font-size: 10.5px; color: var(--s-subtle); }
+  .pbar .track { height: 3px; border-radius: 2px; background: var(--s-line); overflow: hidden; }
+  .pbar .fill { height: 100%; width: 0; background: var(--s-accent); border-radius: 2px; transition: width 320ms var(--baton); }
 
-  .body { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+  .stagetag { flex: none; margin: 12px 18px 0; display: inline-flex; align-self: flex-start; font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--s-accent-tx); background: color-mix(in srgb, var(--s-accent) 13%, transparent); border: 1px solid color-mix(in srgb, var(--s-accent) 32%, transparent); padding: 4px 10px; border-radius: 9999px; }
 
-  .stage-tag { margin: 14px 18px 0; display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--s-accent-tx); background: color-mix(in srgb, var(--s-accent) 13%, transparent); border: 1px solid color-mix(in srgb, var(--s-accent) 32%, transparent); padding: 5px 11px; border-radius: 9999px; }
-  .nofoto { margin: 12px 18px 0; font-size: 12.5px; color: var(--s-muted); line-height: 1.45; }
+  /* identificação — achado B1 */
+  .ident { flex: none; padding: 10px 18px 11px; border-bottom: 1px solid var(--s-line-soft); }
+  .ident h3 { font-size: 18px; font-weight: 600; letter-spacing: -.015em; line-height: 1.25; margin-bottom: 5px; }
+  .ident .intent { font-size: 12.5px; color: var(--s-muted); line-height: 1.4; }
+  .ident .intent b { color: var(--s-accent-tx); font-weight: 600; }
+  .ident .row { display: flex; flex-wrap: wrap; gap: 5px 8px; align-items: center; margin-top: 8px; }
+  .badge { font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--s-muted); border: 1px solid var(--s-line); padding: 2px 7px; border-radius: 9999px; }
+  .badge.pill { color: var(--s-accent-tx); border-color: color-mix(in srgb, var(--s-accent) 42%, transparent); }
+  .when { font-size: 12px; color: var(--s-muted); } .when b { color: var(--s-fg); font-weight: 600; }
 
-  .meta { padding: 14px 18px 8px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
-  .badge { font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--s-muted); border: 1px solid var(--s-line); padding: 3px 8px; border-radius: 9999px; }
-  .when { font-size: 12.5px; color: var(--s-muted); }
-  .when b { color: var(--s-fg); font-weight: 600; }
-
-  .block { padding: 14px 18px 20px; border-top: 1px solid var(--s-line); }
-  .lab { font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--s-subtle); margin-bottom: 9px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .textzone { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 18px 14px; }
+  .lab { font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--s-subtle); margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
   .lab .chars { font-family: var(--f-mono); font-size: 10.5px; color: var(--s-subtle); }
   .lab .chars.warn { color: var(--s-adj); }
-
-  .copy { font-size: 15px; line-height: 1.62; color: var(--s-fg); border: 1px solid transparent; border-radius: 10px; padding: 10px 12px; margin: 0 -12px; outline: none; white-space: pre-wrap; overflow-wrap: anywhere; transition: border-color 160ms var(--baton), background 160ms var(--baton); }
-  .copy:hover { border-color: var(--s-line); }
+  .copy { font-size: 16px; line-height: 1.58; color: var(--s-fg); border: 1px solid transparent; border-radius: 9px; padding: 9px 11px; margin: 0 -11px; outline: none; white-space: pre-wrap; overflow-wrap: anywhere; }
   .copy:focus, .copy.edited { border-color: var(--s-accent); background: var(--s-sunken); }
-  .copy .tags { color: var(--cobalt); }
-  .device[data-app="dark"] .copy .tags { color: #8FB0F6; }
+  .tags { color: var(--cobalt); }
+  .device[data-app="dark"] .tags { color: #8FB0F6; }
 
-  /* ===== IA ============================================================= */
   .ai { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
-  .flag { display: grid; grid-template-columns: 16px 1fr; gap: 10px; background: var(--s-raised); border: 1px solid var(--s-line); border-radius: 11px; padding: 11px 13px; font-size: 13px; line-height: 1.45; color: var(--s-muted); animation: rise 320ms var(--baton) both; }
+  .flag { display: grid; grid-template-columns: 15px 1fr; gap: 9px; background: var(--s-raised); border: 1px solid var(--s-line); border-radius: 11px; padding: 10px 12px; font-size: 12.5px; line-height: 1.45; color: var(--s-muted); animation: rise 320ms var(--baton) both; }
   @keyframes rise { from { opacity:0; transform: translateY(5px) } }
-  .flag .dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 7px; }
+  .flag .dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; }
   .flag b { color: var(--s-fg); font-weight: 600; }
-  .flag .src { display: block; margin-top: 5px; font-size: 11.5px; color: var(--s-subtle); }
+  .flag .src { display: block; margin-top: 4px; font-size: 11px; color: var(--s-subtle); }
   .flag.fact .dot { background: var(--s-adj); }
   .flag.coher .dot { background: var(--s-info); }
 
-  .seal { display: flex; align-items: center; gap: 9px; background: var(--s-raised); border: 1px solid var(--s-line); border-radius: 11px; padding: 10px 13px; cursor: pointer; font-size: 12.5px; color: var(--s-muted); width: 100%; text-align: left; font-family: inherit; }
-  .seal:hover { border-color: var(--s-subtle); }
-  .seal .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--s-info); flex: none; }
-  .seal .chev { margin-left: auto; color: var(--s-subtle); transition: transform 160ms var(--baton); }
-  .seal[aria-expanded="true"] .chev { transform: rotate(90deg); }
+  /* convite à IA — achado B3: sempre visível e obviamente tocável */
+  .askbox { margin-top: 14px; background: var(--s-raised); border: 1px solid var(--s-line); border-radius: 13px; padding: 13px 14px; }
+  .askbox h4 { font-size: 12.5px; font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 7px; }
+  .askbox h4 .sp { width: 6px; height: 6px; border-radius: 50%; background: var(--s-accent); }
+  .askbox .sub { font-size: 11.5px; color: var(--s-subtle); margin-bottom: 11px; line-height: 1.4; }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip { font: inherit; font-size: 13px; font-weight: 500; padding: 9px 13px; border-radius: 9999px; cursor: pointer; background: var(--s-bg); border: 1px solid var(--s-line); color: var(--s-fg); }
+  .chip:hover { border-color: var(--s-accent); color: var(--s-accent-tx); }
+  .chip.hot { border-color: var(--s-accent); color: var(--s-accent-tx); font-weight: 600; }
 
-  .ask { margin-top: 12px; }
-  .ask button { width: 100%; font: inherit; font-size: 13.5px; font-weight: 600; background: transparent; border: 1px dashed var(--s-line); color: var(--s-muted); border-radius: 11px; padding: 12px; cursor: pointer; transition: all 160ms var(--baton); }
-  .ask button:hover:not(:disabled) { border-color: var(--s-accent); color: var(--s-accent-tx); border-style: solid; }
-  .ask button:disabled { opacity: .45; cursor: default; }
-  .ask .hint { font-size: 11.5px; color: var(--s-subtle); text-align: center; margin-top: 7px; line-height: 1.4; }
-
-  .verdict { margin-top: 12px; background: var(--s-raised); border: 1px solid var(--s-accent); border-radius: 13px; padding: 15px 16px; animation: rise 400ms var(--baton) both; }
-  .verdict h4 { font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--s-accent-tx); margin-bottom: 11px; }
-  .verdict .part { font-size: 13.5px; line-height: 1.5; color: var(--s-muted); margin-bottom: 11px; }
+  .verdict { margin-top: 11px; background: var(--s-bg); border: 1px solid var(--s-accent); border-radius: 12px; padding: 14px 15px; animation: rise 400ms var(--baton) both; }
+  .verdict h5 { font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--s-accent-tx); margin-bottom: 10px; }
+  .verdict .part { font-size: 13px; line-height: 1.5; color: var(--s-muted); margin-bottom: 10px; }
   .verdict .part b { color: var(--s-fg); font-weight: 600; }
-  .verdict .alt { background: var(--s-bg); border: 1px solid var(--s-line); border-radius: 9px; padding: 11px 12px; font-size: 13px; line-height: 1.5; color: var(--s-fg); font-style: italic; }
+  .verdict .alt { background: var(--s-sunken); border-radius: 9px; padding: 10px 11px; font-size: 12.5px; line-height: 1.5; color: var(--s-fg); font-style: italic; }
   .verdict .use { margin-top: 9px; display: flex; gap: 8px; }
   .verdict .use button { font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 13px; border-radius: 8px; cursor: pointer; border: 1px solid var(--s-line); background: transparent; color: var(--s-fg); }
   .verdict .use button.p { background: var(--s-accent); color: var(--s-accent-fg); border-color: transparent; }
+  .verdict .caveat { font-size: 11px; color: var(--s-subtle); margin-top: 9px; line-height: 1.4; }
 
-  .actions { flex: none; border-top: 1px solid var(--s-line); background: var(--s-raised); padding: 12px 18px 16px; }
-  .btnrow { display: flex; gap: 10px; }
-  .btn { flex: 1; font: inherit; font-size: 14.5px; font-weight: 600; height: 46px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: transform 80ms var(--baton), background 160ms var(--baton), opacity 160ms var(--baton); }
+  .actions { flex: none; border-top: 1px solid var(--s-line); background: var(--s-raised); padding: 11px 18px 15px; }
+  .btnrow { display: flex; gap: 9px; }
+  .btn { font: inherit; font-size: 14.5px; font-weight: 600; height: 46px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: transform 80ms var(--baton), opacity 160ms var(--baton); }
+  .btnrow .btn { flex: 1; }
   .btn:active { transform: scale(.985); }
-  .btn:focus-visible { outline: 2px solid var(--s-accent); outline-offset: 2px; }
   .btn:disabled { opacity: .45; cursor: default; }
   .primary { background: var(--s-accent); color: var(--s-accent-fg); }
-  .primary:hover:not(:disabled) { background: var(--brass-600); }
-  .device[data-app="dark"] .primary:hover:not(:disabled) { background: var(--brass-300); }
   .secondary { background: transparent; color: var(--s-fg); border-color: var(--s-line); }
-  .secondary:hover:not(:disabled) { border-color: var(--s-subtle); }
-  .after { font-size: 11.5px; color: var(--s-subtle); text-align: center; margin-top: 10px; }
+  .wide { width: 100%; }
+  .after { font-size: 11px; color: var(--s-subtle); text-align: center; margin-top: 8px; }
 
-  .toast { position: absolute; left: 18px; right: 18px; bottom: 96px; background: var(--s-bg); border: 1px solid var(--s-line); border-radius: 11px; padding: 12px 14px; font-size: 13.5px; color: var(--s-fg); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 240ms var(--baton), transform 240ms var(--baton); box-shadow: 0 14px 36px rgba(8,9,11,.18); }
-  .device[data-app="dark"] .toast { background: #181B20; box-shadow: 0 16px 40px rgba(0,0,0,.55); }
+  .toast { position: absolute; left: 16px; right: 16px; bottom: 92px; background: var(--s-bg); border: 1px solid var(--s-line); border-radius: 11px; padding: 11px 13px; font-size: 13.5px; opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 240ms var(--baton), transform 240ms var(--baton); box-shadow: 0 14px 36px rgba(8,9,11,.2); }
+  .device[data-app="dark"] .toast { background: #181B20; }
   .toast.show { opacity: 1; transform: none; }
   .toast b { color: var(--s-ok); font-weight: 600; }
   .toast.ch b { color: var(--s-adj); }
 
+  .done { padding: 44px 22px; text-align: center; }
+  .done .mk { width: 44px; height: 44px; margin: 0 auto 16px; color: var(--s-accent); }
+  .done h2 { font-family: var(--f-display); font-weight: 400; font-size: 29px; margin-bottom: 10px; }
+  .done p { font-size: 14px; color: var(--s-muted); line-height: 1.55; margin: 0 auto 20px; max-width: 30ch; }
+  .done p b { color: var(--s-fg); font-weight: 600; }
+
   .cards { margin-top: 38px; display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 14px; }
   .card { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 14px; padding: 18px 20px; }
   .card .k { font-family: var(--f-mono); font-size: 10.5px; color: var(--page-accent); margin-bottom: 8px; }
-  .card h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; letter-spacing: -.01em; }
+  .card h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
   .card p { font-size: 13px; color: var(--page-muted); line-height: 1.55; }
 
-  @media (max-width: 460px) { .page { padding: 26px 10px 64px; } .device { height: 742px; } }
+  @media (max-width: 460px) { .page { padding: 26px 10px 64px; } .device { height: 740px; } }
   @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
 </style>
 
 <div class="page">
 
   <header class="top">
-    <div class="eyebrow">Lote 1 · Texto · Approval Assistant</div>
+    <div class="eyebrow">Lote 1 · Texto · v3</div>
     <h1>A IA dentro da decisão</h1>
     <p>Primeiro lote do ciclo: só copy e roteiro, sem arte. É aqui que a validação por IA vale mais, porque ainda dá tempo de mudar barato.</p>
-    <p class="rule"><b>A regra:</b> a IA fala sem ser chamada sobre <b>fatos</b> — ortografia, limite de caracteres, número que contradiz a estratégia. Sobre <b>gosto</b>, só quando convidada. Um cliente corrigido por robô para de editar, e cliente que para de editar mata o produto. <b>D-043</b></p>
+    <p class="fix"><b>Corrigido do teste:</b> cada texto agora diz <b>qual publicação é</b> e <b>o que ela busca</b> · as 4 publicações passam em sequência ao decidir · e o convite à IA virou um painel visível, não um botão desabilitado que parecia legenda.</p>
     <div class="ctl">
       <button id="mLight" type="button" aria-pressed="true">Tela clara</button>
       <button id="mDark" type="button" aria-pressed="false">Tela escura</button>
@@ -156,40 +156,19 @@
     <div class="device" id="device" data-app="light">
       <div class="screen">
 
-        <div class="bar">
-          <div class="row"><span class="lbl">Verão 26 · Agosto</span><span class="cnt">Texto 1 de 4</span></div>
-          <div class="track"><div class="fill"></div></div>
+        <div class="pbar">
+          <div class="row"><span class="lbl">Verão 26 · Agosto</span><span class="cnt" id="pcnt"></span></div>
+          <div class="track"><div class="fill" id="pfill"></div></div>
         </div>
 
-        <div class="body">
-          <span class="stage-tag">Etapa 1 de 2 · só os textos</span>
-          <p class="nofoto">As imagens vêm no próximo passo. Agora é só o texto — assim a gente não desenha em cima de algo que você ainda vai mudar.</p>
+        <div id="main" style="flex:1;display:flex;flex-direction:column;min-height:0"></div>
 
-          <div class="meta">
-            <span class="badge">Instagram</span><span class="badge">Carrossel</span>
-            <span class="when">Vai ao ar <b>quinta, 06/08</b></span>
-          </div>
-
-          <div class="block">
-            <div class="lab"><span>Legenda</span><span class="chars" id="chars">0 / 2.200</span></div>
-            <div class="copy" id="copy" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true" aria-label="Legenda editável"></div>
-
-            <div class="ai" id="ai"></div>
-
-            <div class="ask">
-              <button id="askBtn" type="button" disabled>O que você acha da minha versão?</button>
-              <p class="hint" id="askHint">Edite o texto e a IA compara as duas versões — só se você pedir.</p>
-            </div>
-            <div id="verdictBox"></div>
-          </div>
-        </div>
-
-        <div class="actions">
+        <div class="actions" id="actions">
           <div class="btnrow">
             <button class="btn primary" id="bP" type="button">Aprovar</button>
             <button class="btn secondary" id="bS" type="button">Solicitar alterações</button>
           </div>
-          <p class="after" id="after">Ao aprovar, este texto é congelado e a produção começa.</p>
+          <p class="after" id="after"></p>
         </div>
 
         <div class="toast" id="toast" role="status" aria-live="polite"><span id="tmsg"></span></div>
@@ -198,140 +177,224 @@
   </div>
 
   <section class="cards">
-    <div class="card"><div class="k">Nível 1 · fatos</div><h4>Sem pedir, inline</h4>
-      <p>Ortografia, limite de caracteres, hashtag inválida, número que contradiz a estratégia. Toda afirmação mostra a origem — “a estratégia diz 30%”, com link. Sem fonte, não fala.</p></div>
-    <div class="card"><div class="k">Nível 2 · coerência</div><h4>Sem pedir, discreto</h4>
-      <p>Um selo fechado por peça. Atende ao objetivo da fase? Contradiz outra peça do lote? Repete tema? Interpretação bem fundamentada merece espaço, não estardalhaço.</p></div>
-    <div class="card"><div class="k">Nível 3 · opinião</div><h4>Só quando convidada</h4>
-      <p>A comparação segue formato fixo: o que sua versão ganhou → o que perdeu → recomendação → terceira via. Nunca emite veredito. “Era melhor antes” não é resposta útil.</p></div>
-    <div class="card"><div class="k">D-047</div><h4>Tema é escolha do usuário</h4>
-      <p>Claro por padrão no shell do cliente, escuro no da agência — e os dois disponíveis nos dois lados. O toggle acima simula a preferência guardada na conta.</p></div>
+    <div class="card"><div class="k">B1 · D-048</div><h4>Toda peça diz o que é</h4>
+      <p>Sem arte, “Instagram · Carrossel · 06/08” não identifica nada. Cada texto ganhou título, o que busca e a que pilar da estratégia serve. Sem propósito declarado, o cliente avalia contra o próprio gosto.</p></div>
+    <div class="card"><div class="k">B3</div><h4>O convite precisa ser achável</h4>
+      <p>A regra continua: a IA só opina quando chamada. Mas o convite era um botão tracejado e desabilitado que parecia legenda. Virou painel com perguntas prontas — convite que ninguém acha é o mesmo que não existir.</p></div>
+    <div class="card"><div class="k">Limite</div><h4>“Tem potencial?” vem com ressalva</h4>
+      <p>A IA lê gancho, clareza e CTA — e diz que é estimativa, não previsão. Prometer resultado a partir do texto seria a bajulação que o D-046 proíbe.</p></div>
+    <div class="card"><div class="k">Fluxo</div><h4>Texto congelado</h4>
+      <p>Ao aprovar, a copy é congelada e a produção começa. Se alguém da agência mexer no texto depois, o selo muda, a aprovação cai e a peça volta pra você.</p></div>
   </section>
 </div>
 
 <script>
 (function () {
   'use strict';
-  var BASE = 'O verão não precisa de pressa. A nova coleção chegou com tudo — linho lavado, algodão cru e tingimento natural, feitos em pequenas quantidades por quem faz à mão.\n\nAté 50% de desconto na primeira semana. Disponível na loja da Aurora e no site.';
-  var TAGS = ' #LojaNorte #Verão26 #FeitoÀMão';
-  var ALT = 'O verão não precisa de pressa. Linho lavado e algodão cru, com tingimento natural, feitos em pequenas quantidades por quem faz à mão.\n\n30% de desconto na primeira semana. Disponível na loja da Aurora e no site.';
+  var MARK = '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+  var P = [
+    { titulo:'Verão sem pressa', intent:'Apresentar a coleção para quem ainda não conhece a marca',
+      pilar:'Feito à mão', tipo:'Carrossel', dia:'quinta, 06/08 às 10h',
+      copy:'O verão não precisa de pressa. A nova coleção chegou com tudo — linho lavado, algodão cru e tingimento natural, feitos em pequenas quantidades por quem faz à mão.\n\nAté 50% de desconto na primeira semana. Disponível na loja da Aurora e no site.',
+      tags:' #LojaNorte #Verão26 #FeitoÀMão',
+      alt:'O verão não precisa de pressa. Linho lavado e algodão cru, com tingimento natural, feitos em pequenas quantidades por quem faz à mão.\n\n30% de desconto na primeira semana. Disponível na loja da Aurora e no site.' },
+    { titulo:'Como escolher linho', intent:'Provar autoridade ensinando algo útil, sem vender',
+      pilar:'Conhecimento', tipo:'Roteiro de Reels', dia:'segunda, 10/08 às 18h',
+      copy:'Linho bom amassa. Linho ruim também — só que não desamassa.\n\nNeste vídeo, três coisas para olhar antes de comprar: gramatura, trama e acabamento da costura.',
+      tags:' #LojaNorte #Linho',
+      alt:'Linho bom amassa — e é por isso que ele cai bem.\n\nTrês coisas para olhar antes de comprar: gramatura, trama e acabamento da costura.' },
+    { titulo:'Preço e condições', intent:'Tirar a objeção de preço de quem já demonstrou interesse',
+      pilar:'Acessibilidade', tipo:'Post', dia:'quinta, 20/08 às 09h',
+      copy:'Peças a partir de R$ 249, em até 6x sem juros.\n\nQuem compra na loja da Aurora leva o ajuste de barra por conta da casa.',
+      tags:' #LojaNorte',
+      alt:'Peças a partir de R$ 249, em até 6x sem juros — com ajuste de barra por conta da casa para quem compra na loja da Aurora.' },
+    { titulo:'Quem faz a coleção', intent:'Sustentar o pilar “feito à mão” com prova real',
+      pilar:'Feito à mão', tipo:'Carrossel', dia:'terça, 25/08 às 11h',
+      copy:'Toda peça da Loja Norte passa por seis pares de mãos antes de chegar em você.\n\nNeste carrossel, a gente apresenta cada uma delas.',
+      tags:' #LojaNorte #FeitoÀMão',
+      alt:'Seis pares de mãos passam por cada peça da Loja Norte antes de ela chegar em você. Neste carrossel, a gente apresenta cada uma.' }
+  ];
+
+  var st = P.map(function (p) { return { d:null, copy:p.copy, base:p.copy }; });
+  var idx = 0, decidedFlag = false, reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var $ = function (i) { return document.getElementById(i); };
-  var copy = $('copy'), reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var decided = false;
   function esc(s) { return String(s).replace(/[&<>]/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m]; }); }
-
-  copy.innerHTML = esc(BASE) + '<span class="tags">' + esc(TAGS) + '</span>';
-  var ORIGINAL = copy.innerText;
 
   var ctx = null;
   function play(k) {
     if (reduced) return;
     try { if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended') ctx.resume(); } catch(e){ return; }
     (k==='ok' ? [[440,0],[659.25,.09]] : [[329.63,0]]).forEach(function (p) {
-      var o=ctx.createOscillator(), h=ctx.createOscillator(), g=ctx.createGain(), hg=ctx.createGain();
-      o.type='sine'; o.frequency.value=p[0]; h.type='triangle'; h.frequency.value=p[0]*2; hg.gain.value=.12;
+      var o=ctx.createOscillator(),h=ctx.createOscillator(),g=ctx.createGain(),hg=ctx.createGain();
+      o.type='sine';o.frequency.value=p[0];h.type='triangle';h.frequency.value=p[0]*2;hg.gain.value=.12;
       var t=ctx.currentTime+p[1];
       g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.15,t+.008);
       g.gain.exponentialRampToValueAtTime(.0001,t+.42);
-      o.connect(g); h.connect(hg); hg.connect(g); g.connect(ctx.destination);
-      o.start(t); h.start(t); o.stop(t+.5); h.stop(t+.5);
+      o.connect(g);h.connect(hg);hg.connect(g);g.connect(ctx.destination);
+      o.start(t);h.start(t);o.stop(t+.5);h.stop(t+.5);
     });
   }
 
+  function decided() { return st.filter(function (s) { return s.d; }).length; }
+
+  function render() {
+    var p = P[idx], s = st[idx];
+    $('pcnt').textContent = 'Texto ' + (idx+1) + ' de ' + P.length;
+    $('pfill').style.width = (decided()/P.length*100) + '%';
+    $('bP').disabled = false; $('bS').disabled = false;
+
+    $('main').innerHTML =
+      '<span class="stagetag">Etapa 1 de 2 · só os textos</span>' +
+      '<div class="ident"><h3>' + esc(p.titulo) + '</h3>' +
+        '<p class="intent"><b>O que busca:</b> ' + esc(p.intent) + '</p>' +
+        '<div class="row"><span class="badge">Instagram</span><span class="badge">' + esc(p.tipo) + '</span>' +
+        '<span class="badge pill">Pilar: ' + esc(p.pilar) + '</span>' +
+        '<span class="when">Vai ao ar <b>' + esc(p.dia) + '</b></span></div></div>' +
+      '<div class="textzone">' +
+        '<div class="lab"><span>Legenda</span><span class="chars" id="chars"></span></div>' +
+        '<div class="copy" id="copy" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true" aria-label="Legenda editável"></div>' +
+        '<div class="ai" id="ai"></div>' +
+        '<div class="askbox"><h4><span class="sp"></span>Perguntar à IA</h4>' +
+          '<p class="sub">Ela não opina sozinha. Escolha o que quer saber:</p>' +
+          '<div class="chips" id="chips"></div>' +
+          '<div id="verdictBox"></div></div>' +
+      '</div>';
+
+    var copy = $('copy');
+    copy.innerHTML = esc(s.copy) + '<span class="tags">' + esc(p.tags) + '</span>';
+    copy.addEventListener('input', function () { s.copy = copy.innerText.replace(p.tags, '').trim(); onEdit(); });
+    onEdit();
+  }
+
+  function editedNow() { var p=P[idx], s=st[idx]; return s.copy.trim() !== s.base.trim(); }
+
+  function onEdit() {
+    var p = P[idx], s = st[idx], e = editedNow();
+    $('copy').classList.toggle('edited', e);
+    $('bP').textContent = e ? 'Enviar alterações (1)' : 'Aprovar';
+    $('bS').textContent = e ? 'Descartar e aprovar' : 'Solicitar alterações';
+    $('after').textContent = e
+      ? 'A agência recebe sua versão e volta com o texto ajustado.'
+      : 'Ao aprovar, este texto é congelado e a produção começa.';
+    analyse();
+    chips();
+  }
+
   function analyse() {
-    var txt = copy.innerText, flags = [];
-    if (/50\s*%/.test(txt)) flags.push({ c:'fact', h:'A estratégia fala em <b>30% de desconto</b>. Esta copy diz <b>50%</b>.', s:'Fonte: Estratégia do projeto · Verão 26' });
-    if (!/à mão/i.test(txt)) flags.push({ c:'coher', h:'Saiu a menção a <b>feito à mão</b>, que é um dos três pilares de agosto.', s:'Fonte: Pilares da estratégia' });
-    if (txt.length > 2200) flags.push({ c:'fact', h:'A legenda passou do limite do Instagram em <b>' + (txt.length-2200) + '</b> caracteres.', s:'' });
+    var txt = $('copy').innerText, flags = [];
+    if (/50\s*%/.test(txt)) flags.push({ c:'fact', h:'A estratégia fala em <b>30% de desconto</b>. Este texto diz <b>50%</b>.', s:'Fonte: Estratégia do projeto · Verão 26' });
+    if (P[idx].pilar === 'Feito à mão' && !/à mão|mãos/i.test(txt)) flags.push({ c:'coher', h:'Saiu a menção a <b>feito à mão</b> — o pilar que esta publicação deveria sustentar.', s:'Fonte: Propósito desta publicação' });
+    if (txt.length > 2200) flags.push({ c:'fact', h:'Passou do limite do Instagram em <b>' + (txt.length-2200) + '</b> caracteres.', s:'' });
 
     $('ai').innerHTML = flags.slice(0,3).map(function (f) {
       return '<div class="flag ' + f.c + '"><span class="dot"></span><div>' + f.h + (f.s ? '<span class="src">' + f.s + '</span>' : '') + '</div></div>';
-    }).join('') +
-      '<button class="seal" id="sealBtn" type="button" aria-expanded="false"><span class="dot"></span>' +
-      '<span>Coerência com o objetivo de agosto</span><span class="chev">›</span></button><div id="sealBody"></div>';
-
-    $('sealBtn').addEventListener('click', function () {
-      var open = this.getAttribute('aria-expanded') === 'true';
-      this.setAttribute('aria-expanded', String(!open));
-      $('sealBody').innerHTML = open ? '' :
-        '<div class="flag coher" style="margin-top:8px"><span class="dot"></span><div>' +
-        'O objetivo de agosto é <b>alcançar quem ainda não conhece a marca</b>. Esta copy assume que a pessoa já sabe o que é a Loja Norte — não explica o que a marca faz.' +
-        '<span class="src">Fonte: Objetivo da etapa Estreia</span></div></div>';
-    });
+    }).join('');
 
     var n = txt.length;
     $('chars').textContent = n.toLocaleString('pt-BR') + ' / 2.200';
     $('chars').classList.toggle('warn', n > 2000);
   }
 
-  function verdict() {
-    var txt = copy.innerText;
-    var perdeu = !/tingimento/i.test(txt);
-    var menor = txt.length < ORIGINAL.length;
-    var diff = Math.abs(ORIGINAL.length - txt.length);
+  function chips() {
+    var e = editedNow();
+    var list = [];
+    if (e) list.push({ id:'cmp', t:'Ficou melhor assim?', hot:true });
+    list.push({ id:'pot', t:'Isso tem potencial?' });
+    list.push({ id:'bet', t:'Como eu diria melhor?' });
+    $('chips').innerHTML = list.map(function (c) {
+      return '<button class="chip' + (c.hot ? ' hot' : '') + '" type="button" data-id="' + c.id + '">' + c.t + '</button>';
+    }).join('');
+    Array.prototype.forEach.call($('chips').querySelectorAll('.chip'), function (b) {
+      b.addEventListener('click', function () { answer(this.dataset.id); });
+    });
+  }
 
-    $('verdictBox').innerHTML =
-      '<div class="verdict"><h4>Comparando as duas versões</h4>' +
+  function answer(kind) {
+    var p = P[idx], s = st[idx], txt = $('copy').innerText;
+    var box = $('verdictBox'), html = '';
+
+    if (kind === 'cmp') {
+      var perdeuPilar = p.pilar === 'Feito à mão' && !/à mão|mãos/i.test(txt);
+      var menor = s.copy.length < s.base.length;
+      var diff = Math.abs(s.base.length - s.copy.length);
+      html = '<div class="verdict"><h5>Comparando as duas versões</h5>' +
         '<p class="part">' + (menor
-          ? '<b>Sua versão está mais direta</b> — cortou ' + diff + ' caracteres e o começo ficou mais forte.'
-          : '<b>Sua versão detalha mais</b> — ganhou ' + diff + ' caracteres de contexto sobre o produto.') + '</p>' +
-        '<p class="part">' + (perdeu
-          ? '<b>O que saiu:</b> a menção ao tingimento natural. Ela era o único ponto do texto que sustentava “feito à mão”, que é pilar da estratégia de agosto.'
-          : '<b>O que saiu:</b> nada essencial. Os três pilares de agosto continuam no texto.') + '</p>' +
-        '<p class="part">' + (perdeu
-          ? '<b>Sugestão:</b> manter o seu começo e recuperar o tingimento no final.'
-          : '<b>Sugestão:</b> a sua versão sustenta a estratégia. Só ajustar o desconto para 30%.') + '</p>' +
-        '<div class="alt">“' + esc(ALT.split('\n\n')[0]) + ' ' + esc(ALT.split('\n\n')[1].split('.')[0]) + '.”</div>' +
+          ? '<b>Sua versão está mais direta</b> — cortou ' + diff + ' caracteres.'
+          : '<b>Sua versão detalha mais</b> — ganhou ' + diff + ' caracteres de contexto.') + '</p>' +
+        '<p class="part">' + (perdeuPilar
+          ? '<b>O que saiu:</b> a menção a “feito à mão”. Era o único ponto do texto que sustentava o propósito desta publicação.'
+          : '<b>O que saiu:</b> nada essencial. O propósito da publicação continua sustentado.') + '</p>' +
+        '<p class="part"><b>Sugestão:</b> ' + (perdeuPilar
+          ? 'manter o seu começo e recuperar “feito à mão” no final.'
+          : 'a sua versão sustenta a estratégia.') + '</p>' +
+        '<div class="alt">“' + esc(p.alt.split('\n\n')[0]) + '”</div>' +
         '<div class="use"><button class="p" id="useAlt" type="button">Usar esta</button>' +
         '<button id="keepMine" type="button">Ficar com a minha</button></div></div>';
+    }
 
-    $('useAlt').addEventListener('click', function () {
-      copy.innerHTML = esc(ALT) + '<span class="tags">' + esc(TAGS) + '</span>';
-      $('verdictBox').innerHTML = ''; onEdit();
+    if (kind === 'pot') {
+      html = '<div class="verdict"><h5>Leitura do texto</h5>' +
+        '<p class="part"><b>Gancho:</b> a primeira linha cria contraste e prende. Funciona para quem não conhece a marca — que é o objetivo de agosto.</p>' +
+        '<p class="part"><b>Clareza:</b> três produtos citados em uma frase. Para quem chega de fora, dois seriam mais fáceis de guardar.</p>' +
+        '<p class="part"><b>Chamada:</b> “disponível na loja e no site” informa, mas não pede ação. Um verbo no fim aumentaria o clique.</p>' +
+        '<p class="caveat">Isto é uma leitura do texto, não uma previsão de resultado. Só o histórico da conta diz o que funciona com o seu público.</p></div>';
+    }
+
+    if (kind === 'bet') {
+      html = '<div class="verdict"><h5>Duas alternativas</h5>' +
+        '<div class="alt">“' + esc(p.alt.split('\n\n')[0]) + '”</div>' +
+        '<div class="alt" style="margin-top:8px">“' + esc(p.titulo) + ': ' + esc(p.intent.toLowerCase()) + '. Veja na loja da Aurora ou no site.”</div>' +
+        '<p class="caveat">Duas, nunca uma — opção única é imposição disfarçada de sugestão.</p>' +
+        '<div class="use"><button class="p" id="useAlt" type="button">Usar a primeira</button>' +
+        '<button id="keepMine" type="button">Ficar com a minha</button></div></div>';
+    }
+
+    box.innerHTML = html;
+    if ($('useAlt')) $('useAlt').addEventListener('click', function () {
+      st[idx].copy = p.alt;
+      $('copy').innerHTML = esc(p.alt) + '<span class="tags">' + esc(p.tags) + '</span>';
+      box.innerHTML = ''; onEdit();
     });
-    $('keepMine').addEventListener('click', function () { $('verdictBox').innerHTML = ''; });
+    if ($('keepMine')) $('keepMine').addEventListener('click', function () { box.innerHTML = ''; });
   }
-
-  function edited() { return copy.innerText.trim() !== ORIGINAL.trim(); }
-
-  function onEdit() {
-    var e = edited();
-    copy.classList.toggle('edited', e);
-    $('askBtn').disabled = !e;
-    $('askHint').textContent = e ? 'A IA só compara quando você pede. Ela não opina sozinha.' : 'Edite o texto e a IA compara as duas versões — só se você pedir.';
-    $('bP').textContent = e ? 'Enviar alterações (1)' : 'Aprovar';
-    $('bS').textContent = e ? 'Descartar e aprovar' : 'Solicitar alterações';
-    $('after').textContent = e ? 'A agência recebe sua versão e volta com o texto ajustado.' : 'Ao aprovar, este texto é congelado e a produção começa.';
-    analyse();
-  }
-
-  copy.addEventListener('input', onEdit);
-  $('askBtn').addEventListener('click', verdict);
 
   function decide(kind) {
-    if (decided) return;
-    decided = true;
+    st[idx].d = kind;
     play(kind);
-    copy.setAttribute('contenteditable', 'false');
     $('bP').disabled = $('bS').disabled = true;
-    $('tmsg').innerHTML = kind === 'ok' ? '<b>Texto aprovado.</b> Congelado para produção.' : '<b>Alterações enviadas.</b> Ana foi avisada.';
+    $('pfill').style.width = (decided()/P.length*100) + '%';
+    var falta = P.length - decided();
+    $('tmsg').innerHTML = kind === 'ok'
+      ? '<b>Texto aprovado.</b> ' + (falta ? 'Falta' + (falta===1?' 1.':'m '+falta+'.') : 'Era o último.')
+      : '<b>Alterações enviadas.</b> ' + (falta ? 'Falta' + (falta===1?' 1.':'m '+falta+'.') : 'Era o último.');
     $('toast').className = 'toast show' + (kind === 'ok' ? '' : ' ch');
-    setTimeout(function () { $('toast').classList.remove('show'); }, 5000);
+    setTimeout(function () { $('toast').classList.remove('show'); }, 3200);
+    setTimeout(advance, 1400);
   }
 
-  $('bP').addEventListener('click', function () { decide(edited() ? 'ch' : 'ok'); });
-  $('bS').addEventListener('click', function () { decide(edited() ? 'ok' : 'ch'); });
+  function advance() {
+    var next = -1;
+    for (var i=0;i<P.length;i++) { var j=(idx+1+i)%P.length; if (!st[j].d) { next=j; break; } }
+    if (next === -1) done(); else { idx = next; render(); }
+  }
 
-  $('mLight').addEventListener('click', function () {
-    $('device').dataset.app = 'light';
-    this.setAttribute('aria-pressed','true'); $('mDark').setAttribute('aria-pressed','false');
-  });
-  $('mDark').addEventListener('click', function () {
-    $('device').dataset.app = 'dark';
-    this.setAttribute('aria-pressed','true'); $('mLight').setAttribute('aria-pressed','false');
-  });
+  function done() {
+    var ok = st.filter(function(s){ return s.d==='ok'; }).length, ad = P.length - ok;
+    $('actions').style.display = 'none';
+    $('main').innerHTML = '<div class="done"><div class="mk">' + MARK + '</div>' +
+      '<h2>Textos fechados.</h2>' +
+      '<p>Você avaliou ' + P.length + ' textos: <b>' + ok + '</b> aprovados' + (ad ? ' e <b>' + ad + '</b> com ajuste' : '') + '.</p>' +
+      '<p style="font-size:13px">Agora a agência produz as artes e os vídeos. Você vê tudo pronto no próximo lote, antes de ir ao ar.</p>' +
+      '<button class="btn secondary wide" type="button" onclick="location.reload()">Recomeçar</button></div>';
+  }
 
-  onEdit();
+  $('bP').addEventListener('click', function () { if (!this.disabled) decide(editedNow() ? 'ch' : 'ok'); });
+  $('bS').addEventListener('click', function () { if (!this.disabled) decide(editedNow() ? 'ok' : 'ch'); });
+
+  $('mLight').addEventListener('click', function () { $('device').dataset.app='light'; this.setAttribute('aria-pressed','true'); $('mDark').setAttribute('aria-pressed','false'); });
+  $('mDark').addEventListener('click', function () { $('device').dataset.app='dark'; this.setAttribute('aria-pressed','true'); $('mLight').setAttribute('aria-pressed','false'); });
+
+  render();
 })();
 </script>

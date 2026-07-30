@@ -72,7 +72,65 @@ O que a Maestro pode fazer melhor que ele: o documento da Cortez é estático e 
 
 ---
 
-## Rodada 2
+## Rodada 2 — 2026-07-29
+
+Protótipos: entrada do cliente v2.2 e lote de texto. Dispositivo relatado: **iPhone 13 Pro Max**.
+
+### Entrada do cliente
+
+| # | Achado | Tipo | Gravidade |
+|---|---|---|---|
+| A1 | "Queria que ao clicar na imagem ela ficasse maior e eu pudesse dar zoom" | falta de recurso | **alta** |
+| A2 | "Vai passando o slide, vai entrando um no outro e nunca fica no centro" | **bug** | **crítica** |
+| A3 | "Quando clico pra escrever ele dá zoom na tela; ao tirar o teclado continua com zoom" | **bug** | **alta** |
+| A4 | "Depois de um tempo os botões deixam de funcionar — o Salvar não funcionava" | **bug** | **crítica** |
+| A5 | "Queria todas as informações na mesma tela, sem scroll" | layout | **alta** |
+
+### Lote de texto com IA
+
+| # | Achado | Tipo | Gravidade |
+|---|---|---|---|
+| B1 | "Qual postagem estou aprovando? Não tem título, nem propósito, nem o que consigo com ela" | falta de informação | **crítica** |
+| B2 | "Só consigo ver a primeira postagem, não passa para as outras ao aprovar" | protótipo incompleto | alta |
+| B3 | "'A IA compara se você pedir' — e onde eu peço?" | affordance | **alta** |
+
+---
+
+### Diagnóstico
+
+**A2 — o carrossel continuava quebrado depois de eu declarar corrigido.**
+A geometria que escrevi estava certa (`largura n×100%`, deslocamento `100%÷n`). O que faltou foi `box-sizing: border-box`. Com o `box-sizing` padrão, o `padding: 22px 20px` do slide **soma** à base flex — cada slide fica 40px mais largo que a tela, e o erro acumula slide a slide. Daí "entrando um no outro e nunca fica no centro".
+
+Corrigi a causa errada na rodada anterior. O sintoma era o mesmo, a causa não era.
+
+**A3 — zoom no foco é comportamento do iOS, não bug de layout.**
+O Safari amplia automaticamente quando um campo editável tem `font-size` menor que **16px**. A legenda estava em 14,5px e o campo de nota em 13,5px. A solução correta é subir para 16px — desabilitar zoom no viewport resolveria, mas quebra acessibilidade e é proibido.
+
+**A4 — o botão Salvar morre em silêncio.**
+`saveNote()` exige um marcador pendente. Se o marcador some (o usuário arrasta o slide, ou salva uma nota e digita outra), o botão continua visível e clicável, e **não faz nada**. Botão que existe e não responde é pior que botão ausente.
+
+**A5 + A1 se resolvem juntos.**
+Não dá para caber imagem 4:5, legenda, notas e ações numa tela sem rolagem. Mas se a imagem **abre em tela cheia com zoom** (A1), ela pode ser menor na tela principal — e aí tudo cabe. Um achado paga o outro.
+
+**B1 é o mais importante da rodada.**
+No lote de texto não existe arte. Sem imagem, "Instagram · Carrossel · quinta 06/08" não identifica nada. O cliente precisa saber **qual publicação é** e **o que ela busca** — e isso não está no modelo hoje: o objetivo vive na fase, não na peça.
+
+É a mesma classe de erro da rodada 1: eu especifiquei o *como fazer* e esqueci o *o que é isso*.
+
+**B3 — a regra estava certa, a porta estava escondida.**
+D-043 diz que a IA só opina quando convidada. Mas o convite era um botão tracejado e desabilitado, que parecia legenda. Convite que ninguém acha é o mesmo que não existir.
+
+---
+
+### Decisões geradas
+
+**D-048** — toda peça declara título e propósito próprios.
+**D-049** — tocar na imagem abre tela cheia com zoom; marcar ponto vira modo explícito.
+**D-050** — a tela do cliente não rola: regiões fixas, só o bloco de texto rola por dentro.
+
+---
+
+## Rodada 3
 
 **Protótipo:** entrada completa do cliente — capa → peças → termo.
 
