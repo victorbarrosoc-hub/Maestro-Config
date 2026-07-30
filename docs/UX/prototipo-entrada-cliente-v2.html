@@ -113,11 +113,17 @@
 
   .artwrap { padding: 3px 18px 0; }
   .art { position: relative; aspect-ratio: 4/5; border-radius: 12px; overflow: hidden; cursor: crosshair; user-select: none; background: var(--s-sunken); }
-  .slides { display: flex; height: 100%; transition: transform 320ms var(--baton); }
-  .slide { flex: 0 0 100%; height: 100%; display: grid; place-items: center; padding: 26px; text-align: center; }
-  .slide .sp { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; opacity: .82; margin-bottom: 10px; }
-  .slide .st { font-family: var(--f-display); font-size: 27px; line-height: 1.12; letter-spacing: -.02em; }
-  .slide .sb { font-size: 12.5px; margin-top: 10px; opacity: .85; }
+  /* carrossel: largura explícita e deslocamento fracionário — sem ambiguidade de % */
+  .slides { display: flex; height: 100%; width: calc(var(--n, 1) * 100%); transition: transform 320ms var(--baton); }
+  .slide {
+    flex: 0 0 calc(100% / var(--n, 1)); height: 100%; min-width: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 22px 20px; text-align: center; overflow: hidden;
+  }
+  .slide > div { width: 100%; max-height: 100%; overflow: hidden; overflow-wrap: anywhere; }
+  .slide .sp { font-size: clamp(9px, 2.6vw, 11px); letter-spacing: .16em; text-transform: uppercase; opacity: .82; margin-bottom: 9px; }
+  .slide .st { font-family: var(--f-display); font-size: clamp(19px, 6.4vw, 27px); line-height: 1.12; letter-spacing: -.02em; }
+  .slide .sb { font-size: clamp(11px, 3.1vw, 12.5px); margin-top: 9px; opacity: .85; line-height: 1.4; }
 
   .pin { position: absolute; width: 24px; height: 24px; border-radius: 50% 50% 50% 2px; background: var(--brass-400); color: #08090B; font-size: 11px; font-weight: 700; display: grid; place-items: center; transform: translate(-2px,-22px); box-shadow: 0 2px 10px rgba(0,0,0,.4); animation: pop 240ms var(--upbeat) both; }
   @keyframes pop { from { transform: translate(-2px,-22px) scale(.4); opacity: 0 } }
@@ -221,10 +227,10 @@
 <div class="page">
 
   <header class="top">
-    <div class="eyebrow">v2.1 · interface clara + correção</div>
+    <div class="eyebrow">v2.2 · interface clara + 3 correções</div>
     <h1>A entrada do cliente</h1>
     <p>Capa → publicações → termo. A capa responde o que a tela é antes de pedir qualquer decisão.</p>
-    <p class="fix"><b>Corrigido nesta versão:</b> os botões ficavam mortos da segunda publicação em diante — <code>commit()</code> desabilitava e só o <em>Desfazer</em> reabilitava. E arrastar o slide disparava um clique fantasma, criando um marcador sem querer.</p>
+    <p class="fix"><b>Corrigido:</b> botões mortos a partir da segunda publicação · clique fantasma ao arrastar o slide · e o corte de diagramação no carrossel — o deslocamento era de 100% por slide quando deveria ser 100%÷n, então cada slide errava um pouco mais que o anterior.</p>
     <div class="ctl">
       <button id="mLight" type="button" aria-pressed="true">Tela clara</button>
       <button id="mDark" type="button" aria-pressed="false">Tela escura</button>
@@ -282,6 +288,8 @@
       <p><code>commit()</code> desabilitava os botões e só o <em>Desfazer</em> reabilitava. Como as ações ficam fora do container que é redesenhado, o estado <code>disabled</code> sobrevivia à troca de peça.</p></div>
     <div class="card"><div class="k">Bug</div><h4>Clique fantasma no swipe</h4>
       <p>Arrastar entre slides disparava o clique da imagem e criava um marcador sem querer. Agora o swipe marca uma flag que suprime o clique seguinte — e existem setas, para quem não arrasta.</p></div>
+    <div class="card"><div class="k">Bug</div><h4>Corte progressivo no carrossel</h4>
+      <p>A faixa deslizava 100% por slide, mas <code>%</code> em <code>translateX</code> se refere à largura do próprio elemento — que vale <em>n</em> slides. O erro acumulava: no slide 4 já estava três telas fora. Agora a faixa tem largura explícita e desliza 100%÷n.</p></div>
     <div class="card"><div class="k">Contraste</div><h4>Brass no claro é o 700</h4>
       <p>O brass 500 sobre branco dá 2,7:1 — reprovado em AA. Texto de acento usa o 700 (6,5:1); preenchimento usa o 500 com rótulo Ink. Regras R4 e R5 da identidade visual.</p></div>
   </section>
@@ -396,7 +404,7 @@
     $('body').innerHTML =
       '<div class="meta"><span class="badge">Instagram</span><span class="badge">' + esc(p.tipo) + '</span>' +
         '<span class="when">Vai ao ar <b>' + esc(p.dia) + '</b></span></div>' +
-      '<div class="artwrap"><div class="art" id="art"><div class="slides" id="slides">' +
+      '<div class="artwrap"><div class="art" id="art"><div class="slides" id="slides" style="--n:' + p.slides.length + '">' +
         p.slides.map(function (sl) {
           return '<div class="slide ' + p.g + '"><div><div class="sp">' + esc(sl.sp) + '</div>' +
             '<div class="st">' + esc(sl.t) + '</div><div class="sb">' + esc(sl.sb) + '</div></div></div>';
@@ -425,10 +433,12 @@
     var p = P[idx], s = st[idx];
     var art = $('art'), slides = $('slides');
 
+    var n = p.slides.length;
     function go(i) {
-      s.slide = Math.max(0, Math.min(p.slides.length-1, i));
+      s.slide = Math.max(0, Math.min(n-1, i));
       s.seen[s.slide] = true;
-      slides.style.transform = 'translateX(' + (-s.slide*100) + '%)';
+      /* % em translateX refere-se à largura do próprio .slides (n × art) */
+      slides.style.transform = 'translateX(' + (-s.slide * (100 / n)) + '%)';
       if (multi) {
         var d = $('dots').querySelectorAll('i');
         for (var k=0;k<d.length;k++) d[k].className = k===s.slide ? 'on' : (s.seen[k] ? 'seen' : '');

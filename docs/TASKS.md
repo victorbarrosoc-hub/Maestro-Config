@@ -114,9 +114,13 @@ Status do Projeto: 🟢 Sprints 0, 1, 2 e 6 concluídos · próximo: Sprint 3 (w
 - [ ] Migrations Prisma + triggers de imutabilidade
 - [ ] Seeds das 3 metodologias de fábrica
 
-## Sprint 7 — APIs
-- [ ] Auth · Usuários · Organizações · Clientes · Projetos
-- [ ] Conteúdos · Aprovação · Comentários · Analytics
+## Sprint 7 — APIs · ✅ Especificado
+- [x] Contratos REST completos — `ENGINEERING/API.md`
+- [x] Auth por link mágico · organização · clientes · projetos · metodologia
+- [x] Ciclo · lote · decisão com verificação de selo · termo
+- [x] Endpoints de IA fora do caminho crítico · eventos e webhooks
+- [ ] OpenAPI gerado do código
+- [ ] Implementação (ordem de 8 blocos definida no documento)
 
 ## Sprint 8 — Frontend
 - [ ] Setup · Componentes · Layout · Dashboard · Campanhas · Editor
@@ -158,7 +162,11 @@ Status do Projeto: 🟢 Sprints 0, 1, 2 e 6 concluídos · próximo: Sprint 3 (w
 
 ## Bugs
 
-*(vazio — sem código ainda)*
+**Protótipo da entrada do cliente — encontrados no uso, corrigidos em 2026-07-29**
+
+- [x] Botões mortos a partir da segunda publicação — `commit()` desabilitava e só o *Desfazer* reabilitava; as ações ficam fora do container redesenhado, então o estado sobrevivia à troca de peça
+- [x] Clique fantasma ao arrastar o slide criava marcador sem querer — `touchmove` agora marca flag que suprime o clique seguinte
+- [x] Corte progressivo da diagramação no carrossel — a faixa deslizava 100% por slide, mas `%` em `translateX` se refere à largura do próprio elemento (n slides). Erro acumulava a cada slide. Corrigido com largura explícita e deslocamento de 100%÷n
 
 ## Decisões
 

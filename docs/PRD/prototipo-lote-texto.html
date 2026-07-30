@@ -2,11 +2,8 @@
 
 <style>
   :root {
-    --brass-300:#E3C173; --brass-400:#D9AC4C; --brass-500:#C8963A; --brass-700:#855F22;
-    --encore:#35B87A; --coral:#F0784C; --cobalt:#5B8DEF; --violet:#8B7BF0;
-    --ink-50:#F4F6F8; --ink-100:#E3E6EA; --ink-300:#9AA1AC; --ink-400:#6B7280;
-    --ink-500:#4C535D; --ink-600:#333941; --ink-700:#23272E; --ink-800:#181B20;
-    --ink-850:#121418; --ink-900:#0D0F12; --ink-950:#08090B;
+    --brass-300:#E3C173; --brass-400:#D9AC4C; --brass-500:#C8963A; --brass-600:#A87A2C; --brass-700:#855F22;
+    --cobalt:#3B6FE0;
     --f-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
     --f-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -18,104 +15,127 @@
     :root:not([data-theme="light"]) { --page:#0D0F12; --page-fg:#F4F6F8; --page-muted:#9AA1AC; --page-line:#23272E; --page-card:#121418; --page-accent:#E3C173; }
   }
   :root[data-theme="dark"] { --page:#0D0F12; --page-fg:#F4F6F8; --page-muted:#9AA1AC; --page-line:#23272E; --page-card:#121418; --page-accent:#E3C173; }
-  :root[data-theme="light"] { --page:#EEF0F3; --page-fg:#08090B; --page-muted:#4C535D; --page-line:#DADEE3; --page-card:#FFFFFF; --page-accent:#855F22; }
+
+  /* Tokens da TELA do cliente — claro por padrão (D-047) */
+  .device {
+    --s-bg:#FFFFFF; --s-raised:#F7F8FA; --s-sunken:#F1F3F6;
+    --s-line:#E4E8EC; --s-line-soft:#EFF2F5;
+    --s-fg:#14161A; --s-muted:#5A626C; --s-subtle:#868D97;
+    --s-accent:#C8963A; --s-accent-tx:#855F22; --s-accent-fg:#08090B;
+    --s-ok:#2A9862; --s-adj:#D95E33; --s-info:#2B55B8;
+    --s-frame:#D8DDE3; --s-shadow: 0 30px 70px rgba(8,9,11,.16);
+  }
+  .device[data-app="dark"] {
+    --s-bg:#08090B; --s-raised:#121418; --s-sunken:#0D0F12;
+    --s-line:#23272E; --s-line-soft:#181B20;
+    --s-fg:#F4F6F8; --s-muted:#9AA1AC; --s-subtle:#6B7280;
+    --s-accent:#D9AC4C; --s-accent-tx:#E3C173; --s-accent-fg:#08090B;
+    --s-ok:#35B87A; --s-adj:#F0784C; --s-info:#5B8DEF;
+    --s-frame:#181B20; --s-shadow: 0 30px 70px rgba(0,0,0,.5);
+  }
 
   body { background: var(--page); color: var(--page-fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-  .page { max-width: 960px; margin: 0 auto; padding: 48px 20px 96px; }
-  .top { margin-bottom: 26px; }
+  .page { max-width: 960px; margin: 0 auto; padding: 44px 20px 96px; }
+  .top { margin-bottom: 22px; }
   .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; color: var(--page-accent); margin-bottom: 10px; }
   .top h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(30px,5vw,40px); line-height: 1.08; letter-spacing: -.022em; margin-bottom: 10px; }
   .top p { color: var(--page-muted); max-width: 62ch; }
-  .rule { margin-top: 16px; border-left: 2px solid var(--page-accent); padding: 4px 0 4px 16px; font-size: 14px; color: var(--page-muted); max-width: 64ch; }
+  .rule { margin-top: 14px; border-left: 2px solid var(--page-accent); padding: 3px 0 3px 15px; font-size: 14px; color: var(--page-muted); max-width: 64ch; }
   .rule b { color: var(--page-fg); }
+  .ctl { display: flex; gap: 8px; margin-top: 18px; }
+  .ctl button { font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: 9999px; cursor: pointer; background: transparent; border: 1px solid var(--page-line); color: var(--page-muted); transition: all 160ms var(--baton); }
+  .ctl button:hover { color: var(--page-fg); border-color: var(--page-muted); }
+  .ctl button[aria-pressed="true"] { background: var(--page-fg); color: var(--page); border-color: var(--page-fg); }
 
-  .stage { display: flex; justify-content: center; padding: 28px 0 8px; }
-  .device { width: 390px; max-width: 100%; height: 790px; flex: none; background: var(--ink-950); border: 1px solid var(--ink-800); border-radius: 40px; padding: 10px; box-shadow: 0 40px 90px rgba(8,9,11,.34); }
-  .screen { position: relative; height: 100%; background: var(--ink-950); color: var(--ink-50); border-radius: 32px; overflow: hidden; display: flex; flex-direction: column; }
+  .stage { display: flex; justify-content: center; padding: 26px 0 8px; }
+  .device { width: 390px; max-width: 100%; height: 796px; flex: none; background: var(--s-bg); border: 1px solid var(--s-frame); border-radius: 40px; padding: 10px; box-shadow: var(--s-shadow); transition: background 240ms var(--baton), border-color 240ms var(--baton); }
+  .screen { position: relative; height: 100%; background: var(--s-bg); color: var(--s-fg); border-radius: 32px; overflow: hidden; display: flex; flex-direction: column; }
 
-  .bar { flex: none; padding: 24px 18px 10px; border-bottom: 1px solid var(--ink-800); }
+  .bar { flex: none; padding: 22px 18px 10px; border-bottom: 1px solid var(--s-line); }
   .bar .row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
   .bar .lbl { flex: 1; font-size: 13px; font-weight: 600; }
-  .bar .cnt { font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-400); }
-  .bar .track { height: 3px; border-radius: 2px; background: var(--ink-800); overflow: hidden; }
-  .bar .fill { height: 100%; width: 25%; background: var(--brass-400); border-radius: 2px; transition: width 320ms var(--baton); }
+  .bar .cnt { font-family: var(--f-mono); font-size: 10.5px; color: var(--s-subtle); }
+  .bar .track { height: 3px; border-radius: 2px; background: var(--s-line); overflow: hidden; }
+  .bar .fill { height: 100%; width: 25%; background: var(--s-accent); border-radius: 2px; }
 
   .body { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
 
-  .stage-tag { margin: 14px 18px 0; display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--brass-300); background: rgba(217,172,76,.11); border: 1px solid rgba(217,172,76,.3); padding: 5px 11px; border-radius: 9999px; }
-  .nofoto { margin: 12px 18px 0; font-size: 12.5px; color: var(--ink-400); line-height: 1.45; }
+  .stage-tag { margin: 14px 18px 0; display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--s-accent-tx); background: color-mix(in srgb, var(--s-accent) 13%, transparent); border: 1px solid color-mix(in srgb, var(--s-accent) 32%, transparent); padding: 5px 11px; border-radius: 9999px; }
+  .nofoto { margin: 12px 18px 0; font-size: 12.5px; color: var(--s-muted); line-height: 1.45; }
 
   .meta { padding: 14px 18px 8px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
-  .badge { font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-300); border: 1px solid var(--ink-700); padding: 3px 8px; border-radius: 9999px; }
-  .when { font-size: 12.5px; color: var(--ink-300); }
-  .when b { color: var(--ink-50); font-weight: 600; }
+  .badge { font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--s-muted); border: 1px solid var(--s-line); padding: 3px 8px; border-radius: 9999px; }
+  .when { font-size: 12.5px; color: var(--s-muted); }
+  .when b { color: var(--s-fg); font-weight: 600; }
 
-  .block { padding: 14px 18px; border-top: 1px solid var(--ink-800); }
-  .lab { font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-400); margin-bottom: 9px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-  .lab em { font-style: normal; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--brass-300); font-weight: 600; }
-  .lab .chars { font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-500); }
-  .lab .chars.warn { color: var(--coral); }
+  .block { padding: 14px 18px 20px; border-top: 1px solid var(--s-line); }
+  .lab { font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--s-subtle); margin-bottom: 9px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .lab .chars { font-family: var(--f-mono); font-size: 10.5px; color: var(--s-subtle); }
+  .lab .chars.warn { color: var(--s-adj); }
 
-  .copy { font-size: 15px; line-height: 1.62; color: var(--ink-100); border: 1px solid transparent; border-radius: 10px; padding: 10px 12px; margin: 0 -12px; outline: none; white-space: pre-wrap; transition: border-color 160ms var(--baton), background 160ms var(--baton); }
-  .copy:hover { border-color: var(--ink-800); }
-  .copy:focus, .copy.edited { border-color: var(--brass-500); background: var(--ink-900); }
+  .copy { font-size: 15px; line-height: 1.62; color: var(--s-fg); border: 1px solid transparent; border-radius: 10px; padding: 10px 12px; margin: 0 -12px; outline: none; white-space: pre-wrap; overflow-wrap: anywhere; transition: border-color 160ms var(--baton), background 160ms var(--baton); }
+  .copy:hover { border-color: var(--s-line); }
+  .copy:focus, .copy.edited { border-color: var(--s-accent); background: var(--s-sunken); }
   .copy .tags { color: var(--cobalt); }
-  .typo { text-decoration: underline wavy var(--coral); text-decoration-skip-ink: none; cursor: pointer; }
+  .device[data-app="dark"] .copy .tags { color: #8FB0F6; }
 
   /* ===== IA ============================================================= */
   .ai { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
-  .flag { display: grid; grid-template-columns: 16px 1fr; gap: 10px; background: var(--ink-900); border: 1px solid var(--ink-800); border-radius: 11px; padding: 11px 13px; font-size: 13px; line-height: 1.45; color: var(--ink-300); animation: rise 320ms var(--baton) both; }
+  .flag { display: grid; grid-template-columns: 16px 1fr; gap: 10px; background: var(--s-raised); border: 1px solid var(--s-line); border-radius: 11px; padding: 11px 13px; font-size: 13px; line-height: 1.45; color: var(--s-muted); animation: rise 320ms var(--baton) both; }
   @keyframes rise { from { opacity:0; transform: translateY(5px) } }
   .flag .dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 7px; }
-  .flag b { color: var(--ink-50); font-weight: 600; }
-  .flag .src { display: block; margin-top: 5px; font-size: 11.5px; color: var(--ink-500); }
-  .flag.fact .dot { background: var(--coral); }
-  .flag.coher .dot { background: var(--cobalt); }
-  .flag button { background: none; border: 0; color: var(--brass-400); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 4px 0 0; }
+  .flag b { color: var(--s-fg); font-weight: 600; }
+  .flag .src { display: block; margin-top: 5px; font-size: 11.5px; color: var(--s-subtle); }
+  .flag.fact .dot { background: var(--s-adj); }
+  .flag.coher .dot { background: var(--s-info); }
 
-  .seal { display: flex; align-items: center; gap: 9px; background: var(--ink-900); border: 1px solid var(--ink-800); border-radius: 11px; padding: 10px 13px; cursor: pointer; font-size: 12.5px; color: var(--ink-300); width: 100%; text-align: left; font-family: inherit; }
-  .seal:hover { border-color: var(--ink-700); }
-  .seal .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cobalt); flex: none; }
-  .seal .chev { margin-left: auto; color: var(--ink-500); transition: transform 160ms var(--baton); }
+  .seal { display: flex; align-items: center; gap: 9px; background: var(--s-raised); border: 1px solid var(--s-line); border-radius: 11px; padding: 10px 13px; cursor: pointer; font-size: 12.5px; color: var(--s-muted); width: 100%; text-align: left; font-family: inherit; }
+  .seal:hover { border-color: var(--s-subtle); }
+  .seal .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--s-info); flex: none; }
+  .seal .chev { margin-left: auto; color: var(--s-subtle); transition: transform 160ms var(--baton); }
   .seal[aria-expanded="true"] .chev { transform: rotate(90deg); }
 
   .ask { margin-top: 12px; }
-  .ask button { width: 100%; font: inherit; font-size: 13.5px; font-weight: 600; background: transparent; border: 1px dashed var(--ink-600); color: var(--ink-300); border-radius: 11px; padding: 12px; cursor: pointer; transition: all 160ms var(--baton); }
-  .ask button:hover:not(:disabled) { border-color: var(--brass-500); color: var(--brass-300); border-style: solid; }
-  .ask button:disabled { opacity: .4; cursor: default; }
-  .ask .hint { font-size: 11.5px; color: var(--ink-500); text-align: center; margin-top: 7px; line-height: 1.4; }
+  .ask button { width: 100%; font: inherit; font-size: 13.5px; font-weight: 600; background: transparent; border: 1px dashed var(--s-line); color: var(--s-muted); border-radius: 11px; padding: 12px; cursor: pointer; transition: all 160ms var(--baton); }
+  .ask button:hover:not(:disabled) { border-color: var(--s-accent); color: var(--s-accent-tx); border-style: solid; }
+  .ask button:disabled { opacity: .45; cursor: default; }
+  .ask .hint { font-size: 11.5px; color: var(--s-subtle); text-align: center; margin-top: 7px; line-height: 1.4; }
 
-  .verdict { margin-top: 12px; background: var(--ink-900); border: 1px solid var(--brass-700); border-radius: 13px; padding: 15px 16px; animation: rise 400ms var(--baton) both; }
-  .verdict h4 { font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--brass-300); margin-bottom: 11px; }
-  .verdict .part { font-size: 13.5px; line-height: 1.5; color: var(--ink-300); margin-bottom: 11px; }
-  .verdict .part:last-child { margin-bottom: 0; }
-  .verdict .part b { color: var(--ink-50); font-weight: 600; }
-  .verdict .alt { background: var(--ink-950); border-radius: 9px; padding: 11px 12px; font-size: 13px; line-height: 1.5; color: var(--ink-100); font-style: italic; }
+  .verdict { margin-top: 12px; background: var(--s-raised); border: 1px solid var(--s-accent); border-radius: 13px; padding: 15px 16px; animation: rise 400ms var(--baton) both; }
+  .verdict h4 { font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--s-accent-tx); margin-bottom: 11px; }
+  .verdict .part { font-size: 13.5px; line-height: 1.5; color: var(--s-muted); margin-bottom: 11px; }
+  .verdict .part b { color: var(--s-fg); font-weight: 600; }
+  .verdict .alt { background: var(--s-bg); border: 1px solid var(--s-line); border-radius: 9px; padding: 11px 12px; font-size: 13px; line-height: 1.5; color: var(--s-fg); font-style: italic; }
   .verdict .use { margin-top: 9px; display: flex; gap: 8px; }
-  .verdict .use button { font: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 13px; border-radius: 8px; cursor: pointer; border: 1px solid var(--ink-700); background: transparent; color: var(--ink-100); }
-  .verdict .use button.p { background: var(--brass-400); color: var(--ink-950); border-color: transparent; }
+  .verdict .use button { font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 13px; border-radius: 8px; cursor: pointer; border: 1px solid var(--s-line); background: transparent; color: var(--s-fg); }
+  .verdict .use button.p { background: var(--s-accent); color: var(--s-accent-fg); border-color: transparent; }
 
-  .actions { flex: none; border-top: 1px solid var(--ink-800); background: var(--ink-900); padding: 12px 18px 16px; }
+  .actions { flex: none; border-top: 1px solid var(--s-line); background: var(--s-raised); padding: 12px 18px 16px; }
   .btnrow { display: flex; gap: 10px; }
-  .btn { flex: 1; font: inherit; font-size: 14.5px; font-weight: 600; height: 46px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: transform 80ms var(--baton), background 160ms var(--baton), border-color 160ms var(--baton); }
+  .btn { flex: 1; font: inherit; font-size: 14.5px; font-weight: 600; height: 46px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: transform 80ms var(--baton), background 160ms var(--baton), opacity 160ms var(--baton); }
   .btn:active { transform: scale(.985); }
-  .btn:focus-visible { outline: 2px solid var(--brass-400); outline-offset: 2px; }
-  .primary { background: var(--brass-400); color: var(--ink-950); }
-  .secondary { background: transparent; color: var(--ink-100); border-color: var(--ink-700); }
-  .after { font-size: 11.5px; color: var(--ink-500); text-align: center; margin-top: 10px; }
+  .btn:focus-visible { outline: 2px solid var(--s-accent); outline-offset: 2px; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .primary { background: var(--s-accent); color: var(--s-accent-fg); }
+  .primary:hover:not(:disabled) { background: var(--brass-600); }
+  .device[data-app="dark"] .primary:hover:not(:disabled) { background: var(--brass-300); }
+  .secondary { background: transparent; color: var(--s-fg); border-color: var(--s-line); }
+  .secondary:hover:not(:disabled) { border-color: var(--s-subtle); }
+  .after { font-size: 11.5px; color: var(--s-subtle); text-align: center; margin-top: 10px; }
 
-  .toast { position: absolute; left: 18px; right: 18px; bottom: 96px; background: var(--ink-800); border: 1px solid var(--ink-700); border-radius: 11px; padding: 12px 14px; font-size: 13.5px; color: var(--ink-100); display: flex; justify-content: space-between; align-items: center; gap: 12px; opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 240ms var(--baton), transform 240ms var(--baton); box-shadow: 0 16px 40px rgba(0,0,0,.55); }
+  .toast { position: absolute; left: 18px; right: 18px; bottom: 96px; background: var(--s-bg); border: 1px solid var(--s-line); border-radius: 11px; padding: 12px 14px; font-size: 13.5px; color: var(--s-fg); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 240ms var(--baton), transform 240ms var(--baton); box-shadow: 0 14px 36px rgba(8,9,11,.18); }
+  .device[data-app="dark"] .toast { background: #181B20; box-shadow: 0 16px 40px rgba(0,0,0,.55); }
   .toast.show { opacity: 1; transform: none; }
-  .toast b { color: var(--encore); font-weight: 600; }
-  .toast.ch b { color: var(--coral); }
+  .toast b { color: var(--s-ok); font-weight: 600; }
+  .toast.ch b { color: var(--s-adj); }
 
-  .cards { margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 14px; }
+  .cards { margin-top: 38px; display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 14px; }
   .card { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 14px; padding: 18px 20px; }
   .card .k { font-family: var(--f-mono); font-size: 10.5px; color: var(--page-accent); margin-bottom: 8px; }
   .card h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; letter-spacing: -.01em; }
   .card p { font-size: 13px; color: var(--page-muted); line-height: 1.55; }
 
-  @media (max-width: 460px) { .page { padding: 28px 10px 64px; } .device { height: 736px; } }
+  @media (max-width: 460px) { .page { padding: 26px 10px 64px; } .device { height: 742px; } }
   @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
 </style>
 
@@ -126,17 +146,18 @@
     <h1>A IA dentro da decisão</h1>
     <p>Primeiro lote do ciclo: só copy e roteiro, sem arte. É aqui que a validação por IA vale mais, porque ainda dá tempo de mudar barato.</p>
     <p class="rule"><b>A regra:</b> a IA fala sem ser chamada sobre <b>fatos</b> — ortografia, limite de caracteres, número que contradiz a estratégia. Sobre <b>gosto</b>, só quando convidada. Um cliente corrigido por robô para de editar, e cliente que para de editar mata o produto. <b>D-043</b></p>
+    <div class="ctl">
+      <button id="mLight" type="button" aria-pressed="true">Tela clara</button>
+      <button id="mDark" type="button" aria-pressed="false">Tela escura</button>
+    </div>
   </header>
 
   <div class="stage">
-    <div class="device">
+    <div class="device" id="device" data-app="light">
       <div class="screen">
 
         <div class="bar">
-          <div class="row">
-            <span class="lbl">Verão 26 · Agosto</span>
-            <span class="cnt">Texto 1 de 4</span>
-          </div>
+          <div class="row"><span class="lbl">Verão 26 · Agosto</span><span class="cnt">Texto 1 de 4</span></div>
           <div class="track"><div class="fill"></div></div>
         </div>
 
@@ -150,10 +171,7 @@
           </div>
 
           <div class="block">
-            <div class="lab">
-              <span>Legenda</span>
-              <span class="chars" id="chars">0 / 2.200</span>
-            </div>
+            <div class="lab"><span>Legenda</span><span class="chars" id="chars">0 / 2.200</span></div>
             <div class="copy" id="copy" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true" aria-label="Legenda editável"></div>
 
             <div class="ai" id="ai"></div>
@@ -186,8 +204,8 @@
       <p>Um selo fechado por peça. Atende ao objetivo da fase? Contradiz outra peça do lote? Repete tema? Interpretação bem fundamentada merece espaço, não estardalhaço.</p></div>
     <div class="card"><div class="k">Nível 3 · opinião</div><h4>Só quando convidada</h4>
       <p>A comparação segue formato fixo: o que sua versão ganhou → o que perdeu → recomendação → terceira via. Nunca emite veredito. “Era melhor antes” não é resposta útil.</p></div>
-    <div class="card"><div class="k">Segurança</div><h4>A métrica que desliga o agente</h4>
-      <p>Edições do cliente por lote, antes e depois da IA. Se cair, o agente está calando o cliente — e sai, por mais certo que esteja.</p></div>
+    <div class="card"><div class="k">D-047</div><h4>Tema é escolha do usuário</h4>
+      <p>Claro por padrão no shell do cliente, escuro no da agência — e os dois disponíveis nos dois lados. O toggle acima simula a preferência guardada na conta.</p></div>
   </section>
 </div>
 
@@ -196,23 +214,21 @@
   'use strict';
   var BASE = 'O verão não precisa de pressa. A nova coleção chegou com tudo — linho lavado, algodão cru e tingimento natural, feitos em pequenas quantidades por quem faz à mão.\n\nAté 50% de desconto na primeira semana. Disponível na loja da Aurora e no site.';
   var TAGS = ' #LojaNorte #Verão26 #FeitoÀMão';
+  var ALT = 'O verão não precisa de pressa. Linho lavado e algodão cru, com tingimento natural, feitos em pequenas quantidades por quem faz à mão.\n\n30% de desconto na primeira semana. Disponível na loja da Aurora e no site.';
 
   var $ = function (i) { return document.getElementById(i); };
   var copy = $('copy'), reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var decided = false;
-
   function esc(s) { return String(s).replace(/[&<>]/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m]; }); }
 
   copy.innerHTML = esc(BASE) + '<span class="tags">' + esc(TAGS) + '</span>';
   var ORIGINAL = copy.innerText;
 
-  /* som */
   var ctx = null;
   function play(k) {
     if (reduced) return;
     try { if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended') ctx.resume(); } catch(e){ return; }
-    var n = k==='ok' ? [[440,0],[659.25,.09]] : [[329.63,0]];
-    n.forEach(function (p) {
+    (k==='ok' ? [[440,0],[659.25,.09]] : [[329.63,0]]).forEach(function (p) {
       var o=ctx.createOscillator(), h=ctx.createOscillator(), g=ctx.createGain(), hg=ctx.createGain();
       o.type='sine'; o.frequency.value=p[0]; h.type='triangle'; h.frequency.value=p[0]*2; hg.gain.value=.12;
       var t=ctx.currentTime+p[1];
@@ -223,43 +239,24 @@
     });
   }
 
-  /* ---------- IA nível 1 e 2 ---------- */
   function analyse() {
-    var txt = copy.innerText;
-    var flags = [];
+    var txt = copy.innerText, flags = [];
+    if (/50\s*%/.test(txt)) flags.push({ c:'fact', h:'A estratégia fala em <b>30% de desconto</b>. Esta copy diz <b>50%</b>.', s:'Fonte: Estratégia do projeto · Verão 26' });
+    if (!/à mão/i.test(txt)) flags.push({ c:'coher', h:'Saiu a menção a <b>feito à mão</b>, que é um dos três pilares de agosto.', s:'Fonte: Pilares da estratégia' });
+    if (txt.length > 2200) flags.push({ c:'fact', h:'A legenda passou do limite do Instagram em <b>' + (txt.length-2200) + '</b> caracteres.', s:'' });
 
-    if (/50\s*%/.test(txt)) {
-      flags.push({ c:'fact', h:'A estratégia fala em <b>30% de desconto</b>. Esta copy diz <b>50%</b>.',
-                   s:'Fonte: Estratégia do projeto · Verão 26' });
-    }
-    if (/\bpor quem faz à mão\b/.test(txt) === false && /à mão/.test(txt) === false) {
-      flags.push({ c:'coher', h:'Saiu a menção a <b>feito à mão</b>, que é um dos três pilares de agosto.',
-                   s:'Fonte: Pilares da estratégia' });
-    }
-    if (txt.length > 2200) {
-      flags.push({ c:'fact', h:'A legenda passou do limite do Instagram em <b>' + (txt.length-2200) + '</b> caracteres.', s:'' });
-    }
-
-    var html = flags.slice(0,3).map(function (f) {
-      return '<div class="flag ' + f.c + '"><span class="dot"></span><div>' + f.h +
-        (f.s ? '<span class="src">' + f.s + '</span>' : '') + '</div></div>';
-    }).join('');
-
-    // nível 2 — selo fechado
-    html += '<button class="seal" id="sealBtn" type="button" aria-expanded="false">' +
-      '<span class="dot"></span><span id="sealTx">Coerência com o objetivo de agosto</span>' +
-      '<span class="chev">›</span></button>' +
-      '<div id="sealBody"></div>';
-
-    $('ai').innerHTML = html;
+    $('ai').innerHTML = flags.slice(0,3).map(function (f) {
+      return '<div class="flag ' + f.c + '"><span class="dot"></span><div>' + f.h + (f.s ? '<span class="src">' + f.s + '</span>' : '') + '</div></div>';
+    }).join('') +
+      '<button class="seal" id="sealBtn" type="button" aria-expanded="false"><span class="dot"></span>' +
+      '<span>Coerência com o objetivo de agosto</span><span class="chev">›</span></button><div id="sealBody"></div>';
 
     $('sealBtn').addEventListener('click', function () {
       var open = this.getAttribute('aria-expanded') === 'true';
       this.setAttribute('aria-expanded', String(!open));
       $('sealBody').innerHTML = open ? '' :
         '<div class="flag coher" style="margin-top:8px"><span class="dot"></span><div>' +
-        'O objetivo de agosto é <b>alcançar quem ainda não conhece a marca</b>. ' +
-        'Esta copy assume que a pessoa já sabe o que é a Loja Norte — não explica o que a marca faz.' +
+        'O objetivo de agosto é <b>alcançar quem ainda não conhece a marca</b>. Esta copy assume que a pessoa já sabe o que é a Loja Norte — não explica o que a marca faz.' +
         '<span class="src">Fonte: Objetivo da etapa Estreia</span></div></div>';
     });
 
@@ -268,59 +265,44 @@
     $('chars').classList.toggle('warn', n > 2000);
   }
 
-  /* ---------- IA nível 3 — só quando pedida ---------- */
   function verdict() {
     var txt = copy.innerText;
-    var perdeuTingimento = !/tingimento/i.test(txt);
+    var perdeu = !/tingimento/i.test(txt);
     var menor = txt.length < ORIGINAL.length;
     var diff = Math.abs(ORIGINAL.length - txt.length);
 
-    var ganhou = menor
-      ? '<b>Sua versão está mais direta</b> — cortou ' + diff + ' caracteres e o começo ficou mais forte.'
-      : '<b>Sua versão detalha mais</b> — ganhou ' + diff + ' caracteres de contexto sobre o produto.';
-
-    var perdeu = perdeuTingimento
-      ? '<b>O que saiu:</b> a menção ao tingimento natural. Ela era o único ponto do texto que sustentava “feito à mão”, que é pilar da estratégia de agosto.'
-      : '<b>O que saiu:</b> nada essencial. Os três pilares de agosto continuam no texto.';
-
-    var rec = perdeuTingimento
-      ? '<b>Sugestão:</b> manter o seu começo e recuperar o tingimento no final.'
-      : '<b>Sugestão:</b> a sua versão sustenta a estratégia. Só ajustar o desconto para 30%.';
-
     $('verdictBox').innerHTML =
       '<div class="verdict"><h4>Comparando as duas versões</h4>' +
-        '<p class="part">' + ganhou + '</p>' +
-        '<p class="part">' + perdeu + '</p>' +
-        '<p class="part">' + rec + '</p>' +
-        '<div class="alt">“O verão não precisa de pressa. Linho lavado e algodão cru, com tingimento natural, feitos em pequenas quantidades por quem faz à mão. 30% de desconto na primeira semana.”</div>' +
+        '<p class="part">' + (menor
+          ? '<b>Sua versão está mais direta</b> — cortou ' + diff + ' caracteres e o começo ficou mais forte.'
+          : '<b>Sua versão detalha mais</b> — ganhou ' + diff + ' caracteres de contexto sobre o produto.') + '</p>' +
+        '<p class="part">' + (perdeu
+          ? '<b>O que saiu:</b> a menção ao tingimento natural. Ela era o único ponto do texto que sustentava “feito à mão”, que é pilar da estratégia de agosto.'
+          : '<b>O que saiu:</b> nada essencial. Os três pilares de agosto continuam no texto.') + '</p>' +
+        '<p class="part">' + (perdeu
+          ? '<b>Sugestão:</b> manter o seu começo e recuperar o tingimento no final.'
+          : '<b>Sugestão:</b> a sua versão sustenta a estratégia. Só ajustar o desconto para 30%.') + '</p>' +
+        '<div class="alt">“' + esc(ALT.split('\n\n')[0]) + ' ' + esc(ALT.split('\n\n')[1].split('.')[0]) + '.”</div>' +
         '<div class="use"><button class="p" id="useAlt" type="button">Usar esta</button>' +
-        '<button id="keepMine" type="button">Ficar com a minha</button></div>' +
-      '</div>';
+        '<button id="keepMine" type="button">Ficar com a minha</button></div></div>';
 
     $('useAlt').addEventListener('click', function () {
-      copy.innerHTML = esc('O verão não precisa de pressa. Linho lavado e algodão cru, com tingimento natural, feitos em pequenas quantidades por quem faz à mão.\n\n30% de desconto na primeira semana. Disponível na loja da Aurora e no site.') +
-        '<span class="tags">' + esc(TAGS) + '</span>';
-      $('verdictBox').innerHTML = '';
-      onEdit();
+      copy.innerHTML = esc(ALT) + '<span class="tags">' + esc(TAGS) + '</span>';
+      $('verdictBox').innerHTML = ''; onEdit();
     });
     $('keepMine').addEventListener('click', function () { $('verdictBox').innerHTML = ''; });
   }
 
-  /* ---------- estado ---------- */
   function edited() { return copy.innerText.trim() !== ORIGINAL.trim(); }
 
   function onEdit() {
     var e = edited();
     copy.classList.toggle('edited', e);
     $('askBtn').disabled = !e;
-    $('askHint').textContent = e
-      ? 'A IA só compara quando você pede. Ela não opina sozinha.'
-      : 'Edite o texto e a IA compara as duas versões — só se você pedir.';
+    $('askHint').textContent = e ? 'A IA só compara quando você pede. Ela não opina sozinha.' : 'Edite o texto e a IA compara as duas versões — só se você pedir.';
     $('bP').textContent = e ? 'Enviar alterações (1)' : 'Aprovar';
     $('bS').textContent = e ? 'Descartar e aprovar' : 'Solicitar alterações';
-    $('after').textContent = e
-      ? 'A agência recebe sua versão e volta com o texto ajustado.'
-      : 'Ao aprovar, este texto é congelado e a produção começa.';
+    $('after').textContent = e ? 'A agência recebe sua versão e volta com o texto ajustado.' : 'Ao aprovar, este texto é congelado e a produção começa.';
     analyse();
   }
 
@@ -333,16 +315,22 @@
     play(kind);
     copy.setAttribute('contenteditable', 'false');
     $('bP').disabled = $('bS').disabled = true;
-    $('bP').style.opacity = $('bS').style.opacity = '.45';
-    $('tmsg').innerHTML = kind === 'ok'
-      ? '<b>Texto aprovado.</b> Congelado para produção.'
-      : '<b>Alterações enviadas.</b> Ana foi avisada.';
+    $('tmsg').innerHTML = kind === 'ok' ? '<b>Texto aprovado.</b> Congelado para produção.' : '<b>Alterações enviadas.</b> Ana foi avisada.';
     $('toast').className = 'toast show' + (kind === 'ok' ? '' : ' ch');
     setTimeout(function () { $('toast').classList.remove('show'); }, 5000);
   }
 
   $('bP').addEventListener('click', function () { decide(edited() ? 'ch' : 'ok'); });
   $('bS').addEventListener('click', function () { decide(edited() ? 'ok' : 'ch'); });
+
+  $('mLight').addEventListener('click', function () {
+    $('device').dataset.app = 'light';
+    this.setAttribute('aria-pressed','true'); $('mDark').setAttribute('aria-pressed','false');
+  });
+  $('mDark').addEventListener('click', function () {
+    $('device').dataset.app = 'dark';
+    this.setAttribute('aria-pressed','true'); $('mLight').setAttribute('aria-pressed','false');
+  });
 
   onEdit();
 })();
