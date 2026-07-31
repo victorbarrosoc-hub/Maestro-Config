@@ -117,6 +117,35 @@
   .veil { position: absolute; inset: 0; background: rgba(8,9,11,.35); opacity: 0; pointer-events: none; transition: opacity 240ms var(--baton); }
   .veil.on { opacity: 1; pointer-events: auto; }
 
+  /* ===== tela cheia da publicação ======================================= */
+  .full { position: absolute; inset: 0; z-index: 9; background: var(--s-bg); display: none; flex-direction: column; }
+  .full.on { display: flex; animation: fin 280ms var(--baton) both; }
+  @keyframes fin { from { opacity: 0; transform: scale(.985) } }
+  .full .ftop { flex: none; display: flex; align-items: center; gap: 10px; padding: 20px 14px 10px; border-bottom: 1px solid var(--s-line); }
+  .full .ico { width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--s-line); background: transparent; color: var(--s-fg); display: grid; place-items: center; cursor: pointer; flex: none; }
+  .full .ico:disabled { opacity: .3; cursor: default; }
+  .full .fcount { flex: 1; font-family: var(--f-mono); font-size: 10.5px; color: var(--s-subtle); text-align: center; }
+  .full .fbody { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+  .full .fart { width: 100%; aspect-ratio: 4/5; display: grid; place-items: center; padding: 30px; text-align: center; position: relative; }
+  .full .fart .s { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; opacity: .82; margin-bottom: 10px; }
+  .full .fart .t { font-family: var(--f-display); font-size: 30px; line-height: 1.12; letter-spacing: -.02em; }
+  .full .fart .sb { font-size: 13px; margin-top: 11px; opacity: .85; }
+  .full .fmeta { padding: 14px 18px 10px; }
+  .full .fmeta h3 { font-size: 18px; font-weight: 600; letter-spacing: -.015em; margin-bottom: 5px; }
+  .full .fmeta .intent { font-size: 12.5px; color: var(--s-muted); line-height: 1.4; }
+  .full .fmeta .intent b { color: var(--s-accent-tx); font-weight: 600; }
+  .full .fmeta .row { display: flex; flex-wrap: wrap; gap: 6px 9px; align-items: center; margin-top: 9px; }
+  .full .fcopy { padding: 12px 18px 18px; border-top: 1px solid var(--s-line-soft); margin-top: 4px; }
+  .full .fcopy .lab { font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--s-subtle); margin-bottom: 7px; }
+  .full .fcopy p { font-size: 15px; line-height: 1.55; color: var(--s-fg); white-space: pre-wrap; }
+  .full .fcopy .tags { color: var(--cobalt); }
+  .device[data-app="dark"] .full .fcopy .tags { color: #8FB0F6; }
+  .full .fnote { padding: 0 18px 18px; font-size: 12px; color: var(--s-subtle); line-height: 1.45; }
+  .full .facts { flex: none; border-top: 1px solid var(--s-line); background: var(--s-raised); padding: 11px 18px 16px; }
+  .full .facts .brow { display: flex; gap: 9px; }
+  .full .facts .btn { flex: 1; height: 46px; font-size: 14.5px; }
+  .full .facts .after { font-size: 11px; color: var(--s-subtle); text-align: center; margin-top: 8px; }
+
   .cards { margin-top: 38px; display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 14px; }
   .card { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 14px; padding: 18px 20px; }
   .card .k { font-family: var(--f-mono); font-size: 10.5px; color: var(--page-accent); margin-bottom: 8px; }
@@ -133,7 +162,7 @@
     <div class="eyebrow">D-054 · adotado da análise competitiva</div>
     <h1>Como vai ficar o perfil</h1>
     <p>PodePostar e AprovaPost têm preview de feed. A Maestro mostrava a peça e nunca o conjunto no perfil — que é como o cliente realmente enxerga o próprio Instagram.</p>
-    <p class="fix"><b>O que a Maestro faz a mais:</b> o grid carrega o <b>estado</b> de cada peça. O que já foi ao ar, o que está aprovado esperando data, o que ainda espera você — com borda em latão, porque latão significa uma coisa só no produto. Tocar numa célula abre a peça.</p>
+    <p class="fix"><b>O que a Maestro faz a mais:</b> o grid carrega o <b>estado</b> de cada peça. O que já foi ao ar, o que está aprovado esperando data, o que ainda espera você — com borda em latão, porque latão significa uma coisa só no produto. Tocar numa célula abre o resumo; <b>“Ver publicação” abre em tela cheia</b>, com legenda, propósito e — se ela ainda espera você — os botões de decisão. Setas para percorrer o mês inteiro.</p>
     <div class="ctl">
       <button id="mLight" type="button" aria-pressed="true">Tela clara</button>
       <button id="mDark" type="button" aria-pressed="false">Tela escura</button>
@@ -174,6 +203,23 @@
           <p class="noteline" id="noteline"></p>
         </div>
 
+        <div class="full" id="full">
+          <div class="ftop">
+            <button class="ico" id="fClose" type="button" aria-label="Voltar ao feed">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+            <span class="fcount" id="fCount"></span>
+            <button class="ico" id="fPrev" type="button" aria-label="Anterior">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button class="ico" id="fNext" type="button" aria-label="Próxima">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="fbody" id="fBody"></div>
+          <div class="facts" id="fActs"></div>
+        </div>
+
         <div class="veil" id="veil"></div>
         <div class="sheet" id="sheet">
           <div class="grab"></div>
@@ -207,33 +253,39 @@
 
   /* topo = mais recente, como no Instagram */
   var F = [
-    { t:'Quem faz', s:'Bastidores', g:'g4', st:'prod', tipo:'Carrossel', dia:'ter, 25/08',
-      intent:'Sustentar o pilar “feito à mão” com prova real' },
-    { t:'R$ 249', s:'A partir de', g:'g3', st:'wait', tipo:'Post', dia:'qui, 20/08',
-      intent:'Tirar a objeção de preço de quem já demonstrou interesse' },
-    { t:'Ateliê às 6h', s:'Rotina', g:'g5', st:'prod', tipo:'Reels', dia:'seg, 17/08',
-      intent:'Mostrar processo para quem chegou pelo conteúdo de julho' },
+    { t:'Quem faz', s:'Bastidores', sb:'As seis pessoas por trás da coleção', g:'g4', st:'prod', tipo:'Carrossel', dia:'ter, 25/08',
+      intent:'Sustentar o pilar “feito à mão” com prova real',
+      copy:'Toda peça da Loja Norte passa por seis pares de mãos antes de chegar em você.\n\nNeste carrossel, a gente apresenta cada uma delas.', tags:' #LojaNorte #FeitoÀMão' },
+    { t:'R$ 249', s:'A partir de', sb:'Até 6x sem juros', g:'g3', st:'wait', tipo:'Post', dia:'qui, 20/08',
+      intent:'Tirar a objeção de preço de quem já demonstrou interesse',
+      copy:'Peças a partir de R$ 249, em até 6x sem juros.\n\nQuem compra na loja da Aurora leva o ajuste de barra por conta da casa.', tags:' #LojaNorte' },
+    { t:'Ateliê às 6h', s:'Rotina', sb:'O dia começa antes da loja abrir', g:'g5', st:'prod', tipo:'Reels', dia:'seg, 17/08',
+      intent:'Mostrar processo para quem chegou pelo conteúdo de julho',
+      copy:'Roteiro em produção.', tags:'' },
 
-    { t:'Como escolher linho', s:'Vídeo · 45s', g:'g2', st:'wait', tipo:'Reels', dia:'seg, 10/08',
-      intent:'Provar autoridade ensinando algo útil, sem vender' },
-    { t:'Verão sem pressa', s:'Loja Norte', g:'g1', st:'ok', tipo:'Carrossel', dia:'qui, 06/08',
-      intent:'Apresentar a coleção para quem ainda não conhece a marca' },
-    { t:'Duas peças, um verão', s:'Look', g:'g6', st:'ok', tipo:'Post', dia:'ter, 04/08',
-      intent:'Mostrar combinação para quem já conhece a coleção' },
+    { t:'Como escolher linho', s:'Vídeo · 45s', sb:'Três coisas para olhar antes de comprar', g:'g2', st:'wait', tipo:'Reels', dia:'seg, 10/08',
+      intent:'Provar autoridade ensinando algo útil, sem vender',
+      copy:'Linho bom amassa. Linho ruim também — só que não desamassa.\n\nNeste vídeo: gramatura, trama e acabamento da costura.', tags:' #LojaNorte #Linho' },
+    { t:'Verão sem pressa', s:'Loja Norte', sb:'A coleção que respeita o calor', g:'g1', st:'ok', tipo:'Carrossel', dia:'qui, 06/08',
+      intent:'Apresentar a coleção para quem ainda não conhece a marca',
+      copy:'O verão não precisa de pressa. Linho lavado e algodão cru, com tingimento natural, feitos em pequenas quantidades por quem faz à mão.\n\n30% de desconto na primeira semana.', tags:' #LojaNorte #Verão26' },
+    { t:'Duas peças, um verão', s:'Look', sb:'A combinação que resolve a semana', g:'g6', st:'ok', tipo:'Post', dia:'ter, 04/08',
+      intent:'Mostrar combinação para quem já conhece a coleção',
+      copy:'Duas peças, cinco combinações. O verão inteiro resolvido.', tags:' #LojaNorte' },
 
-    { t:'Feito à mão, sem pressa', s:'Julho', g:'g5', st:'pub', tipo:'Carrossel', dia:'29/07',
-      intent:'Aprovado e publicado em julho' },
-    { t:'O linho certo', s:'Julho', g:'g3', st:'pub', tipo:'Reels', dia:'24/07',
-      intent:'Aprovado e publicado em julho' },
-    { t:'Ateliê aberto', s:'Julho', g:'g1', st:'pub', tipo:'Post', dia:'18/07',
-      intent:'Aprovado e publicado em julho' },
+    { t:'Feito à mão, sem pressa', s:'Julho', sb:'', g:'g5', st:'pub', tipo:'Carrossel', dia:'29/07',
+      intent:'Aprovado por Marina Costa em 26/07', copy:'Feito à mão leva mais tempo. É esse o ponto.', tags:' #LojaNorte' },
+    { t:'O linho certo', s:'Julho', sb:'', g:'g3', st:'pub', tipo:'Reels', dia:'24/07',
+      intent:'Aprovado por Marina Costa em 22/07', copy:'Como reconhecer linho bom em 30 segundos.', tags:' #Linho' },
+    { t:'Ateliê aberto', s:'Julho', sb:'', g:'g1', st:'pub', tipo:'Post', dia:'18/07',
+      intent:'Aprovado por Marina Costa em 16/07', copy:'Sábado tem ateliê aberto na Aurora.', tags:' #LojaNorte' },
 
-    { t:'Tingimento natural', s:'Julho', g:'g6', st:'pub', tipo:'Post', dia:'12/07',
-      intent:'Aprovado e publicado em julho' },
-    { t:'Quem costura', s:'Julho', g:'g4', st:'pub', tipo:'Carrossel', dia:'08/07',
-      intent:'Aprovado e publicado em julho' },
-    { t:'Coleção chegando', s:'Julho', g:'g2', st:'pub', tipo:'Post', dia:'02/07',
-      intent:'Aprovado e publicado em julho' }
+    { t:'Tingimento natural', s:'Julho', sb:'', g:'g6', st:'pub', tipo:'Post', dia:'12/07',
+      intent:'Aprovado por Marina Costa em 10/07', copy:'A cor vem da casca, não do laboratório.', tags:' #FeitoÀMão' },
+    { t:'Quem costura', s:'Julho', sb:'', g:'g4', st:'pub', tipo:'Carrossel', dia:'08/07',
+      intent:'Aprovado por Marina Costa em 05/07', copy:'Dona Marta costura há 30 anos.', tags:' #LojaNorte' },
+    { t:'Coleção chegando', s:'Julho', sb:'', g:'g2', st:'pub', tipo:'Post', dia:'02/07',
+      intent:'Aprovado por Marina Costa em 30/06', copy:'Em agosto tem coleção nova.', tags:' #Verão26' }
   ];
 
   var LBL = { pub:'No ar', ok:'Aprovado', wait:'Esperando você', prod:'Em produção' };
@@ -261,22 +313,107 @@
       : '<b>' + wait + '</b> esperam sua decisão · <b>' + prod + '</b> ainda em produção na agência. As posições respeitam o calendário aprovado.';
   }
 
+  var shIdx = 0;
   function open(i) {
     var p = F[i];
+    shIdx = i;
     $('shT').textContent = p.t;
     $('shI').innerHTML = p.st === 'pub' ? esc(p.intent) : '<b>O que busca:</b> ' + esc(p.intent);
     $('shR').innerHTML = '<span class="badge">' + esc(p.tipo) + '</span>' +
       '<span class="badge">' + esc(p.dia) + '</span>' +
       '<span class="pill" style="--c:' + COL[p.st] + '"><span class="d"></span>' + LBL[p.st] + '</span>';
-    $('shGo').textContent = p.st === 'wait' ? 'Decidir esta publicação' : 'Ver publicação';
-    $('shGo').style.display = p.st === 'prod' ? 'none' : 'block';
+    $('shGo').textContent = p.st === 'wait' ? 'Abrir e decidir' : 'Ver publicação';
     $('sheet').classList.add('on'); $('veil').classList.add('on');
   }
   function close() { $('sheet').classList.remove('on'); $('veil').classList.remove('on'); }
 
+  /* ---------- tela cheia da publicação ---------- */
+  var cur = 0;
+
+  function openFull(i) {
+    cur = i; close(); drawFull();
+    $('full').classList.add('on');
+  }
+  function closeFull() { $('full').classList.remove('on'); }
+
+  function drawFull() {
+    var p = F[cur];
+    $('fCount').textContent = (cur + 1) + ' de ' + F.length;
+    $('fPrev').disabled = cur === 0;
+    $('fNext').disabled = cur === F.length - 1;
+
+    $('fBody').innerHTML =
+      '<div class="fart ' + p.g + '"><div>' +
+        (p.s ? '<div class="s">' + esc(p.s) + '</div>' : '') +
+        '<div class="t">' + esc(p.t) + '</div>' +
+        (p.sb ? '<div class="sb">' + esc(p.sb) + '</div>' : '') +
+      '</div></div>' +
+      '<div class="fmeta"><h3>' + esc(p.t) + '</h3>' +
+        '<p class="intent">' + (p.st === 'pub' ? esc(p.intent) : '<b>O que busca:</b> ' + esc(p.intent)) + '</p>' +
+        '<div class="row"><span class="badge">' + esc(p.tipo) + '</span>' +
+        '<span class="badge">' + esc(p.dia) + '</span>' +
+        '<span class="pill" style="--c:' + COL[p.st] + '"><span class="d"></span>' + LBL[p.st] + '</span></div></div>' +
+      '<div class="fcopy"><div class="lab">Legenda</div>' +
+        '<p>' + esc(p.copy) + '<span class="tags">' + esc(p.tags) + '</span></p></div>' +
+      (p.st === 'prod'
+        ? '<p class="fnote">A agência ainda está produzindo esta peça. Você recebe assim que ela estiver pronta.</p>'
+        : p.st === 'pub'
+        ? '<p class="fnote">Selo do conteúdo publicado: 7F3A·2B91 — igual ao que você aprovou.</p>'
+        : '');
+
+    if (p.st === 'wait') {
+      $('fActs').innerHTML = '<div class="brow">' +
+        '<button class="btn" id="fOk" type="button">Aprovar</button>' +
+        '<button class="btn g" id="fAdj" type="button" style="margin-top:0">Solicitar alterações</button></div>' +
+        '<p class="after">Ao aprovar, esta publicação entra na fila para ir ao ar.</p>';
+      $('fOk').addEventListener('click', function () { decide('ok'); });
+      $('fAdj').addEventListener('click', function () { decide('adj'); });
+      $('fActs').style.display = 'block';
+    } else if (p.st === 'ok') {
+      $('fActs').innerHTML = '<p class="after" style="margin:0">Aprovada. Vai ao ar em ' + esc(p.dia) + '.</p>';
+      $('fActs').style.display = 'block';
+    } else {
+      $('fActs').style.display = 'none';
+    }
+    $('fBody').scrollTop = 0;
+  }
+
+  function decide(kind) {
+    F[cur].st = kind === 'ok' ? 'ok' : 'wait';
+    if (kind === 'ok') play();
+    drawFull(); draw();
+    $('fActs').innerHTML = '<p class="after" style="margin:0">' +
+      (kind === 'ok' ? 'Aprovada. A agência foi avisada.' : 'Alterações enviadas. A agência foi avisada.') + '</p>';
+  }
+
+  var ctx = null;
+  function play() {
+    try { if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended') ctx.resume(); } catch(e){ return; }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    [[440,0],[659.25,.09]].forEach(function (n) {
+      var o=ctx.createOscillator(),h=ctx.createOscillator(),g=ctx.createGain(),hg=ctx.createGain();
+      o.type='sine';o.frequency.value=n[0];h.type='triangle';h.frequency.value=n[0]*2;hg.gain.value=.12;
+      var t=ctx.currentTime+n[1];
+      g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.15,t+.008);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.44);
+      o.connect(g);h.connect(hg);hg.connect(g);g.connect(ctx.destination);
+      o.start(t);h.start(t);o.stop(t+.5);h.stop(t+.5);
+    });
+  }
+
+  $('fClose').addEventListener('click', closeFull);
+  $('fPrev').addEventListener('click', function () { if (cur > 0) { cur--; drawFull(); } });
+  $('fNext').addEventListener('click', function () { if (cur < F.length-1) { cur++; drawFull(); } });
+  document.addEventListener('keydown', function (e) {
+    if (!$('full').classList.contains('on')) return;
+    if (e.key === 'Escape') closeFull();
+    if (e.key === 'ArrowLeft' && cur > 0) { cur--; drawFull(); }
+    if (e.key === 'ArrowRight' && cur < F.length-1) { cur++; drawFull(); }
+  });
+
   $('shClose').addEventListener('click', close);
   $('veil').addEventListener('click', close);
-  $('shGo').addEventListener('click', close);
+  $('shGo').addEventListener('click', function () { openFull(shIdx); });
 
   $('sAll').addEventListener('click', function () {
     onlyReady = false; this.setAttribute('aria-pressed','true'); $('sReady').setAttribute('aria-pressed','false'); draw();

@@ -92,14 +92,14 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 - [ ] Resultados
 - [ ] Administração
 
-## Sprint 4 — Design System
+## Sprint 4 — Design System · ✅ Especificado
 
-- [x] Cores · Tipografia · Motion · Tokens · Dark Mode *(entregues no Sprint 0 via Brand)*
-- [ ] Grid e layouts de aplicação
-- [ ] Biblioteca de componentes (shadcn/ui customizado)
-- [ ] Set de ícones
-- [ ] Componentes de estado do conteúdo
-- [ ] Componente de aprovação (botões + som + feedback)
+- [x] Cores · Tipografia · Motion · Tokens · Dark Mode *(Sprint 0, via Brand)*
+- [x] **Inventário de componentes** — `UI/COMPONENTS.md`, extraído dos 8 protótipos
+- [x] Componente de aprovação, estados de conteúdo, grid de feed, painel de IA — todos especificados com props, estados e regras
+- [ ] Implementar em React + Tailwind + shadcn/ui (ordem de 7 blocos no documento)
+- [ ] Set de ícones (Lucide + customizados)
+- [ ] Storybook
 
 ## Sprint 5 — PRD · 🟡 Em andamento
 
@@ -111,7 +111,7 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 - [x] **Protótipo do lado da agência** — painel, envio em lote com checklist, diff de alterações
 - [x] **Análise competitiva** — `MARKETING/COMPETITIVE.md` (D-054 a D-058)
 - [x] **Pricing e empacotamento** — `MARKETING/PRICING.md` (D-057 fechado, D-059, D-060)
-- [x] **Preview de feed** — grid do perfil com o estado de cada peça (D-054)
+- [x] **Preview de feed** — grid do perfil com estado por peça e publicação em tela cheia (D-054)
 - [ ] **Relatório de tempo de aprovação** (D-054)
 - [ ] **Entrada por Canva e Google Drive** (D-055)
 - [ ] Instrumentação das métricas próprias (D-058)
