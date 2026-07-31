@@ -408,6 +408,53 @@ Blocos padrão: **Gancho** (0–3s) · **Desenvolvimento** (n cenas) · **Chamad
 
 ---
 
+# D-054 · Produto · Aprovada
+**Data:** 2026-07-29 · **Origem:** análise competitiva (`MARKETING/COMPETITIVE.md`)
+**Contexto:** PodePostar e AprovaPost têm **preview de feed** — o grid do Instagram com as peças nas posições reais. A Maestro mostra a peça, nunca o conjunto no perfil.
+**Decisão:** **preview de feed entra no MVP.** Estava no backlog como "modo ensaio".
+**Motivo:** é barato, é esperado pelo mercado brasileiro, e casa com o modelo do lote (D-030) — o cliente já avalia o mês, agora vê o mês montado.
+**Junto vai o relatório de tempo de aprovação** (tempo médio do envio à decisão, por cliente e por lote). Os dados já existem em `Approval` e `Batch`.
+**Regra de tom, obrigatória:** o relatório serve para a agência **melhorar a conversa** com o cliente lento, nunca para constrangê-lo. Nenhuma tela do cliente exibe o próprio tempo de resposta. Vale o mesmo princípio de D-023 sobre lembretes: a ferramenta não cobra por ninguém.
+
+# D-055 · Produto · Aprovada
+**Data:** 2026-07-29 · **Origem:** análise competitiva
+**Decisão:** **entrada de arquivos por Canva e Google Drive entra no MVP**, ao lado do upload direto.
+**Motivo:** é onde a arte das agências brasileiras realmente vive. Exigir upload manual não é detalhe de conveniência — é atrito diário que o concorrente já resolveu.
+**Consequências:** integração de leitura apenas (importar arquivo e metadados). Sincronização bidirecional e edição no Canva ficam fora do escopo.
+
+# D-056 · Produto · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Escopo — as recusas
+**Contexto:** o PodePostar tenta virar sistema operacional da agência **somando funcionalidades** — gestão financeira, diagnóstico de perfil, estudo de persona, análise de concorrência, esteira de produtos, quadro de tarefas. É o mesmo território da Maestro por um caminho oposto.
+**Decisão:** a Maestro **não** implementa:
+
+| Recusa | Motivo |
+|---|---|
+| Gestão financeira da agência | Vira ERP. Existe software melhor. Contraria "menos é mais difícil". |
+| Diagnóstico de perfil · persona · análise de concorrência | São entregas de consultoria, não operação. Viram **conteúdo da metodologia**, nunca módulo. |
+| Quadro de tarefas genérico · esteira de produtos | É o Trello que a Maestro existe para substituir. |
+| **Aprovação por grupo de WhatsApp** | Contraria a **Regra #5** frontalmente. |
+
+**Sobre o WhatsApp:** é a recusa mais cara comercialmente e a mais importante estrategicamente. O Aprova.ai destaca isso na home. Aprovar dentro de um grupo destrói registro de versão, selo (D-032) e termo (D-033) — ou seja, destrói dois dos seis diferenciais reais da Maestro. WhatsApp notifica e leva de volta; nunca decide.
+
+# D-057 · Negócio · **Em aberto**
+**Data:** 2026-07-29 · **Categoria:** Pricing e posicionamento
+**Contexto:** Aprova.ai a R$ 19,90/cliente/mês · AprovaPost de R$ 14,50 a R$ 225 por faixa · Frame.io a US$ 15–25/membro.
+**Problema:** cobrar por cliente ancora a comparação direta com R$ 19,90 e faz tudo que a Maestro tem a mais parecer caro. A pergunta "quanto custa por cliente?" já contém o enquadramento errado.
+**Recomendação do time de produto:** **cobrar por assento da agência + projetos ativos**, com faixa de entrada (1 projeto, 3 assentos). Coloca a Maestro na prateleira do Frame.io, não na do Aprova.ai.
+**Motivo:** o valor não escala com número de clientes — escala com a complexidade da operação e com o método guardado na ferramenta.
+**Risco:** agência pequena pode achar caro. Mitigação na faixa de entrada.
+**A decidir antes do lançamento:** modelo, faixas, existência de plano gratuito, duração do teste (os três concorrentes dão 7 dias; 14 é o mínimo competitivo).
+**Responsável:** Founder.
+
+# D-058 · Marketing · Aprovada
+**Data:** 2026-07-29 · **Origem:** Frame.io
+**Contexto:** a home do Frame.io é feita de número — *2,9× mais rápido*, *2,7× em review*, *31% menos retrabalho*. A dos concorrentes brasileiros é feita de adjetivo.
+**Decisão:** **nenhuma afirmação de resultado na comunicação sem número medido.** A Maestro instrumenta desde o primeiro cliente: tempo até a primeira aprovação, % de peças que foram ao ar diferentes do aprovado (meta 0), retrabalho por lote, dias de agenda previstos × consumidos.
+**Motivo:** a identidade verbal já proíbe adjetivo vazio. Sem instrumentação, a landing page não tem o que dizer — e cai no mesmo vocabulário dos concorrentes.
+**Consequência:** as métricas entram no MVP como coleta, mesmo que a exibição pública venha depois.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-054, D-055...
+Adicionar seguindo o padrão D-059, D-060...

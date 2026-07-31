@@ -109,6 +109,11 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 - [x] **Roteiro estruturado para vídeo** no Lote de Texto (D-051)
 - [x] Termo assinado ao fim do Lote de Texto (D-053)
 - [x] **Protótipo do lado da agência** — painel, envio em lote com checklist, diff de alterações
+- [x] **Análise competitiva** — `MARKETING/COMPETITIVE.md` (D-054 a D-058)
+- [ ] **Preview de feed** — grid do perfil com as peças aprovadas (D-054) 🟡 subiu do backlog
+- [ ] **Relatório de tempo de aprovação** (D-054)
+- [ ] **Entrada por Canva e Google Drive** (D-055)
+- [ ] Instrumentação das métricas próprias (D-058)
 - [ ] Dashboard · Clientes · Projetos · Campanhas
 - [ ] Conteúdo · Comentários · **Aprovação**
 - [ ] Produção · Publicação · Resultados
@@ -153,6 +158,7 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 ## Backlog
 
 - Aprovação de vídeo com comentário por timecode
+- Comparação de versões de arte lado a lado (Frame.io faz bem)
 - Aprovação em lote com trava de leitura
 - Templates de campanha por segmento
 - Portal white-label por agência
@@ -162,7 +168,6 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 
 ## Ideias
 
-- "Modo ensaio": prévia da campanha inteira como o cliente veria no feed
 - Relatório de saúde da operação: onde a agência trava mais
 - Score de agilidade do cliente (interno, nunca exposto ao cliente)
 
@@ -182,8 +187,8 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 
 ## Decisões
 
-Ver `DECISIONS.md`. 53 registradas. Última: **D-053** (termo assinado no Lote de Texto).
-Única ainda **em aberto**: **D-024** (naming/jurídico) 🔴
+Ver `DECISIONS.md`. 58 registradas. Última: **D-058** (nenhuma afirmação de resultado sem número medido).
+**Em aberto:** **D-024** (naming/jurídico) 🔴 · **D-057** (pricing e posicionamento) 🔴
 
 ---
 

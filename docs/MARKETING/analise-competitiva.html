@@ -1,0 +1,240 @@
+<title>Maestro — Análise competitiva</title>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --brass-300:#E3C173; --brass-400:#D9AC4C; --brass-500:#C8963A; --brass-700:#855F22;
+    --encore:#2A9862; --coral:#D95E33; --danger:#C62F34; --cobalt:#2B55B8;
+    --f-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --f-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --baton: cubic-bezier(.22,1,.36,1);
+
+    --bg:#F4F6F8; --surface:#FFFFFF; --sunken:#EAEDF1;
+    --line:#DCE0E6; --line-soft:#EBEEF1;
+    --fg:#08090B; --muted:#4C535D; --subtle:#6B7280;
+    --accent:#C8963A; --accent-tx:#855F22;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#08090B; --surface:#121418; --sunken:#0D0F12;
+      --line:#23272E; --line-soft:#181B20;
+      --fg:#F4F6F8; --muted:#9AA1AC; --subtle:#6B7280;
+      --accent:#D9AC4C; --accent-tx:#E3C173;
+      --encore:#35B87A; --coral:#F0784C; --danger:#E5484D; --cobalt:#5B8DEF;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#08090B; --surface:#121418; --sunken:#0D0F12;
+    --line:#23272E; --line-soft:#181B20;
+    --fg:#F4F6F8; --muted:#9AA1AC; --subtle:#6B7280;
+    --accent:#D9AC4C; --accent-tx:#E3C173;
+    --encore:#35B87A; --coral:#F0784C; --danger:#E5484D; --cobalt:#5B8DEF;
+  }
+
+  body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.62; letter-spacing: -.008em; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 22px 120px; }
+
+  header { padding: 88px 0 44px; border-bottom: 1px solid var(--line); }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; color: var(--accent-tx); margin-bottom: 14px; }
+  h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(36px,7vw,60px); line-height: 1.04; letter-spacing: -.025em; margin-bottom: 18px; }
+  .lede { font-size: 19px; color: var(--muted); max-width: 40ch; line-height: 1.5; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line-soft); font-family: var(--f-mono); font-size: 11px; color: var(--subtle); }
+
+  section { padding-top: 60px; }
+  .n { font-family: var(--f-mono); font-size: 11px; color: var(--accent); display: block; margin-bottom: 9px; }
+  h2 { font-family: var(--f-display); font-weight: 400; font-size: 32px; letter-spacing: -.02em; margin-bottom: 10px; }
+  section > p { color: var(--muted); max-width: 62ch; }
+  section > p + p { margin-top: 13px; }
+  p strong { color: var(--fg); font-weight: 600; }
+  h3 { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--subtle); margin: 34px 0 14px; }
+
+  /* preço */
+  .prices { display: grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap: 10px; margin-top: 22px; }
+  .pr { background: var(--surface); border: 1px solid var(--line); border-radius: 13px; padding: 16px 17px; }
+  .pr.us { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  .pr .who { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .pr .v { font-family: var(--f-display); font-size: 25px; line-height: 1; margin-bottom: 5px; }
+  .pr.us .v { color: var(--accent-tx); }
+  .pr .u { font-size: 11.5px; color: var(--subtle); line-height: 1.35; }
+
+  /* tabela */
+  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); margin-top: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 640px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+  thead th { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--subtle); background: var(--sunken); white-space: nowrap; }
+  thead th.me { color: var(--accent-tx); }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.c { text-align: center; width: 96px; }
+  td.me { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  .yes { color: var(--encore); font-weight: 700; }
+  .no { color: var(--subtle); }
+  .part { color: var(--brass-500); font-weight: 600; }
+
+  /* diferenciais */
+  .diffs { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .d { display: grid; grid-template-columns: 26px 1fr; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; padding: 16px 18px; }
+  .d.star { border-color: var(--accent); }
+  .d .k { font-family: var(--f-mono); font-size: 11px; color: var(--accent); padding-top: 2px; }
+  .d h4 { font-size: 14.5px; font-weight: 600; margin-bottom: 4px; letter-spacing: -.01em; }
+  .d p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* adotar / recusar */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+  @media (max-width: 680px) { .two { grid-template-columns: 1fr; } }
+  .col { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .col .ch { padding: 13px 16px; border-bottom: 1px solid var(--line-soft); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  .col.adopt .ch { color: var(--encore); }
+  .col.refuse .ch { color: var(--danger); }
+  .li { padding: 12px 16px; border-bottom: 1px solid var(--line-soft); font-size: 13.5px; }
+  .li:last-child { border-bottom: 0; }
+  .li b { display: block; font-weight: 600; margin-bottom: 3px; }
+  .li span { color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+  .li .src { font-family: var(--f-mono); font-size: 10px; color: var(--subtle); display: block; margin-top: 5px; }
+
+  /* teste de posicionamento */
+  .test { margin-top: 10px; }
+  .tl { display: grid; grid-template-columns: 26px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); align-items: start; }
+  .tl:last-child { border-bottom: 0; }
+  .tl .mk { font-size: 15px; font-weight: 700; }
+  .tl .mk.x { color: var(--danger); } .tl .mk.v { color: var(--encore); }
+  .tl q { font-size: 15px; font-style: italic; font-family: var(--f-display); display: block; margin-bottom: 3px; }
+  .tl small { font-size: 12px; color: var(--subtle); }
+
+  blockquote { border-left: 2px solid var(--accent); padding: 4px 0 4px 20px; margin: 28px 0; font-size: 17px; font-family: var(--f-display); line-height: 1.45; color: var(--fg); max-width: 50ch; }
+
+  .callout { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--coral); border-radius: 4px 14px 14px 4px; padding: 18px 20px; margin-top: 24px; }
+  .callout h4 { font-size: 14px; font-weight: 600; margin-bottom: 7px; }
+  .callout p { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+
+  footer { margin-top: 76px; padding-top: 26px; border-top: 1px solid var(--line); font-family: var(--f-mono); font-size: 11px; color: var(--subtle); display: flex; flex-wrap: wrap; gap: 8px 22px; }
+  footer a { color: var(--accent-tx); }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Análise competitiva · julho 2026</div>
+    <h1>Quatro empresas já ocupam a palavra “aprovação”</h1>
+    <p class="lede">Três delas por menos de R$ 20 por cliente. A boa notícia é que nenhuma ocupa o território que a Maestro construiu.</p>
+    <div class="meta"><span>Aprova.ai</span><span>AprovaPost</span><span>PodePostar</span><span>Frame.io</span><span>Consultado em 29/07/2026</span></div>
+  </header>
+
+  <section>
+    <span class="n">01</span>
+    <h2>O preço é o alerta</h2>
+    <p>Uma agência com dez clientes paga entre <strong>R$ 85 e R$ 199 por mês</strong> nos concorrentes brasileiros. A Maestro — com metodologia, cronograma, dois lotes, selo, termo, IA e agendamento — não cabe nesse preço, e não deve tentar caber.</p>
+    <div class="prices">
+      <div class="pr"><div class="who">Aprova.ai</div><div class="v">R$ 19,90</div><div class="u">por cliente/mês · anual</div></div>
+      <div class="pr"><div class="who">AprovaPost</div><div class="v">R$ 14,50</div><div class="u">1 cliente · até R$ 225 para 30</div></div>
+      <div class="pr"><div class="who">PodePostar</div><div class="v">—</div><div class="u">preço não publicado</div></div>
+      <div class="pr"><div class="who">Frame.io</div><div class="v">US$ 15–25</div><div class="u">por membro/mês</div></div>
+      <div class="pr us"><div class="who">Maestro</div><div class="v">em aberto</div><div class="u">recomendação: assento + projetos, nunca por cliente</div></div>
+    </div>
+    <div class="callout">
+      <h4>Cobrar por cliente é aceitar o enquadramento deles</h4>
+      <p>A pergunta “quanto custa por cliente?” já contém a comparação com R$ 19,90 — e nela tudo que a Maestro tem a mais parece caro. Cobrar por assento e projetos ativos coloca a Maestro na prateleira do Frame.io, não na do Aprova.ai. Decisão em aberto: <b>D-057</b>.</p>
+    </div>
+  </section>
+
+  <section>
+    <span class="n">02</span>
+    <h2>Duas ilusões que a análise derrubou</h2>
+    <p><strong>“Aprovação sem login” não é diferencial — é commodity.</strong> Os três brasileiros vendem exatamente isso na chamada principal. O D-027 me colocava em vantagem; coloca em paridade. Continua certo, só não é argumento de venda.</p>
+    <p><strong>“Aprovar copy antes do design” também já existe.</strong> O AprovaPost lista isso. É o D-042, que apresentei como mudança estrutural. Continua certo. Não é fosso.</p>
+  </section>
+
+  <section>
+    <span class="n">03</span>
+    <h2>Onde a Maestro é única</h2>
+    <p>Cruzei a lista completa dos quatro. Estes seis não existem em nenhum:</p>
+    <div class="diffs">
+      <div class="d star"><span class="k">01</span><div><h4>Metodologia como entidade</h4>
+        <p>Fases com pergunta-guia, trilhas paralelas, pontos de decisão, cenários. Todos organizam posts; nenhum guarda o <b>método</b> da agência. É o diferencial que sustenta o preço.</p></div></div>
+      <div class="d star"><span class="k">02</span><div><h4>Dias de agenda do cliente</h4>
+        <p>Previsto × consumido, declarado por fase. Ninguém mede o custo de tempo do cliente — que é o maior medo de quem contrata uma agência. É o diferencial que fecha reunião.</p></div></div>
+      <div class="d"><span class="k">03</span><div><h4>Selo de integridade</h4>
+        <p>Hash do conteúdo aprovado, visível. Todos têm “histórico de revisões”; nenhum <b>prova</b> que o publicado é o aprovado.</p></div></div>
+      <div class="d"><span class="k">04</span><div><h4>Termo de aprovação</h4>
+        <p>Com registro, selo e comprovante. Nenhum fecha o ciclo com um documento que a agência mostra na reunião.</p></div></div>
+      <div class="d"><span class="k">05</span><div><h4>IA que só opina quando convidada</h4>
+        <p>Fatos sem pedir, gosto sob convite. O Aprova.ai tem “ai” no nome; o que mostra é fluxo, não inteligência.</p></div></div>
+      <div class="d"><span class="k">06</span><div><h4>Aprovar e pedir alteração com o mesmo peso</h4>
+        <p>Nenhum trata isso como princípio. Todos otimizam para o “aprovar” — e um cliente que aprova por atrito publica coisa ruim.</p></div></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="n">04</span>
+    <h2>O mapa</h2>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Capacidade</th><th class="c me">Maestro</th><th class="c">Aprova.ai</th><th class="c">AprovaPost</th><th class="c">PodePostar</th><th class="c">Frame.io</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>Aprovação sem login</td><td class="c me yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+          <tr><td>Calendário editorial</td><td class="c me yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td></tr>
+          <tr><td>Copy aprovada antes da arte</td><td class="c me yes">✓</td><td class="c no">—</td><td class="c yes">✓</td><td class="c part">parcial</td><td class="c no">—</td></tr>
+          <tr><td>Agendamento nas redes</td><td class="c me yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td></tr>
+          <tr><td>Preview de feed</td><td class="c me part">MVP</td><td class="c no">—</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td></tr>
+          <tr><td>Comentário por ponto na arte</td><td class="c me yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td><td class="c yes">✓</td></tr>
+          <tr><td>Versionamento imutável</td><td class="c me yes">✓</td><td class="c no">—</td><td class="c part">histórico</td><td class="c part">histórico</td><td class="c yes">✓</td></tr>
+          <tr><td><b>Metodologia e cronograma</b></td><td class="c me yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td></tr>
+          <tr><td><b>Dias de agenda do cliente</b></td><td class="c me yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td></tr>
+          <tr><td><b>Selo de integridade</b></td><td class="c me yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td><td class="c part">watermark</td></tr>
+          <tr><td><b>Termo de aprovação</b></td><td class="c me yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td></tr>
+          <tr><td><b>IA de aprovação</b></td><td class="c me yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td><td class="c part">transcrição</td></tr>
+          <tr><td>Roteiro de vídeo aprovável</td><td class="c me yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td></tr>
+          <tr><td>Gestão financeira</td><td class="c me no">recusado</td><td class="c no">—</td><td class="c no">—</td><td class="c yes">✓</td><td class="c no">—</td></tr>
+          <tr><td>Aprovação em grupo de WhatsApp</td><td class="c me no">recusado</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <span class="n">05</span>
+    <h2>O que adotar e o que recusar</h2>
+    <div class="two">
+      <div class="col adopt"><div class="ch">Adotar</div>
+        <div class="li"><b>Preview de feed</b><span>Ver o grid do perfil com as peças nas posições reais. Sobe do backlog para o MVP.</span><span class="src">PodePostar · AprovaPost → D-054</span></div>
+        <div class="li"><b>Canva e Google Drive</b><span>É onde a arte das agências brasileiras vive. Upload manual é atrito diário.</span><span class="src">Aprova.ai → D-055</span></div>
+        <div class="li"><b>Relatório de tempo de aprovação</b><span>Os dados já existem. Serve para melhorar a conversa com o cliente lento — nunca para constranger.</span><span class="src">Aprova.ai → D-054</span></div>
+        <div class="li"><b>Comparar versões lado a lado</b><span>Temos diff de texto; falta comparar arte v3 × v4.</span><span class="src">Frame.io → Fase 2</span></div>
+        <div class="li"><b>Publicar métricas próprias</b><span>Home feita de número, não de adjetivo. Instrumentar desde o primeiro cliente.</span><span class="src">Frame.io → D-058</span></div>
+      </div>
+      <div class="col refuse"><div class="ch">Recusar</div>
+        <div class="li"><b>Gestão financeira</b><span>Vira ERP. Existe software melhor. Contraria “menos é mais difícil”.</span><span class="src">PodePostar</span></div>
+        <div class="li"><b>Diagnóstico, persona, concorrência</b><span>São entregas de consultoria. Viram conteúdo da metodologia, nunca módulo.</span><span class="src">PodePostar</span></div>
+        <div class="li"><b>Quadro de tarefas genérico</b><span>É o Trello que a Maestro existe para substituir, não para reimplementar.</span><span class="src">PodePostar</span></div>
+        <div class="li"><b>Aprovação em grupo de WhatsApp</b><span>A recusa mais cara e a mais importante. Aprovar num grupo destrói registro de versão, selo e termo.</span><span class="src">Aprova.ai · Regra #5</span></div>
+        <div class="li"><b>Preço por cliente</b><span>Ancora a comparação em R$ 19,90 e transforma a Maestro em “a cara”.</span><span class="src">todos → D-057</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="n">06</span>
+    <h2>O teste de posicionamento</h2>
+    <blockquote>Se a frase de abertura da Maestro pudesse ser dita pelo Aprova.ai, ela está errada.</blockquote>
+    <div class="test">
+      <div class="tl"><span class="mk x">✗</span><div><q>“Aprove posts mais rápido”</q><small>Eles dizem. Por R$ 19,90.</small></div></div>
+      <div class="tl"><span class="mk x">✗</span><div><q>“Seu cliente aprova sem criar conta”</q><small>Os três dizem.</small></div></div>
+      <div class="tl"><span class="mk v">✓</span><div><q>“O método da sua agência, rodando”</q><small>Nenhum consegue dizer.</small></div></div>
+      <div class="tl"><span class="mk v">✓</span><div><q>“Seu cliente sabe quantos dias da agenda dele este projeto custa”</q><small>Nenhum consegue dizer.</small></div></div>
+      <div class="tl"><span class="mk v">✓</span><div><q>“O que foi ao ar é provadamente o que foi aprovado”</q><small>Nenhum consegue dizer.</small></div></div>
+    </div>
+    <p style="margin-top:26px"><strong>A ameaça real não é funcional, é de enquadramento.</strong> Comparada feature a feature contra R$ 19,90, a Maestro perde — não por ser pior, mas porque a pergunta está errada. Numa conversa que começa por <em>“qual é o método da sua agência, e onde ele está hoje?”</em>, não existe concorrente.</p>
+    <p>É o que o D-001 dizia desde o primeiro dia. Agora tem prova de mercado.</p>
+  </section>
+
+  <footer>
+    <span>docs/MARKETING/COMPETITIVE.md</span>
+    <a href="https://aprova.ai">aprova.ai</a>
+    <a href="https://aprovapost.com.br">aprovapost.com.br</a>
+    <a href="https://use.podepostarapp.com">podepostarapp.com</a>
+    <a href="https://frame.io">frame.io</a>
+    <span>Revalidar antes da landing page e do pricing</span>
+  </footer>
+</div>
