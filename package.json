@@ -1,0 +1,26 @@
+{
+  "name": "maestro",
+  "private": true,
+  "version": "0.5.0",
+  "description": "The Operating System for Creative Operations",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "db:validate": "npm -w @maestro/api run db:validate",
+    "db:generate": "npm -w @maestro/api run db:generate",
+    "db:migrate": "npm -w @maestro/api run db:migrate",
+    "typecheck": "tsc -b --pretty",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.6.0"
+  }
+}

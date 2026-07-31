@@ -1,6 +1,6 @@
 # TASKS.md — Maestro Roadmap
 
-Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andamento · próximo: implementação
+Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 iniciados — **o código começou**
 Última atualização: 2026-07-29
 
 ---
@@ -134,11 +134,17 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 - [ ] OpenAPI gerado do código
 - [ ] Implementação (ordem de 8 blocos definida no documento)
 
-## Sprint 8 — Frontend
-- [ ] Setup · Componentes · Layout · Dashboard · Campanhas · Editor
+## Sprint 8 — Frontend · 🟡 Iniciado
+- [x] Monorepo com workspaces · tsconfig · tokens e strings como pacote
+- [x] Primeiros componentes: `Button`, `StatusPill`, `ApprovalActions`
+- [ ] Next.js em `apps/web` — os dois shells
+- [ ] Restante do bloco 1 e 2 de `UI/COMPONENTS.md`
 
-## Sprint 9 — Backend
-- [ ] Auth · Banco · APIs · Notificações (e-mail + WhatsApp) · IA
+## Sprint 9 — Backend · 🟡 Iniciado
+- [x] **`schema.prisma` completo** — 36 modelos, 15 enums, validado
+- [ ] Migrations + triggers de imutabilidade (I-02, I-03, I-04)
+- [ ] Seed das 3 metodologias de fábrica
+- [ ] NestJS · Auth · APIs · Notificações · IA
 
 ## Sprint 10 — Integrações
 - [ ] Meta (Instagram + Facebook) — **único obrigatório no MVP**

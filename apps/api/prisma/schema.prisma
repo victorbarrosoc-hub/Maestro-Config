@@ -1,0 +1,934 @@
+// Maestro — schema oficial
+// Derivado de docs/ENGINEERING/DATA_MODEL.md. As 21 invariantes citadas nos
+// comentários são contrato: cada uma é um teste.
+//
+// Multi tenant: toda tabela de negócio carrega organizationId como escalar
+// indexado. Relações declaradas só entre pai e filho diretos — evita 30
+// back-relations em Organization sem perder integridade no nível do domínio.
+// O isolamento é garantido por middleware do Prisma + testes de contrato (I-01).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// Enums
+// ============================================================================
+
+enum Role {
+  SUPER_ADMIN
+  AGENCY_ADMIN
+  MANAGER
+  ACCOUNT
+  DESIGNER
+  COPYWRITER
+  VIDEOMAKER
+  CLIENT
+  CLIENT_VIEWER
+}
+
+enum Plan {
+  TRIAL
+  ENSAIO
+  CONCERTO
+  ORQUESTRA
+  SOB_MEDIDA
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  FINISHED
+  ARCHIVED
+}
+
+enum PhaseStatus {
+  PENDING
+  ACTIVE
+  BLOCKED
+  DONE
+}
+
+enum DeliverableKind {
+  MILESTONE
+  VOLUME
+}
+
+enum Platform {
+  INSTAGRAM
+  FACEBOOK
+  LINKEDIN
+  TIKTOK
+  PINTEREST
+  YOUTUBE
+  X
+}
+
+enum ContentFormat {
+  POST
+  CAROUSEL
+  REELS
+  STORY
+  VIDEO
+  ARTICLE
+}
+
+enum ContentStatus {
+  DRAFT
+  IN_PRODUCTION
+  AWAITING_APPROVAL
+  CHANGES_REQUESTED
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
+enum SuggestionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  SUPERSEDED
+}
+
+enum CycleStatus {
+  COPY_DRAFT
+  COPY_REVIEW
+  COPY_APPROVED
+  PRODUCTION
+  FINAL_REVIEW
+  FINAL_APPROVED
+  SCHEDULED
+  CLOSED
+}
+
+enum BatchKind {
+  COPY
+  FINAL
+}
+
+enum BatchStatus {
+  DRAFT
+  SENT
+  PARTIAL
+  CLOSED
+}
+
+enum Decision {
+  APPROVED
+  CHANGES_REQUESTED
+}
+
+enum PublicationStatus {
+  QUEUED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
+enum Channel {
+  IN_APP
+  EMAIL
+  WHATSAPP
+  PUSH
+}
+
+// ============================================================================
+// Organização e acesso
+// ============================================================================
+
+model Organization {
+  id       String  @id @default(uuid()) @db.Uuid
+  name     String
+  slug     String  @unique
+  soundsOn Boolean @default(true) // D-023
+
+  // Plano — D-057. Estourar limite bloqueia a criação do próximo,
+  // nunca desliga o que já está rodando (D-059).
+  plan         Plan      @default(TRIAL)
+  seatLimit    Int       @default(3)
+  projectLimit Int       @default(2)
+  trialEndsAt  DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  members       OrganizationMember[]
+  workspaces    Workspace[]
+  clients       Client[]
+  methodologies Methodology[]
+}
+
+model Workspace {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  name           String
+  createdAt      DateTime  @default(now())
+  deletedAt      DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+}
+
+model User {
+  id        String  @id @default(uuid()) @db.Uuid
+  email     String  @unique
+  name      String
+  avatarUrl String?
+  phone     String? // WhatsApp, E.164
+  locale    String  @default("pt-BR")
+  theme     String  @default("system")
+  soundsOn  Boolean @default(true)
+
+  // Nullable de propósito: CLIENT e CLIENT_VIEWER nunca criam senha (D-027, I-21).
+  passwordHash String?
+
+  lastSeenAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  memberships OrganizationMember[]
+  sessions    Session[]
+}
+
+model OrganizationMember {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  userId         String    @db.Uuid
+  role           Role
+  invitedById    String?   @db.Uuid
+  acceptedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  deletedAt      DateTime?
+
+  organization Organization        @relation(fields: [organizationId], references: [id])
+  user         User                @relation(fields: [userId], references: [id])
+  clientAccess ClientAccess[]
+  assignments  ProjectAssignment[]
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, role])
+}
+
+/// Escopo do atendimento: a quais clientes da agência este membro tem acesso.
+model ClientAccess {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  memberId       String   @db.Uuid
+  clientId       String   @db.Uuid
+  createdAt      DateTime @default(now())
+
+  member OrganizationMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  client Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, clientId])
+  @@index([clientId])
+}
+
+/// Atribuição de equipe é POR PROJETO e cascateia para as campanhas (D-039).
+model ProjectAssignment {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  memberId       String   @db.Uuid
+  projectId      String   @db.Uuid
+  createdAt      DateTime @default(now())
+
+  member  OrganizationMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  project Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, projectId])
+  @@index([projectId])
+}
+
+model Session {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  tokenHash  String   @unique
+  deviceFp   String?
+  ip         String?
+  userAgent  String?
+  expiresAt  DateTime
+  lastUsedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Link mágico — uso único, deletado ao consumir (D-027, I-20).
+model MagicToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  email      String
+  tokenHash  String    @unique
+  purpose    String // "invite" | "login"
+  redirectTo String?
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+// ============================================================================
+// Metodologia — o template, IP da agência (D-035)
+// ============================================================================
+
+model Methodology {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  name           String
+  objective      String
+  question       String
+  signature      String?
+  variables      Json    @default("[]")
+  prerequisites  Json    @default("[]")
+  isSystem       Boolean @default(false)
+  version        Int     @default(1)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  organization Organization       @relation(fields: [organizationId], references: [id])
+  tracks       MethodologyTrack[]
+  phases       MethodologyPhase[]
+  projects     Project[]
+
+  @@index([organizationId])
+}
+
+model MethodologyTrack {
+  id            String  @id @default(uuid()) @db.Uuid
+  methodologyId String  @db.Uuid
+  name          String
+  description   String?
+  color         String
+  order         Int
+
+  methodology  Methodology              @relation(fields: [methodologyId], references: [id], onDelete: Cascade)
+  deliverables MethodologyDeliverable[]
+
+  @@unique([methodologyId, order])
+}
+
+model MethodologyPhase {
+  id            String  @id @default(uuid()) @db.Uuid
+  methodologyId String  @db.Uuid
+  order         Int
+  name          String
+  label         String?
+  /// OBRIGATÓRIO. É a pergunta-guia que separa metodologia de cronograma (D-035, I-09).
+  question      String
+  note          String?
+  durationDays  Int
+  agendaDays    Int     @default(0) // D-037
+  agendaReason  String?
+  scenarios     Json    @default("[]")
+
+  methodology  Methodology              @relation(fields: [methodologyId], references: [id], onDelete: Cascade)
+  deliverables MethodologyDeliverable[]
+  gate         MethodologyGate?
+
+  @@unique([methodologyId, order])
+}
+
+model MethodologyDeliverable {
+  id       String          @id @default(uuid()) @db.Uuid
+  phaseId  String          @db.Uuid
+  trackId  String          @db.Uuid
+  kind     DeliverableKind
+  label    String
+  output   String?
+  quantity Int? // VOLUME → gera CalendarSlot (D-036)
+  format   ContentFormat?
+  platform Platform?
+  order    Int
+
+  phase MethodologyPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  track MethodologyTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@index([phaseId])
+}
+
+model MethodologyGate {
+  id        String @id @default(uuid()) @db.Uuid
+  phaseId   String @unique @db.Uuid
+  question  String
+  criteria  String
+  decidedBy String // "agency" | "agency+client"
+
+  phase MethodologyPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================================
+// Cliente, projeto e cronograma (D-039)
+// ============================================================================
+
+model Client {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  name           String
+  segment        String?
+  brandNotes     String?
+  logoUrl        String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  organization Organization   @relation(fields: [organizationId], references: [id])
+  projects     Project[]
+  accesses     ClientAccess[]
+
+  @@index([organizationId])
+}
+
+/// O contrato: objetivo, estratégia, metodologia, cronograma e metas.
+model Project {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  clientId       String  @db.Uuid
+  methodologyId  String? @db.Uuid // null = "Livre"
+  name           String
+  objective      String
+
+  status   ProjectStatus @default(DRAFT)
+  startsAt DateTime
+  endsAt   DateTime?
+  /// { "NOME DO EXPERT": "Helena Braga" }
+  variables Json         @default("{}")
+
+  // Estratégia vive no Projeto, nunca na Campanha (D-039)
+  audience           String?
+  /// O campo mais útil da tela de estratégia.
+  antiAudience       String?
+  pillars            Json          @default("[]")
+  toneOfVoice        String?
+  /// ContentIds que servem de referência visual (D-031)
+  referenceIds       Json          @default("[]")
+  strategyStatus     ContentStatus @default(DRAFT)
+  strategyApprovedAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  client      Client              @relation(fields: [clientId], references: [id])
+  methodology Methodology?        @relation(fields: [methodologyId], references: [id])
+  phases      Phase[]
+  campaigns   Campaign[]
+  targets     ProjectTarget[]
+  cycles      Cycle[]
+  batches     Batch[]
+  assignments ProjectAssignment[]
+
+  @@index([organizationId, status])
+  @@index([clientId])
+}
+
+model Phase {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  projectId      String  @db.Uuid
+  order          Int
+  name           String
+  label          String?
+  /// OBRIGATÓRIO (I-09).
+  question       String
+  note           String?
+  startsAt       DateTime
+  endsAt         DateTime
+  agendaDays     Int         @default(0)
+  agendaReason   String?
+  /// Consumido × previsto (D-037).
+  agendaUsed     Int         @default(0)
+  scenarios      Json        @default("[]")
+  status         PhaseStatus @default(PENDING)
+
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  gate           Gate?
+  agendaRequests AgendaRequest[]
+  slots          CalendarSlot[]
+  contents       Content[]
+  cycles         Cycle[]
+  batches        Batch[]
+
+  @@unique([projectId, order])
+  @@index([projectId, status])
+}
+
+/// Ponto de decisão. Enquanto aberto, a fase seguinte fica BLOCKED (I-18).
+model Gate {
+  id           String    @id @default(uuid()) @db.Uuid
+  phaseId      String    @unique @db.Uuid
+  question     String
+  criteria     String
+  resolvedAt   DateTime?
+  resolvedById String?   @db.Uuid
+  outcome      String?
+  rationale    String?
+
+  phase Phase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+}
+
+model AgendaRequest {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  phaseId        String    @db.Uuid
+  days           Int
+  reason         String
+  proposedAt     DateTime?
+  confirmedAt    DateTime?
+  confirmedFor   DateTime?
+  usedDays       Int       @default(0)
+
+  phase Phase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+
+  @@index([phaseId])
+}
+
+/// Sem coluna de realizado: o valor é COUNT de Publication publicada (I-17).
+model ProjectTarget {
+  id        String @id @default(uuid()) @db.Uuid
+  projectId String @db.Uuid
+  label     String
+  target    Int
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+// ============================================================================
+// Campanha, calendário e conteúdo
+// ============================================================================
+
+/// A execução. projectId é obrigatório — campanha órfã não existe (I-08).
+model Campaign {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  projectId      String  @db.Uuid
+  /// Origem: trilha da metodologia que gerou esta campanha.
+  trackId        String? @db.Uuid
+  name           String
+  objective      String?
+  color          String?
+  order          Int     @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  project  Project        @relation(fields: [projectId], references: [id])
+  slots    CalendarSlot[]
+  contents Content[]
+
+  @@index([projectId])
+}
+
+/// A PROMESSA (D-022). Gerada pela metodologia, não digitada (D-036).
+model CalendarSlot {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  campaignId     String  @db.Uuid
+  phaseId        String? @db.Uuid
+  contentId      String? @unique @db.Uuid
+  scheduledFor   DateTime
+  platform       Platform
+  format         ContentFormat
+  note           String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  phase    Phase?   @relation(fields: [phaseId], references: [id])
+  content  Content? @relation(fields: [contentId], references: [id])
+
+  @@index([campaignId, scheduledFor])
+  @@index([organizationId, scheduledFor])
+}
+
+/// A ENTREGA.
+model Content {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  campaignId     String  @db.Uuid
+  /// Derivado da data de publicação, fixável manualmente.
+  phaseId        String? @db.Uuid
+
+  /// Obrigatórios e visíveis ao cliente (D-048).
+  title  String
+  intent String
+  role   String?
+
+  format ContentFormat
+  platform Platform
+  status ContentStatus @default(DRAFT)
+
+  currentVersionId String? @unique @db.Uuid
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  campaign    Campaign         @relation(fields: [campaignId], references: [id])
+  phase       Phase?           @relation(fields: [phaseId], references: [id])
+  versions    ContentVersion[] @relation("ContentVersions")
+  current     ContentVersion?  @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+  comments    Comment[]
+  suggestions Suggestion[]
+  approvals   Approval[]
+  batchItems  BatchItem[]
+  slot        CalendarSlot?
+  publication Publication?
+
+  @@index([campaignId, status])
+  @@index([organizationId, status])
+}
+
+/// IMUTÁVEL. Nunca UPDATE — trigger BEFORE UPDATE recusa (D-007, I-02).
+model ContentVersion {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  contentId      String @db.Uuid
+  number         Int
+
+  copy      String
+  cta       String?
+  hashtags  String?
+  /// Duração prevista, para vídeo (D-051).
+  durationS Int?
+  /// FNV-1a de copy + script + assets + metadados (D-032).
+  seal      String
+
+  createdAt   DateTime @default(now())
+  createdById String?  @db.Uuid
+
+  content    Content       @relation("ContentVersions", fields: [contentId], references: [id], onDelete: Cascade)
+  currentFor Content?      @relation("CurrentVersion")
+  assets     Asset[]
+  script     ScriptBlock[]
+  approvals  Approval[]
+
+  @@unique([contentId, number])
+  @@index([contentId])
+}
+
+/// Roteiro de vídeo — aprovado no Lote de Texto, antes da gravação (D-051).
+model ScriptBlock {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  versionId      String  @db.Uuid
+  order          Int
+  label          String // "Gancho", "Desenvolvimento · cena 1", "Chamada"
+  startS         Int
+  endS           Int
+  onScreen       String
+  speech         String
+  note           String?
+
+  version ContentVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@unique([versionId, order])
+  @@index([versionId])
+}
+
+model Asset {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  versionId      String @db.Uuid
+  kind           String // "image" | "video"
+  url            String
+  mimeType       String
+  bytes          Int
+  width          Int?
+  height         Int?
+  durationMs     Int?
+  /// Ordem do slide no carrossel.
+  order          Int    @default(0)
+  metadata       Json   @default("{}")
+
+  version ContentVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@index([versionId])
+}
+
+// ============================================================================
+// Comentários e sugestões
+// ============================================================================
+
+model Comment {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  contentId      String  @db.Uuid
+  versionId      String? @db.Uuid
+  parentId       String? @db.Uuid
+  authorId       String  @db.Uuid
+  body           String
+
+  /// NUNCA visível ao cliente. Filtro aplicado no repositório (I-12).
+  isInternal Boolean @default(false)
+
+  assetId   String? @db.Uuid
+  pinX      Float? // 0–100 (%)
+  pinY      Float?
+  pinNumber Int?
+
+  resolvedAt   DateTime?
+  resolvedById String?   @db.Uuid
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  content Content   @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("Thread", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies Comment[] @relation("Thread")
+
+  @@index([contentId, isInternal])
+}
+
+/// A edição do cliente. PROPOSTA versionada, nunca escrita direta (D-025, I-14).
+model Suggestion {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @db.Uuid
+  contentId      String           @db.Uuid
+  versionId      String           @db.Uuid
+  authorId       String           @db.Uuid
+  before         String
+  after          String
+  status         SuggestionStatus @default(PENDING)
+  resolvedAt     DateTime?
+  resolvedById   String?          @db.Uuid
+  createdAt      DateTime         @default(now())
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId, status])
+}
+
+// ============================================================================
+// Ciclo, lote, aprovação e termo — o coração do produto
+// ============================================================================
+
+/// Um ciclo por fase. Dois lotes: COPY e FINAL (D-042).
+model Cycle {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @db.Uuid
+  projectId      String      @db.Uuid
+  phaseId        String      @db.Uuid
+  name           String // "Agosto"
+  status         CycleStatus @default(COPY_DRAFT)
+  closedAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase   Phase   @relation(fields: [phaseId], references: [id])
+  batches Batch[]
+
+  @@index([projectId, status])
+}
+
+/// O lote pertence ao Projeto, não à Campanha (D-040) — senão um mês com duas
+/// trilhas geraria dois lotes e duas notificações.
+model Batch {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  projectId      String    @db.Uuid
+  cycleId        String    @db.Uuid
+  phaseId        String?   @db.Uuid
+  kind           BatchKind
+  name           String // "Lote 01 · Agosto"
+  /// Objetivo do mês — obrigatório no envio (I-10).
+  goal           String
+  message        String?
+  /// ContentIds de referência visual (D-031).
+  referenceIds   Json      @default("[]")
+
+  status   BatchStatus @default(DRAFT)
+  /// Selo no momento do envio (D-032).
+  seal     String?
+  sentAt   DateTime?
+  sentById String?     @db.Uuid
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  project Project       @relation(fields: [projectId], references: [id])
+  cycle   Cycle         @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  phase   Phase?        @relation(fields: [phaseId], references: [id])
+  items   BatchItem[]
+  term    ApprovalTerm?
+
+  @@index([projectId, status])
+  @@index([cycleId])
+}
+
+model BatchItem {
+  id        String    @id @default(uuid()) @db.Uuid
+  batchId   String    @db.Uuid
+  contentId String    @db.Uuid
+  /// A versão exata enviada.
+  versionId String    @db.Uuid
+  order     Int
+  /// Aprovação em lote exige ter aberto cada peça uma vez.
+  seenAt    DateTime?
+
+  batch   Batch   @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id])
+
+  @@unique([batchId, contentId])
+}
+
+/// Registro imutável. UPDATE permitido apenas em undoneAt e notifiedAt (I-04).
+model Approval {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  contentId      String   @db.Uuid
+  /// Aponta para a versão exata. É a invariante central do produto (I-05).
+  versionId      String   @db.Uuid
+  batchId        String?  @db.Uuid
+  decision       Decision
+  decidedById    String   @db.Uuid
+  seal           String
+
+  ip        String?
+  userAgent String?
+  device    String?
+
+  /// Aprovação registrada pela agência em nome do cliente (D-029, I-13).
+  isOffline   Boolean @default(false)
+  offlineById String? @db.Uuid
+
+  /// Desfazer nunca deleta.
+  undoneAt   DateTime?
+  /// Janela de resfriamento de 60s (D-025, I-15).
+  notifyAfter DateTime
+  notifiedAt  DateTime?
+
+  createdAt DateTime @default(now())
+
+  content Content        @relation(fields: [contentId], references: [id])
+  version ContentVersion @relation(fields: [versionId], references: [id])
+
+  @@index([contentId])
+  @@index([notifyAfter, notifiedAt])
+}
+
+/// D-033 — promovido da Fase 2. Fecha o lote e dá o comprovante.
+model ApprovalTerm {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  batchId        String   @unique @db.Uuid
+  signedById     String   @db.Uuid
+  /// Nome digitado, nunca herdado do perfil (D-053).
+  signedName     String
+  itemCount      Int
+  approvedCount  Int
+  changesCount   Int
+  seal           String
+  reference      String   @unique // "apr_9k2mQx"
+  ip             String?
+  userAgent      String?
+  device         String?
+  signedAt       DateTime @default(now())
+
+  batch Batch @relation(fields: [batchId], references: [id])
+}
+
+// ============================================================================
+// Publicação, notificação e auditoria
+// ============================================================================
+
+/// Só é criada com conteúdo APPROVED (I-07).
+model Publication {
+  id             String            @id @default(uuid()) @db.Uuid
+  organizationId String            @db.Uuid
+  contentId      String            @unique @db.Uuid
+  /// A versão que foi ao ar.
+  versionId      String            @db.Uuid
+  platform       Platform
+  scheduledFor   DateTime
+  status         PublicationStatus @default(QUEUED)
+  externalId     String?
+  externalUrl    String?
+  error          String?
+  attempts       Int               @default(0)
+  publishedAt    DateTime?
+
+  content Content @relation(fields: [contentId], references: [id])
+
+  @@index([organizationId, status, scheduledFor])
+}
+
+model Notification {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  recipientId    String    @db.Uuid
+  channel        Channel
+  event          String
+  payload        Json
+  /// Respeita a janela de resfriamento (I-15).
+  scheduledFor   DateTime  @default(now())
+  sentAt         DateTime?
+  readAt         DateTime?
+  /// Desfazer dentro da janela cancela sem enviar nada (I-16).
+  cancelledAt    DateTime?
+  error          String?
+  createdAt      DateTime  @default(now())
+
+  @@index([recipientId, readAt])
+  @@index([scheduledFor, sentAt])
+}
+
+/// Append-only. Grant do Postgres permite apenas INSERT e SELECT (I-03).
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  actorId        String?  @db.Uuid
+  action         String // "content.approve"
+  entityType     String
+  entityId       String   @db.Uuid
+  before         Json?
+  after          Json?
+  reason         String?
+  ip             String?
+  userAgent      String?
+  device         String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+}
+
+/// Fila de eventos de domínio (D-006).
+model DomainEvent {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  name           String
+  payload        Json
+  processedAt    DateTime?
+  attempts       Int       @default(0)
+  error          String?
+  createdAt      DateTime  @default(now())
+
+  @@index([processedAt, createdAt])
+}
