@@ -110,7 +110,8 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 - [x] Termo assinado ao fim do Lote de Texto (D-053)
 - [x] **Protótipo do lado da agência** — painel, envio em lote com checklist, diff de alterações
 - [x] **Análise competitiva** — `MARKETING/COMPETITIVE.md` (D-054 a D-058)
-- [ ] **Preview de feed** — grid do perfil com as peças aprovadas (D-054) 🟡 subiu do backlog
+- [x] **Pricing e empacotamento** — `MARKETING/PRICING.md` (D-057 fechado, D-059, D-060)
+- [x] **Preview de feed** — grid do perfil com o estado de cada peça (D-054)
 - [ ] **Relatório de tempo de aprovação** (D-054)
 - [ ] **Entrada por Canva e Google Drive** (D-055)
 - [ ] Instrumentação das métricas próprias (D-058)
@@ -187,8 +188,8 @@ Status do Projeto: 🟢 Sprints 0, 1, 2, 6 e 7 concluídos · Sprint 5 em andame
 
 ## Decisões
 
-Ver `DECISIONS.md`. 58 registradas. Última: **D-058** (nenhuma afirmação de resultado sem número medido).
-**Em aberto:** **D-024** (naming/jurídico) 🔴 · **D-057** (pricing e posicionamento) 🔴
+Ver `DECISIONS.md`. 60 registradas.
+**Única em aberto:** **D-024** (naming/jurídico) 🔴
 
 ---
 

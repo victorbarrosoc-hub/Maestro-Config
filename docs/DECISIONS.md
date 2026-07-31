@@ -436,7 +436,7 @@ Blocos padrão: **Gancho** (0–3s) · **Desenvolvimento** (n cenas) · **Chamad
 
 **Sobre o WhatsApp:** é a recusa mais cara comercialmente e a mais importante estrategicamente. O Aprova.ai destaca isso na home. Aprovar dentro de um grupo destrói registro de versão, selo (D-032) e termo (D-033) — ou seja, destrói dois dos seis diferenciais reais da Maestro. WhatsApp notifica e leva de volta; nunca decide.
 
-# D-057 · Negócio · **Em aberto**
+# D-057 · Negócio · Aprovada
 **Data:** 2026-07-29 · **Categoria:** Pricing e posicionamento
 **Contexto:** Aprova.ai a R$ 19,90/cliente/mês · AprovaPost de R$ 14,50 a R$ 225 por faixa · Frame.io a US$ 15–25/membro.
 **Problema:** cobrar por cliente ancora a comparação direta com R$ 19,90 e faz tudo que a Maestro tem a mais parecer caro. A pergunta "quanto custa por cliente?" já contém o enquadramento errado.
@@ -444,7 +444,10 @@ Blocos padrão: **Gancho** (0–3s) · **Desenvolvimento** (n cenas) · **Chamad
 **Motivo:** o valor não escala com número de clientes — escala com a complexidade da operação e com o método guardado na ferramenta.
 **Risco:** agência pequena pode achar caro. Mitigação na faixa de entrada.
 **A decidir antes do lançamento:** modelo, faixas, existência de plano gratuito, duração do teste (os três concorrentes dão 7 dias; 14 é o mínimo competitivo).
-**Responsável:** Founder.
+**Responsável:** Founder. **Aprovada em 2026-07-29** com a recomendação do time de produto.
+**Modelo fechado:** faixa de assentos + projetos ativos, com extras avulsos. Aprovador do cliente nunca conta como assento. Trial de 14 dias sem cartão, sem plano gratuito.
+**Faixas propostas:** Ensaio R$ 149 (3 assentos / 2 projetos) · Concerto R$ 349 (10 / 8) · Orquestra R$ 749 (25 / 25) · Sob medida.
+**Detalhamento:** `MARKETING/PRICING.md`. Os valores são hipótese fundamentada — o modelo é a decisão, os números se ajustam em campo.
 
 # D-058 · Marketing · Aprovada
 **Data:** 2026-07-29 · **Origem:** Frame.io
@@ -455,6 +458,25 @@ Blocos padrão: **Gancho** (0–3s) · **Desenvolvimento** (n cenas) · **Chamad
 
 ---
 
+# D-059 · Produto · Aprovada
+**Data:** 2026-07-29 · **Categoria:** Limites de plano
+**Decisão:** **estourar o limite do plano nunca desliga o que já está rodando.** Projeto ativo continua ativo, lote enviado continua aprovável, cliente continua entrando. O bloqueio é sempre na **criação do próximo**, com upgrade em um clique.
+**Motivo:** uma agência que não consegue mais aprovar porque venceu o plano vira uma agência que perde o cliente dela — e depois nos culpa, com razão. Cobrança nunca pode quebrar operação em andamento.
+**Consequências:** `Organization` ganha `plan`, `seatLimit`, `projectLimit`, `trialEndsAt`. Capacidades checadas no backend, nunca só na interface.
+
+# D-060 · Produto · Aprovada
+**Data:** 2026-07-29 · **Categoria:** O que nunca entra em plano
+**Decisão:** três coisas não são limitadas em nenhuma faixa:
+
+**1 · Nada do lado do cliente.** Aprovador ilimitado e gratuito, com todos os recursos — comentário por ponto, tela cheia com zoom, edição de copy, selo, termo. O cliente da agência **nunca vê uma tela de upgrade**.
+*Motivo:* a experiência do cliente **é** a proposta de valor. Cobrar por ela, ou degradá-la em plano barato, é destruir o produto para vender o produto.
+
+**2 · Histórico e auditoria.** Nenhuma retenção reduzida por faixa. A Regra #6 diz que nada pode ser perdido; retenção por plano transformaria uma regra do produto em item de tabela de preço. Um termo que expira em 90 dias não vale nada num conflito.
+
+**3 · Segurança de base.** Criptografia, isolamento multi tenant, assinatura temporária de arquivo e registro de acesso valem igual em todas as faixas. SSO é conveniência corporativa e pode ser de plano superior; segurança, não.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-059, D-060...
+Adicionar seguindo o padrão D-061, D-062...

@@ -1,0 +1,293 @@
+<title>Maestro — Preview de feed</title>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --brass-300:#E3C173; --brass-400:#D9AC4C; --brass-500:#C8963A; --brass-700:#855F22;
+    --encore:#2A9862; --coral:#D95E33; --cobalt:#2B55B8; --violet:#6D5AD9;
+    --f-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --f-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --baton: cubic-bezier(.22,1,.36,1); --upbeat: cubic-bezier(.34,1.4,.64,1);
+    --page:#EEF0F3; --page-fg:#08090B; --page-muted:#4C535D; --page-line:#DADEE3;
+    --page-card:#FFFFFF; --page-accent:#855F22;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --page:#0D0F12; --page-fg:#F4F6F8; --page-muted:#9AA1AC; --page-line:#23272E; --page-card:#121418; --page-accent:#E3C173; }
+  }
+
+  .device {
+    --s-bg:#FFFFFF; --s-raised:#F7F8FA; --s-sunken:#F1F3F6;
+    --s-line:#E4E8EC; --s-line-soft:#EFF2F5;
+    --s-fg:#14161A; --s-muted:#5A626C; --s-subtle:#868D97;
+    --s-accent:#C8963A; --s-accent-tx:#855F22; --s-accent-fg:#08090B;
+    --s-frame:#D8DDE3; --s-shadow: 0 30px 70px rgba(8,9,11,.16);
+  }
+  .device[data-app="dark"] {
+    --s-bg:#08090B; --s-raised:#121418; --s-sunken:#0D0F12;
+    --s-line:#23272E; --s-line-soft:#181B20;
+    --s-fg:#F4F6F8; --s-muted:#9AA1AC; --s-subtle:#6B7280;
+    --s-accent:#D9AC4C; --s-accent-tx:#E3C173; --s-accent-fg:#08090B;
+    --s-frame:#181B20; --s-shadow: 0 30px 70px rgba(0,0,0,.5);
+  }
+
+  body { background: var(--page); color: var(--page-fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .page { max-width: 980px; margin: 0 auto; padding: 44px 20px 96px; }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; color: var(--page-accent); margin-bottom: 10px; }
+  h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(30px,5vw,40px); line-height: 1.08; letter-spacing: -.022em; margin-bottom: 10px; }
+  .top p { color: var(--page-muted); max-width: 62ch; }
+  .fix { margin-top: 14px; border-left: 2px solid var(--page-accent); padding: 3px 0 3px 15px; font-size: 14px; color: var(--page-muted); max-width: 66ch; }
+  .fix b { color: var(--page-fg); }
+  .ctl { display: flex; gap: 8px; margin-top: 18px; }
+  .ctl button { font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: 9999px; cursor: pointer; background: transparent; border: 1px solid var(--page-line); color: var(--page-muted); }
+  .ctl button[aria-pressed="true"] { background: var(--page-fg); color: var(--page); border-color: var(--page-fg); }
+
+  .stage { display: flex; justify-content: center; padding: 26px 0 8px; }
+  .device { width: 390px; max-width: 100%; height: 790px; flex: none; background: var(--s-bg); border: 1px solid var(--s-frame); border-radius: 40px; padding: 10px; box-shadow: var(--s-shadow); }
+  .screen { position: relative; height: 100%; background: var(--s-bg); color: var(--s-fg); border-radius: 32px; overflow: hidden; display: flex; flex-direction: column; }
+
+  .hd { flex: none; padding: 22px 18px 12px; border-bottom: 1px solid var(--s-line); }
+  .hd .k { font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--s-accent-tx); margin-bottom: 7px; }
+  .hd h2 { font-family: var(--f-display); font-weight: 400; font-size: 25px; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 6px; }
+  .hd p { font-size: 12.5px; color: var(--s-muted); line-height: 1.45; }
+
+  .segs { flex: none; display: flex; gap: 6px; padding: 12px 18px 10px; }
+  .segs button { flex: 1; font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 6px; border-radius: 9px; cursor: pointer;
+    background: transparent; border: 1px solid var(--s-line); color: var(--s-muted); }
+  .segs button[aria-pressed="true"] { background: var(--s-accent); border-color: transparent; color: var(--s-accent-fg); }
+
+  .body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 18px 16px; }
+
+  .prof { display: flex; align-items: center; gap: 12px; padding: 8px 0 14px; }
+  .prof .pic { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(155deg,#0E4C4A,#07211F); display: grid; place-items: center;
+    font-family: var(--f-display); font-size: 17px; color: #EAF6F3; flex: none; }
+  .prof .n { font-size: 14px; font-weight: 600; }
+  .prof .h { font-size: 11.5px; color: var(--s-subtle); }
+  .prof .stats { margin-left: auto; display: flex; gap: 14px; text-align: center; }
+  .prof .stats div { font-size: 11px; color: var(--s-subtle); }
+  .prof .stats b { display: block; font-size: 13.5px; color: var(--s-fg); font-family: var(--f-mono); }
+
+  .grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 3px; }
+  .cell { position: relative; aspect-ratio: 4/5; overflow: hidden; cursor: pointer; display: grid; place-items: center; padding: 8px; text-align: center; }
+  .cell .t { font-family: var(--f-display); font-size: 11.5px; line-height: 1.15; }
+  .cell .s { font-size: 8px; letter-spacing: .12em; text-transform: uppercase; opacity: .8; margin-bottom: 4px; }
+  .cell.wait::after { content:''; position: absolute; inset: 0; border: 2px solid var(--brass-400); }
+  .cell.prod { filter: grayscale(1); opacity: .34; }
+  .cell.prod::after { content:'em produção'; position: absolute; inset: auto 0 0 0; font-size: 8px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    background: rgba(8,9,11,.72); color: #fff; padding: 3px; }
+  .cell .flag { position: absolute; top: 5px; right: 5px; width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center; font-size: 9px; font-weight: 700; }
+  .cell .flag.ok { background: var(--encore); color: #fff; }
+  .cell .flag.wait { background: var(--brass-400); color: #08090B; }
+  .cell .flag.pub { background: rgba(255,255,255,.9); color: #08090B; }
+  .cell.hide { display: none; }
+
+  .g1 { background: linear-gradient(155deg,#0E4C4A,#0A3634 55%,#07211F); color:#EAF6F3; }
+  .g2 { background: linear-gradient(155deg,#E8705E,#C74A45 60%,#8E2F33); color:#FFF3EE; }
+  .g3 { background: linear-gradient(155deg,#F0D9B5,#DCBB8C 55%,#B8925F); color:#3A2A16; }
+  .g4 { background: linear-gradient(155deg,#12474D,#0B2E33 60%,#061A1D); color:#E6F4F3; }
+  .g5 { background: linear-gradient(155deg,#2C3E36,#1B2A24 60%,#101A16); color:#E8F0EA; }
+  .g6 { background: linear-gradient(155deg,#B8925F,#8A6A3E 60%,#5A4426); color:#FFF6E9; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 14px 0 6px; }
+  .lg { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--s-muted); }
+  .lg .sw { width: 10px; height: 10px; border-radius: 3px; }
+  .lg .sw.ok { background: var(--encore); }
+  .lg .sw.wait { background: var(--brass-400); }
+  .lg .sw.prod { background: var(--s-subtle); }
+  .lg .sw.pub { background: var(--violet); }
+
+  .noteline { font-size: 12px; color: var(--s-subtle); line-height: 1.45; padding: 8px 0 0; border-top: 1px solid var(--s-line-soft); margin-top: 10px; }
+
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--s-bg); border-top: 1px solid var(--s-line);
+    border-radius: 18px 18px 32px 32px; padding: 16px 18px 22px; transform: translateY(100%); transition: transform 320ms var(--baton); box-shadow: 0 -14px 40px rgba(8,9,11,.16); }
+  .sheet.on { transform: none; }
+  .sheet .grab { width: 34px; height: 4px; border-radius: 2px; background: var(--s-line); margin: 0 auto 13px; }
+  .sheet h3 { font-size: 16.5px; font-weight: 600; letter-spacing: -.01em; margin-bottom: 4px; }
+  .sheet .intent { font-size: 12.5px; color: var(--s-muted); line-height: 1.4; margin-bottom: 10px; }
+  .sheet .intent b { color: var(--s-accent-tx); font-weight: 600; }
+  .sheet .row { display: flex; flex-wrap: wrap; gap: 6px 9px; align-items: center; margin-bottom: 14px; }
+  .badge { font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--s-muted); border: 1px solid var(--s-line); padding: 2px 7px; border-radius: 9999px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 500; padding: 3px 10px; border-radius: 9999px;
+    border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); background: color-mix(in srgb, var(--c) 14%, transparent); color: color-mix(in srgb, var(--c) 85%, var(--s-fg)); }
+  .pill .d { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+  .sheet .btn { width: 100%; font: inherit; font-size: 14.5px; font-weight: 600; height: 44px; border-radius: 10px; cursor: pointer; border: 1px solid transparent;
+    background: var(--s-accent); color: var(--s-accent-fg); }
+  .sheet .btn.g { background: transparent; border-color: var(--s-line); color: var(--s-fg); margin-top: 8px; }
+
+  .veil { position: absolute; inset: 0; background: rgba(8,9,11,.35); opacity: 0; pointer-events: none; transition: opacity 240ms var(--baton); }
+  .veil.on { opacity: 1; pointer-events: auto; }
+
+  .cards { margin-top: 38px; display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 14px; }
+  .card { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 14px; padding: 18px 20px; }
+  .card .k { font-family: var(--f-mono); font-size: 10.5px; color: var(--page-accent); margin-bottom: 8px; }
+  .card h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .card p { font-size: 13px; color: var(--page-muted); line-height: 1.55; }
+
+  @media (max-width: 460px) { .page { padding: 26px 10px 64px; } .device { height: 730px; } }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { transition-duration:.01ms !important; } }
+</style>
+
+<div class="page">
+
+  <header class="top">
+    <div class="eyebrow">D-054 · adotado da análise competitiva</div>
+    <h1>Como vai ficar o perfil</h1>
+    <p>PodePostar e AprovaPost têm preview de feed. A Maestro mostrava a peça e nunca o conjunto no perfil — que é como o cliente realmente enxerga o próprio Instagram.</p>
+    <p class="fix"><b>O que a Maestro faz a mais:</b> o grid carrega o <b>estado</b> de cada peça. O que já foi ao ar, o que está aprovado esperando data, o que ainda espera você — com borda em latão, porque latão significa uma coisa só no produto. Tocar numa célula abre a peça.</p>
+    <div class="ctl">
+      <button id="mLight" type="button" aria-pressed="true">Tela clara</button>
+      <button id="mDark" type="button" aria-pressed="false">Tela escura</button>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="device" id="device" data-app="light">
+      <div class="screen">
+        <div class="hd">
+          <div class="k">Verão 26 · Loja Norte</div>
+          <h2>Como vai ficar seu perfil</h2>
+          <p>Julho publicado e agosto inteiro, nas posições reais.</p>
+        </div>
+
+        <div class="segs">
+          <button id="sAll" type="button" aria-pressed="true">Tudo</button>
+          <button id="sReady" type="button" aria-pressed="false">Só o que já vai ao ar</button>
+        </div>
+
+        <div class="body">
+          <div class="prof">
+            <span class="pic">LN</span>
+            <div><div class="n">lojanorte</div><div class="h">Roupa feita à mão · Aurora</div></div>
+            <div class="stats">
+              <div><b>12</b>posts</div><div><b>4.310</b>seg.</div>
+            </div>
+          </div>
+
+          <div class="grid" id="grid"></div>
+
+          <div class="legend">
+            <span class="lg"><span class="sw pub"></span>No ar</span>
+            <span class="lg"><span class="sw ok"></span>Aprovado</span>
+            <span class="lg"><span class="sw wait"></span>Esperando você</span>
+            <span class="lg"><span class="sw prod"></span>Em produção</span>
+          </div>
+          <p class="noteline" id="noteline"></p>
+        </div>
+
+        <div class="veil" id="veil"></div>
+        <div class="sheet" id="sheet">
+          <div class="grab"></div>
+          <h3 id="shT"></h3>
+          <p class="intent" id="shI"></p>
+          <div class="row" id="shR"></div>
+          <button class="btn" id="shGo" type="button">Ver publicação</button>
+          <button class="btn g" id="shClose" type="button">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="cards">
+    <div class="card"><div class="k">D-054</div><h4>Estado dentro do grid</h4>
+      <p>Os concorrentes mostram o feed montado. A Maestro mostra o feed montado <em>com o estado de cada peça</em> — o que já foi ao ar, o que está aprovado, o que ainda espera você e o que a agência ainda está produzindo.</p></div>
+    <div class="card"><div class="k">D-018</div><h4>A borda em latão</h4>
+      <p>Latão significa uma coisa só no produto inteiro: algo espera por você. No grid, a moldura marca exatamente as peças que dependem da sua decisão — sem legenda, sem explicação.</p></div>
+    <div class="card"><div class="k">D-030</div><h4>Casa com o lote</h4>
+      <p>O cliente já avalia o mês como conjunto. Agora ele vê o mês montado. É a mesma tese do lote — repetição de tema e desequilíbrio aparecem no grid antes de aparecerem no relatório.</p></div>
+    <div class="card"><div class="k">Agência</div><h4>A mesma tela, outro uso</h4>
+      <p>Para a agência, o grid é planejamento: buraco de data, dois carrosséis seguidos, três peças do mesmo tom. Mesmo dado, densidade diferente — nunca duas telas.</p></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (i) { return document.getElementById(i); };
+  function esc(s) { return String(s).replace(/[&<>]/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m]; }); }
+
+  /* topo = mais recente, como no Instagram */
+  var F = [
+    { t:'Quem faz', s:'Bastidores', g:'g4', st:'prod', tipo:'Carrossel', dia:'ter, 25/08',
+      intent:'Sustentar o pilar “feito à mão” com prova real' },
+    { t:'R$ 249', s:'A partir de', g:'g3', st:'wait', tipo:'Post', dia:'qui, 20/08',
+      intent:'Tirar a objeção de preço de quem já demonstrou interesse' },
+    { t:'Ateliê às 6h', s:'Rotina', g:'g5', st:'prod', tipo:'Reels', dia:'seg, 17/08',
+      intent:'Mostrar processo para quem chegou pelo conteúdo de julho' },
+
+    { t:'Como escolher linho', s:'Vídeo · 45s', g:'g2', st:'wait', tipo:'Reels', dia:'seg, 10/08',
+      intent:'Provar autoridade ensinando algo útil, sem vender' },
+    { t:'Verão sem pressa', s:'Loja Norte', g:'g1', st:'ok', tipo:'Carrossel', dia:'qui, 06/08',
+      intent:'Apresentar a coleção para quem ainda não conhece a marca' },
+    { t:'Duas peças, um verão', s:'Look', g:'g6', st:'ok', tipo:'Post', dia:'ter, 04/08',
+      intent:'Mostrar combinação para quem já conhece a coleção' },
+
+    { t:'Feito à mão, sem pressa', s:'Julho', g:'g5', st:'pub', tipo:'Carrossel', dia:'29/07',
+      intent:'Aprovado e publicado em julho' },
+    { t:'O linho certo', s:'Julho', g:'g3', st:'pub', tipo:'Reels', dia:'24/07',
+      intent:'Aprovado e publicado em julho' },
+    { t:'Ateliê aberto', s:'Julho', g:'g1', st:'pub', tipo:'Post', dia:'18/07',
+      intent:'Aprovado e publicado em julho' },
+
+    { t:'Tingimento natural', s:'Julho', g:'g6', st:'pub', tipo:'Post', dia:'12/07',
+      intent:'Aprovado e publicado em julho' },
+    { t:'Quem costura', s:'Julho', g:'g4', st:'pub', tipo:'Carrossel', dia:'08/07',
+      intent:'Aprovado e publicado em julho' },
+    { t:'Coleção chegando', s:'Julho', g:'g2', st:'pub', tipo:'Post', dia:'02/07',
+      intent:'Aprovado e publicado em julho' }
+  ];
+
+  var LBL = { pub:'No ar', ok:'Aprovado', wait:'Esperando você', prod:'Em produção' };
+  var COL = { pub:'#6D5AD9', ok:'#2A9862', wait:'#D9AC4C', prod:'#868D97' };
+  var onlyReady = false;
+
+  function draw() {
+    $('grid').innerHTML = F.map(function (p, i) {
+      var hide = onlyReady && (p.st === 'prod' || p.st === 'wait');
+      var flag = p.st === 'ok' ? '<span class="flag ok">✓</span>'
+               : p.st === 'wait' ? '<span class="flag wait">!</span>'
+               : p.st === 'pub' ? '<span class="flag pub">▲</span>' : '';
+      return '<div class="cell ' + p.g + ' ' + p.st + (hide ? ' hide' : '') + '" data-i="' + i + '" role="button" tabindex="0">' +
+        '<div><div class="s">' + esc(p.s) + '</div><div class="t">' + esc(p.t) + '</div></div>' + flag + '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call($('grid').querySelectorAll('.cell'), function (c) {
+      c.addEventListener('click', function () { open(+this.dataset.i); });
+    });
+
+    var wait = F.filter(function(p){ return p.st==='wait'; }).length;
+    var prod = F.filter(function(p){ return p.st==='prod'; }).length;
+    $('noteline').innerHTML = onlyReady
+      ? 'Mostrando só o que já está aprovado ou no ar. ' + (wait+prod) + ' publicações de agosto ainda não entram nesta conta.'
+      : '<b>' + wait + '</b> esperam sua decisão · <b>' + prod + '</b> ainda em produção na agência. As posições respeitam o calendário aprovado.';
+  }
+
+  function open(i) {
+    var p = F[i];
+    $('shT').textContent = p.t;
+    $('shI').innerHTML = p.st === 'pub' ? esc(p.intent) : '<b>O que busca:</b> ' + esc(p.intent);
+    $('shR').innerHTML = '<span class="badge">' + esc(p.tipo) + '</span>' +
+      '<span class="badge">' + esc(p.dia) + '</span>' +
+      '<span class="pill" style="--c:' + COL[p.st] + '"><span class="d"></span>' + LBL[p.st] + '</span>';
+    $('shGo').textContent = p.st === 'wait' ? 'Decidir esta publicação' : 'Ver publicação';
+    $('shGo').style.display = p.st === 'prod' ? 'none' : 'block';
+    $('sheet').classList.add('on'); $('veil').classList.add('on');
+  }
+  function close() { $('sheet').classList.remove('on'); $('veil').classList.remove('on'); }
+
+  $('shClose').addEventListener('click', close);
+  $('veil').addEventListener('click', close);
+  $('shGo').addEventListener('click', close);
+
+  $('sAll').addEventListener('click', function () {
+    onlyReady = false; this.setAttribute('aria-pressed','true'); $('sReady').setAttribute('aria-pressed','false'); draw();
+  });
+  $('sReady').addEventListener('click', function () {
+    onlyReady = true; this.setAttribute('aria-pressed','true'); $('sAll').setAttribute('aria-pressed','false'); draw();
+  });
+
+  $('mLight').addEventListener('click', function () { $('device').dataset.app='light'; this.setAttribute('aria-pressed','true'); $('mDark').setAttribute('aria-pressed','false'); });
+  $('mDark').addEventListener('click', function () { $('device').dataset.app='dark'; this.setAttribute('aria-pressed','true'); $('mLight').setAttribute('aria-pressed','false'); });
+
+  draw();
+})();
+</script>
