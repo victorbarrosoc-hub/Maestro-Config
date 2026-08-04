@@ -147,7 +147,8 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 - [x] **Seed** — as 3 metodologias de fábrica, com `provisionSystemMethodologies` reutilizável
 - [x] **Cliente Prisma com escopo de tenant** — `forOrganization()` (I-01) + soft delete global
 - [ ] NestJS · Auth · APIs · Notificações · IA
-- [ ] Testes das 21 invariantes contra Postgres real
+- [x] **Testes das invariantes contra Postgres real** — 15 passando via PGlite (WASM), sem Docker
+- [ ] Cobrir as invariantes restantes (I-01, I-11 a I-21) conforme os serviços existirem
 
 ## Sprint 10 — Integrações
 - [ ] Meta (Instagram + Facebook) — **único obrigatório no MVP**

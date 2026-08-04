@@ -45,6 +45,18 @@ Validar o schema sem banco:
 npm run db:validate
 ```
 
+## Testes das invariantes
+
+As 21 regras de `DATA_MODEL.md` rodam contra um Postgres de verdade —
+**PGlite**, Postgres compilado para WASM. Sem Docker, sem serviço externo:
+
+```bash
+npm -w @maestro/api test
+```
+
+As migrations são aplicadas do zero a cada execução, exatamente como em
+produção. Se um teste quebrar, uma regra do produto quebrou junto.
+
 ---
 
 ## Ordem de implementação
@@ -98,5 +110,7 @@ propriedade do sistema.
 
 Sprints 0, 1, 2, 4, 6 e 7 concluídos. 31 documentos, 9 protótipos navegáveis,
 2 rodadas de teste com clientes reais, 61 decisões registradas.
+
+15 testes de invariante passando contra Postgres real.
 
 **Aberto e bloqueante:** D-024 — busca no INPI e definição de domínio.
