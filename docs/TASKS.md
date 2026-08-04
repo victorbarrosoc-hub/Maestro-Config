@@ -120,11 +120,11 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 - [ ] Produção · Publicação · Resultados
 - [ ] IA · Administração
 
-## Sprint 6 — Banco de Dados · ✅ Antecipado e concluído
+## Sprint 6 — Banco de Dados · ✅ Concluído
 - [x] ERD · Modelagem · Relacionamentos · Auditoria · Versionamento — `ENGINEERING/DATA_MODEL.md`
 - [x] 21 invariantes derivadas das decisões, cada uma um teste
-- [ ] Migrations Prisma + triggers de imutabilidade
-- [ ] Seeds das 3 metodologias de fábrica
+- [x] Migrations Prisma + triggers de imutabilidade
+- [x] Seeds das 3 metodologias de fábrica
 
 ## Sprint 7 — APIs · ✅ Especificado
 - [x] Contratos REST completos — `ENGINEERING/API.md`
@@ -142,9 +142,12 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 
 ## Sprint 9 — Backend · 🟡 Iniciado
 - [x] **`schema.prisma` completo** — 36 modelos, 15 enums, validado
-- [ ] Migrations + triggers de imutabilidade (I-02, I-03, I-04)
-- [ ] Seed das 3 metodologias de fábrica
+- [x] **Migration inicial** — 950 linhas, 36 tabelas, gerada do schema
+- [x] **Migration de invariantes** — triggers I-02 a I-07 + check I-10 + índices parciais
+- [x] **Seed** — as 3 metodologias de fábrica, com `provisionSystemMethodologies` reutilizável
+- [x] **Cliente Prisma com escopo de tenant** — `forOrganization()` (I-01) + soft delete global
 - [ ] NestJS · Auth · APIs · Notificações · IA
+- [ ] Testes das 21 invariantes contra Postgres real
 
 ## Sprint 10 — Integrações
 - [ ] Meta (Instagram + Facebook) — **único obrigatório no MVP**

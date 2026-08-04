@@ -582,9 +582,12 @@ model Content {
 
   currentVersionId String? @unique @db.Uuid
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdById String?   @db.Uuid
+  /// Usado pelo trigger que derruba a aprovação quando o conteúdo muda (I-05).
+  updatedById String?   @db.Uuid
 
   campaign    Campaign         @relation(fields: [campaignId], references: [id])
   phase       Phase?           @relation(fields: [phaseId], references: [id])
