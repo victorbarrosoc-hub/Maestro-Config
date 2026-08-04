@@ -146,8 +146,13 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 - [x] **Migration de invariantes** — triggers I-02 a I-07 + check I-10 + índices parciais
 - [x] **Seed** — as 3 metodologias de fábrica, com `provisionSystemMethodologies` reutilizável
 - [x] **Cliente Prisma com escopo de tenant** — `forOrganization()` (I-01) + soft delete global
-- [ ] NestJS · Auth · APIs · Notificações · IA
+- [x] **Bloco 1 da API** — NestJS, auth por link mágico, organização e membros
+- [x] **Matriz RBAC em código** — `common/permissions.ts`, 45 permissões × 9 papéis
+- [x] Guard global que **nega por padrão** — rota sem decorator não passa
+- [x] Erros como Problem Details (RFC 9457), com texto exibível ao usuário
+- [ ] Blocos 2 a 8 da API
 - [x] **Testes das invariantes contra Postgres real** — 15 passando via PGlite (WASM), sem Docker
+- [x] **26 testes de RBAC** — inclusive "nem o dono da agência aprova"
 - [ ] Cobrir as invariantes restantes (I-01, I-11 a I-21) conforme os serviços existirem
 
 ## Sprint 10 — Integrações

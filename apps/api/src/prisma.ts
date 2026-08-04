@@ -74,11 +74,15 @@ export const prismaRoot = base.$extends({
   query: {
     $allModels: {
       async $allOperations({ model, operation, args, query }) {
+        // `query` é uma união de assinaturas por operação; no boundary da
+        // extensão o TS colapsa para `never`. O cast é local e explícito.
+        const run = query as (a: unknown) => Promise<unknown>;
+
         if (model && SOFT_DELETE_MODELS.has(model) && READ_OPS.has(operation)) {
           const a = args as { where?: Record<string, unknown> };
           a.where = { ...(a.where ?? {}), deletedAt: null };
         }
-        return query(args);
+        return run(args);
       },
     },
   },
@@ -103,7 +107,8 @@ export function forOrganization(organizationId: string) {
     query: {
       $allModels: {
         async $allOperations({ model, operation, args, query }) {
-          if (!model) return query(args);
+          const run = query as (a: unknown) => Promise<unknown>;
+          if (!model) return run(args);
 
           const scoped = TENANT_MODELS.has(model);
           const soft = SOFT_DELETE_MODELS.has(model);
@@ -137,7 +142,7 @@ export function forOrganization(organizationId: string) {
             }
           }
 
-          return query(args);
+          return run(args);
         },
       },
     },
