@@ -477,6 +477,32 @@ Blocos padrão: **Gancho** (0–3s) · **Desenvolvimento** (n cenas) · **Chamad
 
 ---
 
+# D-061 · Arquitetura / IA · Aprovada
+**Data:** 2026-07-29 · **Origem:** análise do [Reportei](https://reportei.com)
+**Contexto:** o Reportei publica um servidor **MCP** que conecta os dados dele a Claude, ChatGPT e Gemini. Não é enfeite — é a interface que agência vai esperar em 2027.
+**Achado desconfortável:** a Maestro escreveu o princípio "AI First" duas vezes — em `ARCHITECTURE.md` (*"como um agente executaria essa ação?"*) e em `API.md` (*"todo endpoint é utilizável por um agente"*) — e **nunca o operacionalizou**.
+**Decisão:** **a Maestro expõe um servidor MCP sobre a própria API**, entregue logo após o núcleo do MVP (bloco 5).
+**Motivo:** custa pouco porque a API já nasceu com verbos claros e erros legíveis. E responde perguntas que nenhum concorrente responde:
+- *"O que está travado com o cliente Loja Norte?"*
+- *"Quantos dias de agenda a Helena ainda deve neste projeto?"*
+- *"Alguma peça foi ao ar diferente do que foi aprovado?"*
+
+A última é o argumento inteiro da Maestro, numa pergunta que uma IA pode fazer sozinha.
+**Consequências:** o MCP herda o RBAC e o escopo de tenant — um agente nunca enxerga mais que a pessoa que o autorizou. Ferramentas de escrita ficam de fora na primeira versão: leitura e resumo primeiro, ação depois (Regra #8).
+
+# D-062 · Produto / Estratégia · Aprovada
+**Data:** 2026-07-29 · **Origem:** análise do Reportei
+**Contexto:** o Reportei tem 40+ integrações, 10 mil clientes e anos de maturidade em coleta de métrica — e já está entrando no território da Maestro com o *Flux by Reportei* (agendamento e aprovação).
+**Problema:** o módulo "Resultados", previsto para a Fase 2, colocaria a Maestro competindo exatamente onde o adversário é mais forte.
+**Decisão:** **a Maestro exporta, não coleta.** Resultado dentro do produto fica no essencial — o que foi publicado, quando, e se saiu igual ao aprovado. Métrica de negócio é do especialista.
+**Motivo:** tempo é o único recurso escasso. Gastar em relatório é gastar no terreno errado.
+**Consequências:**
+- Os eventos de domínio e webhooks (`API.md §Eventos`) passam a ser recurso de integração de primeira classe, não detalhe técnico.
+- Uma agência que usa Reportei deve conseguir puxar da Maestro *o que foi aprovado, quando e por quem* e cruzar lá.
+- `ProjectTarget` continua contando execução. Meta de negócio exige integração e fica na Fase 2 — mas o modelo não pode impedir.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-061, D-062...
+Adicionar seguindo o padrão D-063, D-064...

@@ -157,6 +157,64 @@ Três razões:
 
 ---
 
+---
+
+# Adendo · Reportei (2026-07-29)
+
+[reportei.com](https://reportei.com) — *"Crie relatórios e dashboards de marketing digital em 3 segundos"*.
+10.000 clientes em 70 países. 40+ integrações. Teste de 3 dias.
+
+## Por que ele importa, mesmo não sendo concorrente hoje
+
+O Reportei não aprova nada. Ele vive na **outra ponta do fluxo**: resultado.
+
+```
+Maestro          briefing → estratégia → aprovação → publicação →  ?
+Reportei                                        ?  → publicação → resultado
+```
+
+E os dois estão andando um na direção do outro. O Reportei já tem **Flux by Reportei**, para agendamento e aprovação de conteúdo. A Maestro tem "Resultados" previsto para a Fase 2.
+
+**Vamos nos encontrar no meio.** A pergunta é de que lado da colisão a Maestro quer estar.
+
+## A resposta: não competir em relatório (D-062)
+
+40+ integrações, 10 mil clientes e anos de maturidade em coleta de métrica. Tentar alcançar isso com um módulo de "Resultados" no MVP é gastar o único recurso escasso — tempo — no terreno onde o adversário é mais forte.
+
+**A Maestro exporta, não coleta.** Os webhooks e os eventos de domínio já estão especificados (`API.md §Eventos`). Uma agência que usa Reportei deve conseguir puxar da Maestro *o que foi aprovado, quando e por quem* — e cruzar com o desempenho lá.
+
+Resultado dentro da Maestro fica no essencial: o que foi publicado, quando, e se saiu igual ao aprovado. Métrica de negócio é do especialista.
+
+## O que adotar: servidor MCP (D-061)
+
+O item mais importante deste adendo.
+
+O Reportei publica um **MCP** que conecta os dados dele a Claude, ChatGPT e Gemini. Não é enfeite — é a interface que agência vai esperar em 2027.
+
+E a Maestro já está construída para isso sem ter percebido:
+
+> `ARCHITECTURE.md §AI First`: *"Toda funcionalidade é construída considerando que também será usada por agentes. Sempre perguntar: como um agente executaria essa ação?"*
+> `API.md §Princípios`: *"Todo endpoint é utilizável por um agente: verbos claros, erros legíveis, nada que dependa de estado de tela."*
+
+Escrevemos o princípio duas vezes e nunca o operacionalizamos. Um servidor MCP sobre a API existente é barato — e responde perguntas que nenhum concorrente responde:
+
+> *"O que está travado com o cliente Loja Norte?"*
+> *"Quantos dias de agenda a Helena ainda deve neste projeto?"*
+> *"Alguma peça foi ao ar diferente do que foi aprovado?"*
+
+A última é o argumento inteiro da Maestro, em uma pergunta que uma IA pode fazer sozinha.
+
+## O que mais vale observar
+
+| Deles | Leitura |
+|---|---|
+| **Metas com alerta** (Reportei Controle) | A `ProjectTarget` da Maestro só conta publicação. Meta de negócio exige integração — Fase 2, e o modelo não pode impedir. |
+| **Envio recorrente por e-mail e WhatsApp** | Mecânica de hábito. A mensagem de fim de ciclo (D-046) pode virar um boletim recorrente do projeto. |
+| **Teste de 3 dias** | Curto demais para o ciclo de dois lotes. Confirma os 14 dias do `PRICING.md`. |
+| **Roxo e interface clara** | Mais um azul-violeta na categoria. Reforça o D-017: latão continua sendo diferenciação real. |
+
+---
+
 ## Revalidar
 
 Esta análise tem prazo de validade. Refazer antes de:
