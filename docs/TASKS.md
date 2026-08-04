@@ -155,7 +155,10 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 - [x] 19 testes reproduzindo os números do cronograma da EJUP
 - [x] **Bloco 3 da API** — conteúdo, versões imutáveis e o selo de integridade
 - [x] `seal.ts` — 21 testes: roteiro, ordem de slides, colisão por concatenação
-- [ ] Blocos 4 a 8 da API
+- [x] **Bloco 5 da API — o produto** — ciclo, lote, decisão com verificação de selo, termo
+- [x] `preflight.ts` — 10 verificações, 24 testes; as 3 de conjunto marcadas
+- [x] Janela de resfriamento de 60s com cancelamento silencioso da notificação
+- [ ] Blocos 4, 6, 7 e 8 da API
 - [ ] **Servidor MCP** sobre a API (D-061), logo após o bloco 5
 - [x] **Testes das invariantes contra Postgres real** — 15 passando via PGlite (WASM), sem Docker
 - [x] **26 testes de RBAC** — inclusive "nem o dono da agência aprova"

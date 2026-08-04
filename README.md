@@ -111,6 +111,6 @@ propriedade do sistema.
 Sprints 0, 1, 2, 4, 6 e 7 concluídos. 31 documentos, 9 protótipos navegáveis,
 2 rodadas de teste com clientes reais, 61 decisões registradas.
 
-81 testes passando: 15 invariantes contra Postgres real, 26 de RBAC, 19 do motor de metodologia e 21 do selo.
+105 testes passando: 15 invariantes contra Postgres real, 26 de RBAC, 19 do motor de metodologia, 21 do selo e 24 do checklist pré-envio.
 
 **Aberto e bloqueante:** D-024 — busca no INPI e definição de domínio.
