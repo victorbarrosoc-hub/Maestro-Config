@@ -1,9 +1,13 @@
 # CLAUDE.md — Maestro
 
-Version: 0.2
-Status: Product Discovery → Product Architecture
+Version: 0.5
+Status: Implementação — blocos 1, 2, 3 e 5 da API prontos
 Codename: Project Symphony
 Última atualização: 2026-07-29
+
+> **Retomando o projeto? Leia [`docs/HANDOFF.md`](docs/HANDOFF.md) primeiro.**
+> Ele é o mapa: estado do código, o que já foi verificado, o que está aberto
+> e as dez ideias que sustentam o produto.
 
 > Este arquivo é a fonte principal de contexto. Ele fica na raiz para ser carregado
 > automaticamente. Toda a documentação detalhada vive em `/docs`.
@@ -207,7 +211,12 @@ Priorizar escalabilidade, simplicidade e UX.
 
 ```
 /CLAUDE.md                 ← este arquivo (contexto principal)
+/apps/api                  ← NestJS + Prisma · blocos 1, 2, 3 e 5
+/apps/web                  ← Next.js (a fazer)
+/packages/tokens           ← tokens + strings pt-BR
+/packages/ui               ← componentes
 /docs
+  ├── HANDOFF.md           ← MAPA. Leia primeiro ao retomar
   ├── PROJECT_RULES.md     ← regras obrigatórias
   ├── ARCHITECTURE.md      ← arquitetura oficial
   ├── TASKS.md             ← roadmap e backlog
@@ -228,6 +237,20 @@ Priorizar escalabilidade, simplicidade e UX.
 
 ## Estado Atual
 
-**Concluído:** Visão · Posicionamento · Proposta de Valor · Estrutura Macro · Sitemap inicial · Filosofia do Produto · **Brand Strategy · Identidade Visual · Manual da Marca**
+**Concluído:** Marca completa · Arquitetura da informação · UX e wireflows ·
+UX writing (228 strings) · Metodologia e ciclo de dois lotes · Approval Assistant ·
+Modelo de dados com 21 invariantes · Contratos REST · Inventário de componentes ·
+Análise competitiva · Pricing · **Blocos 1, 2, 3 e 5 da API implementados**
 
-**Próximos passos:** User Flow Master → Wireframes → Design System → PRD → Banco → APIs → Engenharia → MVP
+**Verificado:** 105 testes passando (invariantes no Postgres via PGlite, RBAC,
+motor de metodologia, selo, checklist pré-envio) · typecheck limpo ·
+9 protótipos navegáveis · 2 rodadas de teste com clientes reais
+
+**Não verificado:** nada rodou contra Postgres real; `apps/web` não existe.
+
+**Aberto e bloqueante:** D-024 — INPI e domínio. Rodada 3 do teste com clientes.
+
+**Próximos passos:** subir o Postgres e rodar migrations + seed → blocos 4, 6, 7
+e 8 da API → servidor MCP (D-061) → `apps/web`.
+
+Detalhe completo em [`docs/HANDOFF.md`](docs/HANDOFF.md) e [`docs/TASKS.md`](docs/TASKS.md).
