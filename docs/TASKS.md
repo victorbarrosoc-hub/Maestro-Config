@@ -153,7 +153,10 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 - [x] **Bloco 2 da API** — clientes, projetos e o motor da metodologia
 - [x] `planMethodology()` puro: preview sem persistir nada (D-038)
 - [x] 19 testes reproduzindo os números do cronograma da EJUP
-- [ ] Blocos 3 a 8 da API
+- [x] **Bloco 3 da API** — conteúdo, versões imutáveis e o selo de integridade
+- [x] `seal.ts` — 21 testes: roteiro, ordem de slides, colisão por concatenação
+- [ ] Blocos 4 a 8 da API
+- [ ] **Servidor MCP** sobre a API (D-061), logo após o bloco 5
 - [x] **Testes das invariantes contra Postgres real** — 15 passando via PGlite (WASM), sem Docker
 - [x] **26 testes de RBAC** — inclusive "nem o dono da agência aprova"
 - [ ] Cobrir as invariantes restantes (I-01, I-11 a I-21) conforme os serviços existirem
