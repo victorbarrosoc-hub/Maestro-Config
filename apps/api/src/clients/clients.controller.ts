@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { ProjectStatus } from '@prisma/client';
 import { Auth, RequirePermission, type AuthContext } from '../auth/auth.guard';
 import { ProjectsService } from '../projects/projects.service';
+import { CreateClientDto, UpdateClientDto } from './clients.dto';
 
 @Controller({ path: 'clients', version: '1' })
 export class ClientsController {
@@ -36,7 +37,7 @@ export class ClientsController {
   @Post()
   async create(
     @Auth() ctx: AuthContext,
-    @Body() body: { name: string; segment?: string; brandNotes?: string },
+    @Body() body: CreateClientDto,
   ) {
     const client = await ctx.db.client.create({
       data: { organizationId: ctx.organizationId, ...body },
@@ -74,7 +75,7 @@ export class ClientsController {
 
   @RequirePermission('client.update')
   @Patch(':id')
-  async update(@Auth() ctx: AuthContext, @Param('id') id: string, @Body() body: Record<string, unknown>) {
+  async update(@Auth() ctx: AuthContext, @Param('id') id: string, @Body() body: UpdateClientDto) {
     return ctx.db.client.update({ where: { id }, data: body });
   }
 }

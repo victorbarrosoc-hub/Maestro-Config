@@ -5,6 +5,7 @@ import { Auth, RequirePermission, type AuthContext } from '../auth/auth.guard';
 import { DecisionService } from '../approvals/decision.service';
 import { preflight, summarize, type BatchSnapshot } from './preflight';
 import { Problems } from '../common/problem.filter';
+import { CreateBatchDto, DecideDto, SignTermDto } from './batches.dto';
 
 @Controller({ path: 'batches', version: '1' })
 export class BatchesController {
@@ -14,18 +15,7 @@ export class BatchesController {
   @Post()
   async create(
     @Auth() ctx: AuthContext,
-    @Body()
-    body: {
-      cycleId: string;
-      projectId: string;
-      phaseId?: string;
-      kind: BatchKind;
-      name: string;
-      goal: string;
-      message?: string;
-      contentIds: string[];
-      referenceIds?: string[];
-    },
+    @Body() body: CreateBatchDto,
   ) {
     const { contentIds, ...data } = body;
 
@@ -126,7 +116,7 @@ export class BatchesController {
   async term(
     @Auth() ctx: AuthContext,
     @Param('id') id: string,
-    @Body() body: { signedName: string },
+    @Body() body: SignTermDto,
     @Req() req: Request,
   ) {
     return this.decisions.signTerm(ctx.db, ctx.organizationId, ctx.userId, id, body.signedName, {
@@ -187,7 +177,7 @@ export class DecisionsController {
   async decide(
     @Auth() ctx: AuthContext,
     @Param('id') id: string,
-    @Body() body: { decision: 'APPROVED' | 'CHANGES_REQUESTED'; versionId: string; seal: string },
+    @Body() body: DecideDto,
     @Req() req: Request,
   ) {
     return this.decisions.decide(ctx.db, ctx.organizationId, ctx.userId, {

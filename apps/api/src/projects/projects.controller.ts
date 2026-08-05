@@ -1,15 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { Auth, RequirePermission, type AuthContext } from '../auth/auth.guard';
 import { ProjectsService, type CreateProjectInput } from './projects.service';
-
-interface CreateBody {
-  clientId: string;
-  name: string;
-  objective: string;
-  methodologyId?: string;
-  startsAt: string;
-  variables?: Record<string, string>;
-}
+import { CreateProjectDto, ResolveGateDto, UpdateProjectDto } from './projects.dto';
 
 @Controller({ path: 'projects', version: '1' })
 export class ProjectsController {
@@ -42,7 +34,7 @@ export class ProjectsController {
    */
   @RequirePermission('project.create')
   @Post('preview')
-  async preview(@Auth() ctx: AuthContext, @Body() body: CreateBody) {
+  async preview(@Auth() ctx: AuthContext, @Body() body: CreateProjectDto) {
     const plan = await this.projects.preview(ctx.db, toInput(body));
     if (!plan) return { methodology: null, note: 'Projeto sem metodologia: uma fase, sem entregáveis previstos.' };
 
@@ -71,7 +63,7 @@ export class ProjectsController {
 
   @RequirePermission('project.create')
   @Post()
-  async create(@Auth() ctx: AuthContext, @Body() body: CreateBody) {
+  async create(@Auth() ctx: AuthContext, @Body() body: CreateProjectDto) {
     return this.projects.create(ctx.db, ctx.organizationId, toInput(body));
   }
 
@@ -108,7 +100,7 @@ export class ProjectsController {
   async resolveGate(
     @Auth() ctx: AuthContext,
     @Param('gateId') gateId: string,
-    @Body() body: { outcome: string; rationale?: string },
+    @Body() body: ResolveGateDto,
   ) {
     const gate = await ctx.db.gate.update({
       where: { id: gateId },
@@ -126,12 +118,12 @@ export class ProjectsController {
 
   @RequirePermission('project.update')
   @Patch(':id')
-  async update(@Auth() ctx: AuthContext, @Param('id') id: string, @Body() body: Record<string, unknown>) {
+  async update(@Auth() ctx: AuthContext, @Param('id') id: string, @Body() body: UpdateProjectDto) {
     return ctx.db.project.update({ where: { id }, data: body });
   }
 }
 
-function toInput(body: CreateBody): CreateProjectInput {
+function toInput(body: CreateProjectDto): CreateProjectInput {
   return {
     clientId: body.clientId,
     name: body.name,

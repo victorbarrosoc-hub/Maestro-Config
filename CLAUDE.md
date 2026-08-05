@@ -3,7 +3,7 @@
 Version: 0.5
 Status: Implementação — blocos 1, 2, 3 e 5 da API prontos e rodando contra banco
 Codename: Project Symphony
-Última atualização: 2026-08-04
+Última atualização: 2026-08-05
 
 > **Retomando o projeto? Leia [`docs/HANDOFF.md`](docs/HANDOFF.md) primeiro.**
 > Ele é o mapa: estado do código, o que já foi verificado, o que está aberto
@@ -242,18 +242,18 @@ UX writing (228 strings) · Metodologia e ciclo de dois lotes · Approval Assist
 Modelo de dados com 21 invariantes · Contratos REST · Inventário de componentes ·
 Análise competitiva · Pricing · **Blocos 1, 2, 3 e 5 da API implementados**
 
-**Verificado:** 124 testes passando (invariantes e **serviços contra Postgres**,
+**Verificado:** 140 testes passando (invariantes e **serviços contra Postgres**,
 RBAC, motor de metodologia, selo, checklist pré-envio) · typecheck limpo ·
 migrations e seed executados · 9 protótipos navegáveis · 2 rodadas de teste
 com clientes reais
 
-**Não verificado:** a API nunca subiu — controller, guard e HTTP não foram
-exercitados; `apps/web` não existe.
+**Não verificado:** o produto (ciclo, lote, decisão, termo) nunca passou por
+HTTP; `apps/web` não existe.
 
 **Aberto e bloqueante:** D-024 — INPI e domínio. Rodada 3 do teste com clientes.
 
-**Próximos passos:** subir a API e bater nos endpoints → blocos 4, 6, 7 e 8 →
-servidor MCP (D-061) → `apps/web`.
+**Próximos passos:** testes de HTTP do produto → como a agência se cadastra
+(🔴 aberto) → blocos 4, 6, 7 e 8 → servidor MCP (D-061) → `apps/web`.
 
 > Banco de desenvolvimento **sem Docker**: `npm -w @maestro/api run db:server`.
 > Ver `docs/HANDOFF.md §5`.

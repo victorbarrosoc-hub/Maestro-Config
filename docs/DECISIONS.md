@@ -555,6 +555,51 @@ testadas; o que faltava era o meio de campo, e era lá que estava o furo.
 
 ---
 
+# D-064 · Engenharia / Segurança · Aprovada
+**Data:** 2026-08-05 · **Origem:** primeira subida da API e os testes de HTTP
+**Contexto:** o `main.ts` configurava `ValidationPipe` com `whitelist` e
+`forbidNonWhitelisted`, e o comentário ao lado dizia *"organizationId vem do token,
+nunca do corpo"*. **Nada disso acontecia.**
+
+**Achado:** os DTOs eram tipos inline do TypeScript (`@Body() body: { name: string }`).
+Tipo do TypeScript some na compilação; o `ValidationPipe` recebe `Object`, conclui que
+não há o que validar e passa adiante em silêncio. Consequência medida: **toda requisição
+malformada devolvia 500** — campo obrigatório ausente, tipo errado, campo inesperado.
+A proteção contra `organizationId` no corpo existia por acidente, vinda do carimbo do
+D-063, ao custo de um erro de servidor com stack trace no log.
+
+**Achado adjacente:** `PATCH /clients/:id` e `PATCH /projects/:id` recebiam
+`Record<string, unknown>` e passavam direto para o Prisma. Qualquer coluna era gravável,
+inclusive `deletedAt` e `strategyApprovedAt`.
+
+**Decisão:**
+1. **Todo corpo de requisição é uma classe com decorators de validação.** 17 corpos,
+   7 controllers, um arquivo `*.dto.ts` por domínio (D-012).
+2. **`PATCH` tem lista fechada de campos.** O que é editável é decisão de produto, não
+   o que o corpo mandar.
+3. **Erro de validação sai em português e no formato certo** (`common/validation.ts`).
+   O `class-validator` levanta um *array* de frases em inglês, o que viola o RFC 9457
+   (`title` é texto) e a identidade verbal. Vira `title` + `detail` exibíveis + `errors`
+   por campo para a interface destacar o que corrigir.
+
+**Motivo:** validação que não valida é pior que validação ausente — o comentário no
+código afirmava uma garantia que não existia, e ninguém teria motivo para desconfiar.
+
+**Consequências:**
+- A mensagem escrita no DTO ganha da genérica. A distinção é possível porque o
+  `class-validator` sempre começa a mensagem padrão com o nome do campo, e as nossas
+  nunca começam assim.
+- `src/app.factory.ts` — a montagem do app saiu do `main.ts` para o teste de HTTP
+  exercitar **exatamente** o app que sobe em produção, nunca uma cópia.
+- `test/http.spec.ts` — 16 testes pela porta da frente. Um deles trava explicitamente a
+  volta do `tsx`: se a injeção de dependência quebrar de novo, a rota devolve 500 e o
+  teste acusa.
+- `npm test` passa a rodar duas suítes: `test:unit` no `tsx` e `test:http` no SWC. A
+  extensão `.spec.ts` não é estilo — é o que separa os dois executores, e o de HTTP
+  **precisa** do SWC por causa dos metadados de decorator.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-064, D-065...
+Adicionar seguindo o padrão D-065, D-066...

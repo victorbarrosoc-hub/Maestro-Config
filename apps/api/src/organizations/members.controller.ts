@@ -4,6 +4,7 @@ import { Auth, RequirePermission, type AuthContext } from '../auth/auth.guard';
 import { AuthService } from '../auth/auth.service';
 import { Problems } from '../common/problem.filter';
 import { isClientRole } from '../common/permissions';
+import { InviteMemberDto, UpdateRoleDto } from './members.dto';
 
 @Controller({ path: 'members', version: '1' })
 export class MembersController {
@@ -33,7 +34,7 @@ export class MembersController {
    */
   @RequirePermission('member.invite')
   @Post('invite')
-  async invite(@Auth() ctx: AuthContext, @Body() body: { email: string; role: Role }) {
+  async invite(@Auth() ctx: AuthContext, @Body() body: InviteMemberDto) {
     const org = await ctx.db.organization.findUniqueOrThrow({
       where: { id: ctx.organizationId },
       select: { seatLimit: true },
@@ -71,7 +72,7 @@ export class MembersController {
 
   @RequirePermission('member.updateRole')
   @Patch(':id')
-  async updateRole(@Auth() ctx: AuthContext, @Param('id') id: string, @Body() body: { role: Role }) {
+  async updateRole(@Auth() ctx: AuthContext, @Param('id') id: string, @Body() body: UpdateRoleDto) {
     return ctx.db.organizationMember.update({
       where: { id },
       data: { role: body.role },

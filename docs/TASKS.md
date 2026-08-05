@@ -1,7 +1,7 @@
 # TASKS.md — Maestro Roadmap
 
 Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 iniciados — **o código roda contra banco**
-Última atualização: 2026-08-04
+Última atualização: 2026-08-05
 
 ---
 
@@ -165,6 +165,16 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 - [x] **Dois furos de isolamento multi tenant corrigidos** (D-063) — 7 tabelas sem
       `organizationId` e as variantes `OrThrow` fora do filtro. Um deles alcançável por HTTP
 - [x] **Cliente Prisma falha barulhento** — modelo ou operação não classificada levanta erro
+- [x] **A API sobe e responde** — faltavam `class-validator`/`class-transformer`; o
+      `tsx` derrubava toda a injecao de dependencia do NestJS (500 em toda rota)
+- [x] **16 testes de HTTP** (`test/http.spec.ts`) — guard, link magico, sessao,
+      validacao e isolamento pela porta da frente
+- [x] **Validacao de entrada de verdade** (D-064) — 17 DTOs como classe, `PATCH` com
+      lista fechada, erro em portugues no formato RFC 9457
+- [ ] Testes de HTTP do produto: ciclo, lote, decisao e termo
+- [ ] 🔴 **Como uma agencia entra na plataforma?** Nao existe caminho — nem no codigo
+      nem em `API.md`. Precisa de decisao de produto
+- [ ] Alinhar `API.md` com a implementacao (modelo de sessao, endpoints inexistentes)
 - [ ] Blocos 4, 6, 7 e 8 da API
 - [ ] **Servidor MCP** sobre a API (D-061), logo após o bloco 5
 - [x] **Testes das invariantes contra Postgres real** — 15 passando via PGlite (WASM), sem Docker
@@ -220,7 +230,7 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 
 ## Decisões
 
-Ver `DECISIONS.md`. 63 registradas.
+Ver `DECISIONS.md`. 64 registradas.
 **Única em aberto:** **D-024** (naming/jurídico) 🔴
 
 ---

@@ -23,7 +23,7 @@ ocupam essa palavra, três por menos de R$ 20/mês.
 | Preciso saber… | Está em |
 |---|---|
 | A visão e as regras que não se negociam | `../CLAUDE.md` · `PROJECT_RULES.md` |
-| **Por que qualquer coisa é como é** | **`DECISIONS.md` — 63 decisões, leia sempre antes de mudar algo** |
+| **Por que qualquer coisa é como é** | **`DECISIONS.md` — 64 decisões, leia sempre antes de mudar algo** |
 | A hierarquia de entidades | `PRODUCT_BIBLE/HIERARQUIA.md` |
 | O que é o MVP de verdade | `PRODUCT_BIBLE/PRODUCT_BRIEF.md` |
 | Como o cliente usa | `UX/USER_FLOW_CLIENT.md` |
@@ -100,7 +100,7 @@ packages/tokens/   tokens + 228 strings pt-BR
 packages/ui/       Button, StatusPill, ApprovalActions
 ```
 
-**124 testes passando, typecheck limpo.**
+**140 testes passando, typecheck limpo.**
 
 | Suíte | O que cobre |
 |---|---|
@@ -110,11 +110,16 @@ packages/ui/       Button, StatusPill, ApprovalActions
 | `test/methodology.plan.test.ts` | 19 · o cronograma da EJUP reproduzido |
 | `test/seal.test.ts` | 21 · determinismo, roteiro, colisão por concatenação |
 | `test/preflight.test.ts` | 24 · o checklist pré-envio |
+| `test/http.spec.ts` | 16 · **a API pela porta da frente**: guard, link mágico, sessão, validação, isolamento |
 
 ```bash
-npm -w @maestro/api test        # roda tudo, sem banco no ar
+npm -w @maestro/api test        # as duas suítes, sem banco no ar
 npm -w @maestro/api typecheck
 ```
+
+> `test` roda `test:unit` (no `tsx`) e `test:http` (no SWC). A extensão
+> `.spec.ts` separa as duas: o teste de HTTP sobe o NestJS e **precisa** dos
+> metadados de decorator, que o `tsx` não gera.
 
 ### Para subir a API
 
@@ -148,16 +153,25 @@ fora do git.
 
 ### ⚠ O que ainda NÃO foi verificado
 
-- **Não existe teste de HTTP.** A API sobe e responde (verificado à mão com
-  curl), mas nada disso está coberto por teste — os 124 testes chamam os
-  serviços direto. Foi exatamente essa lacuna que deixou os quatro achados
-  abaixo invisíveis. **É a próxima coisa a fazer.**
+- **O produto em si nunca passou por HTTP.** Os 16 testes de HTTP cobrem
+  autenticação, o guard e o isolamento — não o ciclo, o lote, a decisão nem o
+  termo. Esses só foram exercitados chamando o serviço direto. Bater neles
+  pela API é a próxima coisa a fazer.
 - `apps/web` não existe. Os componentes nunca foram renderizados.
 - Blocos 4, 6, 7 e 8 não existem.
 
-### O que a primeira subida da API encontrou (2026-08-04, ainda sem D-XXX)
+### O que a primeira subida da API encontrou (2026-08-04/05)
 
-A API **nunca tinha subido**. Quatro achados, em ordem de gravidade:
+A API **nunca tinha subido**. Cinco achados, em ordem de gravidade:
+
+0. **A validação de entrada não validava nada** (D-064). `ValidationPipe` estava
+   configurado com `whitelist` e `forbidNonWhitelisted`, e o comentário ao lado
+   prometia que `organizationId` nunca vem do corpo — mas os DTOs eram tipos
+   inline do TypeScript, que somem na compilação. O pipe recebia `Object` e
+   desistia em silêncio. **Toda requisição malformada devolvia 500.** Os
+   `PATCH` ainda aceitavam `Record<string, unknown>` direto para o Prisma, o
+   que tornava qualquer coluna gravável. Corrigido: 17 DTOs como classe, lista
+   fechada nos `PATCH`, erro em português no formato do RFC 9457. ✅
 
 1. **Não iniciava.** Faltavam `class-validator` e `class-transformer`, exigidos
    pelo `ValidationPipe` do `main.ts`. Instalados. ✅
@@ -261,7 +275,7 @@ Lição que se repetiu duas vezes: **eu especifico o "como fazer" e esqueço o
 
 ### 🔴 Só o fundador pode resolver
 
-**D-024 — INPI e domínio.** A única decisão em aberto das 63, e a única que
+**D-024 — INPI e domínio.** A única decisão em aberto das 64, e a única que
 trava qualquer movimento público. "Maestro" colide com Mastercard, mobile.dev
 e Netflix. Recomendação: registrar **marca mista** (símbolo + wordmark) nas
 classes 9 e 42, e adotar `usemaestro.com` ou `maestro.studio`.

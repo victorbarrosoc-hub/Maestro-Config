@@ -1,7 +1,13 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ContentStatus } from '@prisma/client';
 import { Auth, RequirePermission, type AuthContext } from '../auth/auth.guard';
-import { ContentService, type CreateVersionInput } from './content.service';
+import { ContentService } from './content.service';
+import {
+  CreateCommentDto,
+  CreateContentDto,
+  CreateSuggestionDto,
+  CreateVersionDto,
+} from './content.dto';
 import { formatSeal } from './seal';
 import { isClientRole } from '../common/permissions';
 
@@ -55,18 +61,7 @@ export class ContentController {
   @Post()
   async create(
     @Auth() ctx: AuthContext,
-    @Body()
-    body: {
-      campaignId: string;
-      phaseId?: string;
-      slotId?: string;
-      /** Obrigatórios e visíveis ao cliente (D-048). */
-      title: string;
-      intent: string;
-      role?: string;
-      format: 'POST' | 'CAROUSEL' | 'REELS' | 'STORY' | 'VIDEO' | 'ARTICLE';
-      platform: 'INSTAGRAM' | 'FACEBOOK' | 'LINKEDIN' | 'TIKTOK' | 'PINTEREST' | 'YOUTUBE' | 'X';
-    },
+    @Body() body: CreateContentDto,
   ) {
     const { slotId, ...data } = body;
 
@@ -123,7 +118,7 @@ export class ContentController {
   async createVersion(
     @Auth() ctx: AuthContext,
     @Param('id') id: string,
-    @Body() body: Omit<CreateVersionInput, 'contentId'>,
+    @Body() body: CreateVersionDto,
   ) {
     const result = await this.content.createVersion(
       ctx.db,
@@ -152,15 +147,7 @@ export class ContentController {
   async comment(
     @Auth() ctx: AuthContext,
     @Param('id') id: string,
-    @Body()
-    body: {
-      body: string;
-      parentId?: string;
-      assetId?: string;
-      pinX?: number;
-      pinY?: number;
-      isInternal?: boolean;
-    },
+    @Body() body: CreateCommentDto,
   ) {
     // Comentário interno é permissão própria; papel de cliente nunca marca.
     const isInternal = body.isInternal === true && !isClientRole(ctx.role);
@@ -186,7 +173,7 @@ export class ContentController {
   async suggest(
     @Auth() ctx: AuthContext,
     @Param('id') id: string,
-    @Body() body: { versionId: string; before: string; after: string },
+    @Body() body: CreateSuggestionDto,
   ) {
     return this.content.suggest(ctx.db, ctx.organizationId, { contentId: id, ...body }, ctx.userId);
   }

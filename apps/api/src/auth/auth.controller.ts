@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { Auth, AuthGuard, Public, RequirePermission, type AuthContext } from './auth.guard';
+import { MagicLinkDto, SessionDto } from './auth.dto';
 
 const COOKIE = 'maestro_session';
 
@@ -14,14 +15,14 @@ export class AuthController {
    */
   @Public()
   @Post('magic-link')
-  async magicLink(@Body() body: { email: string; redirectTo?: string }) {
+  async magicLink(@Body() body: MagicLinkDto) {
     return this.auth.requestMagicLink(body.email, body.redirectTo);
   }
 
   @Public()
   @Post('session')
   async session(
-    @Body() body: { token: string },
+    @Body() body: SessionDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
