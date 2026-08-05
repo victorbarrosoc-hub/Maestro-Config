@@ -600,6 +600,68 @@ código afirmava uma garantia que não existia, e ninguém teria motivo para des
 
 ---
 
+# D-065 · Produto / Arquitetura · Aprovada
+**Data:** 2026-08-05 · **Responsável:** Founder · **Categoria:** Cadastro da agência
+**Contexto:** os testes de HTTP expuseram que a Maestro era uma **sala trancada**. O seed
+criava uma organização com zero membros, toda rota exigia vínculo, e `POST /members/invite`
+exigia estar logado. Dava para entrar pelo link mágico e cair em 403 em todas as telas,
+com a mensagem *"Peça ao administrador da sua conta"* — e não existia administrador.
+O furo estava também em `API.md`, que nunca descreveu como uma agência se cadastra.
+
+**Pergunta do fundador:** entrar com conta ligada às plataformas (Google, X, LinkedIn,
+Outlook) ou cadastro novo na plataforma?
+
+**Distinção que a decisão exige:** são duas coisas separadas. **Autenticação** (como a
+pessoa prova quem é) e **provisionamento** (como a organização passa a existir). O buraco
+era o segundo — com Google funcionando perfeitamente, a pessoa entraria e ainda cairia
+no nada. E o provisionamento é o mesmo trabalho seja qual for o provedor.
+
+**Decisão — autenticação:** **link mágico agora, Google depois.**
+- O link mágico já existe, já está testado, e não depende de nada externo.
+- **Google é o próximo**, e o mais importante: é onde a agência brasileira vive, e a
+  importação do Drive (D-055) já está no MVP — entrar com Google deixa esse acesso a um
+  clique em vez de uma segunda autorização constrangedora.
+- **Microsoft depois**, quando alguém pedir.
+- **LinkedIn e X ficam de fora.** Cada provedor é integração para construir e manter,
+  mais o caso da mesma pessoa entrando por provedores diferentes. Ninguém autentica
+  ferramenta de trabalho com X, e LinkedIn as pessoas usam para se conectar, não para
+  entrar em software.
+- **Restrição de cronograma:** login social exige domínio registrado para a tela de
+  autorização em produção. Ou seja, Google está **parado atrás da D-024**. O link mágico
+  não tem essa dependência — e foi por isso que ele vem primeiro.
+- D-027 continua intocada: o **cliente** da agência nunca cria senha. Isto é o lado da
+  agência.
+
+**Decisão — provisionamento:** `POST /v1/organizations` cria, numa transação:
+organização com **trial de 14 dias sem cartão** (D-057), quem pediu como `AGENCY_ADMIN`
+já aceito, e as **três metodologias de fábrica**. Ninguém começa em tela vazia.
+
+**Decisão — equipe duplicada:** e-mail de domínio corporativo que já tem agência na
+Maestro recebe **409 com aviso**: *"Sua equipe já usa a Maestro — peça um convite"*, e
+`canConfirm: true`. Reenviar com `confirm: true` cria assim mesmo.
+**O aviso avisa, nunca tranca.** Domínio de e-mail pessoal (gmail, hotmail, uol…) não
+dispara nada — não diz nada sobre a empresa da pessoa.
+*Não é vazamento de informação:* quem chega ali provou controlar um e-mail naquele
+domínio ao consumir o link mágico. Só enxerga o que é da própria casa.
+*Motivo:* agência partida em duas contas, cada uma pagando um plano, termina num pedido
+de fusão — que é caro de resolver e frequente em SaaS B2B. Bloquear seria pior: e-mail
+pessoal fura a regra de qualquer forma, e existe motivo legítimo para uma segunda conta.
+
+**Consequências:**
+- `@RequireSession()` — estado novo no guard: **autenticado, ainda sem organização**.
+  É o único endpoint nessa condição. Não é brecha no "negar por padrão": rota sem
+  nenhum dos três decorators continua sem passar.
+- `provisionSystemMethodologies` saiu de `prisma/seed.ts` para
+  `src/organizations/methodologies.provision.ts`. O arquivo de seed instanciava um
+  Prisma próprio; importar de lá daria duas conexões. O seed passou a ser só um dos usos.
+- Slug com desambiguação (`agencia-igual`, `agencia-igual-2`): duas agências podem ter
+  o mesmo nome, e nenhuma das duas deve receber erro por isso.
+- 8 testes de HTTP cobrindo a jornada, incluindo *"logo depois de fundar, já dá para
+  usar a plataforma"* — o passo que ontem devolvia 403 sem saída.
+- `API.md §Autenticação` ganha o endpoint. A especificação tinha o mesmo furo do código.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-065, D-066...
+Adicionar seguindo o padrão D-066, D-067...

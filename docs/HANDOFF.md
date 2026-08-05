@@ -23,7 +23,7 @@ ocupam essa palavra, três por menos de R$ 20/mês.
 | Preciso saber… | Está em |
 |---|---|
 | A visão e as regras que não se negociam | `../CLAUDE.md` · `PROJECT_RULES.md` |
-| **Por que qualquer coisa é como é** | **`DECISIONS.md` — 64 decisões, leia sempre antes de mudar algo** |
+| **Por que qualquer coisa é como é** | **`DECISIONS.md` — 65 decisões, leia sempre antes de mudar algo** |
 | A hierarquia de entidades | `PRODUCT_BIBLE/HIERARQUIA.md` |
 | O que é o MVP de verdade | `PRODUCT_BIBLE/PRODUCT_BRIEF.md` |
 | Como o cliente usa | `UX/USER_FLOW_CLIENT.md` |
@@ -100,7 +100,7 @@ packages/tokens/   tokens + 228 strings pt-BR
 packages/ui/       Button, StatusPill, ApprovalActions
 ```
 
-**140 testes passando, typecheck limpo.**
+**148 testes passando, typecheck limpo.**
 
 | Suíte | O que cobre |
 |---|---|
@@ -110,7 +110,7 @@ packages/ui/       Button, StatusPill, ApprovalActions
 | `test/methodology.plan.test.ts` | 19 · o cronograma da EJUP reproduzido |
 | `test/seal.test.ts` | 21 · determinismo, roteiro, colisão por concatenação |
 | `test/preflight.test.ts` | 24 · o checklist pré-envio |
-| `test/http.spec.ts` | 16 · **a API pela porta da frente**: guard, link mágico, sessão, validação, isolamento |
+| `test/http.spec.ts` | 24 · **a API pela porta da frente**: guard, link mágico, sessão, **cadastro da agência**, validação, isolamento |
 
 ```bash
 npm -w @maestro/api test        # as duas suítes, sem banco no ar
@@ -183,15 +183,13 @@ A API **nunca tinha subido**. Cinco achados, em ordem de gravidade:
    Corrigido trocando o executor para SWC — `node -r @swc-node/register`
    (o modo ESM `--import .../esm-register` **não** funciona: colide com
    `"module": "commonjs"`). `.swcrc` na raiz de `apps/api`. ✅
-3. **🔴 Não há como entrar na plataforma.** O seed cria a organização com
-   **zero membros**; toda rota exige vínculo; `POST /members/invite` também
-   exige estar logado. Login por link mágico funciona e devolve
-   `memberships: []` — depois disso, 403 em tudo, com a mensagem "Peça ao
-   administrador da sua conta", e não existe administrador.
-   **O furo está na especificação, não só no código:** `API.md` não tem
-   endpoint de criação de organização nem de primeiro admin. Precisa de
-   decisão de produto (como uma agência se cadastra?) + seed de um admin
-   para desenvolvimento. **Não corrigido.**
+3. **Não havia como entrar na plataforma.** O seed criava a organização com
+   zero membros e o convite exigia estar logado — 403 em tudo, com a mensagem
+   "Peça ao administrador da sua conta", e nenhum administrador existia. O furo
+   estava também em `API.md`. Resolvido em D-065: `POST /v1/organizations`
+   funda a agência com trial, administrador e as três metodologias de fábrica.
+   Login social (Google primeiro) fica para quando a D-024 sair — a tela de
+   autorização exige domínio verificado. ✅
 4. **`API.md` divergiu da implementação.** O documento especifica access token
    de 15 min + refresh rotativo + `POST /auth/refresh` + `POST /auth/password`;
    o código usa apenas cookie de sessão de 30 dias e não tem esses dois
@@ -275,7 +273,7 @@ Lição que se repetiu duas vezes: **eu especifico o "como fazer" e esqueço o
 
 ### 🔴 Só o fundador pode resolver
 
-**D-024 — INPI e domínio.** A única decisão em aberto das 64, e a única que
+**D-024 — INPI e domínio.** A única decisão em aberto das 65, e a única que
 trava qualquer movimento público. "Maestro" colide com Mastercard, mobile.dev
 e Netflix. Recomendação: registrar **marca mista** (símbolo + wordmark) nas
 classes 9 e 42, e adotar `usemaestro.com` ou `maestro.studio`.

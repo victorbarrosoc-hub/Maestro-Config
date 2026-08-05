@@ -23,9 +23,29 @@ import { forOrganization, type ScopedPrisma } from '../prisma';
 
 export const PUBLIC = 'maestro:public';
 export const PERMISSION = 'maestro:permission';
+export const SESSION_ONLY = 'maestro:session-only';
 
 export const Public = () => SetMetadata(PUBLIC, true);
 export const RequirePermission = (p: Permission) => SetMetadata(PERMISSION, p);
+
+/**
+ * Exige sessão válida, **sem** exigir organização.
+ *
+ * Existe para o único momento em que a pessoa está autenticada e ainda não
+ * pertence a lugar nenhum: o cadastro da agência (D-065). Antes disso o guard
+ * não tinha esse estado, e o resultado era uma plataforma sem porta de
+ * entrada — dava para entrar e não havia nada onde entrar.
+ *
+ * Não é uma brecha no "negar por padrão": rota sem nenhum dos três decorators
+ * continua sem passar.
+ */
+export const RequireSession = () => SetMetadata(SESSION_ONLY, true);
+
+/** Só o usuário. Rotas de `@RequireSession()` não têm organização nem papel. */
+export interface SessionContext {
+  userId: string;
+  email: string;
+}
 
 export interface AuthContext {
   userId: string;
@@ -38,6 +58,7 @@ export interface AuthContext {
 declare module 'express' {
   interface Request {
     auth?: AuthContext;
+    session?: SessionContext;
   }
 }
 
@@ -47,6 +68,15 @@ export const Auth = createParamDecorator((_data: unknown, ctx: ExecutionContext)
   if (!req.auth) throw Problems.forbidden('acessar isso');
   return req.auth;
 });
+
+/** `@CurrentSession()` — para rotas de `@RequireSession()`. */
+export const CurrentSession = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): SessionContext => {
+    const req = ctx.switchToHttp().getRequest<Request>();
+    if (!req.session) throw Problems.forbidden('acessar isso');
+    return req.session;
+  },
+);
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -69,6 +99,15 @@ export class AuthGuard implements CanActivate {
 
     const session = await this.auth.resolveSession(raw);
     if (!session) throw Problems.forbidden('acessar isso', 'Sua sessão expirou. Entre de novo.');
+
+    req.session = { userId: session.userId, email: session.user.email };
+
+    // Cadastro da agência: autenticado, ainda sem organização (D-065).
+    const sessionOnly = this.reflector.getAllAndOverride<boolean>(SESSION_ONLY, [
+      ctx.getHandler(),
+      ctx.getClass(),
+    ]);
+    if (sessionOnly) return true;
 
     const organizationId = this.pickOrganization(req);
     if (!organizationId) {

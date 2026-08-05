@@ -289,6 +289,149 @@ describe('sessão válida, escopo de organização', () => {
   });
 });
 
+describe('a porta de entrada — fundar a agência (D-065)', () => {
+  /** Entra sem passar por `contaComAdmin`: é gente nova, sem organização. */
+  async function entrarSemAgencia(email: string) {
+    const pedido = await fetch(`${base}/auth/magic-link`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const { token } = (await pedido.json()) as { token: string };
+    const sessao = await fetch(`${base}/auth/session`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    const corpo = (await sessao.json()) as { memberships: unknown[] };
+    assert.equal(corpo.memberships.length, 0, 'esta pessoa ainda não tem agência');
+    return sessao.headers.getSetCookie().find((c) => c.startsWith('maestro_session='))!.split(';')[0]!;
+  }
+
+  async function fundar(cookie: string, name: string, confirm?: boolean) {
+    return fetch(`${base}/organizations`, {
+      method: 'POST',
+      headers: { cookie, 'content-type': 'application/json' },
+      body: JSON.stringify(confirm === undefined ? { name } : { name, confirm }),
+    });
+  }
+
+  test('sem sessão nenhuma, não funda nada', async () => {
+    const r = await fundar('maestro_session=inventado', 'Agência Fantasma');
+    assert.equal(r.status, 403);
+  });
+
+  test('quem acabou de entrar consegue fundar a agência', async () => {
+    const cookie = await entrarSemAgencia('victor@fundar-um.com');
+
+    const r = await fundar(cookie, 'Studio Norte');
+    // `clone()` porque o corpo só pode ser lido uma vez, e a mensagem de falha
+    // precisa dele tanto quanto a asserção seguinte.
+    assert.ok(r.ok, `esperava sucesso, veio ${r.status}: ${await r.clone().text()}`);
+
+    const corpo = (await r.json()) as {
+      organization: { id: string; slug: string; plan: string; trialEndsAt: string };
+      role: string;
+    };
+
+    assert.equal(corpo.role, 'AGENCY_ADMIN', 'quem funda administra');
+    assert.equal(corpo.organization.slug, 'studio-norte');
+    assert.equal(corpo.organization.plan, 'TRIAL');
+
+    // Trial de 14 dias sem cartão (D-057).
+    const dias = Math.round(
+      (new Date(corpo.organization.trialEndsAt).getTime() - Date.now()) / 86_400_000,
+    );
+    assert.equal(dias, 14);
+  });
+
+  test('a agência já nasce com as três metodologias de fábrica', async () => {
+    const cookie = await entrarSemAgencia('victor@fundar-dois.com');
+    const r = await fundar(cookie, 'Studio Sul');
+    const { organization } = (await r.json()) as { organization: { id: string } };
+
+    const metodologias = await prismaRoot.methodology.findMany({
+      where: { organizationId: organization.id },
+      select: { name: true, isSystem: true },
+    });
+
+    assert.equal(metodologias.length, 3, 'ninguém começa em tela vazia');
+    assert.ok(metodologias.every((m) => m.isSystem));
+    assert.ok(metodologias.some((m) => m.name === 'Social sempre ativo'));
+  });
+
+  test('logo depois de fundar, já dá para usar a plataforma', async () => {
+    const cookie = await entrarSemAgencia('victor@fundar-tres.com');
+    const criada = await fundar(cookie, 'Studio Leste');
+    const { organization } = (await criada.json()) as { organization: { id: string } };
+
+    // O teste que faltava: ontem este passo devolvia 403 e não havia saída.
+    const cliente = await fetch(`${base}/clients`, {
+      method: 'POST',
+      headers: {
+        cookie,
+        'x-maestro-organization': organization.id,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ name: 'Loja Norte' }),
+    });
+
+    assert.ok(cliente.ok, `criar cliente logo após fundar: veio ${cliente.status}`);
+  });
+
+  test('nome de agência repetido não colide no endereço', async () => {
+    const a = await entrarSemAgencia('ana@fundar-repetido-a.com');
+    const b = await entrarSemAgencia('bruno@fundar-repetido-b.com');
+
+    const um = await fundar(a, 'Agência Igual');
+    const dois = await fundar(b, 'Agência Igual');
+
+    const p1 = (await um.json()) as { organization: { slug: string } };
+    const p2 = (await dois.json()) as { organization: { slug: string } };
+
+    assert.equal(p1.organization.slug, 'agencia-igual');
+    assert.equal(p2.organization.slug, 'agencia-igual-2');
+  });
+
+  test('mesmo domínio de e-mail avisa, mas não tranca', async () => {
+    const primeiro = await entrarSemAgencia('victor@studionorte-teste.com');
+    await fundar(primeiro, 'Studio Norte Teste');
+
+    const colega = await entrarSemAgencia('maria@studionorte-teste.com');
+
+    const aviso = await fundar(colega, 'Studio Norte Teste 2');
+    assert.equal(aviso.status, 409, 'a colega precisa ser avisada');
+
+    const p = (await aviso.json()) as { title: string; detail: string; canConfirm: boolean };
+    assert.match(p.title, /já usa a Maestro/);
+    assert.match(p.detail, /convite/);
+    assert.equal(p.canConfirm, true, 'o aviso precisa oferecer o caminho de seguir');
+
+    // E seguir tem que funcionar — o aviso avisa, nunca tranca.
+    const insistindo = await fundar(colega, 'Studio Norte Teste 2', true);
+    assert.ok(insistindo.ok, `confirmar deveria criar, veio ${insistindo.status}`);
+  });
+
+  test('e-mail pessoal não dispara o aviso — gmail não é empresa', async () => {
+    const um = await entrarSemAgencia('victor.pessoal@gmail.com');
+    await fundar(um, 'Agência do Victor');
+
+    const outro = await entrarSemAgencia('maria.pessoal@gmail.com');
+    const r = await fundar(outro, 'Agência da Maria');
+
+    assert.ok(r.ok, 'duas pessoas com gmail não são a mesma equipe');
+  });
+
+  test('nome vazio é recusado com mensagem legível', async () => {
+    const cookie = await entrarSemAgencia('victor@fundar-vazio.com');
+    const r = await fundar(cookie, '');
+
+    assert.equal(r.status, 400);
+    const p = (await r.json()) as { detail: string };
+    assert.match(p.detail, /nome da sua agência/i);
+  });
+});
+
 describe('o corpo da requisição não manda no tenant', () => {
   test('organizationId no corpo não sobrepõe o da sessão', async () => {
     const a = await contaComAdmin('corpo-a');

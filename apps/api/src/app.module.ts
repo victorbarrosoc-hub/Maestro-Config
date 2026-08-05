@@ -4,6 +4,8 @@ import { AuthService } from './auth/auth.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthGuard } from './auth/auth.guard';
 import { MembersController } from './organizations/members.controller';
+import { OrganizationsController } from './organizations/organizations.controller';
+import { OrganizationsService } from './organizations/organizations.service';
 import { ClientsController } from './clients/clients.controller';
 import { ProjectsController } from './projects/projects.controller';
 import { ProjectsService } from './projects/projects.service';
@@ -22,11 +24,12 @@ import { ProblemFilter } from './common/problem.filter';
  * sem `@Public` não passa. Esquecer o decorator falha fechado, não aberto.
  */
 @Module({
-  controllers: [AuthController, MembersController, ClientsController, ProjectsController, ContentController,
+  controllers: [AuthController, OrganizationsController, MembersController, ClientsController, ProjectsController, ContentController,
     BatchesController, DecisionsController,
   ],
   providers: [
     AuthService,
+    OrganizationsService,
     ProjectsService,
     ContentService,
     DecisionService,

@@ -172,8 +172,10 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 - [x] **Validacao de entrada de verdade** (D-064) — 17 DTOs como classe, `PATCH` com
       lista fechada, erro em portugues no formato RFC 9457
 - [ ] Testes de HTTP do produto: ciclo, lote, decisao e termo
-- [ ] 🔴 **Como uma agencia entra na plataforma?** Nao existe caminho — nem no codigo
-      nem em `API.md`. Precisa de decisao de produto
+- [x] **Cadastro da agencia** (D-065) — `POST /v1/organizations`: trial de 14 dias,
+      administrador e as tres metodologias de fabrica, numa transacao
+- [ ] **Login com Google** — bloqueado pela D-024: a tela de autorizacao exige dominio
+      verificado em producao. Microsoft depois; LinkedIn e X ficam de fora
 - [ ] Alinhar `API.md` com a implementacao (modelo de sessao, endpoints inexistentes)
 - [ ] Blocos 4, 6, 7 e 8 da API
 - [ ] **Servidor MCP** sobre a API (D-061), logo após o bloco 5
@@ -230,7 +232,7 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 
 ## Decisões
 
-Ver `DECISIONS.md`. 64 registradas.
+Ver `DECISIONS.md`. 65 registradas.
 **Única em aberto:** **D-024** (naming/jurídico) 🔴
 
 ---

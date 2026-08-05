@@ -88,6 +88,34 @@ Access token: 15 min. Refresh: 30 dias, rotativo. Token de link mágico: uso ún
 
 ## Organização, clientes e equipe
 
+### Fundar a agência — a porta de entrada (D-065)
+
+```
+POST /organizations
+  { "name": "Studio Norte" }
+  → 201 { "organization": { id, name, slug, plan, trialEndsAt }, "role": "AGENCY_ADMIN" }
+```
+
+**O único endpoint que exige sessão sem exigir organização** (`@RequireSession()`): quem
+chega aqui está autenticado pelo link mágico e ainda não pertence a lugar nenhum. Cria,
+numa transação, a organização com trial de 14 dias (D-057), quem pediu como
+`AGENCY_ADMIN` já aceito, e as três metodologias de fábrica.
+
+Se o domínio do e-mail já tiver agência na Maestro:
+
+```
+  → 409 { "type": ".../team-already-here",
+          "title": "Sua equipe já usa a Maestro",
+          "organizations": [...], "canConfirm": true }
+```
+
+Reenviar com `"confirm": true` cria assim mesmo. **O aviso avisa, nunca tranca.**
+Domínio de e-mail pessoal não dispara o aviso.
+
+> **Login social** (Google primeiro, Microsoft depois) entra quando o domínio estiver
+> resolvido — a tela de autorização exige domínio verificado em produção (D-024, D-065).
+> LinkedIn e X ficam de fora.
+
 ```
 GET    /organizations/me
 PATCH  /organizations/me
