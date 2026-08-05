@@ -230,6 +230,7 @@ export async function provisionSystemMethodologies(organizationId: string) {
     for (const [i, t] of m.tracks.entries()) {
       const track = await prisma.methodologyTrack.create({
         data: {
+          organizationId,
           methodologyId: methodology.id,
           name: t.name,
           description: t.description,
@@ -243,6 +244,7 @@ export async function provisionSystemMethodologies(organizationId: string) {
     for (const p of m.phases) {
       const phase = await prisma.methodologyPhase.create({
         data: {
+          organizationId,
           methodologyId: methodology.id,
           order: p.order,
           name: p.name,
@@ -256,7 +258,9 @@ export async function provisionSystemMethodologies(organizationId: string) {
       });
 
       if (p.gate) {
-        await prisma.methodologyGate.create({ data: { phaseId: phase.id, ...p.gate } });
+        await prisma.methodologyGate.create({
+          data: { organizationId, phaseId: phase.id, ...p.gate },
+        });
       }
 
       for (const [i, d] of p.deliverables.entries()) {
@@ -264,6 +268,7 @@ export async function provisionSystemMethodologies(organizationId: string) {
         if (!trackId) throw new Error(`Trilha "${d.track}" não existe em "${m.name}"`);
         await prisma.methodologyDeliverable.create({
           data: {
+            organizationId,
             phaseId: phase.id,
             trackId,
             kind: d.kind,

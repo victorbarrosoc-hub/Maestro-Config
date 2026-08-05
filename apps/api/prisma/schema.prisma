@@ -311,23 +311,26 @@ model Methodology {
 }
 
 model MethodologyTrack {
-  id            String  @id @default(uuid()) @db.Uuid
-  methodologyId String  @db.Uuid
-  name          String
-  description   String?
-  color         String
-  order         Int
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  methodologyId  String  @db.Uuid
+  name           String
+  description    String?
+  color          String
+  order          Int
 
   methodology  Methodology              @relation(fields: [methodologyId], references: [id], onDelete: Cascade)
   deliverables MethodologyDeliverable[]
 
   @@unique([methodologyId, order])
+  @@index([organizationId])
 }
 
 model MethodologyPhase {
-  id            String  @id @default(uuid()) @db.Uuid
-  methodologyId String  @db.Uuid
-  order         Int
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  methodologyId  String @db.Uuid
+  order          Int
   name          String
   label         String?
   /// OBRIGATÓRIO. É a pergunta-guia que separa metodologia de cronograma (D-035, I-09).
@@ -343,34 +346,40 @@ model MethodologyPhase {
   gate         MethodologyGate?
 
   @@unique([methodologyId, order])
+  @@index([organizationId])
 }
 
 model MethodologyDeliverable {
-  id       String          @id @default(uuid()) @db.Uuid
-  phaseId  String          @db.Uuid
-  trackId  String          @db.Uuid
-  kind     DeliverableKind
-  label    String
-  output   String?
-  quantity Int? // VOLUME → gera CalendarSlot (D-036)
-  format   ContentFormat?
-  platform Platform?
-  order    Int
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @db.Uuid
+  phaseId        String          @db.Uuid
+  trackId        String          @db.Uuid
+  kind           DeliverableKind
+  label          String
+  output         String?
+  quantity       Int? // VOLUME → gera CalendarSlot (D-036)
+  format         ContentFormat?
+  platform       Platform?
+  order          Int
 
   phase MethodologyPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
   track MethodologyTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
 
   @@index([phaseId])
+  @@index([organizationId])
 }
 
 model MethodologyGate {
-  id        String @id @default(uuid()) @db.Uuid
-  phaseId   String @unique @db.Uuid
-  question  String
-  criteria  String
-  decidedBy String // "agency" | "agency+client"
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  phaseId        String @unique @db.Uuid
+  question       String
+  criteria       String
+  decidedBy      String // "agency" | "agency+client"
 
   phase MethodologyPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }
 
 // ============================================================================
@@ -472,16 +481,19 @@ model Phase {
 
 /// Ponto de decisão. Enquanto aberto, a fase seguinte fica BLOCKED (I-18).
 model Gate {
-  id           String    @id @default(uuid()) @db.Uuid
-  phaseId      String    @unique @db.Uuid
-  question     String
-  criteria     String
-  resolvedAt   DateTime?
-  resolvedById String?   @db.Uuid
-  outcome      String?
-  rationale    String?
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  phaseId        String    @unique @db.Uuid
+  question       String
+  criteria       String
+  resolvedAt     DateTime?
+  resolvedById   String?   @db.Uuid
+  outcome        String?
+  rationale      String?
 
   phase Phase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }
 
 model AgendaRequest {
@@ -502,14 +514,16 @@ model AgendaRequest {
 
 /// Sem coluna de realizado: o valor é COUNT de Publication publicada (I-17).
 model ProjectTarget {
-  id        String @id @default(uuid()) @db.Uuid
-  projectId String @db.Uuid
-  label     String
-  target    Int
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  projectId      String @db.Uuid
+  label          String
+  target         Int
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+  @@index([organizationId])
 }
 
 // ============================================================================
@@ -786,19 +800,21 @@ model Batch {
 }
 
 model BatchItem {
-  id        String    @id @default(uuid()) @db.Uuid
-  batchId   String    @db.Uuid
-  contentId String    @db.Uuid
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  batchId        String    @db.Uuid
+  contentId      String    @db.Uuid
   /// A versão exata enviada.
-  versionId String    @db.Uuid
-  order     Int
+  versionId      String    @db.Uuid
+  order          Int
   /// Aprovação em lote exige ter aberto cada peça uma vez.
-  seenAt    DateTime?
+  seenAt         DateTime?
 
   batch   Batch   @relation(fields: [batchId], references: [id], onDelete: Cascade)
   content Content @relation(fields: [contentId], references: [id])
 
   @@unique([batchId, contentId])
+  @@index([organizationId])
 }
 
 /// Registro imutável. UPDATE permitido apenas em undoneAt e notifiedAt (I-04).

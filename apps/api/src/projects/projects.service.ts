@@ -108,7 +108,7 @@ export class ProjectsService {
         phaseIdByOrder.set(p.order, phase.id);
 
         if (p.gate) {
-          await tx.gate.create({ data: { phaseId: phase.id, ...p.gate } });
+          await tx.gate.create({ data: { organizationId, phaseId: phase.id, ...p.gate } });
         }
 
         if (p.agendaDays > 0) {
@@ -155,7 +155,7 @@ export class ProjectsService {
 
       if (plan.targets.length) {
         await tx.projectTarget.createMany({
-          data: plan.targets.map((t) => ({ projectId: project.id, ...t })),
+          data: plan.targets.map((t) => ({ organizationId, projectId: project.id, ...t })),
         });
       }
 

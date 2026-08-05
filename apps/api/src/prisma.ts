@@ -30,16 +30,28 @@ const SOFT_DELETE_MODELS = new Set<string>([
   'Batch',
 ]);
 
-/** Modelos escopados por organização. Todo o resto herda pelo pai. */
+/**
+ * Modelos escopados por organização — todos carregam `organizationId`.
+ *
+ * "Herda pelo pai" não isola nada: a extensão do Prisma só intercepta a
+ * operação de topo, e um id vindo da URL é sempre operação de topo. Tabela de
+ * negócio sem `organizationId` é tabela sem filtro (D-063).
+ */
 const TENANT_MODELS = new Set<string>([
   'Workspace',
   'OrganizationMember',
   'ClientAccess',
   'ProjectAssignment',
   'Methodology',
+  'MethodologyTrack',
+  'MethodologyPhase',
+  'MethodologyDeliverable',
+  'MethodologyGate',
   'Client',
   'Project',
+  'ProjectTarget',
   'Phase',
+  'Gate',
   'AgendaRequest',
   'Campaign',
   'CalendarSlot',
@@ -51,6 +63,7 @@ const TENANT_MODELS = new Set<string>([
   'Suggestion',
   'Cycle',
   'Batch',
+  'BatchItem',
   'Approval',
   'ApprovalTerm',
   'Publication',
@@ -59,8 +72,43 @@ const TENANT_MODELS = new Set<string>([
   'DomainEvent',
 ]);
 
-const READ_OPS = new Set(['findFirst', 'findMany', 'findUnique', 'count', 'aggregate', 'groupBy']);
-const WRITE_OPS = new Set(['create', 'createMany', 'update', 'updateMany', 'upsert', 'delete', 'deleteMany']);
+/**
+ * Modelos globais por natureza — identidade, não negócio.
+ *
+ * `User` é intencionalmente global: a mesma pessoa pode ser atendimento numa
+ * agência e cliente em outra, e o convite faz `upsert` por e-mail. `Session` e
+ * `MagicToken` pertencem ao usuário. `Organization` é a raiz — e mesmo assim
+ * é presa ao próprio id logo abaixo.
+ */
+const GLOBAL_MODELS = new Set<string>(['Organization', 'User', 'Session', 'MagicToken']);
+
+/**
+ * Leitura. As variantes `OrThrow` **precisam** estar aqui: são as que os
+ * serviços realmente chamam. Ficaram de fora na primeira versão, e o efeito
+ * era um filtro que só protegia o código que ninguém executava (D-063).
+ */
+const READ_OPS = new Set([
+  'findUnique',
+  'findUniqueOrThrow',
+  'findFirst',
+  'findFirstOrThrow',
+  'findMany',
+  'count',
+  'aggregate',
+  'groupBy',
+]);
+
+const WRITE_OPS = new Set([
+  'create',
+  'createMany',
+  'createManyAndReturn',
+  'update',
+  'updateMany',
+  'updateManyAndReturn',
+  'upsert',
+  'delete',
+  'deleteMany',
+]);
 
 const base = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
@@ -110,9 +158,36 @@ export function forOrganization(organizationId: string) {
           const run = query as (a: unknown) => Promise<unknown>;
           if (!model) return run(args);
 
+          // Falha barulhenta, nunca silenciosa. Um modelo novo que esqueça o
+          // `organizationId` para aqui, no primeiro teste — não em produção,
+          // vazando dado de agência para agência.
+          if (!TENANT_MODELS.has(model) && !GLOBAL_MODELS.has(model)) {
+            throw new Error(
+              `${model} não está em TENANT_MODELS nem em GLOBAL_MODELS. ` +
+                'Toda tabela de negócio carrega organizationId (I-01, D-063). ' +
+                'Se for mesmo global, declare em GLOBAL_MODELS e explique o porquê.',
+            );
+          }
+
+          // Mesma regra para operação: se o Prisma ganhar um verbo novo, ele
+          // para aqui em vez de virar caminho sem filtro.
+          if (!READ_OPS.has(operation) && !WRITE_OPS.has(operation)) {
+            throw new Error(
+              `Operação "${operation}" não classificada em READ_OPS nem WRITE_OPS. ` +
+                'Sem classificação não há como aplicar escopo de tenant (I-01, D-063).',
+            );
+          }
+
           const scoped = TENANT_MODELS.has(model);
           const soft = SOFT_DELETE_MODELS.has(model);
           const a = args as { where?: Record<string, unknown>; data?: unknown };
+
+          // A organização só enxerga a si mesma. `where: { id }` divergente
+          // não devolve linha — nem o plano nem os limites de outra agência.
+          if (model === 'Organization' && READ_OPS.has(operation)) {
+            a.where = { ...(a.where ?? {}), id: organizationId, deletedAt: null };
+            return run(args);
+          }
 
           if (READ_OPS.has(operation) && (scoped || soft)) {
             a.where = {

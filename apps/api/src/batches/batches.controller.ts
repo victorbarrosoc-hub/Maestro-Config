@@ -41,7 +41,13 @@ export class BatchesController {
                 where: { id: contentId },
                 select: { currentVersionId: true },
               });
-              return { contentId, versionId: c.currentVersionId!, order };
+              // Escrita aninhada: o carimbo automático não alcança aqui (I-01).
+              return {
+                organizationId: ctx.organizationId,
+                contentId,
+                versionId: c.currentVersionId!,
+                order,
+              };
             }),
           ),
         },

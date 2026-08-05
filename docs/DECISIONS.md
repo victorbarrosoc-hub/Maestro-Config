@@ -503,6 +503,58 @@ A última é o argumento inteiro da Maestro, numa pergunta que uma IA pode fazer
 
 ---
 
+# D-063 · Arquitetura / Segurança · Aprovada
+**Data:** 2026-08-04 · **Origem:** primeira execução dos serviços contra um Postgres real
+**Contexto:** os blocos 1, 2, 3 e 5 tinham 105 testes verdes, mas nenhum serviço havia
+emitido uma query de verdade — as invariantes rodavam contra os triggers, o resto era
+lógica pura. Subir o banco expôs duas falhas de isolamento multi tenant (I-01) que
+nenhuma das duas metades conseguiria mostrar sozinha.
+
+**Achado 1 — sete tabelas sem `organizationId`.** O cabeçalho do `schema.prisma` declara
+que *toda tabela de negócio carrega `organizationId` como escalar indexado*. `BatchItem`,
+`Gate`, `ProjectTarget` e as quatro tabelas de metodologia não carregavam. A extensão do
+Prisma só intercepta a operação de topo — "herda pelo pai" não isola nada quando o id vem
+da URL. **Alcançável por HTTP:** `POST /v1/batch-items/:id/decision` recebe o id pela URL
+e fazia `findUniqueOrThrow` com `include` de `content`. Um membro da organização A, de
+posse de um id da B, lia título, propósito, estado e selo de conteúdo alheio. A escrita já
+era barrada; a leitura, não.
+
+**Achado 2 — `findUniqueOrThrow` e `findFirstOrThrow` fora de `READ_OPS`.** Mais grave que
+o primeiro: são exatamente as variantes que os serviços chamam. O filtro protegia apenas o
+código que ninguém executava — e o mesmo vale para o soft delete, que também não era
+aplicado nessas chamadas.
+
+**Decisão:**
+1. `organizationId` obrigatório e indexado nas sete tabelas, preenchido pela tabela-mãe
+   (migration `20260804000000_escopo_de_tenant_completo`).
+2. `READ_OPS` e `WRITE_OPS` passam a listar **todas** as operações do Prisma, incluindo as
+   variantes `OrThrow` e `*AndReturn`.
+3. O cliente escopado **falha barulhento**: modelo fora de `TENANT_MODELS`/`GLOBAL_MODELS`
+   e operação fora de `READ_OPS`/`WRITE_OPS` levantam erro em vez de passar sem filtro.
+4. `GLOBAL_MODELS` é declarado e justificado — `User` é global de propósito (a mesma
+   pessoa é atendimento numa agência e cliente em outra, e o convite faz `upsert` por
+   e-mail). `Organization` é preso ao próprio id na leitura: nenhuma agência lê o plano ou
+   os limites de outra.
+
+**Motivo:** o mesmo princípio que já sustenta o selo e a imutabilidade — *garantia que não
+pode depender de disciplina*. Uma lista que precisa ser lembrada é uma lista que um dia é
+esquecida; a versão nova recusa o que não reconhece.
+
+**Consequências:**
+- Escrita **aninhada** continua fora do alcance do carimbo automático (a extensão não
+  percorre `data` de relação). Três pontos foram corrigidos à mão e o compilador passa a
+  cobrar os próximos — foi ele que os encontrou.
+- `apps/api/test/integracao.test.ts` — 19 testes exercitando os serviços contra Postgres,
+  6 deles sobre isolamento. Total da suíte: 124.
+- `scripts/dev-db.ts` sobe um Postgres embutido (PGlite sobre socket TCP), sem Docker.
+  Exigir Docker foi o atrito que adiou esta verificação por quatro blocos de API.
+- Os dois testes de banco leem as migrations do diretório, em ordem, nunca de lista fixa.
+
+**Lição, e é a mesma de sempre:** verde não é verificado. As duas metades estavam
+testadas; o que faltava era o meio de campo, e era lá que estava o furo.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-063, D-064...
+Adicionar seguindo o padrão D-064, D-065...

@@ -1,6 +1,6 @@
 # HANDOFF — retomando a Maestro
 
-Última atualização: 2026-07-29 · 28 commits
+Última atualização: 2026-08-04 · 32 commits
 
 > **Leia este arquivo primeiro.** Ele é o mapa. A informação completa está nos
 > documentos apontados aqui — não repita conteúdo, vá na fonte.
@@ -23,7 +23,7 @@ ocupam essa palavra, três por menos de R$ 20/mês.
 | Preciso saber… | Está em |
 |---|---|
 | A visão e as regras que não se negociam | `../CLAUDE.md` · `PROJECT_RULES.md` |
-| **Por que qualquer coisa é como é** | **`DECISIONS.md` — 62 decisões, leia sempre antes de mudar algo** |
+| **Por que qualquer coisa é como é** | **`DECISIONS.md` — 63 decisões, leia sempre antes de mudar algo** |
 | A hierarquia de entidades | `PRODUCT_BIBLE/HIERARQUIA.md` |
 | O que é o MVP de verdade | `PRODUCT_BIBLE/PRODUCT_BRIEF.md` |
 | Como o cliente usa | `UX/USER_FLOW_CLIENT.md` |
@@ -100,39 +100,112 @@ packages/tokens/   tokens + 228 strings pt-BR
 packages/ui/       Button, StatusPill, ApprovalActions
 ```
 
-**105 testes passando, typecheck limpo.**
+**124 testes passando, typecheck limpo.**
 
 | Suíte | O que cobre |
 |---|---|
 | `test/invariants.test.mjs` | 15 · triggers do Postgres, via PGlite (WASM, sem Docker) |
+| `test/integracao.test.ts` | 19 · **os serviços contra Postgres**: decisão, selo, resfriamento, termo, isolamento |
 | `test/permissions.test.ts` | 26 · a matriz RBAC, incl. "nem o dono da agência aprova" |
 | `test/methodology.plan.test.ts` | 19 · o cronograma da EJUP reproduzido |
 | `test/seal.test.ts` | 21 · determinismo, roteiro, colisão por concatenação |
 | `test/preflight.test.ts` | 24 · o checklist pré-envio |
 
 ```bash
-npm -w @maestro/api test        # roda tudo, sem banco
+npm -w @maestro/api test        # roda tudo, sem banco no ar
 npm -w @maestro/api typecheck
 ```
 
-### ⚠ O que ainda NÃO foi verificado
-
-- **Nada rodou contra um Postgres real.** As migrations e triggers foram
-  validados com PGlite; os *serviços* nunca executaram uma query de verdade.
-- `apps/web` não existe. Os componentes nunca foram renderizados.
-- O seed nunca rodou.
-
-**Primeiro passo de qualquer sessão nova que for mexer em backend:**
+### Para subir a API
 
 ```bash
-docker run --name maestro-db -e POSTGRES_USER=maestro -e POSTGRES_PASSWORD=maestro \
-  -e POSTGRES_DB=maestro -p 5432:5432 -d postgres:16
+npm -w @maestro/api run db:server     # terminal 1 — o banco
+npm -w @maestro/api run dev           # terminal 2 — API em :3333/v1
+```
+
+> **Nunca troque o executor de volta para `tsx`.** Ele não gera os metadados de
+> decorator e derruba toda a injeção de dependência do NestJS — a API sobe,
+> mapeia as rotas e devolve 500 em tudo. Ver achado 2 abaixo.
+
+### Para mexer no backend
+
+**Não precisa de Docker.** O banco de desenvolvimento é um Postgres embutido
+(PGlite atrás de um socket TCP — `apps/api/scripts/dev-db.ts`):
+
+```bash
 cp .env.example .env
+ln -sf ../../.env apps/api/.env          # o Prisma procura na pasta do app
+npm -w @maestro/api run db:server        # deixe rodando num terminal
 npm -w @maestro/api run db:deploy && npm -w @maestro/api run db:seed
 ```
 
-É bem provável que apareçam ajustes nos serviços. Corrija-os antes de escrever
-camada nova em cima.
+`db:server --fresh` recomeça do zero. Os dados ficam em `apps/api/.pglite`,
+fora do git.
+
+> Exigir Docker foi o atrito que adiou a verificação por quatro blocos de API.
+> Quando houver Postgres de verdade, tire `connection_limit=1&pgbouncer=true`
+> da `DATABASE_URL` — eles existem porque o PGlite atende tudo numa sessão só.
+
+### ⚠ O que ainda NÃO foi verificado
+
+- **Não existe teste de HTTP.** A API sobe e responde (verificado à mão com
+  curl), mas nada disso está coberto por teste — os 124 testes chamam os
+  serviços direto. Foi exatamente essa lacuna que deixou os quatro achados
+  abaixo invisíveis. **É a próxima coisa a fazer.**
+- `apps/web` não existe. Os componentes nunca foram renderizados.
+- Blocos 4, 6, 7 e 8 não existem.
+
+### O que a primeira subida da API encontrou (2026-08-04, ainda sem D-XXX)
+
+A API **nunca tinha subido**. Quatro achados, em ordem de gravidade:
+
+1. **Não iniciava.** Faltavam `class-validator` e `class-transformer`, exigidos
+   pelo `ValidationPipe` do `main.ts`. Instalados. ✅
+2. **`tsx` quebrava toda a injeção de dependência.** O `tsconfig` tem
+   `emitDecoratorMetadata: true`, mas o esbuild (que o `tsx` usa) **não
+   implementa** essa opção. Resultado: `this.reflector` chegava `undefined` no
+   `AuthGuard` e **toda rota autenticada devolvia 500** em vez de funcionar.
+   Provado isolando: build com `tsc` → 403 correto; `tsx` → 500.
+   Corrigido trocando o executor para SWC — `node -r @swc-node/register`
+   (o modo ESM `--import .../esm-register` **não** funciona: colide com
+   `"module": "commonjs"`). `.swcrc` na raiz de `apps/api`. ✅
+3. **🔴 Não há como entrar na plataforma.** O seed cria a organização com
+   **zero membros**; toda rota exige vínculo; `POST /members/invite` também
+   exige estar logado. Login por link mágico funciona e devolve
+   `memberships: []` — depois disso, 403 em tudo, com a mensagem "Peça ao
+   administrador da sua conta", e não existe administrador.
+   **O furo está na especificação, não só no código:** `API.md` não tem
+   endpoint de criação de organização nem de primeiro admin. Precisa de
+   decisão de produto (como uma agência se cadastra?) + seed de um admin
+   para desenvolvimento. **Não corrigido.**
+4. **`API.md` divergiu da implementação.** O documento especifica access token
+   de 15 min + refresh rotativo + `POST /auth/refresh` + `POST /auth/password`;
+   o código usa apenas cookie de sessão de 30 dias e não tem esses dois
+   endpoints. Também: `magic-link` e `session` devolvem 201, o documento diz
+   202 e 200. Decidir qual dos dois manda e alinhar. **Não corrigido.**
+
+**Suspeita não confirmada:** o `ValidationPipe` está configurado com
+`whitelist` e `forbidNonWhitelisted` para impedir que `organizationId` venha
+do corpo da requisição — mas os DTOs são tipos TypeScript inline, não classes
+com decorators, e nesse caso o pipe não valida nada. Verificar.
+
+### O que a primeira execução contra banco encontrou (D-063)
+
+Dois furos de isolamento entre organizações, nenhum deles visível pelas duas
+metades que já estavam testadas:
+
+1. **Sete tabelas sem `organizationId`** — `BatchItem`, `Gate`, `ProjectTarget`
+   e as quatro de metodologia. Sem a coluna não há o que filtrar. Era
+   alcançável por HTTP em `POST /v1/batch-items/:id/decision`.
+2. **`findUniqueOrThrow` e `findFirstOrThrow` fora de `READ_OPS`** — pior que o
+   primeiro: são justamente as variantes que os serviços chamam. O filtro
+   protegia só o código que ninguém executava.
+
+Ambos corrigidos. O cliente escopado agora **falha barulhento** em modelo ou
+operação que não reconhece, em vez de deixar passar sem filtro.
+
+**Lição:** verde não é verificado. As duas metades estavam testadas; faltava o
+meio de campo, e era lá que estava o furo.
 
 ---
 
@@ -188,7 +261,7 @@ Lição que se repetiu duas vezes: **eu especifico o "como fazer" e esqueço o
 
 ### 🔴 Só o fundador pode resolver
 
-**D-024 — INPI e domínio.** A única decisão em aberto das 62, e a única que
+**D-024 — INPI e domínio.** A única decisão em aberto das 63, e a única que
 trava qualquer movimento público. "Maestro" colide com Mastercard, mobile.dev
 e Netflix. Recomendação: registrar **marca mista** (símbolo + wordmark) nas
 classes 9 e 42, e adotar `usemaestro.com` ou `maestro.studio`.
@@ -198,6 +271,8 @@ classes 9 e 42, e adotar `usemaestro.com` ou `maestro.studio`.
 
 ### Produto e engenharia
 
+- **Subir a API de fato** (`npm -w @maestro/api run dev`) e bater nos endpoints.
+  Os serviços já rodam contra banco; controller, guard e HTTP ainda não.
 - Blocos 4, 6, 7 e 8 da API (comentários completos, publicação/Meta, IA, webhooks)
 - **Servidor MCP** (D-061) — barato porque a API já nasceu agent-shaped, e
   responde *"alguma peça foi ao ar diferente do que foi aprovado?"*

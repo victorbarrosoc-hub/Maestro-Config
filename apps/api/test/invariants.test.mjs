@@ -12,13 +12,24 @@
 
 import { test, before, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS = join(HERE, '..', 'prisma', 'migrations');
+
+/**
+ * Lidas do diretório, em ordem — nunca em lista fixa. Migration nova entra
+ * sozinha no teste, e ninguém descobre em produção que esqueceu de citá-la.
+ */
+export function migrationsEmOrdem() {
+  return readdirSync(MIGRATIONS, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name)
+    .sort();
+}
 
 const ORG = '11111111-1111-1111-1111-111111111111';
 const CLI = '22222222-2222-2222-2222-222222222222';
@@ -40,7 +51,7 @@ async function refuses(sql) {
 before(async () => {
   db = await new PGlite();
 
-  for (const dir of ['20260729000000_init', '20260729000100_invariantes']) {
+  for (const dir of migrationsEmOrdem()) {
     await db.exec(readFileSync(join(MIGRATIONS, dir, 'migration.sql'), 'utf8'));
   }
 

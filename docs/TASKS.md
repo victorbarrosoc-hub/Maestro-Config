@@ -1,7 +1,7 @@
 # TASKS.md — Maestro Roadmap
 
-Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 iniciados — **o código começou**
-Última atualização: 2026-07-29
+Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 iniciados — **o código roda contra banco**
+Última atualização: 2026-08-04
 
 ---
 
@@ -158,11 +158,19 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 - [x] **Bloco 5 da API — o produto** — ciclo, lote, decisão com verificação de selo, termo
 - [x] `preflight.ts` — 10 verificações, 24 testes; as 3 de conjunto marcadas
 - [x] Janela de resfriamento de 60s com cancelamento silencioso da notificação
+- [x] **Banco de desenvolvimento sem Docker** — `npm -w @maestro/api run db:server` sobe
+      Postgres embutido (PGlite sobre socket TCP). Migrations e seed rodaram de verdade
+- [x] **19 testes de integração** — os serviços contra Postgres, pela primeira vez
+      (`test/integracao.test.ts`): decisão, selo, janela de resfriamento, termo, isolamento
+- [x] **Dois furos de isolamento multi tenant corrigidos** (D-063) — 7 tabelas sem
+      `organizationId` e as variantes `OrThrow` fora do filtro. Um deles alcançável por HTTP
+- [x] **Cliente Prisma falha barulhento** — modelo ou operação não classificada levanta erro
 - [ ] Blocos 4, 6, 7 e 8 da API
 - [ ] **Servidor MCP** sobre a API (D-061), logo após o bloco 5
 - [x] **Testes das invariantes contra Postgres real** — 15 passando via PGlite (WASM), sem Docker
 - [x] **26 testes de RBAC** — inclusive "nem o dono da agência aprova"
-- [ ] Cobrir as invariantes restantes (I-01, I-11 a I-21) conforme os serviços existirem
+- [x] **I-01 coberta** — 6 testes de isolamento entre organizações
+- [ ] Cobrir as invariantes restantes (I-11 a I-21) conforme os serviços existirem
 
 ## Sprint 10 — Integrações
 - [ ] Meta (Instagram + Facebook) — **único obrigatório no MVP**
@@ -212,7 +220,7 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 
 ## Decisões
 
-Ver `DECISIONS.md`. 60 registradas.
+Ver `DECISIONS.md`. 63 registradas.
 **Única em aberto:** **D-024** (naming/jurídico) 🔴
 
 ---

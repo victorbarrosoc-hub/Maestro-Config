@@ -15,3 +15,6 @@ npm-debug.log*
 .turbo/
 .vercel/
 *.tsbuildinfo
+
+# banco de desenvolvimento (PGlite) — ver apps/api/scripts/dev-db.ts
+.pglite/
