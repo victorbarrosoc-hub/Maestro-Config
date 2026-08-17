@@ -35,6 +35,7 @@ ocupam essa palavra, três por menos de R$ 20/mês.
 | Componentes | `UI/COMPONENTS.md` |
 | Marca | `BRAND/BRAND_BOOK.md` |
 | Concorrência e pricing | `MARKETING/COMPETITIVE.md` · `MARKETING/PRICING.md` |
+| **Modelo de negócio e canais de receita** | `INVESTOR/MODELO_DE_NEGOCIO.md` — insumo da D-069 |
 | Achados dos testes com clientes | `UX/TESTE_RESULTADOS.md` |
 | O que fazer agora | `TASKS.md` |
 

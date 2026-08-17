@@ -739,6 +739,13 @@ atual tem alavanca".
    conhece a Maestro pelo lado bom — D-060 é estratégia de distribuição, não custo).
 **Invariável em qualquer cenário:** nada do lado do cliente vira receita (D-060).
 **Próximo passo:** founder escolhe quais entram e em que ordem; aí esta decisão fecha.
+**Insumo (2026-08-17):** `INVESTOR/MODELO_DE_NEGOCIO.md` analisa os seis itens acima,
+acrescenta dois canais (implantação da metodologia como serviço; API e MCP como marcador
+de faixa), **desrecomenda o item 4** (Meta como add-on contradiz a tabela publicada e é
+item de paridade) e conclui que a alavanca não é canal novo: é a âncora de preço mais a
+base do lado do cliente, que já roda e ninguém mede. Aponta também que `PRICING.md` e o
+protótipo publicam **três preços diferentes** para o mesmo plano — resolver isso é
+pré-requisito de qualquer projeção. A decisão continua do founder.
 
 # D-070 · Produto · Aprovada
 **Data:** 2026-08-16 · **Responsável:** Founder · **Categoria:** Agendamento e tráfego
