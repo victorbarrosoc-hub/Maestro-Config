@@ -662,6 +662,111 @@ pessoal fura a regra de qualquer forma, e existe motivo legítimo para uma segun
 
 ---
 
+# D-066 · Produto / Aprovação · Aprovada
+**Data:** 2026-08-16 · **Responsável:** Founder · **Categoria:** Revisão de decisão
+**Origem:** protótipo navegável v3. Achado do founder: *"depois que o timer acaba, já era —
+o cliente não consegue revisar a aprovação que fez nem alterar"*.
+**Problema:** a janela de desfazer (8s na tela, 60s de resfriamento — D-025) era o **único**
+caminho de arrependimento. Decisão tomada às pressas ficava travada até a agência intervir,
+e o cliente que quer corrigir a si mesmo é exatamente o cliente engajado que o produto quer.
+**Decisão:** **toda decisão pode ser revista até a assinatura do termo.** A peça decidida
+ganha a ação secundária *"Mudar minha decisão"*, que a devolve para `AWAITING_APPROVAL`.
+- O desfazer imediato (D-025) continua sendo o atalho: dentro da janela, **nada é enviado**.
+- Reabrir **fora** da janela notifica a agência — a correção nunca é silenciosa.
+- **Depois do termo, trava.** O termo é o fechamento (D-033); reabrir lote assinado é conversa
+  com a agência, não botão. A tela explica isso em vez de esconder a opção.
+**Motivo:** o termo já é a fronteira formal do "acabou". Antes dele, travar decisão individual
+não protege ninguém — só transfere para a agência o custo de destravar.
+**Consequências:** máquina de estados do conteúdo aceita `APPROVED/CHANGES_REQUESTED →
+AWAITING_APPROVAL` por ação do cliente **enquanto o lote não tem termo**; o histórico guarda
+as duas decisões (Regra #6 — nada se perde); a API do bloco 5 precisa do endpoint de reabertura
+(`decisions/:id` hoje só desfaz dentro do fluxo do resfriamento).
+
+# D-067 · Produto / UX · Aprovada
+**Data:** 2026-08-16 · **Responsável:** Founder · **Categoria:** Preview de feed
+**Origem:** pedido direto do founder sobre o protótipo v3; estende a D-054.
+**Decisão:** o preview de feed existe **nos dois lados** e tem **três visões**:
+1. **Como está hoje** — o perfil atual do cliente;
+2. **Depois do lote** — o perfil com as peças aprovadas nas posições reais; o que ainda não
+   foi decidido aparece **tracejado**, marcando o lugar que ocupará;
+3. **Só as novas** — apenas as peças do lote, com o estado de cada uma.
+**Motivo:** o lote (D-030) faz o cliente julgar o conjunto; o feed faz os dois lados julgarem
+o conjunto **no contexto final** — repetição de cor e buraco de ritmo aparecem ali primeiro.
+**Consequências:** a visão "depois" exige as peças já publicadas do perfil (entram pela
+integração Meta, ou upload manual antes dela); a ordem segue o calendário, nunca é editável
+no feed — feed é leitura, calendário é onde se muda data.
+
+# D-068 · Produto / Estratégia · Aprovada — emenda calibrada à D-062
+**Data:** 2026-08-16 · **Responsável:** Founder · **Categoria:** Resultados
+**Origem:** pedido do founder: painel de dados "de acordo com a etapa que o cliente está
+vivendo", nos dois lados.
+**Tensão:** a D-062 decidiu *"a Maestro exporta, não coleta"* — resultado no essencial,
+métrica de negócio é do especialista (Reportei). Um painel de resultados genérico violaria
+isso e colocaria a Maestro no terreno onde o adversário é mais forte.
+**Decisão:** existe um painel de resultados, **amarrado à fase da metodologia** — e é essa
+amarração que o mantém dentro da D-062:
+- **Leitura, não relatório.** Até 4 métricas de conta (alcance, seguidores) contextualizadas
+  pela pergunta da fase: *"nesta fase medimos presença, não venda"*. Nada de comparativos,
+  funis, exportação de PDF ou métrica por peça — isso é do especialista, e sai por webhook.
+- **Execução a Maestro mede sozinha** (já era D-062): previsto × no ar, aprovação em 1ª
+  versão, dias de agenda consumidos × previstos (D-037).
+- **Agência vê também o tempo-até-decisão por cliente; o cliente nunca vê o próprio** (D-054).
+- A régua de escopo: **se a métrica não muda uma conversa da fase, ela não entra.**
+**Motivo:** o cliente no meio de um projeto de 6 meses precisa de resposta para "está
+funcionando?" calibrada pela fase — sem isso ele julga a fase de fundação por venda, que é
+exatamente o desalinhamento que a metodologia existe para impedir.
+**Consequências:** depende da integração Meta (bloco 6) para as métricas de conta; até lá o
+painel mostra só execução. `VISUAL_IDENTITY`: gráficos usam a paleta da marca, brass como
+série principal.
+
+# D-069 · Negócio · Em aberto 🟡
+**Data:** 2026-08-16 · **Responsável:** Founder · **Categoria:** Monetização além da assinatura
+**Contexto:** conta do founder: 20 agências no Concerto ≈ R$ 7 mil/mês — não sustenta a
+empresa no médio prazo. A pergunta certa não é "cobrar de quem mais", e sim "onde o modelo
+atual tem alavanca".
+**Proposta do time de produto (aguardando decisão):**
+1. **Plano anual com 2 meses grátis** — caixa antecipado, churn menor. Já no protótipo.
+2. **White-label** (portal com a marca da agência) como add-on — já estava no backlog; é o
+   add-on de maior disposição a pagar do segmento.
+3. **Assinatura com validade jurídica cobrada por termo** — receita puxada pelo uso, sobre
+   um recurso que já estava previsto para a Fase 2 (D-033).
+4. **Publicação automática (Meta) como add-on** ou marcador de tier.
+5. **Marketplace de metodologias** — a metodologia é entidade (D-035); agências vendem
+   métodos entre si, a Maestro fica com comissão. Nenhum concorrente pode copiar isso
+   sem antes copiar o modelo de metodologia.
+6. **Segundo mercado: times internos e franquias** — já previsto no CLAUDE.md como "depois";
+   ARPU maior, e o **aprovador gratuito é o canal de entrada** (cada cliente aprovador
+   conhece a Maestro pelo lado bom — D-060 é estratégia de distribuição, não custo).
+**Invariável em qualquer cenário:** nada do lado do cliente vira receita (D-060).
+**Próximo passo:** founder escolhe quais entram e em que ordem; aí esta decisão fecha.
+
+# D-070 · Produto · Aprovada
+**Data:** 2026-08-16 · **Responsável:** Founder · **Categoria:** Agendamento e tráfego
+**Contexto:** pedido do founder: assinar o termo → publicações agendadas automaticamente com a
+data e o horário do planejamento; calendário no lado do cliente com legenda; controle de
+tráfego pago por publicação.
+**O que já estava decidido e permanece:** o calendário promete o slot desde o planejamento e a
+peça aprovada o destrava (D-022); o fechamento do lote gera os agendamentos deterministicamente,
+sem IA no caminho (D-045), com o automático **desligado por padrão** (Regra #8).
+**Decisões novas:**
+1. **O agendamento automático é opt-in por cliente.** Ligado, a assinatura do termo move as
+   aprovadas direto para `SCHEDULED` com data e hora do calendário; desligado, a agência
+   confirma com um clique (o caminho padrão de D-045). A medalha e o aviso do termo dizem
+   quantas foram agendadas — o cliente vê o efeito da própria assinatura.
+2. **O cliente tem calendário próprio**: mês com os dias marcados, e por dia — peça, horário,
+   estado e legenda completa. Slot de peça em ajuste aparece como "aguardando peça" (D-022):
+   a data espera a peça, nunca o contrário.
+3. **Tráfego pago entra como controle, não como gestor de anúncios.** Por publicação: objetivo,
+   orçamento e duração, subindo junto com o post via integração Meta (Marketing API, na fase
+   da integração). O cliente vê que a publicação é impulsionada; **valores só se a agência
+   optar por mostrar**. Relatório de anúncio continua sendo do especialista (D-062) — a
+   Maestro impulsiona, não vira Ads Manager.
+**Consequências:** `Publication` ganha `boost {objetivo, orcamento, duracaoDias, mostrarAoCliente}`;
+o painel da agência soma o investimento do mês; a execução real depende do bloco 6 (Meta), que
+por sua vez precisa de domínio e app aprovado — mais uma fila atrás da D-024.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-066, D-067...
+Adicionar seguindo o padrão D-071, D-072...

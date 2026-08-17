@@ -1,7 +1,7 @@
 # TASKS.md — Maestro Roadmap
 
 Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 iniciados — **o código roda contra banco**
-Última atualização: 2026-08-05
+Última atualização: 2026-08-16
 
 ---
 
@@ -75,6 +75,9 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
   - [ ] Registrar as 10 métricas na planilha (a rodada 1 registrou só o achado qualitativo)
   - [ ] 2 participantes novos + 3 repetidos
 - [ ] Atualizar os 4 protótipos para a hierarquia nova (cosmético — nenhum contradiz o modelo)
+- [x] **Protótipo da plataforma completa** — site + dois shells + processo único do card
+      (`docs/UX/prototipo-plataforma.html`, ver HANDOFF §6b). Fotos via Artlist
+- [ ] Protótipo: editar/cancelar peça (contadores prontos, falta UI) · depoimentos reais
 
 ## Sprint 3 — Wireframes · ⏳ Próximo
 
@@ -232,8 +235,8 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 
 ## Decisões
 
-Ver `DECISIONS.md`. 65 registradas.
-**Única em aberto:** **D-024** (naming/jurídico) 🔴
+Ver `DECISIONS.md`. 70 registradas.
+**Em aberto:** **D-024** (naming/jurídico) 🔴 · **D-069** (monetização) 🟡
 
 ---
 

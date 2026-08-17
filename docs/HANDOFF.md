@@ -23,7 +23,7 @@ ocupam essa palavra, três por menos de R$ 20/mês.
 | Preciso saber… | Está em |
 |---|---|
 | A visão e as regras que não se negociam | `../CLAUDE.md` · `PROJECT_RULES.md` |
-| **Por que qualquer coisa é como é** | **`DECISIONS.md` — 65 decisões, leia sempre antes de mudar algo** |
+| **Por que qualquer coisa é como é** | **`DECISIONS.md` — 70 decisões, leia sempre antes de mudar algo** |
 | A hierarquia de entidades | `PRODUCT_BIBLE/HIERARQUIA.md` |
 | O que é o MVP de verdade | `PRODUCT_BIBLE/PRODUCT_BRIEF.md` |
 | Como o cliente usa | `UX/USER_FLOW_CLIENT.md` |
@@ -242,6 +242,41 @@ só como cópia em `docs/`.
 Cópias locais em `docs/UX/prototipo-*.html`, `docs/PRD/prototipo-*.html`,
 `docs/BRAND/brand-book.html`, `docs/MARKETING/analise-competitiva.html`.
 
+
+---
+
+## 6b · O protótipo navegável (a especificação visual viva)
+
+**`docs/UX/prototipo-plataforma.html`** (~1,5 MB, fotos embutidas) · publicado em
+https://claude.ai/code/artifact/cad31c77-cdf4-4aa0-a7d7-5332ee3011f7
+É **um arquivo só**, montado em camadas de `<script>` que se sobrescrevem — funções
+redefinidas depois vencem. Editar = achar a ÚLTIMA definição da função.
+
+**O que ele cobre (tudo testado clicando):** site com prova social (fictícia — marcada
+"programa piloto") e preços com anual (D-069 🟡) · entrada agência/cliente · **o processo
+único do card (D-042): criar peça com texto/roteiro + mood + referência + plataforma +
+dia/hora/tráfego → cliente aprova o texto → termo congela → o MESMO card volta pedindo
+material → final → aprovação → assinatura agenda sozinho (D-070) e cria o impulso se
+marcado** · calendário ago/set nos dois lados · feed 3 visões · resultados por fase ·
+kanban arrastável · planos com upgrade travando limites · equipe com papéis/permissões ·
+corrigir com versão nova (derruba aprovação — selo!) · recolher · apagar (só nunca-enviado) ·
+gesto do M bifurcando + violino Lá→Mi · medalha do termo + cadência orquestral ·
+fotos reais geradas via **Artlist MCP** (conectado; 560 créditos usados).
+
+**Pendências do protótipo (próxima sessão):**
+1. **Editar e cancelar peça** — pedido do founder no fim da sessão: editar texto no card
+   (com derrubada quando congelado) e "Cancelar peça" com confirmação quando o cliente
+   desiste. Os contadores já ignoram `st==='CANCELLED'` e a grade já renderiza o card
+   cancelado — **falta só a UI** (modalEditTexto + botões cancelar/reativar).
+2. Depoimentos reais no lugar dos fictícios (vêm do piloto).
+3. Habilitar criação para além da Loja Norte.
+
+**Decisões que o protótipo gerou:** D-063 a D-070 registradas. O processo único do card é a
+D-042 aplicada — não precisa de decisão nova.
+
+**GitHub:** `victorbarrosoc-hub/Maestro-Config` (privado) · branch `feat/banco-real` ·
+o link do artifact é o canal de teste com clientes (rodada 3 pendente 🔴).
+
 ---
 
 ## 7 · Testes com clientes reais — o que já aprendemos
@@ -273,7 +308,8 @@ Lição que se repetiu duas vezes: **eu especifico o "como fazer" e esqueço o
 
 ### 🔴 Só o fundador pode resolver
 
-**D-024 — INPI e domínio.** A única decisão em aberto das 65, e a única que
+**D-024 — INPI e domínio.** Das 70 decisões, uma das duas em aberto (a outra é a
+D-069, monetização) — e a única que
 trava qualquer movimento público. "Maestro" colide com Mastercard, mobile.dev
 e Netflix. Recomendação: registrar **marca mista** (símbolo + wordmark) nas
 classes 9 e 42, e adotar `usemaestro.com` ou `maestro.studio`.
