@@ -767,6 +767,38 @@ por sua vez precisa de domínio e app aprovado — mais uma fila atrás da D-024
 
 ---
 
+# D-071 · Produto · Aprovada
+**Data:** 2026-08-17 · **Responsável:** Founder · **Categoria:** Ciclo de vida da peça
+**Contexto:** o card cobria o caminho feliz do começo ao fim (texto → aprovação → material →
+peça final → agendamento), mas não cobria os dois desvios que acontecem toda semana numa
+agência: **o texto sai errado** e **o cliente desiste da peça**. Sem isso, a única saída era
+apagar — e apagar peça enviada quebra a Regra #6.
+**Decisões:**
+1. **Editar o texto é possível em qualquer fase — e cada fase tem seu preço, dito antes de
+   salvar.** Rascunho: mexe à vontade, nada é notificado. Com o cliente: versão nova, selo
+   novo, ele vê a atualização. Aprovado: derruba a aprovação. **Congelado pelo termo
+   (fase PRODUÇÃO): o card volta para o lote de texto e para `AWAITING_APPROVAL`, e a
+   produção para até o cliente responder.** O modal declara a consequência antes do clique —
+   nunca depois (D-025).
+2. **Cancelar não é apagar.** Peça nunca enviada continua com "Apagar rascunho": não deixa
+   rastro porque, para o cliente, nunca existiu. Peça já enviada só se **cancela**: sai do
+   calendário, do feed, do lote e das contas, mas fica no histórico com motivo, e **pode ser
+   reativada** no estado exato em que estava (Regra #6). Cancelar remove junto o impulso de
+   tráfego ativo, e diz isso na confirmação.
+3. **O motivo do cancelamento é campo de primeira classe**, não comentário solto. É o que
+   torna a peça cancelada legível seis meses depois, quando alguém perguntar por que aquele
+   slot do calendário ficou vazio.
+**Por que não bloquear a edição do texto congelado:** bloquear empurra a agência para o
+WhatsApp — exatamente o que a Maestro existe para eliminar (Regra #8). Cobrar o preço com
+clareza mantém a correção dentro da plataforma e preserva o selo (D-032): o texto que a
+produção usa é sempre o texto que o cliente aceitou, ou o ciclo recomeça.
+**Consequências:** `Content` ganha `cancelledAt`, `cancelReason` e o estado anterior para a
+reativação; a transição PRODUÇÃO → TEXTO precisa existir na máquina de estados da API
+(bloco 5) e invalidar o termo daquele texto. Contadores, calendário e feed já ignoram
+`CANCELLED` — o cliente nunca vê peça cancelada.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-071, D-072...
+Adicionar seguindo o padrão D-072, D-073...

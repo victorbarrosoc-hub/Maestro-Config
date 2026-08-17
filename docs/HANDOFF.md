@@ -23,7 +23,7 @@ ocupam essa palavra, três por menos de R$ 20/mês.
 | Preciso saber… | Está em |
 |---|---|
 | A visão e as regras que não se negociam | `../CLAUDE.md` · `PROJECT_RULES.md` |
-| **Por que qualquer coisa é como é** | **`DECISIONS.md` — 70 decisões, leia sempre antes de mudar algo** |
+| **Por que qualquer coisa é como é** | **`DECISIONS.md` — 71 decisões, leia sempre antes de mudar algo** |
 | A hierarquia de entidades | `PRODUCT_BIBLE/HIERARQUIA.md` |
 | O que é o MVP de verdade | `PRODUCT_BIBLE/PRODUCT_BRIEF.md` |
 | Como o cliente usa | `UX/USER_FLOW_CLIENT.md` |
@@ -263,15 +263,28 @@ corrigir com versão nova (derruba aprovação — selo!) · recolher · apagar 
 gesto do M bifurcando + violino Lá→Mi · medalha do termo + cadência orquestral ·
 fotos reais geradas via **Artlist MCP** (conectado; 560 créditos usados).
 
-**Pendências do protótipo (próxima sessão):**
-1. **Editar e cancelar peça** — pedido do founder no fim da sessão: editar texto no card
-   (com derrubada quando congelado) e "Cancelar peça" com confirmação quando o cliente
-   desiste. Os contadores já ignoram `st==='CANCELLED'` e a grade já renderiza o card
-   cancelado — **falta só a UI** (modalEditTexto + botões cancelar/reativar).
-2. Depoimentos reais no lugar dos fictícios (vêm do piloto).
-3. Habilitar criação para além da Loja Norte.
+**Editar e cancelar peça (camada v14, D-071) — feito e testado clicando:**
+- **Editar texto** em qualquer fase, com o preço declarado antes de salvar: rascunho (nada
+  notificado) · com o cliente (versão nova, ele vê) · aprovado (derruba) · **congelado pelo
+  termo (PRODUÇÃO): o card volta para o lote de texto e para `AWAITING_APPROVAL`, e a
+  produção para**. Entra pelo detalhe do texto, pelo card e por todo botão "Corrigir" —
+  `modalEditPub` foi envelopada e redireciona sozinha quando a peça está em fase de texto.
+- **Cancelar peça** só depois de enviada (nunca enviada continua sendo "Apagar rascunho"),
+  com motivo obrigatório no histórico, aviso quando há impulso ativo, e **Reativar** que
+  devolve o estado exato de antes.
+- Dois bugs achados de passagem e corrigidos: o card cancelado tinha **dois atributos
+  `style`** e por isso nunca esmaeceu; e o feed "Só as novas" mapeava `S.pecas` inteiro,
+  mostrando peça cancelada e card de texto sem arte.
 
-**Decisões que o protótipo gerou:** D-063 a D-070 registradas. O processo único do card é a
+**Pendências do protótipo (próxima sessão):**
+1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
+2. Habilitar criação para além da Loja Norte.
+3. Divergência a alinhar: em texto, responder a um pedido de alteração devolve a peça para
+   `AWAITING_APPROVAL`; na peça final (`modalEditPub`, v12) ela continua em
+   `CHANGES_REQUESTED`. O comportamento do texto é o certo — o botão promete "responder com
+   nova versão", e responder devolve a decisão ao cliente.
+
+**Decisões que o protótipo gerou:** D-063 a D-071 registradas. O processo único do card é a
 D-042 aplicada — não precisa de decisão nova.
 
 **GitHub:** `victorbarrosoc-hub/Maestro-Config` (privado) · branch `feat/banco-real` ·
@@ -308,7 +321,7 @@ Lição que se repetiu duas vezes: **eu especifico o "como fazer" e esqueço o
 
 ### 🔴 Só o fundador pode resolver
 
-**D-024 — INPI e domínio.** Das 70 decisões, uma das duas em aberto (a outra é a
+**D-024 — INPI e domínio.** Das 71 decisões, uma das duas em aberto (a outra é a
 D-069, monetização) — e a única que
 trava qualquer movimento público. "Maestro" colide com Mastercard, mobile.dev
 e Netflix. Recomendação: registrar **marca mista** (símbolo + wordmark) nas

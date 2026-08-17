@@ -1132,6 +1132,7 @@ function agPeca(){
       :p.fase==='PRODUCAO'?`Texto aprovado · ${p.plat||'Instagram'} · dia ${p.dia} de ${nomeMes(p.mes||8)} às ${p.hora}`
       :`${p.f} · ${p.plat||'Instagram'} · vai ao ar ${p.d}`}</p></div>
     <span class="pill p-${p.st}">${CT[p.st]}</span></div>
+  ${typeof bannerCancelada==='function'?bannerCancelada(p):''}
   ${p.st==='DRAFT'?`<div class="check warn">${ic('warn')}
     <div style="flex:1"><b>Rascunho — o cliente ainda não vê</b>
       <span>Enviando, ela entra no lote de agosto e Helena é avisada na hora.</span>
@@ -1183,7 +1184,8 @@ function agPeca(){
       cliente. O agendamento trava sozinho.</span>
       <div style="margin-top:9px"><button class="b gho sm" data-editpub="${p.id}"
         style="color:var(--coral);border-color:rgba(240,120,76,.4)">${ic('pencil')}
-        Corrigir mesmo assim</button></div></div></div>`:''}`);
+        Corrigir mesmo assim</button></div></div></div>`:''}
+  ${typeof rodapePeca==='function'?rodapePeca(p):''}`);
 }
 
 function agLote(){
@@ -1974,7 +1976,7 @@ function feedGrid(modo){
   const pend=ig.filter(p=>p.st==='AWAITING_APPROVAL'||p.st==='CHANGES_REQUESTED');
   let tiles=[];
   if(modo==='agora') tiles=FEEDOLD.map(([t,a])=>({t,a,cls:'',dot:''}));
-  else if(modo==='novas') tiles=S.pecas.map(p=>({t:p.t,a:p.art,
+  else if(modo==='novas') tiles=ig.map(p=>({t:p.t,a:p.art,
     cls:p.st==='APPROVED'?'':'ghosty',dot:p.st}));
   else tiles=[...pend.map(p=>({t:p.t,a:p.art,cls:'ghosty',dot:p.st})),
     ...novas.map(p=>({t:p.t,a:p.art,cls:'',dot:p.st})),
@@ -3936,9 +3938,12 @@ function modalTextoDet(id){
         <span>Enviando, entra no lote de texto de setembro e Helena é avisada.</span></div></div>`:''}
     <div class="modalrow" style="margin-top:14px">
       <button class="b gho" data-modalno="1">Fechar</button>
-      ${x.st==='DRAFT'?`<button class="b gho" data-deltx="${x.id}"
-        style="color:var(--danger);border-color:rgba(229,72,77,.4)">Apagar rascunho</button>
-      <button class="b pri" data-sendonetx="${x.id}">Enviar este texto para aprovação</button>`:''}
+      <button class="b gho" data-edittx="${x.id}">${ic('pencil')} Editar texto</button>
+      ${!x.everSent?`<button class="b gho" data-deltx="${x.id}"
+        style="color:var(--danger);border-color:rgba(229,72,77,.4)">Apagar rascunho</button>`
+      :`<button class="b gho" data-cancelpeca="${x.id}"
+        style="color:var(--danger);border-color:rgba(229,72,77,.4)">Cancelar peça</button>`}
+      ${x.st==='DRAFT'?`<button class="b pri" data-sendonetx="${x.id}">Enviar este texto para aprovação</button>`:''}
     </div></div></div>`;
 }
 
@@ -4144,7 +4149,8 @@ function itemAgenda(p, ladoAgencia){
 
 /* ---------- grade: o card em qualquer fase ----------------------------- */
 function cardFase(p,i){
-  if(p.st==='CANCELLED') return `<button ${stg(i)} data-peca="${p.id}" style="opacity:.4">
+  if(p.st==='CANCELLED') return `<button class="fu" data-peca="${p.id}"
+    style="animation-delay:${Math.min(i*40,360)}ms;opacity:.45">
     <span class="cell" style="display:block"><span class="art"
       style="background:linear-gradient(160deg,var(--ink-800),var(--ink-900))">${esc(p.t)}</span>
     <span class="cap"><b style="text-decoration:line-through">${esc(p.t)}</b>
@@ -4329,6 +4335,180 @@ document.addEventListener('click', e => {
     p2.seal = Array.from({length:8},()=>'0123456789ABCDEF'[Math.random()*16|0]).join('');
     S.modal=null; som('toque'); S.sel=p2.id; S.route='peca'; render();
     toast(`Material no card "${p2.t}" — mesma peça, novo status. Envie para a aprovação final.`);
+    return; }
+});
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v14 — editar o texto e cancelar a peça.
+   As duas ações que faltavam para o card ser honesto do começo ao fim:
+   corrigir o texto em qualquer fase pagando o preço certo em cada uma,
+   e tirar a peça de circulação sem apagar história (Regra #6, D-025).
+   ================================================================== */
+const selo8   = () => Array.from({length:8},()=>'0123456789ABCDEF'[Math.random()*16|0]).join('');
+const emTexto = p => p.fase==='TEXTO' || p.fase==='PRODUCAO';
+const val     = id => { const el=document.getElementById(id); return el?el.value.trim():null; };
+
+/* ---------- o preço de salvar, dito ANTES de salvar -------------------- */
+function custoDaEdicao(p){
+  if(p.fase==='PRODUCAO') return {cls:'check blk',
+    t:'O texto está congelado pelo termo',
+    s:`Salvar derruba a aprovação: o card volta para o lote de texto e Helena decide de novo.
+       A produção para até ela responder — é o preço de mudar palavra depois do aceite (I-05).`};
+  if(p.st==='APPROVED') return {cls:'check blk',
+    t:'Este texto já foi aprovado',
+    s:'Salvar derruba a aprovação e devolve o texto para Helena, com o selo novo.'};
+  if(p.st==='AWAITING_APPROVAL') return {cls:'check',
+    t:'Está com o cliente agora',
+    s:'Salvar gera versão nova e Helena vê a atualização — nada acontece em silêncio (D-025).'};
+  if(p.st==='CHANGES_REQUESTED') return {cls:'check',
+    t:'Helena pediu alterações',
+    s:'Salvar responde o pedido com uma versão nova e devolve a decisão para ela.'};
+  return {cls:'check', t:'Rascunho — o cliente ainda não vê',
+    s:'Dá para mexer à vontade. Nada é notificado até você enviar.'};
+}
+
+function modalEditTexto(id){
+  const p = S.pecas.find(x=>x.id===id); if(!p) return '';
+  const rot = (p.tf||'')==='Roteiro';
+  const c = custoDaEdicao(p);
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3>Editar o texto · "${esc(p.t)}"</h3>
+    <p>É o texto que o cliente aprova antes de existir qualquer arte (D-042).
+      Toda correção é uma versão nova e muda o selo.</p>
+    <div class="frow">
+      <div class="fld"><label for="tx-t">Título</label><input id="tx-t" value="${esc(p.t)}"></div>
+      <div class="fld"><label for="tx-i">Objetivo — o que esta peça busca</label>
+        <input id="tx-i" value="${esc(p.i||'')}"></div>
+    </div>
+    <div class="frow">
+      <div class="fld"><label for="tx-mood">Mood da peça</label>
+        <input id="tx-mood" value="${esc(p.mood||'')}"></div>
+      <div class="fld"><label for="tx-ref">Referência</label>
+        <input id="tx-ref" value="${esc(p.ref||'')}"></div>
+    </div>
+    ${rot?`<div class="fld"><label for="tx-g">Gancho · 0–3s</label>
+        <input id="tx-g" value="${esc(p.g||'')}"></div>
+      <div class="fld"><label for="tx-d">Desenvolvimento</label>
+        <textarea id="tx-d">${esc(p.dev??p.d??'')}</textarea></div>
+      <div class="fld"><label for="tx-ch">Chamada</label>
+        <input id="tx-ch" value="${esc(p.ch||'')}"></div>`
+    :`<div class="fld"><label for="tx-c">Legenda completa</label>
+        <textarea id="tx-c">${esc(p.c||'')}</textarea></div>`}
+    <div class="${c.cls}" style="margin-top:4px">${ic('warn')}
+      <div><b>${c.t}</b><span>${c.s}</span></div></div>
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b pri" data-edittxok="${p.id}">Salvar nova versão</button></div>
+  </div></div>`;
+}
+
+/* "Corrigir" em card de texto abre o editor certo, não o da peça final */
+const _editPubFinal = modalEditPub;
+modalEditPub = function(id){
+  const p = S.pecas.find(x=>x.id===id);
+  return (p && emTexto(p)) ? modalEditTexto(id) : _editPubFinal(id);
+};
+
+/* ---------- cancelar: sai de circulação, não do histórico -------------- */
+function modalCancelPeca(id){
+  const p = S.pecas.find(x=>x.id===id); if(!p) return '';
+  const b = S.boost[p.id];
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>Cancelar "${esc(p.t)}"?</h3>
+    <p>A peça sai do calendário, do feed e das contas do lote — mas não some. Fica no
+      histórico com o motivo, e dá para reativar depois (Regra #6).
+      ${p.st!=='DRAFT'?' Helena é avisada de que esta peça saiu do lote.':''}</p>
+    ${b?`<div class="check warn">${ic('zap')}<div><b>Esta peça tem impulso ativo</b>
+      <span>R$ ${b.orc} · ${b.dias} dias. Cancelar a peça remove o impulso junto.</span></div></div>`:''}
+    ${p.fase==='PRODUCAO'?`<div class="check warn">${ic('warn')}<div><b>O texto já foi aprovado e congelado</b>
+      <span>Cancelar aqui joga fora um aceite que já custou tempo de agenda do cliente (D-037).</span></div></div>`:''}
+    <div class="fld"><label for="cx-mot">Motivo — fica no histórico</label>
+      <input id="cx-mot" placeholder="Ex.: o cliente desistiu da ação"></div>
+    <div class="modalrow"><button class="b gho" data-modalno="1">Voltar</button>
+      <button class="b pri" style="background:var(--danger);color:#fff"
+        data-cancelpecaok="${p.id}">Cancelar a peça</button></div></div></div>`;
+}
+
+function bannerCancelada(p){
+  if(p.st!=='CANCELLED') return '';
+  return `<div class="check warn" style="margin-bottom:14px">${ic('x')}
+    <div style="flex:1"><b>Peça cancelada</b>
+      <span>${p.cancelMotivo?esc(p.cancelMotivo)+' · ':''}Fora do calendário, do feed e das
+        contas do lote. O registro fica — nada foi apagado.</span>
+      <div style="margin-top:9px"><button class="b gho sm" data-reativar="${p.id}">
+        Reativar peça</button></div></div></div>`;
+}
+
+function rodapePeca(p){
+  if(p.st==='CANCELLED') return '';
+  const bts = [];
+  if(emTexto(p)) bts.push(`<button class="b gho sm" data-edittx="${p.id}">
+    ${ic('pencil')} Editar texto</button>`);
+  if(p.everSent && p.st!=='PUBLISHED') bts.push(`<button class="b gho sm" data-cancelpeca="${p.id}"
+    style="color:var(--danger);border-color:rgba(229,72,77,.4)">${ic('x',13)} Cancelar peça</button>`);
+  if(!bts.length) return '';
+  return `<div class="sechd">Outras ações <i></i></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${bts.join('')}</div>`;
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-edittx],[data-edittxok],[data-cancelpeca],[data-cancelpecaok],[data-reativar]');
+  if(!t) return;
+  const d = t.dataset;
+
+  if(d.edittx){ S.modal=modalEditTexto(+d.edittx); renderLayer(); return; }
+
+  if(d.edittxok){
+    const p = S.pecas.find(x=>x.id===+d.edittxok); if(!p) return;
+    const rot = (p.tf||'')==='Roteiro';
+    if((val('tx-t')||'').length<2){ const el=document.getElementById('tx-t');
+      el.style.borderColor='var(--danger)'; el.focus(); return; }
+    p.t = val('tx-t'); p.i = val('tx-i')||p.i;
+    if(val('tx-mood')!==null) p.mood = val('tx-mood');
+    if(val('tx-ref') !==null) p.ref  = val('tx-ref');
+    if(rot){ p.g=val('tx-g')||p.g; p.dev=val('tx-d')||p.dev; p.ch=val('tx-ch')||p.ch;
+      p.c = (p.g||'')+'\n\n'+(p.dev||''); }
+    else p.c = val('tx-c')||p.c;
+    p.seal = selo8(); p.ver = (p.ver||1)+1;
+
+    const congelado = p.fase==='PRODUCAO';
+    const caiu = congelado || p.st==='APPROVED';
+    if(congelado){ p.fase='TEXTO'; p.st='AWAITING_APPROVAL'; p.notes=[]; p.art=null; }
+    else if(p.st==='APPROVED'||p.st==='CHANGES_REQUESTED'){ p.st='AWAITING_APPROVAL'; p.notes=[]; }
+
+    S.modal=null; som(caiu?'ajuste':'toque'); S.sel=p.id; S.route='peca'; render();
+    toast(congelado
+      ? `Versão ${p.ver} salva — o texto saiu da produção e voltou para Helena decidir. Selo novo: ${fmtSeal(p.seal)}.`
+      : caiu
+      ? `Versão ${p.ver} salva — a aprovação do texto caiu e ele voltou para Helena. Selo novo: ${fmtSeal(p.seal)}.`
+      : p.st==='AWAITING_APPROVAL'
+      ? `Versão ${p.ver} salva — Helena vê a atualização. Selo novo: ${fmtSeal(p.seal)}.`
+      : `Versão ${p.ver} salva. O cliente ainda não vê — envie quando quiser.`);
+    return; }
+
+  if(d.cancelpeca){ S.modal=modalCancelPeca(+d.cancelpeca); renderLayer(); return; }
+
+  if(d.cancelpecaok){
+    const p = S.pecas.find(x=>x.id===+d.cancelpecaok); if(!p) return;
+    p.cancelMotivo = val('cx-mot')||'';
+    p.antes = {st:p.st, fase:p.fase};
+    p.st = 'CANCELLED';
+    const tinhaBoost = !!S.boost[p.id];
+    if(tinhaBoost) delete S.boost[p.id];
+    S.modal=null; som('ajuste'); S.sel=p.id; S.route='peca'; render();
+    toast(`"${p.t}" cancelada — saiu do lote e do calendário${tinhaBoost?', e o impulso foi removido':''}. Dá para reativar.`);
+    return; }
+
+  if(d.reativar){
+    const p = S.pecas.find(x=>x.id===+d.reativar); if(!p) return;
+    const a = p.antes || {};
+    p.fase = a.fase || p.fase || 'FINAL';
+    p.st   = (a.st && a.st!=='CANCELLED') ? a.st : 'DRAFT';
+    p.antes = null; p.cancelMotivo = '';
+    som('toque'); S.sel=p.id; S.route='peca'; render();
+    toast(`"${p.t}" reativada — voltou como ${CT[p.st].toLowerCase()}.`);
     return; }
 });
 </script>
