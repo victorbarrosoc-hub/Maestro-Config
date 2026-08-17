@@ -276,6 +276,15 @@ fotos reais geradas via **Artlist MCP** (conectado; 560 créditos usados).
   `style`** e por isso nunca esmaeceu; e o feed "Só as novas" mapeava `S.pecas` inteiro,
   mostrando peça cancelada e card de texto sem arte.
 
+**O sanduíche (camada v15) — todas as 28 telas a um toque:** botão "Menu" fixo no rodapé,
+em cima da barra de abas, nos dois lados. Abre uma folha que sobe com as páginas agrupadas
+pelo sitemap, marcando onde você está e mostrando as pendências. Telas que só existem a
+partir de algo escolhido (peça, texto) ficam num grupo **"Dentro do fluxo"**, com o aviso de
+que no produto se chega nelas pelo caminho, não pelo menu — o menu escolhe um alvo válido
+sozinho (`preparaRota`) e cai na capa quando não há nenhum. Escape e clique no fundo fecham;
+o botão some quando há modal, tela cheia ou paleta aberta. O toast subiu para não colidir
+com ele — no lado do cliente ele já vinha por baixo da barra de abas.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

@@ -4512,3 +4512,209 @@ document.addEventListener('click', e => {
     return; }
 });
 </script>
+<style>
+/* =====================================================================
+   v15 — o sanduíche: todas as páginas a um toque, de qualquer tela.
+   ================================================================== */
+.menufab{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:620;
+  display:inline-flex;align-items:center;gap:9px;padding:11px 18px;border-radius:999px;
+  font-size:13px;font-weight:600;letter-spacing:.01em;
+  background:rgba(24,27,32,.92);color:var(--ink-100);border:1px solid var(--ink-600);
+  backdrop-filter:blur(14px);box-shadow:0 14px 34px -14px rgba(0,0,0,.8);
+  transition:transform var(--fast) var(--eo),border-color var(--fast) var(--eo)}
+.menufab:hover{transform:translateX(-50%) translateY(-2px);border-color:var(--brass-500)}
+.menufab:active{transform:translateX(-50%) scale(.97)}
+.menufab.lt{background:rgba(255,255,255,.94);color:#17181C;border-color:#E7E2D9;
+  box-shadow:0 14px 34px -18px rgba(23,24,28,.4)}
+.menufab.lt:hover{border-color:#855F22}
+.menufab.up{bottom:calc(76px + env(safe-area-inset-bottom))}
+@media(max-width:860px){.menufab.agm{bottom:calc(76px + env(safe-area-inset-bottom))}}
+.burger{display:inline-flex;flex-direction:column;gap:3px;width:15px}
+.burger i{display:block;height:1.8px;border-radius:2px;background:var(--brass-400)}
+.menufab.lt .burger i{background:#855F22}
+
+.msheet{position:fixed;inset:0;z-index:930;background:rgba(4,5,7,.62);backdrop-filter:blur(5px);
+  display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .18s var(--eo)}
+.msheet.lt{background:rgba(23,24,28,.36)}
+.msbox{width:100%;max-width:640px;max-height:82vh;overflow-y:auto;
+  background:var(--ink-900);border:1px solid var(--ink-700);border-bottom:0;
+  border-radius:20px 20px 0 0;padding:10px 20px calc(26px + env(safe-area-inset-bottom));
+  animation:msUp .3s var(--eo) both}
+.msheet.lt .msbox{background:#fff;border-color:#E7E2D9;color:#17181C}
+@keyframes msUp{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+.msgrab{width:38px;height:4px;border-radius:3px;background:var(--ink-700);margin:0 auto 14px}
+.msheet.lt .msgrab{background:#E7E2D9}
+.mshd{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:6px}
+.mshd b{display:block;font-family:var(--serif);font-size:21px;font-weight:400;color:var(--ink-50)}
+.msheet.lt .mshd b{color:#17181C}
+.mshd span{font-size:12px;color:var(--ink-400)}
+.msheet.lt .mshd span{color:#6E6A61}
+.msx{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
+  color:var(--ink-400);border:1px solid var(--ink-700);flex:0 0 auto;
+  transition:background var(--fast) var(--eo),color var(--fast) var(--eo)}
+.msx:hover{background:var(--ink-800);color:var(--ink-50)}
+.msheet.lt .msx{border-color:#E7E2D9;color:#6E6A61}
+.msheet.lt .msx:hover{background:#F4F1EB;color:#17181C}
+.msgrp{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-500);margin:20px 0 9px;display:flex;align-items:center;gap:10px}
+.msgrp i{flex:1;height:1px;background:var(--ink-800);font-style:normal}
+.msheet.lt .msgrp{color:#8A857A}
+.msheet.lt .msgrp i{background:#EFEBE3}
+.msgrp em{font-style:normal;text-transform:none;letter-spacing:0;font-family:var(--sans);
+  font-size:11px;color:var(--ink-500);flex:0 0 auto}
+.msgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:8px}
+.msit{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:11px;
+  border:1px solid var(--ink-800);background:var(--ink-850);text-align:left;font-size:13px;
+  color:var(--ink-200);position:relative;
+  transition:border-color var(--fast) var(--eo),transform var(--fast) var(--eo),
+  background var(--fast) var(--eo)}
+.msit:hover{border-color:var(--brass-600);background:var(--ink-800);transform:translateY(-2px)}
+.msit svg.i{font-size:15px;color:var(--ink-400);flex:0 0 auto}
+.msit.on{border-color:var(--brass-500);background:rgba(200,150,58,.1);color:var(--brass-300)}
+.msit.on svg.i{color:var(--brass-400)}
+.msit .mbd{margin-left:auto;font-family:var(--mono);font-size:10px;background:var(--brass-500);
+  color:var(--ink-950);border-radius:9px;padding:0 6px;font-weight:700}
+.msit .aqui{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--brass-400);
+  letter-spacing:.1em}
+.msheet.lt .msit{border-color:#E7E2D9;background:#FAF8F4;color:#17181C}
+.msheet.lt .msit:hover{border-color:#855F22;background:#F4F1EB}
+.msheet.lt .msit svg.i{color:#6E6A61}
+.msheet.lt .msit.on{border-color:#855F22;background:#F5E7C9;color:#855F22}
+.msheet.lt .msit.on svg.i{color:#855F22}
+.msheet.lt .msit .aqui{color:#855F22}
+.msfoot{margin-top:22px;padding-top:16px;border-top:1px solid var(--ink-800);
+  display:flex;gap:8px;flex-wrap:wrap}
+.msheet.lt .msfoot{border-top-color:#EFEBE3}
+/* no lado claro os botões do tema escuro sumiriam no branco */
+.msheet.lt .msfoot .b.gho{border-color:#E7E2D9;color:#17181C}
+.msheet.lt .msfoot .b.gho:hover{background:#F4F1EB;border-color:#855F22}
+.msheet.lt .msfoot .b.gho svg.i{color:#855F22}
+
+/* o toast morava no mesmo canto do botão — sobe para não colidir
+   (no lado do cliente ele já vinha por baixo da barra de abas) */
+#layer .toast{bottom:84px}
+#layer.up .toast{bottom:calc(144px + env(safe-area-inset-bottom))}
+@media(max-width:860px){#layer.agm .toast{bottom:calc(144px + env(safe-area-inset-bottom))}}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v15 — o sanduíche. Toda tela da plataforma a um toque, dos dois lados.
+   O protótipo cresceu para 28 telas e as abas mostram cinco; quem testa
+   (e quem demonstra) precisava de um mapa, não de adivinhação.
+   ================================================================== */
+const MENU_AG = [
+  {g:'Home', it:[['dash','Início','home']]},
+  {g:'Operação', it:[
+    ['clientes','Clientes','users'], ['clientedet','Cliente · ficha','building'],
+    ['projeto','Projeto','folder'],  ['conteudos','Conteúdos','grid'],
+    ['feed','Feed','img'],           ['agenda','Agenda','cal'],
+    ['lote','Lotes','stack'],        ['aprovacoes','Aprovações','checkc',()=>esperando()+txPend()],
+    ['resultados','Resultados','chart']]},
+  {g:'Produção', it:[['producao','Kanban','kanban']]},
+  {g:'Dentro do fluxo', h:'telas que se abre a partir de uma peça, não pelo menu',
+   it:[['peca','Peça · detalhe','doc']]},
+  {g:'Conta', it:[
+    ['equipe','Equipe','users'], ['planos','Planos','stack'],
+    ['conta','Plano e equipe','sliders']]}
+];
+const MENU_CL = [
+  {g:'Home', it:[['inicio','Início','home']]},
+  {g:'Decidir', it:[
+    ['lote','Publicações','grid',()=>esperando()+txPend()]]},
+  {g:'Acompanhar', it:[
+    ['feed','Feed','img'],       ['agenda','Agenda','cal'],
+    ['projeto','Projeto','folder'], ['resultados','Resultados','chart'],
+    ['conta','Conta','person']]},
+  {g:'Dentro do fluxo', h:'passos de um caminho — no produto o cliente chega por ele, não por menu',
+   it:[
+    ['capa','Capa do lote','stack'],   ['peca','Peça','img'],
+    ['termo','Termo do lote','sealic'],['lotetexto','Capa do texto','doc'],
+    ['pecatexto','Texto','pencil'],    ['termotexto','Termo do texto','sealic']]}
+];
+
+/* algumas telas só existem a partir de algo escolhido — o menu escolhe por você */
+function preparaRota(r){
+  const ag = S.view==='agency';
+  if(r==='peca'){
+    const alvo = ag ? (S.pecas.find(x=>x.id===S.sel && x.st!=='CANCELLED') || proxima() || finAtivos()[0] || S.pecas[0])
+                    : (proxima() || finAtivos()[0]);
+    if(!alvo) return ag ? 'conteudos' : 'lote';
+    S.sel = alvo.id;
+  }
+  if(r==='pecatexto'){
+    const t = txAll().find(x=>x.st==='AWAITING_APPROVAL') || txAll()[0];
+    if(!t) return 'lotetexto';
+    S.txsel = t.id;
+  }
+  if(r==='clientedet' && !S.cli) S.cli = 'ln';
+  return r;
+}
+
+function menuFab(){
+  if(S.menu || S.modal || S.full || S.pal || S.stampShow) return '';
+  const cl = S.view==='client';
+  const cls = ['menufab', cl?'lt up':'', S.view==='agency'?'agm':''].join(' ');
+  return `<button class="${cls}" data-menu="1" aria-label="Abrir o menu de páginas">
+    <span class="burger"><i></i><i></i><i></i></span> Menu</button>`;
+}
+
+function menuSheet(){
+  if(!S.menu) return '';
+  const cl = S.view==='client';
+  const grupos = cl ? MENU_CL : MENU_AG;
+  const n = grupos.reduce((s,g)=>s+g.it.length,0);
+  const corpo = grupos.map(g=>`
+    <div class="msgrp">${g.g} <i></i>${g.h?`<em>${g.h}</em>`:''}</div>
+    <div class="msgrid">${g.it.map(([r,nome,icn,bd])=>{
+      const aqui = S.route===r;
+      const q = bd?bd():0;
+      return `<button class="msit ${aqui?'on':''}" data-mgo="${r}">
+        ${ic(icn)}<span>${nome}</span>
+        ${aqui?`<span class="aqui">AQUI</span>`:q>0?`<span class="mbd">${q}</span>`:''}</button>`;
+    }).join('')}</div>`).join('');
+  return `<div class="msheet ${cl?'lt':''}" data-mclose="1">
+    <div class="msbox" role="dialog" aria-modal="true" aria-label="Todas as páginas">
+      <div class="msgrab"></div>
+      <div class="mshd">
+        <div><b>Todas as páginas</b>
+          <span>${n} telas · lado ${cl?'do cliente':'da agência'}</span></div>
+        <button class="msx" data-mclose="1" aria-label="Fechar">${ic('x',15)}</button>
+      </div>
+      ${corpo}
+      <div class="msgrp">Trocar de lugar <i></i></div>
+      <div class="msfoot">
+        <button class="b gho sm" data-menter="${cl?'agency':'client'}">
+          ${ic(cl?'building':'person',13)} Ver como ${cl?'agência':'cliente'}</button>
+        <button class="b gho sm" data-mgo2="site">${ic('arrowl',13)} Site</button>
+        <button class="b gho sm" data-mgo2="entrar">${ic('doc',13)} Tela de entrada</button>
+      </div>
+    </div></div>`;
+}
+
+const _renderLayerV14 = renderLayer;
+renderLayer = function(){
+  _renderLayerV14();
+  const l = document.getElementById('layer');
+  if(!l) return;
+  l.className = S.view==='client' ? 'up' : S.view==='agency' ? 'agm' : '';
+  l.insertAdjacentHTML('beforeend', menuSheet() + menuFab());
+};
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-menu],[data-mclose],[data-mgo],[data-mgo2],[data-menter]');
+  if(!t) return;
+  const d = t.dataset;
+  if(d.menu){ S.menu=true; renderLayer(); return; }
+  if(d.mclose){ if(e.target.closest('.msbox') && !e.target.closest('.msx')) return;
+    S.menu=false; renderLayer(); return; }
+  if(d.mgo){ S.menu=false; S.tab=null; S.route=preparaRota(d.mgo);
+    window.scrollTo(0,0); som('toque'); render(); return; }
+  if(d.mgo2){ S.menu=false; go('site',d.mgo2); return; }
+  if(d.menter){ S.menu=false; go(d.menter, d.menter==='client'?'inicio':'dash'); return; }
+});
+
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape' && S.menu){ S.menu=false; renderLayer(); }
+});
+</script>
