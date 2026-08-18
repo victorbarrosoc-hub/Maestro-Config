@@ -624,7 +624,8 @@ const IC = {
   bell:'<path d="M6.3 15.8v-5.1a5.7 5.7 0 0 1 11.4 0v5.1l1.6 2.4H4.7zM10.3 20.8a1.9 1.9 0 0 0 3.4 0"/>'
 ,
   chart:'<path d="M4.5 19.5h15M7.5 16v-4.5M12 16V8M16.5 16v-6.5"/>',
-  linkic:'<path d="m9.8 14.2 4.4-4.4M8.3 11.7l-2 2a3.4 3.4 0 0 0 4.8 4.8l2-2M15.7 12.3l2-2a3.4 3.4 0 0 0-4.8-4.8l-2 2"/>'
+  linkic:'<path d="m9.8 14.2 4.4-4.4M8.3 11.7l-2 2a3.4 3.4 0 0 0 4.8 4.8l2-2M15.7 12.3l2-2a3.4 3.4 0 0 0-4.8-4.8l-2 2"/>',
+  sanduiche:'<path d="M4 7.5h16M4 12h16M4 16.5h16"/>'
 };
 const ic = (n,s) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"${s?` style="font-size:${s}px"`:''}>${IC[n]||''}</svg>`;
 const LOGO = (c,s=26) => `<svg width="${s}" height="${s}" viewBox="0 0 48 48" aria-hidden="true">
@@ -4516,22 +4517,10 @@ document.addEventListener('click', e => {
 /* =====================================================================
    v15 — o sanduíche: todas as páginas a um toque, de qualquer tela.
    ================================================================== */
-.menufab{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:620;
-  display:inline-flex;align-items:center;gap:9px;padding:11px 18px;border-radius:999px;
-  font-size:13px;font-weight:600;letter-spacing:.01em;
-  background:rgba(24,27,32,.92);color:var(--ink-100);border:1px solid var(--ink-600);
-  backdrop-filter:blur(14px);box-shadow:0 14px 34px -14px rgba(0,0,0,.8);
-  transition:transform var(--fast) var(--eo),border-color var(--fast) var(--eo)}
-.menufab:hover{transform:translateX(-50%) translateY(-2px);border-color:var(--brass-500)}
-.menufab:active{transform:translateX(-50%) scale(.97)}
-.menufab.lt{background:rgba(255,255,255,.94);color:#17181C;border-color:#E7E2D9;
-  box-shadow:0 14px 34px -18px rgba(23,24,28,.4)}
-.menufab.lt:hover{border-color:#855F22}
-.menufab.up{bottom:calc(76px + env(safe-area-inset-bottom))}
-@media(max-width:860px){.menufab.agm{bottom:calc(76px + env(safe-area-inset-bottom))}}
-.burger{display:inline-flex;flex-direction:column;gap:3px;width:15px}
-.burger i{display:block;height:1.8px;border-radius:2px;background:var(--brass-400)}
-.menufab.lt .burger i{background:#855F22}
+/* o Menu mora na barra de baixo, à direita de Conta — e na lateral no desktop */
+.nav.menu{margin-top:6px}
+.tab.menu.on,.cltab button.menu.on{color:var(--brass-400)}
+.cltab button.menu.on{color:#855F22}
 
 .msheet{position:fixed;inset:0;z-index:930;background:rgba(4,5,7,.62);backdrop-filter:blur(5px);
   display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .18s var(--eo)}
@@ -4592,9 +4581,11 @@ document.addEventListener('click', e => {
 
 /* o toast morava no mesmo canto do botão — sobe para não colidir
    (no lado do cliente ele já vinha por baixo da barra de abas) */
-#layer .toast{bottom:84px}
-#layer.up .toast{bottom:calc(144px + env(safe-area-inset-bottom))}
-@media(max-width:860px){#layer.agm .toast{bottom:calc(144px + env(safe-area-inset-bottom))}}
+/* o toast sobe o bastante para limpar a barra de abas
+   (antes ficava em 24px e vinha por baixo dela no lado do cliente) */
+#layer .toast{bottom:24px}
+#layer.up .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+@media(max-width:860px){#layer.agm .toast{bottom:calc(84px + env(safe-area-inset-bottom))}}
 </style>
 <script>
 "use strict";
@@ -4651,13 +4642,36 @@ function preparaRota(r){
   return r;
 }
 
-function menuFab(){
-  if(S.menu || S.modal || S.full || S.pal || S.stampShow) return '';
-  const cl = S.view==='client';
-  const cls = ['menufab', cl?'lt up':'', S.view==='agency'?'agm':''].join(' ');
-  return `<button class="${cls}" data-menu="1" aria-label="Abrir o menu de páginas">
-    <span class="burger"><i></i><i></i><i></i></span> Menu</button>`;
+/* O Menu e um item de navegacao, nao um balao flutuante: entra na barra de
+   baixo a direita de Conta, e na lateral da agencia no desktop (onde a barra
+   de baixo nao existe). Uma so folha atende os tres lugares. */
+function menuFab(){ return ''; }
+
+function itemBarra(cl){
+  const on = S.menu ? ' on' : '';
+  return cl
+    ? `<button class="menu${on}" data-menu="1" aria-expanded="${!!S.menu}">
+        ${ic('sanduiche')}Menu</button>`
+    : `<button class="tab menu${on}" data-menu="1" aria-expanded="${!!S.menu}">
+        ${ic('sanduiche')}Menu</button>`;
 }
+function itemLateral(){
+  return `<button class="nav menu${S.menu?' on':''}" data-menu="1" aria-expanded="${!!S.menu}">
+    ${ic('sanduiche')}Todas as páginas</button>`;
+}
+
+/* as cascas ja estavam escritas; em vez de reescreve-las, o item entra
+   antes do fechamento da barra (e da lateral, na agencia) */
+const _agShellV15 = agShell;
+agShell = function(inner){
+  return _agShellV15(inner)
+    .replace('</aside>', itemLateral() + '</aside>')
+    .replace(/<\/nav>$/, itemBarra(false) + '</nav>');
+};
+const _clShellV15 = clShell;
+clShell = function(inner){
+  return _clShellV15(inner).replace(/<\/nav>$/, itemBarra(true) + '</nav>');
+};
 
 function menuSheet(){
   if(!S.menu) return '';
@@ -4869,4 +4883,38 @@ function som(tipo){
     if(tipo === 'aprovar'){ som('regencia'); }
   }catch(e){}
 }
+</script>
+<style>
+/* =====================================================================
+   v17 — o aviso sai de cima do conteudo.
+   Medido a 375px: o toast ficava em 626-728 e o rodape de acao em
+   607-748 — cobria "Aprovar" e "Solicitar alteracoes" da peca seguinte,
+   por 8 segundos com o desfazer. E nas telas que rolam cobria o texto.
+
+   Tentei primeiro reservar espaco no fim da tela (padding, min-height).
+   Nao resolve, e a medicao mostrou por que: nas telas que rolam o
+   conteudo e mais alto que a janela de qualquer forma, entao encolher a
+   caixa nao tira nada de baixo de um elemento fixo. Qualquer aviso preso
+   no rodape vai cobrir alguma coisa.
+
+   Entao o aviso muda de lugar: vai para o ALTO, sobre a faixa de
+   identificacao — que e estatica e nao se le. Embaixo ficam as duas
+   acoes da aprovacao e a barra de abas; e o lado caro da tela.
+   ================================================================== */
+/* a regra do rodape era mais especifica (#layer.up .toast) e vencia o
+   bottom:auto — o aviso esticava de 36 a 714px e "cobria" a tela toda */
+#layer .toast, #layer.up .toast, #layer.agm .toast{
+  top:50px; bottom:auto; padding:11px 15px; gap:12px; line-height:1.45;
+  transform:translateX(-50%); animation:avisoDesce .28s var(--spring);
+  /* com left:50% e sem largura, o espaco disponivel e so metade da tela
+     e o texto quebrava em quatro linhas — max-content resolve */
+  width:max-content; max-width:min(420px,calc(100vw - 32px));
+}
+/* so opacidade: animar transform aqui brigava com o translateX(-50%)
+   da centralizacao e deixava o aviso 14px acima do previsto */
+@keyframes avisoDesce{from{opacity:0}to{opacity:1}}
+</style>
+<script>
+"use strict";
+/* o aviso agora sobe; nada de mexer no layout do conteudo */
 </script>

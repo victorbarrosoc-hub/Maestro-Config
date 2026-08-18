@@ -293,6 +293,17 @@ alto. Mesma escala de Lá (D-020), só uma oitava abaixo, mais passa-baixa do ar
 prateleira de −4 dB e uma sala curta sintetizada. **Trocar a onda serra por triângulo foi
 testado e descartado** — mata o timbre de corda. Detalhe em `BRAND/SOUND_IDENTITY.md §4b`.
 
+**O Menu virou item de navegação, e o aviso mudou de lugar (v17).** O sanduíche saiu do
+balão flutuante e entrou na barra de baixo, à direita de "Conta", nos dois lados — e na
+lateral da agência no desktop, onde não há barra. O toast, que ficava no rodapé, **cobria
+os botões "Aprovar" e "Solicitar alterações"** da peça seguinte por 8 segundos (medido a
+375px: aviso em 626–728, rodapé de ação em 607–748). Tentei reservar espaço no fim da tela
+e **não resolve** — em tela que rola o conteúdo é mais alto que a janela de qualquer jeito,
+então nada sai de baixo de um elemento fixo. O aviso foi para o **alto**, sobre a faixa de
+identificação, que é estática e ninguém lê. Medido depois: zero elementos cobertos nas sete
+telas testadas, nas duas larguras. Sobra só o título da página no painel da agência no
+desktop — estático e transitório.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
