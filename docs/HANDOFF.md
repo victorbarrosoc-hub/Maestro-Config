@@ -23,7 +23,7 @@ ocupam essa palavra, três por menos de R$ 20/mês.
 | Preciso saber… | Está em |
 |---|---|
 | A visão e as regras que não se negociam | `../CLAUDE.md` · `PROJECT_RULES.md` |
-| **Por que qualquer coisa é como é** | **`DECISIONS.md` — 71 decisões, leia sempre antes de mudar algo** |
+| **Por que qualquer coisa é como é** | **`DECISIONS.md` — 72 decisões, leia sempre antes de mudar algo** |
 | A hierarquia de entidades | `PRODUCT_BIBLE/HIERARQUIA.md` |
 | O que é o MVP de verdade | `PRODUCT_BIBLE/PRODUCT_BRIEF.md` |
 | Como o cliente usa | `UX/USER_FLOW_CLIENT.md` |
@@ -286,6 +286,13 @@ sozinho (`preparaRota`) e cai na capa quando não há nenhum. Escape e clique no
 o botão some quando há modal, tela cheia ou paleta aberta. O toast subiu para não colidir
 com ele — no lado do cliente ele já vinha por baixo da barra de abas.
 
+**O som desceu uma oitava (camada v16, D-072).** O founder achou os sons da aprovação
+agudos demais. A medição deu razão: o som de aprovar tinha 17,6% da energia entre 2 e 6 kHz
+e 1,5% abaixo de 250 Hz. Agora são 5,5% e 26,7%, com pico menor — mais quente sem ficar mais
+alto. Mesma escala de Lá (D-020), só uma oitava abaixo, mais passa-baixa do arco em 1400 Hz,
+prateleira de −4 dB e uma sala curta sintetizada. **Trocar a onda serra por triângulo foi
+testado e descartado** — mata o timbre de corda. Detalhe em `BRAND/SOUND_IDENTITY.md §4b`.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
@@ -331,7 +338,7 @@ Lição que se repetiu duas vezes: **eu especifico o "como fazer" e esqueço o
 
 ### 🔴 Só o fundador pode resolver
 
-**D-024 — INPI e domínio.** Das 71 decisões, uma das duas em aberto (a outra é a
+**D-024 — INPI e domínio.** Das 72 decisões, uma das duas em aberto (a outra é a
 D-069, monetização) — e a única que
 trava qualquer movimento público. "Maestro" colide com Mastercard, mobile.dev
 e Netflix. Recomendação: registrar **marca mista** (símbolo + wordmark) nas

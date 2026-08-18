@@ -1,7 +1,8 @@
 # SOUND IDENTITY — Maestro
 
-Version: 1.0 · 2026-07-29
+Version: 1.1 · 2026-08-18
 Parte 4 de 5 do Brand Book.
+Revisao 1.1: registro uma oitava abaixo (D-072). Ver §4b.
 
 ---
 
@@ -57,6 +58,67 @@ Todos derivados da escala de Lá maior. Todos abaixo de 400ms. Todos a −18 LUF
 | **Undo** | E5 → A4 (a quinta ao contrário) | 180ms | marimba | Desfez literalmente o som da aprovação. |
 
 **Detalhe deliberado:** o som de *desfazer* é o som de *aprovar* tocado ao contrário. Ninguém percebe conscientemente. Todo mundo sente.
+
+---
+
+## 4b. Registro — a oitava de baixo (D-072)
+
+**A tabela acima descreve as notas. Elas se tocam uma oitava abaixo do escrito.**
+
+| Escrito | Tocado |
+|---|---|
+| A4 440 Hz | **A3 220 Hz** |
+| C♯5 554 Hz | **C♯4 277 Hz** |
+| E5 659 Hz | **E4 330 Hz** |
+| A5 880 Hz | **A4 440 Hz** |
+
+A escala de Lá maior e os intervalos **não mudam** — a quinta justa do "aprovar"
+continua sendo uma quinta justa. Muda só onde ela vive.
+
+**Por que:** a tabela original foi escrita para **marimba** — ataque curto, sem
+sustentação. Com corda sustentada, aquele registro fica agudo e cansa. Medido no
+protótipo, o som de aprovar tinha **17,6% da energia entre 2 e 6 kHz**, a faixa onde
+o ouvido mais reclama, e 1,5% abaixo de 250 Hz. Som fino, sem corpo.
+
+**Três parâmetros, não um.** Baixar a oitava sozinha não resolve — testado, deixa
+mudo. O conjunto que funciona:
+
+| Parâmetro | Antes | Depois |
+|---|---|---|
+| Registro | A4 / E5 | A3 / E4 |
+| Passa-baixa do arco | 2300 Hz | 1400 Hz |
+| Prateleira de agudo | — | −4 dB acima de 2300 Hz |
+| Sala | seca | reverb curto, 26% molhado |
+| Vibrato | 5,4 Hz · ±7 cents | 4,4 Hz · ±3,5 cents |
+
+**A onda continua sendo serra.** Trocar para triângulo foi testado e **descartado**:
+mata o timbre de corda e derruba os médios para 7%, o que reprova no próprio
+checklist do §7 ("funciona em alto-falante de notebook?").
+
+**Resultado medido** (energia por banda, som de aprovar):
+
+| Banda | Antes | Depois |
+|---|---|---|
+| até 250 Hz | 1,5% | **26,7%** |
+| 250–700 Hz | 38,2% | 39,4% |
+| 700 Hz–2 kHz | 41,5% | 28,4% |
+| **2–6 kHz** | **17,6%** | **5,5%** |
+| pico | 0,099 | 0,088 |
+
+Sem ficar mais alto: o pico caiu e o RMS ficou igual.
+
+---
+
+## 4c. Divergência conhecida — duração
+
+O §4 manda **todos os sons funcionais abaixo de 400ms**. A implementação do protótipo
+não cumpre: aprovar dura ~1,2s, solicitar alterações ~0,95s, e a cadência do termo ~2,2s.
+
+Isso **não foi corrigido** na revisão 1.1, que tratou só de timbre e registro. Decidir
+qual dos dois manda: encurtar os sons para caber na regra, ou reescrever a regra
+reconhecendo que a Maestro escolheu momentos orquestrais em vez de bipes. A cadência do
+termo é deliberadamente longa — é a medalha — e provavelmente deve ser a exceção
+declarada, não a violação silenciosa.
 
 ---
 

@@ -806,6 +806,34 @@ reativação; a transição PRODUÇÃO → TEXTO precisa existir na máquina de 
 
 ---
 
+# D-072 · Marca · Aprovada
+**Data:** 2026-08-18 · **Responsável:** Founder · **Categoria:** Identidade sonora
+**Contexto:** o founder ouviu os sons da aprovação do lado do cliente e disse que estavam
+agudos demais — queria algo mais aconchegante. A medicao deu razao a ele: o som de aprovar
+tinha **17,6% da energia entre 2 e 6 kHz** (a faixa em que o ouvido mais reclama) e apenas
+1,5% abaixo de 250 Hz. Som fino, sem corpo.
+**Causa:** o `SOUND_IDENTITY.md` v1.0 especificou as notas para **marimba** — ataque curto,
+sem sustentacao. A implementacao evoluiu para corda sustentada com onda serra e passa-baixa
+em 2300 Hz, que mantem harmonico justamente em 2–4 kHz. No registro escrito (A4/E5) isso
+fica agressivo. O proprio documento ja avisava: "timbre acustico e o que separa premium de
+notificacao de banco".
+**Decisao:** **todo som funcional desce uma oitava.** A4→A3, C♯5→C♯4, E5→E4, A5→A4. A escala
+de La maior e os intervalos ficam intactos (D-020) — a quinta justa do "aprovar" continua
+sendo uma quinta justa, so muda onde ela vive. Junto: passa-baixa do arco de 2300 para
+1400 Hz, prateleira de −4 dB acima de 2300 Hz, sala curta a 26% e vibrato mais raso.
+**O que foi testado e descartado:** trocar a serra por triangulo. Mata o timbre de corda e
+derruba os medios para 7%, reprovando no checklist do proprio documento ("funciona em
+alto-falante de notebook?"). **A onda nao era o problema — o registro e o filtro eram.**
+**Resultado medido:** 2–6 kHz cai de 17,6% para 5,5%; abaixo de 250 Hz sobe de 1,5% para
+26,7%; os medios seguem em 28,4%. Pico cai de 0,099 para 0,088 — mais quente sem ficar mais
+alto. Mesma melhora nos quatro sons (aprovar, ajuste, toque, cadencia do termo).
+**Consequencia:** `BRAND/SOUND_IDENTITY.md` vai para v1.1 com o §4b. Quando os arquivos
+`.webm` do §6 forem produzidos, e o registro de baixo que vale. Fica registrada tambem uma
+divergencia **nao resolvida** (§4c): a regra manda todos os sons abaixo de 400ms e a
+implementacao tem aprovar a ~1,2s e a cadencia do termo a ~2,2s.
+
+---
+
 ## Decisões Futuras
 
-Adicionar seguindo o padrão D-072, D-073...
+Adicionar seguindo o padrão D-073, D-074...

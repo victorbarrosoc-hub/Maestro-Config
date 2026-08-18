@@ -4718,3 +4718,155 @@ document.addEventListener('keydown', e => {
   if(e.key==='Escape' && S.menu){ S.menu=false; renderLayer(); }
 });
 </script>
+<script>
+"use strict";
+/* =====================================================================
+   v16 — a orquestra desce uma oitava, e a sala esquenta.
+   O founder ouviu certo: estava agudo. A medicao confirmou — o som de
+   aprovar tinha 17,7% da energia entre 2 e 6 kHz, justo a faixa onde o
+   ouvido mais reclama, e quase nada abaixo de 250 Hz. Som fino.
+   O conserto NAO foi trocar a onda (tirar a serra matou o timbre de
+   corda). Foram tres coisas: registro uma oitava abaixo (mesmas notas,
+   mesma quinta — D-020 intacto), passa-baixa do arco de 2300 para
+   1400 Hz, e um barramento com prateleira de -4 dB e uma sala curta.
+   Resultado medido: 2-6 kHz cai de 17,7% para 5,6%, o grave sobe de
+   1,6% para 27%, e os medios seguem em 28,8% — continua audivel em
+   alto-falante de notebook, que e o checklist do SOUND_IDENTITY.md.
+   ================================================================== */
+let BUS = null;
+
+/* sala curta e escura, sintetizada — sem arquivo externo.
+   Um polo estavel (a<1) e remocao de DC: sem isso a IR vira integrador
+   e empilha rumble em vez de aconchego. */
+function salaIR(seg){
+  const n = Math.floor(AC.sampleRate * seg);
+  const b = AC.createBuffer(2, n, AC.sampleRate);
+  for(let c = 0; c < 2; c++){
+    const d = b.getChannelData(c);
+    let y = 0, hp = 0, ant = 0;
+    for(let i = 0; i < n; i++){
+      const ruido = (Math.random()*2 - 1) * Math.pow(1 - i/n, 2.9);
+      y  = y + .30 * (ruido - y);          // passa-baixa de um polo
+      hp = .995 * (hp + y - ant); ant = y; // tira o DC
+      d[i] = hp;
+    }
+  }
+  return b;
+}
+
+/* o barramento: teto de brilho, prateleira que tira o gume, e a sala */
+function bus(){
+  if(BUS) return BUS;
+  const entrada = AC.createGain(); entrada.gain.value = .82;
+  const teto = AC.createBiquadFilter();
+  teto.type = 'lowpass'; teto.frequency.value = 3200; teto.Q.value = .5;
+  const gume = AC.createBiquadFilter();
+  gume.type = 'highshelf'; gume.frequency.value = 2300; gume.gain.value = -4;
+  const sala = AC.createConvolver(); sala.buffer = salaIR(1.4);
+  const molhado = AC.createGain(); molhado.gain.value = .26;
+
+  entrada.connect(teto); teto.connect(gume); gume.connect(AC.destination);
+  entrada.connect(sala); sala.connect(molhado); molhado.connect(AC.destination);
+  BUS = entrada;
+  return BUS;
+}
+
+/* corpo: uma oitava abaixo em seno, discreto. Aquece sem embolar. */
+function corpo(freq, t, ataque, sustento, fim, gain){
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = 'sine'; o.frequency.value = freq / 2;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + ataque);
+  if(sustento > ataque) g.gain.setValueAtTime(gain, t + sustento);
+  g.gain.exponentialRampToValueAtTime(.0001, t + fim);
+  o.connect(g).connect(bus());
+  o.start(t); o.stop(t + fim + .05);
+}
+
+function nota(freq, t0, dur, gain, wave){
+  const t = AC.currentTime + t0;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = wave || 'triangle';                       // era seno puro e seco
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + .03);     // ataque menos abrupto
+  g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(bus());
+  o.start(t); o.stop(t + dur + .05);
+  corpo(freq, t, .04, 0, dur * .92, gain * .3);
+}
+
+function violino(freq, t0, dur, gain){
+  const t = AC.currentTime + t0;
+  const lp = AC.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 1400; lp.Q.value = .6;   // era 2300 — o gume morava aqui
+  const g = AC.createGain();
+  const ataque = Math.min(.2, dur * .45);                            // o arco entra mais devagar
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + ataque);
+  g.gain.setValueAtTime(gain, t + dur * .62);
+  g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  lp.connect(g).connect(bus());
+
+  const lfo = AC.createOscillator(); lfo.frequency.value = 4.4;      // vibrato mais lento
+  const lfoG = AC.createGain();
+  lfoG.gain.setValueAtTime(0, t);
+  lfoG.gain.linearRampToValueAtTime(3.5, t + .3);                    // e bem mais raso (era 7)
+  lfo.connect(lfoG);
+  [-4, 3].forEach(det => {
+    const o = AC.createOscillator(); o.type = 'sawtooth';            // a serra fica: e ela que faz som de corda
+    o.frequency.value = freq; o.detune.value = det;
+    lfoG.connect(o.detune);
+    o.connect(lp); o.start(t); o.stop(t + dur + .05);
+  });
+  lfo.start(t); lfo.stop(t + dur + .05);
+  corpo(freq, t, ataque, dur * .62, dur, gain * .2);
+}
+
+function timpano(freq, t0, gain){
+  const t = AC.currentTime + t0;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(freq * 1.5, t);
+  o.frequency.exponentialRampToValueAtTime(freq, t + .07);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + .012);                    // pele mais macia
+  g.gain.exponentialRampToValueAtTime(.0001, t + .85);
+  o.connect(g).connect(bus());
+  o.start(t); o.stop(t + .9);
+}
+
+/* ---------------------------------------------------------------------
+   As notas. Mesma escala de La (D-020), uma oitava abaixo:
+   A4 440 -> A3 220 · C#5 554 -> C#4 277 · E5 659 -> E4 330 · A5 880 -> A4 440
+   ------------------------------------------------------------------ */
+const LA3 = 220, CS4 = 277.18, MI4 = 329.63, LA4 = 440;
+
+function som(tipo){
+  if(!S.sound) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state === 'suspended') AC.resume().catch(()=>{});   // promessa: o try/catch nao pega
+
+    if(tipo === 'toque'){ nota(CS4, 0, .3, .045); }        // era A5 880 em seno puro
+
+    if(tipo === 'regencia'){                                // aprovar
+      violino(LA3, 0,   .55, .06);                          // La — o arco chama
+      violino(MI4, .28, .95, .055);                         // Mi — a quinta responde
+    }
+    if(tipo === 'ajuste'){                                  // solicitar alteracoes
+      violino(MI4, 0,   .42, .05);                          // Mi->La descendo: recebido,
+      violino(LA3, .26, .68, .05);                          // sem drama
+    }
+    if(tipo === 'conclusao' || tipo === 'termo'){
+      [LA3, CS4, MI4, LA4].forEach((f,i) => nota(f, .02 + i*.05, .34, .022));
+      timpano(82.41, .15, .16);                             // Mi grave — dominante
+      timpano(110,   .5,  .22);                             // La — a tonica assenta
+      [LA3, CS4, MI4].forEach(f => violino(f, .5, 1.8, .028));
+      violino(MI4, .55, .46, .042);                         // o solo apresenta o Mi
+      violino(LA4, .95, 1.3, .046);                         // e resolve no La
+    }
+    if(tipo === 'aprovar'){ som('regencia'); }
+  }catch(e){}
+}
+</script>
