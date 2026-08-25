@@ -357,6 +357,22 @@ para a aba. Na barra de baixo, **"Dados" saiu e entrou "Clientes"**.
 > das camadas engoliu) e só apareceu porque a rota antiga não redirecionava. Virou `let`,
 > e a reatribuição foi para a última linha da camada, dentro de `try`.
 
+**Calendário da EJUP com data real (v29–v30).** A planilha do founder
+(`docs/UX/fontes-Calendario_Editorial_EJUP_Ago_Set2026.xlsx`, 3 abas) entrou na pauta da
+EJUP com as **11 correções** que ele pediu — ver commit. Para isso a pauta ganhou **data
+real** (era só dia da semana), **tarefa interna** (edição do podcast, não vai ao ar),
+**pendência** (bloqueio, ex.: "a referência não veio") e o checklist **FEITO / NÃO
+FEITO** com painel de contagem. Os filtros passaram a falar de feito, não de agendamento.
+
+> Armadilha achada no teste: o calendário do mês passou a usar data ISO, mas o handler
+> antigo fazia `+d.ptmdia` (herança de quando era 0..6) — string ISO vira `NaN` e o dia
+> nunca abria. Atributo renomeado e handler próprio, sem coerção.
+
+**A regra editorial que a correção fixou:** editar → teaser → **lançamento** (com chamada
+no feed e story com caixinha de link) → **bastidor + corte** → **artigo** → carrossel
+sobre o artigo. O artigo vem **depois** do episódio: antes, nem o público nem a agência
+viram o que está sendo desdobrado.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

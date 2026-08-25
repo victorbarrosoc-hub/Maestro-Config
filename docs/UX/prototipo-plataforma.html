@@ -7010,3 +7010,515 @@ document.addEventListener('click', e => {
    derruba o resto da camada junto. */
 try{ pautaLiberada = () => CLIS().map(c=>c.id); }catch(e){}
 </script>
+<style>
+/* =====================================================================
+   v29 — a pauta ganha data real, tarefa interna e o checklist
+   FEITO / NÃO FEITO. A planilha da EJUP e datada (25/08 a 30/09) — a
+   pauta so semanal nao dava conta.
+   ================================================================== */
+.ptData{ font-family:var(--mono); font-size:10px; letter-spacing:.08em;
+  color:var(--ink-400); background:var(--ink-950); border:1px solid var(--ink-800);
+  border-radius:5px; padding:2px 7px }
+.ptItem.tarefa .ptRow{ background:repeating-linear-gradient(135deg,
+    var(--ink-850) 0 8px, rgba(91,141,239,.05) 8px 16px);
+  border-color:rgba(91,141,239,.32) }
+.ptTarefaChip{ font-family:var(--mono); font-size:9.5px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--cobalt); background:rgba(91,141,239,.14);
+  border-radius:999px; padding:2px 9px }
+.ptPend{ display:inline-flex; align-items:center; gap:6px; margin-top:7px;
+  font-size:11.5px; color:var(--coral); background:rgba(240,120,76,.1);
+  border:1px solid rgba(240,120,76,.3); border-radius:6px; padding:3px 9px }
+
+/* o botão FEITO / NÃO FEITO */
+.ptFeito{ width:46px; border-radius:12px; border:1px solid var(--ink-800);
+  background:var(--ink-850); display:grid; place-items:center; color:var(--ink-500);
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo),
+    background var(--fast) var(--eo), transform var(--fast) var(--eo) }
+.ptFeito:hover{ color:var(--encore); border-color:rgba(53,184,122,.45) }
+.ptFeito:active{ transform:scale(.94) }
+.ptItem.ok .ptFeito{ color:var(--encore); border-color:rgba(53,184,122,.5);
+  background:rgba(53,184,122,.12) }
+.ptItem.ok .ptRow{ opacity:.62 }
+.ptItem.ok .ptTit{ text-decoration:line-through; text-decoration-color:var(--ink-600) }
+@keyframes ptCheck{ 0%{transform:scale(1)} 40%{transform:scale(1.3)} 100%{transform:scale(1)} }
+.ptItem.marcou .ptFeito{ animation:ptCheck .45s var(--spring) }
+
+/* o painel de checklist */
+.ptCheck{ display:grid; gap:8px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  margin-bottom:14px }
+.ptCheckC{ border:1px solid var(--ink-800); border-radius:13px; padding:14px 16px;
+  background:var(--ink-850) }
+.ptCheckC b{ display:block; font-family:var(--serif); font-size:26px; line-height:1;
+  font-variant-numeric:tabular-nums; margin-bottom:6px }
+.ptCheckC span{ font-size:11.5px; color:var(--ink-300) }
+.ptCheckC.feito b{ color:var(--encore) }
+.ptCheckC.nao b{ color:var(--brass-400) }
+.ptCheckC.pend b{ color:var(--coral) }
+.ptCheckC.tar b{ color:var(--cobalt) }
+.ptTb td.feitoCel{ text-align:center; white-space:nowrap }
+.ptTb .selo{ font-family:var(--mono); font-size:9px; letter-spacing:.08em;
+  padding:2px 8px; border-radius:999px }
+.ptTb .selo.s{ color:var(--encore); background:rgba(53,184,122,.14) }
+.ptTb .selo.n{ color:var(--ink-200); background:var(--ink-800) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v29 — a pauta da EJUP, com as correções do founder.
+
+   As onze mudanças que ele pediu, e o porquê de cada uma:
+   · 25/08 sai (já postaram outra coisa naquele dia)
+   · corte da Maria Luiza vai para quinta (27/08)
+   · dia de artigo: story no lugar de tráfego pago
+   · carrossel depois do artigo passa a ser SOBRE o artigo
+   · 30/08 fica marcado: a referência não veio
+   · 31/08 deixa de ser teaser — os podcasts só serão editados em setembro
+   · Maria do Perpétuo sai do cronograma
+   · antes de cada teaser entra a TAREFA de editar o episódio
+   · o artigo passa a vir DEPOIS do lançamento (ninguém viu o episódio
+     antes — o artigo desdobra o que o público acabou de assistir)
+   · lançamento ganha chamada no feed e no story com caixinha de link
+   · depois do lançamento: bastidor + corte
+   ================================================================== */
+
+const D2 = n => String(n).padStart(2,'0');
+const diaDaSemana = iso => { const [a,m,d] = iso.split('-').map(Number);
+  return (new Date(a, m-1, d).getDay() + 6) % 7; };            // 0=seg … 6=dom
+const dataCurta = iso => { const [,m,d] = iso.split('-'); return `${d}/${m}`; };
+
+/* uma linha da pauta com data real */
+let _pid = 0;
+const P = (data, hora, fmt, plats, t, texto, cta, extra) => ({
+  id: ++_pid, data, dia: diaDaSemana(data), hora, fmt, plats, t, texto, cta,
+  st:'DRAFT', pecaId:null, feito:false, tarefa:false, pend:'', ...(extra||{})
+});
+const TAREFA = x => ({ ...x, tarefa:true, plats:[] });
+
+const PAUTA_EJUP_V2 = [
+  /* ---------- agosto: a semana da Maria Luiza ---------------------- */
+  // 25/08 removido — já foi postada outra coisa no dia
+  P('2026-08-26','11:00','Artigo',['ig','li','sb','str'],
+    'Artigo · superendividamento',
+    'Artigo sobre superendividamento (fundamentos jurídicos, Lei 14.181/2021 e a atuação preventiva do advogado). Nativo no LinkedIn e post editorial no Instagram. Divulgação por STORY — não por tráfego pago.',
+    'Leia o artigo completo no blog da EJUP (link na bio e no story).'),
+  P('2026-08-27','18:00','Reels',['ig','tt','yt'],
+    'Corte do podcast · Maria Luiza',
+    'Corte do podcast com Maria Luiza: trecho de maior impacto da conversa, sintetizando o tema central para atrair para o episódio completo.',
+    'Episódio completo no site e no YouTube da EJUP. Link na bio.'),
+  P('2026-08-27','19:30','Carrossel',['ig','li'],
+    'Carrossel sobre o artigo',
+    'Carrossel desdobrando o artigo de superendividamento publicado ontem: os pontos centrais em telas, com o dado principal em destaque. Stories com enquete: "Você já lidou com um caso de superendividamento?"',
+    'Ainda não leu? O artigo completo está no blog da EJUP — link na bio.'),
+  P('2026-08-28','12:00','Story',['ig','str'],
+    'Bastidor / caixa de perguntas',
+    'Bastidores da gravação do podcast com Maria Luiza (foto/carrossel de produção). Stories com caixinha sobre superendividamento e educação financeira no Direito.',
+    'Deixe sua pergunta na caixinha — respondemos nos stories.'),
+  P('2026-08-29','10:30','Post',['ig'],
+    'Post manifesto / aspas',
+    'Citação de destaque de Maria Luiza sobre educação financeira e responsabilidade jurídica — peça de identidade, alinhada ao Manifesto EJUP.',
+    'Compartilhe com quem defende profundidade em tempos de aceleração.'),
+  P('2026-08-30','17:00','Story',['str'],
+    'Curadoria de leituras',
+    'Indicação de obra/artigo doutrinário sobre Direito do Consumidor e superendividamento, para preparar a semana.',
+    'Toque no link para acessar a referência.',
+    { pend:'A referência não veio — sem ela a postagem não sai.' }),
+  P('2026-08-31','18:00','Carrossel',['ig','li','str'],
+    'Empreender no Direito · abertura de setembro',
+    'Carrossel conceitual sobre o eixo temático de setembro: empreendedorismo e Direito. A EJUP planta o tema pela autoridade dela, sem citar episódios. Story com enquete: "Qual dessas dores você sente hoje no seu escritório?"',
+    'Salve este conteúdo — setembro vem denso.',
+    { nota:'Substitui o teaser original: os episódios só serão editados em setembro.' }),
+
+  /* ---------- setembro · semana 1: Zeca Melo (Sebrae) ---------------- */
+  TAREFA(P('2026-09-01','09:00','Vídeo',[],
+    '[Tarefa] Editar o episódio · Zeca Melo',
+    'Edição do episódio com Zeca Melo (Sebrae): corte fino, legendas, thumb institucional, capítulos e descrição. Precisa estar pronto antes do teaser de amanhã.',
+    'Interno — não vai ao ar.')),
+  P('2026-09-02','18:00','Reels',['ig','tt','yt'],
+    'Teaser · Zeca Melo',
+    'Corte/teaser do podcast com Zeca Melo (Sebrae): trecho em que ele conecta empreendedorismo e Direito, provocação reflexiva sobre o papel do jurista na jornada empresarial.',
+    'Episódio completo amanhã no YouTube e no site da EJUP.'),
+  P('2026-09-03','12:00','Vídeo',['yt','sb','ig','str'],
+    'LANÇAMENTO · episódio completo com Zeca Melo',
+    'Lançamento do episódio na íntegra no YouTube e no site da EJUP. Chamada no feed (post com a capa do episódio) e no story com CAIXINHA DE LINK levando direto para o vídeo.',
+    'Assista ao episódio completo — link na caixinha do story e na bio.'),
+  P('2026-09-04','12:00','Story',['ig','str'],
+    'Bastidor + corte · Zeca Melo',
+    'Depois do lançamento: bastidores da gravação com Zeca Melo (equipe EJUP em produção) e 2º corte com outro trecho forte do episódio. Stories com caixinha: "Qual seu maior desafio empreendendo dentro do Direito?"',
+    'Deixe sua pergunta na caixinha de perguntas.'),
+  P('2026-09-05','10:30','Post',['ig'],
+    'Post manifesto / aspas · Zeca Melo',
+    'Frase de destaque de Zeca Melo sobre empreendedorismo e maturidade profissional.',
+    'Compartilhe com um jurista que também empreende.'),
+  P('2026-09-06','17:00','Story',['str'],
+    'Curadoria de leituras',
+    'Indicação de leitura sobre empreendedorismo jurídico e gestão de escritórios/negócios.',
+    'Toque no link para acessar a referência.'),
+  P('2026-09-07','11:00','Artigo',['ig','li','sb','str'],
+    'Artigo · o Sebrae, o empreendedorismo e o Direito',
+    'Artigo desdobrando a conversa com Zeca Melo — publicado DEPOIS do episódio, porque agora o público já assistiu e o texto aprofunda o que ele viu. Divulgação por STORY.',
+    'Leia o artigo completo no blog da EJUP.'),
+  P('2026-09-08','19:30','Carrossel',['ig','li'],
+    'Carrossel sobre o artigo · Zeca Melo',
+    'Carrossel desdobrando o artigo de ontem: os argumentos centrais em telas, com o dado principal em destaque.',
+    'O artigo completo está no blog — link na bio.'),
+
+  /* ---------- setembro · semana 2: Marco Bruno ----------------------- */
+  TAREFA(P('2026-09-08','09:00','Vídeo',[],
+    '[Tarefa] Editar o episódio · Marco Bruno',
+    'Edição do episódio com Marco Bruno: corte fino, legendas, thumb, capítulos e descrição. Pronto antes do teaser de amanhã.',
+    'Interno — não vai ao ar.')),
+  P('2026-09-09','18:00','Reels',['ig','tt','yt'],
+    'Teaser · Marco Bruno',
+    'Corte/teaser do podcast com Marco Bruno: trecho marcante que sintetiza o tema central da conversa.',
+    'Episódio completo amanhã no YouTube e no site da EJUP.'),
+  P('2026-09-10','12:00','Vídeo',['yt','sb','ig','str'],
+    'LANÇAMENTO · episódio completo com Marco Bruno',
+    'Lançamento do episódio na íntegra no YouTube e no site. Chamada no feed e no story com CAIXINHA DE LINK para o vídeo.',
+    'Assista ao debate na íntegra — link na caixinha do story e na bio.'),
+  P('2026-09-11','12:00','Story',['ig','str'],
+    'Bastidor + corte · Marco Bruno',
+    'Depois do lançamento: bastidores da gravação com Marco Bruno e 2º corte provocativo. Stories com caixinha de perguntas sobre o tema do episódio.',
+    'Deixe na caixinha: qual sua dúvida sobre o tema?'),
+  P('2026-09-12','10:30','Post',['ig'],
+    'Post manifesto / aspas · Marco Bruno',
+    'Citação de destaque de Marco Bruno, em design minimalista.',
+    'Compartilhe com um jurista que preza profundidade.'),
+  P('2026-09-13','17:00','Story',['str'],
+    'Curadoria de leituras',
+    'Indicação de livro/paper relacionado ao tema da semana.',
+    'Toque no link para acessar a referência.'),
+  P('2026-09-14','11:00','Artigo',['ig','li','sb','str'],
+    'Artigo · o tema de Marco Bruno',
+    'Artigo desdobrando com rigor doutrinário o tema discutido com Marco Bruno — depois do episódio no ar. Divulgação por STORY.',
+    'Leia o artigo completo no blog da EJUP.'),
+  P('2026-09-15','19:30','Carrossel',['ig','li'],
+    'Carrossel sobre o artigo · Marco Bruno',
+    'Carrossel desdobrando o artigo de ontem em telas, com o argumento central em destaque.',
+    'O artigo completo está no blog — link na bio.'),
+
+  /* ---------- setembro · semana 3: reforço (sem podcast novo) -------- */
+  // Maria do Perpétuo saiu do cronograma a pedido do founder
+  P('2026-09-16','11:00','Artigo',['ig','li','sb','str'],
+    'Artigo institucional · a definir com Roberto',
+    'Artigo doutrinário autoral, não vinculado a episódio, reforçando o posicionamento Sábio & Mago da EJUP. Semana sem podcast novo. Divulgação por STORY.',
+    'Leia o artigo completo no blog da EJUP.',
+    { pend:'Tema ainda não definido com Roberto.' }),
+  P('2026-09-17','19:30','Carrossel',['ig','li'],
+    'Carrossel sobre o artigo institucional',
+    'Carrossel desdobrando o artigo institucional publicado ontem.',
+    'O artigo completo está no blog — link na bio.'),
+  P('2026-09-18','12:00','Story',['ig','str'],
+    'Bastidor da rotina EJUP',
+    'Bastidores da equipe: curadoria, estudo e produção — humanização e autoridade silenciosa. Stories com caixa de perguntas livre.',
+    'Deixe sua sugestão de tema para o próximo episódio.'),
+  P('2026-09-19','10:30','Post',['ig'],
+    'Post manifesto',
+    'Trecho do Manifesto da EJUP ("O Direito está sendo empurrado para a pressa..."), reafirmando a identidade da marca.',
+    'Compartilhe se você também recusa esse mundo.'),
+  P('2026-09-20','17:00','Story',['str'],
+    'Curadoria de leituras',
+    'Indicação de leitura de fechamento da semana.',
+    'Toque no link para acessar a referência.'),
+  P('2026-09-21','18:00','Carrossel',['ig','li'],
+    'Recapitulação do mês',
+    'Notório saber em ação — duas conversas, um só compromisso com a profundidade. Conecta os episódios de Zeca Melo e Marco Bruno.',
+    'Salve este conteúdo e reveja os episódios. Link na bio.'),
+  P('2026-09-22','18:00','Reels',['ig','tt'],
+    'Compilado dos melhores momentos',
+    'Compilado com os melhores momentos dos episódios de setembro (Zeca Melo e Marco Bruno).',
+    'Qual foi seu episódio favorito? Comenta aqui.'),
+  P('2026-09-24','18:00','Reels',['ig','tt','sb'],
+    'Reforço do episódio de maior engajamento',
+    'Repost do episódio do mês com melhor desempenho, com novo recorte de trecho.',
+    'Ainda não assistiu? Está no YouTube e no site da EJUP.'),
+  P('2026-09-27','17:00','Story',['str'],
+    'Curadoria de fechamento',
+    'Indicação de leitura de fechamento do mês.',
+    'Toque no link para acessar a referência.'),
+  P('2026-09-28','18:00','Carrossel',['ig','li'],
+    'Teaser da pauta de outubro',
+    'Abertura da pauta editorial de outubro.',
+    'Salve este post e acompanhe as novidades de outubro.',
+    { pend:'Pauta de outubro a definir com Roberto.' }),
+  P('2026-09-30','11:00','Artigo',['ig','li','sb','str'],
+    'Artigo de fechamento',
+    'Retrospectiva editorial de setembro + prévia da pauta temática de outubro. Divulgação por STORY.',
+    'Leia o artigo completo no blog da EJUP.')
+];
+
+/* substitui a pauta da EJUP pela corrigida */
+S.pautas[ejupId()] = PAUTA_EJUP_V2;
+try{ const g = JSON.parse(localStorage.getItem(CHAVE)||'null');
+  if(g && g.pautas){ g.pautas[ejupId()] = PAUTA_EJUP_V2;
+    localStorage.setItem(CHAVE, JSON.stringify(g)); } }catch(e){}
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v30 — as visões passam a mostrar data real, tarefa interna,
+   pendência e o checklist FEITO / NÃO FEITO.
+   ================================================================== */
+const MESNOME = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const rotuloData = iso => { if(!iso) return '';
+  const [a,m,d] = iso.split('-'); return `${d}/${m}`; };
+const rotuloLongo = iso => { const [a,m,d] = iso.split('-').map(Number);
+  return `${DIAS[diaDaSemana(iso)]}${diaDaSemana(iso)<5?'-feira':''}, ${d} de ${
+    ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto',
+     'setembro','outubro','novembro','dezembro'][m-1]}`; };
+
+/* a linha, agora com data, tarefa, pendência e o botão de feito */
+ptItemHtml = function(p, i){
+  const cls = [p.st==='SCHEDULED'?'no-ar':'', p.tarefa?'tarefa':'', p.feito?'ok':''].join(' ');
+  return `<div class="ptItem fu ${cls}" data-pt="${p.id}"
+      style="animation-delay:${Math.min(i*45,320)}ms">
+    <button class="ptRow" data-ptedit="${p.id}">
+      <span class="ptL1">
+        ${p.data?`<span class="ptData">${rotuloData(p.data)}</span>`:''}
+        <span class="ptHora">${ic('clock',11)} ${p.hora}</span>
+        ${p.tarefa ? `<span class="ptTarefaChip">${ic('warn',10)} tarefa interna</span>`
+                   : ptDots(p.plats)}
+        <span class="ptFmtChip">${esc(p.fmt)}</span>
+        ${p.tarefa?'':`<span class="pill p-${p.st==='SCHEDULED'?'SCHEDULED':'DRAFT'}">${p.st==='SCHEDULED'?'Agendado':'Rascunho'}</span>`}
+      </span>
+      <span class="ptTit">${esc(p.t)}</span>
+      <span class="ptTxt">${esc(p.texto)}</span>
+      ${p.cta?`<span class="ptCta"><b>CTA</b>${esc(p.cta)}</span>`:''}
+      ${p.pend?`<span class="ptPend">${ic('warn',12)} ${esc(p.pend)}</span>`:''}
+      ${p.pecaId?(()=>{ const pc=S.pecas.find(x=>x.id===p.pecaId);
+        return pc?`<span class="ptVinc">${ic('sealic',11)} peça: ${esc(pc.t)}</span>`:''})():''}
+    </button>
+    <button class="ptFeito" data-ptfeito="${p.id}"
+      aria-pressed="${!!p.feito}" title="${p.feito?'Marcar como não feito':'Marcar como feito'}"
+      aria-label="${p.feito?'Feito':'Não feito'}">${ic('checkc',16)}</button>
+    ${p.tarefa?'':`<button class="ptQuick" data-ptag="${p.id}"
+      aria-label="${p.st==='SCHEDULED'?'Voltar a rascunho':'Agendar'}"
+      title="${p.st==='SCHEDULED'?'Voltar a rascunho':'Agendar'}">${ic('zap',16)}</button>`}
+  </div>`;
+};
+
+/* a semana passa a agrupar por DATA quando ela existe */
+ptVistaSemana = function(visiveis, filtro){
+  const temData = visiveis.some(p=>p.data);
+  let corpo='', n=0;
+  if(temData){
+    const porDia = {};
+    visiveis.forEach(p=>{ const k = p.data || 'sem-data';
+      (porDia[k] = porDia[k] || []).push(p); });
+    Object.keys(porDia).sort().forEach(k=>{
+      const doDia = porDia[k].sort((a,b)=>a.hora<b.hora?-1:1);
+      const feitos = doDia.filter(p=>p.feito).length;
+      corpo += `<div class="ptDia"><div class="ptDiaHd">
+        <b>${k==='sem-data'?'Sem data':rotuloLongo(k)}</b>
+        <span>${feitos}/${doDia.length} feito${doDia.length>1?'s':''}</span><i></i></div>
+        ${doDia.map(p=>ptItemHtml(p,n++)).join('')}</div>`;
+    });
+  } else {
+    for(let d=0; d<7; d++){
+      const doDia = visiveis.filter(p=>p.dia===d);
+      const noTotal = S.pauta.filter(p=>p.dia===d).length;
+      if(!doDia.length && !(filtro==='faltam' && noTotal===0)) continue;
+      const nome = DIAS[d] + (d<5?'-feira':'');
+      corpo += `<div class="ptDia"><div class="ptDiaHd"><b>${nome}</b>
+        <span>${doDia.length?`${doDia.length} ${doDia.length>1?'postagens':'postagem'}`:'vazio'}</span><i></i></div>
+        ${doDia.length ? doDia.map(p=>ptItemHtml(p,n++)).join('')
+          : `<div class="ptVazio">${ic('warn',15)}<span><b>Nada na pauta.</b>
+              O dia está sem postagem planejada.</span>
+            <button class="b gho sm" data-ptnewdia="${d}">${ic('pencil')} Preencher</button></div>`}
+      </div>`;
+    }
+  }
+  if(!corpo) corpo = vazio('Nada aqui com este filtro',
+    'Mude o filtro para ver as outras postagens.');
+  return corpo;
+};
+
+/* a tabela ganha as colunas Data e Feito */
+ptVistaTabela = function(visiveis){
+  const plats = Object.keys(PLATS);
+  const ordem = [...visiveis].sort((a,b)=>
+    (a.data||'').localeCompare(b.data||'') || (a.hora<b.hora?-1:1));
+  let ultimaData = null;
+  const linhas = ordem.map(p=>{
+    const nova = p.data !== ultimaData; ultimaData = p.data;
+    return `<tr class="ptTrRow ${p.st==='SCHEDULED'?'no-ar':''}" data-ptedit="${p.id}">
+      <td class="dia">${nova ? (p.data?`${rotuloData(p.data)}<br><span style="font-weight:400;color:var(--ink-300);font-size:11px">${DIAS[p.dia]}${p.dia<5?'-f.':''}</span>`:'—') : ''}</td>
+      ${plats.map(k=>`<td class="pontoCel">${p.plats.includes(k)
+        ?`<i style="background:${PLATS[k].c};color:${PLATS[k].c}"></i>`:''}</td>`).join('')}
+      <td style="white-space:nowrap">${p.tarefa
+        ?`<span class="ptTarefaChip">tarefa</span>`
+        :`<span class="ptFmtChip">${esc(p.fmt)}</span>`}</td>
+      <td class="conteudo"><b>${esc(p.t)}</b><span>${esc(p.texto)}</span>
+        ${p.pend?`<span class="ptPend" style="margin-top:5px">${ic('warn',11)} ${esc(p.pend)}</span>`:''}</td>
+      <td class="cta">${esc(p.cta||'—')}</td>
+      <td class="hora">${p.hora}</td>
+      <td class="feitoCel"><button class="selo ${p.feito?'s':'n'}" data-ptfeito="${p.id}"
+        aria-pressed="${!!p.feito}">${p.feito?'FEITO':'NÃO FEITO'}</button></td>
+      <td class="acao">${p.tarefa?'':`<button class="ptQuick" data-ptag="${p.id}"
+        aria-label="Agendar">${ic('zap',14)}</button>`}</td>
+    </tr>`;
+  });
+  return `<div class="ptScroll"><table class="ptTb">
+    <thead><tr><th class="esq">Data</th>
+      ${plats.map(k=>`<th style="background:${PLATS[k].c};color:#08090B">${PLATS[k].n}</th>`).join('')}
+      <th class="esq">Formato</th><th class="esq">Conteúdo &amp; pauta</th>
+      <th class="esq">CTA / ação</th><th>Hora</th><th>Status</th><th>⚡</th></tr></thead>
+    <tbody>${linhas.join('') || `<tr><td colspan="${plats.length+7}" style="text-align:center;padding:26px;color:var(--ink-300)">Nada aqui com este filtro.</td></tr>`}</tbody>
+  </table></div>
+  <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">A tabela da sua
+    planilha, viva: clique na linha para editar, em FEITO / NÃO FEITO para marcar, no raio
+    para agendar.</p>`;
+};
+
+/* o mês passa a usar as datas reais */
+ptVistaMes = function(visiveis){
+  const comData = visiveis.filter(p=>p.data);
+  if(!comData.length) return vazio('Sem datas','As postagens desta pauta ainda não têm data.');
+  const meses = [...new Set(comData.map(p=>p.data.slice(0,7)))].sort();
+  const mes = S.ptMes && meses.includes(S.ptMes) ? S.ptMes : meses[meses.length-1];
+  const [ano, m] = mes.split('-').map(Number);
+  const nd = new Date(ano, m, 0).getDate();
+  const off = (new Date(ano, m-1, 1).getDay() + 6) % 7;
+  const doDia = d => comData.filter(p=>p.data === `${ano}-${D2(m)}-${D2(d)}`);
+
+  let cels = ['S','T','Q','Q','S','S','D'].map(w=>`<div class="wd">${w}</div>`).join('');
+  for(let i=0;i<off;i++) cels += `<div class="dd fora"></div>`;
+  for(let d=1; d<=nd; d++){
+    const ps = doDia(d), iso = `${ano}-${D2(m)}-${D2(d)}`;
+    const ag = ps.some(p=>p.st==='SCHEDULED');
+    const tudoFeito = ps.length && ps.every(p=>p.feito);
+    cels += `<div class="dd ${ps.length?'tem':''} ${ag?'agendado':''} ${S.ptMDia===iso?'sel':''}"
+      ${ps.length?`data-ptmdia="${iso}" role="button" tabindex="0"`:''}
+      style="${tudoFeito?'border-color:rgba(53,184,122,.45)':''}">${d}
+      ${ps.length?`<span class="pts">${ps.slice(0,4).map(p=>
+        `<i style="background:${p.tarefa?'#5B8DEF':(PLATS[p.plats[0]]||{c:'#6B7280'}).c};color:${p.tarefa?'#5B8DEF':(PLATS[p.plats[0]]||{c:'#6B7280'}).c}"></i>`).join('')}</span>`:''}</div>`;
+  }
+  const sel = S.ptMDia, doSel = sel ? comData.filter(p=>p.data===sel) : [];
+  const abas = meses.map(k=>{ const [a,mm]=k.split('-');
+    return `<button class="b gho sm ${k===mes?'':''}" data-ptmes="${k}"
+      style="${k===mes?'border-color:var(--brass-500);color:var(--brass-300)':''}">${MESNOME[+mm-1]}</button>`;
+  }).join('');
+  return `<div style="display:flex;gap:8px;margin-bottom:10px">${abas}</div>
+  <div class="ptCal"><div class="malha">${cels}</div>
+    <p class="nota">Toque num dia para ver as postagens dele. Borda verde = tudo feito.</p></div>
+  ${sel && doSel.length?`<div class="ptDia"><div class="ptDiaHd"><b>${rotuloLongo(sel)}</b>
+    <span>${doSel.filter(p=>p.feito).length}/${doSel.length} feito</span><i></i></div>
+    ${doSel.sort((a,b)=>a.hora<b.hora?-1:1).map((p,i)=>ptItemHtml(p,i)).join('')}</div>`:''}`;
+};
+
+/* o painel de checklist entra no topo do miolo */
+const _corpoPautaV30 = corpoPauta;
+corpoPauta = function(){
+  const html = _corpoPautaV30();
+  const lista = S.pauta;
+  if(!lista.length) return html;
+  const feitos = lista.filter(p=>p.feito).length;
+  const pend = lista.filter(p=>p.pend).length;
+  const tar = lista.filter(p=>p.tarefa).length;
+  const painel = `<div class="ptCheck">
+    <div class="ptCheckC feito"><b>${feitos}</b><span>FEITO</span></div>
+    <div class="ptCheckC nao"><b>${lista.length-feitos}</b><span>NÃO FEITO</span></div>
+    <div class="ptCheckC tar"><b>${tar}</b><span>tarefas internas</span></div>
+    <div class="ptCheckC pend"><b>${pend}</b><span>${pend===1?'pendência bloqueando':'pendências bloqueando'}</span></div>
+  </div>`;
+  return painel + html;
+};
+
+/* marcar feito */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptfeito]');
+  if(!t) return;
+  const p = S.pauta.find(x=>x.id===+t.dataset.ptfeito); if(!p) return;
+  p.feito = !p.feito;
+  if(p.feito && S.sound){ try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended') AC.resume().catch(()=>{});
+    barra(329.63, 0, .26, 'marimba', .1);
+  }catch(err){} } else som('toque');
+  render();
+  const it = document.querySelector(`.ptItem[data-pt="${p.id}"]`);
+  if(it){ it.classList.add('marcou'); setTimeout(()=>it.classList.remove('marcou'),480); }
+  const faltam = S.pauta.filter(x=>!x.feito).length;
+  toast(p.feito
+    ? `"${p.t}" marcada como feita${faltam?` — faltam ${faltam}.`:'.'}`
+    : `"${p.t}" voltou para NÃO FEITO.`);
+  if(p.feito && !faltam) setTimeout(()=>{ som('conclusao');
+    toast('Pauta inteira concluída.'); }, 700);
+});
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptmes]');
+  if(!t) return;
+  S.ptMes = t.dataset.ptmes; S.ptMDia = null; render();
+});
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v30b — dois defeitos achados no teste:
+
+   1. O calendário do mês passou a usar data ISO ("2026-09-03"), mas o
+      handler da v25 fazia `+d.ptmdia` — herança de quando o valor era
+      0..6. String ISO vira NaN e o dia nunca abria. Agora o atributo
+      tem outro nome e handler próprio, sem coerção.
+   2. O filtro "o que falta" ainda falava de agendamento. Como o founder
+      pediu o checklist FEITO / NÃO FEITO, é disso que ele tem de falar.
+   ================================================================== */
+ptVistaMes = (function(orig){
+  return function(visiveis){
+    return orig(visiveis).replace(/data-ptmdia="/g, 'data-ptdia-iso="');
+  };
+})(ptVistaMes);
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptdia-iso]');
+  if(!t) return;
+  S.ptMDia = t.dataset.ptdiaIso;      // string, sem converter
+  render();
+});
+document.addEventListener('keydown', e => {
+  if(e.key!=='Enter' && e.key!==' ') return;
+  const t = e.target.closest && e.target.closest('[data-ptdia-iso]');
+  if(!t) return;
+  e.preventDefault(); S.ptMDia = t.dataset.ptdiaIso; render();
+});
+
+/* o filtro agora fala de FEITO, que é o que ele pediu */
+corpoPauta = (function(orig){
+  return function(){
+    return orig()
+      .replace('>todas<', '>tudo<')
+      .replace(/>agendadas<b>\d+<\/b>/, m =>
+        `>feitas<b>${S.pauta.filter(p=>p.feito).length}</b>`)
+      .replace(/>o que falta<b>\d+<\/b>/, m =>
+        `>falta fazer<b>${S.pauta.filter(p=>!p.feito).length}</b>`);
+  };
+})(corpoPauta);
+
+/* e o que cada filtro seleciona */
+const _corpoPautaFiltro = corpoPauta;
+corpoPauta = function(){
+  const real = S.pauta;
+  const f = S.ptFiltro;
+  if(f === 'todas') return _corpoPautaFiltro();
+  // engana o miolo mostrando só o subconjunto, sem tocar nos dados
+  const guardado = S.pautas[cliAtual().id];
+  S.pautas[cliAtual().id] = real.filter(p => f==='feitas' ? p.feito : !p.feito);
+  const antes = S.ptFiltro; S.ptFiltro = 'todas';
+  let html;
+  try{ html = _corpoPautaFiltro(); }
+  finally{ S.pautas[cliAtual().id] = guardado; S.ptFiltro = antes; }
+  // os contadores vêm do conjunto inteiro
+  return html
+    .replace(/>tudo<b>\d+<\/b>/, `>tudo<b>${real.length}</b>`)
+    .replace(/>feitas<b>\d+<\/b>/, `>feitas<b>${real.filter(p=>p.feito).length}</b>`)
+    .replace(/>falta fazer<b>\d+<\/b>/, `>falta fazer<b>${real.filter(p=>!p.feito).length}</b>`)
+    .replace(/class="([^"]*)" data-ptfiltro="feitas"/, (m,c)=>
+      `class="${f==='feitas'?'on':''}" data-ptfiltro="feitas"`)
+    .replace(/class="([^"]*)" data-ptfiltro="faltam"/, (m,c)=>
+      `class="${f==='faltam'?'on':''}" data-ptfiltro="faltam"`)
+    .replace(/class="on" data-ptfiltro="todas"/, `class="" data-ptfiltro="todas"`);
+};
+</script>
+<style>
+/* v30c — a etiqueta de data estava em 4,12:1 */
+.ptData{ color:var(--ink-200) }
+</style>
