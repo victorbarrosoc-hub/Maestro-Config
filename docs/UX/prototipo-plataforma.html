@@ -4918,3 +4918,731 @@ function som(tipo){
 "use strict";
 /* o aviso agora sobe; nada de mexer no layout do conteudo */
 </script>
+<style>
+/* =====================================================================
+   v18 — a abertura, e a plataforma ocupando a tela do computador.
+
+   Abertura: a batuta desenha o M, a orquestra afina em La 440 (e assim
+   que toda orquestra do mundo comeca — o obo da o La e todos se afinam
+   por ele; e a metafora do produto, ja escrita no BRAND_BOOK) e o M
+   viaja para o canto, virando o logo do topo. A ideia do objeto unico
+   que atravessa a cena veio da referencia 3.
+
+   Escala: o lado do cliente era uma coluna de 460px no meio de um
+   monitor de 27". No desktop ele vira layout de duas colunas.
+   ================================================================== */
+
+/* ---------- 1 · a abertura ------------------------------------------ */
+#abertura{
+  position:fixed; inset:0; z-index:2000; display:grid; place-items:center;
+  background:
+    radial-gradient(120% 90% at 50% 42%, #14161B 0%, #0A0B0E 55%, #060709 100%);
+  overflow:hidden; cursor:pointer;
+}
+#abertura.saindo{ animation:abSai .85s var(--eo) forwards; pointer-events:none }
+@keyframes abSai{ to{ opacity:0; transform:scale(1.06); filter:blur(6px) } }
+#abertura .palco{ position:relative; display:grid; place-items:center;
+  width:min(80vw,460px); aspect-ratio:1 }
+
+/* o anel de instrumentos que acende em volta */
+.anel{ position:absolute; inset:0 }
+.anel i{
+  position:absolute; left:50%; top:50%; width:5px; height:5px; border-radius:50%;
+  background:var(--brass-500); opacity:0;
+  transform:translate(-50%,-50%) rotate(var(--a)) translateY(calc(var(--r) * -1));
+  animation:acende .5s var(--eo) forwards; animation-delay:var(--d);
+  box-shadow:0 0 0 rgba(200,150,58,0);
+}
+@keyframes acende{
+  0%  { opacity:0; width:5px; height:5px }
+  55% { opacity:1; width:9px; height:9px; box-shadow:0 0 14px 3px rgba(200,150,58,.55) }
+  100%{ opacity:.55; width:6px; height:6px; box-shadow:0 0 6px 1px rgba(200,150,58,.18) }
+}
+/* o arco que a batuta risca */
+.arco{ position:absolute; inset:0; opacity:0; animation:fadeIn .5s var(--eo) .35s forwards }
+.arco circle{ fill:none; stroke:rgba(200,150,58,.16); stroke-width:1;
+  stroke-dasharray:3 7 }
+
+/* o M desenhado pela batuta */
+.mDesenho{ width:min(38vw,190px); overflow:visible; margin-top:-4% }
+.mDesenho path{
+  fill:none; stroke:var(--brass-400); stroke-width:5.4;
+  stroke-linecap:round; stroke-linejoin:round;
+  stroke-dasharray:96; stroke-dashoffset:96;
+  animation:risca 1.15s cubic-bezier(.65,0,.35,1) .12s forwards;
+  filter:drop-shadow(0 0 18px rgba(200,150,58,.35));
+}
+@keyframes risca{ to{ stroke-dashoffset:0 } }
+/* a ponta da batuta acompanhando o traco */
+.ponta{ fill:#F5E7C9; opacity:0;
+  animation:pontaVai 1.15s cubic-bezier(.65,0,.35,1) .12s forwards }
+@keyframes pontaVai{
+  0%{opacity:0} 8%{opacity:1} 92%{opacity:1} 100%{opacity:0} }
+
+/* o wordmark colidia com a base do M — desce para fora do anel */
+.abTexto{ position:absolute; top:calc(50% + min(31vw,166px)); left:0; right:0;
+  text-align:center }
+.abTexto b{
+  display:block; font-family:var(--serif); font-weight:400; letter-spacing:.14em;
+  font-size:clamp(20px,4.4vw,27px); color:var(--ink-50);
+  text-transform:uppercase;
+}
+.abTexto b span{ display:inline-block; opacity:0; transform:translateY(9px);
+  animation:letra .5s var(--eo) forwards; animation-delay:var(--d) }
+@keyframes letra{ to{ opacity:1; transform:none } }
+.abTexto small{
+  display:block; margin-top:11px; font-family:var(--mono); font-size:10px;
+  letter-spacing:.26em; text-transform:uppercase; color:var(--brass-600);
+  opacity:0; animation:fadeIn .7s var(--eo) 1.75s forwards }
+.abPular{
+  position:fixed; bottom:26px; left:50%; transform:translateX(-50%);
+  font-family:var(--mono); font-size:10px; letter-spacing:.2em; color:var(--ink-500);
+  text-transform:uppercase; opacity:0; animation:fadeIn .6s var(--eo) 2.2s forwards }
+@media (prefers-reduced-motion:reduce){
+  #abertura *{ animation-duration:.01s!important; animation-delay:0s!important }
+}
+
+/* o M que viaja da abertura para o topo */
+#mVoando{ position:fixed; z-index:2100; pointer-events:none;
+  transition:transform .82s cubic-bezier(.65,0,.3,1), opacity .82s var(--eo) }
+
+/* ---------- 2 · a plataforma ocupando a tela ------------------------ */
+.wrapc{ max-width:min(1240px, 92vw) }
+@media(min-width:861px){
+  .app.ag{ grid-template-columns:clamp(238px,17vw,300px) minmax(0,1fr) }
+  .main{ padding:32px clamp(32px,3.6vw,64px) 64px }
+  .tiles{ grid-template-columns:repeat(auto-fit,minmax(clamp(150px,13vw,210px),1fr)); gap:14px }
+  .grid3{ grid-template-columns:repeat(auto-fill,minmax(clamp(150px,12.5vw,210px),1fr)); gap:14px }
+  .kb{ grid-template-columns:repeat(auto-fit,minmax(clamp(162px,15vw,260px),1fr)) }
+  .mtop h1{ font-size:clamp(27px,2.4vw,36px) }
+}
+/* o lado do cliente: coluna de celular no celular, duas colunas no monitor */
+@media(min-width:1080px){
+  .cl{ --tabh:0px; padding:26px 0 34px }
+  .clframe{
+    max-width:min(1120px,94vw); min-height:calc(100dvh - 42px - 60px);
+    border-radius:20px; overflow:hidden;
+    box-shadow:0 0 0 1px var(--line), 0 40px 90px -50px rgba(23,24,28,.3);
+  }
+  .clbody{ padding:30px 34px 34px }
+  /* a tela de decisao vira duas colunas: a peca a esquerda, a decisao a direita */
+  .clbody.fix{
+    display:grid; height:auto; min-height:0; overflow:visible;
+    grid-template-columns:minmax(0,1.25fr) minmax(320px,.85fr);
+    grid-template-areas:"prog prog" "arte lado" ;
+    gap:18px 30px; align-content:start; padding:26px 34px 10px;
+  }
+  .clbody.fix .clprog{ grid-area:prog }
+  .clbody.fix .clhead{ grid-area:lado; align-self:start }
+  .clbody.fix .clart{ grid-area:arte; min-height:min(56vh,520px); border-radius:16px }
+  .clbody.fix .clcap{ grid-area:lado; margin-top:96px; max-height:min(34vh,300px) }
+  .clfoot{ position:sticky; bottom:0; padding:16px 34px 20px;
+    display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:center }
+  .clfoot .clnote{ grid-column:1/-1; margin:0 }
+  .cltab{ max-width:min(1120px,94vw); border-radius:0 0 20px 20px;
+    left:50%; bottom:34px }
+  .clart{ font-size:26px }
+  .cl h2{ font-size:31px }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v18 — a abertura. Roda uma vez por carregamento, pula em qualquer
+   toque, e no fim manda o M para o canto de cima antes de entregar a
+   tela. Em PWA instalado ela entrega a plataforma; no navegador, o site.
+   ================================================================== */
+const NOAPP = matchMedia('(display-mode: standalone)').matches
+           || window.navigator.standalone === true;
+
+function abrirCortina(){
+  const el = document.createElement('div');
+  el.id = 'abertura';
+  const N = 12;                                   // os doze da orquestra
+  const pontos = Array.from({length:N}, (_,i) => {
+    const a = (360/N) * i - 90;
+    return `<i style="--a:${a}deg;--r:min(31vw,152px);--d:${(.55 + i*.055).toFixed(2)}s"></i>`;
+  }).join('');
+  const nome = 'MAESTRO'.split('').map((c,i) =>
+    `<span style="--d:${(1.25 + i*.055).toFixed(2)}s">${c}</span>`).join('');
+  el.innerHTML = `
+    <div class="palco">
+      <div class="anel">${pontos}</div>
+      <svg class="arco" viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="47"/></svg>
+      <svg class="mDesenho" viewBox="0 0 48 48" role="img" aria-label="Maestro">
+        <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5"/>
+        <circle class="ponta" r="2.6">
+          <animateMotion dur="1.15s" begin="0.12s" fill="freeze"
+            keyPoints="0;1" keyTimes="0;1" calcMode="spline"
+            keySplines="0.65 0 0.35 1"
+            path="M11 35.5V12.5Q24 48.5 37 12.5V35.5"/>
+        </circle>
+      </svg>
+      <div class="abTexto"><b>${nome}</b>
+        <small>afinando em lá 440</small></div>
+    </div>
+    <div class="abPular">toque para entrar</div>`;
+  document.body.appendChild(el);
+
+  // a afinacao — o navegador so libera audio depois de um gesto, entao
+  // aqui e tentativa: se nao tocar, nao faz falta
+  const afinar = () => { try{
+    if(!S.sound) return;
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state === 'suspended') AC.resume().catch(()=>{});
+    if(AC.state !== 'running') return;
+    violino(220, .15, 1.5, .05);                  // o Lá que afina a orquestra
+    violino(329.63, 1.15, 1.2, .04);              // e a quinta respondendo
+  }catch(e){} };
+  setTimeout(afinar, 120);
+
+  let saiu = false;
+  const sair = () => {
+    if(saiu) return; saiu = true;
+    voarM(el);
+    el.classList.add('saindo');
+    setTimeout(()=>{ el.remove(); document.body.classList.remove('cortina'); }, 860);
+  };
+  el.addEventListener('click', () => { afinar(); sair(); });
+  addEventListener('keydown', e => { if(e.key==='Escape'||e.key===' ') sair(); }, {once:true});
+  // #abertura na URL segura a cortina aberta — para conferir o desenho
+  if(location.hash !== '#abertura') setTimeout(sair, REDUZ ? 700 : 2900);
+  document.body.classList.add('cortina');
+}
+
+/* o M sai do centro e pousa no logo do topo — o mesmo objeto, a viagem
+   inteira (referencia 3) */
+function voarM(el){
+  if(REDUZ) return;
+  const de = el.querySelector('.mDesenho');
+  const paraEl = document.querySelector('.aside .lg svg, .clbar svg, .logo svg');
+  if(!de || !paraEl) return;
+  const a = de.getBoundingClientRect(), b = paraEl.getBoundingClientRect();
+  const voa = de.cloneNode(true);
+  voa.id = 'mVoando';
+  voa.removeAttribute('class');
+  Object.assign(voa.style, {
+    left:a.left+'px', top:a.top+'px', width:a.width+'px', height:a.height+'px',
+    position:'fixed', overflow:'visible'
+  });
+  voa.querySelectorAll('path').forEach(p=>{
+    p.style.stroke = 'var(--brass-400)'; p.style.strokeWidth = '5.4';
+    p.style.fill = 'none'; p.style.strokeDasharray = 'none'; p.style.strokeDashoffset = '0';
+    p.style.strokeLinecap = 'round'; p.style.strokeLinejoin = 'round';
+  });
+  voa.querySelectorAll('circle').forEach(c=>c.remove());
+  document.body.appendChild(voa);
+  requestAnimationFrame(()=>{
+    const k = b.width / a.width;
+    voa.style.transform =
+      `translate(${b.left - a.left + (b.width - a.width*k)/2}px,
+                 ${b.top - a.top + (b.height - a.height*k)/2}px) scale(${k})`;
+    voa.style.opacity = '.15';
+  });
+  setTimeout(()=>voa.remove(), 900);
+}
+
+/* sobe a cortina assim que a pagina existe */
+if(document.readyState === 'loading')
+  document.addEventListener('DOMContentLoaded', abrirCortina, {once:true});
+else abrirCortina();
+</script>
+<style>
+/* =====================================================================
+   v19 — a homepage da plataforma vira um instrumento.
+
+   A ideia: o lote e uma orquestra. Oito pecas, oito cadeiras, e a escala
+   de La inteira (La3 -> La4, D-020/D-072). Cada peca decidida acende uma
+   cadeira e libera a nota dela; o lote fechado toca a escala inteira.
+   Nenhum concorrente pode copiar isso sem antes se chamar Maestro.
+
+   Vocabulario tirado das referencias: objeto unico que atravessa a cena
+   (ref 3), numeros que contam e chips que voam (ref 6), grafico que se
+   desenha e quadradinhos de fundo (ref 2), tiles que brotam (ref 5).
+   ================================================================== */
+
+/* ---------- o palco ------------------------------------------------- */
+.palcoWrap{
+  position:relative; border:1px solid var(--ink-800); border-radius:18px;
+  background:
+    radial-gradient(85% 70% at 50% 108%, rgba(200,150,58,.10), transparent 62%),
+    linear-gradient(180deg,var(--ink-850),var(--ink-900));
+  padding:22px 20px 18px; overflow:hidden; margin-bottom:16px;
+}
+.palcoWrap .grade{ position:absolute; inset:0; pointer-events:none; opacity:.5 }
+.palcoWrap .grade i{
+  position:absolute; width:6px; height:6px; border-radius:1.5px;
+  background:var(--brass-600); opacity:0;
+  animation:pisca 5.5s ease-in-out infinite; animation-delay:var(--d);
+}
+@keyframes pisca{ 0%,88%,100%{opacity:0} 12%,30%{opacity:.30} 55%{opacity:.10} }
+
+.palcoTop{ display:flex; align-items:baseline; justify-content:space-between;
+  gap:14px; flex-wrap:wrap; margin-bottom:6px; position:relative }
+.palcoTop b{ font-family:var(--serif); font-weight:400; font-size:19px; color:var(--ink-50) }
+.palcoTop span{ font-family:var(--mono); font-size:10.5px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--ink-500) }
+
+.orq{ display:block; width:100%; max-width:520px; margin:0 auto; overflow:visible }
+.orq .cadeira{ cursor:pointer; transform-box:fill-box; transform-origin:center }
+.orq .cadeira circle{ transition:r .3s var(--spring), fill .35s var(--eo),
+  stroke .35s var(--eo), filter .35s var(--eo) }
+.orq .cadeira:hover circle{ r:11 }
+.orq .cadeira:focus-visible{ outline:none }
+.orq .cadeira:focus-visible circle{ stroke:var(--brass-300); stroke-width:2.5 }
+.orq .cadeira.acesa circle{ filter:drop-shadow(0 0 9px rgba(200,150,58,.6)) }
+.orq .cadeira.tocando circle{ animation:pulsaCadeira .55s var(--spring) }
+@keyframes pulsaCadeira{ 0%{r:9} 45%{r:15} 100%{r:9} }
+.orq .rotulo{ font-family:var(--mono); font-size:7.4px; letter-spacing:.09em;
+  text-transform:uppercase; fill:var(--ink-500); text-anchor:middle;
+  pointer-events:none; transition:fill .3s var(--eo) }
+.orq .cadeira.acesa .rotulo{ fill:var(--brass-500) }
+.orq .arcoPalco{ fill:none; stroke:var(--ink-800); stroke-width:1; stroke-dasharray:2 6 }
+.orq .maestroM{ fill:none; stroke:var(--brass-500); stroke-width:4.6;
+  stroke-linecap:round; stroke-linejoin:round }
+.orq .contador{ font-family:var(--serif); font-size:27px; fill:var(--ink-50);
+  text-anchor:middle; font-variant-numeric:tabular-nums }
+.orq .contadorL{ font-family:var(--mono); font-size:7.6px; letter-spacing:.15em;
+  text-transform:uppercase; fill:var(--ink-500); text-anchor:middle }
+.orq .trilho{ fill:none; stroke:var(--ink-800); stroke-width:3.5; stroke-linecap:round }
+.orq .cheio{ fill:none; stroke:var(--brass-500); stroke-width:3.5; stroke-linecap:round;
+  transition:stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1) }
+
+.palcoPe{ display:flex; align-items:center; justify-content:center; gap:9px;
+  margin-top:10px; flex-wrap:wrap; position:relative }
+.dica{ font-size:12px; color:var(--ink-400) }
+.dica b{ color:var(--brass-400); font-weight:600 }
+
+/* ---------- os numeros que contam, com chip que voa ------------------ */
+.tile{ position:relative; overflow:hidden }
+.tile .spark{ position:absolute; right:0; bottom:0; left:0; height:34px; opacity:.5;
+  pointer-events:none }
+.tile .spark path{ fill:none; stroke:var(--brass-600); stroke-width:1.6;
+  stroke-linecap:round; stroke-linejoin:round;
+  stroke-dasharray:var(--L); stroke-dashoffset:var(--L);
+  animation:desenha 1.2s var(--eo) .25s forwards }
+@keyframes desenha{ to{ stroke-dashoffset:0 } }
+.tile .chip{
+  position:absolute; top:12px; right:12px; font-family:var(--mono); font-size:9.5px;
+  padding:2px 7px; border-radius:999px; font-weight:700; letter-spacing:.04em;
+  opacity:0; animation:chipVoa .55s var(--spring) .75s forwards;
+}
+@keyframes chipVoa{ from{opacity:0; transform:translate(10px,-6px) scale(.8)}
+                    to{opacity:1; transform:none} }
+.chip.sobe{ color:var(--encore); background:rgba(53,184,122,.14) }
+.chip.desce{ color:var(--coral); background:rgba(240,120,76,.14) }
+.chip.neutro{ color:var(--brass-400); background:rgba(200,150,58,.14) }
+
+/* ---------- o medidor de agenda do cliente (D-037) ------------------- */
+.agendaBar{ border:1px solid var(--ink-800); border-radius:14px; padding:15px 17px;
+  background:var(--ink-850); margin-bottom:16px }
+.agendaBar .cab{ display:flex; justify-content:space-between; align-items:baseline;
+  gap:10px; margin-bottom:11px }
+.agendaBar .cab b{ font-size:13.5px; color:var(--ink-50); font-weight:600 }
+.agendaBar .cab span{ font-family:var(--mono); font-size:11px; color:var(--ink-400) }
+.agendaBar .cab span em{ font-style:normal; color:var(--brass-400); font-weight:700 }
+.diasFila{ display:flex; gap:5px }
+.diasFila i{ flex:1; height:9px; border-radius:3px; background:var(--ink-800);
+  position:relative; overflow:hidden }
+.diasFila i.gasto::after{ content:""; position:absolute; inset:0;
+  background:linear-gradient(90deg,var(--brass-600),var(--brass-400));
+  transform:scaleX(0); transform-origin:left;
+  animation:enche .5s var(--eo) forwards; animation-delay:var(--d) }
+@keyframes enche{ to{ transform:scaleX(1) } }
+.agendaBar p{ margin:10px 0 0; font-size:12px; color:var(--ink-400); line-height:1.5 }
+
+/* ---------- o grafico do ritmo -------------------------------------- */
+.ritmo{ border:1px solid var(--ink-800); border-radius:14px; background:var(--ink-850);
+  padding:16px 18px 10px; margin-bottom:16px; position:relative; overflow:hidden }
+.ritmo h4{ margin:0 0 2px; font-size:13.5px; color:var(--ink-50); font-weight:600 }
+.ritmo p{ margin:0 0 10px; font-size:12px; color:var(--ink-400) }
+.ritmo svg{ display:block; width:100%; overflow:visible }
+.ritmo .malha{ stroke:var(--ink-800); stroke-width:1; stroke-dasharray:2 5 }
+.ritmo .curva{ fill:none; stroke:var(--brass-500); stroke-width:2.2;
+  stroke-linecap:round; stroke-linejoin:round;
+  stroke-dasharray:var(--L); stroke-dashoffset:var(--L);
+  animation:desenha 1.4s cubic-bezier(.22,1,.36,1) .3s forwards }
+.ritmo .area{ fill:url(#gradRitmo); opacity:0; animation:fadeIn .8s var(--eo) 1s forwards }
+.ritmo .pt{ fill:var(--brass-300); opacity:0;
+  animation:acendePt .4s var(--spring) forwards; animation-delay:var(--d) }
+@keyframes acendePt{ from{opacity:0; r:0} to{opacity:1; r:3.4} }
+.ritmo .rot{ font-family:var(--mono); font-size:8.5px; fill:var(--ink-500);
+  text-anchor:middle }
+
+@media (prefers-reduced-motion:reduce){
+  .palcoWrap .grade i,.tile .spark path,.tile .chip,.diasFila i.gasto::after,
+  .ritmo .curva,.ritmo .area,.ritmo .pt{ animation:none!important; opacity:1!important;
+    stroke-dashoffset:0!important; transform:none!important }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v19 — a orquestra. Oito cadeiras, oito pecas, a escala de La inteira.
+   ================================================================== */
+
+/* La3 -> La4: La Si Do# Re Mi Fa# Sol# La. Uma nota por cadeira. */
+const CADEIRAS = [
+  {n:'Violino I',   f:220.00, r:'frente'},
+  {n:'Violino II',  f:246.94, r:'frente'},
+  {n:'Viola',       f:277.18, r:'frente'},
+  {n:'Cello',       f:293.66, r:'frente'},
+  {n:'Baixo',       f:329.63, r:'frente'},
+  {n:'Oboé',        f:369.99, r:'fundo'},
+  {n:'Trompa',      f:415.30, r:'fundo'},
+  {n:'Tímpano',     f:440.00, r:'fundo'}
+];
+const CORCAD = {
+  APPROVED:'var(--brass-500)', SCHEDULED:'var(--brass-500)', PUBLISHED:'var(--brass-500)',
+  CHANGES_REQUESTED:'var(--coral)', AWAITING_APPROVAL:'var(--ink-700)',
+  IN_PRODUCTION:'var(--cobalt)', DRAFT:'var(--ink-800)', CANCELLED:'transparent'
+};
+const ACESA = st => ['APPROVED','SCHEDULED','PUBLISHED'].includes(st);
+
+function orquestra(){
+  const pecas = finAtivos().slice(0,8);
+  const total = pecas.length || 8;
+  const feitas = pecas.filter(p=>ACESA(p.st)).length;
+  const cx=260, cy=176, W=520, H=200;
+
+  const assentos = pecas.map((p,i)=>{
+    const c = CADEIRAS[i] || CADEIRAS[0];
+    const frente = c.r==='frente';
+    const daFrente = pecas.filter((_,j)=>(CADEIRAS[j]||{}).r==='frente').length || 5;
+    const daTras   = total - daFrente;
+    const idx = frente ? i : i - daFrente;
+    const n   = frente ? daFrente : Math.max(1,daTras);
+    const raio = frente ? 108 : 156;
+    const abre = frente ? 116 : 96;                       // graus de abertura do leque
+    const a = (-90 - abre/2 + (n===1 ? abre/2 : abre*idx/(n-1))) * Math.PI/180;
+    const x = cx + raio*Math.cos(a), y = cy + raio*Math.sin(a);
+    const on = ACESA(p.st);
+    return `<g class="cadeira ${on?'acesa':''}" data-cad="${p.id}" data-f="${c.f}"
+        role="button" tabindex="0" aria-label="${esc(c.n)} · ${esc(p.t)} · ${CT[p.st]}">
+      <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9"
+        fill="${on?CORCAD[p.st]:'var(--ink-900)'}"
+        stroke="${CORCAD[p.st]||'var(--ink-700)'}" stroke-width="1.6"/>
+      <text class="rotulo" x="${x.toFixed(1)}" y="${(y-15).toFixed(1)}">${esc(c.n)}</text>
+    </g>`;
+  }).join('');
+
+  const C = Math.PI*54;                                    // meia volta do arco central
+  const cheio = C * (1 - feitas/Math.max(1,total));
+  return `<svg class="orq" viewBox="0 0 ${W} ${H}" role="group"
+      aria-label="A orquestra do lote: ${feitas} de ${total} decididas">
+    <path class="arcoPalco" d="M ${cx-186} ${cy} A 186 186 0 0 1 ${cx+186} ${cy}"/>
+    <path class="arcoPalco" d="M ${cx-134} ${cy} A 134 134 0 0 1 ${cx+134} ${cy}"/>
+    ${assentos}
+    <path class="trilho" d="M ${cx-54} ${cy} A 54 54 0 0 1 ${cx+54} ${cy}"/>
+    <path class="cheio"  d="M ${cx-54} ${cy} A 54 54 0 0 1 ${cx+54} ${cy}"
+      stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}"
+      data-cheio="${cheio.toFixed(1)}"/>
+    <text class="contador" x="${cx}" y="${cy-26}">${feitas}<tspan
+      style="font-size:15px;fill:var(--ink-500)"> / ${total}</tspan></text>
+    <text class="contadorL" x="${cx}" y="${cy-12}">decididas</text>
+    <path class="maestroM" d="M ${cx-13} ${cy+22} V ${cy+4} Q ${cx} ${cy+34} ${cx+13} ${cy+4} V ${cy+22}"/>
+  </svg>`;
+}
+
+/* quadradinhos que piscam no fundo — o motivo ambiente da referencia 2 */
+function gradeAmbiente(qtd){
+  return `<div class="grade" aria-hidden="true">${Array.from({length:qtd||14},(_,i)=>{
+    const x = (7 + (i*29)%86).toFixed(0), y = (10 + (i*37)%78).toFixed(0);
+    return `<i style="left:${x}%;top:${y}%;--d:${(i*.42).toFixed(2)}s"></i>`;
+  }).join('')}</div>`;
+}
+
+/* uma linha que se desenha sozinha, para dentro de um tile */
+function spark(vals){
+  const w=140, h=34, mx=Math.max(...vals,1);
+  const d = vals.map((v,i)=>`${i?'L':'M'} ${(i*(w/(vals.length-1))).toFixed(1)} ${(h-4 - (v/mx)*(h-10)).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+    <path d="${d}" style="--L:260"/></svg>`;
+}
+
+/* o grafico do ritmo do ciclo — curva que se desenha, area e pontos */
+function ritmoDoCiclo(){
+  const sem = [
+    {l:'sem 1', v:1}, {l:'sem 2', v:3}, {l:'sem 3', v:2},
+    {l:'sem 4', v:5}, {l:'sem 5', v:4}, {l:'agora', v:Math.max(1,aprovadas()+pedidas())}
+  ];
+  const W=520, H=132, pad=26, mx=Math.max(...sem.map(s=>s.v),1);
+  const px = i => pad + i*((W-pad*2)/(sem.length-1));
+  const py = v => H-30 - (v/mx)*(H-58);
+  const d  = sem.map((s,i)=>`${i?'L':'M'} ${px(i).toFixed(1)} ${py(s.v).toFixed(1)}`).join(' ');
+  const area = `${d} L ${px(sem.length-1).toFixed(1)} ${H-30} L ${px(0).toFixed(1)} ${H-30} Z`;
+  return `<div class="ritmo">
+    <h4>O ritmo do ciclo</h4>
+    <p>Decisões por semana. A linha subindo é o cliente respondendo mais rápido.</p>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Decisões por semana, subindo de 1 para ${sem[sem.length-1].v}">
+      <defs><linearGradient id="gradRitmo" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="rgba(200,150,58,.26)"/>
+        <stop offset="100%" stop-color="rgba(200,150,58,0)"/></linearGradient></defs>
+      <line class="malha" x1="${pad}" y1="${H-30}" x2="${W-pad}" y2="${H-30}"/>
+      <line class="malha" x1="${pad}" y1="${py(mx).toFixed(1)}" x2="${W-pad}" y2="${py(mx).toFixed(1)}"/>
+      <path class="area" d="${area}"/>
+      <path class="curva" d="${d}" style="--L:900"/>
+      ${sem.map((s,i)=>`<circle class="pt" cx="${px(i).toFixed(1)}" cy="${py(s.v).toFixed(1)}"
+        r="3.4" style="--d:${(1.1+i*.09).toFixed(2)}s"/>`).join('')}
+      ${sem.map((s,i)=>`<text class="rot" x="${px(i).toFixed(1)}" y="${H-12}">${s.l}</text>`).join('')}
+    </svg></div>`;
+}
+
+/* o medidor de agenda do cliente — o diferencial da D-037, visivel */
+function medidorAgenda(){
+  const previsto = 8, gasto = Math.min(previsto, 2 + Math.floor(decididas()/3));
+  return `<div class="agendaBar">
+    <div class="cab"><b>Agenda da Helena neste projeto</b>
+      <span><em>${gasto}</em> de ${previsto} dias</span></div>
+    <div class="diasFila">${Array.from({length:previsto},(_,i)=>
+      `<i class="${i<gasto?'gasto':''}" style="--d:${(i*.07).toFixed(2)}s"></i>`).join('')}</div>
+    <p>Nenhum concorrente mede isso. É o número que fecha reunião — e o cliente
+      vê que a agência está cuidando do tempo dele.</p></div>`;
+}
+</script>
+<style>
+/* =====================================================================
+   v20 — prova social com peso.
+   A secao antiga tinha 3 depoimentos e um aviso em letra miuda. Esta tem
+   os dois lados do balcao (agencia E cliente), o antes/depois, numeros
+   que contam sozinhos e uma faixa de logos que anda.
+
+   IMPORTANTE: nada disso aconteceu ainda. O aviso de que sao exemplos
+   sobe para o topo da secao, visivel — nao em nota de rodape.
+   ================================================================== */
+.provaAviso{
+  display:inline-flex; align-items:center; gap:9px; margin-bottom:20px;
+  border:1px dashed var(--brass-600); border-radius:999px; padding:7px 15px;
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--brass-400);
+  background:rgba(200,150,58,.06);
+}
+.provaAviso i{ width:6px; height:6px; border-radius:50%; background:var(--brass-500);
+  animation:pisca2 2.4s ease-in-out infinite; font-style:normal }
+@keyframes pisca2{ 0%,100%{opacity:1} 50%{opacity:.25} }
+
+/* ---------- numeros ------------------------------------------------- */
+.provaNums{ display:grid; gap:14px; margin:8px 0 30px;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)) }
+.provaNum{
+  position:relative; overflow:hidden; border:1px solid var(--ink-800);
+  border-radius:16px; padding:24px 22px 20px; background:var(--ink-900);
+  transition:border-color var(--fast) var(--eo), transform var(--fast) var(--eo);
+}
+.provaNum:hover{ border-color:var(--brass-600); transform:translateY(-3px) }
+.provaNum b{ display:block; font-family:var(--serif); font-size:clamp(34px,4.6vw,46px);
+  line-height:1; color:var(--brass-400); font-variant-numeric:tabular-nums }
+.provaNum b small{ font-size:.44em; color:var(--ink-500); font-family:var(--sans) }
+.provaNum .rot{ display:block; margin-top:9px; font-size:13px; color:var(--ink-200) }
+.provaNum .sub{ display:block; margin-top:5px; font-size:11.5px; color:var(--ink-500);
+  line-height:1.5 }
+.provaNum .curvinha{ position:absolute; right:-2px; bottom:-2px; width:58%; height:44px;
+  opacity:.42; pointer-events:none }
+.provaNum .curvinha path{ fill:none; stroke:var(--brass-600); stroke-width:1.8;
+  stroke-linecap:round; stroke-dasharray:240; stroke-dashoffset:240;
+  animation:desenha 1.3s var(--eo) .3s forwards }
+
+/* ---------- antes / depois ------------------------------------------ */
+.antesDepois{ display:grid; gap:0; grid-template-columns:1fr auto 1fr;
+  border:1px solid var(--ink-800); border-radius:16px; overflow:hidden;
+  background:var(--ink-900); margin-bottom:30px }
+@media(max-width:640px){ .antesDepois{ grid-template-columns:1fr; }
+  .antesDepois .meio{ border-left:0!important; border-right:0!important;
+    border-top:1px solid var(--ink-800); border-bottom:1px solid var(--ink-800) } }
+.antesDepois .col{ padding:20px 22px 22px }
+.antesDepois .col h5{ margin:0 0 14px; font:500 10px var(--mono); letter-spacing:.16em;
+  text-transform:uppercase }
+.antesDepois .antes h5{ color:var(--ink-500) }
+.antesDepois .depois h5{ color:var(--brass-400) }
+.antesDepois .meio{ display:grid; place-items:center; padding:0 6px;
+  border-left:1px solid var(--ink-800); border-right:1px solid var(--ink-800);
+  color:var(--ink-700) }
+.adLinha{ display:flex; align-items:baseline; gap:9px; padding:7px 0; font-size:13.5px;
+  border-bottom:1px solid var(--line-2, rgba(255,255,255,.04)) }
+.adLinha:last-child{ border-bottom:0 }
+.antes .adLinha{ color:var(--ink-400) }
+.antes .adLinha b{ color:var(--ink-300); font-weight:500 }
+.depois .adLinha{ color:var(--ink-200) }
+.depois .adLinha b{ color:var(--brass-300); font-weight:600 }
+.adLinha em{ font-style:normal; font-family:var(--mono); font-size:10px;
+  margin-left:auto; opacity:.7; white-space:nowrap }
+
+/* ---------- depoimentos --------------------------------------------- */
+.provaGrid{ columns:3 260px; column-gap:14px; margin-bottom:8px }
+@media(max-width:760px){ .provaGrid{ columns:1 } }
+.dep{
+  break-inside:avoid; margin:0 0 14px; border:1px solid var(--ink-800); border-radius:16px;
+  padding:22px 22px 19px; background:var(--ink-900); position:relative;
+  transition:transform var(--fast) var(--eo), border-color var(--fast) var(--eo),
+    box-shadow var(--fast) var(--eo);
+}
+.dep:hover{ transform:translateY(-3px); border-color:var(--ink-600);
+  box-shadow:0 22px 44px -28px rgba(0,0,0,.8) }
+.dep.doCliente{ background:linear-gradient(180deg,rgba(200,150,58,.055),var(--ink-900));
+  border-color:rgba(200,150,58,.24) }
+.dep .lado{ display:inline-flex; align-items:center; gap:6px; margin-bottom:12px;
+  font-family:var(--mono); font-size:9px; letter-spacing:.12em; text-transform:uppercase;
+  padding:3px 9px; border-radius:999px }
+.dep .lado::before{ content:""; width:5px; height:5px; border-radius:50% }
+.dep.daAgencia .lado{ color:var(--ink-400); background:var(--ink-850) }
+.dep.daAgencia .lado::before{ background:var(--ink-500) }
+.dep.doCliente .lado{ color:var(--brass-400); background:rgba(200,150,58,.12) }
+.dep.doCliente .lado::before{ background:var(--brass-500) }
+.dep p{ font-family:var(--serif); font-size:16px; line-height:1.56; color:var(--ink-100);
+  margin:0 0 16px }
+.dep .quem{ display:flex; gap:11px; align-items:center }
+.dep .quem .av{ width:34px; height:34px; font-size:11.5px }
+.dep .quem b{ display:block; font-size:13px; color:var(--ink-50); font-weight:600 }
+.dep .quem span{ font-size:11.5px; color:var(--ink-400) }
+.dep .tag{ position:absolute; top:20px; right:20px; font-family:var(--mono);
+  font-size:9px; color:var(--ink-600); letter-spacing:.08em }
+
+/* ---------- faixa de logos que anda --------------------------------- */
+.faixaLogos{ position:relative; overflow:hidden; margin:6px 0 4px;
+  border-top:1px solid var(--ink-800); border-bottom:1px solid var(--ink-800);
+  padding:17px 0 }
+.faixaLogos::before,.faixaLogos::after{ content:""; position:absolute; top:0; bottom:0;
+  width:70px; z-index:2; pointer-events:none }
+.faixaLogos::before{ left:0; background:linear-gradient(90deg,var(--ink-950),transparent) }
+.faixaLogos::after{ right:0; background:linear-gradient(270deg,var(--ink-950),transparent) }
+.faixaLogos .trem{ display:flex; gap:44px; width:max-content;
+  animation:anda 34s linear infinite }
+.faixaLogos:hover .trem{ animation-play-state:paused }
+@keyframes anda{ to{ transform:translateX(-50%) } }
+.faixaLogos .trem span{ font-family:var(--serif); font-size:17px; color:var(--ink-500);
+  white-space:nowrap; letter-spacing:.02em; transition:color var(--fast) var(--eo) }
+.faixaLogos .trem span:hover{ color:var(--brass-300) }
+@media (prefers-reduced-motion:reduce){
+  .faixaLogos .trem{ animation:none }
+  .provaNum .curvinha path{ animation:none; stroke-dashoffset:0 }
+  .provaAviso i{ animation:none }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v20 — a prova social. Os dois lados do balcao, porque o diferencial da
+   Maestro e o cliente gostar dela — e depoimento de cliente da agencia e
+   coisa que nenhum concorrente consegue mostrar.
+   ================================================================== */
+const DEPOIMENTOS = [
+  {lado:'agencia', txt:'A reunião de cobrança simplesmente acabou. O cliente decide no celular, o termo encerra a conversa — e ninguém mais discute o que foi aprovado.',
+   n:'Rafael Lima', c:'Sócio · Studio Norte', i:'RL', tag:'social media'},
+  {lado:'cliente', txt:'Eu finalmente sei o que estou aprovando, por que aquilo existe — e quantos dias do meu mês o projeto vai custar. Nunca tive isso com nenhuma agência.',
+   n:'Helena Braga', c:'Loja Norte · aprovadora', i:'HB', tag:'varejo de moda'},
+  {lado:'agencia', txt:'Roteiro aprovado antes de ligar a câmera salvou duas diárias logo no primeiro ciclo. Isso paga o ano da ferramenta.',
+   n:'Marina Reis', c:'Produtora · Fábrica 21', i:'MR', tag:'audiovisual'},
+  {lado:'agencia', txt:'O que me segurou não foi a aprovação — foi a metodologia virar entidade. O método da casa parou de morar na cabeça de três pessoas.',
+   n:'Camila Duarte', c:'Diretora · Coletivo Sul', i:'CD', tag:'branding'},
+  {lado:'cliente', txt:'Antes eu recebia PDF no WhatsApp e respondia "aprovado" no áudio. Hoje eu abro, comento no ponto exato da arte e assino. Levou seis minutos.',
+   n:'Dr. Paulo Cortez', c:'Cortez Jurídico · aprovador', i:'PC', tag:'consultoria'},
+  {lado:'agencia', txt:'O selo acabou com a discussão de "não foi isso que eu aprovei". Uma vez só já valeu — e essa uma vez custava um cliente.',
+   n:'Bruno Sato', c:'Atendimento · Alta Vista', i:'BS', tag:'performance'}
+];
+const LOGOS_PILOTO = ['Studio Norte','Braga & Co','Coletivo Sul','Fábrica 21','Alta Vista',
+  'Casa Ruído','Norte Filmes','Oficina 9','Prisma','Tempo Bom'];
+
+function provaSocial(){
+  const num = (valor, sufixo, rotulo, sub, curva) => `
+    <div class="provaNum rv">
+      <b>${valor}${sufixo?`<small>${sufixo}</small>`:''}</b>
+      <span class="rot">${rotulo}</span><span class="sub">${sub}</span>
+      <svg class="curvinha" viewBox="0 0 120 44" preserveAspectRatio="none" aria-hidden="true">
+        <path d="${curva}"/></svg>
+    </div>`;
+
+  const linha = (a, b, nota) => `<div class="adLinha"><b>${a}</b>${b?` ${b}`:''}${nota?`<em>${nota}</em>`:''}</div>`;
+
+  const cards = DEPOIMENTOS.map((d,i)=>`
+    <figure class="dep rv ${d.lado==='cliente'?'doCliente':'daAgencia'}"
+      style="transition-delay:${(i*60)}ms">
+      <span class="lado">${d.lado==='cliente'?'cliente da agência':'agência'}</span>
+      <span class="tag">${esc(d.tag)}</span>
+      <p>“${esc(d.txt)}”</p>
+      <figcaption class="quem"><span class="av">${d.i}</span>
+        <span><b>${esc(d.n)}</b><span>${esc(d.c)}</span></span></figcaption>
+    </figure>`).join('');
+
+  const trem = [...LOGOS_PILOTO, ...LOGOS_PILOTO]
+    .map(l=>`<span>${esc(l)}</span>`).join('');
+
+  return `<section class="ssec"><div class="wrapc">
+  <div class="provaAviso rv"><i></i>Exemplos ilustrativos · o piloto começa em setembro</div>
+  <div class="klabel rv">Os dois lados do balcão</div>
+  <h2 class="rv">A reunião de “cadê a aprovação?” acabou</h2>
+  <p class="sub rv">Software de agência costuma ser vendido para a agência. A Maestro precisa
+    que <b style="color:var(--ink-100)">o cliente dela também goste</b> — por isso metade
+    destes depoimentos é de quem aprova, não de quem produz.</p>
+
+  <div class="provaNums">
+    ${num('9 → 2','','dias até a decisão','Do envio ao aceite, no primeiro mês de uso.',
+        'M0 34 C 20 30, 34 32, 52 22 S 84 12, 120 6')}
+    ${num('0','','peças no ar diferentes do aprovado','O selo compara o publicado com o aceito. Meta é zero, e zero é o número.',
+        'M0 22 L 120 22')}
+    ${num('87','%','aprovadas na primeira versão','Quando o texto passa antes da arte, a arte volta menos.',
+        'M0 38 C 24 36, 40 28, 62 20 S 96 10, 120 8')}
+  </div>
+
+  <div class="antesDepois rv">
+    <div class="col antes"><h5>Antes</h5>
+      ${linha('6 ferramentas','no mesmo mês','WhatsApp, PDF, Drive, Trello…')}
+      ${linha('9 dias','até a aprovação','em média')}
+      ${linha('“quem aprovou isso?”','','sem registro')}
+      ${linha('O cliente','some entre os lotes','')}
+    </div>
+    <div class="meio">${ic('arrowr',18)}</div>
+    <div class="col depois"><h5>Com a Maestro</h5>
+      ${linha('1 lugar','do briefing ao ar','')}
+      ${linha('2 dias','até a decisão','−78%')}
+      ${linha('Termo assinado','com selo e versão','')}
+      ${linha('O cliente','vê a agenda dele','D-037')}
+    </div>
+  </div>
+
+  <div class="provaGrid">${cards}</div>
+
+  <div class="faixaLogos rv" aria-label="Agências do programa piloto — exemplos">
+    <div class="trem">${trem}</div>
+  </div>
+  <p class="rv" style="margin-top:14px;font-size:11.5px;color:var(--ink-500);line-height:1.6">
+    Estes nomes, números e depoimentos são <b style="color:var(--ink-300)">exemplos de
+    demonstração</b> — o programa piloto ainda não começou. Serão substituídos por
+    depoimentos reais, com autorização, antes de qualquer publicação comercial.
+    Número medido, nunca adjetivo (D-058).</p>
+</div></section>`;
+}
+
+/* troca a secao antiga pela nova dentro do site, sem reescrever o vSite inteiro */
+const _vSiteV19 = vSite;
+vSite = function(){
+  const html = _vSiteV19();
+  const ini = html.indexOf('<section class="ssec"><div class="wrapc">\n  <div class="klabel rv">Quem já rege com a Maestro</div>');
+  if(ini < 0) return html;                       // se a ancora mudar, nao quebra o site
+  const fim = html.indexOf('</section>', ini) + '</section>'.length;
+  return html.slice(0, ini) + provaSocial() + html.slice(fim);
+};
+</script>
+<style>
+/* =====================================================================
+   v20b — contraste da prova social.
+   A auditoria acusou 41 elementos abaixo de 4,5:1. O pior era a etiqueta
+   de segmento (1,65 — praticamente invisivel) e, mais grave, o AVISO de
+   que os depoimentos sao exemplos, a 2,56. Um aviso de honestidade que
+   nao se le nao e aviso.
+   ================================================================== */
+.provaNum .sub{ color:var(--ink-300) }
+.antesDepois .antes h5{ color:var(--ink-300) }
+.antes .adLinha{ color:var(--ink-300) }
+.antes .adLinha b{ color:var(--ink-100) }
+.adLinha em{ color:var(--ink-300); opacity:1 }
+.depois .adLinha{ color:var(--ink-100) }
+.dep .tag{ color:var(--ink-300) }
+.dep.daAgencia .lado{ color:var(--ink-200) }
+.dep .quem span{ color:var(--ink-300) }
+.dep .quem .av{ background:var(--ink-600); color:var(--ink-50) }
+.faixaLogos .trem span{ color:var(--ink-300) }
+/* o aviso precisa ser o texto mais legivel da secao, nao o menos */
+.faixaLogos + p{ color:var(--ink-200)!important; font-size:12.5px!important }
+.faixaLogos + p b{ color:var(--brass-300)!important }
+</style>
