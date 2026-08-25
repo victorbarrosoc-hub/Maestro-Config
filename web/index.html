@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-25 19:47 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-25 19:55 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -7567,9 +7567,14 @@ corpoPauta = function(){
   border:1px solid rgba(53,184,122,.32); border-radius:999px; padding:4px 11px }
 
 /* a área de soltar arquivo */
-.mtSolta{ border:1.5px dashed var(--ink-700); border-radius:14px; padding:26px 18px;
+/* <label> nasce display:inline — sem isto a borda tracejada quebra em
+   volta das linhas e os filhos em bloco escapam da caixa */
+.mtSolta{ display:block; box-sizing:border-box; width:100%;
+  border:1.5px dashed var(--ink-700); border-radius:14px; padding:26px 18px;
   text-align:center; background:var(--ink-950); cursor:pointer;
   transition:border-color var(--fast) var(--eo), background var(--fast) var(--eo) }
+.mtSolta .ic{ line-height:1 }
+.mtSolta span{ display:block }
 .mtSolta:hover,.mtSolta.sobre{ border-color:var(--brass-500);
   background:rgba(200,150,58,.06) }
 .mtSolta .ic{ font-size:26px; color:var(--brass-500); margin-bottom:9px }
@@ -7838,3 +7843,122 @@ ptVistaTabela = (function(orig){
 /* v31b — o peso do arquivo estava em 4,12:1 */
 .mtCard .peso{ color:var(--ink-300) }
 </style>
+<style>
+/* =====================================================================
+   v32 — data de verdade no formulário. Só dava para escolher o dia da
+   semana, e a pauta da EJUP é datada (26/08 a 30/09).
+   ================================================================== */
+.dtLinha{ display:flex; gap:9px; align-items:center; flex-wrap:wrap }
+.dtLinha input[type=date]{ flex:1; min-width:150px; color-scheme:dark }
+.dtEco{ font-family:var(--mono); font-size:11px; color:var(--brass-300);
+  background:rgba(200,150,58,.1); border:1px solid rgba(200,150,58,.28);
+  border-radius:7px; padding:6px 11px; white-space:nowrap }
+.dtEco.vazio{ color:var(--ink-300); background:var(--ink-850);
+  border-color:var(--ink-700) }
+.dtAtalhos{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px }
+.dtAtalhos button{ font-family:var(--mono); font-size:10.5px; padding:5px 11px;
+  border-radius:999px; border:1px solid var(--ink-700); color:var(--ink-300);
+  background:var(--ink-950); transition:color var(--fast) var(--eo),
+    border-color var(--fast) var(--eo) }
+.dtAtalhos button:hover{ color:var(--brass-300); border-color:var(--brass-600) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v32 — a agenda no formulário: escolhe a DATA, e o dia da semana vem
+   junto sozinho. O select de dia da semana ficou para as pautas antigas
+   que não têm data.
+   ================================================================== */
+const hojeISO = () => { const d = new Date();
+  return `${d.getFullYear()}-${D2(d.getMonth()+1)}-${D2(d.getDate())}`; };
+const somaDias = (iso, n) => { const [a,m,d] = iso.split('-').map(Number);
+  const x = new Date(a, m-1, d + n);
+  return `${x.getFullYear()}-${D2(x.getMonth()+1)}-${D2(x.getDate())}`; };
+
+function ecoDaData(iso){
+  if(!iso) return `<span class="dtEco vazio" id="pt-eco">escolha a data</span>`;
+  return `<span class="dtEco" id="pt-eco">${rotuloLongo(iso)}</span>`;
+}
+
+modalPauta = (function(orig){
+  return function(id){
+    let html = orig(id);
+    const p = id ? S.pauta.find(x=>x.id===id) : null;
+    const data = p && p.data ? p.data : hojeISO();
+    const campo = `
+    <div class="fld"><label for="pt-data">Data da postagem</label>
+      <div class="dtLinha">
+        <input type="date" id="pt-data" value="${data}">
+        ${ecoDaData(data)}
+      </div>
+      <div class="dtAtalhos">
+        <button type="button" data-dtsalto="0">hoje</button>
+        <button type="button" data-dtsalto="1">amanhã</button>
+        <button type="button" data-dtsalto="7">+1 semana</button>
+      </div>
+      <p class="fhint">O dia da semana vem da data — não precisa escolher os dois.</p>
+    </div>`;
+    // troca o par "Dia da semana + Horário" por "Data + Horário"
+    const alvo = /<div class="frow" style="grid-template-columns:1fr 1fr">[\s\S]*?<\/div>\s*<\/div>/;
+    if(alvo.test(html)){
+      html = html.replace(alvo, campo + `
+      <div class="fld"><label for="pt-hora">Horário</label>
+        <input id="pt-hora" value="${p?p.hora:'18:30'}" inputmode="numeric"></div>`);
+    }
+    return html;
+  };
+})(modalPauta);
+
+/* o eco do dia da semana acompanha a escolha */
+document.addEventListener('change', e => {
+  if(e.target.id !== 'pt-data') return;
+  const eco = document.getElementById('pt-eco');
+  if(!eco) return;
+  const v = e.target.value;
+  eco.className = v ? 'dtEco' : 'dtEco vazio';
+  eco.textContent = v ? rotuloLongo(v) : 'escolha a data';
+});
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-dtsalto]');
+  if(!t) return;
+  e.preventDefault();
+  const campo = document.getElementById('pt-data'); if(!campo) return;
+  campo.value = somaDias(hojeISO(), +t.dataset.dtsalto);
+  campo.dispatchEvent(new Event('change', {bubbles:true}));
+});
+
+/* salvar passa a gravar a data (e derivar o dia da semana dela) */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptok]');
+  if(!t) return;
+  const campo = document.getElementById('pt-data');
+  if(!campo || !campo.value) return;              // pauta antiga, sem data
+  S.ptDataEscolhida = campo.value;
+}, true);                                          // captura: roda antes do handler que salva
+
+const _ptOkV32 = document.createElement('div');    // marcador, sem uso
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptok]');
+  if(!t || !S.ptDataEscolhida) return;
+  const iso = S.ptDataEscolhida; S.ptDataEscolhida = null;
+  // o handler original já gravou; aqui só completamos com a data
+  const alvo = +t.dataset.ptok
+    ? S.pauta.find(x=>x.id===+t.dataset.ptok)
+    : S.pauta[S.pauta.length-1];
+  if(alvo){ alvo.data = iso; alvo.dia = diaDaSemana(iso); render(); }
+});
+
+/* "Preencher" num dia vazio já abre com a data daquele dia */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptnewdia]');
+  if(!t) return;
+  setTimeout(()=>{
+    const campo = document.getElementById('pt-data'); if(!campo) return;
+    const alvo = +t.dataset.ptnewdia;
+    let iso = hojeISO();
+    for(let i=0;i<7;i++){ if(diaDaSemana(iso)===alvo) break; iso = somaDias(iso,1); }
+    campo.value = iso;
+    campo.dispatchEvent(new Event('change',{bubbles:true}));
+  }, 0);
+});
+</script>

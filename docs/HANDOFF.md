@@ -387,6 +387,16 @@ arquivo anterior; carrossel acumula.
 > **No protótipo os arquivos ficam só na aba** — nada vai para servidor e somem ao
 > recarregar. Está escrito na tela. No produto vão para o armazenamento com versão e selo.
 
+**Dois defeitos corrigidos (v31c–v32).**
+
+1. A zona de soltar arquivo é um `<label>`, que nasce `display:inline` — e eu nunca
+   defini. Caixa inline com padding e borda tracejada quebra em volta das linhas e os
+   filhos em bloco escapam. Virou `display:block` com `box-sizing:border-box`.
+2. O formulário só deixava escolher **dia da semana**, mas a pauta da EJUP é datada.
+   Entrou `<input type="date">` com eco do dia da semana ("Quinta-feira, 17 de
+   setembro"), atalhos hoje/amanhã/+1 semana, e o dia da semana passou a ser **derivado**
+   da data. Mês novo cria aba nova sozinho (out apareceu ao datar em outubro).
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
