@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-25 19:03 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-25 19:16 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -6367,4 +6367,530 @@ render = function(){
 .ptDiaHd span{ color:var(--ink-300) }
 .ptCta b{ color:var(--ink-300) }
 .p-DRAFT{ color:var(--ink-200) }
+</style>
+<style>
+/* =====================================================================
+   v25 — a pauta em três visões: Semana, Mês e a Tabela da planilha.
+   Mais o filtro: todas · agendadas · o que falta.
+   ================================================================== */
+.ptSeg{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px }
+.ptSeg .seg{ flex:0 0 auto }
+.ptSeg .seg button{ padding:6px 16px }
+.ptFiltros{ display:flex; gap:7px; flex-wrap:wrap; margin-left:auto }
+.ptFiltros button{ font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
+  padding:5px 12px; border-radius:999px; border:1px solid var(--ink-700);
+  color:var(--ink-300); background:var(--ink-900);
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.ptFiltros button b{ color:var(--ink-100); font-weight:700; margin-left:4px }
+.ptFiltros button.on{ color:var(--brass-300); border-color:var(--brass-600);
+  background:rgba(200,150,58,.09) }
+.ptFiltros button.on b{ color:var(--brass-300) }
+
+/* dia vazio — o que falta */
+.ptVazio{ display:flex; align-items:center; gap:12px; padding:13px 15px;
+  border:1px dashed var(--ink-700); border-radius:12px; margin-bottom:8px;
+  color:var(--ink-300); font-size:13px }
+.ptVazio b{ color:var(--ink-100); font-weight:600 }
+.ptVazio button{ margin-left:auto; flex:0 0 auto }
+
+/* ---------- a tabela da planilha ------------------------------------ */
+.ptScroll{ overflow-x:auto; border:1px solid var(--ink-800); border-radius:14px;
+  background:var(--ink-900) }
+.ptTb{ border-collapse:collapse; width:100%; min-width:920px; font-size:12.5px }
+.ptTb th{ font-family:var(--mono); font-size:9.5px; letter-spacing:.1em;
+  text-transform:uppercase; font-weight:700; padding:9px 10px; text-align:center;
+  white-space:nowrap; border-bottom:1px solid var(--ink-800) }
+.ptTb th.esq{ text-align:left }
+.ptTb td{ padding:11px 10px; border-bottom:1px solid var(--ink-800);
+  vertical-align:top; color:var(--ink-200) }
+.ptTb tr:last-child td{ border-bottom:0 }
+.ptTb tr.ptTrRow{ cursor:pointer; transition:background var(--fast) var(--eo) }
+.ptTb tr.ptTrRow:hover{ background:var(--ink-850) }
+.ptTb tr.no-ar td:first-child{ box-shadow:inset 2px 0 0 var(--brass-500) }
+.ptTb .dia{ font-weight:600; color:var(--ink-50); white-space:nowrap }
+.ptTb .pontoCel{ text-align:center }
+.ptTb .pontoCel i{ display:inline-block; width:9px; height:9px; border-radius:50%;
+  font-style:normal }
+.ptTb tr.no-ar .pontoCel i{ box-shadow:0 0 7px 1px currentColor }
+.ptTb .conteudo{ min-width:250px; max-width:380px }
+.ptTb .conteudo b{ display:block; color:var(--ink-50); margin-bottom:2px }
+.ptTb .conteudo span{ display:block; color:var(--ink-300); line-height:1.45;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+.ptTb .cta{ min-width:170px; max-width:240px; font-style:italic; color:var(--ink-300);
+  line-height:1.45 }
+.ptTb .hora{ font-family:var(--mono); font-size:11px; white-space:nowrap;
+  color:var(--ink-200) }
+.ptTb .acao{ text-align:center }
+.ptTb .acao .ptQuick{ width:34px; height:34px; border-radius:9px; display:inline-grid }
+
+/* ---------- o mês ---------------------------------------------------- */
+.ptCal{ border:1px solid var(--ink-800); border-radius:14px; background:var(--ink-900);
+  padding:14px; margin-bottom:14px }
+.ptCal .malha{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px }
+.ptCal .wd{ font-family:var(--mono); font-size:9px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-500); text-align:center; padding:4px 0 7px }
+.ptCal .dd{ position:relative; min-height:52px; border-radius:9px;
+  background:var(--ink-850); border:1px solid transparent; padding:6px 7px;
+  font-family:var(--mono); font-size:11px; color:var(--ink-300); text-align:left;
+  transition:border-color var(--fast) var(--eo), transform var(--fast) var(--eo) }
+.ptCal .dd.tem{ cursor:pointer; color:var(--ink-100) }
+.ptCal .dd.tem:hover{ border-color:var(--ink-600); transform:translateY(-1px) }
+.ptCal .dd.sel{ border-color:var(--brass-500); background:rgba(200,150,58,.08) }
+.ptCal .dd.fora{ background:transparent }
+.ptCal .dd .pts{ position:absolute; left:7px; right:7px; bottom:6px;
+  display:flex; gap:3px; flex-wrap:wrap }
+.ptCal .dd .pts i{ width:6px; height:6px; border-radius:50%; font-style:normal }
+.ptCal .dd.agendado .pts i{ box-shadow:0 0 5px 1px currentColor }
+.ptCal .nota{ margin:11px 0 0; font-size:11.5px; color:var(--ink-300); line-height:1.5 }
+@media(max-width:560px){ .ptCal .dd{ min-height:44px } }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v25 — Semana · Mês · Tabela, e o filtro do que falta.
+   ================================================================== */
+S.ptVista  = S.ptVista  || 'semana';
+S.ptFiltro = S.ptFiltro || 'todas';
+S.ptMDia   = (S.ptMDia===undefined) ? null : S.ptMDia;
+
+/* corzinha do texto sobre o cabecalho colorido da tabela */
+const TXTESCURO = { tt:1, sb:1 };
+
+function ptItemHtml(p, i){
+  return `<div class="ptItem fu ${p.st==='SCHEDULED'?'no-ar':''}"
+      data-pt="${p.id}" style="animation-delay:${Math.min(i*45,320)}ms">
+    <button class="ptRow" data-ptedit="${p.id}">
+      <span class="ptL1">
+        <span class="ptHora">${ic('clock',11)} ${p.hora}</span>
+        ${ptDots(p.plats)}
+        <span class="ptFmtChip">${esc(p.fmt)}</span>
+        <span class="pill p-${p.st==='SCHEDULED'?'SCHEDULED':'DRAFT'}">${p.st==='SCHEDULED'?'Agendado':'Rascunho'}</span>
+      </span>
+      <span class="ptTit">${esc(p.t)}</span>
+      <span class="ptTxt">${esc(p.texto)}</span>
+      ${p.cta?`<span class="ptCta"><b>CTA</b>${esc(p.cta)}</span>`:''}
+      ${p.pecaId?(()=>{ const pc=S.pecas.find(x=>x.id===p.pecaId);
+        return pc?`<span class="ptVinc">${ic('sealic',11)} peça: ${esc(pc.t)}</span>`:''})():''}
+    </button>
+    <button class="ptQuick" data-ptag="${p.id}"
+      aria-label="${p.st==='SCHEDULED'?'Voltar a rascunho':'Agendar'}"
+      title="${p.st==='SCHEDULED'?'Voltar a rascunho':'Agendar'}">${ic('zap',16)}</button>
+  </div>`;
+}
+
+function ptVistaSemana(visiveis, filtro){
+  let corpo='', n=0;
+  for(let d=0; d<7; d++){
+    const doDia = visiveis.filter(p=>p.dia===d);
+    const noTotal = S.pauta.filter(p=>p.dia===d).length;
+    if(!doDia.length && !(filtro==='faltam' && noTotal===0)) continue;
+    const nome = DIAS[d] + (d<5?'-feira':'');
+    corpo += `<div class="ptDia"><div class="ptDiaHd"><b>${nome}</b>
+      <span>${doDia.length?`${doDia.length} ${doDia.length>1?'postagens':'postagem'}`:'vazio'}</span><i></i></div>
+      ${doDia.length ? doDia.map(p=>ptItemHtml(p,n++)).join('')
+        : `<div class="ptVazio">${ic('warn',15)}<span><b>Nada na pauta.</b>
+            O dia está sem postagem planejada.</span>
+          <button class="b gho sm" data-ptnewdia="${d}">${ic('pencil')} Preencher</button></div>`}
+    </div>`;
+  }
+  if(!corpo) corpo = vazio('Nada aqui com este filtro',
+    filtro==='feitas' ? 'Nenhuma postagem agendada ainda — o raio agenda na hora.'
+                      : 'Nenhuma pendência: a semana inteira está agendada.');
+  return corpo;
+}
+
+function ptVistaTabela(visiveis){
+  const plats = Object.keys(PLATS);
+  const linhas = [];
+  for(let d=0; d<7; d++){
+    const doDia = visiveis.filter(p=>p.dia===d);
+    doDia.forEach((p,j)=>{
+      linhas.push(`<tr class="ptTrRow ${p.st==='SCHEDULED'?'no-ar':''}" data-ptedit="${p.id}">
+        <td class="dia">${j===0 ? DIAS[d]+(d<5?'-feira':'') : ''}</td>
+        ${plats.map(k=>`<td class="pontoCel">${p.plats.includes(k)
+          ?`<i style="background:${PLATS[k].c};color:${PLATS[k].c}"></i>`:''}</td>`).join('')}
+        <td style="white-space:nowrap"><span class="ptFmtChip">${esc(p.fmt)}</span></td>
+        <td class="conteudo"><b>${esc(p.t)}</b><span>${esc(p.texto)}</span></td>
+        <td class="cta">${esc(p.cta||'—')}</td>
+        <td class="hora">${p.hora}</td>
+        <td class="acao"><button class="ptQuick" data-ptag="${p.id}"
+          aria-label="${p.st==='SCHEDULED'?'Voltar a rascunho':'Agendar'}">${ic('zap',14)}</button></td>
+      </tr>`);
+    });
+  }
+  return `<div class="ptScroll"><table class="ptTb">
+    <thead><tr><th class="esq">Dia</th>
+      ${plats.map(k=>`<th style="background:${PLATS[k].c};color:#08090B">${PLATS[k].n}</th>`).join('')}
+      <th class="esq">Formato</th><th class="esq">Conteúdo &amp; pauta</th>
+      <th class="esq">CTA / ação</th><th>Hora</th><th>⚡</th></tr></thead>
+    <tbody>${linhas.join('') || `<tr><td colspan="${plats.length+6}" style="text-align:center;padding:26px;color:var(--ink-300)">Nada aqui com este filtro.</td></tr>`}</tbody>
+  </table></div>
+  <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">A tabela da sua
+    planilha, viva: clique numa linha para editar, no raio para agendar. Ela rola de
+    lado no celular.</p>`;
+}
+
+function ptVistaMes(visiveis){
+  /* setembro/2026 abre numa terça; a pauta é semanal, o mês mostra a cadência */
+  const ND=30, m1=1;                       // dia 1 cai no índice 1 (terça)
+  const doDiaSem = m => visiveis.filter(p=>p.dia===m);
+  let cels = ['S','T','Q','Q','S','S','D'].map(w=>`<div class="wd">${w}</div>`).join('');
+  for(let i=0;i<m1;i++) cels += `<div class="dd fora"></div>`;
+  for(let d=1; d<=ND; d++){
+    const wk = (d - 1 + m1) % 7;                    // 0=seg … 6=dom (1/set cai na terça)
+    const ps = doDiaSem(wk);
+    const ag = ps.some(p=>p.st==='SCHEDULED');
+    cels += `<div class="dd ${ps.length?'tem':''} ${ag?'agendado':''} ${S.ptMDia===wk&&ps.length?'sel':''}"
+      ${ps.length?`data-ptmdia="${wk}" role="button" tabindex="0"`:''}>${d}
+      ${ps.length?`<span class="pts">${ps.slice(0,4).map(p=>
+        `<i style="background:${PLATS[p.plats[0]].c};color:${PLATS[p.plats[0]].c}"></i>`).join('')}</span>`:''}</div>`;
+  }
+  const sel = S.ptMDia !== null ? S.ptMDia : null;
+  const doSel = sel !== null ? doDiaSem(sel) : [];
+  return `<div class="ptCal"><div class="malha">${cels}</div>
+    <p class="nota">Setembro. A pauta é <b style="color:var(--ink-100)">semanal</b> — o mês
+    mostra a cadência dela se repetindo. Toque num dia para ver as postagens dele.</p></div>
+  ${sel!==null?`<div class="ptDia"><div class="ptDiaHd"><b>Toda ${DIAS[sel].toLowerCase()}${sel<5?'-feira':''}</b>
+    <span>${doSel.length} ${doSel.length>1?'postagens':'postagem'}</span><i></i></div>
+    ${doSel.map((p,i)=>ptItemHtml(p,i)).join('')}</div>`:''}`;
+}
+
+/* a tela — redefinida por cima da v24 (a última definição vence) */
+function agPauta(){
+  const podePauta = typeof pautaLiberada==='function' && pautaLiberada().includes(cliAtual().id);
+  const emVez = podePauta ? null : soLojaNorte('A pauta da semana');
+  const lista = [...S.pauta].sort((a,b)=> a.dia-b.dia || (a.hora<b.hora?-1:1));
+  const total = lista.length, agd = lista.filter(p=>p.st==='SCHEDULED').length;
+  const porPlat = {};
+  lista.forEach(p=>p.plats.forEach(k=>porPlat[k]=(porPlat[k]||0)+1));
+
+  const filtro = S.ptFiltro, vista = S.ptVista;
+  const visiveis = lista.filter(p => filtro==='todas' ? true
+    : filtro==='feitas' ? p.st==='SCHEDULED' : p.st!=='SCHEDULED');
+  const idx = {semana:0, mes:1, tabela:2}[vista] || 0;
+
+  const corpo = vista==='mes' ? ptVistaMes(visiveis)
+    : vista==='tabela' ? ptVistaTabela(visiveis)
+    : ptVistaSemana(visiveis, filtro);
+
+  return agShell(`
+  <div class="mtop"><div><h1>Pauta</h1>
+    <p>${esc(cliAtual().nome)} · o que vai ao ar, dia a dia</p></div>
+    ${podePauta?`<div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="b gho sm" data-ptimp="1">${ic('doc')} Importar planilha</button>
+      <button class="b pri sm" data-ptnew="1">${ic('pencil')} Nova postagem</button></div>`:''}</div>
+  ${chips()}
+  ${emVez || `
+  <div class="ptSeg">
+    <div class="seg">
+      <div class="thumb" style="left:calc(${idx} * 33.333% + 3px);width:calc(33.333% - 5px)"></div>
+      <button class="${vista==='semana'?'on':''}" data-ptvista="semana">Semana</button>
+      <button class="${vista==='mes'?'on':''}" data-ptvista="mes">Mês</button>
+      <button class="${vista==='tabela'?'on':''}" data-ptvista="tabela">Tabela</button>
+    </div>
+    <div class="ptFiltros" role="group" aria-label="Filtrar postagens">
+      <button class="${filtro==='todas'?'on':''}" data-ptfiltro="todas">todas<b>${total}</b></button>
+      <button class="${filtro==='feitas'?'on':''}" data-ptfiltro="feitas">agendadas<b>${agd}</b></button>
+      <button class="${filtro==='faltam'?'on':''}" data-ptfiltro="faltam">o que falta<b>${total-agd}</b></button>
+    </div>
+  </div>
+  <div class="ptCab">
+    ${gradeAmbiente(10)}
+    <div class="lin"><b>A semana em compasso</b>
+      <span class="num"><em>${agd}</em> de ${total} agendadas</span></div>
+    <div class="ptBar"><i style="width:${total?Math.round(agd/total*100):0}%"></i></div>
+    <div class="ptLeg">${Object.entries(porPlat).map(([k,v])=>
+      `<span><i style="background:${PLATS[k].c}"></i>${PLATS[k].n} · ${v}</span>`).join('')}</div>
+  </div>
+  ${corpo}`}`);
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptvista],[data-ptfiltro],[data-ptmdia],[data-ptnewdia]');
+  if(!t) return;
+  const d = t.dataset;
+  if(d.ptvista){ S.ptVista = d.ptvista; render(); return; }
+  if(d.ptfiltro){ S.ptFiltro = d.ptfiltro; render(); return; }
+  if(d.ptmdia !== undefined){ S.ptMDia = +d.ptmdia; render(); return; }
+  if(d.ptnewdia !== undefined){
+    S.modal = modalPauta(null); renderLayer();
+    const sel = document.getElementById('pt-dia');
+    if(sel) sel.value = d.ptnewdia;
+    return; }
+});
+/* teclado no calendário do mês */
+document.addEventListener('keydown', e => {
+  if(e.key!=='Enter' && e.key!==' ') return;
+  const dd = e.target.closest && e.target.closest('[data-ptmdia]');
+  if(!dd) return;
+  e.preventDefault(); S.ptMDia = +dd.dataset.ptmdia; render();
+});
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v26 — importar a planilha que ja existe.
+   A agencia nao comeca do zero: ela ja tem a pauta numa planilha. Aqui
+   ela sobe o CSV — ou simplesmente COLA as celulas copiadas do Excel ou
+   do Sheets (que chegam separadas por tab) — e a Maestro le a estrutura:
+   acha as colunas de dia, plataformas, formato, conteudo, CTA e hora,
+   herda o dia das linhas mescladas, e mostra o que entendeu antes de
+   adicionar qualquer coisa.
+   ================================================================== */
+
+/* um CSV/TSV de verdade: aspas, delimitador detectado */
+function lerTabela(txt){
+  const linha1 = txt.split(/\r?\n/)[0] || '';
+  const delim = linha1.includes('\t') ? '\t'
+    : (linha1.split(';').length > linha1.split(',').length ? ';' : ',');
+  const linhas = [];
+  let cel = '', linha = [], aspas = false;
+  for(let i=0; i<txt.length; i++){
+    const c = txt[i];
+    if(aspas){
+      if(c==='"' && txt[i+1]==='"'){ cel+='"'; i++; }
+      else if(c==='"') aspas = false;
+      else cel += c;
+    } else if(c==='"') aspas = true;
+    else if(c===delim){ linha.push(cel); cel=''; }
+    else if(c==='\n' || c==='\r'){
+      if(c==='\r' && txt[i+1]==='\n') i++;
+      linha.push(cel); cel='';
+      if(linha.some(x=>x.trim())) linhas.push(linha);
+      linha=[];
+    } else cel += c;
+  }
+  linha.push(cel);
+  if(linha.some(x=>x.trim())) linhas.push(linha);
+  return linhas;
+}
+
+const semAcento = t => t.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+
+function acharDia(txt){
+  const t = semAcento(txt).trim();
+  const nomes = [['seg',0],['ter',1],['qua',2],['qui',3],['sex',4],['sab',5],['dom',6]];
+  for(const [n,i] of nomes) if(t.startsWith(n)) return i;
+  return null;
+}
+function acharFormato(txt){
+  const t = semAcento(txt);
+  if(t.includes('reel')) return 'Reels';
+  if(t.includes('carros')) return 'Carrossel';
+  if(t.includes('artigo')) return 'Artigo';
+  if(t.includes('short')) return 'Shorts';
+  if(t.includes('stor')) return 'Story';
+  if(t.includes('podcast')) return 'Podcast';
+  if(t.includes('vid')) return 'Vídeo';
+  return 'Post';
+}
+const APELIDO_PLAT = { instagram:'ig', linkedin:'li', tiktok:'tt', youtube:'yt',
+  'site/blog':'sb', site:'sb', blog:'sb', stories:'str', story:'str', spotify:'sp' };
+
+function entenderPlanilha(txt){
+  const linhas = lerTabela(txt);
+  if(linhas.length < 2) return { erro:'A planilha precisa de um cabeçalho e ao menos uma linha.' };
+
+  // o cabecalho: a linha que tem "dia" ou o nome de alguma rede
+  let hIdx = -1;
+  for(let i=0; i<Math.min(4,linhas.length); i++){
+    const l = linhas[i].map(semAcento);
+    if(l.some(c=>c.trim()==='dia') || l.some(c=>APELIDO_PLAT[c.trim()])){ hIdx=i; break; }
+  }
+  if(hIdx<0) return { erro:'Não achei o cabeçalho — a planilha tem uma linha com "Dia" e os nomes das redes?' };
+
+  const cab = linhas[hIdx].map(c=>semAcento(c).trim());
+  const col = {plats:{}};
+  cab.forEach((c,i)=>{
+    if(c==='dia') col.dia=i;
+    else if(APELIDO_PLAT[c]) col.plats[i]=APELIDO_PLAT[c];
+    else if(c.includes('formato')) col.fmt=i;
+    else if(c.includes('conteudo')||c.includes('pauta')||c.includes('legenda')) col.texto=i;
+    else if(c.includes('cta')||c.includes('acao')||c.includes('direcion')) col.cta=i;
+    else if(c.includes('hora')) col.hora=i;
+  });
+  if(col.dia===undefined) return { erro:'Não achei a coluna "Dia".' };
+
+  const itens = [];
+  let diaAtual = null;
+  for(let i=hIdx+1; i<linhas.length; i++){
+    const l = linhas[i];
+    const d = acharDia(l[col.dia]||'');
+    if(d!==null) diaAtual = d;                     // celula mesclada herda o dia
+    if(diaAtual===null) continue;
+    const texto = (col.texto!==undefined ? l[col.texto] : '')?.trim() || '';
+    const fmtTxt = (col.fmt!==undefined ? l[col.fmt] : '')?.trim() || '';
+    const plats = Object.entries(col.plats)
+      .filter(([i2])=>(l[+i2]||'').trim())
+      .map(([,k])=>k);
+    if(!texto && !plats.length) continue;          // linha vazia de verdade
+    const horaBruta = (col.hora!==undefined ? l[col.hora] : '')?.trim() || '';
+    const hora = (horaBruta.match(/(\d{1,2})[:h](\d{2})/)||[])[0]?.replace('h',':') || '18:30';
+    itens.push({
+      dia: diaAtual, hora,
+      fmt: acharFormato(fmtTxt || texto),
+      plats: plats.length ? plats : ['ig'],
+      t: fmtTxt.length > 6 ? fmtTxt.slice(0,70) : (texto.split(/[.\n]/)[0].slice(0,70) || 'Postagem importada'),
+      texto, cta: (col.cta!==undefined ? l[col.cta] : '')?.trim() || '',
+      st:'DRAFT', pecaId:null
+    });
+  }
+  if(!itens.length) return { erro:'Cabeçalho entendido, mas nenhuma linha de postagem encontrada.' };
+  return { itens, colunas: Object.keys(col).filter(k=>k!=='plats').length + Object.keys(col.plats).length };
+}
+
+function modalImportar(){
+  const lidos = S.ptImport;
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3>Importar planilha</h3>
+    ${!lidos ? `
+    <p>Suba o CSV da sua pauta — ou copie as células direto do Excel/Sheets e cole
+      aqui. A Maestro acha as colunas de dia, redes, formato, conteúdo, CTA e hora,
+      e mostra o que entendeu antes de adicionar.</p>
+    <div class="fld"><label for="pt-file">Arquivo (.csv ou .tsv)</label>
+      <input type="file" id="pt-file" accept=".csv,.tsv,.txt"></div>
+    <div class="fld"><label for="pt-cola">…ou cole as células copiadas da planilha</label>
+      <textarea id="pt-cola" style="min-height:110px;font-family:var(--mono);font-size:12px"
+        placeholder="Dia&#9;Instagram&#9;LinkedIn&#9;Formato&#9;Conteúdo & Pauta&#9;CTA / Ação&#10;Terça-feira&#9;●&#9;&#9;Reels&#9;Corte do vídeo…&#9;Link na bio."></textarea>
+      <p class="fhint">Planilha .xlsx ainda não — exporte como CSV, ou selecione as
+        células e cole (elas chegam no formato certo sozinhas).</p></div>
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b pri" data-ptimpler="1">Ler a planilha</button></div>`
+    : `
+    <p>Entendi <b style="color:var(--brass-300)">${lidos.length}
+      ${lidos.length>1?'postagens':'postagem'}</b>. Confira o mapeamento — depois dá
+      para ajustar linha a linha, como qualquer postagem.</p>
+    <div style="max-height:290px;overflow-y:auto;display:grid;gap:7px;margin:4px 0 6px">
+      ${lidos.map(p=>`<div class="ptVazio" style="border-style:solid;cursor:default">
+        <span class="ptHora">${ic('clock',11)} ${p.hora}</span>
+        ${ptDots(p.plats)}
+        <span class="ptFmtChip">${esc(p.fmt)}</span>
+        <span style="min-width:0"><b>${DIAS[p.dia]}${p.dia<5?'-feira':''}</b> ·
+          <span style="color:var(--ink-300)">${esc(p.t)}</span></span></div>`).join('')}
+    </div>
+    <div class="modalrow" style="margin-top:12px">
+      <button class="b gho" data-ptimpvolta="1">Voltar</button>
+      <button class="b pri" data-ptimpok="1">Adicionar ${lidos.length} à pauta</button></div>`}
+  </div></div>`;
+}
+
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-ptimp],[data-ptimpler],[data-ptimpok],[data-ptimpvolta]');
+  if(!t) return;
+  const d = t.dataset;
+  if(d.ptimp){ S.ptImport=null; S.modal=modalImportar(); renderLayer(); return; }
+  if(d.ptimpvolta){ S.ptImport=null; S.modal=modalImportar(); renderLayer(); return; }
+  if(d.ptimpler){
+    let txt = '';
+    const arq = document.getElementById('pt-file')?.files?.[0];
+    if(arq) txt = await arq.text();
+    if(!txt) txt = document.getElementById('pt-cola')?.value || '';
+    if(!txt.trim()){ toast('Suba um arquivo ou cole as células.'); return; }
+    const r = entenderPlanilha(txt);
+    if(r.erro){ toast(r.erro); return; }
+    S.ptImport = r.itens;
+    S.modal = modalImportar(); renderLayer();
+    return; }
+  if(d.ptimpok){
+    let id = Math.max(0, ...S.pauta.map(x=>x.id));
+    S.ptImport.forEach(p=>S.pauta.push({ id:++id, ...p }));
+    const n = S.ptImport.length;
+    S.ptImport = null; S.modal = null;
+    som('toque'); render();
+    toast(`${n} ${n>1?'postagens importadas':'postagem importada'} como rascunho — ajuste e agende com o raio.`);
+    return; }
+});
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v27 — a EJUP entra como cliente, cada cliente tem a SUA pauta, e nada
+   se perde: o estado da pauta e dos clientes novos e guardado no
+   navegador (localStorage) a cada mudanca e volta sozinho ao reabrir.
+   ================================================================== */
+
+/* ---------- a EJUP -------------------------------------------------- */
+S.novos = S.novos || [];
+if(!S.novos.some(c=>c.nome==='EJUP')){
+  S.novos.push({ nome:'EJUP', ini:'EJ', seg:'Educação jurídica', cor:'#5B8DEF',
+    brief:'Educação jurídica de profundidade. Podcast EJUP e artigos doutrinários — autoridade sem juridiquês. A expert é o rosto.' });
+}
+const pautaLiberada = () => ['ln',
+  ...CLIS().filter(c=>c.nome==='EJUP').map(c=>c.id)];
+const ejupId = () => (CLIS().find(c=>c.nome==='EJUP')||{}).id || 'ej';
+
+/* ---------- a pauta da EJUP: a planilha do founder, ja dentro -------- */
+const PAUTA_EJUP = [
+  {id:1, dia:1, hora:'18:00', fmt:'Reels', plats:['ig','tt','yt'], st:'DRAFT', pecaId:null,
+   t:'Corte do Podcast',
+   texto:'Corte do podcast com Maria Luiza: trecho de maior impacto da conversa, sintetizando o tema central para atrair para o episódio completo.',
+   cta:'Episódio completo no site e no YouTube da EJUP. Link na bio.'},
+  {id:2, dia:2, hora:'11:00', fmt:'Artigo', plats:['ig','li','sb'], st:'DRAFT', pecaId:null,
+   t:'Artigo Aprofundado + Foto Orgânica',
+   texto:'Artigo sobre superendividamento: fundamentos jurídicos, Lei 14.181/2021 e a atuação preventiva do advogado. Nativo no LinkedIn e post editorial no Instagram direcionando tráfego para o blog.',
+   cta:'Leia o artigo completo no blog da EJUP (link na bio e nos stories).'},
+  {id:3, dia:3, hora:'19:00', fmt:'Carrossel', plats:['ig','li'], st:'DRAFT', pecaId:null,
+   t:'Reforço Analítico + Stories',
+   texto:'Carrossel-resumo com um dado central do artigo sobre superendividamento. Stories com enquete de reflexão: "Você já lidou com um caso de superendividamento?"',
+   cta:'Ainda não leu? O artigo completo está no blog da EJUP — link na bio.'},
+  {id:4, dia:4, hora:'12:00', fmt:'Story', plats:['ig','str'], st:'DRAFT', pecaId:null,
+   t:'Bastidor / Caixa de Perguntas',
+   texto:'Bastidores da gravação do podcast com Maria Luiza (foto/carrossel de produção). Stories com caixinha sobre superendividamento e educação financeira no Direito.',
+   cta:'Deixe sua pergunta na caixinha — respondemos nos stories.'},
+  {id:5, dia:5, hora:'10:30', fmt:'Post', plats:['ig'], st:'DRAFT', pecaId:null,
+   t:'Post Manifesto / Aspas',
+   texto:'Citação de destaque de Maria Luiza sobre educação financeira e responsabilidade jurídica — peça de identidade, alinhada ao Manifesto EJUP.',
+   cta:'Compartilhe com quem defende profundidade em tempos de aceleração.'},
+  {id:6, dia:6, hora:'17:00', fmt:'Story', plats:['str'], st:'DRAFT', pecaId:null,
+   t:'Curadoria de Leituras (2–3 telas)',
+   texto:'Indicação de obra doutrinária sobre Direito do Consumidor e superendividamento, para preparar a semana.',
+   cta:'Toque no link para acessar a referência.'},
+  {id:7, dia:0, hora:'18:00', fmt:'Carrossel', plats:['ig','li'], st:'DRAFT', pecaId:null,
+   t:'Carrossel Conceitual + Stories',
+   texto:'Abertura da pauta temática de setembro: teaser dos três novos episódios do Podcast EJUP (Zeca Melo/Sebrae, Marco Bruno e Maria do Perpétuo) sob o fio condutor do mês.',
+   cta:'Salve este post e acompanhe os próximos lançamentos do Podcast EJUP.'}
+];
+
+/* ---------- cada cliente com a sua pauta ----------------------------- */
+const seedLN = Array.isArray(S.pauta) ? S.pauta : [];
+S.pautas = { ln: seedLN };
+S.pautas[ejupId()] = PAUTA_EJUP;
+delete S.pauta;
+Object.defineProperty(S, 'pauta', {
+  get(){ const id = cliAtual().id;
+    if(!S.pautas[id]) S.pautas[id] = [];
+    return S.pautas[id]; },
+  set(v){ S.pautas[cliAtual().id] = v; }
+});
+
+/* ---------- nada se perde: guarda no navegador ----------------------- */
+const CHAVE = 'maestro-prototipo-v1';
+try{
+  const guardado = JSON.parse(localStorage.getItem(CHAVE) || 'null');
+  if(guardado){
+    if(guardado.pautas) Object.assign(S.pautas, guardado.pautas);
+    if(Array.isArray(guardado.novos)){
+      guardado.novos.forEach(c=>{
+        if(!S.novos.some(x=>x.nome===c.nome)) S.novos.push(c); });
+    }
+  }
+}catch(e){}
+let _tmSalva = 0;
+function salvarLocal(){
+  try{ localStorage.setItem(CHAVE, JSON.stringify({
+    pautas:S.pautas, novos:S.novos, quando:Date.now() })); }catch(e){}
+}
+const _renderV27 = render;
+render = function(){
+  _renderV27();
+  clearTimeout(_tmSalva); _tmSalva = setTimeout(salvarLocal, 250);
+};
+</script>
+<style>
+/* v27b — contraste: o texto branco nao passa sobre as cores das redes
+   (Spotify dava 2,5:1) — texto escuro passa em todas. E os segmentos
+   nao selecionados estavam a 3,8:1 no site inteiro. */
+.seg button{ color:var(--ink-200) }
+.seg.lt button{ color:#4C4A44 }
 </style>

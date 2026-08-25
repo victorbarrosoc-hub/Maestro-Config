@@ -335,6 +335,17 @@ a semana 100% agendada toca a cadência de conclusão. Postagem pode vincular o 
 da peça final (aparece com o selo). Dados em `S.pauta`; contraste auditado (zero abaixo
 de 4,5:1 após v24b).
 
+**Pauta v25–v27 (2026-08-25).** Três visões — Semana, Mês (a cadência semanal projetada
+em setembro, com toque no dia) e **Tabela** (a planilha do founder, com cabeçalhos nas
+cores das redes) — mais filtro todas/agendadas/o que falta, com "Preencher" nos dias
+vazios. **Importar planilha**: lê CSV ou células coladas do Excel/Sheets (TSV), acha as
+colunas (dia, redes, formato, conteúdo, CTA, hora), herda dia de célula mesclada e mostra
+o mapeamento antes de adicionar. **EJUP entrou como cliente** com a pauta real da
+planilha dela (7 postagens). **Cada cliente tem a própria pauta** (`S.pautas` +
+accessor em `S.pauta`) e o estado (pautas + clientes novos) **persiste em
+localStorage** — sobrevive a recarga, por navegador. Banco compartilhado com login
+ainda não existe: é o próximo passo (Supabase ou a própria API dos blocos 1–5).
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
