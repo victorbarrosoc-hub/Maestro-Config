@@ -304,6 +304,27 @@ identificação, que é estática e ninguém lê. Medido depois: zero elementos 
 telas testadas, nas duas larguras. Sobra só o título da página no painel da agência no
 desktop — estático e transitório.
 
+**Publicado (2026-08-25).** O protótipo agora tem destino de produção:
+
+```
+web/index.html          gerado — NAO editar a mao
+web/montar.py           gera o index a partir do prototipo
+web/build.sh            bash web/build.sh  ← rode depois de mexer no prototipo
+web/manifest.webmanifest + web/icones/    PWA para a tela de inicio do iPhone
+vercel.json             reescreve / para /web/index.html (sem config no painel)
+```
+
+`main` e `feat/banco-real` estao no mesmo commit em
+`victorbarrosoc-hub/Maestro-Config`. O Vercel deve apontar para o repositorio
+sem mais nada — a reescrita resolve a raiz.
+
+**O que entrou junto:** abertura animada (a batuta desenha o M, o obó dá o Lá
+440, o M viaja para o canto) · painel gamificado com a orquestra do lote
+(8 cadeiras = 8 peças = a escala de Lá; clicar toca a nota, lote fechado toca
+a escala inteira) · medidor de agenda do cliente · gráfico de ritmo · prova
+social com os dois lados do balcão · motor de som novo (barra percutida com
+parciais inarmônicos e ataque de baqueta, no lugar da síntese crua).
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
