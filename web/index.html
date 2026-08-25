@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-25 20:32 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-25 20:39 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -8190,3 +8190,162 @@ mnAplicar();
 .cltab.mn button{ color:#3D3A34 }
 .cltab.mn button.on, .cltab.mn button.ativa{ color:#6B4A16 }
 </style>
+<style>
+/* =====================================================================
+   v34 — a barra passa a ser PERMANENTE, e o movimento fica elegante.
+
+   O founder viu duas coisas: a bolha pulava sem animar, e a barra
+   piscava a cada toque. Mesma causa — render() troca o #root inteiro, e
+   a barra ia junto: destruida e reconstruida a cada desenho. Vidro,
+   bolha e brilho nasciam de novo (o pisca), e a posicao anterior se
+   perdia (o pulo, porque nao havia de onde sair).
+
+   Agora a barra vive fora do #root: sobrevive aos desenhos, e so os
+   botoes sao atualizados. E o tempo subiu de 334ms para 620ms, com uma
+   curva mais macia — ele pediu elegante, nao rapido.
+   ================================================================== */
+:root{ --menisco:cubic-bezier(.45,0,.15,1); --mnDur:620ms }
+
+.mnBolha{ transition:width 260ms var(--menisco), height 260ms var(--menisco) }
+.mnBolha svg{ transition:opacity 200ms var(--menisco), transform 380ms var(--menisco) }
+.mnBolha.voando svg{ transform:scale(.78) }
+/* a barra permanente nao herda mais o fluxo do #root */
+.mnFixa{ position:fixed; left:0; right:0; bottom:0; z-index:600 }
+.mnFixa.cltab{ left:50%; transform:translateX(-50%); width:100%; max-width:460px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v34 — barra permanente + movimento mais macio.
+   ================================================================== */
+MN.DUR = 620;
+const MNBAR = {};                  // {tabbar:el, cltab:el} — sobrevivem ao render
+const mnUltima = {};               // ultima posicao por barra, para ter de onde sair
+
+/* curva nova: macia, desacelerando, sem ultrapassar */
+function mnCurva(t){
+  const p1x=.45, p1y=0, p2x=.15, p2y=1;   // parte macio, assenta macio
+  let lo=0, hi=1, u=t;
+  for(let k=0;k<26;k++){
+    u=(lo+hi)/2;
+    const x = 3*(1-u)*(1-u)*u*p1x + 3*(1-u)*u*u*p2x + u*u*u;
+    if(x<t) lo=u; else hi=u;
+  }
+  u=(lo+hi)/2;
+  return 3*(1-u)*(1-u)*u*p1y + 3*(1-u)*u*u*p2y + u*u*u;
+}
+
+/* constroi a moldura uma unica vez, ja fora do #root */
+function mnCriar(tipo, molde){
+  const claro = tipo === 'cltab';
+  const id = 'mn' + tipo;
+  const nav = document.createElement('nav');
+  nav.className = tipo + ' mn mnFixa';
+  nav.innerHTML = `<div class="mnPalco"><div class="mnBarra">
+    <div class="mnGlow"></div>
+    <svg class="mnSvg" viewBox="0 0 ${MN.L} ${MN.A}" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="luz-${id}" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
+          <stop offset="20%" stop-color="${claro?'rgba(255,255,255,.9)':'rgba(255,255,255,.42)'}"/>
+          <stop offset="50%" stop-color="${claro?'rgba(255,255,255,1)':'rgba(255,255,255,.62)'}"/>
+          <stop offset="80%" stop-color="${claro?'rgba(255,255,255,.9)':'rgba(255,255,255,.42)'}"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </linearGradient>
+        <clipPath id="rec-${id}"><path class="mnRec" d=""/></clipPath>
+      </defs>
+      <foreignObject x="0" y="0" width="${MN.L}" height="${MN.A}" clip-path="url(#rec-${id})">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="mnVidro"></div>
+      </foreignObject>
+      <path class="mnContorno" d=""/>
+      <path class="mnLuz" d="" stroke="url(#luz-${id})"/>
+    </svg>
+    <div class="mnAbas">${molde}</div>
+    <div class="mnBolha"></div>
+  </div></div>`;
+  document.body.appendChild(nav);
+  return nav;
+}
+
+/* a cada desenho: pega os botoes novos e joga na barra permanente */
+function mnSincronizar(){
+  ['tabbar','cltab'].forEach(tipo=>{
+    const emitida = document.querySelector('#root .' + tipo + ':not(.mnFixa)');
+    let barra = MNBAR[tipo];
+    if(emitida){
+      const botoes = emitida.innerHTML;
+      emitida.remove();                       // a do #root vai embora sempre
+      if(!barra){ barra = MNBAR[tipo] = mnCriar(tipo, botoes); }
+      else {
+        const abas = barra.querySelector('.mnAbas');
+        if(abas.innerHTML !== botoes) abas.innerHTML = botoes;   // so troca se mudou
+      }
+      barra.hidden = false;
+    } else if(barra){
+      barra.hidden = true;                    // o outro lado nao usa esta barra
+      delete mnUltima[tipo];                  // ao voltar, entra sem voo
+    }
+  });
+}
+
+function mnAtualizar(nav, tipo){
+  const barra = nav.querySelector('.mnBarra'); if(!barra) return;
+  const abas = [...nav.querySelectorAll('.mnAbas > *')];
+  const ativa = abas.find(a=>a.classList.contains('on')) || abas[0];
+  if(!ativa) return;
+  abas.forEach(a=>a.classList.toggle('ativa', a===ativa));
+
+  const rb = barra.getBoundingClientRect();
+  if(!rb.width) return;
+  const ra = ativa.getBoundingClientRect();
+  const alvo = ra.left + ra.width/2 - rb.left;
+
+  const bolha = barra.querySelector('.mnBolha');
+  const glow  = barra.querySelector('.mnGlow');
+  const icone = ativa.querySelector('svg');
+  const novoIcone = icone ? icone.outerHTML.replace(/class="[^"]*"/,'') : '';
+  if(bolha.innerHTML !== novoIcone) bolha.innerHTML = novoIcone;
+
+  const por = px => {
+    bolha.style.left = px + 'px';
+    glow.style.left  = px + 'px';
+    mnDesenhar(barra, px / rb.width * MN.L);
+  };
+  const de = mnUltima[tipo];
+  mnUltima[tipo] = alvo;
+  if(de === undefined || REDUZ || Math.abs(de - alvo) < 1){ por(alvo); return; }
+
+  cancelAnimationFrame(mnAnim);
+  const t0 = performance.now();
+  bolha.classList.add('voando');
+  const passo = agora => {
+    const k = Math.min(1, (agora - t0) / MN.DUR);
+    por(de + (alvo - de) * mnCurva(k));
+    if(k < 1) mnAnim = requestAnimationFrame(passo);
+    else bolha.classList.remove('voando');
+  };
+  mnAnim = requestAnimationFrame(passo);
+  clearTimeout(mnAtualizar._t);
+  mnAtualizar._t = setTimeout(()=>{ if(bolha.classList.contains('voando')){
+    cancelAnimationFrame(mnAnim); por(alvo); bolha.classList.remove('voando'); } },
+    MN.DUR + 160);
+}
+
+function mnAplicar(){
+  mnSincronizar();
+  Object.entries(MNBAR).forEach(([tipo, nav])=>{
+    if(!nav.hidden) mnAtualizar(nav, tipo);
+  });
+}
+
+/* substitui o posRender da v33 */
+posRender = (function(orig){
+  return function(){ orig(); mnAplicar(); };
+})(_posRenderV33);
+
+addEventListener('resize', ()=>{
+  for(const k in mnUltima) delete mnUltima[k];
+  mnAplicar();
+});
+mnAplicar();
+</script>

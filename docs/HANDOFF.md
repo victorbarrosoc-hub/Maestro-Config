@@ -413,6 +413,20 @@ de luz especular na borda de cima.
 > 2,56 (agência). Corrigido — 8:1 a 11:1 nos dois lados. Cuidado ao medir: o vidro é
 > **irmão** dos botões, não ancestral, então um andador de árvore comum não o enxerga.
 
+**A barra ficou permanente (v34).** O founder viu a bolha **pular sem animar** e a barra
+**piscar** a cada toque — mesma causa: `render()` troca o `#root` inteiro e a barra ia
+junto, destruída e recriada a cada desenho. Vidro, bolha e brilho nasciam de novo (o
+pisca) e a posição anterior se perdia (o pulo — não havia de onde sair; a `WeakMap` era
+chaveada no `<nav>`, que deixava de existir).
+
+> Agora a barra **vive fora do `#root`**, no `body`: sobrevive aos desenhos e só os botões
+> são atualizados. `mnUltima` guarda a posição por tipo de barra, não por elemento.
+> Ao trocar de lado a outra some com `hidden`.
+
+**O tempo subiu de 334 ms para 620 ms**, com `cubic-bezier(.45,0,.15,1)` — ele pediu
+elegante, não rápido. Perfil medido: 0% no primeiro décimo (sai macio), 63% na metade,
+98% aos 90% (assenta macio), monotônico e sem ultrapassar.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
