@@ -1,0 +1,19 @@
+{
+  "name": "Maestro — Sistema Operacional para Agências",
+  "short_name": "Maestro",
+  "description": "Briefing, estratégia, aprovação e publicação num lugar só — com o cliente dentro.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#08090B",
+  "theme_color": "#08090B",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["productivity", "business"],
+  "icons": [
+    { "src": "icones/maestro-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icones/maestro-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icones/maestro-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

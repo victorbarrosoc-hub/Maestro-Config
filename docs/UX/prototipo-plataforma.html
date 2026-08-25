@@ -5872,3 +5872,150 @@ function som(tipo){
   }catch(e){}
 }
 </script>
+<script>
+"use strict";
+/* =====================================================================
+   v23 — o painel vira o palco.
+
+   A home da plataforma era quatro numeros e tres listas. Agora abre com
+   a orquestra do lote: oito cadeiras, oito pecas, a escala de La inteira.
+   Cada peca decidida acende uma cadeira e libera a nota dela — clicar
+   toca. Lote fechado, a escala inteira sobe.
+
+   Isso e o "gamificado" que da para fazer sem virar Duolingo: o jogo e a
+   propria operacao, e o premio e ouvir a orquestra completa.
+   ================================================================== */
+
+function agDash(){
+  const espera = S.pecas.filter(p=>p.st==='AWAITING_APPROVAL');
+  const volta  = S.pecas.filter(p=>p.st==='CHANGES_REQUESTED');
+  const ok     = S.pecas.filter(p=>p.st==='APPROVED');
+  const lote   = finAtivos().slice(0,8);
+  const feitas = lote.filter(p=>ACESA(p.st)).length;
+  const faltam = lote.length - feitas;
+
+  const linha = (p,i,sub,avt) => `<button ${stg(i)} data-peca="${p.id}"><span class="row" style="margin:0">
+    <span class="av">${avt}</span>
+    <span class="t"><b>${esc(p.t)}</b><span>${sub}</span></span>
+    <span class="pill p-${p.st}">${CT[p.st]}</span><span class="chev">${ic('chevr')}</span></span></button>`;
+
+  const tile = (rota, n, rot, chip, chipCls, vals, quente) => `
+    <button class="tile ${quente?'hot':''}" data-r="${rota}">
+      <div class="n" data-count="${n}">${n}</div><div class="l">${rot}</div>
+      ${chip?`<span class="chip ${chipCls}">${chip}</span>`:''}
+      ${spark(vals)}
+    </button>`;
+
+  return agShell(`
+  <div class="mtop"><div><h1>${saudacao()}, Victor</h1>
+    <p>Agência Nova · Loja Norte · Verão 26</p></div>
+    <button class="b pri sm" data-r="lote">${ic('stack')} Preparar lote</button></div>
+
+  <div class="palcoWrap">
+    ${gradeAmbiente(16)}
+    <div class="palcoTop">
+      <b>A orquestra de agosto</b>
+      <span>${feitas === lote.length && lote.length
+        ? 'lote fechado · a escala inteira'
+        : `faltam ${faltam} de ${lote.length}`}</span>
+    </div>
+    ${orquestra()}
+    <div class="palcoPe">
+      <span class="dica">${feitas===0
+        ? 'Cada peça decidida acende uma cadeira. <b>Clique numa para ouvir a nota dela.</b>'
+        : feitas===lote.length
+        ? '<b>Orquestra completa.</b> Clique no centro para ouvir o lote inteiro.'
+        : `<b>${feitas}</b> ${feitas===1?'cadeira acesa':'cadeiras acesas'} · clique para ouvir`}</span>
+      ${feitas===lote.length&&lote.length?`<button class="b pri sm" data-tocarlote="1">
+        ${ic('play',13)} Tocar o lote</button>`:''}
+    </div>
+  </div>
+
+  <div class="tiles">
+    ${tile('aprovacoes', espera.length, 'esperando o cliente',
+      espera.length?'com Helena':'', 'neutro', [2,4,3,6,5,espera.length||1], true)}
+    ${tile('producao', volta.length, 'voltaram com ajuste',
+      volta.length?`+${volta.length}`:'zero', volta.length?'desce':'sobe', [3,2,4,1,2,volta.length||0])}
+    ${tile('conteudos', ok.length, 'aprovadas',
+      ok.length?`+${ok.length}`:'', 'sobe', [0,1,1,3,4,ok.length||0])}
+    ${tile('projeto', 8, 'dias de agenda no projeto', 'D-037', 'neutro', [8,7,7,6,5,4])}
+  </div>
+
+  ${medidorAgenda()}
+  ${ritmoDoCiclo()}
+
+  <div style="display:flex;gap:9px;flex-wrap:wrap;margin:-4px 0 20px">
+    <button class="b gho sm" data-r="feed">${ic('img')} Feed do Instagram</button>
+    <button class="b gho sm" data-r="resultados">${ic('chart')} Resultados</button>
+    <button class="b gho sm" data-r="agenda">${ic('cal')} Agenda</button></div>
+
+  ${espera.length?`<div class="sechd">Esperando o cliente <i></i></div>
+    <div style="display:grid">${espera.map((p,i)=>linha(p,i,'Helena Braga · enviado há 3 dias','HB')).join('')}</div>`:''}
+  ${volta.length?`<div class="sechd">Voltaram para a equipe <i></i></div>
+    <div style="display:grid">${volta.map((p,i)=>linha(p,i,`${p.notes.length} nota${p.notes.length>1?'s':''} do cliente`,'HB')).join('')}</div>`:''}
+  ${ok.length?`<div class="sechd">Aprovadas e na fila <i></i></div>
+    <div style="display:grid">${ok.map((p,i)=>linha(p,i,`vai ao ar ${p.d} · selo ${fmtSeal(p.seal)}`,'✓')).join('')}</div>`:''}
+  ${!espera.length&&!volta.length&&!ok.length?`<div class="empty"><div class="eic">${ic('stack')}</div>
+    <b>Nenhuma peça no ciclo</b><p>Monte o lote de agosto para começar.</p>
+    <button class="b pri sm" data-r="lote">Preparar lote</button></div>`:''}`);
+}
+
+/* ---------- tocar as cadeiras ---------------------------------------- */
+document.addEventListener('click', e => {
+  const cad = e.target.closest('[data-cad]');
+  if(cad){
+    const f = +cad.dataset.f, p = S.pecas.find(x=>x.id===+cad.dataset.cad);
+    if(S.sound){ try{
+      AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+      if(AC.state==='suspended') AC.resume().catch(()=>{});
+      barra(f, 0, ACESA(p?.st)?.34:.16, ACESA(p?.st)?'vibrafone':'madeira', 0);
+    }catch(err){} }
+    cad.classList.add('tocando');
+    setTimeout(()=>cad.classList.remove('tocando'), 560);
+    if(p) toast(`${esc(p.t)} — ${CT[p.st]}`);
+    return;
+  }
+  if(e.target.closest('[data-tocarlote]')){
+    tocarLote(); return;
+  }
+});
+
+/* <g> em SVG nao dispara clique pelo teclado — sem isto a cadeira e
+   focavel mas nao acionavel, o que e pior do que nao ser focavel */
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Enter' && e.key !== ' ') return;
+  const cad = e.target.closest && e.target.closest('[data-cad]');
+  if(!cad) return;
+  e.preventDefault();
+  cad.dispatchEvent(new MouseEvent('click', {bubbles:true}));
+});
+
+/* a escala inteira, de baixo para cima: o premio de fechar o lote */
+function tocarLote(){
+  if(!S.sound) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended') AC.resume().catch(()=>{});
+    CADEIRAS.forEach((c,i)=> barra(c.f, i*.115, .26, i<5?'vibrafone':'celesta', -.25+i*.07));
+    fundo(110, .95, .26);
+    barra(440, 1.0, .30, 'celesta', 0);
+  }catch(e){}
+  const el = document.querySelector('.orq');
+  if(el) el.querySelectorAll('.cadeira').forEach((c,i)=>{
+    setTimeout(()=>{ c.classList.add('tocando');
+      setTimeout(()=>c.classList.remove('tocando'), 560); }, i*115);
+  });
+}
+
+/* o arco de progresso anima depois que a tela existe */
+const _posRenderV23 = posRender;
+posRender = function(){
+  _posRenderV23();
+  document.querySelectorAll('.orq .cheio[data-cheio]').forEach(el=>{
+    const alvo = el.dataset.cheio;
+    const por = () => { el.style.strokeDashoffset = alvo; };
+    requestAnimationFrame(por);
+    setTimeout(por, 60);        // aba em segundo plano nao dispara rAF
+  });
+};
+</script>
