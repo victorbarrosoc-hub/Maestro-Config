@@ -397,6 +397,22 @@ arquivo anterior; carrossel acumula.
    setembro"), atalhos hoje/amanhã/+1 semana, e o dia da semana passou a ser **derivado**
    da data. Mês novo cria aba nova sozinho (out apareceu ao datar em outubro).
 
+**A barra de baixo virou menisco (v33).** Bolha de latão que corre e a superfície de
+vidro que **sobe para encontrá-la** — nos dois lados, agência e cliente (variante clara).
+Vidro real: desfoque 26px + saturação 165%, recortado pela mesma forma da barra, com fio
+de luz especular na borda de cima.
+
+> **A curva foi medida, não chutada.** Rastreei os 154 quadros do vídeo de referência
+> pixel a pixel: **334 ms**, `cubic-bezier(0,.45,.6,1)`, **sem ultrapassar**. A primeira
+> tentativa usava 580 ms com uma mola que passava 4% do alvo e voltava — e, pior, eu
+> redesenhava o berço já no destino, então a barra saltava enquanto a bolha deslizava.
+> Agora bolha, berço, brilho e ícone são conduzidos pelo **mesmo relógio em JS**
+> (`mnAtualizar`), com desalinho medido igual a zero.
+
+> Contraste: o vidro é mais claro que o fundo opaco anterior e os rótulos caíram para
+> 2,56 (agência). Corrigido — 8:1 a 11:1 nos dois lados. Cuidado ao medir: o vidro é
+> **irmão** dos botões, não ancestral, então um andador de árvore comum não o enxerga.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

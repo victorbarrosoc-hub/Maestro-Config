@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-25 19:55 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-25 20:32 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -7962,3 +7962,231 @@ document.addEventListener('click', e => {
   }, 0);
 });
 </script>
+<style>
+/* =====================================================================
+   v33 — o menisco na barra real, nos dois lados.
+
+   A bolha corre e a superficie SOBE para encontra-la. Curva medida
+   quadro a quadro no video de referencia: 334ms, cubic-bezier(0,.45,.6,1),
+   sem ultrapassar. Bolha, berco, brilho e rotulo sao conduzidos pelo
+   mesmo relogio em JS — foi por eles andarem separados que a primeira
+   tentativa saiu errada.
+   ================================================================== */
+:root{ --menisco:cubic-bezier(0,.45,.6,1); --mnDur:334ms }
+
+/* a barra vira palco: o fundo sai dela e vai para o SVG */
+.tabbar.mn, .cltab.mn{
+  background:transparent!important; border-top:0!important;
+  backdrop-filter:none!important; -webkit-backdrop-filter:none!important;
+  padding:0!important; overflow:visible;
+}
+.mnPalco{position:relative; padding:0 10px calc(6px + env(safe-area-inset-bottom));
+  isolation:isolate}
+.mnBarra{position:relative; height:60px; margin:0 auto; max-width:460px;
+  filter:drop-shadow(0 -2px 22px rgba(0,0,0,.45))}
+.mnSvg{position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:0}
+.mnVidro{position:absolute; inset:0;
+  -webkit-backdrop-filter:blur(26px) saturate(165%);
+  backdrop-filter:blur(26px) saturate(165%);
+  background:linear-gradient(180deg, rgba(255,255,255,.085),
+    rgba(255,255,255,.028) 42%, rgba(255,255,255,.05));}
+.cltab .mnVidro{background:linear-gradient(180deg, rgba(255,255,255,.86),
+  rgba(255,255,255,.70) 45%, rgba(255,255,255,.82))}
+.mnContorno{fill:none; stroke:rgba(255,255,255,.16); stroke-width:1}
+.cltab .mnContorno{stroke:rgba(23,24,28,.12)}
+.mnLuz{fill:none; stroke-width:1.4}
+
+/* as abas ficam por cima do vidro */
+.mnAbas{position:absolute; inset:0 14px; display:grid; grid-auto-flow:column;
+  grid-auto-columns:1fr; align-items:center; z-index:2}
+.tabbar.mn .tab, .cltab.mn button{padding:4px 2px}
+.tabbar.mn .tab.ativa svg.i, .cltab.mn button.ativa svg.i{opacity:0}
+.tabbar.mn .tab.ativa, .cltab.mn button.ativa{color:var(--brass-400)}
+.cltab.mn button.ativa{color:#855F22}
+
+/* a bolha */
+.mnBolha{position:absolute; top:-18px; width:44px; height:44px; border-radius:50%;
+  transform:translateX(-50%); z-index:4; display:grid; place-items:center;
+  pointer-events:none;
+  background:radial-gradient(120% 120% at 32% 24%, #E9CE86, var(--brass-500) 62%, #A87A2C);
+  box-shadow:0 0 0 1px rgba(255,255,255,.16) inset,
+    0 8px 20px -6px rgba(200,150,58,.75), 0 0 24px 4px rgba(200,150,58,.34);
+  transition:width 150ms var(--menisco), height 150ms var(--menisco);}
+.mnBolha::after{content:""; position:absolute; inset:3px 3px 55% 3px; border-radius:50%;
+  background:linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0))}
+.mnBolha svg{width:18px; height:18px; stroke:#0B0C0E; fill:none; stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round; position:relative; z-index:1;
+  transition:opacity .16s linear, transform .28s var(--menisco)}
+.mnBolha.voando{width:46px; height:46px}
+.mnBolha.voando svg{opacity:0; transform:scale(.72)}
+
+/* o brilho que escorre por baixo */
+.mnGlow{position:absolute; bottom:-26px; width:230px; height:120px; border-radius:50%;
+  transform:translateX(-50%); filter:blur(38px); opacity:.42; z-index:0;
+  pointer-events:none;
+  background:radial-gradient(circle, var(--brass-500), transparent 66%)}
+.cltab .mnGlow{opacity:.3}
+
+@media (prefers-reduced-motion:reduce){
+  .mnBolha,.mnBolha svg{transition:none}
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v33 — o menisco aplicado. Um relogio, quatro peças.
+   ================================================================== */
+const MN = { L:460, A:60, R:24, BERCO:44, ALTO:14, DUR:334 };
+let mnAnim = null, mnPos = new WeakMap();
+
+function mnCurva(t){
+  const p1y=.45, p2x=.6;
+  let lo=0, hi=1, u=t;
+  for(let k=0;k<24;k++){
+    u=(lo+hi)/2;
+    const x = 3*(1-u)*u*u*p2x + u*u*u;      // p1x = 0
+    if(x<t) lo=u; else hi=u;
+  }
+  u=(lo+hi)/2;
+  return 3*(1-u)*(1-u)*u*p1y + 3*(1-u)*u*u + u*u*u;
+}
+
+/* nas abas das pontas o berco encostava no canto e virava um espeto.
+   Agora ele estreita de cada lado conforme a borda chega — que e, alias,
+   o que o liquido faz de verdade ao encostar na parede do copo. */
+function mnAsas(bx){
+  const {L,R,BERCO:w} = MN;
+  return { e:Math.max(R, bx - Math.max(14, Math.min(w, bx - R))),
+           d:Math.min(L - R, bx + Math.max(14, Math.min(w, (L - R) - bx))) };
+}
+function mnForma(bx){
+  const {L,A,R,BERCO:w,ALTO:h} = MN;
+  const {e,d} = mnAsas(bx);
+  return `M ${R} 0 L ${e} 0
+    C ${e + w*.42} 0, ${bx - w*.46} ${-h}, ${bx} ${-h}
+    C ${bx + w*.46} ${-h}, ${d - w*.42} 0, ${d} 0
+    L ${L-R} 0 A ${R} ${R} 0 0 1 ${L} ${R} L ${L} ${A-R}
+    A ${R} ${R} 0 0 1 ${L-R} ${A} L ${R} ${A}
+    A ${R} ${R} 0 0 1 0 ${A-R} L 0 ${R} A ${R} ${R} 0 0 1 ${R} 0 Z`;
+}
+
+/* monta a moldura dentro da barra, uma vez por desenho */
+function mnMontar(nav){
+  if(!nav || nav.dataset.mn) return;
+  nav.dataset.mn = '1';
+  const claro = nav.classList.contains('cltab');
+  const id = 'mn' + Math.random().toString(36).slice(2,8);
+  const abas = [...nav.children];
+  const palco = document.createElement('div'); palco.className = 'mnPalco';
+  const barra = document.createElement('div'); barra.className = 'mnBarra';
+  barra.innerHTML = `
+    <div class="mnGlow"></div>
+    <svg class="mnSvg" viewBox="0 0 ${MN.L} ${MN.A}" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="luz-${id}" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="${claro?'rgba(255,255,255,0)':'rgba(255,255,255,0)'}"/>
+          <stop offset="20%" stop-color="${claro?'rgba(255,255,255,.9)':'rgba(255,255,255,.42)'}"/>
+          <stop offset="50%" stop-color="${claro?'rgba(255,255,255,1)':'rgba(255,255,255,.62)'}"/>
+          <stop offset="80%" stop-color="${claro?'rgba(255,255,255,.9)':'rgba(255,255,255,.42)'}"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </linearGradient>
+        <clipPath id="rec-${id}"><path class="mnRec" d=""/></clipPath>
+      </defs>
+      <foreignObject x="0" y="0" width="${MN.L}" height="${MN.A}" clip-path="url(#rec-${id})">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="mnVidro"></div>
+      </foreignObject>
+      <path class="mnContorno" d=""/>
+      <path class="mnLuz" d="" stroke="url(#luz-${id})"/>
+    </svg>
+    <div class="mnAbas"></div>
+    <div class="mnBolha"></div>`;
+  barra.querySelector('.mnAbas').append(...abas);
+  palco.appendChild(barra);
+  nav.appendChild(palco);
+  nav.classList.add('mn');
+}
+
+function mnDesenhar(barra, bx){
+  if(!Number.isFinite(bx)) return;
+  const svg = barra.querySelector('.mnSvg');
+  const d = mnForma(bx);
+  svg.querySelector('.mnRec').setAttribute('d', d);
+  svg.querySelector('.mnContorno').setAttribute('d', d);
+  const {L,R,BERCO:w,ALTO:h} = MN;
+  const {e,d:dd} = mnAsas(bx);
+  svg.querySelector('.mnLuz').setAttribute('d',
+    `M ${R} 0 L ${e} 0 C ${e + w*.42} 0, ${bx - w*.46} ${-h}, ${bx} ${-h}
+     C ${bx + w*.46} ${-h}, ${dd - w*.42} 0, ${dd} 0 L ${L-R} 0`);
+}
+
+/* posiciona (e anima) a bolha na aba ativa */
+function mnAtualizar(nav){
+  const barra = nav.querySelector('.mnBarra'); if(!barra) return;
+  const abas = [...nav.querySelectorAll('.mnAbas > *')];
+  const ativa = abas.find(a=>a.classList.contains('on')) || abas[0];
+  if(!ativa) return;
+  abas.forEach(a=>a.classList.toggle('ativa', a===ativa));
+
+  const rb = barra.getBoundingClientRect();
+  if(!rb.width) return;
+  const ra = ativa.getBoundingClientRect();
+  const alvo = ra.left + ra.width/2 - rb.left;
+
+  const bolha = barra.querySelector('.mnBolha');
+  const glow  = barra.querySelector('.mnGlow');
+  const icone = ativa.querySelector('svg');
+  bolha.innerHTML = icone ? icone.outerHTML.replace(/class="[^"]*"/,'') : '';
+
+  const por = px => {
+    bolha.style.left = px + 'px';
+    glow.style.left  = px + 'px';
+    mnDesenhar(barra, px / rb.width * MN.L);
+  };
+  const de = mnPos.get(nav);
+  mnPos.set(nav, alvo);
+
+  if(de === undefined || REDUZ || Math.abs(de - alvo) < 1){ por(alvo); return; }
+
+  cancelAnimationFrame(mnAnim);
+  const t0 = performance.now();
+  bolha.classList.add('voando');
+  const passo = agora => {
+    const k = Math.min(1, (agora - t0) / MN.DUR);
+    por(de + (alvo - de) * mnCurva(k));
+    if(k < 1) mnAnim = requestAnimationFrame(passo);
+    else bolha.classList.remove('voando');
+  };
+  mnAnim = requestAnimationFrame(passo);
+  setTimeout(()=>{ if(bolha.classList.contains('voando')){
+    cancelAnimationFrame(mnAnim); por(alvo); bolha.classList.remove('voando'); } },
+    MN.DUR + 120);
+}
+
+function mnAplicar(){
+  document.querySelectorAll('.tabbar, .cltab').forEach(nav=>{
+    mnMontar(nav);
+    mnAtualizar(nav);
+  });
+}
+
+const _posRenderV33 = posRender;
+posRender = function(){
+  _posRenderV33();
+  mnAplicar();
+  setTimeout(mnAplicar, 40);        // segunda passada: o layout pode assentar depois
+};
+addEventListener('resize', ()=>{
+  document.querySelectorAll('.tabbar, .cltab').forEach(n=>mnPos.delete(n));
+  mnAplicar();
+});
+mnAplicar();
+</script>
+<style>
+/* v33b — o vidro e mais claro que o fundo opaco que existia antes, entao
+   os rotulos das abas cairam para 2,56 (agencia) e 3,70 (cliente).
+   Sobre vidro o texto precisa ser mais forte. */
+.tabbar.mn .tab{ color:var(--ink-200) }
+.tabbar.mn .tab.on, .tabbar.mn .tab.ativa{ color:var(--brass-300) }
+.cltab.mn button{ color:#3D3A34 }
+.cltab.mn button.on, .cltab.mn button.ativa{ color:#6B4A16 }
+</style>
