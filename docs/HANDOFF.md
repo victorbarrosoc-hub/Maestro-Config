@@ -325,6 +325,16 @@ a escala inteira) · medidor de agenda do cliente · gráfico de ritmo · prova
 social com os dois lados do balcão · motor de som novo (barra percutida com
 parciais inarmônicos e ataque de baqueta, no lugar da síntese crua).
 
+**Pauta da semana (camada v24, 2026-08-25).** A planilha editorial do founder virou a
+tela `pauta` do lado da agência (lateral, entre Agenda e Lotes, e no sanduíche): dia a
+dia, cada linha é uma postagem com formato (Reels/Carrossel/Artigo/Shorts…), plataformas
+com a cor de cada rede (Instagram, LinkedIn, TikTok, YouTube, Site/Blog, Stories,
+Spotify), legenda/direcionamento, CTA, hora — e mais de uma por dia. Agendar é o raio na
+linha ou "Salvar e agendar" no formulário, com som próprio (Dó♯→Sol♯ em marimba/vibrafone);
+a semana 100% agendada toca a cadência de conclusão. Postagem pode vincular o documento
+da peça final (aparece com o selo). Dados em `S.pauta`; contraste auditado (zero abaixo
+de 4,5:1 após v24b).
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

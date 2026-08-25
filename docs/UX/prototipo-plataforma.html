@@ -6019,3 +6019,337 @@ posRender = function(){
   });
 };
 </script>
+<style>
+/* =====================================================================
+   v24 — a pauta da semana: a planilha do founder vira tela.
+   Dia a dia, cada linha e uma postagem: formato, plataformas (com a cor
+   de cada rede), legenda/direcionamento, CTA, hora — e mais de uma por
+   dia, como na planilha. Agendar e um toque, com som.
+   ================================================================== */
+.ptCab{ border:1px solid var(--ink-800); border-radius:16px; padding:17px 19px 15px;
+  background:linear-gradient(180deg,var(--ink-850),var(--ink-900));
+  margin-bottom:16px; position:relative; overflow:hidden }
+.ptCab .lin{ display:flex; justify-content:space-between; align-items:baseline;
+  gap:12px; flex-wrap:wrap }
+.ptCab b{ font-size:14px; color:var(--ink-50); font-weight:600 }
+.ptCab .num{ font-family:var(--mono); font-size:11px; color:var(--ink-300) }
+.ptCab .num em{ font-style:normal; color:var(--brass-400); font-weight:700 }
+.ptBar{ height:6px; border-radius:3px; background:var(--ink-800); overflow:hidden;
+  margin-top:11px }
+.ptBar i{ display:block; height:100%; border-radius:3px;
+  background:linear-gradient(90deg,var(--brass-600),var(--brass-400));
+  transition:width .7s var(--eo) }
+.ptLeg{ display:flex; gap:13px 18px; flex-wrap:wrap; margin-top:12px }
+.ptLeg span{ display:inline-flex; align-items:center; gap:6px; font-size:11px;
+  color:var(--ink-300); font-family:var(--mono) }
+.ptLeg i{ width:8px; height:8px; border-radius:50%; font-style:normal }
+
+.ptDia{ margin-bottom:18px }
+.ptDiaHd{ display:flex; align-items:baseline; gap:10px; margin-bottom:9px }
+.ptDiaHd b{ font-family:var(--serif); font-weight:400; font-size:16.5px; color:var(--ink-50) }
+.ptDiaHd span{ font-family:var(--mono); font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-500) }
+.ptDiaHd i{ flex:1; height:1px; background:var(--ink-800); font-style:normal }
+
+.ptItem{ display:flex; gap:8px; margin-bottom:8px }
+.ptRow{ flex:1; min-width:0; text-align:left; padding:13px 15px; border-radius:12px;
+  border:1px solid var(--ink-800); background:var(--ink-850);
+  transition:border-color var(--fast) var(--eo), transform var(--fast) var(--eo),
+    box-shadow var(--fast) var(--eo) }
+.ptRow:hover{ border-color:var(--ink-600); transform:translateY(-2px);
+  box-shadow:0 14px 30px -20px rgba(0,0,0,.75) }
+.ptItem.no-ar .ptRow{ border-color:rgba(200,150,58,.4);
+  background:linear-gradient(180deg,rgba(200,150,58,.05),var(--ink-850)) }
+.ptL1{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:7px }
+.ptHora{ font-family:var(--mono); font-size:11px; color:var(--ink-200);
+  background:var(--ink-950); border:1px solid var(--ink-700); border-radius:6px;
+  padding:2px 8px; display:inline-flex; align-items:center; gap:5px }
+.ptDots{ display:inline-flex; gap:5px; align-items:center }
+.ptDots i{ width:9px; height:9px; border-radius:50%; font-style:normal;
+  box-shadow:0 0 0 1.5px var(--ink-900) }
+.ptItem.no-ar .ptDots i{ box-shadow:0 0 7px 1px currentColor }
+.ptFmtChip{ font-family:var(--mono); font-size:9.5px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--brass-300); background:rgba(200,150,58,.12);
+  border-radius:999px; padding:2px 9px }
+.ptL1 .pill{ margin-left:auto }
+.ptTit{ display:block; font-size:13.5px; font-weight:600; color:var(--ink-50);
+  margin-bottom:3px }
+.ptTxt{ display:block; font-size:12.5px; color:var(--ink-300); line-height:1.5;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+.ptCta{ display:block; margin-top:6px; font-size:11.5px; font-style:italic;
+  color:var(--ink-300) }
+.ptCta b{ font-style:normal; font-family:var(--mono); font-size:9px;
+  letter-spacing:.12em; color:var(--ink-500); margin-right:6px }
+.ptVinc{ display:inline-flex; align-items:center; gap:6px; margin-top:7px;
+  font-family:var(--mono); font-size:10px; color:var(--brass-300);
+  background:rgba(200,150,58,.1); border:1px solid rgba(200,150,58,.3);
+  border-radius:6px; padding:2px 8px }
+.ptQuick{ width:46px; border-radius:12px; border:1px solid var(--ink-800);
+  background:var(--ink-850); display:grid; place-items:center; color:var(--ink-400);
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo),
+    transform var(--fast) var(--eo) }
+.ptQuick:hover{ color:var(--brass-400); border-color:var(--brass-600) }
+.ptQuick:active{ transform:scale(.94) }
+.ptItem.no-ar .ptQuick{ color:var(--brass-400); border-color:rgba(200,150,58,.4) }
+@keyframes ptPulso{ 0%{transform:scale(1)} 45%{transform:scale(1.25)} 100%{transform:scale(1)} }
+.ptItem.pulsou .ptDots i{ animation:ptPulso .5s var(--spring) }
+
+/* chips do formulario */
+.ptChips{ display:flex; gap:7px; flex-wrap:wrap }
+.ptChips button{ display:inline-flex; align-items:center; gap:7px; padding:7px 13px;
+  border:1px solid var(--ink-700); border-radius:999px; font-size:12.5px;
+  color:var(--ink-300); background:var(--ink-950);
+  transition:border-color var(--fast) var(--eo), color var(--fast) var(--eo),
+    transform var(--fast) var(--eo) }
+.ptChips button:hover{ transform:translateY(-1px) }
+.ptChips button i{ width:8px; height:8px; border-radius:50%; font-style:normal }
+.ptChips button.on{ color:var(--ink-50); border-color:var(--brass-500);
+  background:rgba(200,150,58,.1) }
+@media (prefers-reduced-motion:reduce){ .ptItem.pulsou .ptDots i{ animation:none } }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v24 — a pauta da semana. A planilha do founder, viva.
+   ================================================================== */
+const PLATS = {
+  ig:{n:'Instagram', c:'#E1568C'}, li:{n:'LinkedIn', c:'#4C8FDB'},
+  tt:{n:'TikTok',    c:'#E6E8EB'}, yt:{n:'YouTube',  c:'#E5484D'},
+  sb:{n:'Site/Blog', c:'#C8963A'}, str:{n:'Stories', c:'#8B7BF0'},
+  sp:{n:'Spotify',   c:'#35B87A'}
+};
+const FORMATOS = ['Reels','Carrossel','Artigo','Shorts','Story','Post','Vídeo','Podcast'];
+const DIAS = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+
+/* a semana da planilha, adaptada ao cliente do protótipo */
+S.pauta = S.pauta || [
+  {id:1, dia:1, hora:'18:30', fmt:'Reels', plats:['ig','tt','yt'], st:'SCHEDULED', pecaId:3,
+   t:'Corte do vídeo de bastidores',
+   texto:'Trecho de maior impacto da conversa com Dona Rosa, sintetizando o tema central para atrair para o vídeo completo.',
+   cta:'Vídeo completo no perfil — link na bio.'},
+  {id:2, dia:2, hora:'11:00', fmt:'Artigo', plats:['li','ig','sb'], st:'SCHEDULED',
+   t:'Artigo aprofundado · linho no inverno',
+   texto:'Publicação do artigo sobre o linho fora do verão. Artigo nativo no LinkedIn e post editorial no Instagram direcionando tráfego para o blog.',
+   cta:'Leia o artigo completo no blog — link na bio e nos stories.'},
+  {id:3, dia:3, hora:'19:00', fmt:'Carrossel', plats:['ig','li'], st:'DRAFT',
+   t:'Reforço analítico + stories',
+   texto:'Carrossel-resumo com um dado central do artigo. Stories com enquete: "Você já guardou uma peça por mais de três anos?"',
+   cta:'Ainda não leu? O artigo completo está no blog — link na bio.'},
+  {id:4, dia:4, hora:'12:00', fmt:'Story', plats:['ig','str'], st:'DRAFT', pecaId:3,
+   t:'Bastidor / caixa de perguntas',
+   texto:'Bastidores da gravação com Dona Rosa (foto/carrossel de produção). Stories com caixinha sobre cuidado e durabilidade.',
+   cta:'Deixe sua pergunta na caixinha — respondemos nos stories.'},
+  {id:5, dia:5, hora:'10:30', fmt:'Post', plats:['ig'], st:'DRAFT',
+   t:'Post manifesto / aspas',
+   texto:'Citação de destaque sobre consumo consciente — peça de identidade, alinhada ao manifesto da marca.',
+   cta:'Compartilhe com quem compra para durar.'},
+  {id:6, dia:6, hora:'17:00', fmt:'Story', plats:['str'], st:'DRAFT',
+   t:'Curadoria de leituras (2–3 telas)',
+   texto:'Indicação de leitura sobre slow fashion, para preparar a semana.',
+   cta:'Toque no link para acessar a referência.'},
+  {id:7, dia:0, hora:'18:00', fmt:'Carrossel', plats:['ig','li'], st:'DRAFT',
+   t:'Teaser da pauta de setembro',
+   texto:'Abertura da pauta temática do mês: teaser dos três novos conteúdos sob o fio condutor de setembro.',
+   cta:'Salve este post e acompanhe os lançamentos.'}
+];
+
+const ptDots = ps => `<span class="ptDots">${ps.map(k=>
+  `<i style="background:${(PLATS[k]||{}).c};color:${(PLATS[k]||{}).c}" title="${(PLATS[k]||{}).n}"></i>`).join('')}</span>`;
+
+function agPauta(){
+  const emVez = soLojaNorte('A pauta da semana');
+  const lista = [...S.pauta].sort((a,b)=> a.dia-b.dia || (a.hora<b.hora?-1:1));
+  const total = lista.length, agd = lista.filter(p=>p.st==='SCHEDULED').length;
+  const porPlat = {};
+  lista.forEach(p=>p.plats.forEach(k=>porPlat[k]=(porPlat[k]||0)+1));
+
+  const item = (p,i) => `<div class="ptItem fu ${p.st==='SCHEDULED'?'no-ar':''}"
+      data-pt="${p.id}" style="animation-delay:${Math.min(i*45,320)}ms">
+    <button class="ptRow" data-ptedit="${p.id}">
+      <span class="ptL1">
+        <span class="ptHora">${ic('clock',11)} ${p.hora}</span>
+        ${ptDots(p.plats)}
+        <span class="ptFmtChip">${esc(p.fmt)}</span>
+        <span class="pill p-${p.st==='SCHEDULED'?'SCHEDULED':'DRAFT'}">${p.st==='SCHEDULED'?'Agendado':'Rascunho'}</span>
+      </span>
+      <span class="ptTit">${esc(p.t)}</span>
+      <span class="ptTxt">${esc(p.texto)}</span>
+      ${p.cta?`<span class="ptCta"><b>CTA</b>${esc(p.cta)}</span>`:''}
+      ${p.pecaId?(()=>{ const pc=S.pecas.find(x=>x.id===p.pecaId);
+        return pc?`<span class="ptVinc">${ic('sealic',11)} peça: ${esc(pc.t)}</span>`:''})():''}
+    </button>
+    <button class="ptQuick" data-ptag="${p.id}"
+      aria-label="${p.st==='SCHEDULED'?'Voltar a rascunho':'Agendar'}"
+      title="${p.st==='SCHEDULED'?'Voltar a rascunho':'Agendar'}">${ic('zap',16)}</button>
+  </div>`;
+
+  let corpo='', n=0;
+  for(let d=0; d<7; d++){
+    const doDia = lista.filter(p=>p.dia===d);
+    if(!doDia.length) continue;
+    corpo += `<div class="ptDia"><div class="ptDiaHd"><b>${DIAS[d]}-feira</b>
+      <span>${doDia.length} ${doDia.length>1?'postagens':'postagem'}</span><i></i></div>
+      ${doDia.map(p=>item(p,n++)).join('')}</div>`;
+  }
+  corpo = corpo.replace('Sábado-feira','Sábado').replace('Domingo-feira','Domingo');
+
+  return agShell(`
+  <div class="mtop"><div><h1>Pauta da semana</h1>
+    <p>${esc(cliAtual().nome)} · o que vai ao ar, dia a dia</p></div>
+    ${cliAtual().id==='ln'?`<button class="b pri sm" data-ptnew="1">${ic('pencil')} Nova postagem</button>`:''}</div>
+  ${chips()}
+  ${emVez || `
+  <div class="ptCab">
+    ${gradeAmbiente(10)}
+    <div class="lin"><b>A semana em compasso</b>
+      <span class="num"><em>${agd}</em> de ${total} agendadas</span></div>
+    <div class="ptBar"><i style="width:${total?Math.round(agd/total*100):0}%"></i></div>
+    <div class="ptLeg">${Object.entries(porPlat).map(([k,v])=>
+      `<span><i style="background:${PLATS[k].c}"></i>${PLATS[k].n} · ${v}</span>`).join('')}</div>
+  </div>
+  ${corpo}
+  <div class="card" style="margin-top:4px"><h4>Da pauta ao ar</h4>
+    <p>O raio agenda na hora. Cada postagem pode vincular a peça final aprovada —
+    e o agendamento real executa pela integração (bloco 6), sempre com a versão do selo.</p></div>`}`);
+}
+
+/* ---------- o formulário ---------------------------------------------- */
+function modalPauta(id){
+  const p = id ? S.pauta.find(x=>x.id===id) : null;
+  S.ptFmt   = p ? p.fmt : 'Reels';
+  S.ptPlats = new Set(p ? p.plats : ['ig']);
+  const finais = S.pecas.filter(x=>x.fase!=='TEXTO' && x.st!=='CANCELLED');
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3>${p?'Editar postagem':'Nova postagem'}</h3>
+    <p>Uma linha da pauta: o que vai ao ar, onde, quando e com qual direcionamento.</p>
+    <div class="frow">
+      <div class="fld"><label for="pt-t">Título da pauta</label>
+        <input id="pt-t" value="${p?esc(p.t):''}" placeholder="Ex.: Corte do vídeo · parte 2"></div>
+      <div class="fld"><label for="pt-peca">Documento da peça final (opcional)</label>
+        <select id="pt-peca"><option value="">— sem vínculo —</option>
+        ${finais.map(x=>`<option value="${x.id}" ${p&&p.pecaId===x.id?'selected':''}>${esc(x.t)}</option>`).join('')}</select></div>
+    </div>
+    <div class="fld"><label>Formato</label>
+      <div class="ptChips">${FORMATOS.map(f=>
+        `<button data-fmtpick="${f}" class="${S.ptFmt===f?'on':''}">${f}</button>`).join('')}</div></div>
+    <div class="fld"><label>Plataformas — onde esta postagem vai ao ar</label>
+      <div class="ptChips">${Object.entries(PLATS).map(([k,v])=>
+        `<button data-platpick="${k}" class="${S.ptPlats.has(k)?'on':''}">
+          <i style="background:${v.c}"></i>${v.n}</button>`).join('')}</div></div>
+    <div class="frow" style="grid-template-columns:1fr 1fr">
+      <div class="fld"><label for="pt-dia">Dia da postagem</label>
+        <select id="pt-dia">${DIAS.map((d,i)=>
+          `<option value="${i}" ${p&&p.dia===i?'selected':''}>${d}${i<5?'-feira':''}</option>`).join('')}</select></div>
+      <div class="fld"><label for="pt-hora">Horário</label>
+        <input id="pt-hora" value="${p?p.hora:'18:30'}" inputmode="numeric"></div>
+    </div>
+    <div class="fld"><label for="pt-texto">Conteúdo &amp; pauta — a legenda e o direcionamento</label>
+      <textarea id="pt-texto" placeholder="O que é a postagem, o que ela diz e por quê.">${p?esc(p.texto):''}</textarea></div>
+    <div class="fld"><label for="pt-cta">CTA / ação</label>
+      <input id="pt-cta" value="${p?esc(p.cta||''):''}" placeholder="Ex.: link na bio, salve este post…"></div>
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Cancelar</button>
+      ${p?`<button class="b gho" data-ptdel="${p.id}"
+        style="color:var(--danger);border-color:rgba(229,72,77,.4)">Apagar</button>`:''}
+      <button class="b gho" data-ptok="${p?p.id:0}">Salvar rascunho</button>
+      <button class="b pri" data-ptok="${p?p.id:0}" data-agendar="1">${ic('zap',13)} Salvar e agendar</button>
+    </div></div></div>`;
+}
+
+function somAgendar(){
+  if(!S.sound) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended') AC.resume().catch(()=>{});
+    barra(277.18, 0,   .24, 'marimba', -.1);      // Do# — partiu,
+    barra(415.30, .11, .26, 'vibrafone', .12);    // Sol# — subiu
+  }catch(e){}
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptnew],[data-ptedit],[data-ptag],[data-ptok],[data-ptdel],[data-fmtpick],[data-platpick]');
+  if(!t) return;
+  const d = t.dataset;
+
+  if(d.ptnew){ S.modal = modalPauta(null); renderLayer(); return; }
+  if(d.ptedit){ S.modal = modalPauta(+d.ptedit); renderLayer(); return; }
+
+  if(d.fmtpick){ S.ptFmt = d.fmtpick;
+    document.querySelectorAll('[data-fmtpick]').forEach(b=>
+      b.classList.toggle('on', b.dataset.fmtpick===S.ptFmt));
+    return; }
+  if(d.platpick){
+    S.ptPlats.has(d.platpick) ? S.ptPlats.delete(d.platpick) : S.ptPlats.add(d.platpick);
+    t.classList.toggle('on', S.ptPlats.has(d.platpick));
+    return; }
+
+  if(d.ptag){
+    const p = S.pauta.find(x=>x.id===+d.ptag); if(!p) return;
+    p.st = p.st==='SCHEDULED' ? 'DRAFT' : 'SCHEDULED';
+    if(p.st==='SCHEDULED') somAgendar(); else som('toque');
+    render();
+    const item = document.querySelector(`.ptItem[data-pt="${p.id}"]`);
+    if(item){ item.classList.add('pulsou'); setTimeout(()=>item.classList.remove('pulsou'),550); }
+    const todas = S.pauta.length && S.pauta.every(x=>x.st==='SCHEDULED');
+    toast(p.st==='SCHEDULED'
+      ? `"${p.t}" agendada — ${DIAS[p.dia]}${p.dia<5?'-feira':''} às ${p.hora}.`
+      : `"${p.t}" voltou para rascunho.`);
+    if(todas) setTimeout(()=>{ som('conclusao');
+      toast('A semana inteira está no ar — pauta completa.'); }, 700);
+    return; }
+
+  if(d.ptok){
+    const v = id => document.getElementById(id)?.value.trim() || '';
+    if(v('pt-t').length < 2){ const el=document.getElementById('pt-t');
+      el.style.borderColor='var(--danger)'; el.focus(); return; }
+    if(!S.ptPlats.size){ toast('Escolha ao menos uma plataforma.'); return; }
+    const agendar = d.agendar === '1';
+    const dados = { t:v('pt-t'), fmt:S.ptFmt, plats:[...S.ptPlats],
+      dia:+(document.getElementById('pt-dia')?.value||0), hora:v('pt-hora')||'18:30',
+      texto:v('pt-texto'), cta:v('pt-cta'),
+      pecaId:+(document.getElementById('pt-peca')?.value||0) || null,
+      st: agendar ? 'SCHEDULED' : 'DRAFT' };
+    const p = S.pauta.find(x=>x.id===+d.ptok);
+    if(p) Object.assign(p, dados);
+    else S.pauta.push({ id: Math.max(0,...S.pauta.map(x=>x.id))+1, ...dados });
+    S.modal = null;
+    agendar ? somAgendar() : som('toque');
+    render();
+    toast(agendar
+      ? `"${dados.t}" agendada — ${DIAS[dados.dia]}${dados.dia<5?'-feira':''} às ${dados.hora}.`
+      : `"${dados.t}" salva na pauta como rascunho.`);
+    return; }
+
+  if(d.ptdel){
+    const p = S.pauta.find(x=>x.id===+d.ptdel);
+    S.pauta = S.pauta.filter(x=>x.id!==+d.ptdel);
+    S.modal = null; render();
+    toast(`"${p?p.t:''}" saiu da pauta.`);
+    return; }
+});
+
+/* ---------- navegação: a Pauta entra na lateral e no sanduíche --------- */
+AGNAV.splice(AGNAV.findIndex(x=>x.r==='lote'), 0, {r:'pauta', n:'Pauta', icn:'doc'});
+(function(){
+  const g = MENU_AG.find(x=>x.g==='Operação');
+  if(g && !g.it.some(([r])=>r==='pauta'))
+    g.it.splice(g.it.findIndex(([r])=>r==='lote'), 0, ['pauta','Pauta da semana','doc']);
+})();
+
+const _renderV24 = render;
+render = function(){
+  if(S.view==='agency' && S.route==='pauta' && !S.skel){
+    document.getElementById('root').innerHTML = agPauta();
+    renderLayer(); ctxBar(); posRender();
+    return;
+  }
+  _renderV24();
+};
+</script>
+<style>
+/* v24b — contraste da pauta: o contador do dia, o rotulo CTA e a pilula
+   de rascunho estavam abaixo de 4,5:1 */
+.ptDiaHd span{ color:var(--ink-300) }
+.ptCta b{ color:var(--ink-300) }
+.p-DRAFT{ color:var(--ink-200) }
+</style>
