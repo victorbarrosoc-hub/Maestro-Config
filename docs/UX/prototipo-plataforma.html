@@ -5092,8 +5092,7 @@ function abrirCortina(){
     AC = AC || new (window.AudioContext||window.webkitAudioContext)();
     if(AC.state === 'suspended') AC.resume().catch(()=>{});
     if(AC.state !== 'running') return;
-    violino(220, .15, 1.5, .05);                  // o Lá que afina a orquestra
-    violino(329.63, 1.15, 1.2, .04);              // e a quinta respondendo
+    som('afinacao');                              // o obó dá o Lá — v22
   }catch(e){} };
   setTimeout(afinar, 120);
 
@@ -5646,3 +5645,230 @@ vSite = function(){
 .faixaLogos + p{ color:var(--ink-200)!important; font-size:12.5px!important }
 .faixaLogos + p b{ color:var(--brass-300)!important }
 </style>
+<script>
+"use strict";
+/* =====================================================================
+   v22 — o som premium. Reescreve o motor inteiro.
+
+   O que estava errado: sintese crua. Um oscilador, um filtro, um
+   envelope. Isso e som de notificacao de banco — e o proprio
+   SOUND_IDENTITY.md §7 ja avisava que timbre acustico e o que separa
+   premium de barato.
+
+   O que faz um som parecer instrumento de verdade, em ordem de peso:
+   1. ATAQUE. Toda percussao comeca com um transiente de baqueta —
+      um estalo curtissimo de ruido filtrado. Sem ele o som "aparece"
+      em vez de ser tocado. Era o que mais faltava.
+   2. PARCIAIS INARMONICOS. Uma barra de marimba nao vibra em harmonicos
+      inteiros: vibra em 1 : 3,93 : 9,55. Vibrafone em 1 : 3,98 : 10,7.
+      E o que da a cor de madeira e de metal.
+   3. DECAIMENTO POR PARCIAL. O agudo morre rapido, o fundamental
+      sustenta. Se todos decaem juntos, soa a orgao barato.
+   4. SALA. Reverb com reflexoes iniciais discretas, nao so cauda.
+   5. VARIACAO. Micro-desvio de altura e volume a cada toque, senao
+      repeticao vira metralhadora.
+   6. LIMITADOR. Para nada estourar e tudo soar controlado.
+
+   A escala de La (D-020) e o registro grave (D-072) continuam.
+   ================================================================== */
+
+let BUS2 = null, SALA2 = null, RUIDO = null;
+
+/* ---------- a sala: reflexoes iniciais + cauda difusa --------------- */
+function irSala(seg){
+  const sr = AC.sampleRate, n = Math.floor(sr*seg);
+  const b = AC.createBuffer(2, n, sr);
+  // reflexoes iniciais — o que diz ao ouvido "isto e um lugar"
+  const taps = [[.011,.42],[.019,.33],[.028,.30],[.041,.24],[.057,.20],[.073,.16],[.094,.12]];
+  for(let c=0;c<2;c++){
+    const d = b.getChannelData(c);
+    let y=0, hp=0, ant=0;
+    for(let i=0;i<n;i++){
+      const t = i/sr;
+      const env = Math.pow(1 - i/n, 3.2);           // cauda que decai
+      let v = (Math.random()*2-1) * env * .5;
+      y  = y + .22*(v - y);                          // escurece a cauda
+      hp = .996*(hp + y - ant); ant = y;             // tira o DC
+      d[i] = hp;
+    }
+    // as reflexoes por cima, levemente diferentes em cada lado
+    taps.forEach(([ms,g],k)=>{
+      const p = Math.floor(sr*(ms + (c?.0027:0) + k*0.0004));
+      if(p<n) d[p] += (k%2?-1:1) * g * (c? .92 : 1);
+    });
+  }
+  return b;
+}
+
+/* ---------- o barramento: compressor, limitador e envio de sala ----- */
+function bus2(){
+  if(BUS2) return BUS2;
+  const ent = AC.createGain(); ent.gain.value = 1;
+
+  const cor = AC.createBiquadFilter();              // tira o gume sem abafar
+  cor.type='highshelf'; cor.frequency.value=4200; cor.gain.value=-1.5;
+
+  const comp = AC.createDynamicsCompressor();       // cola as camadas
+  comp.threshold.value=-26; comp.knee.value=22; comp.ratio.value=3;
+  comp.attack.value=.006;  comp.release.value=.18;
+
+  const lim = AC.createDynamicsCompressor();        // teto, nada estoura
+  lim.threshold.value=-10; lim.knee.value=0; lim.ratio.value=20;
+  lim.attack.value=.001; lim.release.value=.06;
+
+  const saida = AC.createGain(); saida.gain.value=.26;   // premium nao e alto (R5)
+
+  const sala = AC.createConvolver(); sala.buffer = irSala(2.4);
+  const envio = AC.createGain(); envio.gain.value=.24;
+  const salaCor = AC.createBiquadFilter();
+  salaCor.type='lowpass'; salaCor.frequency.value=3200; salaCor.Q.value=.4;
+
+  ent.connect(cor); cor.connect(comp); comp.connect(lim);
+  ent.connect(envio); envio.connect(salaCor); salaCor.connect(sala); sala.connect(lim);
+  lim.connect(saida); saida.connect(AC.destination);
+
+  BUS2 = ent; SALA2 = sala;
+  return BUS2;
+}
+
+/* ---------- o estalo da baqueta — o transiente que faltava ---------- */
+function ruidoBuffer(){
+  if(RUIDO) return RUIDO;
+  const n = Math.floor(AC.sampleRate*.25);
+  const b = AC.createBuffer(1, n, AC.sampleRate);
+  const d = b.getChannelData(0);
+  for(let i=0;i<n;i++) d[i] = Math.random()*2-1;
+  RUIDO = b; return RUIDO;
+}
+function baqueta(t, gain, cor, dur){
+  const s = AC.createBufferSource(); s.buffer = ruidoBuffer();
+  const f = AC.createBiquadFilter(); f.type='bandpass';
+  f.frequency.value = cor; f.Q.value = .9;
+  const g = AC.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + .0012);
+  g.gain.exponentialRampToValueAtTime(.0001, t + (dur||.016));
+  s.connect(f).connect(g).connect(bus2());
+  s.start(t); s.stop(t + .06);
+}
+
+/* ---------- a barra percutida ---------------------------------------
+   parciais: [multiplo, ganho relativo, quao rapido morre]             */
+const TIMBRES = {
+  marimba:  { p:[[1,1,1],[3.93,.34,4.2],[9.55,.13,9]],      dec:1.5, ataque:2400, cl:.10 },
+  vibrafone:{ p:[[1,1,1],[3.98,.30,3.4],[10.7,.11,8]],      dec:2.8, ataque:3200, cl:.08 },
+  celesta:  { p:[[1,1,1],[2,.42,2.6],[3,.20,4.4],[5.4,.10,7]], dec:2.2, ataque:4400, cl:.11 },
+  madeira:  { p:[[1,1,1],[2.7,.22,5],[5.4,.07,10]],         dec:.9,  ataque:1600, cl:.11 }
+};
+function barra(freq, t0, gain, timbre, panor){
+  const T = TIMBRES[timbre] || TIMBRES.marimba;
+  const t = AC.currentTime + t0;
+  // variacao: nenhum toque igual ao anterior
+  const desvio = 1 + (Math.random()-.5)*.006;
+  const vol    = gain * (1 + (Math.random()-.5)*.10);
+
+  const pan = AC.createStereoPanner ? AC.createStereoPanner() : null;
+  if(pan) pan.pan.value = (panor||0) + (Math.random()-.5)*.14;
+  const dest = pan ? (pan.connect(bus2()), pan) : bus2();
+
+  baqueta(t, vol*T.cl, T.ataque);                      // o estalo primeiro
+
+  T.p.forEach(([mult, g, rapidez])=>{
+    const o = AC.createOscillator(), gn = AC.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq * mult * desvio;
+    const dur = T.dec / rapidez;
+    gn.gain.setValueAtTime(0, t);
+    gn.gain.linearRampToValueAtTime(vol*g, t + .004);   // ataque quase instantaneo
+    gn.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(gn).connect(dest);
+    o.start(t); o.stop(t + dur + .05);
+  });
+  // corpo: uma oitava abaixo, discreto, so peso
+  const sub = AC.createOscillator(), sg = AC.createGain();
+  sub.type='sine'; sub.frequency.value = freq/2 * desvio;
+  sg.gain.setValueAtTime(0, t);
+  sg.gain.linearRampToValueAtTime(vol*.22, t + .012);
+  sg.gain.exponentialRampToValueAtTime(.0001, t + T.dec*.55);
+  sub.connect(sg).connect(dest);
+  sub.start(t); sub.stop(t + T.dec + .05);
+}
+
+/* ---------- o obo que da o La — a abertura --------------------------- */
+function sopro(freq, t0, dur, gain){
+  const t = AC.currentTime + t0;
+  const o = AC.createOscillator(); o.type = 'sawtooth';
+  o.frequency.value = freq;
+  // duas formantes: e o que faz palheta dupla soar como palheta dupla
+  const f1 = AC.createBiquadFilter(); f1.type='bandpass'; f1.frequency.value=1100; f1.Q.value=2.2;
+  const f2 = AC.createBiquadFilter(); f2.type='bandpass'; f2.frequency.value=2700; f2.Q.value=3.4;
+  const f2g = AC.createGain(); f2g.gain.value=.34;
+  const lp = AC.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=2900; lp.Q.value=.6;
+  const g = AC.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + .13);        // sopro entra macio
+  g.gain.setValueAtTime(gain, t + dur*.72);
+  g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  // vibrato lento, de gente tocando
+  const lfo = AC.createOscillator(); lfo.frequency.value = 4.9;
+  const lg = AC.createGain(); lg.gain.setValueAtTime(0,t);
+  lg.gain.linearRampToValueAtTime(4.5, t + .5);
+  lfo.connect(lg); lg.connect(o.detune);
+  o.connect(f1); o.connect(f2); f2.connect(f2g);
+  f1.connect(lp); f2g.connect(lp);
+  lp.connect(g).connect(bus2());
+  o.start(t); o.stop(t + dur + .1); lfo.start(t); lfo.stop(t + dur + .1);
+}
+
+/* ---------- o grave que assenta -------------------------------------- */
+function fundo(freq, t0, gain){
+  const t = AC.currentTime + t0;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type='sine';
+  o.frequency.setValueAtTime(freq*1.35, t);
+  o.frequency.exponentialRampToValueAtTime(freq, t + .09);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + .014);
+  g.gain.exponentialRampToValueAtTime(.0001, t + 1.5);
+  baqueta(t, gain*.35, 420, .05);
+  o.connect(g).connect(bus2());
+  o.start(t); o.stop(t + 1.6);
+}
+
+/* ---------- a paleta ------------------------------------------------- */
+const LA3b=220, SI3=246.94, CS4b=277.18, RE4=293.66, MI4b=329.63, FS4=369.99, SOL4=415.30, LA4b=440;
+
+function som(tipo){
+  if(!S.sound) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state === 'suspended') AC.resume().catch(()=>{});
+
+    if(tipo === 'toque'){                       // enviar: uma nota de marimba
+      barra(CS4b, 0, .30, 'marimba', -.08);
+    }
+    if(tipo === 'regencia' || tipo === 'aprovar'){   // aprovar: quinta ascendente no vibrafone
+      barra(LA3b, 0,   .34, 'vibrafone', -.16);
+      barra(MI4b, .13, .30, 'vibrafone',  .16);
+      barra(LA4b, .26, .13, 'celesta',    .05);      // brilho por cima, discreto
+    }
+    if(tipo === 'ajuste'){                      // pedir alteracao: descendo, em madeira
+      barra(MI4b, 0,   .26, 'madeira',  .14);
+      barra(LA3b, .15, .30, 'marimba', -.14);
+    }
+    if(tipo === 'conclusao' || tipo === 'termo'){    // o termo: a medalha
+      fundo(110, 0, .30);                            // La grave assenta
+      [LA3b, CS4b, MI4b, LA4b].forEach((f,i)=>
+        barra(f, .07 + i*.085, .26, 'celesta', -.2 + i*.13));
+      barra(LA4b, .52, .20, 'vibrafone', 0);
+      barra(MI4b, .52, .14, 'vibrafone', -.1);
+      fundo(220, .54, .16);
+    }
+    if(tipo === 'afinacao'){                    // a abertura: o obo da o La
+      sopro(LA4b, 0, 1.9, .085);
+      barra(LA3b, .05, .13, 'vibrafone', -.2);
+      fundo(110, .04, .13);
+    }
+  }catch(e){}
+}
+</script>
