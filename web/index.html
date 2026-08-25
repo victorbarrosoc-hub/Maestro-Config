@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-25 20:39 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-25 20:50 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -8348,4 +8348,111 @@ addEventListener('resize', ()=>{
   mnAplicar();
 });
 mnAplicar();
+</script>
+<style>
+/* =====================================================================
+   v35 — quatro acertos no menisco.
+
+   1. TREMIDA. Eu animava 'left' em pixels fracionarios: cada quadro
+      refaz o layout e o navegador arredonda diferente, e o icone dentro
+      da bolha treme. Passa a ser transform (composicao pura, sem
+      layout) — o mesmo motivo pelo qual toda animacao boa usa transform.
+   2. O BALAOZINHO VAZANDO. O contador fica a 21px do centro, fora do
+      raio de 22px da bolha, entao espiava por tras. Na aba ativa ele
+      some: estando ali dentro, o numero e redundante.
+   3. O BRILHO lavava a barra inteira. Vai para tras do vidro e desce.
+   4. 10% mais rapida: 620ms -> 558ms.
+   ================================================================== */
+:root{ --mnDur:558ms }
+
+.mnBolha, .mnGlow{
+  left:0!important;
+  will-change:transform;
+  backface-visibility:hidden;
+}
+.mnBolha{ transition:width 240ms var(--menisco), height 240ms var(--menisco) }
+.mnBolha svg{ transition:opacity 180ms var(--menisco), transform 340ms var(--menisco) }
+
+/* o contador da aba ativa some — ele mora dentro da bolha agora */
+.tabbar.mn .tab.ativa .bd, .cltab.mn button.ativa .bd{ display:none }
+
+/* o brilho atras do vidro, e mais para baixo */
+.mnGlow{ bottom:-40px; z-index:-1; opacity:.34; filter:blur(44px) }
+.cltab .mnGlow{ opacity:.24 }
+.mnBarra{ isolation:isolate }
+.mnSvg{ z-index:1 }
+.mnAbas{ z-index:2 }
+.mnBolha{ z-index:4 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v35 — transform no lugar de left, som de volta, 10% mais rapida.
+   ================================================================== */
+MN.DUR = 558;
+
+/* a escala de La, uma nota por aba — a mesma da proposta */
+const MN_NOTAS = [220.00, 246.94, 277.18, 329.63, 369.99, 440.00];
+
+/* posiciona por transform: sem layout a cada quadro, sem tremida */
+mnAtualizar = function(nav, tipo){
+  const barra = nav.querySelector('.mnBarra'); if(!barra) return;
+  const abas = [...nav.querySelectorAll('.mnAbas > *')];
+  const ativa = abas.find(a=>a.classList.contains('on')) || abas[0];
+  if(!ativa) return;
+  abas.forEach(a=>a.classList.toggle('ativa', a===ativa));
+
+  const rb = barra.getBoundingClientRect();
+  if(!rb.width) return;
+  const ra = ativa.getBoundingClientRect();
+  const alvo = ra.left + ra.width/2 - rb.left;
+
+  const bolha = barra.querySelector('.mnBolha');
+  const glow  = barra.querySelector('.mnGlow');
+  const icone = ativa.querySelector('svg');
+  const novo = icone ? icone.outerHTML.replace(/class="[^"]*"/,'') : '';
+  if(bolha.innerHTML !== novo) bolha.innerHTML = novo;
+
+  const por = px => {
+    const t = `translate3d(${px.toFixed(2)}px,0,0) translateX(-50%)`;
+    bolha.style.transform = t;
+    glow.style.transform  = t;
+    mnDesenhar(barra, px / rb.width * MN.L);
+  };
+  const de = mnUltima[tipo];
+  mnUltima[tipo] = alvo;
+  if(de === undefined || REDUZ || Math.abs(de - alvo) < 1){ por(alvo); return; }
+
+  cancelAnimationFrame(mnAnim);
+  const t0 = performance.now();
+  bolha.classList.add('voando');
+  const passo = agora => {
+    const k = Math.min(1, (agora - t0) / MN.DUR);
+    por(de + (alvo - de) * mnCurva(k));
+    if(k < 1) mnAnim = requestAnimationFrame(passo);
+    else { por(alvo); bolha.classList.remove('voando'); }   // encerra no valor exato
+  };
+  mnAnim = requestAnimationFrame(passo);
+  clearTimeout(mnAtualizar._t);
+  mnAtualizar._t = setTimeout(()=>{ if(bolha.classList.contains('voando')){
+    cancelAnimationFrame(mnAnim); por(alvo); bolha.classList.remove('voando'); } },
+    MN.DUR + 160);
+};
+
+/* o som da escala voltou — cada aba tem a sua nota, no motor de barra
+   percutida (D-020, D-072). No lote de aprovar a nota e a mesma do
+   'toque', para nao competir com o som da decisao. */
+document.addEventListener('click', e => {
+  const b = e.target.closest('.mnAbas > *');
+  if(!b || !S.sound) return;
+  const abas = [...b.parentElement.children];
+  const i = abas.indexOf(b);
+  if(i < 0 || b.classList.contains('on')) return;      // ja esta nela: silencio
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state === 'suspended') AC.resume().catch(()=>{});
+    barra(MN_NOTAS[i % MN_NOTAS.length], 0, .26,
+      i >= 4 ? 'celesta' : 'vibrafone', -.2 + i*.08);
+  }catch(err){}
+}, true);
 </script>

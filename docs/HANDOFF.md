@@ -427,6 +427,21 @@ chaveada no `<nav>`, que deixava de existir).
 elegante, não rápido. Perfil medido: 0% no primeiro décimo (sai macio), 63% na metade,
 98% aos 90% (assenta macio), monotônico e sem ultrapassar.
 
+**Acabamento do menisco (v35).** Quatro acertos que o founder apontou:
+
+1. **A tremida na chegada.** Eu animava `left` em pixels fracionários — cada quadro refaz
+   o layout e o navegador arredonda diferente, e o ícone dentro da bolha tremia. Passou a
+   `transform: translate3d` (composição pura, sem layout), e o último quadro fixa o valor
+   exato. Medido: um único valor após o pouso, sem oscilação.
+2. **O contador vazando por trás da bolha.** Ele fica a 21px do centro, fora do raio de
+   22px — espiava pela borda. Na aba ativa ele some: estando ali dentro, o número é
+   redundante. Nas outras continua.
+3. **O brilho lavava a barra.** Foi para trás do vidro (`z-index:-1`) e desceu.
+4. **Som de volta** — cada aba tem a sua nota da escala de Lá, no motor de barra
+   percutida. Clicar na aba em que já se está fica em silêncio.
+
+Duração: 620 ms → **558 ms** (10% mais rápida, a pedido).
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
