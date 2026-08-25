@@ -346,6 +346,17 @@ accessor em `S.pauta`) e o estado (pautas + clientes novos) **persiste em
 localStorage** — sobrevive a recarga, por navegador. Banco compartilhado com login
 ainda não existe: é o próximo passo (Supabase ou a própria API dos blocos 1–5).
 
+**A Pauta mora dentro do cliente (v28).** Ela saiu do topo e virou **aba da ficha do
+cliente**, ao lado de Marca, Projetos e Quem aprova — pauta é do cliente, não da agência,
+e a estrutura de dados já era assim. Todo cliente pode ter a sua; quem não tem vê o vazio
+com "Importar planilha" e "Nova postagem". A rota `/pauta` continua valendo e redireciona
+para a aba. Na barra de baixo, **"Dados" saiu e entrou "Clientes"**.
+
+> Armadilha das camadas: `pautaLiberada` tinha sido declarada com `const` na v27 e a v28
+> tentou reatribuir. O `TypeError` **matou o resto do script em silêncio** (o `try/catch`
+> das camadas engoliu) e só apareceu porque a rota antiga não redirecionava. Virou `let`,
+> e a reatribuição foi para a última linha da camada, dentro de `try`.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

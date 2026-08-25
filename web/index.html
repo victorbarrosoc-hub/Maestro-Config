@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-25 19:16 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-25 19:30 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -6816,7 +6816,7 @@ if(!S.novos.some(c=>c.nome==='EJUP')){
   S.novos.push({ nome:'EJUP', ini:'EJ', seg:'Educação jurídica', cor:'#5B8DEF',
     brief:'Educação jurídica de profundidade. Podcast EJUP e artigos doutrinários — autoridade sem juridiquês. A expert é o rosto.' });
 }
-const pautaLiberada = () => ['ln',
+let pautaLiberada = () => ['ln',
   ...CLIS().filter(c=>c.nome==='EJUP').map(c=>c.id)];
 const ejupId = () => (CLIS().find(c=>c.nome==='EJUP')||{}).id || 'ej';
 
@@ -6894,3 +6894,134 @@ render = function(){
 .seg button{ color:var(--ink-200) }
 .seg.lt button{ color:#4C4A44 }
 </style>
+<script>
+"use strict";
+/* =====================================================================
+   v28 — a Pauta mora DENTRO do cliente, e a barra de baixo troca
+   "Dados" por "Clientes".
+
+   Por que dentro: pauta e do cliente, nao da agencia. Cada cliente tem a
+   sua — a estrutura de dados ja era assim (S.pautas por cliente), mas a
+   navegacao dizia o contrario, com a Pauta solta no topo. Agora ela e
+   uma aba da ficha do cliente, ao lado de Marca, Projetos e Quem aprova.
+   Isso e a Regra #1: toda informacao tem um lugar so.
+   ================================================================== */
+
+/* ---------- barra de baixo: Clientes no lugar de Dados --------------- */
+(function(){
+  const i = AGTABS.findIndex(x=>x.r==='resultados');
+  if(i>=0) AGTABS[i] = {r:'clientes', n:'Clientes', icn:'users'};
+})();
+
+/* ---------- a Pauta sai do topo e vira aba do cliente ---------------- */
+(function(){
+  const i = AGNAV.findIndex(x=>x.r==='pauta');
+  if(i>=0) AGNAV.splice(i,1);
+  const g = MENU_AG.find(x=>x.g==='Operação');
+  if(g){
+    const j = g.it.findIndex(([r])=>r==='pauta');
+    if(j>=0) g.it.splice(j,1);
+    // no menu, ela aparece como o que e: uma tela de dentro do cliente
+    const k = g.it.findIndex(([r])=>r==='clientedet');
+    if(k>=0 && !g.it.some(([r])=>r==='pauta'))
+      g.it.splice(k+1, 0, ['pauta','Pauta do cliente','doc']);
+  }
+})();
+
+/* a ficha do cliente ganha a aba Pauta */
+const _agClienteDetV27 = agClienteDet;
+agClienteDet = function(){
+  if(S.tab === 'pauta'){
+    const c = cliAtual();
+    const liberada = pautaLiberada().includes(c.id);
+    const miolo = liberada
+      ? corpoPauta()
+      : vazio('Sem pauta ainda',
+          `${esc(c.nome)} ainda não tem pauta editorial. Comece do zero ou suba a planilha que já existe.`,
+          `<div style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">
+             <button class="b gho sm" data-ptimp="1">${ic('doc')} Importar planilha</button>
+             <button class="b pri sm" data-ptnew="1">${ic('pencil')} Nova postagem</button></div>`);
+    return agShell(`
+    <div class="mtop"><div>
+      <button class="b gho sm" data-r="clientes" style="margin-bottom:13px">${ic('arrowl')} Clientes</button>
+      <h1>${esc(c.nome)}</h1><p>${esc(c.seg)}</p></div>
+      ${liberada?`<div style="display:flex;gap:9px;flex-wrap:wrap">
+        <button class="b gho sm" data-ptimp="1">${ic('doc')} Importar planilha</button>
+        <button class="b pri sm" data-ptnew="1">${ic('pencil')} Nova postagem</button></div>`:''}</div>
+    ${abasCliente('pauta')}
+    ${miolo}`);
+  }
+  // nas outras abas, so acrescenta a Pauta na regua
+  return _agClienteDetV27().replace(
+    /<div class="tabs">[\s\S]*?<\/div>/,
+    abasCliente(S.tab || 'marca'));
+};
+
+function abasCliente(atual){
+  const abas = [['marca','Marca e briefing'],['pauta','Pauta da semana'],
+                ['projetos','Projetos'],['equipe','Quem aprova']];
+  return `<div class="tabs">${abas.map(([t,n])=>
+    `<button data-tab="${t}" class="${atual===t?'on':''}">${n}</button>`).join('')}</div>`;
+}
+
+/* o miolo da pauta, sem o cabecalho de tela — reaproveitado na aba */
+function corpoPauta(){
+  const lista = [...S.pauta].sort((a,b)=> a.dia-b.dia || (a.hora<b.hora?-1:1));
+  const total = lista.length, agd = lista.filter(p=>p.st==='SCHEDULED').length;
+  const porPlat = {};
+  lista.forEach(p=>p.plats.forEach(k=>porPlat[k]=(porPlat[k]||0)+1));
+  const filtro = S.ptFiltro, vista = S.ptVista;
+  const visiveis = lista.filter(p => filtro==='todas' ? true
+    : filtro==='feitas' ? p.st==='SCHEDULED' : p.st!=='SCHEDULED');
+  const idx = {semana:0, mes:1, tabela:2}[vista] || 0;
+  const corpo = vista==='mes' ? ptVistaMes(visiveis)
+    : vista==='tabela' ? ptVistaTabela(visiveis)
+    : ptVistaSemana(visiveis, filtro);
+  if(!total) return vazio('Pauta vazia',
+    'Nenhuma postagem ainda. Crie a primeira ou importe a planilha que já existe.',
+    `<div style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">
+       <button class="b gho sm" data-ptimp="1">${ic('doc')} Importar planilha</button>
+       <button class="b pri sm" data-ptnew="1">${ic('pencil')} Nova postagem</button></div>`);
+  return `
+  <div class="ptSeg">
+    <div class="seg">
+      <div class="thumb" style="left:calc(${idx} * 33.333% + 3px);width:calc(33.333% - 5px)"></div>
+      <button class="${vista==='semana'?'on':''}" data-ptvista="semana">Semana</button>
+      <button class="${vista==='mes'?'on':''}" data-ptvista="mes">Mês</button>
+      <button class="${vista==='tabela'?'on':''}" data-ptvista="tabela">Tabela</button>
+    </div>
+    <div class="ptFiltros" role="group" aria-label="Filtrar postagens">
+      <button class="${filtro==='todas'?'on':''}" data-ptfiltro="todas">todas<b>${total}</b></button>
+      <button class="${filtro==='feitas'?'on':''}" data-ptfiltro="feitas">agendadas<b>${agd}</b></button>
+      <button class="${filtro==='faltam'?'on':''}" data-ptfiltro="faltam">o que falta<b>${total-agd}</b></button>
+    </div>
+  </div>
+  <div class="ptCab">
+    ${gradeAmbiente(10)}
+    <div class="lin"><b>A semana em compasso</b>
+      <span class="num"><em>${agd}</em> de ${total} agendadas</span></div>
+    <div class="ptBar"><i style="width:${total?Math.round(agd/total*100):0}%"></i></div>
+    <div class="ptLeg">${Object.entries(porPlat).map(([k,v])=>
+      `<span><i style="background:${PLATS[k].c}"></i>${PLATS[k].n} · ${v}</span>`).join('')}</div>
+  </div>
+  ${corpo}`;
+}
+
+/* a rota /pauta continua valendo (menu, atalhos) — leva a aba do cliente */
+const _renderV28 = render;
+render = function(){
+  if(S.view==='agency' && S.route==='pauta'){ S.route='clientedet'; S.tab='pauta'; }
+  _renderV28();
+};
+
+/* trocar de cliente pela ficha mantem a aba aberta */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-cli]');
+  if(t && S.route==='clientedet' && S.tab==='pauta') setTimeout(()=>{ S.tab='pauta'; render(); }, 0);
+});
+
+/* toda pauta agora e por cliente: qualquer um pode ter a sua.
+   Vai por ultimo de proposito — se um dia isto falhar de novo, nao
+   derruba o resto da camada junto. */
+try{ pautaLiberada = () => CLIS().map(c=>c.id); }catch(e){}
+</script>
