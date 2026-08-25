@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-25 19:39 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-25 19:47 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -7536,4 +7536,305 @@ corpoPauta = function(){
 <style>
 /* v30c — a etiqueta de data estava em 4,12:1 */
 .ptData{ color:var(--ink-200) }
+</style>
+<style>
+/* =====================================================================
+   v31 — o arquivo final da postagem.
+   Video, foto, carrossel (varias telas), audio ou documento. Miniatura
+   de verdade, nao nome de arquivo: quem confere a pauta precisa VER a
+   peca, nao ler "IMG_4821.jpg".
+   ================================================================== */
+.mtTira{ display:flex; gap:6px; margin-top:9px; flex-wrap:wrap; align-items:center }
+.mtMini{ position:relative; width:46px; height:58px; border-radius:8px; overflow:hidden;
+  border:1px solid var(--ink-700); background:var(--ink-950); flex:0 0 auto;
+  display:grid; place-items:center }
+.mtMini img,.mtMini video{ width:100%; height:100%; object-fit:cover; display:block }
+.mtMini .tipo{ position:absolute; inset:0; display:grid; place-items:center;
+  color:var(--ink-400); font-size:15px; pointer-events:none }
+.mtMini.temArte .tipo{ display:none }
+.mtMini .ord{ position:absolute; top:2px; left:3px; font-family:var(--mono);
+  font-size:8px; color:#fff; background:rgba(0,0,0,.6); border-radius:3px;
+  padding:0 3px; line-height:1.5 }
+.mtMais{ font-family:var(--mono); font-size:10px; color:var(--ink-300);
+  border:1px dashed var(--ink-700); border-radius:8px; padding:5px 9px }
+.mtSemArquivo{ display:inline-flex; align-items:center; gap:7px; margin-top:9px;
+  font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ink-300); border:1px dashed var(--ink-700); border-radius:999px;
+  padding:4px 11px }
+.mtPronto{ display:inline-flex; align-items:center; gap:6px; margin-top:9px;
+  font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--encore); background:rgba(53,184,122,.12);
+  border:1px solid rgba(53,184,122,.32); border-radius:999px; padding:4px 11px }
+
+/* a área de soltar arquivo */
+.mtSolta{ border:1.5px dashed var(--ink-700); border-radius:14px; padding:26px 18px;
+  text-align:center; background:var(--ink-950); cursor:pointer;
+  transition:border-color var(--fast) var(--eo), background var(--fast) var(--eo) }
+.mtSolta:hover,.mtSolta.sobre{ border-color:var(--brass-500);
+  background:rgba(200,150,58,.06) }
+.mtSolta .ic{ font-size:26px; color:var(--brass-500); margin-bottom:9px }
+.mtSolta b{ display:block; font-size:14px; color:var(--ink-50); margin-bottom:5px }
+.mtSolta span{ font-size:12px; color:var(--ink-300); line-height:1.5 }
+.mtGrade{ display:grid; gap:9px; margin-top:13px;
+  grid-template-columns:repeat(auto-fill,minmax(96px,1fr)) }
+.mtCard{ position:relative; border:1px solid var(--ink-700); border-radius:11px;
+  overflow:hidden; background:var(--ink-950) }
+.mtCard .vis{ aspect-ratio:4/5; display:grid; place-items:center; position:relative }
+.mtCard .vis img,.mtCard .vis video{ width:100%; height:100%; object-fit:cover }
+.mtCard .vis .semPrev{ color:var(--ink-400); font-size:24px }
+.mtCard .nome{ padding:6px 8px; font-size:10px; color:var(--ink-300);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  border-top:1px solid var(--ink-800) }
+.mtCard .peso{ font-family:var(--mono); font-size:9px; color:var(--ink-400) }
+.mtCard .x{ position:absolute; top:5px; right:5px; width:22px; height:22px;
+  border-radius:6px; background:rgba(8,9,11,.78); color:var(--ink-200);
+  display:grid; place-items:center; border:1px solid var(--ink-700) }
+.mtCard .x:hover{ color:var(--danger); border-color:rgba(229,72,77,.5) }
+.mtCard .ordem{ position:absolute; top:5px; left:5px; font-family:var(--mono);
+  font-size:9px; color:#fff; background:rgba(8,9,11,.72); border-radius:5px;
+  padding:1px 5px; border:1px solid var(--ink-700) }
+.mtAviso{ margin-top:12px; font-size:11.5px; color:var(--ink-300); line-height:1.55 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v31 — subir o arquivo final da postagem.
+   Aceita video, imagem, audio e documento; carrossel aceita varias
+   telas e guarda a ordem. A miniatura e o proprio arquivo (blob local),
+   porque nome de arquivo nao diz se a peca esta certa.
+   ================================================================== */
+const ICONE_TIPO = { video:'play', imagem:'img', audio:'sndon', doc:'doc' };
+const tipoDoArquivo = f => {
+  const t = (f.type||'').split('/')[0];
+  if(t==='video') return 'video';
+  if(t==='image') return 'imagem';
+  if(t==='audio') return 'audio';
+  return 'doc';
+};
+const pesoLegivel = n => n < 1048576
+  ? `${Math.max(1,Math.round(n/1024))} KB` : `${(n/1048576).toFixed(1)} MB`;
+
+/* os arquivos vivem em memória — o protótipo não sobe nada para servidor */
+S.mat = S.mat || {};                       // { [idDaPostagem]: [ {nome,tipo,peso,url} ] }
+
+function materiaisDe(id){ return S.mat[id] || []; }
+
+/* solta a memoria do blob so depois que o desenho novo substituiu o
+   <img> antigo — se revogar antes, o navegador reclama de arquivo que
+   sumiu debaixo dele */
+function soltarDepois(urls){
+  const lista = (urls||[]).filter(Boolean);
+  if(!lista.length) return;
+  setTimeout(()=>lista.forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} }), 1200);
+}
+
+function tiraMaterial(p){
+  const ms = materiaisDe(p.id);
+  if(!ms.length){
+    return p.tarefa ? '' : `<span class="mtSemArquivo">${ic('warn',12)} sem arquivo</span>`;
+  }
+  const mostra = ms.slice(0,4);
+  return `<span class="mtTira">
+    ${mostra.map((m,i)=>`<span class="mtMini ${m.url&&(m.tipo==='imagem'||m.tipo==='video')?'temArte':''}">
+      ${ms.length>1?`<span class="ord">${i+1}</span>`:''}
+      ${m.url && m.tipo==='imagem' ? `<img src="${m.url}" alt="">`
+        : m.url && m.tipo==='video' ? `<video src="${m.url}" muted playsinline preload="metadata"></video>`
+        : ''}
+      <span class="tipo">${ic(ICONE_TIPO[m.tipo]||'doc',15)}</span></span>`).join('')}
+    ${ms.length>4?`<span class="mtMais">+${ms.length-4}</span>`:''}
+    <span class="mtPronto">${ic('checkc',12)} material pronto</span></span>`;
+}
+
+/* a linha da pauta mostra o material */
+ptItemHtml = (function(orig){
+  return function(p, i){
+    const html = orig(p, i);
+    const tira = tiraMaterial(p);
+    if(!tira) return html;
+    return html.replace('</button>\n    <button class="ptFeito"',
+      `${tira}</button>\n    <button class="ptFeito"`)
+      || html;
+  };
+})(ptItemHtml);
+
+/* o modal de material */
+function modalMaterial(id){
+  const p = S.pauta.find(x=>x.id===id); if(!p) return '';
+  const ms = materiaisDe(id);
+  const carrossel = /carrossel/i.test(p.fmt);
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3>Material · ${esc(p.t)}</h3>
+    <p>${esc(p.fmt)}${p.data?` · ${rotuloData(p.data)}`:''} · ${
+      p.plats.map(k=>(PLATS[k]||{}).n).filter(Boolean).join(', ')||'sem plataforma'}.
+      ${carrossel?'Carrossel aceita várias telas — a ordem é a de envio.'
+        :'Vídeo, foto, áudio ou documento.'}</p>
+
+    <label class="mtSolta" id="mt-solta" for="mt-file">
+      <div class="ic">${ic('img',26)}</div>
+      <b>Arraste o arquivo aqui, ou toque para escolher</b>
+      <span>${carrossel?'Pode mandar várias telas de uma vez.'
+        :'Vídeo, imagem, áudio ou PDF.'}</span>
+    </label>
+    <input type="file" id="mt-file" ${carrossel?'multiple':''}
+      accept="video/*,image/*,audio/*,.pdf" style="display:none">
+
+    ${ms.length?`<div class="mtGrade" id="mt-grade">
+      ${ms.map((m,i)=>`<div class="mtCard">
+        <div class="vis">
+          ${m.url && m.tipo==='imagem' ? `<img src="${m.url}" alt="${esc(m.nome)}">`
+            : m.url && m.tipo==='video' ? `<video src="${m.url}" muted playsinline controls preload="metadata"></video>`
+            : `<span class="semPrev">${ic(ICONE_TIPO[m.tipo]||'doc',24)}</span>`}
+          ${ms.length>1?`<span class="ordem">${i+1}</span>`:''}
+          <button class="x" data-mtdel="${i}" aria-label="Remover ${esc(m.nome)}">${ic('x',12)}</button>
+        </div>
+        <div class="nome">${esc(m.nome)}<br><span class="peso">${pesoLegivel(m.peso)}</span></div>
+      </div>`).join('')}</div>`
+      : `<p class="mtAviso">Nenhum arquivo ainda.</p>`}
+
+    <p class="mtAviso">${ic('warn',12)} No protótipo os arquivos ficam só nesta aba —
+      nada é enviado para servidor e eles somem ao recarregar. No produto vão para o
+      armazenamento da agência, com versão e selo (D-032).</p>
+
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Fechar</button>
+      ${ms.length?`<button class="b gho" data-mtlimpa="${id}"
+        style="color:var(--danger);border-color:rgba(229,72,77,.4)">Remover todos</button>`:''}
+      ${ms.length&&!p.feito?`<button class="b pri" data-mtpronto="${id}">
+        ${ic('checkc',13)} Marcar como feito</button>`:''}
+    </div></div></div>`;
+}
+
+function guardarArquivos(id, lista){
+  const p = S.pauta.find(x=>x.id===id); if(!p) return 0;
+  const carrossel = /carrossel/i.test(p.fmt);
+  const arr = S.mat[id] = S.mat[id] || [];
+  let n = 0;
+  [...lista].forEach(f=>{
+    if(!carrossel && arr.length + n >= 1){
+      // formato de peça única: o novo substitui o anterior.
+      // A revogação vai para o fim da fila: revogar agora, com o <img>
+      // antigo ainda no DOM, faz o navegador tentar recarregar um blob
+      // que deixou de existir (ERR_FILE_NOT_FOUND no console).
+      soltarDepois(arr.map(m=>m.url));
+      arr.length = 0;
+    }
+    const tipo = tipoDoArquivo(f);
+    arr.push({ nome:f.name, tipo, peso:f.size,
+      url: (tipo==='imagem'||tipo==='video') ? URL.createObjectURL(f) : null });
+    n++;
+  });
+  return n;
+}
+
+function somMaterial(){
+  if(!S.sound) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended') AC.resume().catch(()=>{});
+    barra(220, 0, .26, 'marimba', -.1);
+    barra(293.66, .1, .24, 'vibrafone', .1);
+  }catch(e){}
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-mtabrir],[data-mtdel],[data-mtlimpa],[data-mtpronto]');
+  if(!t) return;
+  const d = t.dataset;
+  if(d.mtabrir){ S.mtId = +d.mtabrir; S.modal = modalMaterial(S.mtId); renderLayer();
+    setTimeout(ligarSolta, 0); return; }
+  if(d.mtdel !== undefined){
+    const arr = S.mat[S.mtId] || [];
+    const m = arr[+d.mtdel];
+    if(m && m.url) soltarDepois([m.url]);
+    arr.splice(+d.mtdel, 1);
+    S.modal = modalMaterial(S.mtId); renderLayer(); setTimeout(ligarSolta, 0);
+    render(); return; }
+  if(d.mtlimpa){
+    soltarDepois((S.mat[+d.mtlimpa]||[]).map(m=>m.url));
+    delete S.mat[+d.mtlimpa];
+    S.modal = modalMaterial(+d.mtlimpa); renderLayer(); setTimeout(ligarSolta, 0);
+    render(); toast('Material removido.'); return; }
+  if(d.mtpronto){
+    const p = S.pauta.find(x=>x.id===+d.mtpronto);
+    if(p){ p.feito = true; }
+    S.modal = null; somMaterial(); render();
+    toast(`"${p?p.t:''}" com material e marcada como feita.`);
+    return; }
+});
+
+/* arrastar e soltar + escolher */
+function ligarSolta(){
+  const zona = document.getElementById('mt-solta');
+  const input = document.getElementById('mt-file');
+  if(!zona || !input) return;
+  input.addEventListener('change', () => {
+    const n = guardarArquivos(S.mtId, input.files);
+    if(!n) return;
+    somMaterial();
+    S.modal = modalMaterial(S.mtId); renderLayer(); setTimeout(ligarSolta, 0);
+    render();
+    toast(`${n} arquivo${n>1?'s anexados':' anexado'} — a miniatura aparece na pauta.`);
+  });
+  ['dragenter','dragover'].forEach(ev=>zona.addEventListener(ev, e=>{
+    e.preventDefault(); zona.classList.add('sobre'); }));
+  ['dragleave','drop'].forEach(ev=>zona.addEventListener(ev, e=>{
+    e.preventDefault(); zona.classList.remove('sobre'); }));
+  zona.addEventListener('drop', e=>{
+    const fs = e.dataTransfer?.files; if(!fs || !fs.length) return;
+    const n = guardarArquivos(S.mtId, fs);
+    somMaterial();
+    S.modal = modalMaterial(S.mtId); renderLayer(); setTimeout(ligarSolta, 0);
+    render();
+    toast(`${n} arquivo${n>1?'s anexados':' anexado'} — a miniatura aparece na pauta.`);
+  });
+}
+
+/* o botão de material entra no formulário da postagem */
+modalPauta = (function(orig){
+  return function(id){
+    const html = orig(id);
+    if(!id) return html;
+    const ms = materiaisDe(id);
+    const botao = `<button class="b gho" data-mtabrir="${id}">
+      ${ic('img',13)} ${ms.length?`Material (${ms.length})`:'Subir material'}</button>`;
+    return html.replace('<button class="b gho" data-modalno="1">Cancelar</button>',
+      `<button class="b gho" data-modalno="1">Cancelar</button>\n      ${botao}`);
+  };
+})(modalPauta);
+
+/* e um atalho direto na linha da pauta */
+ptItemHtml = (function(orig){
+  return function(p, i){
+    const html = orig(p, i);
+    if(p.tarefa) return html;
+    const ms = materiaisDe(p.id);
+    const btn = `<button class="ptQuick" data-mtabrir="${p.id}"
+      style="${ms.length?'color:var(--encore);border-color:rgba(53,184,122,.4)':''}"
+      aria-label="${ms.length?`Material (${ms.length} arquivo${ms.length>1?'s':''})`:'Subir material'}"
+      title="${ms.length?'Ver material':'Subir material'}">${ic('img',16)}</button>`;
+    return html.replace('<button class="ptFeito"', btn + '\n    <button class="ptFeito"');
+  };
+})(ptItemHtml);
+
+/* a tabela ganha a coluna Material */
+ptVistaTabela = (function(orig){
+  return function(visiveis){
+    let html = orig(visiveis);
+    html = html.replace('<th>Status</th>', '<th>Material</th><th>Status</th>');
+    visiveis.forEach(p=>{
+      const ms = materiaisDe(p.id);
+      const cel = `<td class="feitoCel">${p.tarefa ? '—'
+        : `<button class="selo ${ms.length?'s':'n'}" data-mtabrir="${p.id}">${
+            ms.length? `${ms.length} ARQ.` : 'SUBIR'}</button>`}</td>`;
+      html = html.replace(
+        new RegExp(`(<td class="feitoCel"><button class="selo [sn]" data-ptfeito="${p.id}")`),
+        cel + '$1');
+    });
+    return html.replace(/colspan="(\d+)"/, (m,n)=>`colspan="${+n+1}"`);
+  };
+})(ptVistaTabela);
+</script>
+<style>
+/* v31b — o peso do arquivo estava em 4,12:1 */
+.mtCard .peso{ color:var(--ink-300) }
 </style>

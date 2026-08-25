@@ -373,6 +373,20 @@ no feed e story com caixinha de link) → **bastidor + corte** → **artigo** �
 sobre o artigo. O artigo vem **depois** do episódio: antes, nem o público nem a agência
 viram o que está sendo desdobrado.
 
+**Material final por postagem (v31).** Cada linha da pauta aceita o arquivo pronto —
+vídeo, foto, áudio, PDF — e carrossel aceita várias telas guardando a ordem. A miniatura é
+o próprio arquivo (blob local), não o nome: quem confere precisa VER a peça. Atalho na
+linha, na tabela (coluna Material) e no formulário. Formato de peça única substitui o
+arquivo anterior; carrossel acumula.
+
+> Achado: eu revogava a URL do blob **antes** de redesenhar, com o `<img>` antigo ainda no
+> DOM — o navegador tentava recarregar um blob que sumira debaixo dele
+> (`ERR_FILE_NOT_FOUND`). A revogação foi para o fim da fila (`soltarDepois`, 1,2s).
+> Provado pelo histórico de rede: antes 2 falhas, depois 6 blobs em 200.
+
+> **No protótipo os arquivos ficam só na aba** — nada vai para servidor e somem ao
+> recarregar. Está escrito na tela. No produto vão para o armazenamento com versão e selo.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
