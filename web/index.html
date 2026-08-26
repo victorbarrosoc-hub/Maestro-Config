@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-26 15:22 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-26 16:05 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -8696,9 +8696,11 @@ function entenderLinhas(linhas){
       feito: statusTxt === 'feito',
       tarefa: semAcento(tipoTxt).includes('tarefa'),
       pend: (col.pend!==undefined ? l[col.pend] : '')?.trim() || '',
+      // o Pilar é de TODA linha, não só do story: na planilha do founder
+      // as 32 postagens e as 2 tarefas vêm como "Pauta principal"
+      pilar: pilarTxt || (ehStory ? 'Autoridade' : 'Pauta principal'),
       ...(ehStory ? {
         story:true,
-        pilar: pilarTxt || 'Story',
         objetivo: objetivoTxt || texto,
         telas,
         recursos: (col.recursos!==undefined ? l[col.recursos] : '')?.trim() || '',
@@ -10744,4 +10746,277 @@ document.addEventListener('click', e => {
   if(!t || S.ptVista !== 'mes') return;
   S.agDia = t.dataset.ptdiaIso;
 }, true);
+</script>
+<style>
+/* v43 — o Pilar, que estava na planilha e não estava na tabela */
+.ptTb .pilarCel{ white-space:nowrap }
+.pilarChip{ display:inline-block; font-family:var(--mono); font-size:9.5px;
+  letter-spacing:.07em; text-transform:uppercase; padding:4px 9px; border-radius:999px;
+  border:1px solid currentColor; opacity:.95 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v43 — a coluna Pilar. Ela existe na planilha do founder desde sempre
+   (as 70 linhas têm), mas só tinha entrado no card de story. Faltava
+   na tabela, no editor de postagem comum e nos dados que já estavam
+   carregados.
+   ================================================================== */
+
+/* "Pauta principal" é o pilar de 34 das 70 linhas — o padrão. Por ser o
+   mais comum ele fica NEUTRO de propósito: assim os pilares de story
+   é que saltam, em vez de a tabela inteira virar um mostruário de cor. */
+PILAR_COR['Pauta principal'] = '#C4C9D0';
+
+const pilarPadrao = p => p.story ? 'Autoridade' : 'Pauta principal';
+function preencherPilares(){
+  Object.values(S.pautas || {}).forEach(arr =>
+    (arr || []).forEach(p => { if(!p.pilar) p.pilar = pilarPadrao(p); }));
+}
+preencherPilares();
+
+/* o que veio do banco também pode ser de antes da coluna existir */
+sbAplicar = (function(orig){
+  return function(cliId, dados){
+    const ok = orig(cliId, dados);
+    if(ok) preencherPilares();
+    return ok;
+  };
+})(sbAplicar);
+
+/* ---------- a coluna na tabela ------------------------------------- */
+ptVistaTabela = (function(orig){
+  return function(visiveis){
+    let html = orig(visiveis);
+    html = html.replace('<th class="esq">Conteúdo &amp; pauta</th>',
+      '<th class="esq">Pilar</th><th class="esq">Conteúdo &amp; pauta</th>');
+    visiveis.forEach(p=>{
+      const nome = p.pilar || pilarPadrao(p);
+      const cel = `<td class="pilarCel"><span class="pilarChip"
+        style="color:${corDoPilar(nome)}">${esc(nome)}</span></td>`;
+      // entra depois da célula de Formato, que é a última antes do conteúdo
+      html = html.replace(
+        new RegExp(`(data-ptedit="${p.id}"[\\s\\S]*?<td style="white-space:nowrap">[\\s\\S]*?<\\/td>)`),
+        `$1${cel}`);
+    });
+    return html.replace(/colspan="(\d+)"/, (m,n)=>`colspan="${+n+1}"`);
+  };
+})(ptVistaTabela);
+
+/* ---------- o Pilar no editor de QUALQUER postagem ------------------ */
+modalPauta = (function(orig){
+  return function(id){
+    const html = orig(id);
+    const p = id ? S.pauta.find(x=>x.id===id) : null;
+    S.ptPilar = (p && p.pilar) || (p && p.story ? 'Autoridade' : 'Pauta principal');
+    if(p && p.story) return html;          // o story já ganhou os chips na v42
+    const campo = `
+    <div class="fld"><label>Pilar — a que eixo editorial esta peça serve</label>
+      <div class="ptChips">${Object.keys(PILAR_COR).map(k=>
+        `<button data-pilarpick="${k}" class="${S.ptPilar===k?'on':''}"
+          ><i style="background:${PILAR_COR[k]}"></i>${k}</button>`).join('')}</div></div>`;
+    return html.replace('<div class="modalrow" style="margin-top:14px">',
+      campo + '\n    <div class="modalrow" style="margin-top:14px">');
+  };
+})(modalPauta);
+
+/* grava o pilar de qualquer postagem. Duas etapas pelo mesmo motivo da
+   v42: quando o handler de bolha roda, o modal já saiu do DOM — mas
+   aqui o valor vive em S.ptPilar (posto pelo clique no chip), então
+   basta lembrar QUE havia chips na tela. */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptok]');
+  if(!t) return;
+  S.ptPilarEscolhido = document.querySelector('[data-pilarpick]') ? (S.ptPilar || null) : null;
+}, true);
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptok]');
+  if(!t || !S.ptPilarEscolhido) return;
+  const pilar = S.ptPilarEscolhido; S.ptPilarEscolhido = null;
+  const alvo = +t.dataset.ptok
+    ? S.pauta.find(x=>x.id===+t.dataset.ptok)
+    : S.pauta[S.pauta.length-1];
+  if(alvo && alvo.pilar !== pilar){ alvo.pilar = pilar; render(); }
+});
+
+/* ---------- e o pilar aparece na linha da semana -------------------- */
+ptItemHtml = (function(orig){
+  return function(p, i){
+    const html = orig(p, i);
+    if(p.story) return html;               // o card de story já mostra o pilar
+    const nome = p.pilar || pilarPadrao(p);
+    if(nome === 'Pauta principal') return html;   // o padrão não precisa de selo
+    const chip = `<span class="pilarChip" style="color:${corDoPilar(nome)}">${esc(nome)}</span>`;
+    return html.replace('<span class="ptFmtChip">', chip + '\n        <span class="ptFmtChip">');
+  };
+})(ptItemHtml);
+</script>
+<style>
+/* v44 — material também pode ser link */
+.mtMini.ehLink{ border-color:var(--brass-700); background:rgba(200,150,58,.08) }
+.mtMini.ehLink .tipo{ color:var(--brass-300) }
+.mtLinkCard .vis{ display:grid; place-items:center; background:rgba(200,150,58,.07) }
+.mtLinkCard .vis .semPrev{ color:var(--brass-300) }
+.mtDominio{ display:block; font-family:var(--mono); font-size:9.5px; color:var(--brass-300);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v44 — o material pode ser um LINK.
+
+   O founder: "o material em si pode ser um link de um artigo, por
+   exemplo". Estava certo — o Material só aceitava arquivo, e um artigo
+   publicado no blog não é arquivo nenhum: é uma URL. Agora o Material
+   aceita os dois, e um material em link vale como material pronto.
+
+   Ganho de brinde: link não é blob, então SOBE para o banco — o
+   material em arquivo continua preso ao navegador de quem subiu, mas
+   o material em link atravessa para as outras pessoas.
+   ================================================================== */
+
+/* o modal de material ganha a linha de link, igual à das referências */
+modalMaterial = (function(orig){
+  return function(id){
+    let html = orig(id);
+    if(!html) return html;
+    const linha = `
+    <div class="rfLinha">
+      <input type="url" id="mt-url" placeholder="Ou cole o link do material (artigo, vídeo, Drive…)"
+        autocomplete="off">
+      <button class="b gho" data-mtlink="${id}">${ic('linkic',13)} Adicionar link</button>
+    </div>`;
+    // entra logo abaixo da zona de soltar arquivo
+    html = html.replace(/(<input type="file" id="mt-file"[^>]*>)/, `$1${linha}`);
+    // o cartão de um material em link mostra o domínio e abre em outra aba
+    return html;
+  };
+})(modalMaterial);
+
+/* o cartão do material em link, no lugar da miniatura vazia */
+modalMaterial = (function(orig){
+  return function(id){
+    let html = orig(id);
+    if(!html) return html;
+    const ms = materiaisDe(id);
+    ms.forEach((m,i)=>{
+      if(m.tipo !== 'link') return;
+      const novo = `<div class="mtCard mtLinkCard">
+        <div class="vis"><span class="semPrev">${ic('linkic',22)}</span>
+          <button class="x" data-mtdel="${i}" aria-label="Remover">${ic('x',12)}</button>
+        </div>
+        <div class="nome"><a href="${esc(m.url)}" target="_blank" rel="noopener noreferrer"
+          style="color:inherit">${esc(m.nome)}</a>
+          <span class="mtDominio">${esc(dominioDe(m.url))}</span></div>
+      </div>`;
+      // troca o cartão genérico deste índice pelo cartão de link
+      html = html.replace(
+        new RegExp(`<div class="mtCard">[\\s\\S]*?data-mtdel="${i}"[\\s\\S]*?<\\/div>\\s*<\\/div>`),
+        novo);
+    });
+    return html;
+  };
+})(modalMaterial);
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-mtlink]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const campo = document.getElementById('mt-url');
+  const bruto = (campo?.value || '').trim();
+  if(!bruto){ toast('Cole um link primeiro.'); return; }
+  if(!ehUrl(bruto)){ toast('Isso não parece um link. Comece com https://'); return; }
+  const url = arrumaUrl(bruto);
+  const id = +t.dataset.mtlink;
+  (S.mat[id] = S.mat[id] || []).push({ tipo:'link', nome:url, url, peso:0 });
+  somMaterial();
+  S.mtId = id;
+  S.modal = modalMaterial(id); renderLayer(); setTimeout(ligarSolta, 0);
+  render();
+  toast('Link adicionado como material.');
+}, true);
+
+/* Enter no campo de link vale como clicar no botão */
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Enter' || e.target.id !== 'mt-url') return;
+  e.preventDefault();
+  document.querySelector(`[data-mtlink="${S.mtId}"]`)?.click();
+});
+
+/* a tirinha na linha da pauta reconhece o link */
+tiraMaterial = (function(orig){
+  return function(p){
+    const ms = materiaisDe(p.id);
+    if(!ms.length || !ms.some(m=>m.tipo==='link')) return orig(p);
+    let html = orig(p);
+    ms.slice(0,4).forEach((m,i)=>{
+      if(m.tipo !== 'link') return;
+      // marca a i-ésima miniatura como link (ela não tem miniatura visual)
+      let n = -1;
+      html = html.replace(/<span class="mtMini([^"]*)"/g, (mm, cls)=>{
+        n++; return n===i ? `<span class="mtMini${cls} ehLink"` : mm;
+      });
+    });
+    return html;
+  };
+})(tiraMaterial);
+
+/* ---------- e o material em link vai para o banco ------------------- */
+sbEmpacotar = (function(orig){
+  return function(cliId){
+    const pac = orig(cliId);
+    const mats = {};
+    (S.pautas[cliId] || []).forEach(p=>{
+      const so = (S.mat[p.id] || []).filter(m=>m.tipo==='link');
+      if(so.length) mats[p.id] = so;
+    });
+    return { ...pac, mats };
+  };
+})(sbEmpacotar);
+
+sbAplicar = (function(orig){
+  return function(cliId, dados){
+    const ok = orig(cliId, dados);
+    if(!ok) return ok;
+    Object.entries((dados && dados.mats) || {}).forEach(([id, ls])=>{
+      const arquivos = (S.mat[id] || []).filter(m=>m.tipo!=='link');
+      S.mat[id] = [...arquivos, ...ls];   // arquivo local de quem está aqui não se perde
+    });
+    return ok;
+  };
+})(sbAplicar);
+</script>
+<script>
+"use strict";
+/* v44b — "1 ARQ." mentia quando o material era um link. O selo passa a
+   dizer o que a coisa é: LINK, ARQ. ou ITENS quando tem dos dois. E o
+   convite vazio deixa de ser só "SUBIR", já que agora dá para colar. */
+ptVistaTabela = (function(orig){
+  return function(visiveis){
+    let html = orig(visiveis);
+    visiveis.forEach(p=>{
+      const ms = materiaisDe(p.id);
+      const rotulo = !ms.length ? '+ MATERIAL'
+        : ms.every(m=>m.tipo==='link') ? `${ms.length} LINK${ms.length>1?'S':''}`
+        : ms.some(m=>m.tipo==='link')  ? `${ms.length} ITENS`
+        : `${ms.length} ARQ.`;
+      html = html.replace(
+        new RegExp(`(<button class="selo [sn]" data-mtabrir="${p.id}">)[^<]*(</button>)`),
+        `$1${rotulo}$2`);
+    });
+    return html;
+  };
+})(ptVistaTabela);
+
+/* o mesmo no botão do editor de postagem */
+modalPauta = (function(orig){
+  return function(id){
+    const html = orig(id);
+    if(!id) return html;
+    const ms = materiaisDe(id);
+    if(!ms.length || !ms.every(m=>m.tipo==='link')) return html;
+    return html.replace(`Material (${ms.length})`, `Material · ${ms.length} link${ms.length>1?'s':''}`);
+  };
+})(modalPauta);
 </script>

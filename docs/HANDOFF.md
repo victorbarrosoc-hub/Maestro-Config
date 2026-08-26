@@ -669,6 +669,33 @@ da agenda visível como bloco tracejado.
 > texto cortado; zero "Livre" sobreposto a card; em 375px o seletor de cinco visões fica em
 > uma linha só, com o cursor casando com o botão, rolando de lado, e a página não vaza.
 
+**Pilar na tabela, e material que pode ser link (v43 e v44).** Duas faltas que o founder
+apontou olhando a planilha ao lado do protótipo.
+
+> **A coluna Pilar existia na planilha e não na tabela.** As 70 linhas têm Pilar: as 32
+> postagens e as 2 tarefas como "Pauta principal", os 36 stories nos 9 pilares editoriais.
+> O import só guardava o pilar do story — agora guarda de toda linha, a tabela ganhou a
+> coluna (entre Formato e Conteúdo), o editor de qualquer postagem ganhou os chips, e a
+> linha da semana mostra o pilar quando ele não é o padrão. Dados já carregados (inclusive
+> os que voltam do banco de antes da coluna existir) são preenchidos no load.
+> **"Pauta principal" é neutro de propósito** — é 34 das 70 linhas, e se ele tivesse cor
+> a tabela inteira viraria mostruário; assim os pilares de story é que saltam.
+
+> **"O material em si pode ser um link de um artigo."** Estava certo: o Material só
+> aceitava arquivo, e um artigo publicado no blog não é arquivo nenhum — é uma URL. Agora
+> aceita os dois, o material em link conta como material pronto, abre em aba nova e mostra
+> o domínio. **Ganho de brinde: link não é blob, então sobe para o banco** — o material em
+> arquivo continua preso ao navegador de quem subiu, o material em link atravessa para as
+> outras pessoas (mesma regra que já valia para as referências).
+
+> **O selo mentia:** dizia "1 ARQ." para um link. Passou a dizer o que a coisa é — `1 LINK`,
+> `2 ITENS` quando tem dos dois, `N ARQ.` só quando é mesmo arquivo — e o convite vazio
+> virou `+ MATERIAL` em vez de `SUBIR`, já que agora dá para colar.
+
+> Verificado: as 11 colunas da tabela batem com as células; os 70 itens têm pilar; colar
+> link sem protocolo funciona; o link some e volta do banco entre recarregamentos, o
+> arquivo não (por desenho); os três rótulos do selo saem certos nos três casos.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
