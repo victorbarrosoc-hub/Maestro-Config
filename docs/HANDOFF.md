@@ -544,6 +544,49 @@ de cada tarefa**.
 > verdade (não só gerado em memória) abriu limpo no `openpyxl` com data real, cabeçalho
 > congelado e as cores certas em cada rede e em FEITO/NÃO FEITO.
 
+**Stories diários, referências e telas organizáveis (v40).** O founder mandou as duas
+abas reais da planilha da EJUP — "Visão Geral da tabela" e "Stories Diários" — e pediu
+três coisas.
+
+> **1. Visão própria dos stories.** A aba "Stories Diários" tem 36 sequências, cada uma
+> com 3 telas. Virou a quarta visão da pauta, com botão próprio no seletor. Cada story
+> mostra data, hora, pilar (colorido, 9 pilares), objetivo, as telas numeradas e o rodapé
+> com Interação / CTA / Recursos. Entra pela porta da `ptVistaSemana` — vista que não casa
+> com 'mes' nem 'tabela' cai nela —, então o miolo da pauta seguiu intacto.
+
+> **2. Telas organizáveis sem abrir nada.** Cada tela tem ▲ ▼ para reordenar, × para
+> apagar (com Desfazer por 8s) e "+ Tela" para criar; tocar no texto abre a edição.
+> `desfazer()` aprendeu mais um caso — já sabia peça e item de pauta, agora sabe tela.
+> Na Tabela, as linhas de story mostram T1/T2/T3 dentro da coluna de conteúdo.
+
+> **3. Referências por postagem.** Link (que abre em aba nova, com `rel="noopener"`) ou
+> arquivo, com botão no card, na linha e na tabela. Entram no export numa coluna própria.
+
+> **O seletor passou a ser medido, não calculado.** Com o quarto botão, a conta de
+> porcentagem do cursor (`left:calc(idx * 25%)`) deixou de fechar: os botões têm largura
+> de conteúdo (`flex:0 1 auto`), não largura igual — com três já era aproximação, com
+> quatro ficou visivelmente torto. Em vez de remendar a conta, o seletor passou a usar o
+> `fixSegs()` que já existia no arquivo desde a v7: ele **mede** o botão ligado
+> (`offsetLeft`/`offsetWidth`) e põe o cursor exatamente nele.
+
+> **Quatro bugs achados testando, não relendo:**
+> (1) `partirTelas` era chamada pelo importador e **nunca tinha sido escrita** — qualquer
+> importação quebraria com `ReferenceError`. Achado ao rodar as duas abas de verdade.
+> (2) A aba "Stories Diários" importava **vazia**: ela não tem coluna de conteúdo nem de
+> redes (só roteiro), e o filtro de "linha vazia de verdade" descartava as 36 linhas.
+> (3) A coluna **"Interação / sticker" contém "interACAO"** e era capturada pela regra do
+> CTA — o CTA da pauta vinha com o texto do sticker. Agora o sticker é testado antes.
+> (4) Link colado sem protocolo (`ejup.com.br/artigo`) era recusado — que é exatamente
+> como se cola um link. Agora domínio puro vale.
+
+> Verificado: as duas abas reais importam certo (Visão Geral: 70 itens = 32 posts + 36
+> stories + 2 tarefas; Stories Diários: 36, todos com 3 telas, pilar, sticker e recursos);
+> nenhum post virou story por engano (`partirTelas` exige dois marcadores "Tela N");
+> exportar e reimportar os 70 itens dá **zero divergência** em título, data, hora, CTA,
+> pendência, feito, tarefa, story, telas, pilar, sticker e recursos; o .xlsx baixado de
+> verdade abre no `openpyxl` (parser independente) com 23 colunas, data real e cabeçalho
+> congelado; reordenar/apagar/desfazer/adicionar/editar tela testados por clique real.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

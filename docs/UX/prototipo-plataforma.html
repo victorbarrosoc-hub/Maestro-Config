@@ -8603,12 +8603,21 @@ function entenderLinhas(linhas){
     else if(APELIDO_PLAT[c]) col.plats[i]=APELIDO_PLAT[c];
     else if(c.includes('formato')) col.fmt=i;
     else if(c.includes('conteudo')||c.includes('pauta')||c.includes('legenda')) col.texto=i;
+    // "Interação / sticker" contém "interACAO" e era capturada pela regra
+    // do CTA logo abaixo — o CTA da pauta vinha com o texto do sticker.
+    // Por isso ela é testada ANTES.
+    else if(c.includes('sticker')||c.includes('interacao')) col.sticker=i;
     else if(c.includes('cta')||c.includes('acao')||c.includes('direcion')) col.cta=i;
     else if(c.includes('hora')) col.hora=i;
     else if(c==='tipo') col.tipo=i;                    // "Tarefa interna" x "Postagem"
     else if(c.includes('pendencia')) col.pend=i;
     else if(c==='status') col.status=i;                 // FEITO / NÃO FEITO
     else if(c.includes('titulo')) col.titulo=i;         // existe quando se reimporta um export nosso
+    else if(c==='pilar') col.pilar=i;                   // aba "Stories Diários"
+    else if(c.includes('objetivo')) col.objetivo=i;
+    else if(c.includes('roteiro')) col.roteiro=i;       // "Roteiro detalhado para execução"
+    else if(c.includes('recurso')) col.recursos=i;
+    else if(c.includes('referencia')) col.refs=i;
   });
   if(col.dia===undefined && col.data===undefined)
     return { erro:'Não achei a coluna "Dia" nem a coluna "Data".' };
@@ -8633,7 +8642,11 @@ function entenderLinhas(linhas){
     const plats = Object.entries(col.plats)
       .filter(([i2])=>(l[+i2]||'').trim())
       .map(([,k])=>k);
-    if(!texto && !plats.length) continue;                // linha vazia de verdade
+    // o roteiro conta como conteudo: a aba "Stories Diários" da planilha
+    // nao tem coluna de conteudo nem de redes — so roteiro. Sem isto,
+    // toda linha dela caía neste filtro e a aba importava vazia.
+    const roteiroTxt = (col.roteiro!==undefined ? l[col.roteiro] : '')?.trim() || '';
+    if(!texto && !plats.length && !roteiroTxt) continue;  // linha vazia de verdade
 
     // a data manda quando existe; sem ela, cai na proxima ocorrencia do
     // dia da semana — assim todo item importado tem uma data de verdade
@@ -8647,16 +8660,35 @@ function entenderLinhas(linhas){
     const tipoTxt = (col.tipo!==undefined ? l[col.tipo] : '')?.trim() || '';
     const statusTxt = semAcento((col.status!==undefined ? l[col.status] : '')?.trim() || '');
     const tituloTxt = (col.titulo!==undefined ? l[col.titulo] : '')?.trim() || '';
+    // o roteiro do story vem como um bloco "Tela 1 — … / Tela 2 — …";
+    // vira uma lista de telas, que é como a visão de stories organiza
+    const telas = partirTelas(roteiroTxt || texto);
+    const pilarTxt = (col.pilar!==undefined ? l[col.pilar] : '')?.trim() || '';
+    const objetivoTxt = (col.objetivo!==undefined ? l[col.objetivo] : '')?.trim() || '';
+    // "Execução diária" na coluna Tipo, ou um roteiro em telas, define o story
+    const ehStory = semAcento(tipoTxt).includes('diaria') || telas.length > 1;
+
     itens.push({
       data, dia, hora,
-      fmt: acharFormato(fmtTxt || texto),
-      plats: plats.length ? plats : ['ig'],
-      t: tituloTxt || (fmtTxt.length > 6 ? fmtTxt.slice(0,70) : (texto.split(/[.\n]/)[0].slice(0,70) || 'Postagem importada')),
-      texto, cta: (col.cta!==undefined ? l[col.cta] : '')?.trim() || '',
+      fmt: ehStory ? 'Story' : acharFormato(fmtTxt || texto),
+      plats: plats.length ? plats : (ehStory ? ['ig','str'] : ['ig']),
+      t: tituloTxt
+         || (ehStory && pilarTxt ? 'Story · ' + pilarTxt : '')
+         || (fmtTxt.length > 6 ? fmtTxt.slice(0,70) : (texto.split(/[.\n]/)[0].slice(0,70) || 'Postagem importada')),
+      texto: objetivoTxt || texto,
+      cta: (col.cta!==undefined ? l[col.cta] : '')?.trim() || '',
       st:'DRAFT', pecaId:null,
       feito: statusTxt === 'feito',
       tarefa: semAcento(tipoTxt).includes('tarefa'),
-      pend: (col.pend!==undefined ? l[col.pend] : '')?.trim() || ''
+      pend: (col.pend!==undefined ? l[col.pend] : '')?.trim() || '',
+      ...(ehStory ? {
+        story:true,
+        pilar: pilarTxt || 'Story',
+        objetivo: objetivoTxt || texto,
+        telas,
+        recursos: (col.recursos!==undefined ? l[col.recursos] : '')?.trim() || '',
+        sticker: (col.sticker!==undefined ? l[col.sticker] : '')?.trim() || ''
+      } : {})
     });
   }
   if(!itens.length) return { erro:'Cabeçalho entendido, mas nenhuma linha de postagem encontrada.' };
@@ -9248,4 +9280,903 @@ document.addEventListener('click', async e => {
   if(!t) return;
   await baixarPautaXlsx();
 }, true);
+</script>
+<style>
+/* =====================================================================
+   v40 — a aba "Stories Diários" da planilha vira visão própria, e cada
+   postagem ganha referências (link ou arquivo). O roteiro de story
+   deixa de ser um bloco de texto e vira telas numeradas que dá para
+   reordenar e apagar sem abrir nada.
+   ================================================================== */
+.ptSeg .seg{ position:relative }
+.stCard{ border:1px solid var(--ink-800); border-radius:15px; background:var(--ink-900);
+  padding:15px 15px 13px; margin-bottom:11px; position:relative }
+.stCard.ok{ border-color:rgba(53,184,122,.32) }
+.stTopo{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:9px }
+.stPilar{ font-family:var(--mono); font-size:9.5px; letter-spacing:.09em;
+  text-transform:uppercase; padding:4px 9px; border-radius:999px;
+  border:1px solid currentColor; opacity:.95 }
+.stObj{ color:var(--ink-200); font-size:13.5px; line-height:1.5; margin:0 0 11px }
+.stTelas{ display:flex; flex-direction:column; gap:7px }
+.stTela{ display:flex; gap:10px; align-items:flex-start; padding:10px 11px;
+  border:1px solid var(--ink-800); border-radius:11px; background:var(--ink-950);
+  transition:border-color var(--fast) var(--eo), transform var(--fast) var(--eo) }
+.stTela:hover{ border-color:var(--ink-700) }
+.stTela.moveu{ animation:stMove .42s var(--spring) }
+@keyframes stMove{ 0%{ transform:scale(.985); border-color:var(--brass-600) } 100%{ transform:none } }
+.stNum{ flex:0 0 auto; width:23px; height:23px; border-radius:7px; display:grid;
+  place-items:center; font-family:var(--mono); font-size:10.5px; font-weight:600;
+  background:var(--ink-800); color:var(--brass-300); border:1px solid var(--ink-700) }
+.stTxt{ flex:1; min-width:0; font-size:12.8px; line-height:1.55; color:var(--ink-100);
+  text-align:left; background:none; border:0; padding:0; cursor:text }
+.stTxt:hover{ color:var(--ink-50) }
+.stBtns{ flex:0 0 auto; display:flex; gap:3px; align-items:center }
+.stBtns button{ width:25px; height:25px; border-radius:7px; display:grid; place-items:center;
+  border:1px solid transparent; color:var(--ink-400); background:none; font-size:12px;
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.stBtns button:hover:not(:disabled){ color:var(--brass-300); border-color:var(--ink-700) }
+.stBtns button:disabled{ opacity:.25 }
+.stBtns button.rm:hover{ color:var(--danger); border-color:rgba(229,72,77,.35) }
+.stAdd{ margin-top:8px; font-family:var(--mono); font-size:10.5px; padding:7px 13px;
+  border-radius:999px; border:1px dashed var(--ink-700); color:var(--ink-300);
+  background:none; transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.stAdd:hover{ color:var(--brass-300); border-color:var(--brass-600) }
+.stPe{ display:flex; flex-wrap:wrap; gap:7px; margin-top:11px }
+.stPeI{ font-size:11.5px; line-height:1.5; color:var(--ink-300); padding:7px 11px;
+  border-radius:9px; background:var(--ink-950); border:1px solid var(--ink-800); flex:1;
+  min-width:190px }
+.stPeI b{ display:block; font-family:var(--mono); font-size:9px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-400); margin-bottom:3px }
+.stAcoes{ position:absolute; top:13px; right:13px; display:flex; gap:5px }
+.stVazio{ text-align:center; padding:34px 20px; color:var(--ink-300); font-size:13px }
+
+/* referências */
+.rfLista{ display:flex; flex-direction:column; gap:7px; margin:11px 0 0 }
+.rfItem{ display:flex; gap:10px; align-items:center; padding:9px 11px;
+  border:1px solid var(--ink-800); border-radius:10px; background:var(--ink-950) }
+.rfIc{ flex:0 0 auto; width:28px; height:28px; border-radius:8px; display:grid;
+  place-items:center; background:var(--ink-800); color:var(--brass-300) }
+.rfNome{ flex:1; min-width:0; font-size:12.5px; color:var(--ink-100); overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap }
+.rfNome small{ display:block; color:var(--ink-400); font-size:10.5px;
+  font-family:var(--mono); overflow:hidden; text-overflow:ellipsis }
+.rfItem a.rfNome:hover{ color:var(--brass-300) }
+.rfX{ flex:0 0 auto; width:26px; height:26px; border-radius:7px; display:grid;
+  place-items:center; color:var(--ink-400); border:1px solid transparent }
+.rfX:hover{ color:var(--danger); border-color:rgba(229,72,77,.35) }
+.rfLinha{ display:flex; gap:8px; margin-top:11px; flex-wrap:wrap }
+.rfLinha input{ flex:1; min-width:180px }
+.ptTb .refCel{ text-align:center; white-space:nowrap }
+.ptTelasCel{ display:flex; flex-direction:column; gap:3px; margin-top:6px }
+.ptTelasCel span{ display:flex; gap:6px; font-size:11.5px; color:var(--ink-300);
+  line-height:1.45 }
+.ptTelasCel i{ flex:0 0 auto; font-style:normal; font-family:var(--mono); font-size:9.5px;
+  color:var(--brass-300); padding-top:1px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v40 — três pedidos do founder, da planilha real:
+
+   1. A aba "Stories Diários" existe de verdade: 36 sequências, cada uma
+      com telas numeradas. Vira uma quarta visão da pauta, com botão
+      próprio, e as telas podem ser reordenadas e apagadas ali mesmo.
+   2. Toda postagem ganha REFERÊNCIAS — link ou arquivo. É o que a
+      planilha chama de "Recursos / produção", mas de verdade: o link
+      abre, o arquivo aparece.
+   3. Nada disso pode quebrar o import/export: as colunas novas
+      (Pilar, Objetivo, Roteiro, Recursos, Interação) entram nos dois.
+   ================================================================== */
+
+/* ---------- os stories diários da planilha da EJUP ------------------ */
+const PILAR_COR = {
+  'Autoridade':'#C8963A', 'Aquecimento':'#E1568C', 'Relacionamento':'#8B7BF0',
+  'Posicionamento':'#4C8FDB', 'Curadoria':'#35B87A', 'Bastidores':'#9AA1AC',
+  'Conversão':'#E5484D', 'Engajamento':'#D9AC4C', 'Recapitulação':'#5B8DEF'
+};
+const corDoPilar = p => PILAR_COR[p] || '#9AA1AC';
+
+/* "Tela 1 — … / Tela 2 — …" vira uma lista de telas. Exige DOIS
+   marcadores para valer: um texto comum que mencione "Tela 1" de
+   passagem não pode virar roteiro de story por engano. Linha solta
+   (roteiro que quebrou no meio) cola na tela anterior. */
+function partirTelas(txt){
+  if(!txt) return [];
+  const marca = /^tela\s*\d+\s*[—–:-]\s*/i;
+  const linhas = String(txt).split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  if(linhas.filter(l=>marca.test(l)).length < 2) return [];
+  const out = [];
+  for(const l of linhas){
+    if(marca.test(l)) out.push(l.replace(marca,'').trim());
+    else if(out.length) out[out.length-1] += ' ' + l;
+  }
+  return out.filter(Boolean);
+}
+
+const ST = (data, hora, pilar, objetivo, telas, recursos, sticker, cta, pend) => ({
+  id: ++_pid, data, dia: diaDaSemana(data), hora,
+  fmt:'Story', plats:['ig','str'], t:'Story · ' + pilar,
+  texto: objetivo, cta, st:'DRAFT', pecaId:null, feito:false, tarefa:false,
+  pend: pend || '', story:true, pilar, objetivo, telas, recursos, sticker
+});
+
+const STORIES_EJUP = [
+  ST('2026-08-26','11:30','Autoridade',
+    'Distribuir o artigo e gerar leitura qualificada',
+    ['Fundo claro com detalhe de livro/anotação: “Superendividamento não é apenas um problema financeiro. É também uma questão jurídica que exige leitura de contexto.”',
+     'Apresente os três eixos do artigo: fundamentos jurídicos; Lei nº 14.181/2021; atuação preventiva do advogado.',
+     'Mostre a capa do artigo e use o adesivo de link para o blog.'],
+    'Capa do artigo; imagem de apoio com livro ou mesa de estudo; link do artigo revisado pela equipe.',
+    'Enquete na tela 2: “Você já atendeu um caso de superendividamento?” — Sim / Ainda não',
+    'Leia o artigo completo no blog da EJUP; link no Story.',
+    'Confirmar URL final e revisar referências jurídicas.'),
+  ST('2026-08-27','09:30','Aquecimento',
+    'Preparar a audiência para o conteúdo em vídeo do dia',
+    ['Vídeo curto do bastidor ou frame do corte: “Uma conversa jurídica não termina quando a gravação acaba.”',
+     'Apresente a provocação central do corte de Maria Luiza sem entregar a conclusão: “O que se perde quando tratamos problemas complexos como respostas prontas?”',
+     'Avise que o corte estará no feed e convide a audiência a assistir com atenção ao argumento, não apenas à frase de impacto.'],
+    'Corte vertical legendado; capa do episódio; identidade visual do EJUPcast.',
+    'Caixa curta: “Que tema jurídico merece uma conversa mais profunda?”',
+    'Assista ao corte no feed e acompanhe o episódio completo.',
+    'Selecionar trecho e confirmar tema exato da conversa.'),
+  ST('2026-08-28','12:30','Relacionamento',
+    'Humanizar a produção sem perder a autoridade institucional',
+    ['Foto ou vídeo do set: “Antes de um conteúdo chegar até você, existe pesquisa, revisão e escolha.”',
+     'Mostre um detalhe da produção do podcast com Maria Luiza: microfone, roteiro, equipe ou mesa de gravação.',
+     'Reforce que a EJUP valoriza o tempo de preparação e abra espaço para dúvidas sobre superendividamento e educação financeira no Direito.'],
+    'Bastidores da gravação; autorização de uso de imagem; caixa de perguntas.',
+    'Caixa de perguntas: “Qual é sua dúvida sobre superendividamento no Direito?”',
+    'Envie sua pergunta; algumas serão respondidas nos próximos Stories.',
+    'Selecionar bastidores autorizados e definir responsável pelas respostas.'),
+  ST('2026-08-29','10:30','Posicionamento',
+    'Fixar a recusa à superficialidade por meio de uma frase memorável',
+    ['Reproduza a frase aprovada de Maria Luiza em peça minimalista, com bastante respiro visual.',
+     'Acrescente uma linha editorial: “No Direito, responsabilidade também é saber reconhecer a complexidade.”',
+     'Convide o público a compartilhar somente se a frase representar uma convicção profissional real.'],
+    'Arte de aspas; foto autorizada da convidada, se disponível; logo EJUP.',
+    'Slider de reação: “Quanto essa ideia representa sua forma de estudar e atuar?”',
+    'Compartilhe com alguém que valoriza formação consistente.',
+    'Validar a citação literal e o crédito da convidada.'),
+  ST('2026-08-30','17:00','Curadoria',
+    'Criar hábito de estudo e preparar a pauta da semana seguinte',
+    ['Quadro “Leitura de domingo”: apresente uma obra, artigo ou capítulo sobre Direito do Consumidor e superendividamento.',
+     'Explique em uma frase por que a leitura foi escolhida e qual pergunta ela ajuda a investigar.',
+     'Mostre a referência completa e o link, sem prometer conclusões rápidas; finalize com “Leia com tempo.”'],
+    'Referência bibliográfica validada; capa ou imagem de domínio/licenciada; link seguro.',
+    'Enquete: “Você reserva um horário fixo para leitura jurídica?” — Sim / Quero começar',
+    'Acesse a referência pelo link e salve para ler durante a semana.',
+    'Inserir referência bibliográfica e URL antes da publicação.'),
+  ST('2026-08-31','18:30','Aquecimento',
+    'Abrir setembro apresentando o eixo de empreendedorismo e Direito',
+    ['Texto de abertura: “Empreender no Direito exige mais do que iniciativa: exige critério para decidir.”',
+     'Mostre três frentes do mês: negócio; inovação; responsabilidade jurídica.',
+     'Apresente a pergunta que guiará setembro e direcione para o carrossel do feed.'],
+    'Arte de abertura de setembro; carrossel publicado no feed; ícones discretos para as três frentes.',
+    'Enquete: “Qual desafio aparece mais no seu escritório?” — Gestão / Inovação',
+    'Salve o post de abertura e acompanhe a programação de setembro.',
+    'Confirmar redação final do eixo mensal.'),
+  ST('2026-09-01','09:30','Bastidores',
+    'Mostrar o rigor de preparação que antecede um episódio',
+    ['Foto da mesa de edição ou roteiro: “A profundidade também é construída na preparação.”',
+     'Liste discretamente o que está sendo revisado: cortes; legendas; capítulos; descrição.',
+     'Feche com “Amanhã, uma nova conversa sobre empreendedorismo e Direito.” Não divulgar material ainda não aprovado.'],
+    'Foto ou vídeo da ilha de edição; tela desfocada para proteger informações internas.',
+    'Slider de curiosidade: “Quanto você valoriza bastidores de produção?”',
+    'Acompanhe o teaser de amanhã.',
+    'Usar somente material aprovado e sem informações internas sensíveis.'),
+  ST('2026-09-02','09:30','Aquecimento',
+    'Aumentar a expectativa para o episódio com Zeca Melo',
+    ['Corte curto de Zeca Melo com legenda e marcação do EJUPcast.',
+     'Contextualize: “Empreendedorismo e Direito se encontram quando decisões precisam sair do discurso e virar estrutura.”',
+     'Use contagem regressiva para o lançamento do episódio completo no dia seguinte.'],
+    'Teaser vertical; legenda revisada; capa do episódio; adesivo de contagem regressiva.',
+    'Contagem regressiva para o lançamento; pergunta: “O que você quer entender sobre empreender no Direito?”',
+    'Ative o lembrete e assista ao episódio completo amanhã.',
+    'Confirmar horário e links do lançamento.'),
+  ST('2026-09-03','12:30','Conversão',
+    'Levar a audiência ao episódio completo',
+    ['Capa do episódio: “Já está no ar: Zeca Melo no EJUPcast.”',
+     'Destaque uma pergunta-guia da conversa: “Como o jurista pode participar da jornada empresarial sem reduzir o Direito a ferramenta?”',
+     'Adicione o link direto para o YouTube ou site e informe que o episódio pode ser ouvido com calma.'],
+    'Capa oficial; link do episódio; trecho curto opcional; adesivo de link.',
+    'Enquete: “Você prefere assistir ou ouvir o episódio?” — Assistir / Ouvir',
+    'Assista ao episódio completo; link no Story e na bio.',
+    'Inserir URL final do episódio e revisar a pergunta-guia.'),
+  ST('2026-09-04','12:30','Relacionamento',
+    'Estender a conversa do lançamento e coletar dúvidas reais',
+    ['Bastidor da gravação com Zeca Melo: “Uma conversa relevante continua depois do play.”',
+     'Publique um segundo corte, preferencialmente com uma ideia complementar à do teaser.',
+     'Abra a caixinha para mapear dificuldades de quem empreende ou presta assessoria jurídica a negócios.'],
+    'Bastidores autorizados; segundo corte vertical; caixa de perguntas.',
+    'Caixa: “Qual é seu maior desafio empreendendo dentro do Direito?”',
+    'Envie sua pergunta; use as respostas para pautas futuras.',
+    'Separar corte complementar e selecionar respostas para reaproveitamento.'),
+  ST('2026-09-05','10:30','Posicionamento',
+    'Associar empreendedorismo à maturidade profissional',
+    ['Repita a citação aprovada de Zeca Melo em peça de aspas.',
+     'Faça a ponte editorial: “Empreender também é escolher quais riscos merecem ser enfrentados.”',
+     'Mostre o post do feed e convide ao compartilhamento consciente.'],
+    'Arte da citação; crédito; post publicado no feed.',
+    'Slider: “Essa frase conversa com o momento do seu escritório?”',
+    'Compartilhe com um jurista que também empreende.',
+    'Validar citação e crédito.'),
+  ST('2026-09-06','17:00','Curadoria',
+    'Oferecer referência para aprofundar o eixo de empreendedorismo jurídico',
+    ['“Leitura de domingo: empreendedorismo jurídico sem fórmulas prontas.”',
+     'Apresente a referência escolhida e uma pergunta de leitura: “Qual decisão de gestão exige compreensão jurídica antes de velocidade?”',
+     'Link para a leitura e lembrete para anotar uma ideia aplicável à própria realidade.'],
+    'Referência bibliográfica; capa autorizada; link validado.',
+    'Enquete: “Você lê sobre gestão do escritório?” — Regularmente / Quero incluir na rotina',
+    'Acesse a referência e salve o Story.',
+    'Inserir referência bibliográfica e URL.'),
+  ST('2026-09-07','11:30','Autoridade',
+    'Levar o artigo sobre Sebrae, empreendedorismo e Direito para o blog',
+    ['Capa do artigo e frase: “A conversa sobre empreendedorismo continua na Coluna Jurídica.”',
+     'Resuma os três blocos do texto: contexto empresarial; papel do Sebrae; atuação jurídica estratégica. Ajustar ao conteúdo final do artigo.',
+     'Link para a íntegra e convite para leitura pausada.'],
+    'Capa do artigo; link do blog; texto final revisado.',
+    'Quiz: “O que sustenta uma decisão empreendedora?” — Pressa / Critério / Improviso. Resposta: Critério.',
+    'Leia o artigo completo no blog da EJUP.',
+    'Confirmar estrutura final do artigo e alternativa correta do quiz.'),
+  ST('2026-09-08','09:30','Bastidores',
+    'Criar continuidade entre o artigo e o próximo episódio',
+    ['Foto da equipe em curadoria: “Enquanto uma conversa vai ao ar, outra começa a ser preparada.”',
+     'Mostre roteiro, microfone ou seleção de referências, sem revelar o conteúdo ainda não publicado.',
+     'Avise que o próximo episódio será apresentado em teaser amanhã.'],
+    'Bastidor autorizado; detalhe de roteiro sem dados sensíveis; arte simples de continuidade.',
+    'Caixa: “Qual competência além do conhecimento técnico mais desafia sua atuação?”',
+    'Volte amanhã para conhecer o novo convidado.',
+    'Evitar spoilers e validar material de bastidor.'),
+  ST('2026-09-09','09:30','Aquecimento',
+    'Gerar atenção qualificada para o episódio com Marco Bruno',
+    ['Teaser com o trecho mais claro e instigante do episódio.',
+     'Enquadre a tensão da conversa em uma pergunta: “Como atualizar a prática sem abandonar o critério?”',
+     'Contagem regressiva para o lançamento e convite para compartilhar com alguém que vive esse desafio.'],
+    'Teaser vertical; legendas; capa; contagem regressiva.',
+    'Quiz: “Atualização responsável pressupõe…” — Mais ruído / Mais repertório. Resposta: Mais repertório.',
+    'Ative o lembrete para o episódio completo amanhã.',
+    'Confirmar trecho e horário do lançamento.'),
+  ST('2026-09-10','12:30','Conversão',
+    'Direcionar tráfego para o episódio completo com Marco Bruno',
+    ['Capa oficial: “Novo episódio no ar.”',
+     'Apresente o tema central em uma linha e inclua uma frase de contexto, sem transformar a conversa em promessa rápida.',
+     'Link para o vídeo no YouTube/site; informe a duração e sugira assistir ao argumento completo.'],
+    'Capa; link direto; trecho de apoio; adesivo de link.',
+    'Enquete: “Você vai assistir hoje?” — Sim / Vou salvar para depois',
+    'Assista ao debate na íntegra; link no Story e na bio.',
+    'Inserir URL e duração final do episódio.'),
+  ST('2026-09-11','12:30','Relacionamento',
+    'Transformar o lançamento em conversa com a comunidade',
+    ['Bastidor do episódio: “O conhecimento ganha força quando pode ser debatido.”',
+     'Publique um corte provocativo complementar e escreva uma pergunta de interpretação.',
+     'Abra a caixa para dúvidas sobre o tema do episódio e avise que as melhores perguntas podem virar pauta.'],
+    'Bastidor; segundo corte; caixa de perguntas.',
+    'Caixa: “Qual dúvida ficou depois de assistir ao episódio?”',
+    'Envie sua pergunta e continue a conversa.',
+    'Escolher corte e definir fluxo de triagem das respostas.'),
+  ST('2026-09-12','10:30','Posicionamento',
+    'Reforçar a autoridade silenciosa associada ao episódio',
+    ['Citação literal de Marco Bruno em layout minimalista.',
+     'Interpretação editorial da equipe em uma frase: “A autoridade que permanece é construída com estudo, contexto e responsabilidade.”',
+     'Mostre a peça do feed e convide o público a encaminhar para um colega, sem tom de apelo.'],
+    'Arte de aspas; crédito; post do feed.',
+    'Slider de identificação com a frase.',
+    'Compartilhe com um jurista que preza profundidade.',
+    'Validar citação e texto de apoio.'),
+  ST('2026-09-13','17:00','Curadoria',
+    'Manter o hábito de estudo no intervalo entre conteúdos principais',
+    ['“Uma leitura para atravessar o domingo com mais repertório.”',
+     'Indique livro, paper ou texto relacionado ao tema da semana e explique por que ele merece atenção.',
+     'Inclua referência e link, com a frase: “Aprofundar é também aprender a fazer melhores perguntas.”'],
+    'Referência validada; imagem licenciada; link.',
+    'Enquete: “Você prefere começar por livro ou artigo?” — Livro / Artigo',
+    'Acesse a leitura e salve para retomar.',
+    'Definir e validar a referência.'),
+  ST('2026-09-14','11:30','Autoridade',
+    'Aprofundar o tema do episódio por meio do artigo da Coluna',
+    ['Capa do artigo: “Do episódio à reflexão escrita.”',
+     'Destaque a tese central e dois pontos que o leitor encontrará no texto; não reduzir o artigo a uma lista de dicas.',
+     'Link para a íntegra e convite para comentar qual argumento provocou mais reflexão.'],
+    'Capa; link do artigo; resumo aprovado pelo autor.',
+    'Slider: “Quanto esse tema aparece nas suas decisões profissionais?”',
+    'Leia o artigo completo no blog da EJUP.',
+    'Confirmar título, tese central e link.'),
+  ST('2026-09-15','19:45','Engajamento',
+    'Desdobrar o artigo em uma interação simples e qualificada',
+    ['Mostre a capa do carrossel publicado e convide: “Passe pelas telas antes de responder.”',
+     'Transforme o argumento principal em uma pergunta de múltipla escolha, mantendo as alternativas conceitualmente honestas.',
+     'Revele a resposta com uma breve justificativa e direcione para o artigo completo.'],
+    'Carrossel; arte da pergunta; link do artigo.',
+    'Quiz baseado no argumento central do artigo.',
+    'Leia o texto completo para ver a fundamentação.',
+    'Definir pergunta e resposta com o autor/editor.'),
+  ST('2026-09-16','11:30','Posicionamento',
+    'Comunicar a proposta institucional sem depender de lançamento',
+    ['“Profundidade não é excesso. É método para decidir melhor.”',
+     'Explique em três linhas que a EJUP conecta tradição jurídica, repertório contemporâneo e aplicação responsável.',
+     'Direcione para o artigo institucional do dia, sem antecipar um tema que ainda não foi validado.'],
+    'Arte institucional; link do artigo; logo EJUP.',
+    'Enquete: “Você tem reservado tempo para aprofundar um tema?” — Sim / Preciso retomar',
+    'Leia o artigo institucional e acompanhe a reflexão.',
+    'Definir tema e link do artigo com Roberto.'),
+  ST('2026-09-17','19:45','Engajamento',
+    'Reforçar a leitura do artigo institucional pelo feed',
+    ['Apresente a primeira tela do carrossel: “Uma ideia para levar para a prática.”',
+     'Destaque o argumento que melhor traduz o posicionamento EJUP, com texto legível e sem excesso de elementos.',
+     'Convide a audiência a responder à pergunta final do carrossel e a visitar o artigo.'],
+    'Carrossel; frame do argumento central; link do blog.',
+    'Caixa curta: “Qual parte desse argumento você levaria para sua rotina?”',
+    'Comente no post e leia o artigo completo.',
+    'Selecionar argumento final após aprovação do artigo.'),
+  ST('2026-09-18','12:30','Bastidores',
+    'Mostrar a rotina de curadoria e convidar a comunidade a participar',
+    ['Foto da equipe em estudo, revisão ou reunião: “A autoridade também nasce do que ninguém vê.”',
+     'Mostre uma etapa real da rotina: leitura de referência, pauta, gravação ou revisão.',
+     'Abra espaço para sugestões de temas, reforçando que a curadoria segue critérios.'],
+    'Bastidores autorizados; caixa de perguntas; material de estudo sem dados pessoais.',
+    'Caixa: “Que tema deveria entrar na próxima conversa da EJUP?”',
+    'Envie sua sugestão de pauta.',
+    'Selecionar fotos e definir quem fará a triagem das sugestões.'),
+  ST('2026-09-19','10:30','Posicionamento',
+    'Reafirmar o manifesto e a identidade da marca',
+    ['Trecho aprovado do Manifesto: “O Direito está sendo empurrado para a pressa…”',
+     'Complete com a contraposição EJUP: “Aqui, o tempo do estudo e o rigor não são obstáculos; são parte da formação.”',
+     'Mostre o post manifesto e convide a audiência a reagir com uma frase própria sobre profundidade.'],
+    'Trecho final aprovado do Manifesto EJUP; arte do post; tipografia institucional.',
+    'Caixa: “O que a profundidade permite enxergar?”',
+    'Compartilhe se você também recusa a superficialidade como método.',
+    'Confirmar trecho exato do Manifesto e revisão jurídica/editorial.'),
+  ST('2026-09-20','17:00','Curadoria',
+    'Fechar a semana com uma referência e uma pergunta de reflexão',
+    ['“Leitura de fechamento: menos volume, mais critério.”',
+     'Indique uma referência coerente com o artigo institucional da semana e explique a conexão em uma frase.',
+     'Link e pergunta final: “Que ideia você levará para a próxima semana?”'],
+    'Referência validada; capa ou imagem licenciada; link.',
+    'Caixa de resposta: “Uma ideia que ficou da semana:”',
+    'Acesse a leitura e responda à pergunta.',
+    'Definir referência e conferir direitos de uso da imagem.'),
+  ST('2026-09-21','18:30','Recapitulação',
+    'Organizar os aprendizados do mês e estimular revisita aos episódios',
+    ['“Duas conversas. Um compromisso: ampliar o repertório.”',
+     'Faça um resumo visual dos episódios de Zeca Melo e Marco Bruno, com uma ideia-chave de cada um.',
+     'Direcione para os episódios e peça que o público escolha por qual pretende começar ou qual deseja rever.'],
+    'Capas dos dois episódios; links; frases-chave aprovadas.',
+    'Enquete: “Qual conversa você quer rever?” — Zeca Melo / Marco Bruno',
+    'Reveja os episódios; links nos Stories e na bio.',
+    'Confirmar frases-chave e links.'),
+  ST('2026-09-22','18:30','Engajamento',
+    'Aproveitar o compilado para entender preferências da audiência',
+    ['Compartilhe o compilado dos melhores momentos e explique o critério: ideias que permanecem depois do vídeo.',
+     'Inclua um frame de cada convidado com a pergunta “Qual argumento ficou com você?”',
+     'Convide a comentar no Reels e a enviar o Story para outro profissional.'],
+    'Reels compilado; frames dos convidados; legenda e créditos.',
+    'Enquete: “Qual episódio foi mais útil para você?” — Zeca / Marco',
+    'Assista ao compilado e comente seu momento favorito.',
+    'Confirmar cortes, créditos e ordem do compilado.'),
+  ST('2026-09-23','12:30','Posicionamento',
+    'Preencher o intervalo do calendário com uma apresentação clara da tese da marca',
+    ['“Alma clássica. Repertório contemporâneo.” Use a assinatura institucional da EJUP.',
+     'Traduza a assinatura em três movimentos: respeitar fundamentos; compreender o presente; agir com visão de futuro.',
+     'Convide a audiência a escolher qual movimento está mais presente em sua trajetória profissional.'],
+    'Arte institucional; assinatura oficial; elementos de arquitetura gráfica da marca.',
+    'Enquete: “O que você busca hoje?” — Aprofundar / Atualizar',
+    'Conheça as formações, o EJUPcast e a Coluna Jurídica pelo site.',
+    'Usar assinatura oficial e link da página inicial.'),
+  ST('2026-09-24','18:30','Conversão',
+    'Reforçar o episódio que teve melhor desempenho sem parecer repetitivo',
+    ['Apresente o novo recorte e diga por que ele continua relevante para a audiência.',
+     'Faça uma pergunta de contexto relacionada ao trecho, evitando repetir a legenda do Reels.',
+     'Adicione o link para o episódio completo e convide quem já assistiu a compartilhar com um colega.'],
+    'Novo recorte vertical; link do episódio; dados de desempenho apenas se aprovados.',
+    'Quiz de compreensão sobre a ideia do trecho.',
+    'Ainda não assistiu? Veja o episódio completo no YouTube e no site.',
+    'Definir episódio de maior engajamento com base nos dados internos.'),
+  ST('2026-09-25','12:30','Conversão',
+    'Apresentar as formações da EJUP de forma educativa',
+    ['“Formação não é consumo de conteúdo: é percurso.”',
+     'Mostre como a EJUP estrutura suas formações: profundidade técnica, aplicação prática, acesso online/presencial conforme o curso e certificado quando aplicável.',
+     'Apresente a página de Formações e convide o público a escolher uma área para conhecer melhor.'],
+    'Capturas ou capas atuais das formações no site; link da página de Formações; informações atualizadas.',
+    'Enquete: “O que você quer aprofundar?” — Direito / Negócios e inovação',
+    'Conheça as formações disponíveis em ejup.com.br/formacoes.',
+    'Atualizar cursos, preços, status e links antes de publicar.'),
+  ST('2026-09-26','10:30','Curadoria',
+    'Propor uma rotina de leitura curta, mas intelectualmente consistente',
+    ['“Leitura guiada de sábado: escolha uma referência e reserve 15 minutos sem notificações.”',
+     'Apresente três perguntas para acompanhar a leitura: qual problema o texto enfrenta; qual fundamento mobiliza; que consequência prática sugere.',
+     'Convide a audiência a salvar o roteiro e usar a mesma estrutura em uma leitura futura.'],
+    'Arte com as três perguntas; imagem de livro ou caderno; sem necessidade de link externo.',
+    'Slider: “Você consegue reservar 15 minutos para uma leitura hoje?”',
+    'Salve o roteiro de leitura e pratique ainda hoje.',
+    'Revisar a redação e adaptar ao padrão visual de Stories.'),
+  ST('2026-09-27','17:00','Curadoria',
+    'Encerrar o mês de leituras com síntese e continuidade',
+    ['“Leitura de fechamento do mês: o que merece permanecer?”',
+     'Retome uma referência que dialogou com os temas de setembro e resuma sua contribuição em duas linhas.',
+     'Link para o texto e convite a responder com a próxima leitura que a comunidade gostaria de ver na curadoria.'],
+    'Referência e link validados; capa licenciada ou composição tipográfica.',
+    'Caixa: “Qual tema você quer ver na curadoria de outubro?”',
+    'Acesse a referência e envie sua sugestão para outubro.',
+    'Definir a leitura e garantir URL acessível.'),
+  ST('2026-09-28','18:30','Aquecimento',
+    'Apresentar a pauta de outubro e coletar sinais da audiência',
+    ['“Outubro começa com uma nova pergunta.” Use a arte teaser da pauta.',
+     'Apresente o eixo temático em linguagem provisória, somente após validação editorial, e explique por que ele importa para o jurista contemporâneo.',
+     'Mostre o carrossel do feed e peça uma resposta que ajude a priorizar desdobramentos.'],
+    'Arte teaser; carrossel; texto validado da pauta de outubro.',
+    'Caixa: “Qual recorte desse tema você quer ver primeiro?”',
+    'Salve o post e acompanhe a pauta de outubro.',
+    'Definir pauta com Roberto antes de publicar.'),
+  ST('2026-09-29','12:30','Bastidores',
+    'Tornar visível o processo de planejamento editorial',
+    ['Foto de calendário, quadro ou reunião: “Conteúdo consistente começa antes da publicação.”',
+     'Mostre como uma pauta é escolhida: relevância; aderência à marca; qualidade da referência; utilidade para o jurista.',
+     'Convide a comunidade a sugerir uma questão que mereça estudo em outubro.'],
+    'Foto de planejamento; elementos do calendário sem dados confidenciais; caixa de perguntas.',
+    'Caixa: “Que pergunta você levaria para a próxima pauta?”',
+    'Envie sua pergunta e acompanhe os próximos conteúdos.',
+    'Fotografar material de planejamento sem expor informações internas.'),
+  ST('2026-09-30','11:30','Recapitulação',
+    'Fechar setembro, levar ao artigo e preparar a transição para outubro',
+    ['Capa do artigo de fechamento: “Setembro em perspectiva.”',
+     'Resuma o mês em três ideias: empreendedorismo com critério; inovação sem vulgarização; formação como percurso.',
+     'Link para o artigo e teaser do próximo mês, com convite para acompanhar a continuidade da pauta.'],
+    'Capa do artigo; link do blog; arte da prévia de outubro.',
+    'Enquete: “O que você quer levar para outubro?” — Mais repertório / Mais aplicação',
+    'Leia o artigo de fechamento e acompanhe a pauta de outubro.',
+    'Finalizar artigo, link e teaser da próxima pauta.')
+];
+
+/* os stories entram na pauta da EJUP, junto com o que já existia */
+(function(){
+  const arr = S.pautas[ejupId()] || [];
+  const jaTem = arr.some(p=>p.story);
+  if(!jaTem){
+    const juntos = [...arr, ...STORIES_EJUP].sort((a,b)=>
+      (a.data||'').localeCompare(b.data||'') || (a.hora<b.hora?-1:1));
+    S.pautas[ejupId()] = juntos;
+    const g = window.SEED || null;
+    if(g && g.pautas) g.pautas[ejupId()] = juntos;
+  }
+})();
+
+/* ---------- referências: link que abre, arquivo que aparece --------- */
+S.refs = S.refs || {};                      // { [idDaPostagem]: [ {tipo,nome,url,peso} ] }
+function refsDe(id){ return S.refs[id] || []; }
+/* aceita como link tanto "https://x.com/y" quanto "x.com/y" colado cru —
+   exigir o protocolo recusava exatamente o jeito que a pessoa cola */
+const ehUrl = s => { s = s.trim();
+  return /^https?:\/\/\S+$/i.test(s)
+      || /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(s); };
+const arrumaUrl = s => { s = s.trim(); return /^https?:\/\//i.test(s) ? s : 'https://' + s; };
+const dominioDe = u => { try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } };
+
+function modalRefs(id){
+  const p = S.pauta.find(x=>x.id===id); if(!p) return '';
+  const rs = refsDe(id);
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3>Referências · ${esc(p.t)}</h3>
+    <p>O que sustenta esta postagem: o artigo que ela cita, a imagem aprovada, o
+      documento da fonte. Link abre em outra aba; arquivo fica anexado.</p>
+
+    ${p.recursos?`<p class="mtAviso" style="margin-bottom:11px">${ic('doc',12)}
+      <b style="color:var(--ink-200)">Da planilha:</b> ${esc(p.recursos)}</p>`:''}
+
+    <div class="rfLinha">
+      <input type="url" id="rf-url" placeholder="Cole um link (artigo, drive, figma…)"
+        autocomplete="off">
+      <button class="b gho" data-rflink="${id}">${ic('linkic',13)} Adicionar link</button>
+    </div>
+
+    <label class="mtSolta" id="rf-solta" for="rf-file" style="margin-top:11px">
+      <div class="ic">${ic('doc',24)}</div>
+      <b>Ou arraste um arquivo de referência aqui</b>
+      <span>PDF, imagem, documento — o que a equipe precisa ter à mão.</span>
+    </label>
+    <input type="file" id="rf-file" multiple style="display:none">
+
+    ${rs.length?`<div class="rfLista">${rs.map((r,i)=>`<div class="rfItem">
+      <span class="rfIc">${ic(r.tipo==='link'?'linkic':(ICONE_TIPO[r.tipo]||'doc'),14)}</span>
+      ${r.tipo==='link'
+        ? `<a class="rfNome" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">
+            ${esc(r.nome)}<small>${esc(dominioDe(r.url))}</small></a>`
+        : `<span class="rfNome">${esc(r.nome)}<small>${pesoLegivel(r.peso||0)}</small></span>`}
+      <button class="rfX" data-rfdel="${i}" aria-label="Remover">${ic('x',12)}</button>
+    </div>`).join('')}</div>`
+      : `<p class="mtAviso" style="margin-top:11px">Nenhuma referência ainda.</p>`}
+
+    <p class="mtAviso">${ic('warn',12)} No protótipo os arquivos ficam só nesta aba —
+      no produto vão para o armazenamento da agência, com versão e histórico.</p>
+
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Fechar</button>
+    </div></div></div>`;
+}
+
+function ligarSoltaRef(){
+  const zona = document.getElementById('rf-solta');
+  const input = document.getElementById('rf-file');
+  const campo = document.getElementById('rf-url');
+  const guarda = fs => {
+    const arr = S.refs[S.rfId] = S.refs[S.rfId] || [];
+    let n = 0;
+    [...fs].forEach(f=>{
+      const tipo = tipoDoArquivo(f);
+      arr.push({ tipo, nome:f.name, peso:f.size,
+        url:(tipo==='imagem'||tipo==='video') ? URL.createObjectURL(f) : null });
+      n++;
+    });
+    if(!n) return;
+    somMaterial();
+    S.modal = modalRefs(S.rfId); renderLayer(); setTimeout(ligarSoltaRef, 0);
+    render();
+    toast(`${n} referência${n>1?'s anexadas':' anexada'}.`);
+  };
+  if(campo) campo.addEventListener('keydown', e=>{
+    if(e.key!=='Enter') return;
+    e.preventDefault();
+    document.querySelector(`[data-rflink="${S.rfId}"]`)?.click();
+  });
+  if(input) input.addEventListener('change', ()=>guarda(input.files));
+  if(!zona) return;
+  ['dragenter','dragover'].forEach(ev=>zona.addEventListener(ev, e=>{
+    e.preventDefault(); zona.classList.add('sobre'); }));
+  ['dragleave','drop'].forEach(ev=>zona.addEventListener(ev, e=>{
+    e.preventDefault(); zona.classList.remove('sobre'); }));
+  zona.addEventListener('drop', e=>{
+    const fs = e.dataTransfer?.files; if(fs && fs.length) guarda(fs); });
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-rfabrir],[data-rflink],[data-rfdel]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+  if(d.rfabrir){
+    S.rfId = +d.rfabrir; S.modal = modalRefs(S.rfId); renderLayer();
+    setTimeout(ligarSoltaRef, 0); return; }
+  if(d.rflink){
+    const campo = document.getElementById('rf-url');
+    const bruto = (campo?.value || '').trim();
+    if(!bruto){ toast('Cole um link primeiro.'); return; }
+    if(!ehUrl(bruto)){ toast('Isso não parece um link. Comece com https://'); return; }
+    const url = arrumaUrl(bruto);
+    (S.refs[S.rfId] = S.refs[S.rfId] || []).push({ tipo:'link', nome:url, url });
+    somMaterial();
+    S.modal = modalRefs(S.rfId); renderLayer(); setTimeout(ligarSoltaRef, 0);
+    render(); toast('Link de referência adicionado.'); return; }
+  if(d.rfdel !== undefined){
+    const arr = S.refs[S.rfId] || [];
+    const r = arr[+d.rfdel];
+    if(r && r.url && r.tipo !== 'link') soltarDepois([r.url]);
+    arr.splice(+d.rfdel, 1);
+    S.modal = modalRefs(S.rfId); renderLayer(); setTimeout(ligarSoltaRef, 0);
+    render(); return; }
+}, true);
+
+/* o botão de referências entra no card, na linha e na tabela */
+modalPauta = (function(orig){
+  return function(id){
+    const html = orig(id);
+    if(!id) return html;
+    const n = refsDe(id).length;
+    const botao = `<button class="b gho" data-rfabrir="${id}">
+      ${ic('linkic',13)} ${n?`Referências (${n})`:'Referências'}</button>`;
+    return html.replace('<button class="b gho" data-modalno="1">Cancelar</button>',
+      `<button class="b gho" data-modalno="1">Cancelar</button>\n      ${botao}`);
+  };
+})(modalPauta);
+
+ptItemHtml = (function(orig){
+  return function(p, i){
+    const html = orig(p, i);
+    const n = refsDe(p.id).length;
+    const btn = `<button class="ptQuick" data-rfabrir="${p.id}"
+      style="${n?'color:var(--brass-300);border-color:var(--brass-600)':''}"
+      aria-label="${n?`Referências (${n})`:'Adicionar referência'}"
+      title="${n?`${n} referência${n>1?'s':''}`:'Adicionar referência'}">${ic('linkic',15)}</button>`;
+    return html.replace('<button class="ptQuick" data-ptrm=', btn + '\n    <button class="ptQuick" data-ptrm=');
+  };
+})(ptItemHtml);
+
+ptVistaTabela = (function(orig){
+  return function(visiveis){
+    let html = orig(visiveis);
+    html = html.replace('<th>Status</th>', '<th>Refs</th><th>Status</th>');
+    visiveis.forEach(p=>{
+      const n = refsDe(p.id).length;
+      const cel = `<td class="refCel"><button class="selo ${n?'s':'n'}"
+        data-rfabrir="${p.id}">${n ? `${n} REF.` : '+ REF'}</button></td>`;
+      html = html.replace(
+        new RegExp(`(<td class="feitoCel"><button class="selo [sn]" data-ptfeito="${p.id}")`),
+        cel + '$1');
+      // o roteiro do story aparece como telas numeradas dentro do conteúdo
+      if(p.telas && p.telas.length){
+        const telas = `<span class="ptTelasCel">${p.telas.map((t,i)=>
+          `<span><i>T${i+1}</i>${esc(t.length>90?t.slice(0,90)+'…':t)}</span>`).join('')}</span>`;
+        html = html.replace(
+          new RegExp(`(data-ptedit="${p.id}"[\\s\\S]*?<td class="conteudo"><b>[\\s\\S]*?</span>)`),
+          `$1${telas}`);
+      }
+    });
+    return html.replace(/colspan="(\d+)"/, (m,n)=>`colspan="${+n+1}"`);
+  };
+})(ptVistaTabela);
+
+/* ---------- a visão só dos stories diários -------------------------- */
+function ptVistaStories(visiveis){
+  const sts = visiveis.filter(p=>p.story)
+    .sort((a,b)=>(a.data||'').localeCompare(b.data||'') || (a.hora<b.hora?-1:1));
+  if(!sts.length) return `<div class="stVazio">${ic('warn',20)}<br><br>
+    <b style="color:var(--ink-100)">Nenhum story diário aqui.</b><br>
+    Os stories vêm da aba "Stories Diários" da planilha — importe-a ou crie o primeiro.</div>`;
+  const feitos = sts.filter(p=>p.feito).length;
+  return `<div class="ptCab" style="margin-bottom:12px">
+      <div class="lin"><b>Stories diários</b>
+        <span class="num"><em>${feitos}</em> de ${sts.length} feitos</span></div>
+      <div class="ptBar"><i style="width:${Math.round(feitos/sts.length*100)}%"></i></div>
+      <p style="margin:9px 0 0;font-size:11.5px;color:var(--ink-300)">Cada dia é uma
+        sequência de telas. Use ↑ ↓ para reordenar, × para tirar uma tela, e toque no
+        texto para editar.</p>
+    </div>
+    ${sts.map((p,i)=>stCardHtml(p,i)).join('')}`;
+}
+
+function stCardHtml(p, i){
+  const cor = corDoPilar(p.pilar);
+  const telas = p.telas || [];
+  const nRef = refsDe(p.id).length;
+  return `<div class="stCard fu ${p.feito?'ok':''}" data-st="${p.id}"
+      style="animation-delay:${Math.min(i*40,300)}ms">
+    <div class="stAcoes">
+      <button class="ptQuick" data-rfabrir="${p.id}"
+        style="${nRef?'color:var(--brass-300);border-color:var(--brass-600)':''}"
+        title="${nRef?`${nRef} referência${nRef>1?'s':''}`:'Adicionar referência'}"
+        aria-label="Referências">${ic('linkic',15)}</button>
+      <button class="ptQuick" data-ptfeito="${p.id}" aria-pressed="${!!p.feito}"
+        style="${p.feito?'color:var(--encore);border-color:rgba(53,184,122,.4)':''}"
+        title="${p.feito?'Marcar como não feito':'Marcar como feito'}"
+        aria-label="Feito">${ic('checkc',15)}</button>
+      <button class="ptQuick" data-ptrm="${p.id}" style="color:var(--danger)"
+        title="Apagar" aria-label="Apagar">${ic('x',15)}</button>
+    </div>
+    <div class="stTopo">
+      <span class="ptData">${rotuloData(p.data)}</span>
+      <span class="ptHora">${ic('clock',11)} ${p.hora}</span>
+      <span class="stPilar" style="color:${cor}">${esc(p.pilar||'story')}</span>
+      ${p.pend?`<span class="ptPend">${ic('warn',11)} ${esc(p.pend)}</span>`:''}
+    </div>
+    <p class="stObj">${esc(p.objetivo || p.texto)}</p>
+    <div class="stTelas">
+      ${telas.map((t,j)=>`<div class="stTela" data-tela="${p.id}-${j}">
+        <span class="stNum">${j+1}</span>
+        <button class="stTxt" data-stedit="${p.id}-${j}">${esc(t)}</button>
+        <span class="stBtns">
+          <button data-stsobe="${p.id}-${j}" ${j===0?'disabled':''}
+            aria-label="Subir tela ${j+1}" title="Subir">&#9650;</button>
+          <button data-stdesce="${p.id}-${j}" ${j===telas.length-1?'disabled':''}
+            aria-label="Descer tela ${j+1}" title="Descer">&#9660;</button>
+          <button class="rm" data-strm="${p.id}-${j}"
+            aria-label="Apagar tela ${j+1}" title="Apagar tela">${ic('x',11)}</button>
+        </span>
+      </div>`).join('')}
+    </div>
+    <button class="stAdd" data-stadd="${p.id}">+ Tela ${telas.length+1}</button>
+    <div class="stPe">
+      ${p.sticker?`<span class="stPeI"><b>Interação</b>${esc(p.sticker)}</span>`:''}
+      ${p.cta?`<span class="stPeI"><b>CTA</b>${esc(p.cta)}</span>`:''}
+      ${p.recursos?`<span class="stPeI"><b>Recursos</b>${esc(p.recursos)}</span>`:''}
+    </div>
+  </div>`;
+}
+
+/* a visão de stories entra pela porta da semana (vista que não casa com
+   'mes' nem 'tabela' cai nela) — assim o miolo da pauta segue intacto */
+ptVistaSemana = (function(orig){
+  return function(visiveis, filtro){
+    if(S.ptVista === 'stories') return ptVistaStories(visiveis);
+    return orig(visiveis, filtro);
+  };
+})(ptVistaSemana);
+
+/* O seletor ganha o quarto botão. Com quatro, a conta de porcentagem do
+   cursor deixou de fechar: os botões têm largura de conteúdo (flex auto),
+   então "25% cada" mira num lugar onde o botão não está. Em vez de
+   remendar a conta, o seletor passa a usar o fixSegs() que já existe —
+   ele MEDE o botão ligado e põe o cursor exatamente nele. */
+corpoPauta = (function(orig){
+  return function(){
+    let html = orig();
+    if(!html.includes('data-ptvista="tabela"')) return html;
+    const n = (S.pauta||[]).filter(p=>p.story).length;
+    html = html.replace('<div class="seg">', '<div class="seg" data-autothumb="1">');
+    return html.replace(/(<button class="[^"]*" data-ptvista="tabela">Tabela<\/button>)/,
+      `$1\n      <button class="${S.ptVista==='stories'?'on':''}" data-ptvista="stories"
+        >Stories${n?` <b style="font-family:var(--mono);font-size:9.5px">${n}</b>`:''}</button>`);
+  };
+})(corpoPauta);
+
+/* o cursor do seletor é medido depois de cada desenho */
+render = (function(orig){
+  return function(){
+    const r = orig.apply(this, arguments);
+    setTimeout(fixSegs, 0);
+    return r;
+  };
+})(render);
+
+/* ---------- organizar as telas: subir, descer, apagar, criar -------- */
+const telaAlvo = chave => {
+  const [id, j] = chave.split('-').map(Number);
+  const p = S.pauta.find(x=>x.id===id);
+  return p && p.telas ? {p, j} : null;
+};
+function piscaTela(id, j){
+  const el = document.querySelector(`.stTela[data-tela="${id}-${j}"]`);
+  if(el){ el.classList.add('moveu'); setTimeout(()=>el.classList.remove('moveu'), 440); }
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-stsobe],[data-stdesce],[data-strm],[data-stadd],[data-stedit]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+
+  if(d.stadd){
+    const p = S.pauta.find(x=>x.id===+d.stadd); if(!p) return;
+    p.telas = p.telas || [];
+    S.stEdit = {id:p.id, j:p.telas.length, nova:true};
+    S.modal = modalTela(); renderLayer();
+    setTimeout(()=>document.getElementById('st-txt')?.focus(), 60);
+    return;
+  }
+  if(d.stedit){
+    const a = telaAlvo(d.stedit); if(!a) return;
+    S.stEdit = {id:a.p.id, j:a.j, nova:false};
+    S.modal = modalTela(); renderLayer();
+    setTimeout(()=>{ const c = document.getElementById('st-txt');
+      if(c){ c.focus(); c.setSelectionRange(c.value.length, c.value.length); } }, 60);
+    return;
+  }
+  const a = telaAlvo(d.stsobe || d.stdesce || d.strm);
+  if(!a) return;
+  const {p, j} = a;
+  if(d.stsobe && j > 0){
+    [p.telas[j-1], p.telas[j]] = [p.telas[j], p.telas[j-1]];
+    som('toque'); render(); piscaTela(p.id, j-1); return;
+  }
+  if(d.stdesce && j < p.telas.length-1){
+    [p.telas[j+1], p.telas[j]] = [p.telas[j], p.telas[j+1]];
+    som('toque'); render(); piscaTela(p.id, j+1); return;
+  }
+  if(d.strm){
+    const fora = p.telas.splice(j,1)[0];
+    ultimaTelaRm = {id:p.id, j, txt:fora};
+    clearTimeout(_telaUndo);
+    _telaUndo = setTimeout(()=>{ ultimaTelaRm = null; }, 8000);
+    som('toque'); render();
+    toast(`Tela ${j+1} apagada.`, true);
+    return;
+  }
+}, true);
+
+/* desfazer aprende mais um caso: a tela apagada volta na posição certa */
+let ultimaTelaRm = null, _telaUndo = null;
+desfazer = (function(base){
+  return function(){
+    if(ultimaTelaRm){
+      const {id, j, txt} = ultimaTelaRm;
+      const p = S.pauta.find(x=>x.id===id);
+      if(p){ p.telas = p.telas || []; p.telas.splice(Math.min(j, p.telas.length), 0, txt); }
+      ultimaTelaRm = null; S.toast = null;
+      render(); piscaTela(id, j);
+      toast('Tela de volta no roteiro.');
+      return;
+    }
+    return base();
+  };
+})(desfazer);
+
+function modalTela(){
+  const {id, j, nova} = S.stEdit || {};
+  const p = S.pauta.find(x=>x.id===id); if(!p) return '';
+  const txt = nova ? '' : (p.telas[j] || '');
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>${nova?`Tela ${j+1}`:`Editar tela ${j+1}`} · ${esc(p.pilar||p.t)}</h3>
+    <p>O que aparece nesta tela do story: a imagem, a frase, o adesivo.
+      Escreva como quem vai produzir precisa ler.</p>
+    <textarea id="st-txt" rows="5" placeholder="Ex.: Foto da mesa de edição com a frase…"
+      style="width:100%;resize:vertical">${esc(txt)}</textarea>
+    <div class="modalrow" style="margin-top:13px">
+      <button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b pri" data-stok="1">${nova?'Adicionar tela':'Salvar'}</button>
+    </div></div></div>`;
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-stok]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const {id, j, nova} = S.stEdit || {};
+  const p = S.pauta.find(x=>x.id===id); if(!p) return;
+  const v = (document.getElementById('st-txt')?.value || '').trim();
+  if(!v){ toast('Escreva o que aparece nesta tela.'); return; }
+  p.telas = p.telas || [];
+  if(nova) p.telas.push(v); else p.telas[j] = v;
+  if(!p.story){ p.story = true; p.pilar = p.pilar || 'Story'; }
+  S.modal = null; S.stEdit = null;
+  som('toque'); render(); piscaTela(id, nova ? p.telas.length-1 : j);
+  toast(nova ? `Tela ${p.telas.length} adicionada.` : `Tela ${j+1} salva.`);
+}, true);
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v40b — o export tem de levar o que a v40 passou a entender. Sem isto,
+   exportar e reimportar transformava um story de volta em postagem
+   comum: as telas, o pilar, o objetivo, os recursos e o sticker
+   sumiam no caminho. Redefine a planilha inteira com as seis colunas
+   novas no fim — na ordem da aba "Stories Diários" do founder.
+   ================================================================== */
+xlsxSheetXml = function(itens){
+  const platKeys = Object.keys(PLATS);
+  const headers = ['Data','Dia da semana', ...platKeys.map(k=>PLATS[k].n),
+    'Tipo','Formato','Título','Conteúdo & pauta','CTA / ação','Hora','Status','Pendência',
+    'Pilar','Objetivo','Roteiro detalhado para execução','Recursos / produção',
+    'Interação / sticker','Referências'];
+  const larguras = [12,14, ...platKeys.map(()=>7), 15,12,26,46,34,9,13,26,
+    16,34,52,34,34,30];
+  const nCols = headers.length;
+  const colsXml = larguras.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('');
+
+  const cel = (ref, valor, estilo, texto) => {
+    if(valor === '' || valor === null || valor === undefined) return `<c r="${ref}" s="${estilo}"/>`;
+    if(texto) return `<c r="${ref}" s="${estilo}" t="inlineStr"><is><t xml:space="preserve">${escXml(valor)}</t></is></c>`;
+    return `<c r="${ref}" s="${estilo}"><v>${valor}</v></c>`;
+  };
+
+  const headerRow = `<row r="1" s="${XLSX_ESTILO.hdr}">${headers.map((h,i)=>{
+    const plIdx = i-2;
+    const est = (plIdx>=0 && plIdx<platKeys.length) ? XLSX_ESTILO.hdrPlat[platKeys[plIdx]] : XLSX_ESTILO.hdr;
+    return cel(colLetra(i+1)+'1', h, est, true);
+  }).join('')}</row>`;
+
+  let corpo = '';
+  itens.forEach((p, li) => {
+    const r = li+2, cs = [];
+    let c = 1;
+    const add = (v, est, txt) => cs.push(cel(colLetra(c++)+r, v, est, txt !== false));
+    add(p.data ? isoParaSerialExcel(p.data) : '', XLSX_ESTILO.data, false);
+    add(DIAS[p.dia]+(p.dia<5?'-feira':''), XLSX_ESTILO.corpo);
+    platKeys.forEach(k=>{
+      const on = p.plats.includes(k);
+      add(on?'X':'', on?XLSX_ESTILO.platOn[k]:XLSX_ESTILO.platOff);
+    });
+    // o Tipo tem de dizer "Execução diária" para o story voltar story
+    add(p.tarefa ? 'Tarefa interna' : p.story ? 'Execução diária' : 'Postagem', XLSX_ESTILO.corpo);
+    add(p.fmt, XLSX_ESTILO.corpo);
+    add(p.t, XLSX_ESTILO.corpo);
+    add(p.texto, XLSX_ESTILO.corpoWrap);
+    add(p.cta || '', XLSX_ESTILO.corpo);
+    add(p.hora, XLSX_ESTILO.corpo);
+    add(p.feito?'FEITO':'NÃO FEITO', p.feito?XLSX_ESTILO.feito:XLSX_ESTILO.naofeito);
+    add(p.pend || '', XLSX_ESTILO.corpo);
+    // as seis colunas da aba de stories
+    add(p.pilar || '', XLSX_ESTILO.corpo);
+    add(p.objetivo || '', XLSX_ESTILO.corpoWrap);
+    add((p.telas || []).map((t,i)=>`Tela ${i+1} — ${t}`).join('\n'), XLSX_ESTILO.corpoWrap);
+    add(p.recursos || '', XLSX_ESTILO.corpoWrap);
+    add(p.sticker || '', XLSX_ESTILO.corpoWrap);
+    add(refsDe(p.id).map(x=>x.tipo==='link' ? x.url : x.nome).join('\n'), XLSX_ESTILO.corpoWrap);
+    corpo += `<row r="${r}">${cs.join('')}</row>`;
+  });
+
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<dimension ref="A1:${colLetra(nCols)}${itens.length+1}"/>
+<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+<cols>${colsXml}</cols>
+<sheetData>${headerRow}${corpo}</sheetData>
+</worksheet>`;
+};
 </script>
