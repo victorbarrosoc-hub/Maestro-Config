@@ -7644,7 +7644,8 @@ function tiraMaterial(p){
     ${mostra.map((m,i)=>`<span class="mtMini ${m.url&&(m.tipo==='imagem'||m.tipo==='video')?'temArte':''}">
       ${ms.length>1?`<span class="ord">${i+1}</span>`:''}
       ${m.url && m.tipo==='imagem' ? `<img src="${m.url}" alt="">`
-        : m.url && m.tipo==='video' ? `<video src="${m.url}" muted playsinline preload="metadata"></video>`
+        : (m.url||m.poster) && m.tipo==='video' ? `<video ${m.url?`src="${m.url}"`:''}
+            ${m.poster?`poster="${m.poster}"`:''} muted playsinline preload="metadata"></video>`
         : ''}
       <span class="tipo">${ic(ICONE_TIPO[m.tipo]||'doc',15)}</span></span>`).join('')}
     ${ms.length>4?`<span class="mtMais">+${ms.length-4}</span>`:''}
@@ -7688,7 +7689,8 @@ function modalMaterial(id){
       ${ms.map((m,i)=>`<div class="mtCard">
         <div class="vis">
           ${m.url && m.tipo==='imagem' ? `<img src="${m.url}" alt="${esc(m.nome)}">`
-            : m.url && m.tipo==='video' ? `<video src="${m.url}" muted playsinline controls preload="metadata"></video>`
+            : m.url && m.tipo==='video' ? `<video src="${m.url}" ${m.poster?`poster="${m.poster}"`:''}
+                muted playsinline controls preload="metadata"></video>`
             : `<span class="semPrev">${ic(ICONE_TIPO[m.tipo]||'doc',24)}</span>`}
           ${ms.length>1?`<span class="ordem">${i+1}</span>`:''}
           <button class="x" data-mtdel="${i}" aria-label="Remover ${esc(m.nome)}">${ic('x',12)}</button>
@@ -7727,10 +7729,13 @@ function guardarArquivos(id, lista){
     }
     const tipo = tipoDoArquivo(f);
     const chave = novaChave('mt');
-    arr.push({ nome:f.name, tipo, peso:f.size, chave,
-      url: (tipo==='imagem'||tipo==='video') ? URL.createObjectURL(f) : null });
+    const url = (tipo==='imagem'||tipo==='video') ? URL.createObjectURL(f) : null;
+    const item = { nome:f.name, tipo, peso:f.size, chave, url };
+    arr.push(item);
     idbSalvar(chave, f).catch(()=>{});          // o arquivo de verdade,
-    n++;                                        // sobrevive a recarregar
+    if(tipo==='video') gerarPoster(url).then(pst=>{     // sobrevive a recarregar
+      if(pst){ item.poster = pst; render(); } });
+    n++;
   });
   return n;
 }
@@ -9834,9 +9839,11 @@ function ligarSoltaRef(){
     [...fs].forEach(f=>{
       const tipo = tipoDoArquivo(f);
       const chave = novaChave('rf');
-      arr.push({ tipo, nome:f.name, peso:f.size, chave,
-        url:(tipo==='imagem'||tipo==='video') ? URL.createObjectURL(f) : null });
+      const url = (tipo==='imagem'||tipo==='video') ? URL.createObjectURL(f) : null;
+      const item = { tipo, nome:f.name, peso:f.size, chave, url };
+      arr.push(item);
       idbSalvar(chave, f).catch(()=>{});
+      if(tipo==='video') gerarPoster(url).then(pst=>{ if(pst){ item.poster = pst; render(); } });
       n++;
     });
     if(!n) return;
@@ -11363,6 +11370,42 @@ async function idbApagar(chave){
 }
 const novaChave = prefixo => `${prefixo}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
 
+/* =====================================================================
+   v46b — a miniatura de vídeo aparecia preta.
+
+   `<video preload="metadata">` sem `poster` deixa a decisão de mostrar
+   um quadro por conta do motor de vídeo do navegador — e no WebKit do
+   iPhone (Safari e, principalmente, o app instalado na tela de início)
+   isso costuma ficar preto até alguém apertar play. O arquivo estava
+   lá — "MATERIAL PRONTO" não mentia — só a prévia é que não desenhava
+   nada. Corrigido gerando um quadro de verdade (canvas) e usando como
+   `poster`: aí não depende do motor de vídeo decidir mostrar algo.
+   ================================================================== */
+function gerarPoster(url){
+  return new Promise(resolve=>{
+    const v = document.createElement('video');
+    v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+    let feito = false;
+    const acaba = valor => { if(feito) return; feito = true; resolve(valor); };
+    const desenhar = () => {
+      try{
+        const c = document.createElement('canvas');
+        const w = 160, h = Math.round(w * (v.videoHeight||v.videoWidth||1) / (v.videoWidth||1)) || w;
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(v, 0, 0, w, h);
+        acaba(c.toDataURL('image/jpeg', .72));
+      }catch(e){ acaba(null); }               // canvas contaminado, decode falhou etc.
+    };
+    v.addEventListener('loadeddata', () => {
+      try{ v.currentTime = Math.min(.1, (v.duration||1)/2); }
+      catch(e){ desenhar(); }
+    }, {once:true});
+    v.addEventListener('seeked', desenhar, {once:true});
+    v.addEventListener('error', () => acaba(null), {once:true});
+    setTimeout(() => acaba(null), 4000);      // nunca trava esperando o vídeo
+  });
+}
+
 /* ao abrir, toda foto/vídeo com chave e sem url (acabou de voltar do
    localStorage, ainda sem o Blob) busca o arquivo de verdade */
 async function rehidratarArquivos(){
@@ -11376,7 +11419,12 @@ async function rehidratarArquivos(){
   for(const m of alvos){
     try{
       const blob = await idbLer(m.chave);
-      if(blob){ m.url = URL.createObjectURL(blob); algum = true; }
+      if(blob){
+        m.url = URL.createObjectURL(blob); algum = true;
+        // anexo de antes desta correção pode não ter poster ainda
+        if(m.tipo==='video' && !m.poster) gerarPoster(m.url).then(pst=>{
+          if(pst){ m.poster = pst; render(); } });
+      }
     }catch(e){}
   }
   if(algum) render();

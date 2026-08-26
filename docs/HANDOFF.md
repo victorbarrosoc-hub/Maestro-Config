@@ -764,6 +764,41 @@ não havia motivo para recarregar a página com material anexado.
 > "Remover todos") apaga também do IndexedDB — conferido que a chave some de lá, não só
 > da tela.
 
+**Miniatura de vídeo aparecia preta, e o "app" e o Safari têm memórias separadas
+(v46b).** O founder mandou print comparando o app instalado na tela de início do iPhone
+("Maestro") com o Safari normal, no mesmo link: a foto e o vídeo que ele subiu no app
+apareciam lá, mas "SEM ARQUIVO" no Safari — e mesmo dentro do app, o vídeo aparecia como
+um quadrado preto, só com "MATERIAL PRONTO" escrito embaixo.
+
+> **São duas coisas diferentes, uma explicação e uma correção.**
+
+> A explicação: o **app instalado** ("Adicionar à Tela de Início") e a **aba do Safari**
+> no mesmo link são, para o iOS, dois ambientes de armazenamento **separados** — mesmo no
+> mesmo iPhone, mesma URL. Não é bug da Maestro; é assim que a Apple isola apps
+> instalados do navegador, por privacidade. `localStorage` e `IndexedDB` (onde o Material e
+> as Referências vivem, desde a v46) não atravessam essa fronteira, e não existe truque de
+> código que resolva — só um backend de arquivo de verdade (D-032, ainda não construído)
+> resolveria isso de vez, subindo o arquivo para um lugar que os dois enxergam.
+
+> A correção: `<video preload="metadata">` sem `poster` deixa a decisão de mostrar um
+> quadro por conta do motor de vídeo — e no WebKit do iPhone isso costuma ficar preto até
+> alguém apertar o play. O arquivo estava lá de verdade ("MATERIAL PRONTO" não mentia); só
+> a prévia não desenhava nada. Agora, ao anexar um vídeo (Material ou Referências) ou ao
+> reidratar um já salvo, um `<video>` fora da tela carrega o arquivo, busca um quadro perto
+> do início, desenha num `<canvas>` e vira um JPEG pequeno guardado como `poster` — que
+> não depende do motor de vídeo decidir mostrar algo. O poster viaja com a metadata no
+> `localStorage`, então aparece **antes mesmo** do arquivo de verdade voltar do IndexedDB.
+
+> Achado ao investigar: um `python3 -m http.server` local não manda cabeçalho de
+> `no-cache`, e o navegador serviu uma cópia velha do arquivo por duas rodadas de teste —
+> `gerarPoster` dava `ReferenceError` mesmo já escrita no arquivo. `?v=2` na URL contornou;
+> vale lembrar da próxima vez que algo "não existir" logo depois de salvo.
+
+> Verificado com vídeo de verdade (gerado via `ffmpeg`, quadro vermelho sólido): o poster
+> captura a cor certa (pixel central RGB 254/0/2); sobrevive a um recarregamento completo
+> sem precisar gerar de novo; e vídeos anexados antes desta correção ganham poster na
+> primeira vez que a pauta é reaberta.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
