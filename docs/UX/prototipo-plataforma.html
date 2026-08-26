@@ -8476,3 +8476,61 @@ document.addEventListener('click', e => {
 })();
 mnAplicar();
 </script>
+<style>
+/* =====================================================================
+   v37 — o conteudo estava indo parar debaixo da barra.
+
+   A barra nova e mais alta que a antiga, e a bolha ainda sobe 18px
+   acima dela. O espaco reservado no fim das telas continuava sendo o de
+   antes (96px chutados), entao o ultimo botao ficava embaixo da barra —
+   e o "Ver planos" da tela de equipe era impossivel de apertar.
+
+   Agora a altura e MEDIDA e vira --mnAltura. Nada de numero chutado:
+   se a barra mudar de tamanho, o espaco acompanha.
+   ================================================================== */
+:root{ --mnAltura:0px }
+
+/* a barra em si nunca captura clique fora dos botoes */
+.mnFixa{ pointer-events:none }
+.mnFixa .mnAbas{ pointer-events:auto }
+.mnFixa .mnBarra, .mnFixa .mnSvg, .mnFixa .mnBolha, .mnFixa .mnGlow{ pointer-events:none }
+
+/* e o conteudo ganha o chao que faltava */
+.app.ag .main{ padding-bottom:calc(var(--mnAltura) + 28px) }
+.clframe{ padding-bottom:calc(var(--mnAltura) + 10px) }
+#root.temtoast .clframe{ padding-bottom:calc(var(--mnAltura) + 10px + var(--toasth,0px)) }
+.clbody.fix{ height:calc(100dvh - 42px - 52px - var(--mnAltura)) }
+#root.temtoast .clbody.fix{
+  height:calc(100dvh - 42px - 52px - var(--mnAltura) - var(--toasth,0px)) }
+.clfoot{ bottom:var(--mnAltura) }
+#root.temtoast .clfoot{ bottom:calc(var(--mnAltura) + var(--toasth,0px)) }
+/* o aviso tambem sobe o suficiente */
+#layer.up .toast, #layer.agm .toast{
+  bottom:calc(var(--mnAltura) + 20px)!important }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v37 — mede a barra e devolve a altura ao layout.
+   ================================================================== */
+function mnMedirAltura(){
+  const nav = [...document.querySelectorAll('.tabbar, .cltab')]
+    .find(n => getComputedStyle(n).display !== 'none');
+  let h = 0;
+  if(nav){
+    const r = nav.getBoundingClientRect();
+    const bolha = nav.querySelector('.mnBolha');
+    // a bolha sobe acima da barra: o vao dela conta como altura ocupada
+    const sobe = bolha ? Math.max(0, r.top - bolha.getBoundingClientRect().top) : 0;
+    h = Math.ceil(r.height + sobe);
+  }
+  const atual = parseInt(document.documentElement.style.getPropertyValue('--mnAltura')) || 0;
+  if(Math.abs(atual - h) > 1)
+    document.documentElement.style.setProperty('--mnAltura', h + 'px');
+}
+
+mnAplicar = (function(orig){
+  return function(){ orig(); mnMedirAltura(); };
+})(mnAplicar);
+mnAplicar();
+</script>

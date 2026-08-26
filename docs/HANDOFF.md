@@ -453,6 +453,18 @@ máximo uma barra visível, e nenhuma no site.
 > A armadilha vale para o resto do protótipo: **`hidden` não esconde elemento que tenha
 > `display` definido em regra de autor.**
 
+**A barra cobria o conteúdo (v37).** O "Ver planos" da tela de equipe ficava embaixo dela
+e não dava para apertar. A barra nova é mais alta que a antiga e a bolha ainda sobe 18px
+acima — mas o espaço reservado no fim das telas continuava sendo o número chutado de
+antes (96px).
+
+> Agora a altura é **medida** (`mnMedirAltura` → `--mnAltura`, hoje 84px) e todo o layout
+> se pendura nela: `.main`, `.clframe`, a altura da tela de decisão, o rodapé de ação e o
+> toast. Se a barra mudar de tamanho, o espaço acompanha sozinho. E a barra só captura
+> clique nos botões — o resto dela é `pointer-events:none`.
+
+> Varredura em **24 telas** dos dois lados procurando botão coberto pela barra: zero.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
