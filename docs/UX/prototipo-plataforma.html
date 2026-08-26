@@ -8534,3 +8534,343 @@ mnAplicar = (function(orig){
 })(mnAplicar);
 mnAplicar();
 </script>
+<script>
+"use strict";
+/* =====================================================================
+   v38 — importar .xlsx de verdade, e o bug da data que sumia.
+
+   O BUG: "subir em CSV não copiou as datas". A causa era estrutural — o
+   leitor da planilha (entenderPlanilha) só sabia ler a coluna "Dia"
+   (texto do dia da semana, tipo "Terça-feira") e nunca soube ler a
+   coluna "Data" (a data de calendário de verdade, tipo "26/08"). Toda
+   pauta datada — a da EJUP inclusive — tem as duas colunas separadas, e
+   so a mais fraca das duas era lida. O item importado ficava com o dia
+   da semana certo mas sem NENHUMA data real, entao sumia da visao Mes e
+   virava travessao na coluna Data da Tabela.
+
+   O .XLSX: nao ha biblioteca nenhuma aqui (o CSP do artifact bloqueia
+   CDN), entao o formato e lido na mao. Um .xlsx e um .zip com XML
+   dentro — dá para ler o fim do arquivo (o indice central do zip),
+   achar as partes que interessam (planilha, textos compartilhados,
+   estilos) e descompactar com a DecompressionStream nativa do
+   navegador, sem nenhuma dependencia externa.
+   ================================================================== */
+
+/* ---------- a data de uma celula, em qualquer formato comum --------- */
+function parseDataCel(txt, anoPadrao, hoje){
+  const t = (txt||'').trim();
+  if(!t) return null;
+  let m, iso, temAno = true;
+  if(m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))
+    iso = `${m[1]}-${D2(+m[2])}-${D2(+m[3])}`;
+  else if(m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/))
+    iso = `${m[3]}-${D2(+m[2])}-${D2(+m[1])}`;
+  else if(m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2})$/))
+    iso = `20${m[3]}-${D2(+m[2])}-${D2(+m[1])}`;
+  else if(m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})$/)){
+    iso = `${anoPadrao}-${D2(+m[2])}-${D2(+m[1])}`; temAno = false;
+  } else return null;
+  const [a,mm,dd] = iso.split('-').map(Number);
+  if(mm<1 || mm>12 || dd<1 || dd>31) return null;      // lixo tipo "99/99"
+  // sem ano na celula e a data cai bem no passado: e do ano que vem
+  if(!temAno && hoje && iso < somaDias(hoje,-60)) iso = `${a+1}-${D2(mm)}-${D2(dd)}`;
+  return iso;
+}
+
+/* a proxima data de calendario que cai naquele dia da semana — o mesmo
+   calculo que ja existia no botao "Preencher", agora compartilhado */
+function proximaDataDoDia(diaSemana){
+  let iso = hojeISO();
+  for(let i=0;i<7;i++){ if(diaDaSemana(iso)===diaSemana) return iso; iso = somaDias(iso,1); }
+  return hojeISO();
+}
+
+/* ---------- o miolo: recebe LINHAS (2D), nao mais so texto ---------- */
+function entenderLinhas(linhas){
+  if(linhas.length < 2) return { erro:'A planilha precisa de um cabeçalho e ao menos uma linha.' };
+
+  let hIdx = -1;
+  for(let i=0; i<Math.min(4,linhas.length); i++){
+    const l = linhas[i].map(semAcento);
+    if(l.some(c=>c.trim()==='dia') || l.some(c=>c.trim()==='data') || l.some(c=>APELIDO_PLAT[c.trim()])){ hIdx=i; break; }
+  }
+  if(hIdx<0) return { erro:'Não achei o cabeçalho — a planilha tem uma linha com "Dia" (ou "Data") e os nomes das redes?' };
+
+  const cab = linhas[hIdx].map(c=>semAcento(c).trim());
+  const col = {plats:{}};
+  cab.forEach((c,i)=>{
+    if(c==='dia') col.dia=i;
+    else if(c==='data') col.data=i;
+    else if(APELIDO_PLAT[c]) col.plats[i]=APELIDO_PLAT[c];
+    else if(c.includes('formato')) col.fmt=i;
+    else if(c.includes('conteudo')||c.includes('pauta')||c.includes('legenda')) col.texto=i;
+    else if(c.includes('cta')||c.includes('acao')||c.includes('direcion')) col.cta=i;
+    else if(c.includes('hora')) col.hora=i;
+    else if(c==='tipo') col.tipo=i;                    // "Tarefa interna" x "Postagem"
+    else if(c.includes('pendencia')) col.pend=i;
+    else if(c==='status') col.status=i;                 // FEITO / NÃO FEITO
+  });
+  if(col.dia===undefined && col.data===undefined)
+    return { erro:'Não achei a coluna "Dia" nem a coluna "Data".' };
+
+  const hoje = hojeISO(), anoPadrao = +hoje.slice(0,4);
+  const itens = [];
+  let diaAtual = null, dataAtual = null;
+  for(let i=hIdx+1; i<linhas.length; i++){
+    const l = linhas[i];
+    if(col.data!==undefined){
+      const iso = parseDataCel(l[col.data]||'', anoPadrao, hoje);
+      if(iso) dataAtual = iso;                          // célula mesclada herda a data
+    }
+    if(col.dia!==undefined){
+      const d = acharDia(l[col.dia]||'');
+      if(d!==null) diaAtual = d;                         // célula mesclada herda o dia
+    }
+    if(dataAtual===null && diaAtual===null) continue;
+
+    const texto = (col.texto!==undefined ? l[col.texto] : '')?.trim() || '';
+    const fmtTxt = (col.fmt!==undefined ? l[col.fmt] : '')?.trim() || '';
+    const plats = Object.entries(col.plats)
+      .filter(([i2])=>(l[+i2]||'').trim())
+      .map(([,k])=>k);
+    if(!texto && !plats.length) continue;                // linha vazia de verdade
+
+    // a data manda quando existe; sem ela, cai na proxima ocorrencia do
+    // dia da semana — assim todo item importado tem uma data de verdade
+    const data = dataAtual !== null ? dataAtual : proximaDataDoDia(diaAtual);
+    const dia  = diaDaSemana(data);
+
+    const horaBruta = (col.hora!==undefined ? l[col.hora] : '')?.trim() || '';
+    const hora = (horaBruta.match(/(\d{1,2})[:h](\d{2})/)||[])[0]?.replace('h',':') || '18:30';
+    // "Tipo"/"Pendência"/"Status" existem quando se reimporta um export
+    // da propria Maestro — sem eles, cai no padrao (rascunho, nao feito)
+    const tipoTxt = (col.tipo!==undefined ? l[col.tipo] : '')?.trim() || '';
+    const statusTxt = semAcento((col.status!==undefined ? l[col.status] : '')?.trim() || '');
+    itens.push({
+      data, dia, hora,
+      fmt: acharFormato(fmtTxt || texto),
+      plats: plats.length ? plats : ['ig'],
+      t: fmtTxt.length > 6 ? fmtTxt.slice(0,70) : (texto.split(/[.\n]/)[0].slice(0,70) || 'Postagem importada'),
+      texto, cta: (col.cta!==undefined ? l[col.cta] : '')?.trim() || '',
+      st:'DRAFT', pecaId:null,
+      feito: statusTxt === 'feito',
+      tarefa: semAcento(tipoTxt).includes('tarefa'),
+      pend: (col.pend!==undefined ? l[col.pend] : '')?.trim() || ''
+    });
+  }
+  if(!itens.length) return { erro:'Cabeçalho entendido, mas nenhuma linha de postagem encontrada.' };
+  return { itens };
+}
+
+/* texto (CSV/TSV/colado) continua entrando pela mesma porta de sempre */
+function entenderPlanilha(txt){ return entenderLinhas(lerTabela(txt)); }
+
+/* ---------- .xlsx: zip + XML, lido na mao, sem biblioteca ----------- */
+function zipIndice(bytes, dv){
+  let eocd = -1;
+  const min = Math.max(0, bytes.length - 22 - 65557);
+  for(let i=bytes.length-22; i>=min; i--){
+    if(dv.getUint32(i,true) === 0x06054b50){ eocd = i; break; }
+  }
+  if(eocd < 0) throw new Error('Não parece um .xlsx válido — o índice do arquivo não foi encontrado.');
+  const nEntradas = dv.getUint16(eocd+10, true);
+  const offCD = dv.getUint32(eocd+16, true);
+  const entradas = {};
+  let p = offCD;
+  for(let k=0; k<nEntradas; k++){
+    if(dv.getUint32(p,true) !== 0x02014b50) break;       // fim inesperado do indice
+    const metodo = dv.getUint16(p+10, true);
+    const compSize = dv.getUint32(p+20, true);
+    const fnameLen = dv.getUint16(p+28, true);
+    const extraLen = dv.getUint16(p+30, true);
+    const comLen = dv.getUint16(p+32, true);
+    const offsetLocal = dv.getUint32(p+42, true);
+    const nome = new TextDecoder().decode(bytes.subarray(p+46, p+46+fnameLen));
+    entradas[nome] = { metodo, compSize, offsetLocal };
+    p += 46 + fnameLen + extraLen + comLen;
+  }
+  return entradas;
+}
+async function zipLer(bytes, dv, entradas, nome){
+  const e = entradas[nome];
+  if(!e) return null;
+  const lp = e.offsetLocal;
+  const fnameLen = dv.getUint16(lp+26, true);
+  const extraLen = dv.getUint16(lp+28, true);
+  const inicio = lp + 30 + fnameLen + extraLen;
+  const comp = bytes.subarray(inicio, inicio + e.compSize);
+  let plano;
+  if(e.metodo === 0) plano = comp;                        // guardado sem compressao
+  else if(e.metodo === 8){                                // deflate — o caso comum
+    if(!window.DecompressionStream)
+      throw new Error('Este navegador não sabe abrir .xlsx aqui — exporte a planilha como CSV.');
+    const fluxo = new Blob([comp]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    plano = new Uint8Array(await new Response(fluxo).arrayBuffer());
+  } else throw new Error('Esse .xlsx usa uma compressão que não sei abrir — exporte como CSV.');
+  return new TextDecoder('utf-8').decode(plano);
+}
+
+/* quais estilos de celula sao data, a partir do styles.xml */
+function xlsxEhData(stylesXml){
+  if(!stylesXml) return () => false;
+  const custom = {};
+  const reNF = /<numFmt numFmtId="(\d+)" formatCode="([^"]*)"/g;
+  let m; while(m = reNF.exec(stylesXml)) custom[+m[1]] = m[2];
+  const padraoData = new Set([14,15,16,17,22,45,46,47]);   // formatos de data/hora de fabrica do Excel
+  const bloco = stylesXml.match(/<cellXfs\b[^>]*>([\s\S]*?)<\/cellXfs>/);
+  const xfs = [];
+  if(bloco){
+    const reXf = /<xf\b[^>]*\/?>/g;
+    let mm; while(mm = reXf.exec(bloco[1])){
+      const nf = mm[0].match(/numFmtId="(\d+)"/);
+      xfs.push(nf ? +nf[1] : 0);
+    }
+  }
+  return idx => {
+    const nf = xfs[idx]; if(nf === undefined) return false;
+    if(padraoData.has(nf)) return true;
+    const cod = custom[nf];
+    return !!cod && /[dmy]/i.test(cod) && !/general/i.test(cod);
+  };
+}
+
+const colDeRef = ref => {                                  // "C7" -> 2 (0-based)
+  const letras = ref.match(/[A-Z]+/)[0];
+  let n = 0; for(const c of letras) n = n*26 + (c.charCodeAt(0) - 64);
+  return n - 1;
+};
+const serialParaISO = n => {
+  const d = new Date(Math.round((n - 25569) * 86400 * 1000));
+  return `${d.getUTCFullYear()}-${D2(d.getUTCMonth()+1)}-${D2(d.getUTCDate())}`;
+};
+
+async function lerXlsx(arrayBuffer){
+  const bytes = new Uint8Array(arrayBuffer), dv = new DataView(arrayBuffer);
+  const entradas = zipIndice(bytes, dv);
+
+  const wbXml = await zipLer(bytes, dv, entradas, 'xl/workbook.xml');
+  const relsXml = await zipLer(bytes, dv, entradas, 'xl/_rels/workbook.xml.rels');
+  if(!wbXml || !relsXml) throw new Error('Não achei a planilha dentro do arquivo — é mesmo um .xlsx?');
+
+  const primeiroId = (wbXml.match(/<sheet\b[^>]*r:id="([^"]+)"/) || [])[1];
+  const relAlvo = new RegExp(`<Relationship[^>]*Id="${primeiroId}"[^>]*Target="([^"]+)"`).exec(relsXml);
+  const alvo = relAlvo ? 'xl/' + relAlvo[1].replace(/^\/?xl\//,'') : 'xl/worksheets/sheet1.xml';
+
+  const sheetXml = await zipLer(bytes, dv, entradas, alvo)
+    || await zipLer(bytes, dv, entradas, 'xl/worksheets/sheet1.xml');
+  if(!sheetXml) throw new Error('Não consegui ler a primeira aba da planilha.');
+
+  const sstXml = await zipLer(bytes, dv, entradas, 'xl/sharedStrings.xml');
+  const sst = [];
+  if(sstXml){
+    const reSi = /<si>([\s\S]*?)<\/si>/g;
+    let m; while(m = reSi.exec(sstXml)){
+      const textos = [...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(x=>x[1]);
+      sst.push(textos.join('')
+        .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')
+        .replace(/&quot;/g,'"').replace(/&#39;/g,"'"));
+    }
+  }
+  const stylesXml = await zipLer(bytes, dv, entradas, 'xl/styles.xml');
+  const ehData = xlsxEhData(stylesXml);
+
+  const linhas = [];
+  const reRow = /<row r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g;
+  let rm;
+  while(rm = reRow.exec(sheetXml)){
+    const numLinha = +rm[1];
+    const linha = linhas[numLinha-1] = linhas[numLinha-1] || [];
+    const reCel = /<c r="([A-Z]+\d+)"([^>]*)(?:\/>|>([\s\S]*?)<\/c>)/g;
+    let cm;
+    while(cm = reCel.exec(rm[2])){
+      const [, ref, attrs, corpo] = cm;
+      const col = colDeRef(ref);
+      const tipo = (attrs.match(/ t="([^"]+)"/) || [])[1];
+      const estilo = +((attrs.match(/ s="(\d+)"/) || [])[1] || 0);
+      let valor = '';
+      if(!corpo) valor = '';
+      else if(tipo === 'inlineStr'){
+        const t = corpo.match(/<t[^>]*>([\s\S]*?)<\/t>/); valor = t ? t[1] : '';
+      } else {
+        const v = corpo.match(/<v>([\s\S]*?)<\/v>/);
+        const bruto = v ? v[1] : '';
+        if(tipo === 's') valor = sst[+bruto] ?? '';
+        else if(tipo === 'b') valor = bruto === '1' ? 'TRUE' : 'FALSE';
+        else if(!tipo || tipo === 'n' || tipo === 'str'){
+          if((!tipo || tipo==='n') && bruto && ehData(estilo)) valor = serialParaISO(+bruto);
+          else valor = bruto;
+        } else valor = bruto;
+      }
+      valor = valor.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')
+        .replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+      linha[col] = valor;
+    }
+  }
+  for(const l of linhas) if(l) for(let i=0;i<l.length;i++) if(l[i]===undefined) l[i]='';
+  return linhas.filter(l => l && l.some(x=>(x||'').trim()));
+}
+
+/* ---------- o formulario ganha o .xlsx, e o mapeamento mostra a data - */
+modalImportar = function(){
+  const lidos = S.ptImport;
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3>Importar planilha</h3>
+    ${!lidos ? `
+    <p>Suba o .xlsx ou o CSV da sua pauta — ou copie as células direto do Excel/Sheets
+      e cole aqui. A Maestro acha as colunas de dia, data, redes, formato, conteúdo,
+      CTA e hora, e mostra o que entendeu antes de adicionar.</p>
+    <div class="fld"><label for="pt-file">Arquivo (.xlsx, .csv ou .tsv)</label>
+      <input type="file" id="pt-file" accept=".xlsx,.csv,.tsv,.txt"></div>
+    <div class="fld"><label for="pt-cola">…ou cole as células copiadas da planilha</label>
+      <textarea id="pt-cola" style="min-height:110px;font-family:var(--mono);font-size:12px"
+        placeholder="Data&#9;Dia&#9;Instagram&#9;LinkedIn&#9;Formato&#9;Conteúdo & Pauta&#9;CTA / Ação&#10;26/08&#9;Quarta-feira&#9;●&#9;&#9;Reels&#9;Corte do vídeo…&#9;Link na bio."></textarea>
+      <p class="fhint">A coluna <b>Data</b> (26/08, 2026-08-26…) manda; sem ela, a Maestro
+        usa a próxima ocorrência do dia da semana da coluna <b>Dia</b>.</p></div>
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b pri" data-ptimpler="1">Ler a planilha</button></div>`
+    : `
+    <p>Entendi <b style="color:var(--brass-300)">${lidos.length}
+      ${lidos.length>1?'postagens':'postagem'}</b>. Confira o mapeamento — depois dá
+      para ajustar linha a linha, como qualquer postagem.</p>
+    <div style="max-height:290px;overflow-y:auto;display:grid;gap:7px;margin:4px 0 6px">
+      ${lidos.map(p=>`<div class="ptVazio" style="border-style:solid;cursor:default">
+        <span class="ptData">${rotuloData(p.data)}</span>
+        <span class="ptHora">${ic('clock',11)} ${p.hora}</span>
+        ${ptDots(p.plats)}
+        <span class="ptFmtChip">${esc(p.fmt)}</span>
+        <span style="min-width:0"><b>${DIAS[p.dia]}${p.dia<5?'-feira':''}</b> ·
+          <span style="color:var(--ink-300)">${esc(p.t)}</span></span></div>`).join('')}
+    </div>
+    <div class="modalrow" style="margin-top:12px">
+      <button class="b gho" data-ptimpvolta="1">Voltar</button>
+      <button class="b pri" data-ptimpok="1">Adicionar ${lidos.length} à pauta</button></div>`}
+  </div></div>`;
+};
+
+/* intercepta ANTES do handler antigo (mesmo truque de captura ja usado
+   em data-ptok): o antigo so sabia ler texto, este sabe ler .xlsx tambem
+   e sempre grava a data. stopImmediatePropagation impede o antigo de
+   rodar em cima do mesmo clique. */
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-ptimpler]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const arq = document.getElementById('pt-file')?.files?.[0];
+  let r;
+  try{
+    if(arq && /\.xlsx$/i.test(arq.name)){
+      const linhas = await lerXlsx(await arq.arrayBuffer());
+      r = entenderLinhas(linhas);
+    } else {
+      let txt = arq ? await arq.text() : '';
+      if(!txt) txt = document.getElementById('pt-cola')?.value || '';
+      if(!txt.trim()){ toast('Suba um arquivo ou cole as células.'); return; }
+      r = entenderPlanilha(txt);
+    }
+  }catch(err){ toast(err.message || 'Não consegui ler esse arquivo.'); return; }
+  if(r.erro){ toast(r.erro); return; }
+  S.ptImport = r.itens;
+  S.modal = modalImportar(); renderLayer();
+}, true);
+</script>

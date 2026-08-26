@@ -465,6 +465,37 @@ antes (96px).
 
 > Varredura em **24 telas** dos dois lados procurando botão coberto pela barra: zero.
 
+**Importar .xlsx, e o bug da data que sumia (v38).** O founder achou dois problemas na
+importação de planilha: faltava aceitar `.xlsx`, e importar por CSV **não copiava a data
+de cada tarefa**.
+
+> A causa da data: `entenderPlanilha` só sabia ler a coluna **"Dia"** (texto do dia da
+> semana). A pauta da EJUP — e qualquer pauta datada de verdade — tem **duas colunas
+> separadas**, "Data" e "Dia", e só a mais fraca era lida. O item importado ficava com o
+> dia da semana certo mas sem nenhuma data real, então sumia da visão Mês e virava
+> travessão na coluna Data da Tabela.
+
+> Correção: `entenderLinhas` (o novo miolo, compartilhado por texto e `.xlsx`) reconhece
+> a coluna **"Data"** em qualquer formato comum (`DD/MM`, `DD/MM/AAAA`, ISO…), com
+> inferência de ano quando falta e correção para o ano seguinte se a data cair mais de 60
+> dias no passado. Sem coluna Data, cai no fallback: a **próxima ocorrência** daquele dia
+> da semana a partir de hoje (`proximaDataDoDia`, o mesmo cálculo do botão "Preencher").
+> **Todo item importado sai com uma data real agora — nunca mais sem `.data`.**
+
+> `.xlsx` é lido **na mão** — zip + XML, sem biblioteca nenhuma (o CSP do artifact
+> bloqueia CDN). `lerXlsx` acha o índice central do zip, descompacta com a
+> `DecompressionStream('deflate-raw')` nativa do navegador, lê `sharedStrings.xml` e
+> `styles.xml` (para saber quais células numéricas são datas — serial Excel → ISO) e monta
+> a mesma grade 2D que o `lerTabela` do CSV produz. Reconhece também "Tipo"
+> (tarefa interna), "Pendência" e "Status" — reimportar o próprio export da Maestro
+> preserva tudo, não só a data.
+
+> Verificado: os 34 itens da pauta real da EJUP, via `.xlsx` **e** via CSV, saem com data
+> certa e dia da semana batendo 100% com a data; fallback só-com-"Dia" também ganha data
+> real; fluxo completo pela UI (arquivo real → pré-visualização → adicionar) sem duplicar
+> nem disparar o handler antigo; arquivo corrompido dá erro claro sem travar o modal;
+> console limpo.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
