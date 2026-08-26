@@ -815,6 +815,46 @@ tela e sem usar a URL.
 > empurrada primeiro (confirmado direto no banco). Depois simulei uma mudança "de fora"
 > (outra pessoa) e cliquei — ela apareceu na tela sem recarregar nada.
 
+**Foto e vídeo sobem de verdade para o Supabase Storage — atravessam aparelho
+(v48).** O founder testou na prática o limite documentado na v46: subiu material no
+celular, não apareceu no computador. Certo — até aqui, o arquivo em si nunca saía do
+aparelho que enviou (só a pauta e os links viajavam pelo banco). Agora sobe de verdade.
+
+> Bucket público `midia` no mesmo projeto Supabase, com políticas de leitura/upload/apagar
+> liberadas — mesmo padrão pragmático já aceito para a tabela `pauta` (dívida documentada
+> ali: sem login ainda, então sem RLS por usuário). Upload via REST do Storage
+> (`fetch` puro, sem SDK — coerente com o resto do arquivo). Ao anexar Material ou
+> Referências, o preview local (blob:/IndexedDB, v46) aparece na hora, e o upload roda por
+> trás; quando termina, a `url` do item vira a do Storage (`https://…/storage/v1/object/
+> public/midia/…`) e ganha `nuvem:true`. Uma vez com `nuvem`, o item para de ser "só deste
+> aparelho": entra no que sincroniza pela tabela, junto com os links.
+
+> **Teto do plano grátis, e o que fazer quando bater nele:** 50MB por arquivo, 1GB no
+> total — travado, não é um padrão que dá pra só aumentar sem assinar o Pro. Episódio de
+> podcast em vídeo longo continua sendo link (Referências já faz isso), não upload;
+> upload fica pra material menor. Falha de envio (sem internet, arquivo grande demais,
+> banco cheio) cai de volta no que já existia antes da v48 — o item fica só neste
+> aparelho, sem travar nada.
+
+> **Duplicação evitada nas duas pontas.** O filtro de "o que é puramente local" (que
+> nunca sincroniza) tinha de excluir também `nuvem`, não só `tipo==='link'` — senão o
+> mesmo item vinha do banco E continuava marcado como "local" no merge, duplicando.
+
+> **Apagar tira da nuvem também**, não só da tela e do IndexedDB — em Material e em
+> Referências, e no "Remover todos". A confirmação do apagar usa o endpoint de metadados
+> (`/storage/v1/object/info/public/…`), não a URL pública de leitura: o CDN público cacheia
+> por um tempo e continuava respondendo 200 por alguns segundos depois de um DELETE bem
+> sucedido — comportamento normal de CDN, não bug, mas teria me enganado se eu tivesse
+> testado só pela URL pública.
+
+> Verificado com vídeo real (`ffmpeg`) contra o banco de verdade: upload por Material via
+> `input`, e por Referências via **arraste-e-solte de verdade** (`DragEvent`, não só
+> `change` do campo — importante porque um wrapper "por fora" que só escutasse o `change`
+> teria deixado o drop sem subir; por isso a v48 edita o `guarda()` original em vez de
+> envolvê-lo por fora). Um navegador com `localStorage` e `IndexedDB` **totalmente
+> limpos** (simulando outro computador) buscou a pauta do banco e o vídeo apareceu — 1
+> item, não 2 —, bytes e tipo batendo, poster incluído. Repetir "atualizar" não duplicou.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

@@ -6871,11 +6871,12 @@ try{
        era um blob: desta mesma aba, que morreu ao fechar. Fica null até
        o arquivo de verdade voltar do IndexedDB (rehidratarArquivos, v46:
        esses dois nunca tinham entrado aqui, e por isso sumiam mesmo sem
-       sair do aparelho). */
+       sair do aparelho). Já um item com `nuvem` tem uma url https:// de
+       verdade (Supabase Storage, v48) — essa não morre, então fica. */
     if(guardado.mat) Object.entries(guardado.mat).forEach(([id,arr])=>{
-      S.mat[id] = arr.map(m => ({...m, url:null})); });
+      S.mat[id] = arr.map(m => (m.tipo==='link'||m.nuvem) ? m : {...m, url:null}); });
     if(guardado.refs) Object.entries(guardado.refs).forEach(([id,arr])=>{
-      S.refs[id] = arr.map(r => r.tipo==='link' ? r : {...r, url:null}); });
+      S.refs[id] = arr.map(r => (r.tipo==='link'||r.nuvem) ? r : {...r, url:null}); });
   }
 }catch(e){}
 let _tmSalva = 0;
@@ -7768,6 +7769,7 @@ document.addEventListener('click', e => {
     const alvo = S.mat[+d.mtlimpa] || [];
     soltarDepois(alvo.map(m=>m.url));
     alvo.filter(m=>m.chave).forEach(m=>idbApagar(m.chave).catch(()=>{}));
+    alvo.filter(m=>m.caminhoNuvem).forEach(m=>apagarNuvem(m.caminhoNuvem));
     delete S.mat[+d.mtlimpa];
     S.modal = modalMaterial(+d.mtlimpa); renderLayer(); setTimeout(ligarSolta, 0);
     render(); toast('Material removido.'); return; }
@@ -9844,6 +9846,7 @@ function ligarSoltaRef(){
       arr.push(item);
       idbSalvar(chave, f).catch(()=>{});
       if(tipo==='video') gerarPoster(url).then(pst=>{ if(pst){ item.poster = pst; render(); } });
+      if(typeof subirDepois==='function') subirDepois(item, `ref/${S.rfId}`, f);
       n++;
     });
     if(!n) return;
@@ -10281,17 +10284,21 @@ function sbEmpacotar(cliId){
   const pauta = (S.pautas[cliId] || []).map(p=>({...p}));
   const refs = {};
   pauta.forEach(p=>{
-    const rs = (S.refs[p.id] || []).filter(r=>r.tipo==='link');
+    // link sempre sincroniza; arquivo só depois de subir pro Storage
+    // (m.nuvem) — antes disso ele só existe neste aparelho
+    const rs = (S.refs[p.id] || []).filter(r=>r.tipo==='link' || r.nuvem);
     if(rs.length) refs[p.id] = rs;
   });
-  return { pauta, refs, versao: 41 };
+  return { pauta, refs, versao: 48 };
 }
 function sbAplicar(cliId, dados){
   if(!dados || !Array.isArray(dados.pauta)) return false;
   S.pautas[cliId] = dados.pauta;
   Object.entries(dados.refs || {}).forEach(([id, rs])=>{
-    const soLink = (S.refs[id] || []).filter(r=>r.tipo!=='link');
-    S.refs[id] = [...rs, ...soLink];      // arquivo local de quem está aqui não se perde
+    // só o que É puramente local (nunca foi link nem terminou de subir)
+    // fica de fora do que vem do banco — senão duplica o mesmo item
+    const soLocal = (S.refs[id] || []).filter(r=>r.tipo!=='link' && !r.nuvem);
+    S.refs[id] = [...rs, ...soLocal];     // arquivo local de quem está aqui não se perde
   });
   // o proximo id novo tem de passar do maior que veio do banco
   const maior = dados.pauta.reduce((m,p)=>Math.max(m, +p.id||0), 0);
@@ -10986,13 +10993,13 @@ tiraMaterial = (function(orig){
   };
 })(tiraMaterial);
 
-/* ---------- e o material em link vai para o banco ------------------- */
+/* ---------- e o material em link (ou já enviado) vai para o banco --- */
 sbEmpacotar = (function(orig){
   return function(cliId){
     const pac = orig(cliId);
     const mats = {};
     (S.pautas[cliId] || []).forEach(p=>{
-      const so = (S.mat[p.id] || []).filter(m=>m.tipo==='link');
+      const so = (S.mat[p.id] || []).filter(m=>m.tipo==='link' || m.nuvem);
       if(so.length) mats[p.id] = so;
     });
     return { ...pac, mats };
@@ -11004,7 +11011,7 @@ sbAplicar = (function(orig){
     const ok = orig(cliId, dados);
     if(!ok) return ok;
     Object.entries((dados && dados.mats) || {}).forEach(([id, ls])=>{
-      const arquivos = (S.mat[id] || []).filter(m=>m.tipo!=='link');
+      const arquivos = (S.mat[id] || []).filter(m=>m.tipo!=='link' && !m.nuvem);
       S.mat[id] = [...arquivos, ...ls];   // arquivo local de quem está aqui não se perde
     });
     return ok;
@@ -11503,4 +11510,117 @@ corpoPauta = (function(orig){
     return html.replace(/(<button class="sbBadge[\s\S]*?<\/button>)/, `$1${botao}`);
   };
 })(corpoPauta);
+</script>
+<style>
+/* v48 — arquivo de verdade sobe pro Supabase Storage */
+.mtMini.subindo{ opacity:.55 }
+.mtMini .subindoTag{ position:absolute; inset:auto 3px 3px 3px; text-align:center;
+  font-family:var(--mono); font-size:8px; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--brass-300); background:rgba(8,9,11,.75); border-radius:4px; padding:2px 0 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v48 — foto e vídeo sobem para o Supabase Storage de verdade.
+
+   A v46 resolveu o arquivo sumir da PRÓPRIA tela ao recarregar
+   (IndexedDB). Mas o founder testou celular → computador e continuou
+   sem ver: por desenho, o arquivo nunca saía do aparelho — só a pauta
+   e os links viajavam pelo banco. Agora o arquivo em si sobe para um
+   bucket público (`midia`) via a REST do Storage (fetch puro, mesma
+   lógica do resto do protótipo — sem biblioteca, sem SDK). Uma vez lá,
+   vira uma url https:// de verdade: atravessa aparelho, atravessa
+   PWA/Safari, tudo — porque para de ser um blob: local.
+
+   50MB por arquivo e 1GB no total é o teto do plano grátis do
+   Supabase — falha de upload cai de volta no que já existia (o
+   arquivo fica só neste aparelho, como antes da v48), sem travar nada.
+   ================================================================== */
+const nomeSeguro = s => (s||'arquivo').replace(/[^\w.\-]+/g, '_').slice(-80);
+
+async function subirNuvem(caminho, file){
+  const r = await fetch(`${SB.url}/storage/v1/object/midia/${caminho}`, {
+    method:'POST',
+    headers: { apikey:SB.key, Authorization:'Bearer '+SB.key,
+      'Content-Type': file.type || 'application/octet-stream', 'x-upsert':'true' },
+    body: file
+  });
+  if(!r.ok){
+    let msg = `upload recusado (${r.status})`;
+    try{ const j = await r.json(); if(j.message) msg = j.message; }catch(e){}
+    throw new Error(msg);
+  }
+  return `${SB.url}/storage/v1/object/public/midia/${caminho}`;
+}
+async function apagarNuvem(caminho){
+  try{
+    await fetch(`${SB.url}/storage/v1/object/midia/${caminho}`,
+      { method:'DELETE', headers: { apikey:SB.key, Authorization:'Bearer '+SB.key } });
+  }catch(e){}
+}
+
+/* sobe em segundo plano; se der certo, troca a url local pela da nuvem
+   (o preview que já estava na tela não pisca — só passa a valer em
+   qualquer aparelho). Se falhar (sem internet, arquivo grande demais,
+   banco cheio), o item continua exatamente como já era: só aqui. */
+function subirDepois(item, pasta, file){
+  if(!_sbLigado) return;                     // sem banco, nem tenta
+  const caminho = `${pasta}/${item.chave}_${nomeSeguro(file.name)}`;
+  item.caminhoNuvem = caminho;
+  subirNuvem(caminho, file).then(url=>{
+    item.url = url; item.nuvem = true; render();
+  }).catch(err=>{
+    console.warn('Maestro: upload de mídia não foi — ficou só neste aparelho.', err.message);
+  });
+}
+
+/* ---------- Material: guardarArquivos ganha o envio ------------------
+   (Referências já ganhou o dela direto no "guarda" — arquivo de
+   referência entra tanto pelo campo quanto por arrastar-e-soltar, e só
+   editar o "guarda" cobre os dois; um wrapper por fora, escutando só o
+   'change' do campo, deixaria o "arrastar" sem subir pra nuvem.)
+
+   `n` é sempre `lista.length` — guardarArquivos nunca pula arquivo, só
+   às vezes reseta o array antes de empurrar (troca de peça única). Por
+   isso os "novos" são sempre os `n` últimos itens do array depois da
+   chamada, não uma subtração de tamanho antes/depois — que erraria
+   bem na troca de peça única, o caso mais comum. */
+guardarArquivos = (function(orig){
+  return function(id, lista){
+    const arquivos = [...lista];
+    const n = orig(id, lista);
+    if(n > 0){
+      const arr = S.mat[id] || [];
+      const novos = arr.slice(arr.length - n);
+      novos.forEach((item,i)=> subirDepois(item, `mat/${id}`, arquivos[i]));
+    }
+    return n;
+  };
+})(guardarArquivos);
+
+/* apagar tira da nuvem também, não só da tela/IndexedDB */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-mtdel],[data-rfdel]');
+  if(!t) return;
+  const arr = t.dataset.mtdel!==undefined ? (S.mat[S.mtId]||[]) : (S.refs[S.rfId]||[]);
+  const i = +(t.dataset.mtdel ?? t.dataset.rfdel);
+  const item = arr[i];
+  if(item?.caminhoNuvem) apagarNuvem(item.caminhoNuvem);
+}, true);                                       // captura: lê antes do handler original tirar do array
+
+/* selo pequeno "enviando..." na miniatura, enquanto não vira nuvem */
+tiraMaterial = (function(orig){
+  return function(p){
+    let html = orig(p);
+    const ms = materiaisDe(p.id);
+    ms.slice(0,4).forEach((m,i)=>{
+      if(!m.chave || m.nuvem || m.tipo==='link') return;
+      let n = -1;
+      html = html.replace(/<span class="mtMini([^"]*)">/g, (mm, cls)=>{
+        n++; return n===i ? `<span class="mtMini${cls} subindo"><span class="subindoTag">enviando…</span>` : mm;
+      });
+    });
+    return html;
+  };
+})(tiraMaterial);
 </script>
