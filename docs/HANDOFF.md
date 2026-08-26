@@ -587,6 +587,51 @@ três coisas.
 > verdade abre no `openpyxl` (parser independente) com 23 colunas, data real e cabeçalho
 > congelado; reordenar/apagar/desfazer/adicionar/editar tela testados por clique real.
 
+**Banco de verdade no protótipo — Supabase (v41).** O founder pediu que o que ele muda
+no protótipo pare de morrer no navegador e que outras pessoas possam editar junto.
+
+> **Projeto:** `MaestroDados` · `https://tgrbmdsootnewjqpmeii.supabase.co`. Uma tabela
+> `pauta`: `cliente` (texto, índice único) e `dados` (jsonb com a pauta e as referências
+> em link). Upsert por `on_conflict=cliente`, uma linha por cliente.
+
+> **Sem biblioteca, por obrigação e por sorte.** O CSP do artifact bloqueia CDN, então
+> `supabase-js` estava fora desde o começo. O Supabase expõe PostgREST, então é `fetch`
+> puro com `apikey` + `Authorization` — menos código e nenhuma dependência.
+
+> **O artifact NUNCA vai sincronizar, e isso está no projeto, não é bug.** O CSP do
+> artifact bloqueia fetch para fora. Por isso o caminho todo é tolerante a falha: se não
+> conectar, o protótipo funciona exatamente como antes (memória), e o selo diz **"só neste
+> aparelho"** em vez de mentir que salvou. Sincroniza no Vercel e em `localhost`.
+
+> **Selo honesto** ao lado do seletor de visão: `ligando…` / `buscando no banco…` /
+> `salvando…` / `salvo HH:MM` / `sem salvar` / `só neste aparelho`. Clicar força a
+> gravação — ou uma nova tentativa de conexão, quando está local.
+
+> **Gravação debounced (1,4s) disparada pelo `render()`**, comparando contra um espelho do
+> último conteúdo confirmado no banco: nada muda, nada sobe. Digitar rápido não vira uma
+> requisição por tecla.
+
+> **Arquivo local não sobe, link sobe.** Referência em arquivo vira `blob:` no navegador de
+> quem subiu — não significa nada em outro aparelho. Sobem só os links; ao carregar, o
+> arquivo local de quem está na tela é preservado ao lado dos links que vieram do banco.
+
+> **`_pid` é reposicionado ao carregar** (acima do maior id que veio do banco). Sem isso,
+> um item criado depois de carregar colidiria de id com um que já existe lá.
+
+> Verificado contra o banco real: as duas abas sobem (EJUP `n0` = 70 itens, 36 stories);
+> editar no navegador chega ao banco sozinho em ~1,4s; escrita feita por fora (simulando
+> outra pessoa) aparece no navegador ao recarregar; com o banco inalcançável o protótipo
+> segue editável, não perde nada e o selo diz a verdade; `DELETE` sem política volta 204
+> mas não apaga — ninguém derruba linha pela chave pública.
+
+> 🔴 **Dívida consciente, a resolver antes de qualquer uso real:** as políticas de RLS
+> hoje são `using (true)` para select/insert/update — **qualquer pessoa com o link lê e
+> escreve tudo**. Serve para o founder não perder trabalho e para o teste com clientes;
+> não serve para produção. Quando entrar login, trocar por permissão por usuário
+> (a API em `apps/api` já tem RBAC — o protótipo não). Não há política de DELETE, de
+> propósito. Sobrou uma linha `__teste__` na tabela, inofensiva e ignorada pelo código
+> (só clientes conhecidos são aplicados); dá para apagar pelo Table Editor.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

@@ -10180,3 +10180,199 @@ xlsxSheetXml = function(itens){
 </worksheet>`;
 };
 </script>
+<style>
+/* =====================================================================
+   v41 — o banco de verdade. A pauta deixa de morrer no navegador.
+   ================================================================== */
+.sbBadge{ display:inline-flex; align-items:center; gap:7px; padding:6px 12px;
+  border-radius:999px; border:1px solid var(--ink-700); background:var(--ink-950);
+  font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--ink-300);
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.sbBadge:hover{ color:var(--ink-100); border-color:var(--ink-600) }
+.sbBadge i{ width:7px; height:7px; border-radius:50%; font-style:normal;
+  background:var(--ink-500); flex:0 0 auto }
+.sbBadge.salvo i{ background:var(--encore) }
+.sbBadge.salvo{ color:var(--encore); border-color:rgba(53,184,122,.3) }
+.sbBadge.salvando i{ background:var(--brass-400); animation:sbPulsa 1s infinite }
+.sbBadge.salvando{ color:var(--brass-300); border-color:var(--brass-700) }
+.sbBadge.erro i{ background:var(--danger) }
+.sbBadge.erro{ color:var(--danger); border-color:rgba(229,72,77,.35) }
+.sbBadge.local i{ background:var(--ink-500) }
+@keyframes sbPulsa{ 0%,100%{ opacity:1 } 50%{ opacity:.3 } }
+@media (prefers-reduced-motion:reduce){ .sbBadge.salvando i{ animation:none } }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v41 — a pauta passa a viver num banco de verdade (Supabase), para
+   não morrer no navegador e para mais de uma pessoa poder editar.
+
+   Sem biblioteca: o Supabase expõe PostgREST, então é fetch puro — o
+   que também é o único caminho possível, já que o CSP do artifact
+   bloqueia CDN. Uma linha por cliente: `cliente` (texto, único) e
+   `dados` (jsonb com a pauta e as referências em link).
+
+   IMPORTANTE, e por isso está escrito aqui: o CSP do artifact bloqueia
+   fetch para fora. Dentro do link do artifact isto NUNCA vai conectar —
+   e não pode quebrar nada por causa disso. Por isso todo o caminho é
+   tolerante a falha: se não conectar, o protótipo segue funcionando
+   exatamente como antes, só que guardando na memória, e o selo diz
+   "só neste aparelho" em vez de mentir que salvou.
+   ================================================================== */
+const SB = {
+  url: 'https://tgrbmdsootnewjqpmeii.supabase.co',
+  key: 'sb_publishable_unX8xCpACxgtDDnm0RLrBw_qkvScvZR'
+};
+const sbCab = () => ({
+  apikey: SB.key, Authorization: 'Bearer ' + SB.key,
+  'Content-Type': 'application/json'
+});
+
+S.sb = { estado:'parado', quando:null, erro:null };   // parado|carregando|salvando|salvo|erro|local
+let sbEspelho = {};        // ultimo conteudo confirmado no banco, por cliente
+let _sbTimer = null, _sbLigado = false;
+
+/* o que vai para o banco: a pauta e as referencias em LINK. Arquivo
+   solto vira blob: no navegador de quem subiu — nao significa nada em
+   outro aparelho, entao nao sobe (e o nome fica, para a pessoa saber
+   que existia). */
+function sbEmpacotar(cliId){
+  const pauta = (S.pautas[cliId] || []).map(p=>({...p}));
+  const refs = {};
+  pauta.forEach(p=>{
+    const rs = (S.refs[p.id] || []).filter(r=>r.tipo==='link');
+    if(rs.length) refs[p.id] = rs;
+  });
+  return { pauta, refs, versao: 41 };
+}
+function sbAplicar(cliId, dados){
+  if(!dados || !Array.isArray(dados.pauta)) return false;
+  S.pautas[cliId] = dados.pauta;
+  Object.entries(dados.refs || {}).forEach(([id, rs])=>{
+    const soLink = (S.refs[id] || []).filter(r=>r.tipo!=='link');
+    S.refs[id] = [...rs, ...soLink];      // arquivo local de quem está aqui não se perde
+  });
+  // o proximo id novo tem de passar do maior que veio do banco
+  const maior = dados.pauta.reduce((m,p)=>Math.max(m, +p.id||0), 0);
+  if(typeof _pid === 'number' && maior >= _pid) _pid = maior + 1;
+  return true;
+}
+
+function sbSelo(estado, erro){
+  S.sb = { estado, quando: (estado==='salvo') ? new Date() : S.sb.quando, erro: erro||null };
+  const el = document.querySelector('.sbBadge');
+  if(el) el.outerHTML = sbSeloHtml();
+}
+function sbSeloHtml(){
+  const {estado, quando, erro} = S.sb;
+  const hh = quando ? `${D2(quando.getHours())}:${D2(quando.getMinutes())}` : '';
+  const txt = {
+    parado:'ligando…', carregando:'buscando no banco…', salvando:'salvando…',
+    salvo: hh ? `salvo ${hh}` : 'salvo',
+    erro: 'sem salvar', local: 'só neste aparelho'
+  }[estado] || estado;
+  const cls = ['parado','carregando'].includes(estado) ? 'salvando' : estado;
+  return `<button class="sbBadge ${cls}" data-sbforca="1"
+    title="${estado==='local'
+      ? 'Este link não alcança o banco — o que você mudar fica só aqui.'
+      : erro ? esc(erro) : 'Clique para salvar agora'}"><i></i>${txt}</button>`;
+}
+
+async function sbCarregar(){
+  sbSelo('carregando');
+  let linhas;
+  try{
+    const r = await fetch(`${SB.url}/rest/v1/pauta?select=cliente,dados`, { headers: sbCab() });
+    if(!r.ok) throw new Error(`banco respondeu ${r.status}`);
+    linhas = await r.json();
+  }catch(e){
+    // CSP do artifact, offline, projeto pausado — segue local, sem drama
+    sbSelo('local'); _sbLigado = false; render();
+    return false;
+  }
+  _sbLigado = true;
+  const conhecidos = new Set(CLIS().map(c=>c.id));
+  let aplicou = 0;
+  linhas.forEach(({cliente, dados})=>{
+    if(!conhecidos.has(cliente)) return;          // ignora linha de outro lugar
+    if(sbAplicar(cliente, dados)){
+      sbEspelho[cliente] = JSON.stringify(dados); aplicou++;
+    }
+  });
+  if(!aplicou){
+    // banco vazio: a primeira carga sobe o que já existe aqui
+    for(const c of CLIS()) await sbGravar(c.id, true);
+  }
+  sbSelo('salvo'); render();
+  return true;
+}
+
+async function sbGravar(cliId, silencioso){
+  if(!_sbLigado) return false;
+  const dados = sbEmpacotar(cliId);
+  const corpo = JSON.stringify(dados);
+  if(sbEspelho[cliId] === corpo) return true;      // nada mudou
+  if(!silencioso) sbSelo('salvando');
+  try{
+    const r = await fetch(`${SB.url}/rest/v1/pauta?on_conflict=cliente`, {
+      method:'POST',
+      headers: { ...sbCab(), Prefer:'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ cliente: cliId, dados, atualizado_em: new Date().toISOString() })
+    });
+    if(!r.ok) throw new Error(`banco recusou (${r.status})`);
+    sbEspelho[cliId] = corpo;
+    if(!silencioso) sbSelo('salvo');
+    return true;
+  }catch(e){
+    sbSelo('erro', e.message);
+    return false;
+  }
+}
+
+/* toda mudança agenda uma gravação. O compara-e-grava é debounced, então
+   digitar rápido não vira uma requisição por tecla. */
+function sbAgendar(){
+  if(!_sbLigado) return;
+  clearTimeout(_sbTimer);
+  _sbTimer = setTimeout(async ()=>{
+    for(const c of CLIS()) await sbGravar(c.id);
+  }, 1400);
+}
+render = (function(orig){
+  return function(){
+    const r = orig.apply(this, arguments);
+    sbAgendar();
+    return r;
+  };
+})(render);
+
+/* o selo entra ao lado do seletor de visão da pauta */
+corpoPauta = (function(orig){
+  return function(){
+    const html = orig();
+    if(!html.includes('data-ptvista=')) return html;
+    return html.replace('<div class="ptFiltros"',
+      `<div style="display:flex;align-items:center">${sbSeloHtml()}</div>\n    <div class="ptFiltros"`);
+  };
+})(corpoPauta);
+
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-sbforca]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  if(!_sbLigado){
+    const ok = await sbCarregar();
+    if(!ok) toast('Este link não alcança o banco — o que você mudar fica só neste aparelho.');
+    else toast('Conectado. A pauta agora fica salva no banco.');
+    return;
+  }
+  sbSelo('salvando');
+  let tudo = true;
+  for(const c of CLIS()) tudo = await sbGravar(c.id, true) && tudo;
+  sbSelo(tudo ? 'salvo' : 'erro');
+  toast(tudo ? 'Pauta salva no banco.' : 'Não consegui salvar — tente de novo.');
+}, true);
+
+/* e sobe sozinho ao abrir */
+setTimeout(sbCarregar, 400);
+</script>
