@@ -632,6 +632,43 @@ no protótipo pare de morrer no navegador e que outras pessoas possam editar jun
 > propósito. Sobrou uma linha `__teste__` na tabela, inofensiva e ignorada pelo código
 > (só clientes conhecidos são aplicados); dá para apagar pelo Table Editor.
 
+**Agenda do dia e edição completa do story (v42).** Dois pedidos, um deles com
+referência visual: um app de salão, colunas por profissional, hora na lateral e o buraco
+da agenda visível como bloco tracejado.
+
+> **"Não consigo alterar os textos do card de story (ex.: CTA)."** A visão de stories só
+> deixava editar as telas. Agora o lápis e o objetivo abrem o editor inteiro, e o editor
+> ganhou os campos que só o story tem: pilar (9 chips coloridos), objetivo, interação /
+> sticker e recursos / produção. As telas seguem sendo editadas na visão Stories, onde dá
+> para reordenar — o editor diz isso em vez de duplicar o controle.
+
+> **Agenda do dia.** Quinta visão. A coluna é a **rede** — é onde a peça sai —, a régua é
+> a hora, o card fica na altura do horário e o vão vira "Livre" tracejado, que é a graça
+> da referência: o buraco aparece. Chips filtram por rede, as setas andam dia a dia
+> (só entre dias que têm pauta), e clicar num card abre a postagem para ver e alterar.
+> Peça em três redes aparece nas três colunas; tarefa interna ganha coluna "Interno".
+> Clicar num dia no calendário do Mês já deixa a agenda naquele dia.
+
+> **`applyNumFmt` do dia:** o rótulo "Documento da peça final (opcional)" não dizia o que
+> o campo faz — ele liga a linha da pauta (a promessa) à peça que o cliente aprova (D-022).
+> Virou "Peça que preenche esta pauta (opcional)".
+
+> **Quatro defeitos achados medindo, não olhando:**
+> (1) Os campos de story **não salvavam**: o handler original fecha o modal e chama
+> `render()` antes de qualquer handler de bolha rodar, então ler `pt-obj` já devolvia nada.
+> Passou a gravar em duas etapas — captura guarda os valores, bolha aplica —, o mesmo
+> desenho que a v32 usou para a data. Título e CTA salvavam (são do handler original), o
+> que mascarava o problema.
+> (2) Card de 58px para conteúdo de 65px: o formato ficava cortado pelo `overflow:hidden`.
+> (3) O rótulo da primeira hora usa `translateY(-50%)` e subia 7px por cima do cabeçalho.
+> (4) O "Livre" tracejado aparecia **atrás** de dois cards que dividem a coluna — o cálculo
+> de vão ignorava cards sobrepostos (`de===1`). Agora todos ocupam.
+
+> Verificado: os seis campos do story salvam e aparecem na tela, sem perder telas nem data;
+> navegação de dia, filtro por rede e clique-abre-postagem por clique real; zero card com
+> texto cortado; zero "Livre" sobreposto a card; em 375px o seletor de cinco visões fica em
+> uma linha só, com o cursor casando com o botão, rolando de lado, e a página não vaza.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

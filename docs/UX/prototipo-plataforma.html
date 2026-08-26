@@ -10376,3 +10376,357 @@ document.addEventListener('click', async e => {
 /* e sobe sozinho ao abrir */
 setTimeout(sbCarregar, 400);
 </script>
+<style>
+/* =====================================================================
+   v42 — a agenda do dia (referência do founder: app de salão, colunas
+   por profissional, hora na lateral, buraco visível) e a edição
+   completa do card de story.
+   ================================================================== */
+/* Com cinco visões o seletor não cabe mais em 375px. Os botões param de
+   encolher (`flex:0 0 auto`) e de quebrar linha — senão "Stories 36"
+   virava duas linhas e desalinhava o cursor — e o seletor rola de lado.
+   O fixSegs continua certo: offsetLeft não é afetado por scrollLeft. */
+.ptSeg .seg{ overflow-x:auto; max-width:100%; scrollbar-width:none }
+.ptSeg .seg::-webkit-scrollbar{ display:none }
+.ptSeg .seg button{ flex:0 0 auto; white-space:nowrap }
+
+.agTopo{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap }
+.agNav{ display:flex; align-items:center; gap:5px }
+.agNav button{ width:32px; height:32px; border-radius:9px; display:grid; place-items:center;
+  border:1px solid var(--ink-700); color:var(--ink-300); background:var(--ink-950);
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.agNav button:hover:not(:disabled){ color:var(--brass-300); border-color:var(--brass-600) }
+.agNav button:disabled{ opacity:.3 }
+.agData{ font-family:var(--serif); font-size:17px; color:var(--ink-50); min-width:190px }
+.agData small{ display:block; font-family:var(--mono); font-size:10px; letter-spacing:.08em;
+  color:var(--ink-400); text-transform:uppercase; margin-top:2px }
+
+.agRolo{ overflow-x:auto; border:1px solid var(--ink-800); border-radius:15px;
+  background:var(--ink-900); padding:0 0 4px }
+.agGrade{ display:grid; grid-template-columns:var(--agCols); min-width:min-content }
+.agCabCol{ padding:13px 9px 11px; text-align:center; border-bottom:1px solid var(--ink-800);
+  position:sticky; top:0; background:var(--ink-900); z-index:2 }
+.agAv{ width:34px; height:34px; border-radius:50%; margin:0 auto 6px; display:grid;
+  place-items:center; font-family:var(--mono); font-size:10px; font-weight:600;
+  color:#08090B }
+.agCabCol b{ display:block; font-size:13px; color:var(--ink-50); font-weight:600 }
+.agCabCol span{ display:block; font-family:var(--mono); font-size:10px; color:var(--ink-400);
+  margin-top:3px }
+.agCantoCab{ border-bottom:1px solid var(--ink-800); position:sticky; top:0;
+  background:var(--ink-900); z-index:3 }
+
+.agHoras{ position:relative; border-right:1px solid var(--ink-800) }
+.agHoras span{ position:absolute; right:9px; font-family:var(--mono); font-size:10px;
+  color:var(--ink-400); transform:translateY(-50%) }
+.agCol{ position:relative; border-right:1px solid var(--ink-850); padding:0 5px }
+.agCol:last-child{ border-right:0 }
+.agLinhas{ position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(to bottom, var(--ink-800) 0 1px, transparent 1px var(--agH));
+  background-position:0 var(--agTopo) }
+
+.agCard{ position:absolute; left:5px; right:5px; border-radius:11px; padding:8px 10px;
+  text-align:left; overflow:hidden; border:1px solid var(--ink-700);
+  border-left:3px solid var(--ink-500); background:var(--ink-850);
+  transition:transform var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.agCard:hover{ transform:translateY(-1px); border-color:var(--ink-600) }
+.agCard b{ display:block; font-family:var(--mono); font-size:10.5px; margin-bottom:3px }
+.agCard i{ display:block; font-style:normal; font-size:12.5px; color:var(--ink-50);
+  line-height:1.3; font-weight:600; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap }
+.agCard small{ display:block; font-size:11px; color:var(--ink-300); margin-top:2px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.agCard.feito{ opacity:.55 }
+.agLivre{ position:absolute; left:5px; right:5px; border:1px dashed var(--ink-700);
+  border-radius:11px; display:grid; place-items:center; font-size:11.5px;
+  color:var(--ink-500); pointer-events:none }
+.agVazioCol{ position:absolute; inset:8px 5px; border-radius:11px;
+  display:grid; place-items:center; text-align:center; font-size:11.5px;
+  color:var(--ink-500); background:var(--ink-950); padding:10px }
+
+/* campos de story no editor */
+.stCampos{ border-top:1px solid var(--ink-800); margin-top:15px; padding-top:14px }
+.stCampos > b{ display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--brass-300); margin-bottom:11px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v42 — dois pedidos do founder:
+
+   1. "Não consigo alterar os textos do card de story (ex.: CTA)."
+      A visão de stories só deixava editar as telas. Agora o card
+      inteiro abre o editor, e o editor ganhou os campos que só o
+      story tem: pilar, objetivo, recursos e interação/sticker.
+
+   2. "Visão geral da agenda de cada dia, o que vai sair; clicar leva
+      ao post para ver e alterar." A referência que ele mandou é um
+      app de salão: coluna por profissional, hora na lateral, e o
+      buraco da agenda visível como bloco tracejado. Aqui a coluna é
+      a REDE — é onde a peça vai sair — e o buraco continua visível,
+      que é a graça da referência.
+   ================================================================== */
+
+/* ---------- 1. o card de story abre o editor inteiro --------------- */
+const PILARES = Object.keys(PILAR_COR);
+
+modalPauta = (function(orig){
+  return function(id){
+    let html = orig(id);
+    // o rótulo antigo não dizia o que o campo faz
+    html = html.replace('Documento da peça final (opcional)',
+                        'Peça que preenche esta pauta (opcional)');
+    const p = id ? S.pauta.find(x=>x.id===id) : null;
+    if(!p || !p.story) return html;
+
+    S.ptPilar = p.pilar || 'Autoridade';
+    const campos = `
+    <div class="stCampos"><b>Story diário</b>
+      <div class="fld"><label>Pilar</label>
+        <div class="ptChips">${PILARES.map(k=>
+          `<button data-pilarpick="${k}" class="${S.ptPilar===k?'on':''}"
+            ><i style="background:${PILAR_COR[k]}"></i>${k}</button>`).join('')}</div></div>
+      <div class="fld"><label for="pt-obj">Objetivo — o que este story precisa conseguir</label>
+        <input id="pt-obj" value="${esc(p.objetivo||'')}"
+          placeholder="Ex.: distribuir o artigo e gerar leitura qualificada"></div>
+      <div class="fld"><label for="pt-stick">Interação / sticker</label>
+        <input id="pt-stick" value="${esc(p.sticker||'')}"
+          placeholder="Ex.: enquete na tela 2 — Sim / Ainda não"></div>
+      <div class="fld"><label for="pt-rec">Recursos / produção</label>
+        <textarea id="pt-rec" rows="2"
+          placeholder="O que a produção precisa ter à mão.">${esc(p.recursos||'')}</textarea></div>
+      <p class="fhint">As telas do roteiro (${(p.telas||[]).length}) são editadas na visão
+        Stories — lá dá para reordenar e apagar uma a uma.</p>
+    </div>`;
+    return html.replace('<div class="modalrow" style="margin-top:14px">',
+      campos + '\n    <div class="modalrow" style="margin-top:14px">');
+  };
+})(modalPauta);
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-pilarpick]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  S.ptPilar = t.dataset.pilarpick;
+  document.querySelectorAll('[data-pilarpick]').forEach(b=>
+    b.classList.toggle('on', b.dataset.pilarpick===S.ptPilar));
+}, true);
+
+/* Grava os campos de story em DUAS ETAPAS, e tem de ser assim: o
+   handler original fecha o modal e chama render() antes de qualquer
+   handler de bolha rodar, então nessa hora os campos já saíram do DOM
+   e ler `pt-obj` devolvia nada. A captura guarda os valores ANTES; a
+   bolha aplica depois que o original gravou o resto. Mesmo desenho que
+   a v32 usou para completar com a data. */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptok]');
+  if(!t) return;
+  const obj = document.getElementById('pt-obj');
+  if(!obj){ S.ptStoryCampos = null; return; }        // não é story
+  const v = id => document.getElementById(id)?.value.trim() || '';
+  S.ptStoryCampos = { objetivo:v('pt-obj'), sticker:v('pt-stick'), recursos:v('pt-rec'),
+                      pilar: S.ptPilar || 'Autoridade' };
+}, true);                                            // captura: antes do que salva
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptok]');
+  if(!t || !S.ptStoryCampos) return;
+  const campos = S.ptStoryCampos; S.ptStoryCampos = null;
+  const alvo = +t.dataset.ptok
+    ? S.pauta.find(x=>x.id===+t.dataset.ptok)
+    : S.pauta[S.pauta.length-1];
+  if(!alvo) return;
+  Object.assign(alvo, { story:true, ...campos });
+  if(!alvo.telas) alvo.telas = [];
+  // o objetivo é o que a visão de stories mostra no lugar do texto
+  if(campos.objetivo) alvo.texto = campos.objetivo;
+  render();
+});
+
+/* o lápis no card de story, e o objetivo clicável */
+stCardHtml = (function(orig){
+  return function(p, i){
+    let html = orig(p, i);
+    const lapis = `<button class="ptQuick" data-ptedit="${p.id}"
+      title="Editar story" aria-label="Editar story">${ic('pencil',15)}</button>`;
+    html = html.replace('<div class="stAcoes">', '<div class="stAcoes">\n      ' + lapis);
+    return html.replace(/<p class="stObj">([\s\S]*?)<\/p>/,
+      `<button class="stObj" data-ptedit="${p.id}" style="display:block;width:100%;
+        text-align:left;background:none;border:0;padding:0;cursor:pointer">$1</button>`);
+  };
+})(stCardHtml);
+
+/* ---------- 2. a agenda do dia ------------------------------------- */
+const AG_H = 64;                                     // altura de uma hora, em px
+/* 68, nao 58: hora + titulo + formato medem 49px e a moldura come 16 —
+   com 58 o formato ficava cortado pelo overflow:hidden do card. */
+const AG_MIN = 68;
+/* respiro no topo da grade: o rotulo da primeira hora usa
+   translateY(-50%) e sem isto ele subia por cima do cabecalho */
+const AG_TOPO = 12;
+const horaEmNum = h => { const [a,b] = String(h||'0:00').split(':').map(Number);
+  return (a||0) + (b||0)/60; };
+const CODIGO_PLAT = { ig:'IG', li:'IN', tt:'TT', yt:'YT', sb:'SB', str:'ST', sp:'SP' };
+
+function agDiasComPauta(){
+  return [...new Set(S.pauta.filter(p=>p.data).map(p=>p.data))].sort();
+}
+function agDiaAtual(){
+  const dias = agDiasComPauta();
+  if(!dias.length) return null;
+  if(S.agDia && dias.includes(S.agDia)) return S.agDia;
+  const hoje = hojeISO();
+  return dias.find(d=>d>=hoje) || dias[dias.length-1];
+}
+
+/* posições dos cards numa coluna: quem se sobrepõe divide a largura */
+function agPosicionar(itens, h0){
+  const ord = [...itens].sort((a,b)=>horaEmNum(a.hora)-horaEmNum(b.hora));
+  const cx = ord.map(p=>{
+    const topo = (horaEmNum(p.hora) - h0) * AG_H;
+    return { p, topo, base: topo + AG_MIN, faixa:0, de:1 };
+  });
+  let grupo = [];
+  const fecha = () => {
+    grupo.forEach((c,i)=>{ c.faixa = i; c.de = grupo.length; });
+    grupo = [];
+  };
+  cx.forEach(c=>{
+    if(grupo.length && c.topo >= Math.max(...grupo.map(g=>g.base))) fecha();
+    grupo.push(c);
+  });
+  fecha();
+  return cx;
+}
+
+function agCardHtml(c){
+  const {p, topo, faixa, de} = c;
+  const cor = p.tarefa ? '#5B8DEF' : (PLATS[p.plats[0]] || {c:'#9AA1AC'}).c;
+  const larg = 100/de, esq = larg*faixa;
+  return `<button class="agCard ${p.feito?'feito':''}" data-ptedit="${p.id}"
+    style="top:${topo + AG_TOPO}px;height:${AG_MIN}px;
+      left:calc(5px + ${esq}%);width:calc(${larg}% - 10px);
+      border-left-color:${cor};background:${cor}14">
+    <b style="color:${cor}">${p.hora}</b>
+    <i>${esc(p.t)}</i>
+    <small>${p.tarefa ? 'tarefa interna' : esc(p.fmt)}</small>
+  </button>`;
+}
+
+/* os buracos entre um card e o próximo — o que a referência mostra */
+function agLivresHtml(cx, altura){
+  if(!cx.length) return '';
+  // TODOS os cards ocupam, inclusive os que dividem a largura entre si.
+  // Filtrar por `de===1` fazia o horário de dois cards lado a lado contar
+  // como vago, e o "Livre" tracejado aparecia atrás deles.
+  const ocupado = cx.map(c=>[c.topo, c.base]).sort((a,b)=>a[0]-b[0]);
+  const vaos = []; let cursor = 0;
+  ocupado.forEach(([t,b])=>{ if(t - cursor >= 34) vaos.push([cursor, t]); cursor = Math.max(cursor,b); });
+  if(altura - cursor >= 34) vaos.push([cursor, altura]);
+  return vaos.map(([a,b])=>`<div class="agLivre" style="top:${a+4+AG_TOPO}px;height:${b-a-8}px">Livre</div>`).join('');
+}
+
+function ptVistaAgenda(){
+  const dia = agDiaAtual();
+  if(!dia) return vazio('Sem datas','Nenhuma postagem com data para montar a agenda.');
+  const dias = agDiasComPauta(), iDia = dias.indexOf(dia);
+  const doDia = S.pauta.filter(p=>p.data===dia);
+  const filtro = S.agFiltro || 'todas';
+
+  // uma coluna por rede que tem algo no dia; tarefa interna ganha a sua
+  let chaves = Object.keys(PLATS).filter(k=>doDia.some(p=>p.plats.includes(k)));
+  if(doDia.some(p=>p.tarefa)) chaves.push('__int');
+  if(filtro !== 'todas') chaves = chaves.filter(k=>k===filtro);
+  if(!chaves.length) chaves = ['__int'];
+
+  const itensDe = k => k==='__int'
+    ? doDia.filter(p=>p.tarefa)
+    : doDia.filter(p=>!p.tarefa && p.plats.includes(k));
+
+  const horas = doDia.map(p=>horaEmNum(p.hora));
+  const h0 = Math.max(0, Math.floor(Math.min(...horas)) - 1);
+  const h1 = Math.min(24, Math.ceil(Math.max(...horas)) + 2);
+  const altura = (h1 - h0) * AG_H;
+  const alturaCx = altura + AG_TOPO * 2;
+
+  const chips = ['todas', ...Object.keys(PLATS).filter(k=>doDia.some(p=>p.plats.includes(k)))]
+    .map(k=>`<button data-agfiltro="${k}" class="${filtro===k?'on':''}">
+      ${k==='todas' ? 'Todas' : `<i style="background:${PLATS[k].c}"></i>${PLATS[k].n}`}</button>`).join('');
+
+  const cab = chaves.map(k=>{
+    const n = itensDe(k).length, feitos = itensDe(k).filter(p=>p.feito).length;
+    const cor = k==='__int' ? '#5B8DEF' : PLATS[k].c;
+    return `<div class="agCabCol">
+      <div class="agAv" style="background:${cor}">${k==='__int'?'IN':CODIGO_PLAT[k]||k.toUpperCase()}</div>
+      <b>${k==='__int' ? 'Interno' : esc(PLATS[k].n)}</b>
+      <span>${n} ${n===1?'peça':'peças'}${feitos?` · ${feitos} feito${feitos>1?'s':''}`:''}</span>
+    </div>`;
+  }).join('');
+
+  const colunas = chaves.map(k=>{
+    const cx = agPosicionar(itensDe(k), h0);
+    return `<div class="agCol" style="height:${alturaCx}px">
+      <div class="agLinhas"></div>
+      ${cx.length ? agLivresHtml(cx, altura) + cx.map(agCardHtml).join('')
+        : `<div class="agVazioCol">Nada ${k==='__int'?'interno':`no ${esc(PLATS[k].n)}`} neste dia.</div>`}
+    </div>`;
+  }).join('');
+
+  let marcas = '';
+  for(let h=h0; h<=h1; h++)
+    marcas += `<span style="top:${(h-h0)*AG_H + AG_TOPO}px">${D2(h)}h</span>`;
+
+  return `<div class="agTopo">
+      <div class="agNav">
+        <button data-agsalto="-1" ${iDia<=0?'disabled':''} aria-label="Dia anterior">${ic('arrowl',14)}</button>
+        <button data-agsalto="1" ${iDia>=dias.length-1?'disabled':''} aria-label="Próximo dia">${ic('arrowr',14)}</button>
+      </div>
+      <div class="agData">${rotuloLongo(dia)}
+        <small>${doDia.length} ${doDia.length===1?'peça':'peças'} · dia ${iDia+1} de ${dias.length}</small></div>
+    </div>
+    <div class="ptChips" style="margin-bottom:11px">${chips}</div>
+    <div class="agRolo"><div class="agGrade"
+        style="--agCols:52px repeat(${chaves.length}, minmax(150px,1fr)); --agH:${AG_H}px; --agTopo:${AG_TOPO}px">
+      <div class="agCantoCab"></div>
+      ${cab}
+      <div class="agHoras" style="height:${alturaCx}px">${marcas}</div>
+      ${colunas}
+    </div></div>
+    <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">A agenda do dia, por
+      onde a peça sai. Clique num card para abrir a postagem e alterar. Tracejado é buraco
+      na agenda daquele canal.</p>`;
+}
+
+/* entra como quinta visão, pela mesma porta que a de stories usa */
+ptVistaSemana = (function(orig){
+  return function(visiveis, filtro){
+    if(S.ptVista === 'dia') return ptVistaAgenda();
+    return orig(visiveis, filtro);
+  };
+})(ptVistaSemana);
+
+corpoPauta = (function(orig){
+  return function(){
+    const html = orig();
+    if(!html.includes('data-ptvista="stories"')) return html;
+    return html.replace(/(<button class="[^"]*" data-ptvista="stories"[\s\S]*?<\/button>)/,
+      `$1\n      <button class="${S.ptVista==='dia'?'on':''}" data-ptvista="dia">Dia</button>`);
+  };
+})(corpoPauta);
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-agsalto],[data-agfiltro]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  if(t.dataset.agfiltro){ S.agFiltro = t.dataset.agfiltro; render(); return; }
+  const dias = agDiasComPauta(), i = dias.indexOf(agDiaAtual()) + (+t.dataset.agsalto);
+  if(i < 0 || i >= dias.length) return;
+  S.agDia = dias[i]; som('toque'); render();
+}, true);
+
+/* clicar num dia do calendário do Mês abre a agenda daquele dia */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptdia-iso]');
+  if(!t || S.ptVista !== 'mes') return;
+  S.agDia = t.dataset.ptdiaIso;
+}, true);
+</script>
