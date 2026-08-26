@@ -696,6 +696,45 @@ apontou olhando a planilha ao lado do protótipo.
 > link sem protocolo funciona; o link some e volta do banco entre recarregamentos, o
 > arquivo não (por desenho); os três rótulos do selo saem certos nos três casos.
 
+**Editar e excluir cliente, e o aviso que cobria a tela (v45).**
+
+> A lista de clientes era imutável: `ln` e `cj` estão escritos à mão em `CLIS()` e só os
+> novos vinham de `S.novos`. Em vez de reescrever `CLIS`, duas camadas por cima —
+> `S.cliEdit` (edições por id) e `S.cliFora` (exclusões) — que valem igual para os fixos e
+> os criados, sem nenhum código existente precisar saber que isso existe. Editar abre um
+> formulário com nome, iniciais, segmento, cor, briefing, links e referências; excluir pede
+> confirmação, **e dá 8 segundos para desfazer**. Botão de editar também na página do
+> cliente. Tudo vai para o banco numa linha `__config__`, senão sumia ao recarregar.
+
+> 🔴 **`const` matou o bloco inteiro em silêncio.** `CLIS` e `projetosAtivos` eram `const`;
+> a reatribuição lançou `TypeError: Assignment to constant variable` e **nada** depois dela
+> rodou. E o disfarce foi cruel: a contagem no topo continuou certa por coincidência
+> (`2 + S.novos.length` dava o mesmo 3), então a tela parecia funcionar. Só apareceu ao
+> conferir o console. Os dois viraram `let`, com comentário dizendo por quê.
+
+> 🔴 **Um teste meu apagou os 70 itens reais da EJUP no banco de produção.** O `delete
+> S.pautas[id]` do excluir-cliente rodou contra o Supabase de verdade e o próximo
+> salvamento gravou a pauta vazia. Restaurado a partir das sementes do arquivo
+> (`PAUTA_EJUP_V2` + `STORIES_EJUP`), conferido: 70 itens, 36 stories, 2 tarefas, pilar em
+> todos. **A lição virou desenho: excluir cliente não apaga mais a pauta** — só tira o
+> cliente da lista, os dados ficam parados e invisíveis. Guardar não custa nada e
+> transforma um erro de clique num "Desfazer" (que agora sabe quatro casos: peça, item de
+> pauta, tela e cliente). *Testar contra o banco que o founder usa foi erro meu; o próximo
+> teste destrutivo vai contra uma linha descartável.*
+
+> **"Tela gigante sem necessidade" (o aviso).** Conflito de CSS entre duas camadas: a v36
+> mudou o aviso para o topo (`top:50px; bottom:auto`) porque embaixo estão os botões e a
+> barra; a v37 depois acrescentou `bottom:...!important` — regra do tempo em que o aviso
+> ficava embaixo. Com `top` **e** `bottom` valendo, a caixa esticava de uma ponta à outra
+> da tela. É o mesmo defeito que o comentário da v36 diz ter corrigido uma vez, e que
+> voltou por outra porta. A regra obsoleta saiu, com um aviso no lugar dela para não voltar
+> de novo. Medido: 44px o aviso curto, 63px o longo, contra a tela inteira antes.
+
+> **A linha do cliente em 375px:** com os dois botões novos sobravam 47px para o nome
+> ("Loja ..." cortado, subtítulo em quatro linhas). A seta saiu de vez (com botões ao lado
+> já está claro que é clicável) e o selo sai abaixo de 520px. O texto foi de 47px para
+> 194px e nenhum nome corta.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

@@ -2506,7 +2506,9 @@ const PLANOS = {
   ORQUESTRA:{nome:'Orquestra',assentos:25,projetos:25,preco:749}};
 const plano = () => PLANOS[S.plan];
 const assentosUsados = () => S.equipe.length;
-const projetosAtivos = () => 2 + S.novos.length;
+/* `let`, nao `const`: a v45 precisa reapontar isto para a lista real
+   de clientes depois que exclusao e edicao passaram a existir. */
+let projetosAtivos = () => 2 + S.novos.length;
 
 const PERMS = {
   Administrador:{sim:['tudo da operação','equipe e papéis','plano e faturamento','enviar lotes','registrar aprovação offline'],nao:['aprovar conteúdo do cliente']},
@@ -2529,7 +2531,11 @@ S.proj = {
     {n:'Pré-lançamento',m:'dez',dias:31,ag:1,q:'A audiência sabe o que vem aí?'},
     {n:'Lançamento',m:'jan',dias:31,ag:3,q:'A promessa dos seis meses se cumpriu?'}]}};
 
-const CLIS = () => [
+/* `let`, nao `const`: a v45 envolve CLIS para aplicar edicoes e
+   exclusoes por cima. Com `const` a reatribuicao lancava
+   "Assignment to constant variable" e matava o bloco inteiro em
+   silencio — o contador do topo batia por coincidencia e escondia. */
+let CLIS = () => [
   {id:'ln',nome:'Loja Norte',ini:'LN',seg:'Varejo de moda',cor:null,
    brief:'Marca de moda atemporal em linho. Tom calmo, nunca urgência de promoção. Nunca falar de preço em conteúdo de marca.',
    links:['drive.google.com/lojanorte','@lojanorte'],refs:'COS, Toteme, feeds de slow fashion'},
@@ -8503,9 +8509,15 @@ mnAplicar();
   height:calc(100dvh - 42px - 52px - var(--mnAltura) - var(--toasth,0px)) }
 .clfoot{ bottom:var(--mnAltura) }
 #root.temtoast .clfoot{ bottom:calc(var(--mnAltura) + var(--toasth,0px)) }
-/* o aviso tambem sobe o suficiente */
-#layer.up .toast, #layer.agm .toast{
-  bottom:calc(var(--mnAltura) + 20px)!important }
+/* AQUI NAO VAI REGRA DE `bottom` PARA O AVISO.
+   Esta regra existiu ("o aviso tambem sobe o suficiente") de quando o
+   aviso ficava ancorado embaixo. A v36 mudou ele para o topo
+   (`top:50px; bottom:auto`) porque embaixo estao os botoes e a barra —
+   e como esta regra era mais especifica e ainda usava !important, o
+   aviso passou a ter `top` E `bottom` ao mesmo tempo: a caixa esticava
+   de uma ponta a outra da tela e cobria tudo. E o mesmo defeito que o
+   comentario da v36 diz ter corrigido uma vez; voltou por aqui.
+   O aviso fica no topo e nao precisa de nada para escapar da barra. */
 </style>
 <script>
 "use strict";
@@ -11004,4 +11016,275 @@ modalPauta = (function(orig){
     return html.replace(`Material (${ms.length})`, `Material · ${ms.length} link${ms.length>1?'s':''}`);
   };
 })(modalPauta);
+</script>
+<style>
+/* v45 — editar e excluir cliente */
+.cliAcoes{ display:flex; gap:6px; align-items:center; flex:0 0 auto }
+.cliAcoes button{ width:32px; height:32px; border-radius:9px; display:grid; place-items:center;
+  border:1px solid transparent; color:var(--ink-400); background:none;
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.cliAcoes button:hover{ color:var(--brass-300); border-color:var(--ink-700) }
+.cliAcoes button.rm:hover{ color:var(--danger); border-color:rgba(229,72,77,.35) }
+.cliLinha{ display:flex; align-items:center; gap:8px }
+.cliLinha > button:first-child{ flex:1; min-width:0 }
+/* Medido em 375px: com os dois botoes novos sobravam 47px para o nome
+   ("Loja ..." cortado, subtitulo em quatro linhas). A seta some sempre
+   — com botoes ao lado ja esta claro que a linha e clicavel — e o selo
+   ("8 esperando", 102px) sai no celular. O nome do cliente e o que
+   importa; o selo volta a aparecer a partir de 520px. */
+.cliLinha .chev{ display:none }
+@media (max-width:520px){
+  .cliLinha .pill{ display:none }
+  .cliAcoes button{ width:30px; height:30px }
+}
+.corPick{ display:flex; gap:7px; flex-wrap:wrap }
+.corPick button{ width:26px; height:26px; border-radius:50%; border:2px solid transparent }
+.corPick button.on{ border-color:var(--ink-50) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v45 — editar e excluir cliente.
+
+   A lista de clientes era imutável: 'ln' e 'cj' estão escritos à mão em
+   CLIS() e só os novos vinham de S.novos. Em vez de reescrever CLIS,
+   duas camadas por cima dela — edições e exclusões por id — que valem
+   igual para os fixos e para os criados. Assim nenhum código que já
+   chama CLIS() precisa saber que isso existe.
+   ================================================================== */
+S.cliEdit = S.cliEdit || {};      // { [id]: {nome,ini,seg,cor,brief,links,refs} }
+S.cliFora = S.cliFora || [];      // ids excluídos
+
+const _CLIS_BASE = CLIS;
+CLIS = () => _CLIS_BASE()
+  .filter(c => !S.cliFora.includes(c.id))
+  .map(c => S.cliEdit[c.id] ? { ...c, ...S.cliEdit[c.id] } : c);
+
+/* a contagem de projetos passa a seguir a lista de verdade */
+projetosAtivos = () => CLIS().length;
+
+/* ---------- a lista, agora sem contar com posições fixas ----------- */
+const SUBTITULO_FIXO = {
+  ln: 'Varejo de moda · Verão 26',
+  cj: 'Consultoria jurídica · Da marca ao lançamento'
+};
+const SELO_FIXO = {
+  ln: () => [esperando()+' esperando', 'p-AWAITING_APPROVAL'],
+  cj: () => ['Em produção', 'p-IN_PRODUCTION']
+};
+
+agClientes = function(){
+  const cs = CLIS();
+  const linha = (c,i) => {
+    const [pill, pcls] = SELO_FIXO[c.id] ? SELO_FIXO[c.id]() : ['novo','p-DRAFT'];
+    const sub = SUBTITULO_FIXO[c.id] || `${esc(c.seg)} · Sempre ativo`;
+    return `<div class="cliLinha fu" style="animation-delay:${Math.min(i*50,300)}ms">
+      <button data-clidet="${c.id}" style="display:block;width:100%">
+        <span class="row" style="margin:0">
+          <span class="av" ${c.cor?`style="background:linear-gradient(150deg,${c.cor},#111);color:#fff"`:''}>${esc(c.ini)}</span>
+          <span class="t"><b>${esc(c.nome)}</b><span>${sub}</span></span>
+          <span class="pill ${pcls}">${pill}</span><span class="chev">${ic('chevr')}</span></span></button>
+      <span class="cliAcoes">
+        <button data-cliedit="${c.id}" title="Editar ${esc(c.nome)}"
+          aria-label="Editar ${esc(c.nome)}">${ic('pencil',15)}</button>
+        <button class="rm" data-clidel="${c.id}" title="Excluir ${esc(c.nome)}"
+          aria-label="Excluir ${esc(c.nome)}">${ic('x',15)}</button>
+      </span></div>`;
+  };
+  return agShell(`
+  <div class="mtop"><div><h1>Clientes</h1><p>${cs.length} ${cs.length===1?'cliente':'clientes'} · ${projetosAtivos()} ${projetosAtivos()===1?'projeto ativo':'projetos ativos'}</p></div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="b gho sm" data-newproj="1">${ic('folder')} Novo projeto</button>
+      <button class="b pri sm" data-newclient="1">${ic('users')} Novo cliente</button></div></div>
+  ${cs.length ? cs.map(linha).join('')
+    : vazio('Nenhum cliente','A lista está vazia. Crie o primeiro para começar.',
+        `<button class="b pri sm" data-newclient="1">${ic('users')} Novo cliente</button>`)}
+  <div class="card" style="margin-top:18px"><h4>Ninguém começa em tela vazia</h4>
+    <p>Todo cliente nasce com um projeto "Sempre ativo" e o calendário do primeiro mês.
+      Toque no cliente para abrir a página dele — briefing, marca, links e projetos.</p></div>`);
+};
+
+/* ---------- o formulário ------------------------------------------- */
+const CORES_CLI = ['#5B8DEF','#E1568C','#35B87A','#C8963A','#8B7BF0','#E5484D','#4C8FDB',null];
+
+function modalCliente(id){
+  const c = CLIS().find(x=>x.id===id); if(!c) return '';
+  S.cliCor = c.cor || null;
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3>Editar ${esc(c.nome)}</h3>
+    <p>O que a equipe vê ao abrir este cliente. O briefing é o que orienta toda peça.</p>
+    <div class="frow">
+      <div class="fld"><label for="cl-nome">Nome</label>
+        <input id="cl-nome" value="${esc(c.nome)}"></div>
+      <div class="fld"><label for="cl-ini">Iniciais</label>
+        <input id="cl-ini" value="${esc(c.ini)}" maxlength="3"></div>
+    </div>
+    <div class="fld"><label for="cl-seg">Segmento</label>
+      <input id="cl-seg" value="${esc(c.seg)}" placeholder="Ex.: Educação jurídica"></div>
+    <div class="fld"><label>Cor</label>
+      <div class="corPick">${CORES_CLI.map(k=>
+        `<button data-clicor="${k||''}" class="${(S.cliCor||'')===(k||'')?'on':''}"
+          style="background:${k?`linear-gradient(150deg,${k},#111)`:'var(--ink-700)'}"
+          aria-label="${k||'sem cor'}"></button>`).join('')}</div></div>
+    <div class="fld"><label for="cl-brief">Briefing — o que a equipe precisa saber</label>
+      <textarea id="cl-brief" rows="3">${esc(c.brief||'')}</textarea></div>
+    <div class="fld"><label for="cl-links">Links — um por linha</label>
+      <textarea id="cl-links" rows="2"
+        placeholder="drive.google.com/cliente&#10;@cliente">${esc((c.links||[]).join('\n'))}</textarea></div>
+    <div class="fld"><label for="cl-refs">Referências</label>
+      <input id="cl-refs" value="${esc(c.refs||'')}" placeholder="Marcas, feeds, tom"></div>
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b gho" data-clidel="${c.id}"
+        style="color:var(--danger);border-color:rgba(229,72,77,.4)">Excluir cliente</button>
+      <button class="b pri" data-cliok="${c.id}">Salvar</button>
+    </div></div></div>`;
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-cliedit],[data-clicor],[data-cliok],[data-clidel],[data-clidelok]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+
+  if(d.cliedit){ S.modal = modalCliente(d.cliedit); renderLayer(); return; }
+
+  if(d.clicor !== undefined){
+    S.cliCor = d.clicor || null;
+    document.querySelectorAll('[data-clicor]').forEach(b=>
+      b.classList.toggle('on', (b.dataset.clicor||'') === (S.cliCor||'')));
+    return; }
+
+  if(d.cliok){
+    const v = id => document.getElementById(id)?.value.trim() || '';
+    const nome = v('cl-nome');
+    if(nome.length < 2){ const el = document.getElementById('cl-nome');
+      el.style.borderColor = 'var(--danger)'; el.focus(); return; }
+    S.cliEdit[d.cliok] = {
+      nome, ini: (v('cl-ini') || nome.slice(0,2)).toUpperCase(),
+      seg: v('cl-seg') || '—', cor: S.cliCor || null,
+      brief: v('cl-brief') || '—',
+      links: v('cl-links').split('\n').map(s=>s.trim()).filter(Boolean),
+      refs: v('cl-refs') || '—'
+    };
+    S.modal = null; som('toque'); render();
+    toast(`"${nome}" atualizado.`);
+    return; }
+
+  if(d.clidel){
+    const c = CLIS().find(x=>x.id===d.clidel); if(!c) return;
+    if(CLIS().length <= 1){
+      toast('Este é o único cliente — não dá para excluir todos.'); return; }
+    const n = (S.pautas[c.id] || []).length;
+    S.modal = `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+      <h3>Excluir ${esc(c.nome)}?</h3>
+      <p>Sai da lista, junto com a pauta ${n?`(${n} ${n===1?'postagem':'postagens'})`:'dele'},
+        o material e as referências. Você tem 8 segundos para desfazer.</p>
+      <div class="modalrow"><button class="b gho" data-modalno="1">Voltar</button>
+        <button class="b pri" style="background:var(--danger);color:#fff"
+          data-clidelok="${c.id}">Excluir cliente</button></div></div></div>`;
+    renderLayer(); return; }
+
+  if(d.clidelok){
+    const c = CLIS().find(x=>x.id===d.clidelok);
+    const nome = c ? c.nome : '';
+    if(!S.cliFora.includes(d.clidelok)) S.cliFora.push(d.clidelok);
+    // A PAUTA NAO E APAGADA de proposito. Excluir o cliente so o tira
+    // da lista; os dados ficam parados, invisiveis. Foi o que salvou os
+    // 70 itens reais da EJUP quando um teste meu excluiu o cliente
+    // contra o banco de producao — com `delete S.pautas[id]` a pauta
+    // some do banco no proximo salvamento e nao volta. Guardar custa
+    // nada e transforma um erro de clique em um "Desfazer".
+    ultimoCliRm = { id:d.clidelok, edit:S.cliEdit[d.clidelok], cliAntes:S.cli };
+    clearTimeout(_cliUndo);
+    _cliUndo = setTimeout(()=>{ ultimoCliRm = null; }, 8000);
+    if(S.cli === d.clidelok) S.cli = (CLIS()[0] || {}).id || null;
+    S.modal = null; S.route = 'clientes';
+    som('toque'); render();
+    toast(`"${nome}" excluído.`, true);
+    return; }
+}, true);
+
+/* ---------- e um botão de editar dentro da página do cliente ------- */
+agClienteDet = (function(orig){
+  return function(){
+    const html = orig();
+    const c = cliAtual(); if(!c) return html;
+    const botao = `<button class="b gho sm" data-cliedit="${c.id}">${ic('pencil')} Editar cliente</button>`;
+    // entra na régua de ações do topo, ao lado de "Clientes"
+    return html.replace(
+      /(<button class="b gho sm" data-r="clientes"[^>]*>[\s\S]*?<\/button>)/,
+      `$1 ${botao}`);
+  };
+})(agClienteDet);
+
+/* ---------- edições e exclusões vão para o banco ------------------- */
+/* Uma linha própria, `__config__`: a tabela guarda uma linha por
+   cliente, e isto não é de nenhum cliente — é a lista deles. */
+sbCarregar = (function(orig){
+  return function(){
+    const p = orig.apply(this, arguments);
+    return Promise.resolve(p).then(async ok => {
+      if(!ok) return ok;
+      try{
+        const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__config__&select=dados`,
+          { headers: sbCab() });
+        if(r.ok){
+          const [linha] = await r.json();
+          const d = linha && linha.dados;
+          if(d){
+            if(d.cliEdit) S.cliEdit = d.cliEdit;
+            if(Array.isArray(d.cliFora)) S.cliFora = d.cliFora;
+            render();
+          }
+        }
+      }catch(e){}
+      return ok;
+    });
+  };
+})(sbCarregar);
+
+let _cfgEspelho = null;
+async function sbGravarConfig(){
+  if(!_sbLigado) return;
+  const dados = { cliEdit:S.cliEdit, cliFora:S.cliFora, versao:45 };
+  const corpo = JSON.stringify(dados);
+  if(_cfgEspelho === corpo) return;
+  try{
+    const r = await fetch(`${SB.url}/rest/v1/pauta?on_conflict=cliente`, {
+      method:'POST',
+      headers: { ...sbCab(), Prefer:'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ cliente:'__config__', dados, atualizado_em:new Date().toISOString() })
+    });
+    if(r.ok) _cfgEspelho = corpo;
+  }catch(e){}
+}
+sbAgendar = (function(orig){
+  return function(){
+    orig.apply(this, arguments);
+    clearTimeout(sbGravarConfig._t);
+    sbGravarConfig._t = setTimeout(sbGravarConfig, 1500);
+  };
+})(sbAgendar);
+</script>
+<script>
+"use strict";
+/* v45b — excluir cliente vira reversivel. `desfazer()` ja sabia peca,
+   item de pauta e tela; agora sabe cliente tambem. */
+let ultimoCliRm = null, _cliUndo = null;
+desfazer = (function(base){
+  return function(){
+    if(ultimoCliRm){
+      const {id, edit, cliAntes} = ultimoCliRm;
+      S.cliFora = S.cliFora.filter(x => x !== id);
+      if(edit) S.cliEdit[id] = edit;
+      S.cli = cliAntes; ultimoCliRm = null; S.toast = null;
+      render();
+      const c = CLIS().find(x=>x.id===id);
+      toast(`"${c ? c.nome : 'Cliente'}" de volta à lista.`);
+      return;
+    }
+    return base();
+  };
+})(desfazer);
 </script>
