@@ -735,6 +735,35 @@ apontou olhando a planilha ao lado do protótipo.
 > já está claro que é clicável) e o selo sai abaixo de 520px. O texto foi de 47px para
 > 194px e nenhum nome corta.
 
+**Foto e vídeo sumiam ao recarregar, mesmo sem sair do aparelho (v46).** O founder
+reportou: "só sobe link e alteração de ação" — e estava certo, mas a causa não era o
+Supabase (que nunca prometeu levar arquivo). Era mais básica: **o localStorage do
+protótipo nunca guardou `S.mat` nem `S.refs`** — só a pauta. "Nada se perde: guarda no
+navegador" (v27) tinha um buraco desde o começo, que só foi notado agora porque antes
+não havia motivo para recarregar a página com material anexado.
+
+> E não bastaria só entrar no `localStorage`: um anexo vira `blob:` — um endereço válido
+> só **enquanto a aba que criou continua aberta**. Fechar ou recarregar mata o blob, e
+> `localStorage` só guarda texto — não dá para pôr um vídeo lá.
+
+> A solução tem duas partes. Cada anexo (Material e Referências, os dois passavam pelo
+> mesmo buraco) ganha uma **chave**; o arquivo de verdade vai para o **IndexedDB** sob essa
+> chave — ele guarda o `Blob`, não só texto, e sobrevive a fechar a aba. É a chave (um
+> texto curto) que entra no `localStorage` junto com o resto da pauta. Ao reabrir, a chave
+> busca o `Blob` de volta e gera um `blob:` novo, desta sessão. Antes do primeiro desenho,
+> a `url` salva (que já morreu) é zerada — assim a tela nunca chega a tentar carregar um
+> blob morto, só mostra o ícone até o arquivo de verdade voltar.
+
+> Continua valendo o que já estava documentado: isto é por aparelho. O Supabase leva a
+> pauta e os links entre pessoas; o arquivo em si nunca atravessa — nem antes nem agora.
+> O que mudou é que agora ele pelo menos **não desaparece da sua própria tela**.
+
+> Verificado: PNG de verdade anexado, página recarregada do zero (não só `render()` —
+> `navigate` completo) — o Material voltou com os mesmos 68 bytes e o tipo certo; mesmo
+> teste para Referências, com a miniatura renderizando no modal; apagar (um item ou
+> "Remover todos") apaga também do IndexedDB — conferido que a chave some de lá, não só
+> da tela.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

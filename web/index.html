@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-26 16:32 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-26 17:00 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -6872,6 +6872,8 @@ Object.defineProperty(S, 'pauta', {
 
 /* ---------- nada se perde: guarda no navegador ----------------------- */
 const CHAVE = 'maestro-prototipo-v1';
+S.mat = S.mat || {};                       // inicializa aqui — este bloco
+S.refs = S.refs || {};                     // roda antes de onde eles nascem
 try{
   const guardado = JSON.parse(localStorage.getItem(CHAVE) || 'null');
   if(guardado){
@@ -6880,12 +6882,21 @@ try{
       guardado.novos.forEach(c=>{
         if(!S.novos.some(x=>x.nome===c.nome)) S.novos.push(c); });
     }
+    /* material e referências: só a METADATA volta daqui — a url salva
+       era um blob: desta mesma aba, que morreu ao fechar. Fica null até
+       o arquivo de verdade voltar do IndexedDB (rehidratarArquivos, v46:
+       esses dois nunca tinham entrado aqui, e por isso sumiam mesmo sem
+       sair do aparelho). */
+    if(guardado.mat) Object.entries(guardado.mat).forEach(([id,arr])=>{
+      S.mat[id] = arr.map(m => ({...m, url:null})); });
+    if(guardado.refs) Object.entries(guardado.refs).forEach(([id,arr])=>{
+      S.refs[id] = arr.map(r => r.tipo==='link' ? r : {...r, url:null}); });
   }
 }catch(e){}
 let _tmSalva = 0;
 function salvarLocal(){
   try{ localStorage.setItem(CHAVE, JSON.stringify({
-    pautas:S.pautas, novos:S.novos, quando:Date.now() })); }catch(e){}
+    pautas:S.pautas, novos:S.novos, mat:S.mat, refs:S.refs, quando:Date.now() })); }catch(e){}
 }
 const _renderV27 = render;
 render = function(){
@@ -7726,12 +7737,15 @@ function guardarArquivos(id, lista){
       // antigo ainda no DOM, faz o navegador tentar recarregar um blob
       // que deixou de existir (ERR_FILE_NOT_FOUND no console).
       soltarDepois(arr.map(m=>m.url));
+      arr.filter(m=>m.chave).forEach(m=>idbApagar(m.chave).catch(()=>{}));
       arr.length = 0;
     }
     const tipo = tipoDoArquivo(f);
-    arr.push({ nome:f.name, tipo, peso:f.size,
+    const chave = novaChave('mt');
+    arr.push({ nome:f.name, tipo, peso:f.size, chave,
       url: (tipo==='imagem'||tipo==='video') ? URL.createObjectURL(f) : null });
-    n++;
+    idbSalvar(chave, f).catch(()=>{});          // o arquivo de verdade,
+    n++;                                        // sobrevive a recarregar
   });
   return n;
 }
@@ -7756,11 +7770,14 @@ document.addEventListener('click', e => {
     const arr = S.mat[S.mtId] || [];
     const m = arr[+d.mtdel];
     if(m && m.url) soltarDepois([m.url]);
+    if(m && m.chave) idbApagar(m.chave).catch(()=>{});
     arr.splice(+d.mtdel, 1);
     S.modal = modalMaterial(S.mtId); renderLayer(); setTimeout(ligarSolta, 0);
     render(); return; }
   if(d.mtlimpa){
-    soltarDepois((S.mat[+d.mtlimpa]||[]).map(m=>m.url));
+    const alvo = S.mat[+d.mtlimpa] || [];
+    soltarDepois(alvo.map(m=>m.url));
+    alvo.filter(m=>m.chave).forEach(m=>idbApagar(m.chave).catch(()=>{}));
     delete S.mat[+d.mtlimpa];
     S.modal = modalMaterial(+d.mtlimpa); renderLayer(); setTimeout(ligarSolta, 0);
     render(); toast('Material removido.'); return; }
@@ -9831,8 +9848,10 @@ function ligarSoltaRef(){
     let n = 0;
     [...fs].forEach(f=>{
       const tipo = tipoDoArquivo(f);
-      arr.push({ tipo, nome:f.name, peso:f.size,
+      const chave = novaChave('rf');
+      arr.push({ tipo, nome:f.name, peso:f.size, chave,
         url:(tipo==='imagem'||tipo==='video') ? URL.createObjectURL(f) : null });
+      idbSalvar(chave, f).catch(()=>{});
       n++;
     });
     if(!n) return;
@@ -9878,6 +9897,7 @@ document.addEventListener('click', e => {
     const arr = S.refs[S.rfId] || [];
     const r = arr[+d.rfdel];
     if(r && r.url && r.tipo !== 'link') soltarDepois([r.url]);
+    if(r && r.chave) idbApagar(r.chave).catch(()=>{});
     arr.splice(+d.rfdel, 1);
     S.modal = modalRefs(S.rfId); renderLayer(); setTimeout(ligarSoltaRef, 0);
     render(); return; }
@@ -11302,4 +11322,79 @@ desfazer = (function(base){
     return base();
   };
 })(desfazer);
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v46 — fotos e vídeos anexados (Material e Referências) sumiam ao
+   recarregar a página, MESMO sem sair do mesmo aparelho.
+
+   Causa: "nada se perde: guarda no navegador" (v27) só guardava a
+   pauta no localStorage — nunca guardou S.mat nem S.refs. E blob: é da
+   ABA que criou: fecha a aba, o blob morre. Então nem entrar no
+   localStorage bastaria — precisa do arquivo de verdade em algum lugar
+   que sobrevive ao fechar a aba: IndexedDB, que guarda o Blob real (o
+   localStorage só guarda texto, não dá pra por um vídeo lá).
+
+   Cada anexo ganha uma "chave" — o Blob vai pro IndexedDB sob essa
+   chave, e é a chave (texto, cabe no localStorage) que viaja junto com
+   o resto da pauta. Ao reabrir, a chave busca o Blob de volta e gera
+   um blob: novo, desta aba.
+   ================================================================== */
+const IDB_NOME = 'maestroArquivos', IDB_STORE = 'blobs';
+function idbAbrir(){
+  return new Promise((resolve, reject)=>{
+    if(!window.indexedDB) return reject(new Error('sem IndexedDB'));
+    const req = indexedDB.open(IDB_NOME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbSalvar(chave, blob){
+  const db = await idbAbrir();
+  return new Promise((res, rej)=>{
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put(blob, chave);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+async function idbLer(chave){
+  const db = await idbAbrir();
+  return new Promise((res, rej)=>{
+    const req = db.transaction(IDB_STORE, 'readonly').objectStore(IDB_STORE).get(chave);
+    req.onsuccess = () => res(req.result || null);
+    req.onerror = () => rej(req.error);
+  });
+}
+async function idbApagar(chave){
+  const db = await idbAbrir();
+  return new Promise(res=>{
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(chave);
+    tx.oncomplete = () => res();
+  });
+}
+const novaChave = prefixo => `${prefixo}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+
+/* ao abrir, toda foto/vídeo com chave e sem url (acabou de voltar do
+   localStorage, ainda sem o Blob) busca o arquivo de verdade */
+async function rehidratarArquivos(){
+  const alvos = [];
+  Object.values(S.mat||{}).forEach(arr=>arr.forEach(m=>{
+    if(m.chave && !m.url && (m.tipo==='imagem'||m.tipo==='video')) alvos.push(m); }));
+  Object.values(S.refs||{}).forEach(arr=>arr.forEach(r=>{
+    if(r.chave && !r.url && (r.tipo==='imagem'||r.tipo==='video')) alvos.push(r); }));
+  if(!alvos.length) return;
+  let algum = false;
+  for(const m of alvos){
+    try{
+      const blob = await idbLer(m.chave);
+      if(blob){ m.url = URL.createObjectURL(blob); algum = true; }
+    }catch(e){}
+  }
+  if(algum) render();
+}
+setTimeout(rehidratarArquivos, 500);
 </script>
