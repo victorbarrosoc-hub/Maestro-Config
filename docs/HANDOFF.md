@@ -496,6 +496,54 @@ de cada tarefa**.
 > nem disparar o handler antigo; arquivo corrompido dá erro claro sem travar o modal;
 > console limpo.
 
+**Tabela cortando em "Data" no celular, apagar sem abrir o card, e exportar em
+.xlsx colorido (v39).** Três pedidos do founder na mesma sessão.
+
+> A causa do corte: a visão Tabela tinha **sete colunas** — uma por rede — quase sempre
+> vazias (só uma bolinha de 9px quando a rede está marcada). No celular a largura toda ia
+> para essas colunas quase sem conteúdo visível, e a tabela parecia truncada logo depois de
+> "Data", sem nenhum sinal de que havia mais pra ver ao lado. Correção: as sete colunas
+> viraram **uma só, "Redes"**, com o mesmo `ptDots()` (bolinhas coloridas) já usado nas
+> visões Semana e Mês — de 15 colunas para 9. Testado a 375px: Data, Redes e Formato cabem
+> juntos na tela, com "Conteúdo" espiando na borda como dica de que dá pra arrastar.
+
+> **Apagar** ganhou um "×" direto na linha (Tabela) e no card (Semana/Mês) — `data-ptrm`,
+> capturado antes do clique abrir o card de edição (mesmo truque de `stopImmediatePropagation`
+> do importador de `.xlsx`). Some da pauta na hora, com toast + **Desfazer** por 8s
+> (`desfazer()` aprende a restaurar um item apagado além do que já sabia sobre peças —
+> sem tocar no comportamento antigo). **Resetar pauta** limpa tudo de uma vez, atrás do
+> mesmo modal de confirmação em duas etapas do "apagar rascunho" — irreversível, avisado.
+
+> **Exportar planilha** gera um `.xlsx` de verdade, no navegador, sem biblioteca nenhuma —
+> o ZIP + OOXML que o importador (v38) já sabia *ler*, agora escrito na mão: CRC32
+> tabelado, compressão via `CompressionStream('deflate-raw')` (o par do
+> `DecompressionStream` que a leitura usa). O `styles.xml` colore o cabeçalho de cada rede
+> com a cor da marca (a mesma do app), Status em verde/vermelho, e a data sai como data de
+> verdade do Excel (`DD/MM/AAAA`), não texto — pra abrir e entender antes de ler uma
+> palavra. A coluna "Título" agora é reconhecida na importação (`entenderLinhas`), então
+> reimportar o próprio export preserva tudo, título incluído.
+
+> **Dois bugs achados só por não confiar no próprio parser:** (1) a regex que lê célula
+> de `.xlsx` (`<c r="...">`) tinha um grupo de atributos guloso que, diante de duas
+> células vazias autofechadas seguidas (`<c .../><c .../>`), "vazava" pra frente e
+> engolia a célula seguinte inteira — sumia com a rede logo depois de duas colunas vazias
+> (achado ao notar que "Site/Blog" voltava vazio no reimport, com "Stories" ao lado certo).
+> Corrigido trocando `([^>]*)` por `([^>]*?)` (preguiçoso) — sem isso, qualquer `.xlsx` real
+> com células em branco autofechadas (comum em exports do LibreOffice/Sheets) perderia dado
+> silenciosamente. (2) `applyNumFmt` não existe no padrão OOXML — o atributo certo é
+> `applyNumberFormat`; com o nome errado, o Excel de verdade teria recusado o arquivo.
+> Achado só porque a verificação não parou no próprio `lerXlsx()` (que é tolerante e não
+> pegaria isso): o arquivo baixado de verdade foi validado com `python -m zipfile`
+> (integridade do zip) e depois com `openpyxl` (parser OOXML independente, sem nenhuma
+> relação com o código da Maestro) — só aí o erro de spec apareceu.
+
+> Verificado: reset e apagar com desfazer testados via clique real na UI; export rodou nos
+> 34 itens reais da EJUP e voltou a bater 100% depois dos dois fixes (as duas únicas
+> diferenças restantes são itens "tarefa interna" sem nenhuma rede, que caem no fallback
+> `['ig']` do importador — comportamento já existente, não novo); arquivo baixado de
+> verdade (não só gerado em memória) abriu limpo no `openpyxl` com data real, cabeçalho
+> congelado e as cores certas em cada rede e em FEITO/NÃO FEITO.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

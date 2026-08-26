@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-26 10:22 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-26 10:58 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -7349,7 +7349,6 @@ ptVistaSemana = function(visiveis, filtro){
 
 /* a tabela ganha as colunas Data e Feito */
 ptVistaTabela = function(visiveis){
-  const plats = Object.keys(PLATS);
   const ordem = [...visiveis].sort((a,b)=>
     (a.data||'').localeCompare(b.data||'') || (a.hora<b.hora?-1:1));
   let ultimaData = null;
@@ -7357,8 +7356,7 @@ ptVistaTabela = function(visiveis){
     const nova = p.data !== ultimaData; ultimaData = p.data;
     return `<tr class="ptTrRow ${p.st==='SCHEDULED'?'no-ar':''}" data-ptedit="${p.id}">
       <td class="dia">${nova ? (p.data?`${rotuloData(p.data)}<br><span style="font-weight:400;color:var(--ink-300);font-size:11px">${DIAS[p.dia]}${p.dia<5?'-f.':''}</span>`:'—') : ''}</td>
-      ${plats.map(k=>`<td class="pontoCel">${p.plats.includes(k)
-        ?`<i style="background:${PLATS[k].c};color:${PLATS[k].c}"></i>`:''}</td>`).join('')}
+      <td class="redesCel">${ptDots(p.plats)}</td>
       <td style="white-space:nowrap">${p.tarefa
         ?`<span class="ptTarefaChip">tarefa</span>`
         :`<span class="ptFmtChip">${esc(p.fmt)}</span>`}</td>
@@ -7369,19 +7367,20 @@ ptVistaTabela = function(visiveis){
       <td class="feitoCel"><button class="selo ${p.feito?'s':'n'}" data-ptfeito="${p.id}"
         aria-pressed="${!!p.feito}">${p.feito?'FEITO':'NÃO FEITO'}</button></td>
       <td class="acao">${p.tarefa?'':`<button class="ptQuick" data-ptag="${p.id}"
-        aria-label="Agendar">${ic('zap',14)}</button>`}</td>
+        aria-label="Agendar">${ic('zap',14)}</button>`}<button class="ptQuick" data-ptrm="${p.id}"
+        style="color:var(--danger)" aria-label="Apagar" title="Apagar">${ic('x',14)}</button></td>
     </tr>`;
   });
   return `<div class="ptScroll"><table class="ptTb">
     <thead><tr><th class="esq">Data</th>
-      ${plats.map(k=>`<th style="background:${PLATS[k].c};color:#08090B">${PLATS[k].n}</th>`).join('')}
+      <th class="esq">Redes</th>
       <th class="esq">Formato</th><th class="esq">Conteúdo &amp; pauta</th>
       <th class="esq">CTA / ação</th><th>Hora</th><th>Status</th><th>⚡</th></tr></thead>
-    <tbody>${linhas.join('') || `<tr><td colspan="${plats.length+7}" style="text-align:center;padding:26px;color:var(--ink-300)">Nada aqui com este filtro.</td></tr>`}</tbody>
+    <tbody>${linhas.join('') || `<tr><td colspan="8" style="text-align:center;padding:26px;color:var(--ink-300)">Nada aqui com este filtro.</td></tr>`}</tbody>
   </table></div>
   <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">A tabela da sua
     planilha, viva: clique na linha para editar, em FEITO / NÃO FEITO para marcar, no raio
-    para agendar.</p>`;
+    para agendar, no X para apagar.</p>`;
 };
 
 /* o mês passa a usar as datas reais */
@@ -8624,6 +8623,7 @@ function entenderLinhas(linhas){
     else if(c==='tipo') col.tipo=i;                    // "Tarefa interna" x "Postagem"
     else if(c.includes('pendencia')) col.pend=i;
     else if(c==='status') col.status=i;                 // FEITO / NÃO FEITO
+    else if(c.includes('titulo')) col.titulo=i;         // existe quando se reimporta um export nosso
   });
   if(col.dia===undefined && col.data===undefined)
     return { erro:'Não achei a coluna "Dia" nem a coluna "Data".' };
@@ -8661,11 +8661,12 @@ function entenderLinhas(linhas){
     // da propria Maestro — sem eles, cai no padrao (rascunho, nao feito)
     const tipoTxt = (col.tipo!==undefined ? l[col.tipo] : '')?.trim() || '';
     const statusTxt = semAcento((col.status!==undefined ? l[col.status] : '')?.trim() || '');
+    const tituloTxt = (col.titulo!==undefined ? l[col.titulo] : '')?.trim() || '';
     itens.push({
       data, dia, hora,
       fmt: acharFormato(fmtTxt || texto),
       plats: plats.length ? plats : ['ig'],
-      t: fmtTxt.length > 6 ? fmtTxt.slice(0,70) : (texto.split(/[.\n]/)[0].slice(0,70) || 'Postagem importada'),
+      t: tituloTxt || (fmtTxt.length > 6 ? fmtTxt.slice(0,70) : (texto.split(/[.\n]/)[0].slice(0,70) || 'Postagem importada')),
       texto, cta: (col.cta!==undefined ? l[col.cta] : '')?.trim() || '',
       st:'DRAFT', pecaId:null,
       feito: statusTxt === 'feito',
@@ -8795,7 +8796,7 @@ async function lerXlsx(arrayBuffer){
   while(rm = reRow.exec(sheetXml)){
     const numLinha = +rm[1];
     const linha = linhas[numLinha-1] = linhas[numLinha-1] || [];
-    const reCel = /<c r="([A-Z]+\d+)"([^>]*)(?:\/>|>([\s\S]*?)<\/c>)/g;
+    const reCel = /<c r="([A-Z]+\d+)"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
     let cm;
     while(cm = reCel.exec(rm[2])){
       const [, ref, attrs, corpo] = cm;
@@ -8887,5 +8888,379 @@ document.addEventListener('click', async e => {
   if(r.erro){ toast(r.erro); return; }
   S.ptImport = r.itens;
   S.modal = modalImportar(); renderLayer();
+}, true);
+</script>
+<style>
+/* v39 — a Tabela ganha uma coluna "Redes" só, no lugar de sete colunas
+   de bolinha quase vazias: no celular a largura toda ia para colunas
+   sem texto, e a tabela parecia cortada em "Data" sem sinal de que
+   havia mais pra ver ao lado. Também entram os botões de apagar direto
+   na linha e de resetar a pauta inteira. */
+.ptTb .redesCel{ text-align:center; white-space:nowrap }
+.ptTb .acao{ white-space:nowrap }
+.ptTb .acao .ptQuick + .ptQuick{ margin-left:6px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v39 — apagar direto na pauta (tabela e lista), sem abrir o card, e
+   resetar a pauta inteira. O apagar de item único usa o mesmo toast com
+   "Desfazer" que a aprovação de peça já usa — desfazer() aprende a
+   lidar com os dois casos, sem tocar no que já existia. O reset é
+   destrutivo e por isso passa pelo mesmo modal de confirmação em duas
+   etapas do "apagar rascunho".
+   ================================================================== */
+
+/* o "x" na linha da lista/semana, ao lado dos botões que já existem */
+ptItemHtml = (function(orig){
+  return function(p, i){
+    const html = orig(p, i);
+    const btn = `<button class="ptQuick" data-ptrm="${p.id}"
+      style="color:var(--danger)" aria-label="Apagar" title="Apagar">${ic('x',15)}</button>`;
+    return html.replace(/<\/div>\s*$/, btn + '\n  </div>');
+  };
+})(ptItemHtml);
+
+/* apagar um item guarda o suficiente pro "Desfazer" trazer ele de volta
+   na mesma posição — mesmo toast das peças, desfazer() agora sabe as
+   duas coisas que pode estar desfazendo. */
+let ultimoPtDel = null, _ptUndoTimer = null;
+const _desfazerBase = desfazer;
+desfazer = function(){
+  if(ultimoPtDel){
+    const {cliId, item, idx} = ultimoPtDel;
+    const arr = S.pautas[cliId] = S.pautas[cliId] || [];
+    arr.splice(Math.min(idx, arr.length), 0, item);
+    ultimoPtDel = null; S.toast = null;
+    render();
+    toast(`"${item.t}" de volta à pauta.`);
+    return;
+  }
+  return _desfazerBase();
+};
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptrm]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const cliId = cliAtual().id;
+  const arr = S.pautas[cliId] || [];
+  const idx = arr.findIndex(x=>x.id===+t.dataset.ptrm);
+  if(idx<0) return;
+  const [item] = arr.splice(idx,1);
+  ultimoPtDel = {cliId, item, idx};
+  clearTimeout(_ptUndoTimer);
+  _ptUndoTimer = setTimeout(()=>{ ultimoPtDel=null; }, 8000);
+  if(S.sel===item.id) S.sel=null;
+  render();
+  som('toque');
+  toast(`"${item.t}" apagada.`, true);
+}, true);
+
+/* resetar a pauta inteira — dois passos, como o apagar rascunho */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptreset],[data-ptresetok]');
+  if(!t) return;
+  const d = t.dataset;
+  if(d.ptreset){
+    const c = cliAtual();
+    S.modal = `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+      <h3>Resetar a pauta de ${esc(c.nome)}?</h3>
+      <p>Isso apaga as ${S.pauta.length} postagens da pauta inteira. Não dá para
+        desfazer depois de confirmar — se for engano, cancele agora.</p>
+      <div class="modalrow"><button class="b gho" data-modalno="1">Voltar</button>
+        <button class="b pri" style="background:var(--danger);color:#fff"
+          data-ptresetok="1">Apagar tudo</button></div></div></div>`;
+    renderLayer(); return;
+  }
+  if(d.ptresetok){
+    const c = cliAtual();
+    const n = (S.pautas[c.id]||[]).length;
+    S.pautas[c.id] = [];
+    ultimoPtDel = null; S.modal = null;
+    render();
+    toast(`Pauta de ${esc(c.nome)} apagada — ${n} postagens.`);
+    return;
+  }
+});
+
+/* os botões de Exportar e Resetar entram ao lado dos que já existem */
+agClienteDet = (function(orig){
+  return function(){
+    const html = orig();
+    if(S.tab !== 'pauta' || !S.pauta || !S.pauta.length) return html;
+    return html.replace(
+      '<button class="b pri sm" data-ptnew="1">'+ic('pencil')+' Nova postagem</button></div>',
+      '<button class="b gho sm" data-ptexport="1">'+ic('doc')+' Exportar planilha</button>\n'+
+      '        <button class="b pri sm" data-ptnew="1">'+ic('pencil')+' Nova postagem</button>\n'+
+      '        <button class="b gho sm" data-ptreset="1" style="color:var(--danger);'+
+        'border-color:rgba(229,72,77,.35)">'+ic('x',13)+' Resetar pauta</button></div>');
+  };
+})(agClienteDet);
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v39b — exportar a pauta em .xlsx colorido, sem biblioteca nenhuma:
+   o mesmo ZIP + OOXML que o importador de .xlsx (v38) já sabe LER,
+   agora ao contrário. CRC32 na mão, compressão nativa do navegador
+   (CompressionStream — o par do DecompressionStream que a leitura já
+   usa), e um styles.xml com uma cor por rede (as mesmas cores da
+   Maestro) e verde/vermelho para FEITO / NÃO FEITO — pra abrir a
+   planilha e entender tudo antes de ler uma palavra.
+   ================================================================== */
+const CRC_TAB = (() => {
+  const t = new Uint32Array(256);
+  for(let n=0;n<256;n++){ let c=n;
+    for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1);
+    t[n]=c>>>0; }
+  return t;
+})();
+function crc32(bytes){
+  let c = 0xFFFFFFFF;
+  for(let i=0;i<bytes.length;i++) c = CRC_TAB[(c ^ bytes[i]) & 0xFF] ^ (c>>>8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+async function deflateBruto(bytes){
+  const cs = new CompressionStream('deflate-raw');
+  const w = cs.writable.getWriter();
+  w.write(bytes); w.close();
+  const chunks = []; const rd = cs.readable.getReader();
+  while(true){ const {done, value} = await rd.read(); if(done) break; chunks.push(value); }
+  let total = 0; chunks.forEach(c=>total+=c.length);
+  const out = new Uint8Array(total); let off=0;
+  chunks.forEach(c=>{ out.set(c, off); off+=c.length; });
+  return out;
+}
+function dosDataHora(d){
+  const time = ((d.getHours()&0x1F)<<11) | ((d.getMinutes()&0x3F)<<5) | ((d.getSeconds()>>1)&0x1F);
+  const dt = (((d.getFullYear()-1980)&0x7F)<<9) | (((d.getMonth()+1)&0xF)<<5) | (d.getDate()&0x1F);
+  return {time, dt};
+}
+async function zipEscrever(arquivos){
+  const enc = new TextEncoder();
+  const {time, dt} = dosDataHora(new Date());
+  const locais = [], central = [];
+  let offset = 0;
+  for(const a of arquivos){
+    const raw = enc.encode(a.texto);
+    const crc = crc32(raw);
+    const comp = await deflateBruto(raw);
+    const nome = enc.encode(a.nome);
+    const lfh = new Uint8Array(30 + nome.length);
+    const dv = new DataView(lfh.buffer);
+    dv.setUint32(0, 0x04034b50, true);
+    dv.setUint16(4, 20, true); dv.setUint16(6, 0, true); dv.setUint16(8, 8, true);
+    dv.setUint16(10, time, true); dv.setUint16(12, dt, true);
+    dv.setUint32(14, crc, true);
+    dv.setUint32(18, comp.length, true); dv.setUint32(22, raw.length, true);
+    dv.setUint16(26, nome.length, true); dv.setUint16(28, 0, true);
+    lfh.set(nome, 30);
+    locais.push(lfh, comp);
+
+    const cdh = new Uint8Array(46 + nome.length);
+    const dv2 = new DataView(cdh.buffer);
+    dv2.setUint32(0, 0x02014b50, true);
+    dv2.setUint16(4, 20, true); dv2.setUint16(6, 20, true); dv2.setUint16(8, 0, true);
+    dv2.setUint16(10, 8, true);
+    dv2.setUint16(12, time, true); dv2.setUint16(14, dt, true);
+    dv2.setUint32(16, crc, true);
+    dv2.setUint32(20, comp.length, true); dv2.setUint32(24, raw.length, true);
+    dv2.setUint16(28, nome.length, true);
+    dv2.setUint16(30, 0, true); dv2.setUint16(32, 0, true); dv2.setUint16(34, 0, true);
+    dv2.setUint16(36, 0, true); dv2.setUint32(38, 0, true);
+    dv2.setUint32(42, offset, true);
+    cdh.set(nome, 46);
+    central.push(cdh);
+
+    offset += lfh.length + comp.length;
+  }
+  const centralStart = offset;
+  let centralSize = 0; central.forEach(c=>centralSize+=c.length);
+  const eocd = new Uint8Array(22);
+  const dv3 = new DataView(eocd.buffer);
+  dv3.setUint32(0, 0x06054b50, true);
+  dv3.setUint16(8, arquivos.length, true); dv3.setUint16(10, arquivos.length, true);
+  dv3.setUint32(12, centralSize, true); dv3.setUint32(16, centralStart, true);
+  const total = locais.reduce((s,p)=>s+p.length,0) + centralSize + eocd.length;
+  const out = new Uint8Array(total); let p=0;
+  locais.forEach(x=>{ out.set(x,p); p+=x.length; });
+  central.forEach(x=>{ out.set(x,p); p+=x.length; });
+  out.set(eocd, p);
+  return out;
+}
+
+const escXml = s => String(s==null?'':s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const isoParaSerialExcel = iso => {
+  const [y,m,d] = iso.split('-').map(Number);
+  return Math.round(Date.UTC(y, m-1, d) / 86400000) + 25569;
+};
+function colLetra(n){
+  let s=''; while(n>0){ const r=(n-1)%26; s=String.fromCharCode(65+r)+s; n=Math.floor((n-1)/26); }
+  return s;
+}
+
+const XLSX_ESTILO = {
+  hdr: 1, hdrPlat: {ig:2, li:3, tt:4, yt:5, sb:6, str:7, sp:8},
+  data: 9, corpo: 10, corpoWrap: 11,
+  feito: 12, naofeito: 13,
+  platOn: {ig:14, li:15, tt:16, yt:17, sb:18, str:19, sp:20}, platOff: 21
+};
+
+function xlsxStylesXml(){
+  const cor = k => PLATS[k].c.replace('#','');
+  const custom = ['1F2937', ...Object.keys(PLATS).map(cor), 'D9F2E3', 'F8D7DA'];
+  const fillXml = custom.map(hex =>
+    `<fill><patternFill patternType="solid"><fgColor rgb="FF${hex}"/><bgColor indexed="64"/></patternFill></fill>`).join('');
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="1"><numFmt numFmtId="164" formatCode="DD/MM/YYYY"/></numFmts>
+<fonts count="5">
+<font><sz val="11"/><name val="Calibri"/></font>
+<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
+<font><b/><sz val="11"/><color rgb="FF08090B"/><name val="Calibri"/></font>
+<font><b/><sz val="11"/><color rgb="FF1B7A4B"/><name val="Calibri"/></font>
+<font><b/><sz val="11"/><color rgb="FFB42318"/><name val="Calibri"/></font>
+</fonts>
+<fills count="${2+custom.length}">
+<fill><patternFill patternType="none"/></fill>
+<fill><patternFill patternType="gray125"/></fill>
+${fillXml}
+</fills>
+<borders count="2">
+<border><left/><right/><top/><bottom/><diagonal/></border>
+<border><left style="thin"><color rgb="FFD8DCE1"/></left><right style="thin"><color rgb="FFD8DCE1"/></right><top style="thin"><color rgb="FFD8DCE1"/></top><bottom style="thin"><color rgb="FFD8DCE1"/></bottom><diagonal/></border>
+</borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="22">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="2" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="2" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="2" fillId="6" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="2" fillId="7" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="2" fillId="8" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="2" fillId="9" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="3" fillId="10" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="4" fillId="11" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="0" fillId="4" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="0" fillId="5" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="0" fillId="6" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="0" fillId="7" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="0" fillId="8" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="0" fillId="9" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+</cellXfs>
+</styleSheet>`;
+}
+
+function xlsxSheetXml(itens){
+  const platKeys = Object.keys(PLATS);
+  const nCols = 2 + platKeys.length + 8;
+  const headers = ['Data','Dia da semana', ...platKeys.map(k=>PLATS[k].n),
+    'Tipo','Formato','Título','Conteúdo & pauta','CTA / ação','Hora','Status','Pendência'];
+  const larguras = [12,14, ...platKeys.map(()=>7), 14,12,26,46,34,9,13,26];
+  const colsXml = larguras.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('');
+
+  const cel = (ref, valor, estilo, texto) => {
+    if(valor === '' || valor === null || valor === undefined) return `<c r="${ref}" s="${estilo}"/>`;
+    if(texto) return `<c r="${ref}" s="${estilo}" t="inlineStr"><is><t xml:space="preserve">${escXml(valor)}</t></is></c>`;
+    return `<c r="${ref}" s="${estilo}"><v>${valor}</v></c>`;
+  };
+
+  const headerRow = `<row r="1" s="${XLSX_ESTILO.hdr}">${headers.map((h,i)=>{
+    const ref = colLetra(i+1)+'1';
+    const plIdx = i-2;
+    const est = (plIdx>=0 && plIdx<platKeys.length) ? XLSX_ESTILO.hdrPlat[platKeys[plIdx]] : XLSX_ESTILO.hdr;
+    return cel(ref, h, est, true);
+  }).join('')}</row>`;
+
+  let corpo = '';
+  itens.forEach((p, li) => {
+    const r = li+2;
+    const cs = [];
+    cs.push(cel(`A${r}`, p.data?isoParaSerialExcel(p.data):'', XLSX_ESTILO.data));
+    cs.push(cel(`B${r}`, DIAS[p.dia]+(p.dia<5?'-feira':''), XLSX_ESTILO.corpo, true));
+    platKeys.forEach((k,i)=>{
+      const ref = colLetra(3+i)+r;
+      const on = p.plats.includes(k);
+      cs.push(cel(ref, on?'X':'', on?XLSX_ESTILO.platOn[k]:XLSX_ESTILO.platOff, true));
+    });
+    cs.push(cel(colLetra(10)+r, p.tarefa?'Tarefa interna':'Postagem', XLSX_ESTILO.corpo, true));
+    cs.push(cel(colLetra(11)+r, p.fmt, XLSX_ESTILO.corpo, true));
+    cs.push(cel(colLetra(12)+r, p.t, XLSX_ESTILO.corpo, true));
+    cs.push(cel(colLetra(13)+r, p.texto, XLSX_ESTILO.corpoWrap, true));
+    cs.push(cel(colLetra(14)+r, p.cta||'', XLSX_ESTILO.corpo, true));
+    cs.push(cel(colLetra(15)+r, p.hora, XLSX_ESTILO.corpo, true));
+    cs.push(cel(colLetra(16)+r, p.feito?'FEITO':'NÃO FEITO', p.feito?XLSX_ESTILO.feito:XLSX_ESTILO.naofeito, true));
+    cs.push(cel(colLetra(17)+r, p.pend||'', XLSX_ESTILO.corpo, true));
+    corpo += `<row r="${r}">${cs.join('')}</row>`;
+  });
+
+  const ultimaLinha = itens.length + 1;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<dimension ref="A1:${colLetra(nCols)}${ultimaLinha}"/>
+<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+<cols>${colsXml}</cols>
+<sheetData>${headerRow}${corpo}</sheetData>
+</worksheet>`;
+}
+
+async function gerarXlsxPauta(itens){
+  const arquivos = [
+    {nome:'[Content_Types].xml', texto:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`},
+    {nome:'_rels/.rels', texto:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`},
+    {nome:'xl/workbook.xml', texto:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets><sheet name="Pauta" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`},
+    {nome:'xl/_rels/workbook.xml.rels', texto:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`},
+    {nome:'xl/styles.xml', texto: xlsxStylesXml()},
+    {nome:'xl/worksheets/sheet1.xml', texto: xlsxSheetXml(itens)}
+  ];
+  return zipEscrever(arquivos);
+}
+
+async function baixarPautaXlsx(){
+  const c = cliAtual();
+  const itens = [...S.pauta].sort((a,b)=>(a.data||'').localeCompare(b.data||'')||(a.hora<b.hora?-1:1));
+  if(!itens.length){ toast('Pauta vazia — nada para exportar.'); return; }
+  let bytes;
+  try{ bytes = await gerarXlsxPauta(itens); }
+  catch(err){ toast('Não consegui gerar a planilha.'); return; }
+  const blob = new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${c.nome.replace(/[\\/:*?"<>|]/g,'')} - Pauta.xlsx`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  toast(`Planilha de ${c.nome} exportada — ${itens.length} postagens.`);
+}
+
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-ptexport]');
+  if(!t) return;
+  await baixarPautaXlsx();
 }, true);
 </script>
