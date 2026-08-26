@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-25 20:50 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-25 21:10 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -8455,4 +8455,39 @@ document.addEventListener('click', e => {
       i >= 4 ? 'celesta' : 'vibrafone', -.2 + i*.08);
   }catch(err){}
 }, true);
+</script>
+<style>
+/* =====================================================================
+   v36 — as duas barras apareciam juntas.
+
+   `.cltab` e `.tabbar` trazem `display:grid` do CSS do autor, e regra de
+   autor VENCE o `[hidden]{display:none}` do navegador. Entao esconder
+   com o atributo nao fazia nada: as barras da agencia e do cliente
+   ficavam empilhadas — dois rotulos por aba, duas bolhas, dois
+   contadores.
+
+   Aqui o esconder e explicito, e a barra deixa de ser grid (ela ja nao e
+   mais: quem faz a grade agora e .mnAbas la dentro).
+   ================================================================== */
+.mnFixa{ display:block!important }
+.mnFixa[hidden]{ display:none!important }
+</style>
+<script>
+"use strict";
+/* rede de seguranca: nunca deixar mais de uma barra visivel */
+(function(){
+  const _sync = mnSincronizar;
+  mnSincronizar = function(){
+    _sync();
+    const doLado = S.view === 'client' ? 'cltab' : 'tabbar';
+    ['tabbar','cltab'].forEach(t=>{
+      const b = MNBAR[t];
+      if(!b) return;
+      const deveAparecer = (t === doLado) && S.view !== 'site';
+      if(b.hidden !== !deveAparecer) b.hidden = !deveAparecer;
+      if(!deveAparecer) delete mnUltima[t];
+    });
+  };
+})();
+mnAplicar();
 </script>

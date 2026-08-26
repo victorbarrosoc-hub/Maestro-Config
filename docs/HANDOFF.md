@@ -442,6 +442,17 @@ elegante, não rápido. Perfil medido: 0% no primeiro décimo (sai macio), 63% n
 
 Duração: 620 ms → **558 ms** (10% mais rápida, a pedido).
 
+**As duas barras apareciam juntas (v36).** Empilhadas: dois rótulos por aba ("Feed" por
+cima de "Aprovar"), duas bolhas, dois contadores. Causa: `.cltab` e `.tabbar` trazem
+`display:grid` do CSS do autor, e **regra de autor vence o `[hidden]{display:none}` do
+navegador** — esconder pelo atributo não fazia nada. Agora o esconder é explícito
+(`.mnFixa[hidden]{display:none!important}`), a barra deixou de ser grid (quem faz a grade
+é `.mnAbas` dentro dela) e há uma rede de segurança em `mnSincronizar` que garante no
+máximo uma barra visível, e nenhuma no site.
+
+> A armadilha vale para o resto do protótipo: **`hidden` não esconde elemento que tenha
+> `display` definido em regra de autor.**
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
