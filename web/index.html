@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-26 17:53 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-26 18:04 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -11445,4 +11445,77 @@ async function rehidratarArquivos(){
   if(algum) render();
 }
 setTimeout(rehidratarArquivos, 500);
+</script>
+<style>
+/* v47 — atualizar a pauta sem sair da tela e sem recarregar o navegador */
+.ptAtualiza{ width:32px; height:32px; border-radius:9px; display:grid; place-items:center;
+  flex:0 0 auto; border:1px solid var(--ink-700); color:var(--ink-300); background:var(--ink-950);
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.ptAtualiza:hover:not(:disabled){ color:var(--brass-300); border-color:var(--brass-600) }
+.ptAtualiza:disabled{ opacity:.55; cursor:default }
+.ptAtualiza.girando svg{ animation:ptGira .7s linear infinite }
+@keyframes ptGira{ to{ transform:rotate(360deg) } }
+@media (prefers-reduced-motion:reduce){ .ptAtualiza.girando svg{ animation:none } }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v47 — um botão pra trazer o que mudou em outro lugar, sem F5.
+
+   O selo (v41) mostra se SALVOU o que você mexeu aqui — mas nunca ia
+   BUSCAR o que outra pessoa mudou de lá enquanto esta tela ficava
+   aberta. Só um recarregamento completo da página trazia isso, e o
+   founder não queria precisar disso ("sem sair dela e sem ir na url").
+
+   A ordem importa: primeiro EMPURRA o que está pendente aqui (se
+   alguém tivesse acabado de digitar algo, um "puxar" ingênuo
+   sobrescreveria com a versão de fora, que ainda não tem essa edição),
+   só depois PUXA o que já está no banco.
+   ================================================================== */
+IC.refresh = '<path d="M19.5 8A7.5 7.5 0 0 0 6.2 6.2M4.5 16A7.5 7.5 0 0 0 17.8 17.8"/>'+
+  '<path d="M19.5 4v4.5H15M4.5 20v-4.5H9"/>';
+
+let _ptAtualizando = false;
+async function atualizarPautaAgora(){
+  if(_ptAtualizando) return;
+  _ptAtualizando = true;
+  const btn = document.querySelector('[data-ptrefresh]');
+  btn?.classList.add('girando'); if(btn) btn.disabled = true;
+  try{
+    if(_sbLigado){
+      clearTimeout(_sbTimer);
+      for(const c of CLIS()) await sbGravar(c.id, true);   // primeiro salva o que é seu
+      await sbCarregar();                                   // só então traz o que mudou fora
+      toast('Pauta atualizada.');
+    } else {
+      const ok = await sbCarregar();                         // tenta conectar, se ainda não estava
+      toast(ok ? 'Conectado — pauta atualizada.'
+        : 'Sem conexão com o banco — nada pra atualizar aqui.');
+    }
+  } finally {
+    _ptAtualizando = false;
+    document.querySelector('[data-ptrefresh]')?.classList.remove('girando');
+    const b2 = document.querySelector('[data-ptrefresh]'); if(b2) b2.disabled = false;
+  }
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptrefresh]');
+  if(!t || t.disabled) return;
+  e.stopImmediatePropagation();
+  atualizarPautaAgora();
+}, true);
+
+/* o botão entra ao lado do selo, dentro do mesmo envoltório flex que a
+   v41 já criou pra ele — ancorado no <button class="sbBadge">, que é
+   sempre exatamente isto (sbSeloHtml() é determinística) */
+corpoPauta = (function(orig){
+  return function(){
+    const html = orig();
+    if(!html.includes('class="sbBadge')) return html;
+    const botao = `<button class="ptAtualiza" data-ptrefresh="1"
+      title="Atualizar a pauta agora" aria-label="Atualizar a pauta">${ic('refresh',15)}</button>`;
+    return html.replace(/(<button class="sbBadge[\s\S]*?<\/button>)/, `$1${botao}`);
+  };
+})(corpoPauta);
 </script>

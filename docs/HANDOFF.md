@@ -799,6 +799,22 @@ um quadrado preto, só com "MATERIAL PRONTO" escrito embaixo.
 > sem precisar gerar de novo; e vídeos anexados antes desta correção ganham poster na
 > primeira vez que a pauta é reaberta.
 
+**Botão de atualizar a pauta, sem F5 (v47).** O selo (v41) mostra se SALVOU o que
+você mexeu — mas nunca ia BUSCAR o que outra pessoa mudou em outro lugar enquanto a tela
+ficava aberta; só um recarregamento completo trazia isso, e o founder queria sem sair da
+tela e sem usar a URL.
+
+> Botão de seta circular ao lado do selo. A ordem importa: primeiro **empurra** o que
+> estiver pendente aqui (se alguém tivesse acabado de digitar algo, um "puxar" ingênuo
+> sobrescreveria com a versão de fora, que ainda não tem essa edição), só depois **puxa**
+> o que já está no banco. Ícone gira enquanto atualiza; botão desabilita pra evitar clique
+> duplo.
+
+> Verificado contra o banco real, nos dois sentidos: editei um item e cliquei em atualizar
+> dentro da janela de 1,4s do salvamento automático — a edição sobreviveu porque foi
+> empurrada primeiro (confirmado direto no banco). Depois simulei uma mudança "de fora"
+> (outra pessoa) e cliquei — ela apareceu na tela sem recarregar nada.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
