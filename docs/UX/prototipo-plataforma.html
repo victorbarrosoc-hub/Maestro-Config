@@ -7690,16 +7690,14 @@ function modalMaterial(id){
     <h3>Material · ${esc(p.t)}</h3>
     <p>${esc(p.fmt)}${p.data?` · ${rotuloData(p.data)}`:''} · ${
       p.plats.map(k=>(PLATS[k]||{}).n).filter(Boolean).join(', ')||'sem plataforma'}.
-      ${carrossel?'Carrossel aceita várias telas — a ordem é a de envio.'
-        :'Vídeo, foto, áudio ou documento.'}</p>
+      Aceita vários arquivos — o vídeo e a capa, as telas do carrossel. A ordem é a de envio.</p>
 
     <label class="mtSolta" id="mt-solta" for="mt-file">
       <div class="ic">${ic('img',26)}</div>
       <b>Arraste o arquivo aqui, ou toque para escolher</b>
-      <span>${carrossel?'Pode mandar várias telas de uma vez.'
-        :'Vídeo, imagem, áudio ou PDF.'}</span>
+      <span>Vídeo, imagem, áudio ou PDF — vários de uma vez.</span>
     </label>
-    <input type="file" id="mt-file" ${carrossel?'multiple':''}
+    <input type="file" id="mt-file" multiple
       accept="video/*,image/*,audio/*,.pdf" style="display:none">
 
     ${ms.length?`<div class="mtGrade" id="mt-grade">
@@ -7733,15 +7731,8 @@ function guardarArquivos(id, lista){
   const arr = S.mat[id] = S.mat[id] || [];
   let n = 0;
   [...lista].forEach(f=>{
-    if(!carrossel && arr.length + n >= 1){
-      // formato de peça única: o novo substitui o anterior.
-      // A revogação vai para o fim da fila: revogar agora, com o <img>
-      // antigo ainda no DOM, faz o navegador tentar recarregar um blob
-      // que deixou de existir (ERR_FILE_NOT_FOUND no console).
-      soltarDepois(arr.map(m=>m.url));
-      arr.filter(m=>m.chave).forEach(m=>idbApagar(m.chave).catch(()=>{}));
-      arr.length = 0;
-    }
+    // v51: a trava de "peça única substitui" saiu — um Reel também tem
+    // capa, um carrossel tem N telas. Sempre acrescenta; apagar é manual.
     const tipo = tipoDoArquivo(f);
     const chave = novaChave('mt');
     const url = (tipo==='imagem'||tipo==='video') ? URL.createObjectURL(f) : null;
@@ -11740,4 +11731,765 @@ LOGO = (c, s=26) => {
    render(); a lateral e o topo montam o logo pelo LOGO() — basta
    forçar um redesenho agora */
 if(typeof render === 'function') render();
+</script>
+<style>
+/* =====================================================================
+   v51 — Pauta 2.0. O coração do produto ganha o corpo que o uso real
+   pediu: modo de visualização, responsável, observação, tipos de
+   conteúdo com caixas próprias, semanas separadas, dias passados
+   minimizados, lixeira, arrastar entre dias, link por card, progresso
+   de upload, botões menores.
+   ================================================================== */
+
+/* leitura de muitos cards: tudo um ponto mais compacto */
+.ptItem{ padding:11px 12px }
+.ptItem .ptQuick, .ptItem .ptFeito{ width:29px; height:29px; border-radius:8px }
+.ptItem .ptQuick svg, .ptItem .ptFeito svg{ font-size:13px }
+.ptTit{ font-size:14.5px }
+.ptTxt{ font-size:12.5px }
+
+/* a semana como capítulo */
+.ptSemanaHd{ display:flex; align-items:center; gap:12px; margin:26px 2px 10px }
+.ptSemanaHd b{ font-family:var(--mono); font-size:10.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--brass-300); white-space:nowrap }
+.ptSemanaHd i{ flex:1; height:1px; background:var(--ink-800) }
+.ptSemanaHd span{ font-family:var(--mono); font-size:10px; color:var(--ink-400);
+  white-space:nowrap }
+
+/* dia passado, minimizado */
+.ptDiaMin{ display:flex; align-items:center; gap:10px; width:100%;
+  padding:10px 13px; margin-bottom:8px; border:1px dashed var(--ink-700);
+  border-radius:12px; background:var(--ink-950); text-align:left;
+  transition:border-color var(--fast) var(--eo) }
+.ptDiaMin:hover{ border-color:var(--ink-600) }
+.ptDiaMin b{ font-family:var(--serif); font-weight:400; font-size:14.5px;
+  color:var(--ink-300) }
+.ptDiaMin .st{ margin-left:auto; font-family:var(--mono); font-size:10px;
+  letter-spacing:.06em; white-space:nowrap; padding:4px 10px; border-radius:999px }
+.ptDiaMin .st.ok{ color:var(--encore); background:rgba(53,184,122,.12) }
+.ptDiaMin .st.pend{ color:#E5A54D; background:rgba(229,165,77,.12) }
+
+/* responsável e observação na linha */
+.ptResp{ display:inline-grid; place-items:center; width:20px; height:20px;
+  border-radius:50%; background:var(--ink-700); color:var(--ink-100);
+  font-family:var(--mono); font-size:8.5px; font-weight:600; flex:0 0 auto }
+.ptObsLinha{ display:flex; gap:6px; align-items:flex-start; margin-top:6px;
+  font-size:11.5px; color:#B8A98C; font-style:italic }
+.ptObsLinha svg{ flex:0 0 auto; margin-top:2px }
+
+/* o modo de visualização */
+.vzTopo{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px }
+.vzBloco{ border:1px solid var(--ink-800); border-radius:12px; background:var(--ink-950);
+  padding:12px 14px; margin-bottom:9px }
+.vzBloco > b{ display:block; font-family:var(--mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-400); margin-bottom:6px }
+.vzBloco p{ margin:0; font-size:13.5px; line-height:1.6; color:var(--ink-100);
+  white-space:pre-wrap; word-break:break-word }
+.vzBloco .cp{ float:right; margin:-2px -4px 6px 8px }
+.vzTC{ display:flex; gap:8px; align-items:center; font-family:var(--mono); font-size:12px;
+  color:var(--ink-100); padding:5px 0 }
+.vzTC .ord{ width:20px; height:20px; border-radius:6px; background:var(--ink-800);
+  display:grid; place-items:center; font-size:10px; color:var(--brass-300) }
+.vzMats{ display:flex; gap:8px; flex-wrap:wrap }
+
+/* tipos de conteúdo no editor */
+.tcSecao{ border-top:1px solid var(--ink-800); margin-top:14px; padding-top:13px }
+.tcSecao > b{ display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--brass-300); margin-bottom:10px }
+.tcCorpo[hidden]{ display:none }
+.tcLinha{ display:flex; gap:8px; align-items:center; margin-bottom:8px }
+.tcLinha input{ flex:1; min-width:0 }
+.tcLinha .ord{ width:34px; text-align:center; flex:0 0 auto }
+.tcLinha .rmtc{ width:28px; height:28px; border-radius:8px; display:grid;
+  place-items:center; color:var(--ink-400); border:1px solid transparent; flex:0 0 auto }
+.tcLinha .rmtc:hover{ color:var(--danger); border-color:rgba(229,72,77,.35) }
+
+/* arrastar entre dias */
+.ptItem.arrastando{ opacity:.35 }
+#ptGhost{ position:fixed; z-index:999; pointer-events:none; width:230px;
+  border:1px solid var(--brass-600); border-radius:12px; background:var(--ink-850);
+  padding:10px 13px; box-shadow:0 18px 44px rgba(0,0,0,.55);
+  font-size:13px; color:var(--ink-50); transform:translate(-50%,-115%) rotate(2deg) }
+.ptDia.alvoDrop{ outline:2px dashed var(--brass-500); outline-offset:4px;
+  border-radius:14px }
+.ptDiaMin.alvoDrop{ border-color:var(--brass-500) }
+
+/* progresso de upload na miniatura */
+.mtMini .prog{ position:absolute; left:3px; right:3px; bottom:3px; height:3px;
+  border-radius:2px; background:var(--ink-700); overflow:hidden }
+.mtMini .prog i{ display:block; height:100%; width:calc(var(--p,0) * 1%);
+  background:var(--brass-400); transition:width .25s linear }
+.mtCard .baixa{ position:absolute; right:30px; top:4px; width:24px; height:24px;
+  border-radius:7px; display:grid; place-items:center; color:var(--ink-100);
+  background:rgba(8,9,11,.6) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v51 — Pauta 2.0 (código). Cada pedaço com o porquê.
+   ================================================================== */
+
+/* ---------- a equipe REAL da aba Equipe, não um time paralelo --------
+   S.equipe já existe desde o começo com {n, mail, papel, dono} — e é
+   nela que o Convidar acrescenta gente. O responsável do card referencia
+   essa lista por um id derivado do e-mail (estável e legível). */
+const membroId = m => (m.mail || m.n || '').split('@')[0].toLowerCase().replace(/\s+/g,'.');
+const membroIni = m => (m.n||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+const membro = id => {
+  const m = (S.equipe||[]).find(x=>membroId(x)===id);
+  return m ? { id, nome:m.n, ini:membroIni(m), papel:m.papel } : null;
+};
+
+/* ---------- lixeira: excluído nunca é perdido ----------------------- */
+S.lixeira = S.lixeira || {};                 // { [cliId]: [ {item, quando} ] }
+const lixeiraDe = cliId => S.lixeira[cliId] = S.lixeira[cliId] || [];
+
+sbEmpacotar = (function(orig){
+  return function(cliId){
+    return { ...orig(cliId), lixeira: lixeiraDe(cliId) };
+  };
+})(sbEmpacotar);
+sbAplicar = (function(orig){
+  return function(cliId, dados){
+    const ok = orig(cliId, dados);
+    if(ok && Array.isArray(dados.lixeira)) S.lixeira[cliId] = dados.lixeira;
+    return ok;
+  };
+})(sbAplicar);
+
+/* apagar um card manda para a lixeira — window captura roda ANTES do
+   handler antigo (document captura), que fazia splice destrutivo */
+window.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptrm]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const cliId = cliAtual().id;
+  const arr = S.pautas[cliId] || [];
+  const idx = arr.findIndex(x=>x.id===+t.dataset.ptrm);
+  if(idx<0) return;
+  const [item] = arr.splice(idx,1);
+  lixeiraDe(cliId).unshift({ item, idx, quando: Date.now() });
+  ultimoPtDel = null;
+  som('toque'); render();
+  toast(`"${item.t}" foi para a lixeira.`, true);
+  ultimoPtDel = { cliId, item, idx, daLixeira:true };
+}, true);
+
+/* o desfazer do toast resgata da lixeira */
+desfazer = (function(base){
+  return function(){
+    if(ultimoPtDel && ultimoPtDel.daLixeira){
+      const {cliId, item, idx} = ultimoPtDel;
+      const lx = lixeiraDe(cliId);
+      const i = lx.findIndex(e=>e.item && e.item.id===item.id);
+      if(i>=0) lx.splice(i,1);
+      (S.pautas[cliId] = S.pautas[cliId] || []).splice(Math.min(idx, S.pautas[cliId].length), 0, item);
+      ultimoPtDel = null; S.toast = null; render();
+      toast(`"${item.t}" de volta à pauta.`);
+      return;
+    }
+    return base();
+  };
+})(desfazer);
+
+/* resetar a pauta também vira reversível: tudo vai para a lixeira */
+window.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptresetok]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const c = cliAtual();
+  const arr = S.pautas[c.id] || [];
+  const lx = lixeiraDe(c.id);
+  arr.forEach((item,idx)=>lx.unshift({item, idx, quando:Date.now()}));
+  S.pautas[c.id] = [];
+  S.modal = null; som('toque'); render();
+  toast(`Pauta de ${c.nome} foi para a lixeira — dá para resgatar por lá.`);
+}, true);
+
+function modalLixeira(){
+  const c = cliAtual();
+  const lx = lixeiraDe(c.id);
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3>Lixeira · ${esc(c.nome)}</h3>
+    <p>Tudo que foi excluído fica aqui, e volta com um toque. Excluir de vez é
+      que não tem volta.</p>
+    ${lx.length ? `<div style="display:flex;flex-direction:column;gap:7px;max-height:46vh;overflow:auto">
+      ${lx.map((e,i)=>`<div class="rfItem">
+        <span class="rfIc">${ic('doc',13)}</span>
+        <span class="rfNome">${esc(e.item.t)}<small>${e.item.data?rotuloData(e.item.data)+' · ':''}${esc(e.item.fmt||'')}</small></span>
+        <button class="b gho sm" data-lxvolta="${i}">Resgatar</button>
+        <button class="rfX" data-lxfim="${i}" aria-label="Excluir de vez">${ic('x',12)}</button>
+      </div>`).join('')}</div>`
+    : `<p class="mtAviso">A lixeira está vazia.</p>`}
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Fechar</button></div></div></div>`;
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptlixeira],[data-lxvolta],[data-lxfim]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+  const c = cliAtual(), lx = lixeiraDe(c.id);
+  if(d.ptlixeira){ S.modal = modalLixeira(); renderLayer(); return; }
+  if(d.lxvolta !== undefined){
+    const [e2] = lx.splice(+d.lxvolta,1);
+    if(e2){ (S.pautas[c.id]=S.pautas[c.id]||[]).splice(Math.min(e2.idx??0, S.pautas[c.id].length),0,e2.item); }
+    S.modal = modalLixeira(); renderLayer(); render();
+    toast(`"${e2?e2.item.t:''}" de volta à pauta.`); return; }
+  if(d.lxfim !== undefined){
+    lx.splice(+d.lxfim,1);
+    S.modal = modalLixeira(); renderLayer(); render(); return; }
+}, true);
+
+/* o botão da lixeira entra na régua do cliente */
+agClienteDet = (function(orig){
+  return function(){
+    const html = orig();
+    const n = lixeiraDe(cliAtual().id).length;
+    return html.replace('<button class="b gho sm" data-ptreset="1"',
+      `<button class="b gho sm" data-ptlixeira="1">${ic('doc',13)} Lixeira${n?` (${n})`:''}</button>
+       <button class="b gho sm" data-ptreset="1"`);
+  };
+})(agClienteDet);
+
+/* ---------- clicar fora do modal fecha ------------------------------ */
+document.addEventListener('click', e => {
+  if(!e.target.classList || !e.target.classList.contains('modal')) return;
+  S.modal = null; S.stEdit = null; renderLayer();
+});
+
+/* ---------- semanas separadas + dias passados minimizados ----------- */
+S.ptExpand = S.ptExpand || {};
+const inicioDaSemana = iso => somaDias(iso, -diaDaSemana(iso));   // segunda
+const rotuloSemana = seg => {
+  const dom = somaDias(seg, 6);
+  const [a1,m1,d1] = seg.split('-'), [a2,m2,d2] = dom.split('-');
+  return m1===m2 ? `Semana de ${+d1} a ${+d2} de ${MESNOME[+m2-1]}`
+                 : `Semana de ${+d1} de ${MESNOME[+m1-1]} a ${+d2} de ${MESNOME[+m2-1]}`;
+};
+
+ptVistaSemana = function(visiveis, filtro){
+  if(S.ptVista === 'stories') return ptVistaStories(visiveis);
+  if(S.ptVista === 'dia') return ptVistaAgenda();
+  const hoje = hojeISO();
+  const porDia = {};
+  visiveis.forEach(p=>{ const k = p.data || 'sem-data';
+    (porDia[k] = porDia[k] || []).push(p); });
+  const dias = Object.keys(porDia).sort();
+  let corpo = '', semanaAtual = null, n = 0;
+  for(const k of dias){
+    if(k !== 'sem-data'){
+      const seg = inicioDaSemana(k);
+      if(seg !== semanaAtual){
+        semanaAtual = seg;
+        const daSemana = dias.filter(d=>d!=='sem-data' && inicioDaSemana(d)===seg)
+          .reduce((s,d)=>s+porDia[d].length,0);
+        corpo += `<div class="ptSemanaHd"><b>${rotuloSemana(seg)}</b><i></i>
+          <span>${daSemana} ${daSemana===1?'postagem':'postagens'}</span></div>`;
+      }
+    }
+    const doDia = porDia[k].sort((a,b)=>a.hora<b.hora?-1:1);
+    const feitos = doDia.filter(p=>p.feito).length;
+    const passado = k !== 'sem-data' && k < hoje;
+    if(passado && !S.ptExpand[k]){
+      const pend = doDia.length - feitos;
+      corpo += `<button class="ptDiaMin" data-ptexp="${k}">
+        <b>${rotuloLongo(k)}</b>
+        <span class="st ${pend? 'pend':'ok'}">${pend
+          ? `pendência em ${pend} ${pend===1?'post':'posts'}`
+          : 'tudo feito'}</span></button>`;
+      continue;
+    }
+    corpo += `<div class="ptDia" data-dia-iso="${k==='sem-data'?'':k}">
+      <div class="ptDiaHd">
+        <b>${k==='sem-data'?'Sem data':rotuloLongo(k)}</b>
+        <span>${feitos}/${doDia.length} feito${doDia.length>1?'s':''}</span><i></i>
+        ${passado ? `<button class="b gho sm" data-ptexp="${k}" style="margin-left:8px">recolher</button>` : ''}
+      </div>
+      ${doDia.map(p=>ptItemHtml(p,n++)).join('')}</div>`;
+  }
+  if(!corpo) corpo = vazio('Nada aqui com este filtro',
+    'Mude o filtro para ver as outras postagens.');
+  return corpo;
+};
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptexp]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const k = t.dataset.ptexp;
+  S.ptExpand[k] = !S.ptExpand[k];
+  render();
+}, true);
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v51b — o card em dois modos: VER (clicar) e EDITAR (botão).
+   Clicar num card abria direto a edição — assustador para conferir e
+   péssimo para mostrar. Agora clicar ABRE A LEITURA; editar é um botão.
+   ================================================================== */
+function modalVer(id){
+  const p = S.pauta.find(x=>x.id===id); if(!p) return '';
+  const resp = membro(p.resp);
+  const fmts = p.fmts && p.fmts.length ? p.fmts : [p.fmt];
+  const ms = materiaisDe(id), rs = refsDe(id);
+  const cor = corDoPilar(p.pilar||'Pauta principal');
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <div class="vzTopo">
+      ${p.data?`<span class="ptData">${rotuloData(p.data)}</span>`:''}
+      <span class="ptHora">${ic('clock',11)} ${p.hora}</span>
+      ${fmts.map(f=>`<span class="ptFmtChip">${esc(f)}</span>`).join('')}
+      ${p.pilar && p.pilar!=='Pauta principal' ? `<span class="pilarChip" style="color:${cor}">${esc(p.pilar)}</span>`:''}
+      ${ptDots(p.plats||[])}
+      ${p.tarefa?`<span class="ptTarefaChip">tarefa interna</span>`:''}
+      ${resp?`<span class="ptResp" title="${esc(resp.nome)} · ${esc(resp.papel)}">${esc(resp.ini)}</span>`:''}
+      ${p.feito?`<span class="pill p-APPROVED">FEITO</span>`:`<span class="pill p-DRAFT">não feito</span>`}
+    </div>
+    <h3 style="margin:0 0 12px">${esc(p.t)}</h3>
+
+    ${p.texto?`<div class="vzBloco"><b>Conteúdo — o que vai ser produzido</b><p>${esc(p.texto)}</p></div>`:''}
+    ${p.legenda?`<div class="vzBloco">
+      <button class="b gho sm cp" data-cplegenda="${p.id}">${ic('doc',12)} Copiar</button>
+      <b>Legenda / descrição do post</b><p>${esc(p.legenda)}</p></div>`:''}
+    ${p.roteiro && (p.roteiro.hook||p.roteiro.des||p.roteiro.cta) ? `<div class="vzBloco"><b>Roteiro de vídeo</b>
+      ${p.roteiro.hook?`<p><b style="color:var(--brass-300);font-size:10px;font-family:var(--mono)">HOOK</b><br>${esc(p.roteiro.hook)}</p>`:''}
+      ${p.roteiro.des?`<p style="margin-top:8px"><b style="color:var(--brass-300);font-size:10px;font-family:var(--mono)">DESENVOLVIMENTO</b><br>${esc(p.roteiro.des)}</p>`:''}
+      ${p.roteiro.cta?`<p style="margin-top:8px"><b style="color:var(--brass-300);font-size:10px;font-family:var(--mono)">CTA</b><br>${esc(p.roteiro.cta)}</p>`:''}
+    </div>`:''}
+    ${p.corte && (p.corte.ep || (p.corte.tcs||[]).length) ? `<div class="vzBloco"><b>Corte de podcast</b>
+      ${p.corte.ep?`<p style="margin-bottom:6px">${esc(p.corte.ep)}</p>`:''}
+      ${(p.corte.tcs||[]).map(tc=>`<span class="vzTC"><span class="ord">${esc(String(tc.ordem??''))}</span>
+        ${esc(tc.de||'?')} → ${esc(tc.ate||'?')}</span>`).join('')}
+    </div>`:''}
+    ${p.telas && p.telas.length ? `<div class="vzBloco"><b>Telas do story</b>
+      ${p.telas.map((t,i)=>`<p style="margin-bottom:6px"><b style="color:var(--brass-300);font-family:var(--mono);font-size:10px">T${i+1}</b> ${esc(t)}</p>`).join('')}</div>`:''}
+    ${p.cta?`<div class="vzBloco"><b>CTA / ação</b><p>${esc(p.cta)}</p></div>`:''}
+    ${p.sticker?`<div class="vzBloco"><b>Interação / sticker</b><p>${esc(p.sticker)}</p></div>`:''}
+    ${p.caixinha?`<div class="vzBloco"><b>Story</b><p>Com caixinha de perguntas.</p></div>`:''}
+    ${p.obs?`<div class="vzBloco" style="border-color:rgba(200,150,58,.3)"><b>Observação</b><p>${esc(p.obs)}</p></div>`:''}
+    ${p.pend?`<div class="vzBloco" style="border-color:rgba(229,72,77,.35)"><b>Pendência</b><p>${esc(p.pend)}</p></div>`:''}
+    ${ms.length?`<div class="vzBloco"><b>Material (${ms.length})</b><div class="vzMats">
+      ${ms.slice(0,6).map(m=>`<span class="mtMini ${m.url&&(m.tipo==='imagem'||m.tipo==='video')?'temArte':''}">
+        ${m.url&&m.tipo==='imagem'?`<img src="${m.url}" alt="">`
+          :(m.url||m.poster)&&m.tipo==='video'?`<video ${m.url?`src="${m.url}"`:''} ${m.poster?`poster="${m.poster}"`:''} muted playsinline preload="metadata"></video>`:''}
+        <span class="tipo">${ic(m.tipo==='link'?'linkic':(ICONE_TIPO[m.tipo]||'doc'),14)}</span></span>`).join('')}
+      </div><button class="b gho sm" style="margin-top:10px" data-mtabrir="${p.id}">${ic('img',12)} Abrir material</button></div>`:''}
+    ${rs.length?`<div class="vzBloco"><b>Referências (${rs.length})</b>
+      <button class="b gho sm" data-rfabrir="${p.id}">${ic('linkic',12)} Abrir referências</button></div>`:''}
+
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Fechar</button>
+      <button class="b gho" data-cplink="${p.id}">${ic('linkic',13)} Copiar link</button>
+      ${p.legenda||p.texto?`<button class="b gho" data-cplegenda="${p.id}">${ic('doc',13)} Copiar legenda</button>`:''}
+      <button class="b pri" data-abreedit="${p.id}">${ic('pencil',13)} Editar</button>
+    </div></div></div>`;
+}
+
+/* clicar no card abre a LEITURA — window captura passa na frente do
+   handler antigo que abria a edição */
+window.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptedit]');
+  if(!t) return;
+  // botões internos do card (feito, raio, material...) continuam deles
+  if(e.target.closest('[data-ptfeito],[data-ptag],[data-mtabrir],[data-rfabrir],[data-ptrm],[data-stedit],[data-stsobe],[data-stdesce],[data-strm],[data-stadd]')) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  S.modal = modalVer(+t.dataset.ptedit); renderLayer();
+}, true);
+
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-abreedit],[data-cplegenda],[data-cplink]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+  if(d.abreedit){ S.modal = modalPauta(+d.abreedit); renderLayer(); return; }
+  const p = S.pauta.find(x=>x.id===+(d.cplegenda||d.cplink));
+  if(!p) return;
+  try{
+    if(d.cplegenda){
+      await navigator.clipboard.writeText(p.legenda || p.texto || '');
+      toast('Legenda copiada.');
+    } else {
+      const url = `${location.origin}${location.pathname}#post=${cliAtual().id}:${p.id}`;
+      await navigator.clipboard.writeText(url);
+      toast('Link do card copiado — quem abrir cai direto nele.');
+    }
+  }catch(err){ toast('Não consegui copiar — o navegador bloqueou.'); }
+}, true);
+
+/* o link profundo: #post=cliente:id abre o card ao carregar */
+(function(){
+  const m = location.hash.match(/#post=([^:]+):(\d+)/);
+  if(!m) return;
+  const [, cli, id] = m;
+  const abre = () => {
+    if(!CLIS().some(c=>c.id===cli)) return;
+    S.view='agency'; S.route='clientedet'; S.cli=cli; S.tab='pauta';
+    const p = (S.pautas[cli]||[]).find(x=>x.id===+id);
+    if(p){ S.modal = modalVer(p.id); }
+    render(); renderLayer();
+  };
+  setTimeout(abre, 2600);          // depois do banco carregar
+})();
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v51c — o editor ganha os campos que faltavam: responsável,
+   observação, legenda separada do conteúdo, tipo de conteúdo (estático /
+   roteiro de vídeo / corte de podcast com timecodes em sequência),
+   caixinha de perguntas e mais de um formato por card.
+   ================================================================== */
+modalPauta = (function(orig){
+  return function(id){
+    let html = orig(id);
+    const p = id ? S.pauta.find(x=>x.id===id) : null;
+    S.ptResp = p ? (p.resp||null) : null;
+    S.ptFmts = new Set(p ? (p.fmts && p.fmts.length ? p.fmts : [p.fmt]) : ['Reels']);
+    const tipoC = p && p.corte ? 'corte' : p && p.roteiro ? 'roteiro' : 'estatico';
+
+    /* legenda separada do conteúdo: o conteúdo é o QUE produzir; a
+       legenda é o texto que vai junto do post */
+    const legenda = `
+    <div class="fld"><label for="pt-legenda">Legenda / descrição do post</label>
+      <textarea id="pt-legenda" rows="3"
+        placeholder="O texto que acompanha a postagem publicada.">${p?esc(p.legenda||''):''}</textarea></div>`;
+    html = html.replace('<div class="fld"><label for="pt-cta">', legenda + '\n    <div class="fld"><label for="pt-cta">');
+
+    /* responsável + observação */
+    const equipeChips = (S.equipe||[]).map(m=>
+      `<button data-resppick="${membroId(m)}" class="${S.ptResp===membroId(m)?'on':''}"
+        ><i style="background:var(--ink-600)"></i>${esc(m.n)}</button>`).join('');
+    const extras = `
+    <div class="fld"><label>Responsável — quem executa este card</label>
+      <div class="ptChips">${equipeChips}
+        <button data-resppick="" class="${!S.ptResp?'on':''}">— ninguém ainda</button></div></div>
+    <div class="fld"><label for="pt-obs">Observação</label>
+      <textarea id="pt-obs" rows="2"
+        placeholder="Recado para quem for executar — contexto, cuidado, detalhe.">${p?esc(p.obs||''):''}</textarea></div>
+    <label style="display:flex;gap:9px;align-items:center;margin:4px 0 2px;font-size:13px;color:var(--ink-200)">
+      <input type="checkbox" id="pt-caixinha" ${p&&p.caixinha?'checked':''}>
+      Story com caixinha de perguntas</label>`;
+
+    /* tipo de conteúdo: as três caixas existem no DOM e só alternam
+       visibilidade — re-render aqui apagaria o que já foi digitado */
+    const r = (p&&p.roteiro)||{}, ct = (p&&p.corte)||{};
+    const tcs = (ct.tcs&&ct.tcs.length?ct.tcs:[{de:'',ate:'',ordem:1}]);
+    const tipos = `
+    <div class="tcSecao"><b>Tipo de conteúdo</b>
+      <div class="ptChips" id="tc-chips">
+        <button type="button" data-tcpick="estatico" class="${tipoC==='estatico'?'on':''}">Post estático</button>
+        <button type="button" data-tcpick="roteiro" class="${tipoC==='roteiro'?'on':''}">Roteiro de vídeo</button>
+        <button type="button" data-tcpick="corte" class="${tipoC==='corte'?'on':''}">Corte de podcast</button>
+      </div>
+      <div class="tcCorpo" data-tc="roteiro" ${tipoC!=='roteiro'?'hidden':''}>
+        <div class="fld"><label for="rt-hook">Hook — os 3 primeiros segundos</label>
+          <textarea id="rt-hook" rows="2" placeholder="A frase ou imagem que segura quem ia passar direto.">${esc(r.hook||'')}</textarea></div>
+        <div class="fld"><label for="rt-des">Desenvolvimento</label>
+          <textarea id="rt-des" rows="4" placeholder="O argumento, cena a cena.">${esc(r.des||'')}</textarea></div>
+        <div class="fld"><label for="rt-cta">CTA do vídeo</label>
+          <textarea id="rt-cta" rows="2" placeholder="O que a pessoa faz ao terminar de assistir.">${esc(r.cta||'')}</textarea></div>
+      </div>
+      <div class="tcCorpo" data-tc="corte" ${tipoC!=='corte'?'hidden':''}>
+        <div class="fld"><label for="ct-ep">Episódio</label>
+          <input id="ct-ep" value="${esc(ct.ep||'')}" placeholder="Ex.: EJUPcast #12 · Zeca Melo"></div>
+        <div class="fld"><label>Timecodes — a ordem diz ao editor como juntar</label>
+          <div id="ct-tcs">${tcs.map((tc,i)=>`<div class="tcLinha">
+            <input class="tc-de" value="${esc(tc.de||'')}" placeholder="início 00:12:30" inputmode="numeric">
+            <input class="tc-ate" value="${esc(tc.ate||'')}" placeholder="fim 00:14:05" inputmode="numeric">
+            <input class="tc-ord ord" value="${tc.ordem??i+1}" inputmode="numeric" title="ordem na edição">
+            <button type="button" class="rmtc" aria-label="Remover">${ic('x',11)}</button>
+          </div>`).join('')}</div>
+          <button type="button" class="b gho sm" id="ct-mais">+ timecode</button>
+          <p class="fhint">Um corte pode ser a junção de vários trechos — a coluna da direita é a sequência.</p></div>
+      </div>
+    </div>`;
+
+    return html.replace('<div class="modalrow" style="margin-top:14px">',
+      extras + tipos + '\n    <div class="modalrow" style="margin-top:14px">');
+  };
+})(modalPauta);
+
+/* interações do editor que NÃO re-renderizam (para não comer texto) */
+document.addEventListener('click', e => {
+  const rp = e.target.closest('[data-resppick]');
+  if(rp){
+    e.stopImmediatePropagation();
+    S.ptResp = rp.dataset.resppick || null;
+    document.querySelectorAll('[data-resppick]').forEach(b=>
+      b.classList.toggle('on', (b.dataset.resppick||null)===S.ptResp));
+    return;
+  }
+  const tc = e.target.closest('[data-tcpick]');
+  if(tc){
+    e.stopImmediatePropagation();
+    const tipo = tc.dataset.tcpick;
+    document.querySelectorAll('[data-tcpick]').forEach(b=>
+      b.classList.toggle('on', b.dataset.tcpick===tipo));
+    document.querySelectorAll('.tcCorpo').forEach(c=>{ c.hidden = (c.dataset.tc !== tipo); });
+    return;
+  }
+  if(e.target.closest('#ct-mais')){
+    e.stopImmediatePropagation();
+    const caixa = document.getElementById('ct-tcs');
+    const n = caixa.querySelectorAll('.tcLinha').length + 1;
+    const div = document.createElement('div');
+    div.className = 'tcLinha';
+    div.innerHTML = `<input class="tc-de" placeholder="início 00:00:00" inputmode="numeric">
+      <input class="tc-ate" placeholder="fim 00:00:00" inputmode="numeric">
+      <input class="tc-ord ord" value="${n}" inputmode="numeric" title="ordem na edição">
+      <button type="button" class="rmtc" aria-label="Remover">${ic('x',11)}</button>`;
+    caixa.appendChild(div);
+    return;
+  }
+  const rm = e.target.closest('.rmtc');
+  if(rm){ e.stopImmediatePropagation(); rm.closest('.tcLinha').remove(); return; }
+}, true);
+
+/* mais de um formato por card: Reels e Shorts são o mesmo arquivo.
+   O clique no chip vira múltipla escolha; o primeiro escolhido segue
+   sendo o formato "principal" que o resto do app já entende. */
+window.addEventListener('click', e => {
+  const t = e.target.closest('[data-fmtpick]');
+  if(!t || !document.getElementById('pt-obs')) return;   // só no editor da pauta
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const f = t.dataset.fmtpick;
+  if(S.ptFmts.has(f) && S.ptFmts.size>1) S.ptFmts.delete(f);
+  else S.ptFmts.add(f);
+  S.ptFmt = [...S.ptFmts][0];
+  document.querySelectorAll('[data-fmtpick]').forEach(b=>
+    b.classList.toggle('on', S.ptFmts.has(b.dataset.fmtpick)));
+}, true);
+
+/* gravação em duas etapas (o mesmo desenho da v42/v43: a captura lê
+   antes do modal fechar; a bolha aplica depois que o original gravou) */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptok]');
+  if(!t) return;
+  if(!document.getElementById('pt-obs')){ S.ptV51 = null; return; }
+  const v = id => document.getElementById(id)?.value.trim() || '';
+  const tipo = document.querySelector('[data-tcpick].on')?.dataset.tcpick || 'estatico';
+  const tcs = [...document.querySelectorAll('#ct-tcs .tcLinha')].map(l=>({
+    de: l.querySelector('.tc-de').value.trim(),
+    ate: l.querySelector('.tc-ate').value.trim(),
+    ordem: +l.querySelector('.tc-ord').value || 0
+  })).filter(tc=>tc.de||tc.ate);
+  S.ptV51 = {
+    legenda: v('pt-legenda'), obs: v('pt-obs'),
+    resp: S.ptResp || null,
+    caixinha: !!document.getElementById('pt-caixinha')?.checked,
+    fmts: [...S.ptFmts],
+    roteiro: tipo==='roteiro' ? {hook:v('rt-hook'), des:v('rt-des'), cta:v('rt-cta')} : null,
+    corte: tipo==='corte' ? {ep:v('ct-ep'), tcs} : null
+  };
+}, true);
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptok]');
+  if(!t || !S.ptV51) return;
+  const dados = S.ptV51; S.ptV51 = null;
+  const alvo = +t.dataset.ptok
+    ? S.pauta.find(x=>x.id===+t.dataset.ptok)
+    : S.pauta[S.pauta.length-1];
+  if(!alvo) return;
+  Object.assign(alvo, dados);
+  if(dados.roteiro===null) delete alvo.roteiro;
+  if(dados.corte===null) delete alvo.corte;
+  render();
+});
+
+/* responsável e observação aparecem na linha da semana */
+ptItemHtml = (function(orig){
+  return function(p, i){
+    let html = orig(p, i);
+    const resp = membro(p.resp);
+    if(resp) html = html.replace('<span class="ptFmtChip">',
+      `<span class="ptResp" title="${esc(resp.nome)}">${esc(resp.ini)}</span>\n        <span class="ptFmtChip">`);
+    if(p.obs) html = html.replace(/(<\/button>\s*<button class="ptFeito")/,
+      `<span class="ptObsLinha">${ic('pencil',11)} ${esc(p.obs.length>90?p.obs.slice(0,90)+'…':p.obs)}</span>$1`);
+    return html;
+  };
+})(ptItemHtml);
+
+/* e o responsável entra na tabela, depois do Pilar */
+ptVistaTabela = (function(orig){
+  return function(visiveis){
+    let html = orig(visiveis);
+    html = html.replace('<th class="esq">Conteúdo &amp; pauta</th>',
+      '<th>Resp.</th><th class="esq">Conteúdo &amp; pauta</th>');
+    visiveis.forEach(p=>{
+      const r = membro(p.resp);
+      const cel = `<td style="text-align:center">${r?`<span class="ptResp" title="${esc(r.nome)}">${esc(r.ini)}</span>`:'—'}</td>`;
+      html = html.replace(
+        new RegExp(`(data-ptedit="${p.id}"[\\s\\S]*?<td class="pilarCel">[\\s\\S]*?</td>)`),
+        `$1${cel}`);
+    });
+    return html.replace(/colspan="(\d+)"/, (m,n)=>`colspan="${+n+1}"`);
+  };
+})(ptVistaTabela);
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v51d — segurar um card e arrastar para outro dia. Funciona com mouse
+   e com dedo (pointer events, não o drag-and-drop do HTML — esse não
+   existe no toque). Segurou 350ms, virou arrasto; soltou sobre um dia,
+   o card muda de data.
+   ================================================================== */
+let ptDrag = null;
+document.addEventListener('pointerdown', e => {
+  if(S.ptVista && S.ptVista !== 'semana') return;
+  const item = e.target.closest('.ptItem');
+  // o card INTEIRO é um <button> (.ptRow) — o guarda tem de mirar só os
+  // botões de ação, senão nada é arrastável
+  if(!item || e.target.closest('.ptQuick,.ptFeito,[data-ptrm],[data-mtabrir],[data-rfabrir]')) return;
+  const id = +item.dataset.pt;
+  const p = S.pauta.find(x=>x.id===id);
+  if(!p) return;
+  const timer = setTimeout(()=>{
+    ptDrag = { id, item, alvo:null };
+    item.classList.add('arrastando');
+    const g = document.createElement('div');
+    g.id = 'ptGhost';
+    g.textContent = p.t;
+    document.body.appendChild(g);
+    g.style.left = e.clientX+'px'; g.style.top = e.clientY+'px';
+    document.body.style.touchAction = 'none';
+    if(navigator.vibrate) navigator.vibrate(10);
+  }, 350);
+  const cancela = () => { clearTimeout(timer);
+    removeEventListener('pointerup', cancela); removeEventListener('pointercancel', cancela); };
+  addEventListener('pointerup', cancela, {once:true});
+  addEventListener('pointercancel', cancela, {once:true});
+  // mexeu antes dos 350ms = rolagem, não arrasto
+  const mexeu = ev => { if(Math.abs(ev.clientY - e.clientY) > 8) cancela(); };
+  addEventListener('pointermove', mexeu);
+  setTimeout(()=>removeEventListener('pointermove', mexeu), 400);
+});
+document.addEventListener('pointermove', e => {
+  if(!ptDrag) return;
+  e.preventDefault();
+  const g = document.getElementById('ptGhost');
+  if(g){ g.style.left = e.clientX+'px'; g.style.top = e.clientY+'px'; }
+  // perto da borda, a página rola sozinha — sem isto não dá para levar
+  // um card até um dia que está fora da tela
+  if(e.clientY > innerHeight - 90) scrollBy(0, 14);
+  else if(e.clientY < 130) scrollBy(0, -14);
+  const sob = document.elementFromPoint(e.clientX, e.clientY);
+  const dia = sob && (sob.closest('.ptDia[data-dia-iso]') || sob.closest('.ptDiaMin[data-ptexp]'));
+  if(ptDrag.alvo && ptDrag.alvo !== dia) ptDrag.alvo.classList.remove('alvoDrop');
+  if(dia){ dia.classList.add('alvoDrop'); }
+  ptDrag.alvo = dia || null;
+}, {passive:false});
+document.addEventListener('pointerup', e => {
+  if(!ptDrag) return;
+  const {id, item, alvo} = ptDrag;
+  ptDrag = null;
+  document.getElementById('ptGhost')?.remove();
+  document.body.style.touchAction = '';
+  item.classList.remove('arrastando');
+  document.querySelectorAll('.alvoDrop').forEach(x=>x.classList.remove('alvoDrop'));
+  if(!alvo) return;
+  const iso = alvo.dataset.diaIso || alvo.dataset.ptexp;
+  const p = S.pauta.find(x=>x.id===id);
+  if(!p || !iso || p.data === iso) return;
+  const antes = rotuloData(p.data);
+  p.data = iso; p.dia = diaDaSemana(iso);
+  som('toque'); render();
+  const el2 = document.querySelector(`.ptItem[data-pt="${id}"]`);
+  if(el2){ el2.classList.add('marcou'); setTimeout(()=>el2.classList.remove('marcou'),480); }
+  toast(`"${p.t}" mudou de ${antes} para ${rotuloData(iso)}.`);
+});
+
+/* =====================================================================
+   v51e — o upload com barra de progresso e o botão de baixar.
+   subirNuvem troca fetch por XHR só para ter onprogress; quem chama
+   não muda.
+   ================================================================== */
+subirNuvem = function(caminho, file, aoProgredir){
+  return new Promise((res, rej)=>{
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${SB.url}/storage/v1/object/midia/${caminho}`);
+    xhr.setRequestHeader('apikey', SB.key);
+    xhr.setRequestHeader('Authorization', 'Bearer '+SB.key);
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+    xhr.setRequestHeader('x-upsert', 'true');
+    xhr.upload.onprogress = ev => {
+      if(ev.lengthComputable && aoProgredir) aoProgredir(Math.round(ev.loaded/ev.total*100));
+    };
+    xhr.onload = () => xhr.status < 300
+      ? res(`${SB.url}/storage/v1/object/public/midia/${caminho}`)
+      : rej(new Error(`upload recusado (${xhr.status})`));
+    xhr.onerror = () => rej(new Error('sem conexão'));
+    xhr.send(file);
+  });
+};
+subirDepois = function(item, pasta, file){
+  if(!_sbLigado) return;
+  const caminho = `${pasta}/${item.chave}_${nomeSeguro(file.name)}`;
+  item.caminhoNuvem = caminho;
+  item.progresso = 0;
+  let ultimoDesenho = 0;
+  subirNuvem(caminho, file, p => {
+    item.progresso = p;
+    const agora = Date.now();
+    if(agora - ultimoDesenho > 350){ ultimoDesenho = agora; render(); }
+  }).then(url=>{
+    item.url = url; item.nuvem = true; delete item.progresso; render();
+  }).catch(err=>{
+    delete item.progresso; render();
+    console.warn('Maestro: upload não foi — ficou só neste aparelho.', err.message);
+  });
+};
+
+/* a barra na miniatura enquanto sobe */
+tiraMaterial = (function(orig){
+  return function(p){
+    let html = orig(p);
+    const ms = materiaisDe(p.id);
+    ms.slice(0,4).forEach((m,i)=>{
+      if(m.progresso === undefined) return;
+      let n = -1;
+      html = html.replace(/<span class="mtMini([^"]*)">/g, (mm, cls)=>{
+        n++; return n===i
+          ? `<span class="mtMini${cls}"><span class="prog"><i style="--p:${m.progresso}"></i></span>`
+          : mm;
+      });
+    });
+    return html;
+  };
+})(tiraMaterial);
+
+/* baixar: cada cartão do modal de material ganha a seta para baixo */
+modalMaterial = (function(orig){
+  return function(id){
+    let html = orig(id);
+    if(!html) return html;
+    const ms = materiaisDe(id);
+    ms.forEach((m,i)=>{
+      if(m.tipo==='link') return;
+      html = html.replace(
+        new RegExp(`(<button class="x" data-mtdel="${i}")`),
+        `<button class="baixa" data-mtbaixa="${i}" aria-label="Baixar ${esc(m.nome)}"
+          title="Baixar">${ic('arrowr',12)}</button>$1`);
+    });
+    return html;
+  };
+})(modalMaterial);
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-mtbaixa]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const m = (S.mat[S.mtId]||[])[+t.dataset.mtbaixa];
+  if(!m) return;
+  try{
+    let blob = null;
+    if(m.chave) blob = await idbLer(m.chave).catch(()=>null);
+    if(!blob && m.url){ const r = await fetch(m.url); blob = await r.blob(); }
+    if(!blob){ toast('Não achei o arquivo para baixar.'); return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = m.nome || 'arquivo';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  }catch(err){ toast('O download falhou — tente de novo.'); }
+}, true);
 </script>
