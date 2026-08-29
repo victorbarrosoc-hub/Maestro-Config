@@ -964,6 +964,27 @@ perguntar. Tudo abaixo foi construído, testado no navegador e commitado em fase
 > dela** (data-cpbox), com "✓ Copiado" no próprio botão e reserva via execCommand para
 > navegador sem permissão/foco.
 
+**Ensaio por categorias, privacidade e o CARD ÚNICO (v59).** Pedido do founder: "quero
+que seja tudo o mesmo card — ele começa aqui e aparece lá", com categorias que abrem
+funções diferentes e sigilo por categoria.
+
+> **Card único**: em Marketing, a tarefa do Ensaio e o card da pauta são o MESMO job.
+> No modal da tarefa dá para ligar a um card existente ou "＋ criar um card novo na
+> pauta" (nasce com data=prazo e responsável herdado). O cartão do quadro mostra o
+> vínculo + a fase do card, e o ícone de documento abre o card completo (modalVer, com
+> roteiro/timecodes/material/aprovação). Caminho inverso: no card da pauta, "Mandar pro
+> Ensaio" cria a tarefa ligada, e o badge passa a mostrar "No Ensaio · coluna".
+
+> **Categorias com funções próprias** (CATS_ENSAIO, cor na borda esquerda do cartão):
+> Marketing (latão — cliente + card da pauta), Financeiro (verde — valor R$ e
+> a pagar/a receber), Sócios (azul). Os campos alternam por visibilidade no modal,
+> sem re-render (padrão tcCorpo).
+
+> **Privacidade**: Financeiro e Sócios só aparecem para o responsável, os marcados em
+> "quem pode ver" e os sócios (dono/Administrador, que veem tudo). Quem não pode ver
+> não enxerga NEM o chip da categoria. Testado com os três olhares (Victor vê, Marina
+> marcada vê, Paulo não vê nada).
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

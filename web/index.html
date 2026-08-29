@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-29 06:23 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-29 06:39 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -14133,5 +14133,296 @@ document.addEventListener('click', async e => {
       confirma();
     }catch(e2){ toast('Não consegui copiar — o navegador bloqueou.'); }
   }
+}, true);
+</script>
+<style>
+/* =====================================================================
+   v59 — o Ensaio por categorias, com privacidade e o CARD ÚNICO:
+   a tarefa de Marketing e o card da pauta são o MESMO job.
+   ================================================================== */
+.enCats{ display:flex; gap:8px; flex-wrap:wrap; margin:0 0 14px }
+.enCat{ display:inline-flex; align-items:center; gap:8px; padding:8px 14px;
+  border:1px solid var(--ink-700); border-radius:999px; background:var(--ink-950);
+  font-size:12.5px; color:var(--ink-300);
+  transition:border-color var(--fast) var(--eo), color var(--fast) var(--eo) }
+.enCat i{ width:9px; height:9px; border-radius:50%; font-style:normal; flex:0 0 auto }
+.enCat b{ font-family:var(--mono); font-size:10px; color:var(--ink-400); font-weight:500 }
+.enCat.on{ color:var(--ink-50); border-color:var(--catCor, var(--brass-500)) }
+.enCard{ border-left:3px solid var(--catCor, var(--ink-800)) }
+.enCard .priv{ font-family:var(--mono); font-size:8px; letter-spacing:.08em;
+  padding:2px 7px; border-radius:999px; background:var(--ink-800); color:var(--ink-300) }
+.enCard .jobLink{ display:inline-flex; align-items:center; gap:5px;
+  font-family:var(--mono); font-size:9px; color:var(--brass-300) }
+.vzEnsaio{ display:inline-flex; align-items:center; gap:7px; padding:5px 12px;
+  border-radius:999px; border:1px solid var(--ink-700); font-family:var(--mono);
+  font-size:10px; color:var(--ink-200) }
+.vzEnsaio i{ width:8px; height:8px; border-radius:50%; font-style:normal }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v59 — categorias, privacidade e o card único.
+   ================================================================== */
+const CATS_ENSAIO = [
+  { id:'marketing',  nome:'Marketing',  cor:'#C8963A',
+    dica:'a produção de conteúdo — cada tarefa pode SER um card da pauta' },
+  { id:'financeiro', nome:'Financeiro', cor:'#35B87A',
+    dica:'contas, cobranças e pagamentos — só quem for escolhido vê' },
+  { id:'socios',     nome:'Sócios',     cor:'#5B8DEF',
+    dica:'assuntos da sociedade — só os selecionados veem' }
+];
+const catDe = t => CATS_ENSAIO.find(c=>c.id===(t.cat||'marketing')) || CATS_ENSAIO[0];
+
+/* quem pode ver uma tarefa:
+   - Marketing: toda a agência.
+   - Financeiro e Sócios: só o responsável, quem foi marcado em "quem
+     pode ver" — e os sócios (dono/Administrador), que veem tudo. */
+function podeVerTarefa(t){
+  if(!S.usuario || S.usuario.tipo!=='agencia') return false;
+  if((t.cat||'marketing')==='marketing') return true;
+  if(ehAdmin()) return true;
+  const eu = S.usuario.id;
+  return t.resp===eu || (t.quemVe||[]).includes(eu);
+}
+const catsVisiveis = () => CATS_ENSAIO.filter(c =>
+  c.id==='marketing' || ehAdmin() ||
+  (S.ensaio && S.ensaio.tarefas.some(t=>(t.cat||'marketing')===c.id && podeVerTarefa(t))));
+
+/* ---------- o quadro, agora por categoria --------------------------- */
+agEnsaio = function(){
+  if(!S.ensaio) S.ensaio = kbSemente();
+  const cats = catsVisiveis();
+  if(!cats.some(c=>c.id===S.enCat)) S.enCat = 'marketing';
+  const catAtiva = CATS_ENSAIO.find(c=>c.id===S.enCat);
+  const minhas = S.enSoMinhas && S.usuario ? S.usuario.id : null;
+  const doQuadro = t => (t.cat||'marketing')===S.enCat && podeVerTarefa(t)
+    && (!minhas || t.resp===minhas);
+
+  const cartao = t => {
+    const c = CLIS().find(x=>x.id===t.cli);
+    const r = membro(t.resp);
+    const tarde = t.prazo && t.prazo < hojeISO();
+    const cat = catDe(t);
+    const job = t.cardId && (S.pautas[t.cli]||[]).find(p=>p.id===t.cardId);
+    return `<div class="enCard" data-entar="${t.id}" style="--catCor:${cat.cor}">
+      <div class="tit">${esc(t.titulo)}</div>
+      <div class="meta">
+        ${c && cat.id==='marketing' ? `<span class="cli">${esc(c.ini)}</span>`:''}
+        ${cat.id!=='marketing' ? `<span class="priv">🔒 ${esc(cat.nome)}</span>`:''}
+        ${r?`<span class="ptResp" title="${esc(r.nome)}">${esc(r.ini)}</span>`
+           :`<span class="prazo" style="color:#E5A54D">sem dono</span>`}
+        ${t.prazo?`<span class="prazo ${tarde?'tarde':''}">${rotuloData(t.prazo)}</span>`:''}
+        ${t.valor?`<span class="prazo" style="color:${cat.cor}">R$ ${esc(String(t.valor))}${t.fin==='receber'?' ↓':' ↑'}</span>`:''}
+        <span class="kbTempo ${t.desde?'rodando':''}" data-kbtempo="${t.id}">${kbFmt(kbTempoTotal(t))}</span>
+      </div>
+      ${job?`<div style="margin-top:7px"><span class="jobLink">${ic('linkic',10)}
+        card da pauta · ${esc(rotuloFase(job))}</span></div>`:''}
+      <div class="acoes">
+        <button data-enmove="${t.id}|-1" aria-label="Coluna anterior">${ic('arrowl',12)}</button>
+        <button data-enmove="${t.id}|1" aria-label="Próxima coluna">${ic('arrowr',12)}</button>
+        <button data-entimer="${t.id}" aria-label="${t.desde?'Pausar':'Contar tempo'}"
+          title="${t.desde?'Pausar':'Contar tempo'}">${ic(t.desde?'sndoff':'clock',12)}</button>
+        ${job?`<button data-hjabre="${t.cli}:${t.cardId}" title="Abrir o card completo"
+          aria-label="Abrir o card completo">${ic('doc',12)}</button>`:''}
+        ${t.col==='act'?`<button class="conclui" data-enfim="${t.id}">concluir ✓</button>`:''}
+      </div></div>`;
+  };
+  const cols = EN_COLS.map(([k, nome, cor, dica])=>{
+    const ts = S.ensaio.tarefas.filter(t=>t.col===k && doQuadro(t));
+    return `<div class="enCol" data-encol="${k}">
+      <div class="enColHd"><i style="background:${cor}"></i><b>${nome}</b>
+        <span>${ts.length}</span></div>
+      ${ts.map(cartao).join('') || `<div class="enVazia">${dica}</div>`}
+    </div>`;
+  }).join('');
+  const chips = cats.map(c=>{
+    const n = S.ensaio.tarefas.filter(t=>(t.cat||'marketing')===c.id && podeVerTarefa(t)).length;
+    return `<button class="enCat ${c.id===S.enCat?'on':''}" data-encat="${c.id}"
+      style="--catCor:${c.cor}"><i style="background:${c.cor}"></i>${c.nome}<b>${n||''}</b></button>`;
+  }).join('');
+  const feitasMes = S.ensaio.feitas.length;
+  return agShell(`
+  <div class="mtop"><div><h1>Ensaio</h1><p>${esc(catAtiva.dica)}</p></div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="b gho sm" data-enminhas="1"
+        style="${S.enSoMinhas?'border-color:var(--brass-500);color:var(--brass-300)':''}">
+        ${ic('person',13)} ${S.enSoMinhas?'Só as minhas':'Todas'}</button>
+      <button class="b gho sm" data-enranking="1">${ic('chart',13)} Ranking${feitasMes?` (${feitasMes})`:''}</button>
+      <button class="b pri sm" data-ennova="1">${ic('pencil',13)} Nova tarefa</button></div></div>
+  <div class="enCats">${chips}</div>
+  <div class="enRolo">${cols}</div>
+  <p style="margin:4px 2px 0;font-size:11.5px;color:var(--ink-300)">Arraste entre colunas
+    (ou setas). Em Marketing, a tarefa e o card da pauta são o MESMO job — o ícone de
+    documento abre o card completo. Categorias com cadeado só aparecem para quem pode ver.</p>`);
+};
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-encat]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  S.enCat = t.dataset.encat; render();
+}, true);
+
+/* ---------- o modal da tarefa, com as funções da categoria ---------- */
+modalTarefa = function(id){
+  const t = id ? S.ensaio.tarefas.find(x=>x.id===id) : null;
+  S.enResp = t ? t.resp : null;
+  S.enCli = t ? t.cli : (CLIS()[0]||{}).id;
+  S.enCatModal = t ? (t.cat||'marketing') : (S.enCat||'marketing');
+  S.enQuemVe = new Set(t ? (t.quemVe||[]) : []);
+  const cat = CATS_ENSAIO.find(c=>c.id===S.enCatModal);
+  const job = t && t.cardId && (S.pautas[t.cli]||[]).find(p=>p.id===t.cardId);
+  const postagens = (S.pautas[S.enCli]||[]).filter(p=>!p.tarefa);
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3>${t?'Editar tarefa':'Nova tarefa'}</h3>
+    <p>Um job do Ensaio. A categoria decide as funções — e quem pode ver.</p>
+    <div class="fld"><label>Categoria</label><div class="ptChips">
+      ${CATS_ENSAIO.map(c=>`<button data-encatpick="${c.id}"
+        class="${S.enCatModal===c.id?'on':''}"><i style="background:${c.cor}"></i>${c.nome}</button>`).join('')}</div></div>
+    <div class="fld"><label for="en-t">O que precisa ser feito</label>
+      <input id="en-t" value="${t?esc(t.titulo):''}" placeholder="Ex.: cortar o episódio 12 para Reels"></div>
+    <div class="fld"><label for="en-desc">Detalhes</label>
+      <textarea id="en-desc" rows="2" placeholder="O contexto que quem executa precisa.">${t?esc(t.desc||''):''}</textarea></div>
+
+    <div class="tcCorpo" data-encampo="marketing" ${S.enCatModal!=='marketing'?'hidden':''}>
+      <div class="fld"><label>Cliente</label><div class="ptChips">
+        ${CLIS().map(c=>`<button data-enclipick="${c.id}" class="${S.enCli===c.id?'on':''}">${esc(c.nome)}</button>`).join('')}</div></div>
+      <div class="fld"><label for="en-card">O card da pauta deste job</label>
+        <select id="en-card">
+          <option value="">— sem card ainda —</option>
+          <option value="novo" style="color:var(--brass-300)">＋ criar um card novo na pauta</option>
+          ${postagens.map(p=>`<option value="${p.id}" ${job&&job.id===p.id?'selected':''}>${esc(p.t)}${p.data?' · '+rotuloData(p.data):''}</option>`).join('')}
+        </select>
+        <p class="fhint">A tarefa e o card são o mesmo job: roteiro, timecodes, material e
+          aprovação vivem no card — o Ensaio carrega a execução.</p></div>
+      ${job?`<button class="b gho sm" data-hjabre="${t.cli}:${job.id}" style="margin-bottom:10px">
+        ${ic('doc',12)} Abrir o card completo</button>`:''}
+    </div>
+
+    <div class="tcCorpo" data-encampo="financeiro" ${S.enCatModal!=='financeiro'?'hidden':''}>
+      <div class="frow">
+        <div class="fld"><label for="en-valor">Valor (R$)</label>
+          <input id="en-valor" inputmode="decimal" value="${t&&t.valor?esc(String(t.valor)):''}" placeholder="0,00"></div>
+        <div class="fld"><label for="en-fin">Tipo</label>
+          <select id="en-fin">
+            <option value="pagar" ${t&&t.fin!=='receber'?'selected':''}>A pagar</option>
+            <option value="receber" ${t&&t.fin==='receber'?'selected':''}>A receber</option>
+          </select></div>
+      </div>
+    </div>
+
+    <div class="fld"><label>Responsável</label><div class="ptChips">
+      ${(S.equipe||[]).map(m=>`<button data-enresppick="${membroId(m)}"
+        class="${S.enResp===membroId(m)?'on':''}">${esc(m.n)}</button>`).join('')}
+      <button data-enresppick="" class="${!S.enResp?'on':''}">inbox (sem dono)</button></div></div>
+
+    <div class="tcCorpo" data-encampo="privado" ${S.enCatModal==='marketing'?'hidden':''}>
+      <div class="fld"><label>Quem pode ver — além do responsável e dos sócios</label>
+        <div class="ptChips">${(S.equipe||[]).map(m=>`<button data-enquemve="${membroId(m)}"
+          class="${S.enQuemVe.has(membroId(m))?'on':''}">${esc(m.n)}</button>`).join('')}</div>
+        <p class="fhint">Esta tarefa NÃO aparece no quadro geral — só para os marcados
+          aqui, o responsável e os sócios.</p></div>
+    </div>
+
+    <div class="fld"><label for="en-prazo">Prazo</label>
+      <input type="date" id="en-prazo" value="${t&&t.prazo?t.prazo:''}" style="color-scheme:dark"></div>
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b pri" data-enok="${t?t.id:0}">Salvar</button></div></div></div>`;
+};
+
+/* trocas dentro do modal sem re-render (mesmo padrão dos tipos) */
+document.addEventListener('click', e => {
+  const cp = e.target.closest('[data-encatpick]');
+  if(cp){
+    e.stopImmediatePropagation();
+    S.enCatModal = cp.dataset.encatpick;
+    document.querySelectorAll('[data-encatpick]').forEach(b=>
+      b.classList.toggle('on', b.dataset.encatpick===S.enCatModal));
+    document.querySelectorAll('.tcCorpo[data-encampo]').forEach(c=>{
+      c.hidden = c.dataset.encampo==='privado'
+        ? S.enCatModal==='marketing'
+        : c.dataset.encampo!==S.enCatModal;
+    });
+    return;
+  }
+  const qv = e.target.closest('[data-enquemve]');
+  if(qv){
+    e.stopImmediatePropagation();
+    const id = qv.dataset.enquemve;
+    S.enQuemVe.has(id) ? S.enQuemVe.delete(id) : S.enQuemVe.add(id);
+    qv.classList.toggle('on', S.enQuemVe.has(id));
+    return;
+  }
+}, true);
+
+/* o salvar da v54 continua valendo; a janela lê os campos novos antes
+   e aplica DEPOIS dele (o padrão já provado da casa) */
+window.addEventListener('click', e => {
+  const t = e.target.closest('[data-enok]');
+  if(!t || !document.getElementById('en-desc')) return;
+  const v = id => document.getElementById(id)?.value.trim() || '';
+  const extras = {
+    cat: S.enCatModal || 'marketing',
+    desc: v('en-desc'),
+    quemVe: [...S.enQuemVe],
+    valor: v('en-valor') || null,
+    fin: document.getElementById('en-fin')?.value || null,
+    cardSel: document.getElementById('en-card')?.value ?? ''
+  };
+  const idTarefa = +t.dataset.enok;
+  setTimeout(()=>{
+    const tr = idTarefa
+      ? S.ensaio.tarefas.find(x=>x.id===idTarefa)
+      : S.ensaio.tarefas[S.ensaio.tarefas.length-1];
+    if(!tr) return;
+    Object.assign(tr, { cat:extras.cat, desc:extras.desc, quemVe:extras.quemVe });
+    if(extras.cat==='financeiro'){ tr.valor = extras.valor; tr.fin = extras.fin; }
+    if(extras.cat==='marketing'){
+      if(extras.cardSel==='novo'){
+        // o job nasce nos dois lugares de uma vez
+        const arr = S.pautas[tr.cli] = S.pautas[tr.cli] || [];
+        const novo = { id: Math.max(0,...arr.map(x=>x.id))+1, data:tr.prazo||hojeISO(),
+          dia: diaDaSemana(tr.prazo||hojeISO()), hora:'12:00', fmt:'Post',
+          plats:['ig'], t: tr.titulo, texto: tr.desc||'', cta:'', st:'DRAFT',
+          pecaId:null, feito:false, tarefa:false, pend:'', pilar:'Pauta principal',
+          resp: tr.resp||null };
+        arr.push(novo);
+        tr.cardId = novo.id;
+        toast(`Card criado na pauta de ${CLIS().find(c=>c.id===tr.cli)?.nome||''} — o mesmo job, nos dois lugares.`);
+      } else if(extras.cardSel){ tr.cardId = +extras.cardSel; }
+      else if(extras.cardSel==='') tr.cardId = tr.cardId && extras.cardSel!=='' ? tr.cardId : null;
+    } else { tr.cardId = null; }
+    render();
+  }, 0);
+}, true);
+
+/* no card da pauta, o caminho de volta: mandar pro Ensaio / ver etapa */
+modalVer = (function(orig){
+  return function(id){
+    let html = orig(id);
+    const p = S.pauta.find(x=>x.id===id);
+    if(!p || p.tarefa || S.view==='client' || !S.ensaio) return html;
+    const tr = S.ensaio.tarefas.find(x=>x.cardId===id && x.cli===cliAtual().id);
+    const bloco = tr
+      ? `<span class="vzEnsaio" style="border-color:${catDe(tr).cor}55">
+          <i style="background:${catDe(tr).cor}"></i>
+          No Ensaio · ${EN_COLS.find(([k])=>k===tr.col)?.[1]||tr.col}</span>`
+      : `<button class="vzEnsaio" data-ptparaensaio="${id}">
+          ${ic('kanban',11)} Mandar pro Ensaio</button>`;
+    return html.replace('<div class="vzTopo">', `<div class="vzTopo">${bloco}`);
+  };
+})(modalVer);
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptparaensaio]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const p = S.pauta.find(x=>x.id===+t.dataset.ptparaensaio); if(!p) return;
+  if(!S.ensaio) S.ensaio = kbSemente();
+  S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo:p.t, cli:cliAtual().id,
+    resp:p.resp||null, col: p.resp?'plan':'inbox', criada:Date.now(),
+    prazo:p.data||null, tempoMs:0, desde:null, cat:'marketing', cardId:p.id, quemVe:[] });
+  som('toque');
+  S.modal = modalVer(p.id); renderLayer(); render();
+  toast(`"${p.t}" agora também está no Ensaio — o mesmo job, nos dois lugares.`);
 }, true);
 </script>
