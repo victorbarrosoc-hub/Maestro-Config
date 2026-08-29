@@ -947,6 +947,23 @@ perguntar. Tudo abaixo foi construído, testado no navegador e commitado em fase
 > varredura tardia mata sobras; e nenhum render() convive com fantasma órfão. Testado
 > simulando o cancel e um órfão plantado na unha.
 
+**Segunda rodada do founder — quatro consertos (v58).**
+
+> **A logo cortada na abertura**: o traçado animado usava `stroke-dasharray:340`, mas o
+> caminho real de cada linha tem **414 unidades** (medido com `getTotalLength()`): os 74
+> finais — exatamente a asa direita — caíam no VÃO do tracejado e sumiam. Tracejado
+> folgado (560) na abertura, no gesto e na prancheta da marca. *Lição: dasharray para
+> efeito de traçado sempre folgado ou `pathLength` explícito.*
+
+> **O herói do site** (homepage de marketing) ainda desenhava o M-batuta sólido no
+> `batonwrap` — trocado pelo símbolo novo em 3 linhas (e o stroke de 6→12, porque a
+> espessura era calibrada pro viewBox 48, não 240).
+
+> **Leitura do card**: Conteúdo, Legenda e CTA agora aparecem SEMPRE (vazio ganha a dica
+> "Ainda sem legenda — toque em Editar"), e **cada caixa tem o botãozinho que copia tudo
+> dela** (data-cpbox), com "✓ Copiado" no próprio botão e reserva via execCommand para
+> navegador sem permissão/foco.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

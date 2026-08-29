@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-29 06:15 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-29 06:23 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -138,7 +138,7 @@ svg.i{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;
 .hero p.lede{font-size:clamp(16px,2.1vw,19px);color:var(--ink-300);max-width:56ch;margin:0 auto 32px;line-height:1.65}
 .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .hero .batonwrap{margin:0 auto 26px;width:64px}
-.baton{stroke:var(--brass-500);stroke-width:6;fill:none;stroke-linecap:round;stroke-linejoin:round;
+.baton{stroke:var(--brass-500);stroke-width:12;fill:none;stroke-linecap:round;stroke-linejoin:round;
   stroke-dasharray:100;stroke-dashoffset:100;animation:draw 1.1s var(--eo) .15s forwards}
 
 .rv{opacity:0;transform:translateY(22px);transition:opacity .6s var(--eo),transform .6s var(--eo)}
@@ -823,9 +823,10 @@ function vSite(){ return `<div class="site">
     <path d="M22 206 L56 206 C74 206 76 122 94 122 C110 122 114 186 130 186 C146 186 150 122 166 122 C184 122 186 206 204 206 L238 206" fill="none" stroke="#C8963A" stroke-width="6.5" stroke-linecap="round"/>
     <path d="M22 220 L56 220 C74 220 76 136 94 136 C110 136 114 200 130 200 C146 200 150 136 166 136 C184 136 186 220 204 220 L238 220" fill="none" stroke="#C8963A" stroke-width="6.5" stroke-linecap="round"/></svg>
   <div class="wrapc inner">
-    <div class="batonwrap fu"><svg viewBox="0 0 48 48" width="76" height="76">
-      <path class="baton" pathLength="100" d="M24 30.5Q17.5 30.5 11 12.5L11 35.5"/>
-      <path class="baton" pathLength="100" d="M24 30.5Q30.5 30.5 37 12.5L37 35.5"/></svg></div>
+    <div class="batonwrap fu"><svg viewBox="10 30 240 190" width="96" height="76">
+      <path class="baton" pathLength="100" d="M22 148 L56 148 C74 148 76 64 94 64 C110 64 114 128 130 128 C146 128 150 64 166 64 C184 64 186 148 204 148 L238 148"/>
+      <path class="baton" pathLength="100" d="M22 172 L56 172 C74 172 76 88 94 88 C110 88 114 152 130 152 C146 152 150 88 166 88 C184 88 186 172 204 172 L238 172"/>
+      <path class="baton" pathLength="100" d="M22 196 L56 196 C74 196 76 112 94 112 C110 112 114 176 130 176 C146 176 150 112 166 112 C184 112 186 196 204 196 L238 196"/></svg></div>
     <div class="eyebrow fu" style="animation-delay:80ms"><i></i>O sistema operacional para agências<i></i></div>
     <h1 class="fu" style="animation-delay:140ms">Sua agência não tem um problema<br>
       de tarefa. Tem um problema<br>de <em>alinhamento</em>.</h1>
@@ -12041,6 +12042,14 @@ document.addEventListener('click', e => {
    Clicar num card abria direto a edição — assustador para conferir e
    péssimo para mostrar. Agora clicar ABRE A LEITURA; editar é um botão.
    ================================================================== */
+/* uma caixa de leitura com o botão que copia tudo dela */
+function blocoCopia(id, campo, rotulo, txt, dica){
+  return `<div class="vzBloco">
+    ${txt?`<button class="b gho sm cp" data-cpbox="${id}|${campo}"
+      title="Copiar tudo desta caixa">${ic('doc',12)} Copiar</button>`:''}
+    <b>${rotulo}</b>
+    <p${txt?'':' style="color:var(--ink-500);font-style:italic"'}>${txt?esc(txt):dica}</p></div>`;
+}
 function modalVer(id){
   const p = S.pauta.find(x=>x.id===id); if(!p) return '';
   const resp = membro(p.resp);
@@ -12060,10 +12069,10 @@ function modalVer(id){
     </div>
     <h3 style="margin:0 0 12px">${esc(p.t)}</h3>
 
-    ${p.texto?`<div class="vzBloco"><b>Conteúdo — o que vai ser produzido</b><p>${esc(p.texto)}</p></div>`:''}
-    ${p.legenda?`<div class="vzBloco">
-      <button class="b gho sm cp" data-cplegenda="${p.id}">${ic('doc',12)} Copiar</button>
-      <b>Legenda / descrição do post</b><p>${esc(p.legenda)}</p></div>`:''}
+    ${blocoCopia(p.id, 'texto', 'Conteúdo — o que vai ser produzido', p.texto,
+      'Ainda sem conteúdo — toque em Editar para escrever.')}
+    ${blocoCopia(p.id, 'legenda', 'Legenda / descrição do post', p.legenda,
+      'Ainda sem legenda — toque em Editar para escrever.')}
     ${p.roteiro && (p.roteiro.hook||p.roteiro.des||p.roteiro.cta) ? `<div class="vzBloco"><b>Roteiro de vídeo</b>
       ${p.roteiro.hook?`<p><b style="color:var(--brass-300);font-size:10px;font-family:var(--mono)">HOOK</b><br>${esc(p.roteiro.hook)}</p>`:''}
       ${p.roteiro.des?`<p style="margin-top:8px"><b style="color:var(--brass-300);font-size:10px;font-family:var(--mono)">DESENVOLVIMENTO</b><br>${esc(p.roteiro.des)}</p>`:''}
@@ -12076,7 +12085,7 @@ function modalVer(id){
     </div>`:''}
     ${p.telas && p.telas.length ? `<div class="vzBloco"><b>Telas do story</b>
       ${p.telas.map((t,i)=>`<p style="margin-bottom:6px"><b style="color:var(--brass-300);font-family:var(--mono);font-size:10px">T${i+1}</b> ${esc(t)}</p>`).join('')}</div>`:''}
-    ${p.cta?`<div class="vzBloco"><b>CTA / ação</b><p>${esc(p.cta)}</p></div>`:''}
+    ${blocoCopia(p.id, 'cta', 'CTA / ação', p.cta, 'Sem CTA definido.')}
     ${p.sticker?`<div class="vzBloco"><b>Interação / sticker</b><p>${esc(p.sticker)}</p></div>`:''}
     ${p.caixinha?`<div class="vzBloco"><b>Story</b><p>Com caixinha de perguntas.</p></div>`:''}
     ${p.obs?`<div class="vzBloco" style="border-color:rgba(200,150,58,.3)"><b>Observação</b><p>${esc(p.obs)}</p></div>`:''}
@@ -14085,3 +14094,44 @@ render = (function(orig){
 #flash .mgest path{ stroke-width:12 }
 .medal .mm{ stroke-width:14 }
 </style>
+<style>
+/* =====================================================================
+   v58 — a logo cortada na abertura. O traçado animado usava um
+   tracejado de 340 unidades, mas o caminho real da linha tem ~400:
+   o fim (a asa direita) caía dentro do VÃO do tracejado e sumia.
+   Tracejado folgado resolve — e vale para a abertura e para o gesto.
+   ================================================================== */
+.mDesenho.mPauta path{ stroke-dasharray:560; stroke-dashoffset:560 }
+</style>
+<script>
+"use strict";
+/* v58b — o botão que copia o conteúdo de UMA caixa da leitura */
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-cpbox]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const [id, campo] = t.dataset.cpbox.split('|');
+  const p = S.pauta.find(x=>x.id===+id); if(!p) return;
+  const txt = campo==='roteiro' && p.roteiro
+    ? ['HOOK: '+(p.roteiro.hook||''), '', p.roteiro.des||'', '', 'CTA: '+(p.roteiro.cta||'')].join('\n')
+    : (p[campo] || '');
+  const confirma = () => {
+    const antes = t.innerHTML;
+    t.innerHTML = '✓ Copiado';
+    setTimeout(()=>{ t.innerHTML = antes; }, 1400);
+  };
+  try{
+    await navigator.clipboard.writeText(txt);
+    confirma();
+  }catch(err){
+    // reserva à moda antiga — cobre navegador sem permissão ou sem foco
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+      confirma();
+    }catch(e2){ toast('Não consegui copiar — o navegador bloqueou.'); }
+  }
+}, true);
+</script>
