@@ -4685,7 +4685,7 @@ function itemBarra(cl){
 }
 function itemLateral(){
   return `<button class="nav menu${S.menu?' on':''}" data-menu="1" aria-expanded="${!!S.menu}">
-    ${ic('sanduiche')}Todas as páginas</button>`;
+    ${ic('sanduiche')}Menu</button>`;
 }
 
 /* as cascas ja estavam escritas; em vez de reescreve-las, o item entra
@@ -4716,10 +4716,10 @@ function menuSheet(){
         ${aqui?`<span class="aqui">AQUI</span>`:q>0?`<span class="mbd">${q}</span>`:''}</button>`;
     }).join('')}</div>`).join('');
   return `<div class="msheet ${cl?'lt':''}" data-mclose="1">
-    <div class="msbox" role="dialog" aria-modal="true" aria-label="Todas as páginas">
+    <div class="msbox" role="dialog" aria-modal="true" aria-label="Menu">
       <div class="msgrab"></div>
       <div class="mshd">
-        <div><b>Todas as páginas</b>
+        <div><b>Menu</b>
           <span>${n} telas · lado ${cl?'do cliente':'da agência'}</span></div>
         <button class="msx" data-mclose="1" aria-label="Fechar">${ic('x',15)}</button>
       </div>
@@ -6355,7 +6355,7 @@ AGNAV.splice(AGNAV.findIndex(x=>x.r==='lote'), 0, {r:'pauta', n:'Pauta', icn:'do
 (function(){
   const g = MENU_AG.find(x=>x.g==='Operação');
   if(g && !g.it.some(([r])=>r==='pauta'))
-    g.it.splice(g.it.findIndex(([r])=>r==='lote'), 0, ['pauta','Pauta da semana','doc']);
+    g.it.splice(g.it.findIndex(([r])=>r==='lote'), 0, ['pauta','Pauta','doc']);
 })();
 
 const _renderV24 = render;
@@ -6977,7 +6977,7 @@ agClienteDet = function(){
 };
 
 function abasCliente(atual){
-  const abas = [['marca','Marca e briefing'],['pauta','Pauta da semana'],
+  const abas = [['marca','Marca e briefing'],['pauta','Pauta'],
                 ['projetos','Projetos'],['equipe','Quem aprova']];
   return `<div class="tabs">${abas.map(([t,n])=>
     `<button data-tab="${t}" class="${atual===t?'on':''}">${n}</button>`).join('')}</div>`;
@@ -12492,4 +12492,208 @@ document.addEventListener('click', async e => {
     setTimeout(()=>URL.revokeObjectURL(url), 4000);
   }catch(err){ toast('O download falhou — tente de novo.'); }
 }, true);
+</script>
+<style>
+/* =====================================================================
+   v52 — o Início vira HOJE: quem abre a Maestro vê na hora o que sai
+   hoje, de todos os clientes, o que falta e o que já está de pé.
+   ================================================================== */
+.hjCab{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:4px }
+.hjCab h1{ margin:0 }
+.hjData{ font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--brass-300) }
+.hjResumo{ display:flex; gap:10px; flex-wrap:wrap; margin:14px 0 20px }
+.hjPill{ display:flex; align-items:baseline; gap:7px; padding:9px 15px;
+  border:1px solid var(--ink-800); border-radius:12px; background:var(--ink-900) }
+.hjPill b{ font-family:var(--serif); font-size:22px; font-weight:400; color:var(--ink-50) }
+.hjPill span{ font-size:11.5px; color:var(--ink-300) }
+.hjPill.ok b{ color:var(--encore) } .hjPill.falta b{ color:#E5A54D }
+.hjCli{ margin-bottom:20px }
+.hjCliHd{ display:flex; align-items:center; gap:10px; margin-bottom:9px }
+.hjCliHd .av{ width:30px; height:30px; font-size:11px }
+.hjCliHd b{ font-family:var(--serif); font-weight:400; font-size:17px; color:var(--ink-50) }
+.hjCliHd span{ font-family:var(--mono); font-size:10px; color:var(--ink-400) }
+.hjItem{ display:flex; align-items:center; gap:11px; width:100%; text-align:left;
+  padding:11px 13px; margin-bottom:7px; border:1px solid var(--ink-800);
+  border-radius:12px; background:var(--ink-900);
+  transition:border-color var(--fast) var(--eo), transform var(--fast) var(--eo) }
+.hjItem:hover{ border-color:var(--ink-600); transform:translateY(-1px) }
+.hjItem .hora{ font-family:var(--mono); font-size:11px; color:var(--brass-300);
+  flex:0 0 auto; width:42px }
+.hjItem .t{ flex:1; min-width:0 }
+.hjItem .t b{ display:block; font-size:13.5px; color:var(--ink-50); font-weight:600;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.hjItem .t span{ font-size:11px; color:var(--ink-400) }
+.hjItem.feito{ opacity:.55 } .hjItem.feito .t b{ text-decoration:line-through }
+.hjVazio{ text-align:center; color:var(--ink-300); padding:30px;
+  border:1px dashed var(--ink-700); border-radius:14px }
+.hjBar{ height:5px; border-radius:3px; background:var(--ink-800); overflow:hidden;
+  margin:4px 0 22px }
+.hjBar i{ display:block; height:100%; border-radius:3px;
+  background:linear-gradient(90deg,var(--brass-600),var(--brass-400));
+  width:calc(var(--p,0) * 1%); transition:width .6s var(--eo) }
+.fdRede{ width:100%; display:flex; align-items:center; gap:10px; padding:13px 15px;
+  border:1px solid var(--ink-800); border-radius:13px; background:var(--ink-900);
+  margin-bottom:8px; text-align:left }
+.fdRede i{ width:10px; height:10px; border-radius:50%; font-style:normal; flex:0 0 auto }
+.fdRede b{ flex:1; font-size:14px; color:var(--ink-50); font-weight:600 }
+.fdRede span{ font-family:var(--mono); font-size:10.5px; color:var(--ink-400) }
+.fdRede .chev{ transition:transform .25s var(--eo) }
+.fdRede.aberta .chev{ transform:rotate(90deg) }
+.fdGrade{ display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr));
+  gap:8px; margin:4px 0 16px }
+.fdPost{ position:relative; aspect-ratio:4/5; border-radius:10px; overflow:hidden;
+  border:1px solid var(--ink-700); background:var(--ink-950); text-align:left }
+.fdPost img,.fdPost video{ width:100%; height:100%; object-fit:cover; display:block }
+.fdPost .semArte{ position:absolute; inset:0; display:grid; place-items:center;
+  color:var(--ink-500) }
+.fdPost .rot{ position:absolute; left:0; right:0; bottom:0; padding:14px 7px 5px;
+  background:linear-gradient(transparent, rgba(8,9,11,.88)); font-size:9px;
+  font-family:var(--mono); color:var(--ink-100); white-space:nowrap; overflow:hidden;
+  text-overflow:ellipsis }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v52 — navegação nova.
+   1. Início = HOJE, de todos os clientes. A orquestra de agosto sai.
+   2. Abas mortas saem do menu: Conteúdos, Lotes, Aprovações, Agenda e
+      Projeto (global — o de dentro do cliente fica). As rotas seguem
+      vivas por baixo; só deixam de ocupar navegação.
+   3. Feed com divisória por rede — abre uma por vez.
+   ================================================================== */
+
+/* ---------- 2. limpeza do menu -------------------------------------- */
+(function(){
+  const mortas = ['conteudos','lote','aprovacoes','agenda','projeto'];
+  for(const r of mortas){
+    let i;
+    while((i = AGNAV.findIndex(x=>x.r===r)) >= 0) AGNAV.splice(i,1);
+    while((i = AGTABS.findIndex(x=>x.r===r)) >= 0) AGTABS.splice(i,1);
+  }
+  MENU_AG.forEach(g=>{ if(g.it) g.it = g.it.filter(([r])=>!mortas.includes(r)); });
+  // o grupo "Dentro do fluxo" da agência também sai — era didático
+  const df = MENU_AG.findIndex(g=>g.g==='Dentro do fluxo');
+  if(df>=0) MENU_AG.splice(df,1);
+  // a doca sem o Aprovar ganha os Clientes no lugar
+  if(!AGTABS.some(x=>x.r==='clientes'))
+    AGTABS.splice(2,0,{r:'clientes',n:'Clientes',icn:'users'});
+  // Início agora é Hoje, em todo lugar
+  const h1 = AGNAV.find(x=>x.r==='dash'); if(h1) h1.n = 'Hoje';
+  const h2 = AGTABS.find(x=>x.r==='dash'); if(h2) h2.n = 'Hoje';
+  MENU_AG.forEach(g=>(g.it||[]).forEach(it=>{ if(it[0]==='dash') it[1]='Hoje'; }));
+})();
+
+/* ---------- 1. a tela Hoje ------------------------------------------ */
+function itensDoDia(iso){
+  const saida = [];
+  for(const c of CLIS()){
+    const doDia = (S.pautas[c.id]||[]).filter(p=>p.data===iso);
+    if(doDia.length) saida.push({cli:c, itens:doDia.sort((a,b)=>a.hora<b.hora?-1:1)});
+  }
+  return saida;
+}
+agDash = function(){
+  const hoje = hojeISO();
+  const grupos = itensDoDia(hoje);
+  const todos = grupos.flatMap(g=>g.itens);
+  const feitos = todos.filter(p=>p.feito).length;
+  const agendados = todos.filter(p=>p.st==='SCHEDULED').length;
+  const amanha = itensDoDia(somaDias(hoje,1)).flatMap(g=>g.itens).length;
+  const p100 = todos.length ? Math.round(feitos/todos.length*100) : 0;
+
+  const corpo = grupos.length ? grupos.map(g=>`
+    <div class="hjCli">
+      <div class="hjCliHd">
+        <span class="av" ${g.cli.cor?`style="background:linear-gradient(150deg,${g.cli.cor},#111);color:#fff"`:''}>${esc(g.cli.ini)}</span>
+        <b>${esc(g.cli.nome)}</b>
+        <span>${g.itens.filter(p=>p.feito).length}/${g.itens.length} feito</span>
+      </div>
+      ${g.itens.map(p=>{
+        const resp = membro(p.resp);
+        return `<button class="hjItem ${p.feito?'feito':''}" data-hjabre="${g.cli.id}:${p.id}">
+        <span class="hora">${p.hora}</span>
+        ${p.tarefa?`<span class="ptTarefaChip">tarefa</span>`:ptDots(p.plats||[])}
+        <span class="t"><b>${esc(p.t)}</b>
+          <span>${esc(p.fmt)}${p.st==='SCHEDULED'?' · agendado':''}${p.pend?' · ⚠ pendência':''}</span></span>
+        ${resp?`<span class="ptResp" title="${esc(resp.nome)}">${esc(resp.ini)}</span>`:''}
+        ${p.feito?`<span class="pill p-APPROVED">feito</span>`:`<span class="pill p-DRAFT">falta</span>`}
+      </button>`;}).join('')}
+    </div>`).join('')
+  : `<div class="hjVazio"><b style="color:var(--ink-100)">Nada sai hoje.</b><br>
+      Um dia de respiro — ou de produzir o que sai amanhã${amanha?` (${amanha} ${amanha===1?'post':'posts'})`:''}.</div>`;
+
+  return agShell(`
+  <div class="hjCab"><h1>Hoje</h1><span class="hjData">${rotuloLongo(hoje)}</span></div>
+  <p style="color:var(--ink-300);margin:0 0 14px">O que vai ao ar hoje, de todos os clientes
+    — e o que ainda falta de pé.</p>
+  <div class="hjResumo">
+    <div class="hjPill"><b>${todos.length}</b><span>${todos.length===1?'saída hoje':'saídas hoje'}</span></div>
+    <div class="hjPill ok"><b>${feitos}</b><span>feitas</span></div>
+    <div class="hjPill falta"><b>${todos.length-feitos}</b><span>faltam</span></div>
+    <div class="hjPill"><b>${agendados}</b><span>agendadas</span></div>
+    <div class="hjPill"><b>${amanha}</b><span>amanhã</span></div>
+  </div>
+  ${todos.length?`<div class="hjBar"><i style="--p:${p100}"></i></div>`:''}
+  ${corpo}`);
+};
+
+/* clicar numa saída de hoje abre o card daquele cliente */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-hjabre]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const [cli, id] = t.dataset.hjabre.split(':');
+  S.cli = cli; S.route = 'clientedet'; S.tab = 'pauta';
+  render();
+  const p = (S.pautas[cli]||[]).find(x=>x.id===+id);
+  if(p){ S.modal = modalVer(p.id); renderLayer(); }
+}, true);
+
+/* ---------- 3. o Feed com divisórias por rede ----------------------- */
+agFeed = function(){
+  const c = cliAtual();
+  const aberta = S.fdAberta || null;
+  const redes = Object.keys(PLATS).map(k=>{
+    const posts = (S.pautas[c.id]||[])
+      .filter(p=>!p.tarefa && (p.plats||[]).includes(k))
+      .sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+    if(!posts.length) return '';
+    const abertaAqui = aberta === k;
+    return `<button class="fdRede ${abertaAqui?'aberta':''}" data-fdrede="${k}">
+      <i style="background:${PLATS[k].c}"></i><b>${PLATS[k].n}</b>
+      <span>${posts.length} ${posts.length===1?'post':'posts'}</span>
+      <span class="chev">${ic('chevr',13)}</span></button>
+    ${abertaAqui?`<div class="fdGrade">${posts.slice(0,18).map(p=>{
+      const m = materiaisDe(p.id).find(x=>x.url||x.poster);
+      return `<button class="fdPost" data-ptedit="${p.id}">
+        ${m && m.tipo==='imagem' && m.url ? `<img src="${m.url}" alt="" loading="lazy">`
+        : m && m.tipo==='video' && (m.poster||m.url) ? `<video ${m.url?`src="${m.url}"`:''} ${m.poster?`poster="${m.poster}"`:''} muted playsinline preload="none"></video>`
+        : `<span class="semArte">${ic('img',18)}</span>`}
+        <span class="rot">${p.data?rotuloData(p.data):''} · ${esc(p.fmt)}</span>
+      </button>`;}).join('')}</div>`:''}`;
+  }).join('');
+  return agShell(`
+  <div class="mtop"><div><h1>Feed</h1><p>${esc(c.nome)} · por rede</p></div></div>
+  ${chips()}
+  ${redes || vazio('Sem posts ainda','Quando a pauta tiver postagens, o feed delas aparece aqui, rede por rede.')}`);
+};
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-fdrede]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  S.fdAberta = S.fdAberta === t.dataset.fdrede ? null : t.dataset.fdrede;
+  render();
+}, true);
+
+/* na visão do CLIENTE, o card abre sem o botão Editar — ele vê, não mexe */
+modalVer = (function(orig){
+  return function(id){
+    const html = orig(id);
+    if(S.view !== 'client') return html;
+    return html
+      .replace(/<button class="b pri" data-abreedit="[^"]*">[\s\S]*?<\/button>/, '')
+      .replace(/<button class="b gho" data-cplink="[^"]*">[\s\S]*?<\/button>/, '');
+  };
+})(modalVer);
 </script>
