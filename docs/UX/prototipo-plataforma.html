@@ -224,7 +224,7 @@ svg.i{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;
 .door:hover .go{gap:11px}
 
 /* =====================================================================
-   AGÊNCIA — escuro (D-047), em camadas
+   AGÊNCIA — escuro, em camadas
    ================================================================== */
 .app{display:grid;min-height:calc(100vh - 42px)}
 .app.ag{grid-template-columns:238px minmax(0,1fr);background:var(--ink-900)}
@@ -378,7 +378,7 @@ svg.i{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;
 </style>
 <style>
 /* =====================================================================
-   CLIENTE — claro e quente (D-047), celular primeiro (D-026)
+   CLIENTE — claro e quente, celular primeiro
    ================================================================== */
 .cl{--tabh:64px;--bg:#FFFFFF;--paper:#FAF8F4;--soft:#F4F1EB;--line:#E7E2D9;
   --tx:#17181C;--mut:#6E6A61;--acc:#855F22;
@@ -633,7 +633,7 @@ const LOGO = (c,s=26) => `<svg width="${s}" height="${s}" viewBox="0 0 48 48" ar
   stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 /* =====================================================================
-   SOM — a nota da marca é Lá 440 (D-020); só em ação de consequência (D-023)
+   SOM — a nota da marca é Lá 440; só em ação de consequência
    ================================================================== */
 let AC = null;
 function nota(freq, t0, dur, gain, wave){
@@ -899,7 +899,7 @@ function vSite(){ return `<div class="site">
       <div class="who"><span class="av">MR</span><div><b>Marina Reis</b><span>Produtora · Fábrica 21</span></div></div></div>
   </div>
   <p class="rv" style="margin-top:16px;font-size:11.5px;color:var(--ink-500)">Depoimentos do
-    programa piloto · número medido, nunca adjetivo (D-058).</p>
+    programa piloto · número medido, nunca adjetivo.</p>
 </div></section>
 
 <section class="ssec" id="preco"><div class="wrapc">
@@ -1146,7 +1146,7 @@ function agPeca(){
   ${p.st==='AWAITING_APPROVAL'?`<div class="check">${ic('clock')}
     <div style="flex:1"><b>Com o cliente — ainda sem decisão</b>
       <span>Mandou errado? Corrija com uma versão nova, ou recolha para rascunho.
-        Nos dois casos Helena é avisada — nada acontece em silêncio (D-025).</span>
+        Nos dois casos Helena é avisada — nada acontece em silêncio.</span>
       <div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="b pri sm" data-editpub="${p.id}">${ic('pencil')} Corrigir · nova versão</button>
         <button class="b gho sm" data-recall="${p.id}">Recolher para rascunho</button>
@@ -2052,7 +2052,7 @@ function clResultados(){ return clShell(`<div class="clbody venter">
       <i style="display:block;height:100%;width:50%;background:#C8963A"></i></div>
     <p style="font-size:12px;margin:9px 0 0">Setembro não vai custar nenhum dia seu.</p></div>
   <p style="font-size:11.5px;margin-top:14px;color:#6E6A61">Os números da conta vêm do Instagram
-    (simulados neste protótipo). O que a Maestro mede sozinha: o que foi ao ar, quando, e se saiu
+    O que a Maestro mede sozinha: o que foi ao ar, quando, e se saiu
     igual ao aprovado.</p>
 </div>`); }
 
@@ -2081,10 +2081,10 @@ function agResultados(){ return agShell(`
         <span class="tr"><i style="width:${v/4.5*100}%"></i></span>
         <span class="v">${String(v).replace('.',',')} d</span></div>`).join('')}
     <p style="font-size:12px;color:var(--ink-400);margin:10px 0 0">Isto nunca aparece para o
-      cliente — serve para melhorar a conversa, não para constranger (D-054).</p></div>
+      cliente — serve para melhorar a conversa, não para constranger.</p></div>
   <div class="card" style="margin-top:12px"><h4>De onde vêm os números</h4>
     <p>Execução (no ar, quando, igual ao aprovado) a Maestro mede sozinha. Métrica de conta vem
-      da integração Meta — e sai por webhook para o relatório do especialista (D-062).</p></div>`); }
+      da integração Meta —.</p></div>`); }
 
 /* ---------- criação: cliente, projeto, campanha ----------------------- */
 const CORES=['#4A6C52','#3D5A6C','#6C4A5A','#6C5A3C','#44506C','#8B5E3C'];
@@ -2141,7 +2141,7 @@ function modalNovoProjeto(){
     </select>
     <p class="fhint">A metodologia gera fases, trilhas, entregáveis e os dias de agenda do
       cliente. <b style="color:var(--ink-200)">Nada é criado sem revisão</b>: o cronograma abre
-      editável antes de existir (D-038).</p></div>
+      editável antes de existir.</p></div>
   <div class="modalrow" style="margin-top:16px">
     <button class="b gho" data-modalno="1">Voltar</button>
     <button class="b pri" data-createproj="1">Revisar cronograma e criar</button></div>
@@ -2158,7 +2158,7 @@ function modalNovaCampanha(){ return `<div class="modal"><div class="modalbox wi
   <div class="fld"><label for="cp-conceito">Conceito — o que esta campanha quer dizer</label>
     <textarea id="cp-conceito" placeholder="A ideia central, o tom, o que não pode faltar…"></textarea></div>
   <p class="fhint">O cliente nunca vê a palavra "campanha" — ele continua recebendo
-    <b style="color:var(--ink-200)">um lote por mês</b>, com as peças de todas as trilhas juntas (D-040).</p>
+    <b style="color:var(--ink-200)">um lote por mês</b>, com as peças de todas as trilhas juntas.</p>
   <div class="modalrow" style="margin-top:16px">
     <button class="b gho" data-modalno="1">Voltar</button>
     <button class="b pri" data-createcamp="1">Criar campanha</button></div>
@@ -2394,7 +2394,7 @@ document.addEventListener('click', e => {
       el.style.borderColor='var(--danger)'; el.focus(); return; }
     S.modal=null; som('toque'); S.view='agency'; S.route='projeto'; S.tab='cronograma'; render();
     toast(`Projeto "${nome}" criado para ${cli}. O cronograma abre para revisão antes de gerar
-      as datas — no protótipo, o exemplo é o Verão 26.`);
+      as datas.`);
     return; }
   if(d.createcamp){
     const nome=v('cp-nome')||'Nova campanha';
@@ -2639,7 +2639,7 @@ function agClienteDet(){
       <span>${c.id==='n'?'convide quem aprova':'aprovadora · acesso por link, sem senha'}</span></span>
       <span class="pill p-DRAFT">Aprovador · grátis</span></div>
       <div class="card" style="margin-top:12px"><h4>O aprovador nunca conta como assento</h4>
-      <p>Acesso completo e gratuito, em qualquer plano (D-060).</p></div>`
+      <p>Acesso completo e gratuito, em qualquer plano.</p></div>`
   }[tab];
   return agShell(`
   <div class="mtop"><div>
@@ -2713,7 +2713,7 @@ function modalCrono(){
   return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
     <h3>Editar cronograma</h3>
     <p>${esc(pj.nome)} · ${esc(c.nome)}. Nada muda sem esta revisão — o template é ponto de
-      partida, nunca contrato (D-038).</p>
+      partida, nunca contrato.</p>
     ${pj.fases.map((f,i)=>`<div class="frow" style="grid-template-columns:2fr 1fr 1fr;margin-bottom:10px">
       <div class="fld" style="margin:0"><label>Fase ${i+1}</label>
         <input id="cr-n-${i}" value="${esc(f.n)}"></div>
@@ -2721,7 +2721,7 @@ function modalCrono(){
         <input id="cr-d-${i}" value="${f.dias}" inputmode="numeric"></div>
       <div class="fld" style="margin:0"><label>Agenda do cliente</label>
         <input id="cr-a-${i}" value="${f.ag}" inputmode="numeric"></div></div>`).join('')}
-    <p class="fhint">Dias de agenda somam no topo e viram pedido de agenda quando a fase começa (D-037).</p>
+    <p class="fhint">Dias de agenda somam no topo e viram pedido de agenda quando a fase começa.</p>
     <div class="modalrow" style="margin-top:14px">
       <button class="b gho" data-modalno="1">Cancelar</button>
       <button class="b pri" data-savecrono="1">Salvar cronograma</button></div>
@@ -2734,7 +2734,7 @@ function soLojaNorte(oQue){
   if(c.id==='ln') return null;
   const msg = c.id==='cj'
     ? `Cortez está no lote de texto: a copy precisa ser aprovada e congelada antes de qualquer arte
-       (D-042). ${oQue} aparece quando a produção começar.`
+. ${oQue} aparece quando a produção começar.`
     : `${esc(c.nome)} acabou de chegar. ${oQue} aparece quando o primeiro conteúdo for criado.`;
   return vazio('Ainda nada por aqui', msg);
 }
@@ -2797,7 +2797,7 @@ function agResultados(){
       .map(([n,v])=>`<div class="tempo"><span style="color:var(--ink-300)">${n}</span>
         <span class="tr"><i style="width:${v/4.5*100}%"></i></span>
         <span class="v">${String(v).replace('.',',')} d</span></div>`).join('')}
-    <p style="font-size:12px;color:var(--ink-400);margin:10px 0 0">Nunca aparece para o cliente (D-054).</p></div>`);
+    <p style="font-size:12px;color:var(--ink-400);margin:10px 0 0">Nunca aparece para o cliente.</p></div>`);
 }
 
 function agLote(){
@@ -2923,8 +2923,8 @@ function agPlanos(){
     ${cartao('ORQUESTRA',['Integrações e webhooks','Suporte prioritário'])}
   </div>
   <div class="card" style="margin-top:16px"><h4>A regra que não muda</h4>
-    <p>Estourar o limite nunca desliga o que já roda — bloqueia só a criação do próximo (D-059).
-      E nada do lado do cliente é limitado, em plano nenhum (D-060).</p></div>`);
+    <p>Estourar o limite nunca desliga o que já roda — bloqueia só a criação do próximo.
+      E nada do lado do cliente é limitado, em plano nenhum.</p></div>`);
 }
 
 function agEquipe(){
@@ -2948,7 +2948,7 @@ function agEquipe(){
     </div></div>`).join('')}
   <div class="card"><h4>Uma regra acima de todas</h4>
     <p><b style="color:var(--ink-50)">Ninguém da agência aprova conteúdo — nem o dono.</b>
-      Quem aprova é o cliente. A única exceção é o registro offline, sempre marcado e auditado (D-029).</p></div>
+      Quem aprova é o cliente. A única exceção é o registro offline, sempre marcado e auditado.</p></div>
   ${usados>=lim?`<div class="check warn" style="margin-top:12px">${ic('warn')}
     <div><b>Assentos esgotados (${usados}/${lim})</b><span>Convidar mais alguém pede um plano maior.
       O que já roda continua funcionando.</span></div></div>
@@ -2960,7 +2960,7 @@ function modalInvite(){
   if(usados>=lim) return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
     <h3>Assentos esgotados</h3>
     <p>Seu plano ${plano().nome} tem ${lim} assentos e todos estão em uso. O que já roda continua
-      funcionando — só a criação do próximo é bloqueada (D-059).</p>
+      funcionando — só a criação do próximo é bloqueada.</p>
     <div class="modalrow"><button class="b gho" data-modalno="1">Voltar</button>
       <button class="b pri" data-modalno="1" data-r="planos">Ver planos</button></div></div></div>`;
   return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
@@ -3124,7 +3124,7 @@ function clTermoTexto(){ return clShell(`<div class="clbody venter">
     <div class="bar"><i style="width:100%"></i></div></div>
   <div class="kick">Verão 26 · Lote de texto · Setembro</div>
   <h2>Textos decididos</h2>
-  <p>Assinar congela a copy e os roteiros — e libera a produção (D-042).</p>
+  <p>Assinar congela a copy e os roteiros — e libera a produção.</p>
   <div class="termo">
     <div style="font-family:var(--serif);font-size:18px;margin-bottom:3px">Termo do lote de texto</div>
     <div style="font-size:11.5px;color:#6E6A61">Loja Norte · Verão 26 · Setembro</div>
@@ -3236,7 +3236,7 @@ document.addEventListener('click', e => {
     S.modal=`<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
       <h3>Mudar para ${p.nome}?</h3>
       <p>R$ ${p.preco}/mês · ${p.assentos} assentos · ${p.projetos} projetos ativos.
-        No protótipo não há cobrança — o plano muda na hora.</p>
+        O plano muda na hora.</p>
       <div class="modalrow"><button class="b gho" data-modalno="1">Voltar</button>
         <button class="b pri" data-kbmove="__plan|${d.upgrade}">Confirmar</button></div></div></div>`;
     renderLayer(); return; }
@@ -3363,7 +3363,7 @@ function agConta(){
       <div class="l">de ${pl.projetos} projetos ativos</div></button></div>
   ${assentosUsados()>=pl.assentos?`<div class="check warn">${ic('warn')}
     <div><b>Assentos esgotados</b><span>Convidar mais alguém pede plano maior. O que roda continua
-      rodando (D-059).</span></div></div>
+      rodando.</span></div></div>
     <div style="margin:10px 0 18px"><button class="b pri sm" data-r="planos">Fazer upgrade</button></div>`:''}
   <div class="sechd">Atalhos <i></i></div>
   <button class="row" data-r="equipe" style="width:100%"><span class="av">${ic('users',13)}</span>
@@ -3373,7 +3373,7 @@ function agConta(){
     <span class="t"><b>Planos e upgrade</b><span>hoje: ${pl.nome}</span></span>
     <span class="chev">${ic('chevr')}</span></button>
   <div class="card" style="margin-top:14px"><h4>O aprovador do cliente é grátis</h4>
-    <p>Helena e a Dra. Ana têm tudo — e não consomem assento em plano nenhum (D-060).</p></div>`);
+    <p>Helena e a Dra. Ana têm tudo — e não consomem assento em plano nenhum.</p></div>`);
 }
 </script>
 <style>
@@ -3626,13 +3626,13 @@ function agAgenda(){
     <span style="flex:1;min-width:200px"><b style="color:var(--ink-50);font-size:13.5px">Agendamento automático</b>
       <span style="display:block;font-size:12px;color:var(--ink-400)">Ao assinar o termo, as aprovadas
       entram na fila com a data e o horário do planejamento. Desligado por padrão no produto —
-      a Loja Norte optou por ligar (D-045).</span></span></div>
+      a Loja Norte optou por ligar.</span></span></div>
   ${!S.autoAg&&aprovadas2?`<div style="margin:-6px 0 16px"><button class="b pri sm" data-confag="1">
     Confirmar ${aprovadas2} agendamento${aprovadas2>1?'s':''} com um clique</button></div>`:''}
   <div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
     <div class="tile"><div class="n">${agendadas}</div><div class="l">agendadas</div></div>
     <div class="tile"><div class="n">${S.pecas.filter(p=>p.st==='CHANGES_REQUESTED').length}</div>
-      <div class="l">aguardando peça (D-022)</div></div>
+      <div class="l">aguardando peça</div></div>
     <div class="tile hot"><div class="n">${nBoost}</div><div class="l">impulsionadas</div></div>
     <div class="tile"><div class="n">R$ ${invest}</div><div class="l">em tráfego este mês</div></div></div>
   <div style="max-width:420px">${mesSwitch(false)}${calAgosto(true)}
@@ -3645,7 +3645,7 @@ function agAgenda(){
   ${pecasDoDia(sel).map(p=>itemAgenda(p,true)).join('')||'<p style="color:var(--ink-400);font-size:13px">Nada neste dia.</p>'}
   <div class="card" style="margin-top:14px"><h4>De onde vêm data e hora</h4>
     <p>Do calendário do planejamento — aprovadas no lote junto com a peça. Montar a publicação é
-      operação exata, sem IA no caminho (D-045). A publicação real entra com a integração Meta.</p></div>`);
+      operação exata, sem IA no caminho. A publicação real entra com a integração Meta.</p></div>`);
 }
 
 function modalBoost(pid){
@@ -3661,7 +3661,7 @@ function modalBoost(pid){
       <div class="fld"><label for="bo-dias">Duração (dias)</label>
         <input id="bo-dias" inputmode="numeric" value="${b.dias||7}"></div></div>
     <p class="fhint">O cliente vê que a publicação é impulsionada; os valores, só se você optar
-      por mostrar (D-070).</p>
+      por mostrar.</p>
     <div class="modalrow" style="margin-top:14px">
       ${b.orc?`<button class="b gho" data-boostoff="${pid}">Remover impulso</button>`:`<button class="b gho" data-modalno="1">Cancelar</button>`}
       <button class="b pri" data-boostok="${pid}">Salvar</button></div></div></div>`;
@@ -3712,7 +3712,7 @@ function modalNovaPub(){
       <div class="fld"><label for="pb-t">Título</label>
         <input id="pb-t" placeholder="Ex.: Volta às aulas"></div>
       <div class="fld"><label for="pb-i">O que esta publicação busca</label>
-        <input id="pb-i" placeholder="Obrigatório — sem isso o cliente julga por gosto (D-048)"></div>
+        <input id="pb-i" placeholder="Obrigatório — sem isso o cliente julga por gosto"></div>
     </div>
     <div class="frow">
       <div class="fld"><label for="pb-plat">Plataforma</label><select id="pb-plat">
@@ -3733,7 +3733,7 @@ function modalNovaPub(){
       <div class="artpick">${['a1','a2','a3','a4','a5','a6'].map(k=>
         `<button class="${S.novaArt===k?'on':''}" data-artpick="${k}"
           style="background:${A[k]}" aria-label="arte ${k}"></button>`).join('')}</div>
-      <p class="fhint">No produto, a arte entra por upload, Google Drive ou Canva (D-055).
+      <p class="fhint">No produto, a arte entra por upload, Google Drive ou Canva.
         Aqui, escolha um arquivo da biblioteca.</p></div>
     <div class="modalrow" style="margin-top:14px">
       <button class="b gho" data-modalno="1">Cancelar</button>
@@ -3785,7 +3785,7 @@ function modalNovoTexto(){
   return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
     <h3>Novo texto para aprovação</h3>
     <p>O texto decide antes da produção — aprovado e congelado, ele vira o contrato da peça
-      final (D-042).</p>
+      final.</p>
     <div class="frow">
       <div class="fld"><label for="tx-t">Título</label>
         <input id="tx-t" placeholder="Ex.: Dona Rosa · parte 3"></div>
@@ -3793,7 +3793,7 @@ function modalNovoTexto(){
         <option>Legenda</option><option>Roteiro</option></select></div>
     </div>
     <div class="fld"><label for="tx-i">O que este texto busca</label>
-      <input id="tx-i" placeholder="Obrigatório — o cliente decide contra isto (D-048)"></div>
+      <input id="tx-i" placeholder="Obrigatório — o cliente decide contra isto"></div>
     <div id="bloco-leg">
       <div class="fld"><label for="tx-c">Legenda completa</label>
         <textarea id="tx-c" placeholder="O texto inteiro que o cliente vai ler, editar e aprovar."></textarea></div>
@@ -3807,7 +3807,7 @@ function modalNovoTexto(){
         <input id="tx-ch" placeholder='Ex.: "O link está na bio."'></div>
     </div>
     <p class="fhint">Vai para o <b style="color:var(--ink-200)">Lote de texto</b> — o cliente
-      aprova a palavra antes de a produção custar um dia de agenda dele (D-037, D-051).</p>
+      aprova a palavra antes de a produção custar um dia de agenda dele.</p>
     <div class="modalrow" style="margin-top:14px">
       <button class="b gho" data-modalno="1">Cancelar</button>
       <button class="b gho" data-createtx="1">Só criar rascunho</button>
@@ -3860,7 +3860,7 @@ document.addEventListener('click', e => {
 "use strict";
 /* =====================================================================
    v9 — a orquestra de verdade: violino com arco e vibrato, tímpano,
-   e a cadência final. Tudo na escala de Lá (D-020).
+   e a cadência final. Tudo na escala de Lá.
    ================================================================== */
 function violino(freq, t0, dur, gain){
   const t = AC.currentTime + t0;
@@ -4018,7 +4018,7 @@ function modalEditPub(id){
   const p2 = S.pecas.find(x=>x.id===id); if(!p2) return '';
   return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
     <h3>Corrigir "${esc(p2.t)}"</h3>
-    <p>Toda correção é uma versão nova — o selo muda junto (D-007, D-032).</p>
+    <p>Toda correção é uma versão nova — o selo muda junto.</p>
     <div class="frow">
       <div class="fld"><label for="ed-t">Título</label><input id="ed-t" value="${esc(p2.t)}"></div>
       <div class="fld"><label for="ed-i">O que busca</label><input id="ed-i" value="${esc(p2.i)}"></div>
@@ -4081,7 +4081,7 @@ document.addEventListener('click', e => {
 <script>
 "use strict";
 /* =====================================================================
-   v13 — o processo único: um card, duas passagens (D-042).
+   v13 — o processo único: um card, duas passagens.
    texto aprovado → o MESMO card volta pedindo material → final → agenda.
    ================================================================== */
 const MOODS=['Calmo e íntimo','Nostálgico quente','Didático leve','Energético','Bastidor honesto'];
@@ -4208,7 +4208,7 @@ function modalNovaPeca(){
     <div class="frow">
       <div class="fld"><label for="pc-t">Título</label><input id="pc-t" placeholder="Ex.: Dona Rosa · parte 3"></div>
       <div class="fld"><label for="pc-i">Objetivo — o que esta peça busca</label>
-        <input id="pc-i" placeholder="Obrigatório (D-048)"></div>
+        <input id="pc-i" placeholder="Obrigatório"></div>
     </div>
     <div class="frow">
       <div class="fld"><label for="pc-mood">Mood da peça</label>
@@ -4264,7 +4264,7 @@ function modalUpMat(id){
     <div class="fld"><label>Arte final</label>
       <div class="artpick">${['a1','a2','a3','a4','a5','a6'].map(k=>
         `<button data-artpick2="${k}" style="background:${A[k]}" aria-label="arte"></button>`).join('')}</div>
-      <p class="fhint">No produto: upload, Drive ou Canva (D-055).</p></div>
+      <p class="fhint">No produto: upload, Drive ou Canva.</p></div>
     <div class="frow" style="grid-template-columns:1fr 1fr 1fr">
       <div class="fld"><label for="um-mes">Mês</label><select id="um-mes">
         <option value="8" ${p2.mes===8?'selected':''}>agosto</option>
@@ -4368,7 +4368,7 @@ function custoDaEdicao(p){
     s:'Salvar derruba a aprovação e devolve o texto para Helena, com o selo novo.'};
   if(p.st==='AWAITING_APPROVAL') return {cls:'check',
     t:'Está com o cliente agora',
-    s:'Salvar gera versão nova e Helena vê a atualização — nada acontece em silêncio (D-025).'};
+    s:'Salvar gera versão nova e Helena vê a atualização — nada acontece em silêncio.'};
   if(p.st==='CHANGES_REQUESTED') return {cls:'check',
     t:'Helena pediu alterações',
     s:'Salvar responde o pedido com uma versão nova e devolve a decisão para ela.'};
@@ -4382,7 +4382,7 @@ function modalEditTexto(id){
   const c = custoDaEdicao(p);
   return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
     <h3>Editar o texto · "${esc(p.t)}"</h3>
-    <p>É o texto que o cliente aprova antes de existir qualquer arte (D-042).
+    <p>É o texto que o cliente aprova antes de existir qualquer arte.
       Toda correção é uma versão nova e muda o selo.</p>
     <div class="frow">
       <div class="fld"><label for="tx-t">Título</label><input id="tx-t" value="${esc(p.t)}"></div>
@@ -4430,7 +4430,7 @@ function modalCancelPeca(id){
     ${b?`<div class="check warn">${ic('zap')}<div><b>Esta peça tem impulso ativo</b>
       <span>R$ ${b.orc} · ${b.dias} dias. Cancelar a peça remove o impulso junto.</span></div></div>`:''}
     ${p.fase==='PRODUCAO'?`<div class="check warn">${ic('warn')}<div><b>O texto já foi aprovado e congelado</b>
-      <span>Cancelar aqui joga fora um aceite que já custou tempo de agenda do cliente (D-037).</span></div></div>`:''}
+      <span>Cancelar aqui joga fora um aceite que já custou tempo de agenda do cliente.</span></div></div>`:''}
     <div class="fld"><label for="cx-mot">Motivo — fica no histórico</label>
       <input id="cx-mot" placeholder="Ex.: o cliente desistiu da ação"></div>
     <div class="modalrow"><button class="b gho" data-modalno="1">Voltar</button>
@@ -4857,7 +4857,7 @@ function timpano(freq, t0, gain){
 }
 
 /* ---------------------------------------------------------------------
-   As notas. Mesma escala de La (D-020), uma oitava abaixo:
+   As notas. Mesma escala de La, uma oitava abaixo:
    A4 440 -> A3 220 · C#5 554 -> C#4 277 · E5 659 -> E4 330 · A5 880 -> A4 440
    ------------------------------------------------------------------ */
 const LA3 = 220, CS4 = 277.18, MI4 = 329.63, LA4 = 440;
@@ -5614,7 +5614,7 @@ function provaSocial(){
     Estes nomes, números e depoimentos são <b style="color:var(--ink-300)">exemplos de
     demonstração</b> — o programa piloto ainda não começou. Serão substituídos por
     depoimentos reais, com autorização, antes de qualquer publicação comercial.
-    Número medido, nunca adjetivo (D-058).</p>
+    Número medido, nunca adjetivo.</p>
 </div></section>`;
 }
 
@@ -5675,7 +5675,7 @@ vSite = function(){
       repeticao vira metralhadora.
    6. LIMITADOR. Para nada estourar e tudo soar controlado.
 
-   A escala de La (D-020) e o registro grave (D-072) continuam.
+   A escala de La e o registro grave continuam.
    ================================================================== */
 
 let BUS2 = null, SALA2 = null, RUIDO = null;
@@ -7700,9 +7700,7 @@ function modalMaterial(id){
       </div>`).join('')}</div>`
       : `<p class="mtAviso">Nenhum arquivo ainda.</p>`}
 
-    <p class="mtAviso">${ic('warn',12)} No protótipo os arquivos ficam só nesta aba —
-      nada é enviado para servidor e eles somem ao recarregar. No produto vão para o
-      armazenamento da agência, com versão e selo (D-032).</p>
+    <p class="mtAviso">${ic('warn',12)} Arquivos de até 50MB. Maior que isso, use um link.</p>
 
     <div class="modalrow" style="margin-top:14px">
       <button class="b gho" data-modalno="1">Fechar</button>
@@ -8454,7 +8452,7 @@ mnAtualizar = function(nav, tipo){
 };
 
 /* o som da escala voltou — cada aba tem a sua nota, no motor de barra
-   percutida (D-020, D-072). No lote de aprovar a nota e a mesma do
+   percutida. No lote de aprovar a nota e a mesma do
    'toque', para nao competir com o som da decisao. */
 document.addEventListener('click', e => {
   const b = e.target.closest('.mnAbas > *');
@@ -9823,8 +9821,7 @@ function modalRefs(id){
     </div>`).join('')}</div>`
       : `<p class="mtAviso" style="margin-top:11px">Nenhuma referência ainda.</p>`}
 
-    <p class="mtAviso">${ic('warn',12)} No protótipo os arquivos ficam só nesta aba —
-      no produto vão para o armazenamento da agência, com versão e histórico.</p>
+    <p class="mtAviso">${ic('warn',12)} Arquivos de até 50MB. Maior que isso, use um link.</p>
 
     <div class="modalrow" style="margin-top:14px">
       <button class="b gho" data-modalno="1">Fechar</button>
@@ -11623,4 +11620,72 @@ tiraMaterial = (function(orig){
     return html;
   };
 })(tiraMaterial);
+</script>
+<style>
+/* =====================================================================
+   v49 — a doca repensada.
+
+   O founder: "toda bugada no desktop e atrapalhando muito no mobile,
+   fica na frente e no celular já é pequeno". Dois diagnósticos:
+
+   1. No desktop a doca era REDUNDANTE — a lateral já navega tudo.
+      Navegação duplicada não é ajuda, é ruído. Some.
+   2. No celular ela flutuava como pílula de vidro translúcida com uma
+      bolha saltando por cima do conteúdo. Bonita parada, ilegível em
+      uso: o conteúdo vazava por trás e a bolha cobria texto. Vira uma
+      barra sólida, fina, ancorada — o conteúdo NUNCA fica atrás dela
+      (o chão já é medido via --mnAltura e continua valendo).
+   ================================================================== */
+
+/* desktop, lado agência: a lateral navega — a doca sai de cena */
+@media(min-width:861px){
+  nav.tabbar.mnFixa{ display:none !important }
+}
+
+/* a barra sólida — nos dois lados (agência escura, cliente clara) */
+.mnBarra{ max-width:none; height:54px; margin:0; filter:none }
+.mnPalco{ padding:0 4px calc(2px + env(safe-area-inset-bottom)) }
+.mnSvg, .mnGlow{ display:none }
+nav.tabbar.mnFixa{ background:rgba(10,11,14,.92) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(140%) !important;
+  backdrop-filter:blur(18px) saturate(140%) !important;
+  border-top:1px solid var(--ink-800) !important }
+nav.cltab.mnFixa{ background:rgba(255,255,255,.94) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(140%) !important;
+  backdrop-filter:blur(18px) saturate(140%) !important;
+  border-top:1px solid rgba(23,24,28,.1) !important;
+  max-width:none; width:100%; left:0; transform:none }
+
+/* a bolha saltante sai; o ícone ativo volta a aparecer no lugar dele */
+.mnBolha{ display:none !important }
+.tabbar.mn .tab.ativa svg.i, .cltab.mn button.ativa svg.i{ opacity:1 }
+.tabbar.mn .tab.ativa .bd, .cltab.mn button.ativa .bd{ display:block }
+
+/* o item ativo: traço de latão em cima, sem cobrir nada */
+.mnAbas{ inset:0 6px }
+.tabbar.mn .tab, .cltab.mn button{ position:relative }
+.tabbar.mn .tab.ativa::before, .cltab.mn button.ativa::before{
+  content:''; position:absolute; top:-2px; left:50%; transform:translateX(-50%);
+  width:22px; height:3px; border-radius:0 0 3px 3px; background:var(--brass-500) }
+.cltab.mn button.ativa::before{ background:#A87A2C }
+</style>
+<script>
+"use strict";
+/* v49 — com a bolha fora, a altura medida muda; mede de novo já */
+if(typeof mnMedirAltura === 'function') setTimeout(mnMedirAltura, 60);
+</script>
+<script>
+"use strict";
+/* v49b — a medição da altura sem contar a bolha (que não existe mais).
+   Com a bolha em display:none o retângulo dela é zero e a conta antiga
+   somava a distância até o TOPO DA TELA — 812px de chão. */
+mnMedirAltura = function(){
+  const nav = [...document.querySelectorAll('.tabbar, .cltab')]
+    .find(n => getComputedStyle(n).display !== 'none');
+  const h = nav ? Math.ceil(nav.getBoundingClientRect().height) : 0;
+  const atual = parseInt(document.documentElement.style.getPropertyValue('--mnAltura')) || 0;
+  if(Math.abs(atual - h) > 1)
+    document.documentElement.style.setProperty('--mnAltura', h + 'px');
+};
+mnMedirAltura();
 </script>

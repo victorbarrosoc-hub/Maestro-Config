@@ -1,0 +1,326 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Três Gestos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* =====================================================================
+   Três Gestos — exploração de logo v2 da Maestro
+   Mundo único e assumido: o MIV da própria marca (ink + latão).
+   ================================================================== */
+:root{
+  --ink-950:#08090B; --ink-900:#0D0F12; --ink-850:#121418; --ink-800:#181B20;
+  --ink-700:#23272E; --ink-600:#333941; --ink-400:#6B7280; --ink-300:#9AA1AC;
+  --ink-100:#E3E6EA; --ink-50:#F4F6F8;
+  --brass-300:#E3C173; --brass-500:#C8963A; --brass-700:#855F22;
+  --serif:'Instrument Serif',Georgia,serif;
+  --sans:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--ink-950);color:var(--ink-100);
+  font-family:var(--sans);font-size:15px;line-height:1.65;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:0 28px}
+
+/* ---------- abertura ---------- */
+header{padding:88px 0 56px;border-bottom:1px solid var(--ink-800)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--brass-500);margin:0 0 18px}
+header h1{font-family:var(--serif);font-weight:400;font-size:clamp(44px,7.5vw,84px);
+  line-height:1.02;margin:0 0 22px;color:var(--ink-50);text-wrap:balance}
+header h1 em{font-style:italic;color:var(--brass-300)}
+.lede{max-width:58ch;color:var(--ink-300);font-size:16.5px;margin:0}
+.lede b{color:var(--ink-100);font-weight:500}
+.regras{display:flex;gap:26px;flex-wrap:wrap;margin-top:34px}
+.regras span{font-family:var(--mono);font-size:11.5px;color:var(--ink-400)}
+.regras b{color:var(--ink-300);font-weight:500}
+
+/* ---------- prancha de opção ---------- */
+section{padding:72px 0 64px;border-bottom:1px solid var(--ink-800)}
+.cab{display:flex;align-items:baseline;gap:20px;margin-bottom:8px}
+.num{font-family:var(--serif);font-style:italic;font-size:clamp(58px,9vw,110px);
+  line-height:1;color:var(--ink-700)}
+.cab h2{font-family:var(--serif);font-weight:400;font-size:clamp(30px,4.5vw,46px);
+  margin:0;color:var(--ink-50)}
+.frase{font-family:var(--mono);font-size:12px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--brass-500);margin:0 0 34px}
+
+.palco{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);
+  gap:40px;align-items:center}
+@media(max-width:760px){.palco{grid-template-columns:1fr}}
+.simbolo{background:var(--ink-900);border:1px solid var(--ink-800);
+  border-radius:18px;display:grid;place-items:center;
+  aspect-ratio:1.15;padding:8%}
+.simbolo svg{width:100%;height:auto;max-height:100%}
+.conceito p{color:var(--ink-300);margin:0 0 16px;max-width:52ch}
+.conceito p b{color:var(--ink-100);font-weight:500}
+.conceito .assina{font-family:var(--serif);font-size:21px;color:var(--brass-300);
+  font-style:italic;margin-top:22px}
+
+/* ---------- aplicações ---------- */
+.aplic{margin-top:46px}
+.aplic h3{font-family:var(--mono);font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-400);font-weight:500;margin:0 0 20px}
+.linhaAp{display:flex;gap:18px;flex-wrap:wrap;align-items:stretch}
+.ap{background:var(--ink-900);border:1px solid var(--ink-800);border-radius:14px;
+  padding:18px;display:flex;flex-direction:column;gap:14px;align-items:center;
+  justify-content:center}
+.ap small{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-400)}
+
+.icone{width:92px;height:92px;border-radius:22px;background:var(--ink-950);
+  border:1px solid var(--ink-700);display:grid;place-items:center;padding:18px}
+.icone svg{width:100%;height:100%}
+.avatarr{width:76px;height:76px;border-radius:50%;
+  background:linear-gradient(150deg,var(--brass-500),var(--brass-700));
+  display:grid;place-items:center;padding:16px}
+.avatarr svg{width:100%;height:100%}
+.tamanhos{display:flex;align-items:flex-end;gap:14px}
+.tamanhos i{display:grid;place-items:center;font-style:normal}
+.tamanhos svg{display:block}
+.cartao{width:300px;max-width:100%;aspect-ratio:1.72;border-radius:12px;
+  background:linear-gradient(155deg,var(--ink-900),var(--ink-950) 70%);
+  border:1px solid var(--ink-700);position:relative;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:space-between;padding:18px}
+.cartao .mini{width:44px}
+.cartao .quem{display:flex;justify-content:space-between;align-items:flex-end}
+.cartao .quem b{font-family:var(--serif);font-weight:400;font-size:19px;
+  color:var(--ink-50);letter-spacing:.2px}
+.cartao .quem span{font-family:var(--mono);font-size:8px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--brass-500);text-align:right;line-height:1.7}
+.cartao::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--brass-500),transparent)}
+.telefone{width:170px;aspect-ratio:9/18.5;border-radius:22px;background:var(--ink-950);
+  border:1px solid var(--ink-700);display:grid;place-items:center;position:relative;
+  overflow:hidden}
+.telefone .m{width:64px}
+.telefone .nome{position:absolute;bottom:26px;left:0;right:0;text-align:center;
+  font-family:var(--serif);font-size:16px;color:var(--ink-100);letter-spacing:.4px}
+.telefone::before{content:'';position:absolute;top:10px;left:50%;width:52px;height:5px;
+  border-radius:3px;background:var(--ink-800);transform:translateX(-50%)}
+
+/* ---------- veredito ---------- */
+.veredito{padding:76px 0 100px}
+.veredito h2{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4vw,40px);
+  color:var(--ink-50);margin:0 0 20px}
+.veredito p{color:var(--ink-300);max-width:60ch}
+.veredito p b{color:var(--brass-300);font-weight:500}
+.como{margin-top:30px;padding:20px 24px;border:1px solid var(--ink-700);
+  border-radius:14px;background:var(--ink-900);
+  font-family:var(--mono);font-size:13px;color:var(--ink-100)}
+.como b{color:var(--brass-300)}
+
+/* ---------- animações ---------- */
+.tr line, .tr path{stroke-dasharray:var(--len,600);stroke-dashoffset:var(--len,600)}
+.viva .tr line, .viva .tr path{animation:traca 1.1s var(--d,0s) cubic-bezier(.6,0,.2,1) forwards}
+@keyframes traca{to{stroke-dashoffset:0}}
+.cresce line{transform:scaleY(0);transform-origin:center bottom}
+.viva .cresce line{animation:sobe .7s var(--d,0s) cubic-bezier(.34,1.3,.5,1) forwards}
+@keyframes sobe{to{transform:scaleY(1)}}
+.pulsa line{transform:scaleY(0);transform-origin:center center}
+.viva .pulsa line{animation:sobe .7s var(--d,0s) cubic-bezier(.34,1.3,.5,1) forwards}
+@media(prefers-reduced-motion:reduce){
+  .tr line,.tr path{stroke-dasharray:none;stroke-dashoffset:0;animation:none!important}
+  .cresce line,.pulsa line{transform:none;animation:none!important}
+}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Maestro · Exploração de símbolo · v2</p>
+  <h1>Três gestos para<br>a mesma <em>música</em>.</h1>
+  <p class="lede">O branding fica — cores, tipografia, conceito, tom. O que muda é o
+    <b>símbolo</b>: três caminhos construídos com linhas, na direção das referências.
+    Cada um vem aplicado em ícone de app, abertura, cartão e avatar, testado em
+    tamanho pequeno. No fim, a recomendação.</p>
+  <div class="regras">
+    <span><b>Preciso</b> — geometria construída</span>
+    <span><b>Calmo</b> — pouco elemento, muito espaço</span>
+    <span><b>Quente</b> — o latão contra o ink</span>
+  </div>
+</header>
+
+<!-- ================= OPÇÃO 1 ================= -->
+<section id="op1">
+  <div class="cab"><span class="num">1</span><h2>A Pauta</h2></div>
+  <p class="frase">As linhas da pauta tomam a forma do M</p>
+  <div class="palco">
+    <div class="simbolo" id="s1"></div>
+    <div class="conceito">
+      <p>Em português, <b>pauta</b> é as duas coisas ao mesmo tempo: as cinco linhas
+        onde a música é escrita — e o calendário editorial, que é o coração da
+        plataforma. Nenhuma outra palavra da marca carrega os dois mundos assim.</p>
+      <p>O símbolo é esse trocadilho tornado forma: as linhas da pauta, empilhadas,
+        erguem-se juntas e desenham o M. Nada é ilustrado — o M <b>acontece</b>
+        quando as linhas se movem em conjunto, que é exatamente o que um maestro faz
+        com uma orquestra.</p>
+      <p class="assina">"A pauta toma forma."</p>
+    </div>
+  </div>
+  <div class="aplic"><h3>Aplicações</h3>
+    <div class="linhaAp">
+      <div class="ap"><div class="icone" id="s1-icone"></div><small>Ícone de app</small></div>
+      <div class="ap"><div class="telefone"><div class="m" id="s1-splash"></div>
+        <div class="nome">Maestro</div></div><small>Abertura</small></div>
+      <div class="ap"><div class="cartao"><div class="mini" id="s1-cartao"></div>
+        <div class="quem"><b>Maestro</b><span>The Operating System<br>for Creative Operations</span></div>
+      </div><small>Cartão</small></div>
+      <div class="ap"><div class="avatarr" id="s1-av"></div><small>Avatar</small></div>
+      <div class="ap"><div class="tamanhos" id="s1-tam"></div><small>16 · 24 · 32 px</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= OPÇÃO 2 ================= -->
+<section id="op2">
+  <div class="cab"><span class="num">2</span><h2>O Compasso</h2></div>
+  <p class="frase">O M como equalizador — o vale é a batida</p>
+  <div class="palco">
+    <div class="simbolo" id="s2"></div>
+    <div class="conceito">
+      <p>Nove barras verticais, terminadas em curva, cujos topos desenham a
+        silhueta do M. É a linguagem de <b>equalizador</b> — a mais reconhecível do
+        mundo do som — posta a serviço da letra.</p>
+      <p>A barra central é a mais curta de propósito: é o <b>vale da regência</b>,
+        a batida descendente que já era o coração do símbolo atual. O conceito não
+        muda — muda o corpo. É a opção mais geométrica e a que se lê mais rápido
+        em tamanho pequeno.</p>
+      <p class="assina">"Cada barra, um tempo. O vale, a batida."</p>
+    </div>
+  </div>
+  <div class="aplic"><h3>Aplicações</h3>
+    <div class="linhaAp">
+      <div class="ap"><div class="icone" id="s2-icone"></div><small>Ícone de app</small></div>
+      <div class="ap"><div class="telefone"><div class="m" id="s2-splash"></div>
+        <div class="nome">Maestro</div></div><small>Abertura</small></div>
+      <div class="ap"><div class="cartao"><div class="mini" id="s2-cartao"></div>
+        <div class="quem"><b>Maestro</b><span>The Operating System<br>for Creative Operations</span></div>
+      </div><small>Cartão</small></div>
+      <div class="ap"><div class="avatarr" id="s2-av"></div><small>Avatar</small></div>
+      <div class="ap"><div class="tamanhos" id="s2-tam"></div><small>16 · 24 · 32 px</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= OPÇÃO 3 ================= -->
+<section id="op3">
+  <div class="cab"><span class="num">3</span><h2>A Frequência</h2></div>
+  <p class="frase">A marca abstrata — o som antes da letra</p>
+  <div class="palco">
+    <div class="simbolo" id="s3"></div>
+    <div class="conceito">
+      <p>A opção mais ousada: <b>sem letra nenhuma</b>. Sete lentes verticais,
+        alinhadas pelo centro, cuja altura mergulha no meio — outra vez a batida
+        descendente, agora pura, sem precisar soletrar o nome.</p>
+      <p>É o caminho das marcas que confiam no próprio símbolo (o nome fica com o
+        logotipo por extenso, em serifa). Funciona lindamente em avatar e ícone;
+        pede mais tempo de convivência até o público ligar o símbolo ao nome.</p>
+      <p class="assina">"A frequência não soletra. Ela soa."</p>
+    </div>
+  </div>
+  <div class="aplic"><h3>Aplicações</h3>
+    <div class="linhaAp">
+      <div class="ap"><div class="icone" id="s3-icone"></div><small>Ícone de app</small></div>
+      <div class="ap"><div class="telefone"><div class="m" id="s3-splash"></div>
+        <div class="nome">Maestro</div></div><small>Abertura</small></div>
+      <div class="ap"><div class="cartao"><div class="mini" id="s3-cartao"></div>
+        <div class="quem"><b>Maestro</b><span>The Operating System<br>for Creative Operations</span></div>
+      </div><small>Cartão</small></div>
+      <div class="ap"><div class="avatarr" id="s3-av"></div><small>Avatar</small></div>
+      <div class="ap"><div class="tamanhos" id="s3-tam"></div><small>16 · 24 · 32 px</small></div>
+    </div>
+  </div>
+</section>
+
+<div class="veredito wrap-inner">
+  <h2>A recomendação</h2>
+  <p><b>Opção 1 — A Pauta.</b> É a única em que o símbolo conta a história exata do
+    produto: a pauta (o calendário, o coração da Maestro) é também a pauta (as linhas
+    da música). A opção 2 é a mais segura e legível; a 3 é a mais elegante, mas pede
+    uma marca já conhecida. A 1 tem conceito, escala bem e anima naturalmente — as
+    linhas se erguendo são a própria abertura da plataforma.</p>
+  <div class="como">Responda <b>1</b>, <b>2</b> ou <b>3</b> — ou peça ajustes em
+    qualquer uma. Dá pra misturar: espessura, quantidade de linhas, curvatura.</div>
+</div>
+</div>
+
+<script>
+/* =====================================================================
+   Os três símbolos, gerados por função — a mesma geometria em todo
+   tamanho, do hero ao favicon de 16px.
+   ================================================================== */
+'use strict';
+
+/* Opção 1 — a pauta: linhas horizontais empilhadas erguendo o M.
+   Perfil: asa plana → pico → vale central raso → pico → asa plana. */
+function svgPauta(cor, n, grosso, anima){
+  n = n || 7; grosso = grosso || 4.5;
+  const W=260, gap=14, A=84, V=20;
+  const yBase0=136, ys=[];
+  for(let i=0;i<n;i++) ys.push(yBase0 + i*gap);
+  const perfil = y => `M22 ${y} L56 ${y}`
+    + ` C74 ${y} 76 ${y-A} 94 ${y-A}`
+    + ` C110 ${y-A} 114 ${y-V} 130 ${y-V}`
+    + ` C146 ${y-V} 150 ${y-A} 166 ${y-A}`
+    + ` C184 ${y-A} 186 ${y} 204 ${y} L238 ${y}`;
+  const paths = ys.map((y,i)=>`<path d="${perfil(y)}" style="--len:340;--d:${(i*.06).toFixed(2)}s"/>`).join('');
+  return `<svg viewBox="0 0 ${W} ${yBase0+(n-1)*gap+18}" class="${anima?'tr':''}"
+    fill="none" stroke="${cor}" stroke-width="${grosso}"
+    stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${paths}</svg>`;
+}
+
+/* Opção 2 — o compasso: barras verticais, topos em M, vale no centro. */
+function svgCompasso(cor, grosso, anima){
+  grosso = grosso || 15;
+  const xs=[28,54,80,106,132,158,184,210,236];
+  const topos=[58,58,80,118,152,118,80,58,58];
+  const base=196;
+  const barras = xs.map((x,i)=>
+    `<line x1="${x}" y1="${base}" x2="${x}" y2="${topos[i]}" style="--d:${(i*.05).toFixed(2)}s"/>`).join('');
+  return `<svg viewBox="0 0 264 240" class="${anima?'cresce':''}"
+    fill="none" stroke="${cor}" stroke-width="${grosso}"
+    stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${barras}</svg>`;
+}
+
+/* Opção 3 — a frequência: lentes centradas, mergulho no meio. */
+function svgFrequencia(cor, grosso, anima){
+  grosso = grosso || 16;
+  const xs=[36,68,100,132,164,196,228];
+  const meia=[78,58,40,26,40,58,78];      // meia-altura de cada lente
+  const cy=120;
+  const barras = xs.map((x,i)=>
+    `<line x1="${x}" y1="${cy-meia[i]}" x2="${x}" y2="${cy+meia[i]}" style="--d:${(i*.05).toFixed(2)}s"/>`).join('');
+  return `<svg viewBox="0 0 264 240" class="${anima?'pulsa':''}"
+    fill="none" stroke="${cor}" stroke-width="${grosso}"
+    stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${barras}</svg>`;
+}
+
+const BRASS='#C8963A', INK='#0D0F12', CLARO='#E3E6EA';
+const geradores = {
+  1:(cor,anima)=>svgPauta(cor,7,4.5,anima),
+  2:(cor,anima)=>svgCompasso(cor,15,anima),
+  3:(cor,anima)=>svgFrequencia(cor,16,anima)
+};
+function poe(id, html){ const el=document.getElementById(id); if(el) el.innerHTML=html; }
+
+for(const k of [1,2,3]){
+  const g = geradores[k];
+  poe(`s${k}`, g(BRASS, true));
+  poe(`s${k}-icone`, g(BRASS, false));
+  poe(`s${k}-splash`, g(CLARO, false));
+  poe(`s${k}-cartao`, g(BRASS, false));
+  poe(`s${k}-av`, g(INK, false));
+  const tam = [16,24,32].map(px=>{
+    const s = g(BRASS,false).replace('<svg ', `<svg width="${px}" height="${px}" `);
+    return `<i>${s}</i>`;
+  }).join('');
+  poe(`s${k}-tam`, tam);
+}
+
+/* anima quando a prancha entra na tela */
+const io = new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){ e.target.classList.add('viva'); io.unobserve(e.target); }
+}), {threshold:.35});
+document.querySelectorAll('.simbolo').forEach(el=>io.observe(el));
+</script>
