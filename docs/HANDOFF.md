@@ -855,6 +855,80 @@ aparelho que enviou (só a pauta e os links viajavam pelo banco). Agora sobe de 
 > limpos** (simulando outro computador) buscou a pauta do banco e o vídeo apareceu — 1
 > item, não 2 —, bytes e tipo batendo, poster incluído. Repetir "atualizar" não duplicou.
 
+**A GRANDE VIRADA (v49–v56, madrugada de 29/08).** O founder mandou um pedido de
+~40 itens ("quero ver tudo pronto quando acordar") e autorizou execução completa sem
+perguntar. Tudo abaixo foi construído, testado no navegador e commitado em fases:
+
+> **Identidade nova — "A Pauta" (v50).** Exploração com 3 opções de símbolo em linhas
+> (docs/BRAND/exploracao-logo-v2.html, artifact próprio); o founder escolheu a 1: as
+> linhas da pauta musical erguendo o M ("pauta" = pauta musical E calendário editorial).
+> `LOGO()` gera o símbolo em todo canto (3 linhas abaixo de 40px), a abertura traça as
+> linhas uma a uma (Lá 440 continua), ícones PWA regenerados por canvas — o upload usou
+> o Storage do Supabase como ponte navegador→terminal. A prancheta virou apresentação
+> da marca decidida, com aplicações (empena, Instagram, deck, papelaria, home screen,
+> assinatura). **Nunca redesenhar à mão: é tudo função geradora.**
+
+> **Doca (v49).** Some no desktop (a lateral já navega); no celular vira barra sólida
+> fina ancorada. A medição de altura quebrou do jeito clássico (bolha display:none →
+> rect zero → 812px de chão) e foi reescrita ignorando a bolha. 43 refs (D-0XX) saíram
+> dos textos de interface; avisos de "isto é protótipo" também.
+
+> **Pauta 2.0 (v51).** Clicar = LER (modalVer com copiar legenda / copiar link deep-link
+> `#post=cli:id` / Editar). Editor: responsável (equipe REAL — id derivado do e-mail),
+> observação, legenda separada, caixinha de perguntas, multi-formato, tipo de conteúdo
+> (estático / roteiro hook-des-CTA / corte de podcast com N timecodes ordenados).
+> Semanas como capítulos; dias passados minimizados com status; LIXEIRA (excluir e
+> resetar viraram reversíveis); clicar fora fecha modais; arrasto de card entre dias por
+> pointer events (funciona no toque; autoscroll nas bordas; o guarda não pode filtrar
+> `button` porque o card inteiro É um button). Upload com progresso (XHR), botão baixar,
+> caiu a trava de 1 arquivo por tipo.
+
+> **Navegação (v52).** Início = HOJE (todas as saídas do dia, de todos os clientes,
+> clique abre o card). Morreram do menu: Conteúdos, Lotes, Aprovações, Agenda, Projeto
+> global. "Pauta da semana"→"Pauta"; "Todas as páginas"→"Menu". Feed com divisórias
+> por rede (acordeão + grade de capas reais).
+
+> **Pessoas (v53).** "Quem está aí?" — cada um entra como si (localStorage), cliente
+> entra como cliente e vê só o dele. Só admin edita papéis/perfil da agência (nome no
+> __config__). Papéis novos: Revisor, Social Media, Editor de Vídeo, Motion, Tráfego.
+> FLUXO COMPLETO do card: Rascunho→Criado→Aprov.interna→Aprov.textos(cliente)→Texto
+> aprovado→Produção→Aprov.interna→Aprov.postagem(cliente)→Aprovado→Agendado→Postado,
+> com trilha no modalVer, avançar/voltar, marcadores de Alteração. Fila de REVISÃO no
+> menu com badge. Aprovador do cliente (nome+mail) no editar cliente.
+> **Lição de arquitetura**: handler antigo com stopImmediatePropagation em captura de
+> documento mata listeners novos — capturar na JANELA (roda antes) e aplicar em
+> setTimeout(0).
+
+> **ENSAIO (v54, ex-Kanban).** Inbox (solicitações sem dono; gestor destina) + MPGP/PDCA
+> Plan→Do→Check→Act. Cronômetro por tarefa (uma pessoa um relógio), concluir só no Act
+> (som de conquista, registra tempo e prazo), ranking do mês com pódio (10/+5/−3),
+> "meu ritmo" no perfil, filtro só-as-minhas, arrasto entre colunas. Sementes = as
+> pendências reais da pauta. Estado em S.ensaio (S.kb JÁ ERA do kanban velho — colisão
+> achada em teste).
+
+> **Conexões (v55).** Projetos por cliente criáveis/editáveis (objetivo, prazo,
+> estratégia, etapas com pergunta; concluir etapa = som + próxima acesa; 100% = troféu;
+> cliente só vê). Manual da marca no cliente + links da aba Marca ABREM. Resultados =
+> pulso de tudo (tiles, gráfico 7 dias, barra por cliente, ponte pro pódio). CONVERSAS:
+> squads + canal por cliente (cliente só vê o dele), Enter envia, persistido em __chat__.
+> Agendar de verdade: raio abre checklist (data/redes/material/legenda) → entra na fila
+> → **a fila trabalha**: passou a hora, vira Postado sozinho (varredura a cada 60s).
+> Material aceita link do Drive.
+
+> 🔴 **O que é simulação honesta e o que falta de chave externa:** a fila de publicação
+> marca como postado DENTRO da Maestro — publicar de verdade nas redes exige app
+> aprovado na Meta (Instagram Graph API) etc.; o encaixe está pronto para receber as
+> chaves. Google Drive é por LINK; o Picker oficial exige projeto no Google Cloud
+> (client id + API key). Login é leve (perfil por pessoa, sem senha) — auth real
+> (Supabase Auth) é o próximo degrau natural. RLS continua aberto (dívida já registrada).
+
+> **Pendências que sobraram do pedidão:** links/arquivos de referência na visão geral
+> já existem (v40/v44); "funções da Nova Peça dentro da Nova postagem" foi atendido
+> pelos tipos de conteúdo do editor — a rota conteudos segue viva fora do menu se
+> quiserem resgatar algo; rebuild profundo do LADO DO CLIENTE (espelhar Hoje/Pauta nova
+> em visual claro) ficou para a próxima sessão; IA de pontuar eficácia de post (ranking)
+> ficou como ideia — o ranking atual usa conduta (prazo).
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

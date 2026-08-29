@@ -4,323 +4,374 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* =====================================================================
-   Três Gestos — exploração de logo v2 da Maestro
-   Mundo único e assumido: o MIV da própria marca (ink + latão).
+   Três Gestos → A Pauta. A exploração virou decisão: a opção 1 foi
+   escolhida e esta prancha agora apresenta a marca aplicada no mundo.
+   Mundo único e assumido: o MIV da própria Maestro (ink + latão).
    ================================================================== */
 :root{
   --ink-950:#08090B; --ink-900:#0D0F12; --ink-850:#121418; --ink-800:#181B20;
   --ink-700:#23272E; --ink-600:#333941; --ink-400:#6B7280; --ink-300:#9AA1AC;
   --ink-100:#E3E6EA; --ink-50:#F4F6F8;
-  --brass-300:#E3C173; --brass-500:#C8963A; --brass-700:#855F22;
+  --brass-100:#F5E7C9; --brass-300:#E3C173; --brass-500:#C8963A; --brass-700:#855F22;
   --serif:'Instrument Serif',Georgia,serif;
   --sans:'Inter',system-ui,sans-serif;
   --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
 body{margin:0;background:var(--ink-950);color:var(--ink-100);
   font-family:var(--sans);font-size:15px;line-height:1.65;
-  -webkit-font-smoothing:antialiased}
-.wrap{max-width:1060px;margin:0 auto;padding:0 28px}
-
-/* ---------- abertura ---------- */
-header{padding:88px 0 56px;border-bottom:1px solid var(--ink-800)}
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:1100px;margin:0 auto;padding:0 28px}
 .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;
   text-transform:uppercase;color:var(--brass-500);margin:0 0 18px}
-header h1{font-family:var(--serif);font-weight:400;font-size:clamp(44px,7.5vw,84px);
-  line-height:1.02;margin:0 0 22px;color:var(--ink-50);text-wrap:balance}
+
+/* ---------- o herói: a decisão ---------- */
+header{min-height:92vh;display:grid;place-items:center;text-align:center;
+  position:relative;padding:60px 20px}
+header .simboloHero{width:min(58vw,330px);margin:0 auto 34px}
+header h1{font-family:var(--serif);font-weight:400;font-size:clamp(52px,9vw,110px);
+  line-height:.98;margin:0 0 18px;color:var(--ink-50)}
 header h1 em{font-style:italic;color:var(--brass-300)}
-.lede{max-width:58ch;color:var(--ink-300);font-size:16.5px;margin:0}
-.lede b{color:var(--ink-100);font-weight:500}
-.regras{display:flex;gap:26px;flex-wrap:wrap;margin-top:34px}
-.regras span{font-family:var(--mono);font-size:11.5px;color:var(--ink-400)}
-.regras b{color:var(--ink-300);font-weight:500}
+header .tese{max-width:52ch;margin:0 auto;color:var(--ink-300);font-size:16.5px}
+header .tese b{color:var(--ink-100);font-weight:500}
+.selo{position:absolute;top:34px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:10px;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--ink-400)}
 
-/* ---------- prancha de opção ---------- */
-section{padding:72px 0 64px;border-bottom:1px solid var(--ink-800)}
-.cab{display:flex;align-items:baseline;gap:20px;margin-bottom:8px}
-.num{font-family:var(--serif);font-style:italic;font-size:clamp(58px,9vw,110px);
-  line-height:1;color:var(--ink-700)}
-.cab h2{font-family:var(--serif);font-weight:400;font-size:clamp(30px,4.5vw,46px);
-  margin:0;color:var(--ink-50)}
-.frase{font-family:var(--mono);font-size:12px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--brass-500);margin:0 0 34px}
+/* ---------- declarações editoriais ---------- */
+.decl{padding:110px 28px;text-align:center}
+.decl p{font-family:var(--serif);font-weight:400;font-size:clamp(26px,4.6vw,44px);
+  line-height:1.25;color:var(--ink-100);max-width:22ch;margin:0 auto;text-wrap:balance}
+.decl p em{font-style:italic;color:var(--brass-300)}
 
-.palco{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);
-  gap:40px;align-items:center}
-@media(max-width:760px){.palco{grid-template-columns:1fr}}
-.simbolo{background:var(--ink-900);border:1px solid var(--ink-800);
-  border-radius:18px;display:grid;place-items:center;
-  aspect-ratio:1.15;padding:8%}
-.simbolo svg{width:100%;height:auto;max-height:100%}
-.conceito p{color:var(--ink-300);margin:0 0 16px;max-width:52ch}
-.conceito p b{color:var(--ink-100);font-weight:500}
-.conceito .assina{font-family:var(--serif);font-size:21px;color:var(--brass-300);
-  font-style:italic;margin-top:22px}
+/* ---------- seções ---------- */
+section{padding:70px 0}
+.secHd{margin-bottom:36px}
+.secHd h2{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4.4vw,42px);
+  margin:0 0 8px;color:var(--ink-50)}
+.secHd p{color:var(--ink-300);max-width:58ch;margin:0}
 
-/* ---------- aplicações ---------- */
-.aplic{margin-top:46px}
-.aplic h3{font-family:var(--mono);font-size:11px;letter-spacing:.2em;
-  text-transform:uppercase;color:var(--ink-400);font-weight:500;margin:0 0 20px}
-.linhaAp{display:flex;gap:18px;flex-wrap:wrap;align-items:stretch}
-.ap{background:var(--ink-900);border:1px solid var(--ink-800);border-radius:14px;
-  padding:18px;display:flex;flex-direction:column;gap:14px;align-items:center;
-  justify-content:center}
-.ap small{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+/* ---------- construção ---------- */
+.constru{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:36px;
+  align-items:center}
+@media(max-width:760px){.constru{grid-template-columns:1fr}}
+.constru .placa{background:var(--ink-900);border:1px solid var(--ink-800);
+  border-radius:18px;padding:9%;display:grid;place-items:center}
+.constru .placa svg{width:100%;height:auto}
+.specs{display:grid;gap:14px}
+.spec{display:flex;gap:14px;align-items:baseline;border-bottom:1px solid var(--ink-800);
+  padding-bottom:13px}
+.spec b{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--brass-500);min-width:110px}
+.spec span{color:var(--ink-300);font-size:13.5px}
+
+/* ---------- a galeria de aplicações ---------- */
+.galeria{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.pecaAp{border-radius:16px;overflow:hidden;position:relative;border:1px solid var(--ink-800)}
+.pecaAp .tag{position:absolute;top:12px;left:14px;z-index:5;font-family:var(--mono);
+  font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-400)}
+.pecaAp.claro .tag{color:#8A857C}
+
+/* outdoor — a empena */
+.outdoor{grid-column:span 12;aspect-ratio:21/9;background:
+  radial-gradient(120% 160% at 20% 0%, #16181D, var(--ink-950) 60%);
+  display:grid;place-items:center}
+@media(max-width:760px){.outdoor{aspect-ratio:16/11}}
+.outdoor .placaOut{width:78%;max-width:760px;display:flex;align-items:center;gap:6%;
+  padding:4.5% 5%;border:1px solid var(--ink-700);border-radius:6px;
+  background:linear-gradient(160deg,#0B0C0F, #08090B);
+  box-shadow:0 40px 90px -30px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.02) inset;
+  transform:perspective(1200px) rotateY(-4deg) rotateX(2deg)}
+.outdoor .placaOut svg{width:26%;flex:0 0 auto}
+.outdoor .placaOut .txt b{display:block;font-family:var(--serif);font-weight:400;
+  font-size:clamp(20px,4vw,44px);color:var(--ink-50);letter-spacing:.5px}
+.outdoor .placaOut .txt span{display:block;font-family:var(--mono);
+  font-size:clamp(7px,1.1vw,11px);letter-spacing:.28em;text-transform:uppercase;
+  color:var(--brass-500);margin-top:6px}
+.outdoor .chao{position:absolute;bottom:0;left:0;right:0;height:16%;
+  background:linear-gradient(transparent, rgba(0,0,0,.5))}
+
+/* perfil do instagram */
+.igperfil{grid-column:span 5;background:var(--ink-900);padding:22px;display:grid;
+  place-items:center}
+@media(max-width:860px){.igperfil{grid-column:span 12}}
+.fone{width:min(250px,100%);aspect-ratio:9/19;border-radius:26px;background:#000;
+  border:1px solid var(--ink-600);padding:8px;box-shadow:0 30px 60px -20px rgba(0,0,0,.7)}
+.fone .telaIg{width:100%;height:100%;border-radius:19px;background:var(--ink-950);
+  overflow:hidden;display:flex;flex-direction:column}
+.telaIg .topoIg{display:flex;align-items:center;gap:9px;padding:13px 12px 9px}
+.telaIg .avIg{width:44px;height:44px;border-radius:50%;flex:0 0 auto;
+  background:linear-gradient(150deg,var(--brass-500),var(--brass-700));
+  display:grid;place-items:center;padding:9px}
+.telaIg .avIg svg{width:100%;height:100%}
+.telaIg .quemIg b{display:block;font-size:11px;color:var(--ink-50)}
+.telaIg .quemIg span{font-size:8.5px;color:var(--ink-400);display:block;line-height:1.5}
+.telaIg .bioIg{padding:0 12px 10px;font-size:8.5px;color:var(--ink-300);line-height:1.55}
+.telaIg .bioIg b{color:var(--brass-300)}
+.gridIg{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;flex:1}
+.gridIg .cel{position:relative;background:var(--ink-900);display:grid;place-items:center;
+  overflow:hidden}
+.gridIg .cel svg{width:56%}
+.gridIg .cel.cheio{background:linear-gradient(150deg,var(--brass-500),var(--brass-700))}
+.gridIg .cel.tipo{background:var(--ink-850)}
+.gridIg .cel.tipo i{font-family:var(--serif);font-style:italic;font-size:13px;
+  color:var(--brass-300)}
+
+/* capa de deck */
+.deck{grid-column:span 7;aspect-ratio:16/10;background:
+  linear-gradient(155deg,var(--ink-900), var(--ink-950) 70%);
+  display:flex;flex-direction:column;justify-content:space-between;padding:4.5%}
+@media(max-width:860px){.deck{grid-column:span 12}}
+.deck .m{width:15%}
+.deck .tit{font-family:var(--serif);font-weight:400;font-size:clamp(22px,3.6vw,40px);
+  line-height:1.06;color:var(--ink-50)}
+.deck .tit em{font-style:italic;color:var(--brass-300)}
+.deck .pe{display:flex;justify-content:space-between;font-family:var(--mono);
+  font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-400)}
+
+/* papelaria clara — a marca aguenta o claro */
+.papel{grid-column:span 6;aspect-ratio:4/3;background:#EDEAE3;display:grid;
+  place-items:center;padding:8%}
+@media(max-width:860px){.papel{grid-column:span 12}}
+.papel .carta{width:100%;height:100%;background:#F7F5F0;border-radius:6px;
+  box-shadow:0 24px 50px -22px rgba(30,25,15,.45);padding:8% 9%;
+  display:flex;flex-direction:column;justify-content:space-between}
+.papel .carta .mv{width:44px}
+.papel .carta .linhas i{display:block;height:5px;border-radius:3px;background:#DDD8CC;
+  margin-bottom:7px}
+.papel .carta .linhas i:nth-child(1){width:62%} .papel .carta .linhas i:nth-child(2){width:84%}
+.papel .carta .linhas i:nth-child(3){width:47%}
+.papel .carta .rodape{display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:8px;letter-spacing:.16em;text-transform:uppercase;
+  color:#8A5F22}
+
+/* ícone na tela de início */
+.home{grid-column:span 6;aspect-ratio:4/3;background:
+  radial-gradient(140% 120% at 80% 0%, #1A1D24, var(--ink-950) 70%);
+  display:grid;place-items:center}
+@media(max-width:860px){.home{grid-column:span 12}}
+.home .fileira{display:flex;gap:18px;align-items:flex-start}
+.home .app{display:flex;flex-direction:column;align-items:center;gap:7px;width:64px}
+.home .app .ic{width:58px;height:58px;border-radius:14px;background:var(--ink-800)}
+.home .app.maestro .ic{background:var(--ink-950);border:1px solid var(--ink-700);
+  display:grid;place-items:center;padding:11px;
+  box-shadow:0 0 26px -4px rgba(200,150,58,.45)}
+.home .app .ic svg{width:100%;height:100%}
+.home .app small{font-size:8.5px;color:var(--ink-300)}
+.home .app.maestro small{color:var(--ink-50)}
+
+/* assinatura de e-mail */
+.assin{grid-column:span 12;background:var(--ink-900);padding:26px;display:grid;
+  place-items:center}
+.assin .bloco{display:flex;gap:18px;align-items:center;border-left:2px solid var(--brass-500);
+  padding-left:18px}
+.assin .bloco .mv{width:52px;flex:0 0 auto}
+.assin .quem b{display:block;font-family:var(--serif);font-weight:400;font-size:19px;
+  color:var(--ink-50)}
+.assin .quem span{display:block;font-size:11px;color:var(--ink-300)}
+.assin .quem small{display:block;font-family:var(--mono);font-size:9px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--brass-500);margin-top:5px}
+
+/* ---------- arquivo: os outros dois gestos ---------- */
+.arquivo{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.arquivo{grid-template-columns:1fr}}
+.arqOp{background:var(--ink-900);border:1px solid var(--ink-800);border-radius:16px;
+  padding:22px;display:flex;gap:18px;align-items:center}
+.arqOp svg{width:110px;flex:0 0 auto}
+.arqOp b{display:block;font-family:var(--serif);font-weight:400;font-size:19px;
+  color:var(--ink-50)}
+.arqOp span{font-size:12px;color:var(--ink-400)}
+
+footer{padding:80px 0 100px;text-align:center}
+footer p{font-family:var(--serif);font-style:italic;font-size:20px;color:var(--brass-300)}
+footer small{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
   text-transform:uppercase;color:var(--ink-400)}
 
-.icone{width:92px;height:92px;border-radius:22px;background:var(--ink-950);
-  border:1px solid var(--ink-700);display:grid;place-items:center;padding:18px}
-.icone svg{width:100%;height:100%}
-.avatarr{width:76px;height:76px;border-radius:50%;
-  background:linear-gradient(150deg,var(--brass-500),var(--brass-700));
-  display:grid;place-items:center;padding:16px}
-.avatarr svg{width:100%;height:100%}
-.tamanhos{display:flex;align-items:flex-end;gap:14px}
-.tamanhos i{display:grid;place-items:center;font-style:normal}
-.tamanhos svg{display:block}
-.cartao{width:300px;max-width:100%;aspect-ratio:1.72;border-radius:12px;
-  background:linear-gradient(155deg,var(--ink-900),var(--ink-950) 70%);
-  border:1px solid var(--ink-700);position:relative;overflow:hidden;
-  display:flex;flex-direction:column;justify-content:space-between;padding:18px}
-.cartao .mini{width:44px}
-.cartao .quem{display:flex;justify-content:space-between;align-items:flex-end}
-.cartao .quem b{font-family:var(--serif);font-weight:400;font-size:19px;
-  color:var(--ink-50);letter-spacing:.2px}
-.cartao .quem span{font-family:var(--mono);font-size:8px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--brass-500);text-align:right;line-height:1.7}
-.cartao::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--brass-500),transparent)}
-.telefone{width:170px;aspect-ratio:9/18.5;border-radius:22px;background:var(--ink-950);
-  border:1px solid var(--ink-700);display:grid;place-items:center;position:relative;
-  overflow:hidden}
-.telefone .m{width:64px}
-.telefone .nome{position:absolute;bottom:26px;left:0;right:0;text-align:center;
-  font-family:var(--serif);font-size:16px;color:var(--ink-100);letter-spacing:.4px}
-.telefone::before{content:'';position:absolute;top:10px;left:50%;width:52px;height:5px;
-  border-radius:3px;background:var(--ink-800);transform:translateX(-50%)}
-
-/* ---------- veredito ---------- */
-.veredito{padding:76px 0 100px}
-.veredito h2{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4vw,40px);
-  color:var(--ink-50);margin:0 0 20px}
-.veredito p{color:var(--ink-300);max-width:60ch}
-.veredito p b{color:var(--brass-300);font-weight:500}
-.como{margin-top:30px;padding:20px 24px;border:1px solid var(--ink-700);
-  border-radius:14px;background:var(--ink-900);
-  font-family:var(--mono);font-size:13px;color:var(--ink-100)}
-.como b{color:var(--brass-300)}
-
 /* ---------- animações ---------- */
-.tr line, .tr path{stroke-dasharray:var(--len,600);stroke-dashoffset:var(--len,600)}
-.viva .tr line, .viva .tr path{animation:traca 1.1s var(--d,0s) cubic-bezier(.6,0,.2,1) forwards}
+.tr path{stroke-dasharray:340;stroke-dashoffset:340;
+  animation:traca 1.1s calc(.15s + var(--i,0) * .1s) cubic-bezier(.6,0,.2,1) forwards}
 @keyframes traca{to{stroke-dashoffset:0}}
-.cresce line{transform:scaleY(0);transform-origin:center bottom}
-.viva .cresce line{animation:sobe .7s var(--d,0s) cubic-bezier(.34,1.3,.5,1) forwards}
-@keyframes sobe{to{transform:scaleY(1)}}
-.pulsa line{transform:scaleY(0);transform-origin:center center}
-.viva .pulsa line{animation:sobe .7s var(--d,0s) cubic-bezier(.34,1.3,.5,1) forwards}
+.sobe{opacity:0;transform:translateY(26px);
+  transition:opacity .8s var(--d,0s) ease, transform .8s var(--d,0s) cubic-bezier(.2,.8,.2,1)}
+.viva{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){
-  .tr line,.tr path{stroke-dasharray:none;stroke-dashoffset:0;animation:none!important}
-  .cresce line,.pulsa line{transform:none;animation:none!important}
+  .tr path{stroke-dasharray:none;stroke-dashoffset:0;animation:none}
+  .sobe{opacity:1;transform:none;transition:none}
 }
 </style>
 
-<div class="wrap">
+<span class="selo">Maestro · identidade v2 · decidida</span>
 <header>
-  <p class="eyebrow">Maestro · Exploração de símbolo · v2</p>
-  <h1>Três gestos para<br>a mesma <em>música</em>.</h1>
-  <p class="lede">O branding fica — cores, tipografia, conceito, tom. O que muda é o
-    <b>símbolo</b>: três caminhos construídos com linhas, na direção das referências.
-    Cada um vem aplicado em ícone de app, abertura, cartão e avatar, testado em
-    tamanho pequeno. No fim, a recomendação.</p>
-  <div class="regras">
-    <span><b>Preciso</b> — geometria construída</span>
-    <span><b>Calmo</b> — pouco elemento, muito espaço</span>
-    <span><b>Quente</b> — o latão contra o ink</span>
+  <div>
+    <div class="simboloHero" id="hero-m"></div>
+    <h1>A <em>Pauta</em>.</h1>
+    <p class="tese">Em português, <b>pauta</b> é as duas coisas ao mesmo tempo: as linhas
+      onde a música é escrita — e o calendário editorial, o coração da plataforma.
+      O símbolo é esse trocadilho tornado forma: <b>as linhas se erguem juntas e o M
+      acontece</b>, que é exatamente o que um maestro faz com uma orquestra.</p>
   </div>
 </header>
 
-<!-- ================= OPÇÃO 1 ================= -->
-<section id="op1">
-  <div class="cab"><span class="num">1</span><h2>A Pauta</h2></div>
-  <p class="frase">As linhas da pauta tomam a forma do M</p>
-  <div class="palco">
-    <div class="simbolo" id="s1"></div>
-    <div class="conceito">
-      <p>Em português, <b>pauta</b> é as duas coisas ao mesmo tempo: as cinco linhas
-        onde a música é escrita — e o calendário editorial, que é o coração da
-        plataforma. Nenhuma outra palavra da marca carrega os dois mundos assim.</p>
-      <p>O símbolo é esse trocadilho tornado forma: as linhas da pauta, empilhadas,
-        erguem-se juntas e desenham o M. Nada é ilustrado — o M <b>acontece</b>
-        quando as linhas se movem em conjunto, que é exatamente o que um maestro faz
-        com uma orquestra.</p>
-      <p class="assina">"A pauta toma forma."</p>
-    </div>
-  </div>
-  <div class="aplic"><h3>Aplicações</h3>
-    <div class="linhaAp">
-      <div class="ap"><div class="icone" id="s1-icone"></div><small>Ícone de app</small></div>
-      <div class="ap"><div class="telefone"><div class="m" id="s1-splash"></div>
-        <div class="nome">Maestro</div></div><small>Abertura</small></div>
-      <div class="ap"><div class="cartao"><div class="mini" id="s1-cartao"></div>
-        <div class="quem"><b>Maestro</b><span>The Operating System<br>for Creative Operations</span></div>
-      </div><small>Cartão</small></div>
-      <div class="ap"><div class="avatarr" id="s1-av"></div><small>Avatar</small></div>
-      <div class="ap"><div class="tamanhos" id="s1-tam"></div><small>16 · 24 · 32 px</small></div>
+<div class="decl"><p>Nada é ilustrado.<br>O M <em>acontece</em> quando as<br>linhas se movem juntas.</p></div>
+
+<div class="wrap">
+<section>
+  <div class="secHd"><p class="eyebrow">Construção</p>
+    <h2>Sete linhas, um gesto</h2>
+    <p>Geometria gerada por função — nunca redesenhada à mão. Em tamanhos pequenos o
+      símbolo reduz para três linhas com traço mais forte: legível de 330px a 16px.</p></div>
+  <div class="constru">
+    <div class="placa" id="constru-m"></div>
+    <div class="specs">
+      <div class="spec"><b>Linhas</b><span>7 na versão cheia · 3 abaixo de 40px</span></div>
+      <div class="spec"><b>Perfil</b><span>asa plana → pico → vale raso → pico → asa plana</span></div>
+      <div class="spec"><b>Amplitude</b><span>picos a 84 unidades; o vale central a 20 — a batida</span></div>
+      <div class="spec"><b>Terminais</b><span>sempre arredondados — precisão sem frieza</span></div>
+      <div class="spec"><b>Cor</b><span>latão 500 sobre ink · ink sobre latão · nunca cinza</span></div>
+      <div class="spec"><b>Movimento</b><span>as linhas se traçam uma a uma, de baixo para cima, 90ms entre elas</span></div>
     </div>
   </div>
 </section>
 
-<!-- ================= OPÇÃO 2 ================= -->
-<section id="op2">
-  <div class="cab"><span class="num">2</span><h2>O Compasso</h2></div>
-  <p class="frase">O M como equalizador — o vale é a batida</p>
-  <div class="palco">
-    <div class="simbolo" id="s2"></div>
-    <div class="conceito">
-      <p>Nove barras verticais, terminadas em curva, cujos topos desenham a
-        silhueta do M. É a linguagem de <b>equalizador</b> — a mais reconhecível do
-        mundo do som — posta a serviço da letra.</p>
-      <p>A barra central é a mais curta de propósito: é o <b>vale da regência</b>,
-        a batida descendente que já era o coração do símbolo atual. O conceito não
-        muda — muda o corpo. É a opção mais geométrica e a que se lê mais rápido
-        em tamanho pequeno.</p>
-      <p class="assina">"Cada barra, um tempo. O vale, a batida."</p>
+<section>
+  <div class="secHd"><p class="eyebrow">A marca no mundo</p>
+    <h2>Aplicações</h2>
+    <p>Da empena ao ícone de 58px — a mesma geometria, o mesmo silêncio em volta.</p></div>
+  <div class="galeria">
+
+    <div class="pecaAp outdoor sobe"><span class="tag">Empena · fachada</span>
+      <div class="placaOut"><span id="out-m"></span>
+        <span class="txt"><b>Maestro</b>
+          <span>The Operating System for Creative Operations</span></span></div>
+      <div class="chao"></div>
     </div>
-  </div>
-  <div class="aplic"><h3>Aplicações</h3>
-    <div class="linhaAp">
-      <div class="ap"><div class="icone" id="s2-icone"></div><small>Ícone de app</small></div>
-      <div class="ap"><div class="telefone"><div class="m" id="s2-splash"></div>
-        <div class="nome">Maestro</div></div><small>Abertura</small></div>
-      <div class="ap"><div class="cartao"><div class="mini" id="s2-cartao"></div>
-        <div class="quem"><b>Maestro</b><span>The Operating System<br>for Creative Operations</span></div>
-      </div><small>Cartão</small></div>
-      <div class="ap"><div class="avatarr" id="s2-av"></div><small>Avatar</small></div>
-      <div class="ap"><div class="tamanhos" id="s2-tam"></div><small>16 · 24 · 32 px</small></div>
+
+    <div class="pecaAp igperfil sobe"><span class="tag">Instagram</span>
+      <div class="fone"><div class="telaIg">
+        <div class="topoIg"><span class="avIg" id="ig-av"></span>
+          <span class="quemIg"><b>maestro.app</b>
+            <span>1.240 publicações · 18,6 mil seguidores</span></span></div>
+        <div class="bioIg"><b>Maestro</b> — o sistema operacional para agências.
+          Briefing → aprovação → publicação, sem WhatsApp.</div>
+        <div class="gridIg">
+          <span class="cel" id="ig-c1"></span>
+          <span class="cel tipo"><i>a pauta<br>toma forma</i></span>
+          <span class="cel cheio" id="ig-c2"></span>
+          <span class="cel tipo"><i>sem<br>WhatsApp</i></span>
+          <span class="cel" id="ig-c3"></span>
+          <span class="cel tipo"><i>lá<br>440</i></span>
+          <span class="cel cheio" id="ig-c4"></span>
+          <span class="cel" id="ig-c5"></span>
+          <span class="cel tipo"><i>encore</i></span>
+        </div>
+      </div></div>
     </div>
+
+    <div class="pecaAp deck sobe"><span class="tag">Capa de apresentação</span>
+      <span class="m" id="deck-m"></span>
+      <span class="tit">A agência inteira,<br>numa <em>pauta</em> só.</span>
+      <span class="pe"><span>Maestro · 2026</span><span>confidencial</span></span>
+    </div>
+
+    <div class="pecaAp papel claro sobe"><span class="tag">Papelaria</span>
+      <div class="carta">
+        <span class="mv" id="papel-m"></span>
+        <span class="linhas"><i></i><i></i><i></i></span>
+        <span class="rodape"><span>Maestro</span><span>maestro.app</span></span>
+      </div>
+    </div>
+
+    <div class="pecaAp home sobe"><span class="tag">Tela de início</span>
+      <div class="fileira">
+        <span class="app"><span class="ic"></span><small>Fotos</small></span>
+        <span class="app maestro"><span class="ic" id="home-m"></span><small>Maestro</small></span>
+        <span class="app"><span class="ic"></span><small>Agenda</small></span>
+        <span class="app"><span class="ic"></span><small>Notas</small></span>
+      </div>
+    </div>
+
+    <div class="pecaAp assin sobe"><span class="tag">Assinatura de e-mail</span>
+      <div class="bloco">
+        <span class="mv" id="assin-m"></span>
+        <span class="quem"><b>Victor Cardoso</b>
+          <span>Fundador · victor@maestro.app</span>
+          <small>The Operating System for Creative Operations</small></span>
+      </div>
+    </div>
+
   </div>
 </section>
 
-<!-- ================= OPÇÃO 3 ================= -->
-<section id="op3">
-  <div class="cab"><span class="num">3</span><h2>A Frequência</h2></div>
-  <p class="frase">A marca abstrata — o som antes da letra</p>
-  <div class="palco">
-    <div class="simbolo" id="s3"></div>
-    <div class="conceito">
-      <p>A opção mais ousada: <b>sem letra nenhuma</b>. Sete lentes verticais,
-        alinhadas pelo centro, cuja altura mergulha no meio — outra vez a batida
-        descendente, agora pura, sem precisar soletrar o nome.</p>
-      <p>É o caminho das marcas que confiam no próprio símbolo (o nome fica com o
-        logotipo por extenso, em serifa). Funciona lindamente em avatar e ícone;
-        pede mais tempo de convivência até o público ligar o símbolo ao nome.</p>
-      <p class="assina">"A frequência não soletra. Ela soa."</p>
-    </div>
-  </div>
-  <div class="aplic"><h3>Aplicações</h3>
-    <div class="linhaAp">
-      <div class="ap"><div class="icone" id="s3-icone"></div><small>Ícone de app</small></div>
-      <div class="ap"><div class="telefone"><div class="m" id="s3-splash"></div>
-        <div class="nome">Maestro</div></div><small>Abertura</small></div>
-      <div class="ap"><div class="cartao"><div class="mini" id="s3-cartao"></div>
-        <div class="quem"><b>Maestro</b><span>The Operating System<br>for Creative Operations</span></div>
-      </div><small>Cartão</small></div>
-      <div class="ap"><div class="avatarr" id="s3-av"></div><small>Avatar</small></div>
-      <div class="ap"><div class="tamanhos" id="s3-tam"></div><small>16 · 24 · 32 px</small></div>
-    </div>
+<section>
+  <div class="secHd"><p class="eyebrow">Arquivo</p>
+    <h2>Os caminhos estudados</h2>
+    <p>Dois outros gestos foram desenhados antes da decisão — ficam guardados aqui.</p></div>
+  <div class="arquivo">
+    <div class="arqOp"><span id="arq-2"></span>
+      <span><b>02 · O Compasso</b><span>o M como equalizador; o vale central, a batida.
+        A opção mais geométrica — perdeu para o conceito.</span></span></div>
+    <div class="arqOp"><span id="arq-3"></span>
+      <span><b>03 · A Frequência</b><span>a marca abstrata, sem letra. Elegante,
+        mas pede uma marca já conhecida.</span></span></div>
   </div>
 </section>
-
-<div class="veredito wrap-inner">
-  <h2>A recomendação</h2>
-  <p><b>Opção 1 — A Pauta.</b> É a única em que o símbolo conta a história exata do
-    produto: a pauta (o calendário, o coração da Maestro) é também a pauta (as linhas
-    da música). A opção 2 é a mais segura e legível; a 3 é a mais elegante, mas pede
-    uma marca já conhecida. A 1 tem conceito, escala bem e anima naturalmente — as
-    linhas se erguendo são a própria abertura da plataforma.</p>
-  <div class="como">Responda <b>1</b>, <b>2</b> ou <b>3</b> — ou peça ajustes em
-    qualquer uma. Dá pra misturar: espessura, quantidade de linhas, curvatura.</div>
 </div>
-</div>
+
+<footer>
+  <p>"A pauta toma forma."</p>
+  <small>Maestro · exploração de símbolo v2 · opção 1 aplicada na plataforma</small>
+</footer>
 
 <script>
-/* =====================================================================
-   Os três símbolos, gerados por função — a mesma geometria em todo
-   tamanho, do hero ao favicon de 16px.
-   ================================================================== */
 'use strict';
-
-/* Opção 1 — a pauta: linhas horizontais empilhadas erguendo o M.
-   Perfil: asa plana → pico → vale central raso → pico → asa plana. */
+/* a mesma geometria da plataforma — gerada, nunca redesenhada */
 function svgPauta(cor, n, grosso, anima){
   n = n || 7; grosso = grosso || 4.5;
-  const W=260, gap=14, A=84, V=20;
-  const yBase0=136, ys=[];
-  for(let i=0;i<n;i++) ys.push(yBase0 + i*gap);
-  const perfil = y => `M22 ${y} L56 ${y}`
-    + ` C74 ${y} 76 ${y-A} 94 ${y-A}`
-    + ` C110 ${y-A} 114 ${y-V} 130 ${y-V}`
-    + ` C146 ${y-V} 150 ${y-A} 166 ${y-A}`
-    + ` C184 ${y-A} 186 ${y} 204 ${y} L238 ${y}`;
-  const paths = ys.map((y,i)=>`<path d="${perfil(y)}" style="--len:340;--d:${(i*.06).toFixed(2)}s"/>`).join('');
-  return `<svg viewBox="0 0 ${W} ${yBase0+(n-1)*gap+18}" class="${anima?'tr':''}"
-    fill="none" stroke="${cor}" stroke-width="${grosso}"
-    stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${paths}</svg>`;
+  const gap = n<=4 ? 24 : 14, A=84, V=20, y0 = n<=4 ? 148 : 136;
+  const paths = [];
+  for(let i=0;i<n;i++){
+    const y = y0 + i*gap;
+    paths.push(`<path d="M22 ${y} L56 ${y} C74 ${y} 76 ${y-A} 94 ${y-A}`+
+      ` C110 ${y-A} 114 ${y-V} 130 ${y-V} C146 ${y-V} 150 ${y-A} 166 ${y-A}`+
+      ` C184 ${y-A} 186 ${y} 204 ${y} L238 ${y}" style="--i:${i}"/>`);
+  }
+  return `<svg viewBox="10 30 240 190" class="${anima?'tr':''}" fill="none"
+    stroke="${cor}" stroke-width="${grosso}" stroke-linecap="round"
+    xmlns="http://www.w3.org/2000/svg">${paths.join('')}</svg>`;
 }
-
-/* Opção 2 — o compasso: barras verticais, topos em M, vale no centro. */
-function svgCompasso(cor, grosso, anima){
-  grosso = grosso || 15;
+function svgCompasso(cor){
   const xs=[28,54,80,106,132,158,184,210,236];
   const topos=[58,58,80,118,152,118,80,58,58];
-  const base=196;
-  const barras = xs.map((x,i)=>
-    `<line x1="${x}" y1="${base}" x2="${x}" y2="${topos[i]}" style="--d:${(i*.05).toFixed(2)}s"/>`).join('');
-  return `<svg viewBox="0 0 264 240" class="${anima?'cresce':''}"
-    fill="none" stroke="${cor}" stroke-width="${grosso}"
-    stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${barras}</svg>`;
+  return `<svg viewBox="0 0 264 240" fill="none" stroke="${cor}" stroke-width="15"
+    stroke-linecap="round">${xs.map((x,i)=>`<line x1="${x}" y1="196" x2="${x}" y2="${topos[i]}"/>`).join('')}</svg>`;
 }
-
-/* Opção 3 — a frequência: lentes centradas, mergulho no meio. */
-function svgFrequencia(cor, grosso, anima){
-  grosso = grosso || 16;
-  const xs=[36,68,100,132,164,196,228];
-  const meia=[78,58,40,26,40,58,78];      // meia-altura de cada lente
-  const cy=120;
-  const barras = xs.map((x,i)=>
-    `<line x1="${x}" y1="${cy-meia[i]}" x2="${x}" y2="${cy+meia[i]}" style="--d:${(i*.05).toFixed(2)}s"/>`).join('');
-  return `<svg viewBox="0 0 264 240" class="${anima?'pulsa':''}"
-    fill="none" stroke="${cor}" stroke-width="${grosso}"
-    stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${barras}</svg>`;
+function svgFrequencia(cor){
+  const xs=[36,68,100,132,164,196,228], meia=[78,58,40,26,40,58,78];
+  return `<svg viewBox="0 0 264 240" fill="none" stroke="${cor}" stroke-width="16"
+    stroke-linecap="round">${xs.map((x,i)=>`<line x1="${x}" y1="${120-meia[i]}" x2="${x}" y2="${120+meia[i]}"/>`).join('')}</svg>`;
 }
+const B='#C8963A', CL='#E3E6EA', IK='#0D0F12';
+const poe=(id,h)=>{const e=document.getElementById(id); if(e) e.innerHTML=h;};
+poe('hero-m', svgPauta(B,7,4.5,true));
+poe('constru-m', svgPauta(B,7,4.5,false));
+poe('out-m', svgPauta(B,7,6,false));
+poe('ig-av', svgPauta(IK,3,14,false));
+['ig-c1','ig-c3','ig-c5'].forEach(id=>poe(id, svgPauta(B,3,13,false)));
+['ig-c2','ig-c4'].forEach(id=>poe(id, svgPauta(IK,3,13,false)));
+poe('deck-m', svgPauta(B,7,6.5,false));
+poe('papel-m', svgPauta('#8A5F22',3,13,false));
+poe('home-m', svgPauta(B,3,12,false));
+poe('assin-m', svgPauta(B,3,11,false));
+poe('arq-2', svgCompasso('#4C535D'));
+poe('arq-3', svgFrequencia('#4C535D'));
 
-const BRASS='#C8963A', INK='#0D0F12', CLARO='#E3E6EA';
-const geradores = {
-  1:(cor,anima)=>svgPauta(cor,7,4.5,anima),
-  2:(cor,anima)=>svgCompasso(cor,15,anima),
-  3:(cor,anima)=>svgFrequencia(cor,16,anima)
-};
-function poe(id, html){ const el=document.getElementById(id); if(el) el.innerHTML=html; }
-
-for(const k of [1,2,3]){
-  const g = geradores[k];
-  poe(`s${k}`, g(BRASS, true));
-  poe(`s${k}-icone`, g(BRASS, false));
-  poe(`s${k}-splash`, g(CLARO, false));
-  poe(`s${k}-cartao`, g(BRASS, false));
-  poe(`s${k}-av`, g(INK, false));
-  const tam = [16,24,32].map(px=>{
-    const s = g(BRASS,false).replace('<svg ', `<svg width="${px}" height="${px}" `);
-    return `<i>${s}</i>`;
-  }).join('');
-  poe(`s${k}-tam`, tam);
-}
-
-/* anima quando a prancha entra na tela */
-const io = new IntersectionObserver(es=>es.forEach(e=>{
-  if(e.isIntersecting){ e.target.classList.add('viva'); io.unobserve(e.target); }
-}), {threshold:.35});
-document.querySelectorAll('.simbolo').forEach(el=>io.observe(el));
+const io = new IntersectionObserver(es=>es.forEach((e,i)=>{
+  if(e.isIntersecting){
+    e.target.style.setProperty('--d', (es.indexOf ? 0 : 0)+'s');
+    e.target.classList.add('viva'); io.unobserve(e.target);
+  }
+}), {threshold:.25});
+document.querySelectorAll('.sobe').forEach((el,i)=>{
+  el.style.setProperty('--d', (i*.08)+'s'); io.observe(el);
+});
 </script>
