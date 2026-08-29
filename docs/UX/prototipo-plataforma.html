@@ -13111,3 +13111,374 @@ render = (function(orig){
   };
 })(render);
 </script>
+<style>
+/* =====================================================================
+   v54 — ENSAIO. O kanban de verdade: onde a orquestra prepara o que
+   vai ao palco. Método MPGP sobre PDCA: Plan → Do → Check → Act,
+   com Inbox de solicitações na frente.
+   ================================================================== */
+.enRolo{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(240px, 300px);
+  gap:12px; overflow-x:auto; padding:4px 2px 16px; align-items:start;
+  scroll-snap-type:x proximity }
+.enCol{ background:var(--ink-900); border:1px solid var(--ink-800); border-radius:15px;
+  padding:12px; scroll-snap-align:start; min-height:120px }
+.enCol.alvoDrop{ outline:2px dashed var(--brass-500); outline-offset:3px }
+.enColHd{ display:flex; align-items:center; gap:8px; margin-bottom:11px }
+.enColHd i{ width:10px; height:10px; border-radius:50%; font-style:normal; flex:0 0 auto }
+.enColHd b{ font-family:var(--mono); font-size:10.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-100); flex:1 }
+.enColHd span{ font-family:var(--mono); font-size:10px; color:var(--ink-400) }
+.enCard{ background:var(--ink-950); border:1px solid var(--ink-800); border-radius:12px;
+  padding:11px 12px; margin-bottom:8px; cursor:grab;
+  transition:border-color var(--fast) var(--eo), transform var(--fast) var(--eo) }
+.enCard:hover{ border-color:var(--ink-600); transform:translateY(-1px) }
+.enCard.arrastando{ opacity:.35 }
+.enCard .tit{ font-size:13.5px; font-weight:600; color:var(--ink-50); line-height:1.4;
+  margin-bottom:7px }
+.enCard .meta{ display:flex; align-items:center; gap:7px; flex-wrap:wrap }
+.enCard .cli{ font-family:var(--mono); font-size:9px; letter-spacing:.06em;
+  padding:3px 8px; border-radius:999px; background:var(--ink-800); color:var(--ink-200) }
+.enCard .prazo{ font-family:var(--mono); font-size:9.5px; color:var(--ink-400) }
+.enCard .prazo.tarde{ color:var(--danger) }
+.enCard .acoes{ display:flex; gap:5px; margin-top:9px; align-items:center }
+.enCard .acoes button{ width:26px; height:26px; border-radius:8px; display:grid;
+  place-items:center; border:1px solid var(--ink-700); color:var(--ink-300);
+  background:var(--ink-900) }
+.enCard .acoes button:hover{ color:var(--brass-300); border-color:var(--brass-600) }
+.kbTempo{ font-family:var(--mono); font-size:10.5px; color:var(--ink-300);
+  margin-left:auto; display:inline-flex; align-items:center; gap:5px }
+.kbTempo.rodando{ color:var(--encore) }
+.kbTempo.rodando::before{ content:''; width:6px; height:6px; border-radius:50%;
+  background:var(--encore); animation:sbPulsa 1.1s infinite }
+.enCard .conclui{ width:auto !important; padding:0 10px; font-family:var(--mono);
+  font-size:9.5px; letter-spacing:.06em; color:var(--encore) !important;
+  border-color:rgba(53,184,122,.35) !important }
+.enVazia{ border:1px dashed var(--ink-700); border-radius:11px; padding:16px 10px;
+  text-align:center; font-size:11.5px; color:var(--ink-500) }
+/* pódio */
+.podio{ display:flex; align-items:flex-end; justify-content:center; gap:14px;
+  margin:18px 0 8px }
+.podio .lugar{ display:flex; flex-direction:column; align-items:center; gap:8px }
+.podio .bloco{ width:74px; border-radius:10px 10px 0 0; display:grid; place-items:center;
+  font-family:var(--serif); font-size:22px; color:#08090B;
+  background:linear-gradient(180deg,var(--brass-300),var(--brass-600)) }
+.podio .lugar:nth-child(1) .bloco{ height:64px; background:linear-gradient(180deg,#C9CDD4,#8B909A) }
+.podio .lugar:nth-child(2) .bloco{ height:92px }
+.podio .lugar:nth-child(3) .bloco{ height:48px; background:linear-gradient(180deg,#C99B6A,#8A5A32) }
+.podio b{ font-size:13px; color:var(--ink-50) }
+.podio span{ font-family:var(--mono); font-size:10px; color:var(--ink-300) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v54 — o Ensaio.
+   ================================================================== */
+const EN_COLS = [
+  ['inbox','Inbox','#9AA1AC','solicitações chegam aqui — o gestor destina'],
+  ['plan','Plan','#5B8DEF','planejar: o que, quem, até quando'],
+  ['do','Do','#E5C54D','fazendo agora'],
+  ['check','Check','#E5854D','conferir antes de valer'],
+  ['act','Act','#35B87A','ajustar e concluir']
+];
+S.ensaio = S.ensaio || null;
+function kbSemente(){
+  // nasce do que é real: as pendências da pauta viram solicitações
+  const t = [];
+  let n = 1;
+  for(const c of CLIS()){
+    for(const p of (S.pautas[c.id]||[])){
+      if(p.pend && t.length < 5)
+        t.push({ id:n++, titulo:p.pend.replace(/\.$/,''), cli:c.id, resp:null,
+          col:'inbox', criada:Date.now(), prazo:p.data||null, tempoMs:0, desde:null, cardId:p.id });
+    }
+  }
+  return { prox:n, tarefas:t, feitas:[] };
+}
+sbGravarConfig = (function(){
+  /* o Ensaio viaja junto no __config__ — reescreve a função inteira
+     para incluir, em vez de duplicar requisições */
+  let _esp = null;
+  return async function(){
+    if(!_sbLigado) return;
+    const dados = { cliEdit:S.cliEdit, cliFora:S.cliFora, agencia:(S.agencia||null),
+      estudio:(S.ensaio||null), versao:54 };
+    const corpo = JSON.stringify(dados);
+    if(_esp === corpo) return;
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/pauta?on_conflict=cliente`, {
+        method:'POST',
+        headers:{ ...sbCab(), Prefer:'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({ cliente:'__config__', dados, atualizado_em:new Date().toISOString() })
+      });
+      if(r.ok) _esp = corpo;
+    }catch(e){}
+  };
+})();
+sbCarregar = (function(orig){
+  return function(){
+    const p = orig.apply(this, arguments);
+    return Promise.resolve(p).then(async ok=>{
+      if(ok){
+        try{
+          const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__config__&select=dados`,{headers:sbCab()});
+          if(r.ok){ const [l] = await r.json();
+            if(l && l.dados && l.dados.estudio) S.ensaio = l.dados.estudio; }
+        }catch(e){}
+      }
+      if(!S.ensaio) S.ensaio = kbSemente();
+      render();
+      return ok;
+    });
+  };
+})(sbCarregar);
+setTimeout(()=>{ if(!S.ensaio) S.ensaio = kbSemente(); }, 3200);
+
+const kbTempoTotal = t => t.tempoMs + (t.desde ? Date.now()-t.desde : 0);
+const kbFmt = ms => {
+  const m = Math.floor(ms/60000), h = Math.floor(m/60);
+  return h ? `${h}h${String(m%60).padStart(2,'0')}` : `${m}m`;
+};
+
+function agEnsaio(){
+  if(!S.ensaio) S.ensaio = kbSemente();
+  const minhas = S.enSoMinhas && S.usuario ? S.usuario.id : null;
+  const cartao = t => {
+    const c = CLIS().find(x=>x.id===t.cli);
+    const r = membro(t.resp);
+    const tarde = t.prazo && t.prazo < hojeISO();
+    return `<div class="enCard" data-entar="${t.id}">
+      <div class="tit">${esc(t.titulo)}</div>
+      <div class="meta">
+        ${c?`<span class="cli">${esc(c.ini)}</span>`:''}
+        ${r?`<span class="ptResp" title="${esc(r.nome)}">${esc(r.ini)}</span>`
+           :`<span class="prazo" style="color:#E5A54D">sem dono</span>`}
+        ${t.prazo?`<span class="prazo ${tarde?'tarde':''}">${rotuloData(t.prazo)}</span>`:''}
+        <span class="kbTempo ${t.desde?'rodando':''}" data-kbtempo="${t.id}">${kbFmt(kbTempoTotal(t))}</span>
+      </div>
+      <div class="acoes">
+        <button data-enmove="${t.id}|-1" aria-label="Coluna anterior">${ic('arrowl',12)}</button>
+        <button data-enmove="${t.id}|1" aria-label="Próxima coluna">${ic('arrowr',12)}</button>
+        <button data-entimer="${t.id}" aria-label="${t.desde?'Pausar cronômetro':'Começar a contar o tempo'}"
+          title="${t.desde?'Pausar':'Contar tempo'}">${ic(t.desde?'sndoff':'clock',12)}</button>
+        ${t.col==='act'?`<button class="conclui" data-enfim="${t.id}">concluir ✓</button>`:''}
+      </div></div>`;
+  };
+  const cols = EN_COLS.map(([k, nome, cor, dica])=>{
+    const ts = S.ensaio.tarefas.filter(t=>t.col===k && (!minhas || t.resp===minhas));
+    return `<div class="enCol" data-encol="${k}">
+      <div class="enColHd"><i style="background:${cor}"></i><b>${nome}</b>
+        <span>${ts.length}</span></div>
+      ${ts.map(cartao).join('') || `<div class="enVazia">${dica}</div>`}
+    </div>`;
+  }).join('');
+  const feitasMes = S.ensaio.feitas.length;
+  return agShell(`
+  <div class="mtop"><div><h1>Ensaio</h1><p>o método MPGP em cena — Plan · Do · Check · Act</p></div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="b gho sm ${S.enSoMinhas?'':''}" data-enminhas="1"
+        style="${S.enSoMinhas?'border-color:var(--brass-500);color:var(--brass-300)':''}">
+        ${ic('person',13)} ${S.enSoMinhas?'Só as minhas':'Todas'}</button>
+      <button class="b gho sm" data-enranking="1">${ic('chart',13)} Ranking${feitasMes?` (${feitasMes})`:''}</button>
+      <button class="b pri sm" data-ennova="1">${ic('pencil',13)} Nova tarefa</button></div></div>
+  <div class="enRolo">${cols}</div>
+  <p style="margin:4px 2px 0;font-size:11.5px;color:var(--ink-300)">Arraste um cartão entre
+    colunas (ou use as setas). O relógio conta quanto tempo cada tarefa levou — a média vira
+    métrica da agência.</p>`);
+}
+render = (function(orig){
+  return function(){
+    if(S.view==='agency' && S.route==='producao' && !S.skel){
+      document.getElementById('root').innerHTML = agEnsaio();
+      renderLayer(); ctxBar(); posRender();
+      return;
+    }
+    return orig.apply(this, arguments);
+  };
+})(render);
+/* o nome no menu acompanha */
+(function(){
+  const n1 = AGNAV.find(x=>x.r==='producao'); if(n1) n1.n = 'Ensaio';
+  MENU_AG.forEach(g=>(g.it||[]).forEach(it=>{ if(it[0]==='producao') it[1]='Ensaio'; }));
+})();
+
+/* ---------- ações ---------------------------------------------------- */
+function modalTarefa(id){
+  const t = id ? S.ensaio.tarefas.find(x=>x.id===id) : null;
+  S.enResp = t ? t.resp : null; S.enCli = t ? t.cli : (CLIS()[0]||{}).id;
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>${t?'Editar tarefa':'Nova tarefa'}</h3>
+    <p>Uma demanda do Ensaio: o que precisa ser feito, para qual cliente, por quem.</p>
+    <div class="fld"><label for="en-t">O que precisa ser feito</label>
+      <input id="en-t" value="${t?esc(t.titulo):''}" placeholder="Ex.: cortar o episódio 12 para Reels"></div>
+    <div class="fld"><label>Cliente</label><div class="ptChips">
+      ${CLIS().map(c=>`<button data-enclipick="${c.id}" class="${S.enCli===c.id?'on':''}">${esc(c.nome)}</button>`).join('')}</div></div>
+    <div class="fld"><label>Responsável</label><div class="ptChips">
+      ${(S.equipe||[]).map(m=>`<button data-enresppick="${membroId(m)}"
+        class="${S.enResp===membroId(m)?'on':''}">${esc(m.n)}</button>`).join('')}
+      <button data-enresppick="" class="${!S.enResp?'on':''}">inbox (sem dono)</button></div></div>
+    <div class="fld"><label for="en-prazo">Prazo</label>
+      <input type="date" id="en-prazo" value="${t&&t.prazo?t.prazo:''}" style="color-scheme:dark"></div>
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b pri" data-enok="${t?t.id:0}">Salvar</button></div></div></div>`;
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ennova],[data-enok],[data-enclipick],[data-enresppick],[data-enmove],[data-entimer],[data-enfim],[data-enminhas],[data-enranking],[data-entar]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+  if(d.ennova){ S.modal = modalTarefa(null); renderLayer(); return; }
+  if(d.entar && !e.target.closest('button')){ S.modal = modalTarefa(+d.entar); renderLayer(); return; }
+  if(d.enclipick){ S.enCli = d.enclipick;
+    document.querySelectorAll('[data-enclipick]').forEach(b=>b.classList.toggle('on', b.dataset.enclipick===S.enCli)); return; }
+  if(d.enresppick !== undefined){ S.enResp = d.enresppick || null;
+    document.querySelectorAll('[data-enresppick]').forEach(b=>b.classList.toggle('on', (b.dataset.enresppick||null)===S.enResp)); return; }
+  if(d.enok !== undefined){
+    const titulo = document.getElementById('en-t')?.value.trim();
+    if(!titulo){ const el=document.getElementById('en-t'); el.style.borderColor='var(--danger)'; el.focus(); return; }
+    const prazo = document.getElementById('en-prazo')?.value || null;
+    if(+d.enok){
+      const tr = S.ensaio.tarefas.find(x=>x.id===+d.enok);
+      Object.assign(tr, {titulo, prazo, resp:S.enResp, cli:S.enCli});
+      if(tr.col==='inbox' && tr.resp) tr.col = 'plan';
+    } else {
+      S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo, cli:S.enCli, resp:S.enResp,
+        col: S.enResp ? 'plan' : 'inbox', criada:Date.now(), prazo, tempoMs:0, desde:null });
+    }
+    S.modal=null; som('toque'); render();
+    toast(S.enResp ? `Tarefa no Plan, com ${membro(S.enResp)?.nome}.` : 'Solicitação no Inbox — o gestor destina.');
+    return; }
+  if(d.enmove){
+    const [id, dir] = d.enmove.split('|');
+    const tr = S.ensaio.tarefas.find(x=>x.id===+id); if(!tr) return;
+    const i = EN_COLS.findIndex(([k])=>k===tr.col);
+    const j = Math.max(0, Math.min(EN_COLS.length-1, i + (+dir)));
+    if(j===i) return;
+    tr.col = EN_COLS[j][0];
+    som('toque'); render(); return; }
+  if(d.entimer){
+    const tr = S.ensaio.tarefas.find(x=>x.id===+d.entimer); if(!tr) return;
+    if(tr.desde){ tr.tempoMs += Date.now()-tr.desde; tr.desde = null; }
+    else {
+      // uma pessoa, um relógio: pausa o que estiver rodando do mesmo dono
+      S.ensaio.tarefas.forEach(o=>{ if(o.desde && o.resp===tr.resp){ o.tempoMs += Date.now()-o.desde; o.desde=null; } });
+      tr.desde = Date.now();
+    }
+    render(); return; }
+  if(d.enfim){
+    const i = S.ensaio.tarefas.findIndex(x=>x.id===+d.enfim); if(i<0) return;
+    const [tr] = S.ensaio.tarefas.splice(i,1);
+    if(tr.desde){ tr.tempoMs += Date.now()-tr.desde; tr.desde=null; }
+    tr.concluida = Date.now();
+    tr.noPrazo = !tr.prazo || hojeISO() <= tr.prazo;
+    S.ensaio.feitas.push(tr);
+    som('conclusao'); render();
+    toast(`"${tr.titulo}" concluída${tr.noPrazo?' — no prazo. 🏆':'.'}`);
+    return; }
+  if(d.enminhas){ S.enSoMinhas = !S.enSoMinhas; render(); return; }
+  if(d.enranking){ S.modal = modalRanking(); renderLayer(); return; }
+}, true);
+
+/* o relógio anda sem redesenhar a tela */
+setInterval(()=>{
+  if(!S.ensaio) return;
+  for(const t of S.ensaio.tarefas){
+    if(!t.desde) continue;
+    const el = document.querySelector(`[data-kbtempo="${t.id}"]`);
+    if(el) el.textContent = kbFmt(kbTempoTotal(t));
+  }
+}, 5000);
+
+/* arrastar cartões entre colunas — o mesmo motor do arrasto da pauta */
+let enDrag = null;
+document.addEventListener('pointerdown', e => {
+  const card = e.target.closest('.enCard');
+  if(!card || e.target.closest('button')) return;
+  const id = +card.dataset.entar;
+  const timer = setTimeout(()=>{
+    enDrag = { id, card, alvo:null };
+    card.classList.add('arrastando');
+    const t = S.ensaio.tarefas.find(x=>x.id===id);
+    const g = document.createElement('div');
+    g.id='ptGhost'; g.textContent = t ? t.titulo : '';
+    document.body.appendChild(g);
+    g.style.left=e.clientX+'px'; g.style.top=e.clientY+'px';
+    document.body.style.touchAction='none';
+    if(navigator.vibrate) navigator.vibrate(10);
+  }, 300);
+  const solta = () => clearTimeout(timer);
+  addEventListener('pointerup', solta, {once:true});
+  addEventListener('pointercancel', solta, {once:true});
+});
+document.addEventListener('pointermove', e => {
+  if(!enDrag) return;
+  e.preventDefault();
+  const g = document.getElementById('ptGhost');
+  if(g){ g.style.left=e.clientX+'px'; g.style.top=e.clientY+'px'; }
+  const rolo = document.querySelector('.enRolo');
+  if(rolo){ if(e.clientX > innerWidth-70) rolo.scrollBy(12,0);
+            else if(e.clientX < 70) rolo.scrollBy(-12,0); }
+  const sob = document.elementFromPoint(e.clientX, e.clientY);
+  const col = sob && sob.closest('.enCol');
+  if(enDrag.alvo && enDrag.alvo !== col) enDrag.alvo.classList.remove('alvoDrop');
+  if(col) col.classList.add('alvoDrop');
+  enDrag.alvo = col || null;
+}, {passive:false});
+document.addEventListener('pointerup', () => {
+  if(!enDrag) return;
+  const {id, card, alvo} = enDrag;
+  enDrag = null;
+  document.getElementById('ptGhost')?.remove();
+  document.body.style.touchAction='';
+  card.classList.remove('arrastando');
+  document.querySelectorAll('.alvoDrop').forEach(x=>x.classList.remove('alvoDrop'));
+  if(!alvo) return;
+  const tr = S.ensaio.tarefas.find(x=>x.id===id);
+  if(!tr || tr.col === alvo.dataset.encol) return;
+  tr.col = alvo.dataset.encol;
+  som('toque'); render();
+});
+
+/* ---------- ranking do mês ------------------------------------------ */
+function pontosDe(id){
+  return S.ensaio.feitas.filter(f=>f.resp===id)
+    .reduce((s,f)=> s + 10 + (f.noPrazo?5:-3), 0);
+}
+function modalRanking(){
+  const placar = (S.equipe||[]).map(m=>({m, pts: pontosDe(membroId(m)),
+    feitas: S.ensaio.feitas.filter(f=>f.resp===membroId(m)).length}))
+    .sort((a,b)=>b.pts-a.pts);
+  const top3 = placar.slice(0,3);
+  const ordemPodio = [top3[1], top3[0], top3[2]].filter(Boolean);
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>Ranking do mês</h3>
+    <p>Tarefa concluída vale 10 pontos; no prazo, +5; atrasada, −3. A agência
+      bonifica o pódio no fim do mês.</p>
+    <div class="podio">${ordemPodio.map((e,i)=>`<div class="lugar">
+      <span class="av" style="width:38px;height:38px">${membroIni(e.m)}</span>
+      <b>${esc(e.m.n.split(' ')[0])}</b><span>${e.pts} pts · ${e.feitas} feitas</span>
+      <div class="bloco">${[2,1,3][i]||''}</div></div>`).join('')}</div>
+    ${placar.slice(3).map((e,i)=>`<div class="rfItem" style="margin-top:6px">
+      <span class="rfIc">${i+4}º</span>
+      <span class="rfNome">${esc(e.m.n)}<small>${e.pts} pts · ${e.feitas} concluídas</small></span></div>`).join('')}
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Fechar</button></div></div></div>`;
+}
+
+/* o "meu tempo" no perfil (Conta) */
+agConta = (function(orig){
+  return function(){
+    let html = orig();
+    if(!S.usuario || S.usuario.tipo!=='agencia' || !S.ensaio) return html;
+    const id = S.usuario.id;
+    const minhas = S.ensaio.feitas.filter(f=>f.resp===id);
+    const ms = minhas.reduce((s,f)=>s+f.tempoMs,0);
+    const media = minhas.length ? kbFmt(ms/minhas.length) : '—';
+    const card = `<div class="card" style="margin-bottom:12px"><h4>Meu ritmo no Ensaio</h4>
+      <p><b style="color:var(--ink-50)">${minhas.length}</b> tarefas concluídas ·
+        tempo médio <b style="color:var(--brass-300)">${media}</b> ·
+        <b style="color:var(--ink-50)">${pontosDe(id)}</b> pontos no mês</p></div>`;
+    return html.replace('<div class="card" style="margin-bottom:12px">', card + '<div class="card" style="margin-bottom:12px">');
+  };
+})(agConta);
+</script>
