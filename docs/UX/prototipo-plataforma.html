@@ -13482,3 +13482,540 @@ agConta = (function(orig){
   };
 })(agConta);
 </script>
+<style>
+/* =====================================================================
+   v55a — Projetos de verdade dentro do cliente: criáveis, editáveis,
+   com etapas e a satisfação de avançar. E a marca ganha manual.
+   ================================================================== */
+.pjCard{ border:1px solid var(--ink-800); border-radius:14px; background:var(--ink-900);
+  padding:15px 16px; margin-bottom:10px; width:100%; text-align:left;
+  transition:border-color var(--fast) var(--eo), transform var(--fast) var(--eo) }
+.pjCard:hover{ border-color:var(--ink-600); transform:translateY(-1px) }
+.pjCard h4{ margin:0 0 4px; font-family:var(--serif); font-weight:400; font-size:18px;
+  color:var(--ink-50) }
+.pjCard .obj{ font-size:12.5px; color:var(--ink-300); margin:0 0 10px }
+.pjBar{ height:6px; border-radius:3px; background:var(--ink-800); overflow:hidden }
+.pjBar i{ display:block; height:100%; width:calc(var(--p) * 1%); border-radius:3px;
+  background:linear-gradient(90deg,var(--brass-600),var(--brass-300));
+  transition:width .7s var(--spring) }
+.pjMeta{ display:flex; gap:12px; margin-top:8px; font-family:var(--mono);
+  font-size:10px; color:var(--ink-400); flex-wrap:wrap }
+.pjEtapas{ display:flex; flex-direction:column; gap:8px; margin:14px 0 }
+.pjEtapa{ display:flex; gap:11px; align-items:flex-start; padding:11px 13px;
+  border:1px solid var(--ink-800); border-radius:12px; background:var(--ink-950) }
+.pjEtapa.feita{ border-color:rgba(53,184,122,.3); opacity:.75 }
+.pjEtapa.atual{ border-color:var(--brass-600);
+  box-shadow:0 0 18px -6px rgba(200,150,58,.4) }
+.pjEtapa .num{ width:24px; height:24px; border-radius:8px; display:grid;
+  place-items:center; font-family:var(--mono); font-size:10.5px; flex:0 0 auto;
+  background:var(--ink-800); color:var(--ink-300) }
+.pjEtapa.feita .num{ background:rgba(53,184,122,.16); color:var(--encore) }
+.pjEtapa.atual .num{ background:rgba(200,150,58,.18); color:var(--brass-300) }
+.pjEtapa b{ display:block; font-size:13.5px; color:var(--ink-50) }
+.pjEtapa span{ font-size:12px; color:var(--ink-300); font-style:italic }
+.pjEtapa .feito-selo{ margin-left:auto; font-family:var(--mono); font-size:9px;
+  color:var(--encore); flex:0 0 auto }
+.mvLink{ color:var(--brass-300); text-decoration:none; border-bottom:1px dotted var(--brass-700) }
+.mvLink:hover{ color:var(--brass-100) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v55a — projetos por cliente.
+   ================================================================== */
+S.projetos = S.projetos || {};                 // { [cliId]: [projeto...] }
+const projetosDe = id => S.projetos[id] = S.projetos[id] || [];
+sbEmpacotar = (function(orig){
+  return function(cliId){ return { ...orig(cliId), projetos: projetosDe(cliId) }; };
+})(sbEmpacotar);
+sbAplicar = (function(orig){
+  return function(cliId, dados){
+    const ok = orig(cliId, dados);
+    if(ok && Array.isArray(dados.projetos)) S.projetos[cliId] = dados.projetos;
+    return ok;
+  };
+})(sbAplicar);
+
+function modalProjeto(id){
+  const c = cliAtual();
+  const pj = id ? projetosDe(c.id).find(x=>x.id===id) : null;
+  const fases = pj && pj.fases.length ? pj.fases : [{n:'',q:''}];
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3>${pj?'Editar projeto':'Novo projeto'} · ${esc(c.nome)}</h3>
+    <p>O contrato vivo: objetivo, prazo, estratégia — e as etapas que mostram a
+      todo mundo, cliente incluso, onde a caminhada está.</p>
+    <div class="fld"><label for="pj-nome">Nome do projeto</label>
+      <input id="pj-nome" value="${pj?esc(pj.nome):''}" placeholder="Ex.: Autoridade 2026"></div>
+    <div class="fld"><label for="pj-obj">Objetivo — o que muda quando ele der certo</label>
+      <textarea id="pj-obj" rows="2" placeholder="Ex.: dobrar a base de alunos qualificados até dezembro.">${pj?esc(pj.objetivo||''):''}</textarea></div>
+    <div class="frow">
+      <div class="fld"><label for="pj-prazo">Prazo para atingir</label>
+        <input id="pj-prazo" value="${pj?esc(pj.prazo||''):''}" placeholder="Ex.: 6 meses · até fev/27"></div>
+    </div>
+    <div class="fld"><label for="pj-estr">Estratégia — o caminho, em poucas linhas</label>
+      <textarea id="pj-estr" rows="3" placeholder="Como o objetivo vai ser alcançado.">${pj?esc(pj.estrategia||''):''}</textarea></div>
+    <div class="fld"><label>Etapas — a jornada que todos acompanham</label>
+      <div id="pj-fases">${fases.map(f=>`<div class="tcLinha">
+        <input class="pj-fn" value="${esc(f.n||'')}" placeholder="Ex.: Fundação">
+        <input class="pj-fq" value="${esc(f.q||'')}" placeholder="a pergunta que a etapa responde">
+        <button type="button" class="rmtc" aria-label="Remover etapa">${ic('x',11)}</button>
+      </div>`).join('')}</div>
+      <button type="button" class="b gho sm" id="pj-mais">+ etapa</button></div>
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Cancelar</button>
+      ${pj?`<button class="b gho" data-pjdel="${pj.id}"
+        style="color:var(--danger);border-color:rgba(229,72,77,.4)">Excluir</button>`:''}
+      <button class="b pri" data-pjok="${pj?pj.id:0}">Salvar projeto</button></div></div></div>`;
+}
+
+function detalheProjeto(pj){
+  const feitas = pj.fases.filter(f=>f.feita).length;
+  const p100 = pj.fases.length ? Math.round(feitas/pj.fases.length*100) : 0;
+  const atual = pj.fases.findIndex(f=>!f.feita);
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <div class="vzTopo"><span class="pilarChip" style="color:var(--brass-300)">${p100}% da jornada</span>
+      ${pj.prazo?`<span class="ptHora">${ic('clock',11)} ${esc(pj.prazo)}</span>`:''}</div>
+    <h3 style="margin:0 0 6px">${esc(pj.nome)}</h3>
+    ${pj.objetivo?`<p style="margin:0 0 12px;color:var(--ink-300)">${esc(pj.objetivo)}</p>`:''}
+    <div class="pjBar"><i style="--p:${p100}"></i></div>
+    ${pj.estrategia?`<div class="vzBloco" style="margin-top:13px"><b>Estratégia</b><p>${esc(pj.estrategia)}</p></div>`:''}
+    <div class="pjEtapas">
+      ${pj.fases.map((f,i)=>`<div class="pjEtapa ${f.feita?'feita':''} ${i===atual?'atual':''}">
+        <span class="num">${f.feita?'✓':i+1}</span>
+        <span style="flex:1;min-width:0"><b>${esc(f.n)}</b>
+          ${f.q?`<span>${esc(f.q)}</span>`:''}</span>
+        ${i===atual && S.view!=='client' ? `<button class="b pri sm" data-pjfase="${pj.id}|${i}"
+          style="flex:0 0 auto">${ic('checkc',12)} Concluir etapa</button>`
+        : f.feita ? `<span class="feito-selo">CONCLUÍDA</span>` : ''}
+      </div>`).join('')}
+    </div>
+    ${p100===100?`<p style="text-align:center;font-family:var(--serif);font-size:19px;color:var(--brass-300)">
+      A jornada inteira, cumprida. 🏆</p>`:''}
+    <div class="modalrow" style="margin-top:8px">
+      <button class="b gho" data-modalno="1">Fechar</button>
+      ${S.view!=='client'?`<button class="b gho" data-pjedit="${pj.id}">${ic('pencil',13)} Editar</button>`:''}
+    </div></div></div>`;
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-pjnovo],[data-pjok],[data-pjdel],[data-pjabre],[data-pjedit],[data-pjfase]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+  const c = cliAtual();
+  if(t.id==='pj-mais') return;
+  if(d.pjnovo){ S.modal = modalProjeto(null); renderLayer(); return; }
+  if(d.pjedit){ S.modal = modalProjeto(+d.pjedit); renderLayer(); return; }
+  if(d.pjabre){ const pj = projetosDe(c.id).find(x=>x.id===+d.pjabre);
+    if(pj){ S.modal = detalheProjeto(pj); renderLayer(); } return; }
+  if(d.pjok !== undefined){
+    const v = id => document.getElementById(id)?.value.trim() || '';
+    const nome = v('pj-nome');
+    if(nome.length<2){ const el=document.getElementById('pj-nome'); el.style.borderColor='var(--danger)'; el.focus(); return; }
+    const fasesNovas = [...document.querySelectorAll('#pj-fases .tcLinha')].map(l=>({
+      n: l.querySelector('.pj-fn').value.trim(),
+      q: l.querySelector('.pj-fq').value.trim(), feita:false
+    })).filter(f=>f.n);
+    const arr = projetosDe(c.id);
+    if(+d.pjok){
+      const pj = arr.find(x=>x.id===+d.pjok);
+      // etapas já concluídas não desconcluem na edição
+      fasesNovas.forEach(f=>{ const antiga = pj.fases.find(x=>x.n===f.n); if(antiga) f.feita = antiga.feita; });
+      Object.assign(pj, {nome, objetivo:v('pj-obj'), prazo:v('pj-prazo'),
+        estrategia:v('pj-estr'), fases:fasesNovas});
+    } else {
+      arr.push({ id: Date.now()%1e9, nome, objetivo:v('pj-obj'), prazo:v('pj-prazo'),
+        estrategia:v('pj-estr'), fases:fasesNovas });
+    }
+    S.modal=null; som('toque'); render();
+    toast(`Projeto "${nome}" salvo.`); return; }
+  if(d.pjdel){
+    const arr = projetosDe(c.id);
+    const i = arr.findIndex(x=>x.id===+d.pjdel);
+    if(i>=0) arr.splice(i,1);
+    S.modal=null; render(); toast('Projeto excluído.'); return; }
+  if(d.pjfase){
+    const [pid, fi] = d.pjfase.split('|');
+    const pj = projetosDe(c.id).find(x=>x.id===+pid); if(!pj) return;
+    pj.fases[+fi].feita = true;
+    const tudo = pj.fases.every(f=>f.feita);
+    if(tudo) som('conclusao'); else som('aprovar');
+    S.modal = detalheProjeto(pj); renderLayer(); render();
+    toast(tudo ? `"${pj.nome}" chegou ao fim da jornada. 🏆`
+               : `Etapa "${pj.fases[+fi].n}" concluída — a próxima já está acesa.`);
+    return; }
+}, true);
+document.addEventListener('click', e => {
+  if(!e.target.closest('#pj-mais')) return;
+  e.stopImmediatePropagation();
+  const caixa = document.getElementById('pj-fases');
+  const div = document.createElement('div');
+  div.className='tcLinha';
+  div.innerHTML = `<input class="pj-fn" placeholder="nome da etapa">
+    <input class="pj-fq" placeholder="a pergunta que a etapa responde">
+    <button type="button" class="rmtc" aria-label="Remover etapa">${ic('x',11)}</button>`;
+  caixa.appendChild(div);
+}, true);
+
+/* a aba Projetos do cliente mostra os projetos criáveis */
+agClienteDet = (function(orig){
+  return function(){
+    let html = orig();
+    if(S.tab !== 'projetos') return html;
+    const c = cliAtual();
+    const arr = projetosDe(c.id);
+    const lista = arr.map(pj=>{
+      const feitas = pj.fases.filter(f=>f.feita).length;
+      const p100 = pj.fases.length ? Math.round(feitas/pj.fases.length*100) : 0;
+      return `<button class="pjCard" data-pjabre="${pj.id}">
+        <h4>${esc(pj.nome)}</h4>
+        ${pj.objetivo?`<p class="obj">${esc(pj.objetivo)}</p>`:''}
+        <div class="pjBar"><i style="--p:${p100}"></i></div>
+        <div class="pjMeta"><span>${feitas}/${pj.fases.length} etapas</span>
+          ${pj.prazo?`<span>${esc(pj.prazo)}</span>`:''}<span>${p100}%</span></div>
+      </button>`;
+    }).join('');
+    const bloco = `<div style="display:flex;justify-content:flex-end;margin:0 0 12px">
+      <button class="b pri sm" data-pjnovo="1">${ic('folder',13)} Novo projeto</button></div>
+      ${lista || `<div class="hjVazio"><b style="color:var(--ink-100)">Nenhum projeto ainda.</b><br>
+        Crie o primeiro: objetivo, prazo, estratégia e as etapas da jornada.</div>`}`;
+    // o miolo da aba projetos é substituído inteiro
+    return html.replace(/(<div class="tabs">[\s\S]*?<\/div>)([\s\S]*)$/, `$1${bloco}`);
+  };
+})(agClienteDet);
+
+/* ---------- manual da marca + links que abrem ----------------------- */
+modalCliente = (function(orig){
+  return function(id){
+    let html = orig(id);
+    const c = CLIS().find(x=>x.id===id);
+    if(!c) return html;
+    const campo = `
+    <div class="fld"><label for="cl-manual">Manual da marca — link (Drive, site, PDF)</label>
+      <input id="cl-manual" value="${esc(c.manual||'')}" placeholder="drive.google.com/pasta-da-marca"></div>`;
+    return html.replace('<div class="fld"><label for="cl-links">',
+      campo + '\n    <div class="fld"><label for="cl-links">');
+  };
+})(modalCliente);
+window.addEventListener('click', e => {
+  const t = e.target.closest('[data-cliok]');
+  if(!t) return;
+  const manual = document.getElementById('cl-manual')?.value.trim() || '';
+  const id = t.dataset.cliok;
+  setTimeout(()=>{ if(S.cliEdit[id]) { S.cliEdit[id].manual = manual || null; render(); } }, 0);
+}, true);
+/* na aba Marca, links viram LINK de verdade e o manual aparece */
+agClienteDet = (function(orig){
+  return function(){
+    let html = orig();
+    if(S.tab && S.tab !== 'marca') return html;
+    const c = cliAtual();
+    // cada link cadastrado abre numa aba
+    (c.links||[]).forEach(l=>{
+      const url = /^https?:\/\//i.test(l) ? l : (l.includes('.') ? 'https://'+l : null);
+      if(!url) return;
+      html = html.split(`${ic('linkic',12)} ${esc(l)}`).join(
+        `${ic('linkic',12)} <a class="mvLink" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(l)}</a>`);
+    });
+    if(c.manual){
+      const url = /^https?:\/\//i.test(c.manual) ? c.manual : 'https://'+c.manual;
+      html = html.replace('<div class="card"><h4>Referências</h4>',
+        `<div class="card"><h4>Manual da marca</h4><p>
+          <a class="mvLink" href="${esc(url)}" target="_blank" rel="noopener noreferrer">
+          ${ic('doc',12)} Abrir o manual</a></p></div>
+        <div class="card"><h4>Referências</h4>`);
+    }
+    return html;
+  };
+})(agClienteDet);
+</script>
+<style>
+/* =====================================================================
+   v55b — Resultados de verdade, Conversas (squads + cliente), Drive
+   por link e o Agendar com fila.
+   ================================================================== */
+.cvLayout{ display:grid; grid-template-columns:230px 1fr; gap:14px; align-items:start }
+@media(max-width:760px){ .cvLayout{ grid-template-columns:1fr } }
+.cvCanais{ display:flex; flex-direction:column; gap:6px }
+@media(max-width:760px){ .cvCanais{ flex-direction:row; overflow-x:auto; padding-bottom:6px } }
+.cvCanal{ display:flex; align-items:center; gap:9px; padding:10px 12px; text-align:left;
+  border:1px solid var(--ink-800); border-radius:11px; background:var(--ink-900);
+  white-space:nowrap }
+.cvCanal.on{ border-color:var(--brass-600); color:var(--brass-300) }
+.cvCanal b{ font-size:12.5px; color:var(--ink-100) }
+.cvCanal.on b{ color:var(--brass-300) }
+.cvCanal small{ font-family:var(--mono); font-size:9px; color:var(--ink-400) }
+.cvJanela{ border:1px solid var(--ink-800); border-radius:15px; background:var(--ink-900);
+  display:flex; flex-direction:column; min-height:340px; max-height:62vh }
+.cvMsgs{ flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:9px }
+.cvMsg{ max-width:78%; align-self:flex-start }
+.cvMsg.minha{ align-self:flex-end; text-align:right }
+.cvMsg .quem{ font-family:var(--mono); font-size:9px; color:var(--ink-400); margin-bottom:2px }
+.cvMsg .balao{ display:inline-block; padding:9px 13px; border-radius:13px 13px 13px 4px;
+  background:var(--ink-950); border:1px solid var(--ink-800); font-size:13px;
+  color:var(--ink-100); text-align:left; white-space:pre-wrap; word-break:break-word }
+.cvMsg.minha .balao{ border-radius:13px 13px 4px 13px;
+  background:rgba(200,150,58,.12); border-color:rgba(200,150,58,.3) }
+.cvEscreve{ display:flex; gap:8px; padding:11px; border-top:1px solid var(--ink-800) }
+.cvEscreve input{ flex:1; min-width:0 }
+/* agendar */
+.agdLista{ display:flex; flex-direction:column; gap:7px; margin:10px 0 }
+.agdItem{ display:flex; gap:9px; align-items:center; font-size:12.5px; color:var(--ink-200) }
+.agdItem i{ font-style:normal; width:18px; text-align:center }
+.agdItem.falta{ color:#E5A54D }
+</style>
+<script>
+"use strict";
+/* ---------- Resultados: o pulso de tudo ----------------------------- */
+agResultados = function(){
+  const hoje = hojeISO();
+  let total=0, feitos=0, agendados=0, comMaterial=0, pend=0;
+  const porCli = [];
+  for(const c of CLIS()){
+    const arr = S.pautas[c.id]||[];
+    const f = arr.filter(p=>p.feito).length;
+    total += arr.length; feitos += f;
+    agendados += arr.filter(p=>faseDe(p)==='agendado').length;
+    comMaterial += arr.filter(p=>materiaisDe(p.id).length).length;
+    pend += arr.filter(p=>p.pend).length;
+    if(arr.length) porCli.push({c, n:arr.length, f});
+  }
+  const fe = (S.ensaio&&S.ensaio.feitas)||[];
+  const noPrazo = fe.filter(f=>f.noPrazo).length;
+  const ultimos7 = Array.from({length:7},(_,i)=>{
+    const d = somaDias(hoje, i-6);
+    let n=0; for(const c of CLIS()) n += (S.pautas[c.id]||[]).filter(p=>p.data===d && p.feito).length;
+    return n;
+  });
+  return agShell(`
+  <div class="mtop"><div><h1>Resultados</h1><p>o pulso da operação inteira</p></div></div>
+  <div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+    <div class="tile"><div class="n">${feitos}<span style="font-size:15px;color:var(--ink-400)">/${total}</span></div><div class="l">postagens feitas</div></div>
+    <div class="tile"><div class="n">${agendados}</div><div class="l">na fila de publicação</div></div>
+    <div class="tile ${pend?'hot':''}"><div class="n">${pend}</div><div class="l">pendências abertas</div></div>
+    <div class="tile"><div class="n">${fe.length?Math.round(noPrazo/fe.length*100):0}%</div><div class="l">tarefas no prazo (Ensaio)</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+    <div class="card"><h4>Feitas por dia — últimos 7</h4>
+      ${svgLine(ultimos7, ultimos7.map((_,i)=>rotuloData(somaDias(hoje,i-6))), {})}</div>
+    <div class="card"><h4>Por cliente</h4>
+      ${porCli.map(({c,n,f})=>`<div style="margin-bottom:11px">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px">
+          <b style="color:var(--ink-50)">${esc(c.nome)}</b>
+          <span style="color:var(--ink-300)">${f}/${n}</span></div>
+        <div class="pjBar"><i style="--p:${n?Math.round(f/n*100):0}"></i></div>
+      </div>`).join('') || '<p style="color:var(--ink-300)">Sem pautas ainda.</p>'}</div>
+    <div class="card"><h4>Ensaio — ritmo da equipe</h4>
+      <p style="font-size:13px;color:var(--ink-300)">
+        <b style="color:var(--ink-50)">${fe.length}</b> tarefas concluídas ·
+        <b style="color:var(--encore)">${noPrazo}</b> no prazo ·
+        material pronto em <b style="color:var(--brass-300)">${comMaterial}</b> cards</p>
+      <button class="b gho sm" data-enranking="1" style="margin-top:8px">${ic('chart',12)} Ver o pódio</button></div>
+  </div>`);
+};
+
+/* ---------- Conversas: squads e o canal do cliente ------------------ */
+S.chat = S.chat || null;
+function chatSemente(){
+  const canais = [
+    { id:'geral', nome:'Geral', tipo:'squad', membros:null,
+      msgs:[{de:'victor', txt:'A casa nova está de pé. Cada canal é um assunto — e o cliente só vê o canal dele.', ts:Date.now()}] },
+    { id:'design', nome:'Squad Design', tipo:'squad', membros:['victor','paulo'], msgs:[] },
+    { id:'conteudo', nome:'Squad Conteúdo', tipo:'squad', membros:['victor','marina'], msgs:[] }
+  ];
+  for(const c of CLIS())
+    canais.push({ id:'cli_'+c.id, nome:c.nome+' · atendimento', tipo:'cliente',
+      cli:c.id, membros:['victor','marina'], msgs:[] });
+  return { canais };
+}
+function canaisVisiveis(){
+  if(!S.chat) return [];
+  if(S.usuario && S.usuario.tipo==='cliente')
+    return S.chat.canais.filter(c=>c.tipo==='cliente' && c.cli===S.usuario.id);
+  const eu = S.usuario && S.usuario.id;
+  return S.chat.canais.filter(c=>!c.membros || !eu || c.membros.includes(eu) || ehAdmin());
+}
+function telaConversas(shell){
+  if(!S.chat) S.chat = chatSemente();
+  const canais = canaisVisiveis();
+  const ativo = canais.find(c=>c.id===S.cvAtivo) || canais[0];
+  if(ativo) S.cvAtivo = ativo.id;
+  const eu = S.usuario ? (S.usuario.tipo==='cliente' ? 'cliente_'+S.usuario.id : S.usuario.id) : 'victor';
+  const nomeDe = de => de.startsWith('cliente_')
+    ? (CLIS().find(c=>c.id===de.slice(8))?.aprovador?.nome || CLIS().find(c=>c.id===de.slice(8))?.nome || 'Cliente')
+    : (membro(de)?.nome || de);
+  const corpo = `
+  <div class="mtop"><div><h1>Conversas</h1><p>squads da equipe — e o canal direto de cada cliente</p></div>
+    ${S.usuario&&S.usuario.tipo!=='cliente'?`<button class="b gho sm" data-cvnovo="1">${ic('users',13)} Novo squad</button>`:''}</div>
+  <div class="cvLayout">
+    <div class="cvCanais">${canais.map(c=>`<button class="cvCanal ${c.id===S.cvAtivo?'on':''}"
+      data-cvcanal="${c.id}"><b>${esc(c.nome)}</b>
+      <small>${c.msgs.length||''}</small></button>`).join('')}</div>
+    <div class="cvJanela">
+      <div class="cvMsgs" id="cv-msgs">${ativo ? (ativo.msgs.length ? ativo.msgs.map(m=>`
+        <div class="cvMsg ${m.de===eu?'minha':''}">
+          <div class="quem">${esc(nomeDe(m.de))}</div>
+          <span class="balao">${esc(m.txt)}</span></div>`).join('')
+        : `<div class="hjVazio" style="margin:auto">Canal aberto. A primeira palavra é sua.</div>`)
+        : '<div class="hjVazio" style="margin:auto">Nenhum canal.</div>'}</div>
+      <div class="cvEscreve">
+        <input id="cv-txt" placeholder="Escreva aqui… (Enter envia)" autocomplete="off">
+        <button class="b pri sm" data-cvenvia="1">${ic('arrowr',13)} Enviar</button>
+      </div></div></div>`;
+  return shell(corpo);
+}
+function agConversas(){ return telaConversas(agShell); }
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-cvcanal],[data-cvenvia],[data-cvnovo]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+  if(d.cvcanal){ S.cvAtivo = d.cvcanal; render(); return; }
+  if(d.cvnovo){
+    const nome = prompt('Nome do squad:');
+    if(!nome) return;
+    S.chat.canais.splice(3,0,{ id:'sq_'+Date.now(), nome:'Squad '+nome, tipo:'squad',
+      membros:null, msgs:[] });
+    render(); toast(`Squad "${nome}" criado.`); return; }
+  if(d.cvenvia){
+    const campo = document.getElementById('cv-txt');
+    const txt = (campo?.value||'').trim();
+    if(!txt) return;
+    const canal = S.chat.canais.find(c=>c.id===S.cvAtivo);
+    const eu = S.usuario ? (S.usuario.tipo==='cliente' ? 'cliente_'+S.usuario.id : S.usuario.id) : 'victor';
+    canal.msgs.push({de:eu, txt, ts:Date.now()});
+    campo.value='';
+    som('toque'); render();
+    setTimeout(()=>{ const cx=document.getElementById('cv-msgs'); if(cx) cx.scrollTop=cx.scrollHeight;
+      document.getElementById('cv-txt')?.focus(); }, 60);
+    return; }
+}, true);
+document.addEventListener('keydown', e => {
+  if(e.key!=='Enter' || e.target.id!=='cv-txt') return;
+  e.preventDefault();
+  document.querySelector('[data-cvenvia]')?.click();
+});
+render = (function(orig){
+  return function(){
+    if(S.view==='agency' && S.route==='conversas' && !S.skel){
+      document.getElementById('root').innerHTML = agConversas();
+      renderLayer(); ctxBar(); posRender();
+      setTimeout(()=>{ const cx=document.getElementById('cv-msgs'); if(cx) cx.scrollTop=cx.scrollHeight; },40);
+      return;
+    }
+    return orig.apply(this, arguments);
+  };
+})(render);
+AGNAV.splice(AGNAV.findIndex(x=>x.r==='producao'), 0,
+  {r:'conversas', n:'Conversas', icn:'sndon'});
+(function(){
+  const g = MENU_AG.find(x=>x.g==='Operação');
+  if(g && !g.it.some(([r])=>r==='conversas')) g.it.push(['conversas','Conversas','sndon']);
+})();
+/* o chat viaja no __config__ junto do resto */
+sbGravarConfig = (function(orig){
+  let _esp2 = null;
+  return async function(){
+    await orig.apply(this, arguments);
+    if(!_sbLigado || !S.chat) return;
+    const corpo = JSON.stringify(S.chat);
+    if(_esp2===corpo) return;
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/pauta?on_conflict=cliente`, {
+        method:'POST', headers:{...sbCab(), Prefer:'resolution=merge-duplicates,return=minimal'},
+        body: JSON.stringify({cliente:'__chat__', dados:S.chat, atualizado_em:new Date().toISOString()})});
+      if(r.ok) _esp2=corpo;
+    }catch(e){}
+  };
+})(sbGravarConfig);
+sbCarregar = (function(orig){
+  return function(){
+    const p = orig.apply(this, arguments);
+    return Promise.resolve(p).then(async ok=>{
+      if(ok){ try{
+        const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__chat__&select=dados`,{headers:sbCab()});
+        if(r.ok){ const [l]=await r.json(); if(l&&l.dados&&l.dados.canais) S.chat=l.dados; }
+      }catch(e){} }
+      if(!S.chat) S.chat = chatSemente();
+      render();
+      return ok;
+    });
+  };
+})(sbCarregar);
+
+/* ---------- Google Drive por link nos materiais --------------------- */
+modalMaterial = (function(orig){
+  return function(id){
+    let html = orig(id);
+    if(!html) return html;
+    return html.replace('placeholder="Ou cole o link do material (artigo, vídeo, Drive…)"',
+      'placeholder="Ou cole o link — Google Drive, artigo, vídeo…"');
+  };
+})(modalMaterial);
+
+/* ---------- Agendar com fila ---------------------------------------- */
+function modalAgendar(id){
+  const p = S.pauta.find(x=>x.id===id); if(!p) return '';
+  const ms = materiaisDe(id);
+  const checa = (ok, txt) => `<div class="agdItem ${ok?'':'falta'}">
+    <i>${ok?'✓':'—'}</i>${txt}</div>`;
+  const pronto = !!(p.data && p.hora && (p.plats||[]).length && ms.length && (p.legenda||p.texto));
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>Agendar "${esc(p.t)}"</h3>
+    <p>A peça entra na fila e é publicada sozinha na hora marcada.</p>
+    <div class="agdLista">
+      ${checa(!!p.data, p.data ? `Sai ${rotuloLongo(p.data)} às ${p.hora}` : 'Sem data definida')}
+      ${checa((p.plats||[]).length, (p.plats||[]).length
+        ? 'Redes: '+(p.plats||[]).map(k=>(PLATS[k]||{}).n).filter(Boolean).join(', ') : 'Nenhuma rede escolhida')}
+      ${checa(ms.length, ms.length ? `Material pronto (${ms.length} ${ms.length>1?'arquivos':'arquivo'})` : 'Sem material anexado')}
+      ${checa(!!(p.legenda||p.texto), (p.legenda||p.texto) ? 'Legenda pronta' : 'Sem legenda')}
+    </div>
+    ${pronto?'':`<p class="mtAviso">${ic('warn',12)} Dá para agendar mesmo assim — mas o que
+      está faltando precisa existir antes da hora marcada.</p>`}
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b pri" data-agdok="${p.id}">${ic('zap',13)} Entrar na fila</button>
+    </div></div></div>`;
+}
+/* o raio agora abre o agendamento de verdade */
+window.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptag]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const p = S.pauta.find(x=>x.id===+t.dataset.ptag); if(!p) return;
+  if(faseDe(p)==='agendado' || faseDe(p)==='postado'){
+    porFase(p,'aprovado'); som('toque'); render();
+    toast(`"${p.t}" saiu da fila de publicação.`);
+    return;
+  }
+  S.modal = modalAgendar(p.id); renderLayer();
+}, true);
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-agdok]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const p = S.pauta.find(x=>x.id===+t.dataset.agdok); if(!p) return;
+  porFase(p, 'agendado');
+  p.agendadoEm = Date.now();
+  S.modal = null; somAgendar(); render();
+  toast(`"${p.t}" na fila — publica ${p.data?rotuloData(p.data):''} às ${p.hora}.`);
+}, true);
+/* a fila trabalha: o que estava agendado e cuja hora passou vira POSTADO */
+function filaPublica(){
+  const agora = new Date();
+  const hoje = hojeISO();
+  const hhmm = `${D2(agora.getHours())}:${D2(agora.getMinutes())}`;
+  let publicou = 0;
+  for(const c of CLIS()){
+    for(const p of (S.pautas[c.id]||[])){
+      if(faseDe(p)!=='agendado' || !p.data) continue;
+      if(p.data < hoje || (p.data===hoje && (p.hora||'00:00') <= hhmm)){
+        porFase(p,'postado'); publicou++;
+      }
+    }
+  }
+  if(publicou){ render(); toast(`${publicou} ${publicou===1?'peça publicada':'peças publicadas'} pela fila.`); }
+}
+setTimeout(filaPublica, 4200);
+setInterval(filaPublica, 60000);
+</script>
