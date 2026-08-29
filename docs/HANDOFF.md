@@ -985,6 +985,25 @@ funções diferentes e sigilo por categoria.
 > não enxerga NEM o chip da categoria. Testado com os três olhares (Victor vê, Marina
 > marcada vê, Paulo não vê nada).
 
+**A abertura centrada e o mergulho pela partitura (v60).** Pedido do founder: símbolo no
+centro exato, e uma saída em que ele "mergulhasse, ganhasse dimensão de virar uma
+partitura e caminhasse por ela em 3D" até a homepage.
+
+> Centro: desvio medido de 0px (o palco perdeu o aspect-ratio e as margens herdadas).
+> A saída nova (`sairPauta`, chamada pelo `sair()` da v18 quando não há
+> prefers-reduced-motion): o M deita em rotateX até ~76°, cresce 10× e atravessa a
+> câmera enquanto um plano-partitura (repeating-linear-gradient dourado, também deitado
+> em 3D, com máscara de profundidade) corre 720px por baixo — as linhas passando como
+> trilhos. A cortina esvai aos ~1s e a plataforma, já desenhada por baixo, simplesmente
+> É a tela. Com movimento reduzido, fade simples de sempre.
+
+> **Validação num ambiente que congela animação**: o painel de teste pausa TODAS as
+> animações CSS quando fica oculto — amostrar `getComputedStyle` no relógio dá matriz
+> identidade e engana. A prova certa: aplicar a animação com **delay negativo +
+> paused** (`animation: mMergulha 1.5s -0.75s paused forwards`) e ler o frame exato —
+> deu `matrix3d` com escala ~4,5 e rotação X no meio do mergulho, e o fundo da
+> partitura andado 542px. Fica registrado como técnica da casa.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.

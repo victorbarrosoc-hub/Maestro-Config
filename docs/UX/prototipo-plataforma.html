@@ -5119,7 +5119,9 @@ function abrirCortina(){
   let saiu = false;
   const sair = () => {
     if(saiu) return; saiu = true;
-    voarM(el);
+    // v60: a saída nova mergulha pela partitura em 3D; com movimento
+    // reduzido (ou se a coreografia não existir), o fade simples fica
+    if(!REDUZ && typeof sairPauta === 'function'){ sairPauta(el); return; }
     el.classList.add('saindo');
     setTimeout(()=>{ el.remove(); document.body.classList.remove('cortina'); }, 860);
   };
@@ -14410,4 +14412,66 @@ document.addEventListener('click', e => {
   S.modal = modalVer(p.id); renderLayer(); render();
   toast(`"${p.t}" agora também está no Ensaio — o mesmo job, nos dois lugares.`);
 }, true);
+</script>
+<style>
+/* =====================================================================
+   v60 — a abertura: símbolo no CENTRO exato, e a saída vira um
+   mergulho: o M deita, ganha profundidade, vira a própria partitura e
+   a câmera atravessa por entre as linhas até a plataforma aparecer.
+   ================================================================== */
+#abertura .palco{ aspect-ratio:auto }
+.mDesenho.mPauta{ margin:0 }
+
+/* o mergulho */
+#abertura.mergulho{ cursor:default; pointer-events:none;
+  animation:cortinaSome .55s ease .98s forwards }
+#abertura.mergulho .palco{ perspective:760px }
+#abertura.mergulho .mDesenho.mPauta{
+  transform-origin:50% 62%;
+  animation:mMergulha 1.5s cubic-bezier(.55,0,.12,1) forwards;
+  filter:drop-shadow(0 0 18px rgba(200,150,58,.35));
+}
+#abertura.mergulho .mDesenho.mPauta path{
+  animation:none; stroke-dasharray:none; stroke-dashoffset:0 }
+@keyframes mMergulha{
+  0%  { transform:none; opacity:1 }
+  30% { transform:rotateX(48deg) scale(1.9); opacity:1 }
+  70% { transform:rotateX(70deg) scale(5.2) translateY(6%); opacity:.9 }
+  100%{ transform:rotateX(76deg) scale(10) translateY(16%); opacity:0 }
+}
+/* a partitura infinita que corre por baixo da câmera */
+#abertura{ perspective:760px }
+.pauta3d{
+  position:absolute; left:-70vw; right:-70vw; top:46%; height:170vh;
+  transform:rotateX(76deg); transform-origin:top center;
+  background:repeating-linear-gradient(to bottom,
+    rgba(200,150,58,.55) 0 2.5px, transparent 2.5px 54px);
+  -webkit-mask-image:linear-gradient(to bottom, transparent, #000 12%, #000 55%, transparent 85%);
+  mask-image:linear-gradient(to bottom, transparent, #000 12%, #000 55%, transparent 85%);
+  opacity:0; pointer-events:none;
+  animation:pautaCorre 1.45s cubic-bezier(.4,0,.2,1) .12s forwards;
+}
+@keyframes pautaCorre{
+  0%  { opacity:0; background-position:0 0 }
+  22% { opacity:.9 }
+  78% { opacity:.85 }
+  100%{ opacity:0; background-position:0 720px }
+}
+@keyframes cortinaSome{ to{ opacity:0 } }
+@media (prefers-reduced-motion:reduce){
+  #abertura.mergulho .mDesenho.mPauta, .pauta3d{ animation:none }
+}
+</style>
+<script>
+"use strict";
+/* v60 — a coreografia da saída. A plataforma já está desenhada por
+   baixo da cortina: no fim do mergulho ela simplesmente É a tela. */
+function sairPauta(el){
+  const plano = document.createElement('div');
+  plano.className = 'pauta3d';
+  el.appendChild(plano);
+  el.classList.add('mergulho');
+  document.body.classList.remove('cortina');
+  setTimeout(()=>{ el.remove(); }, 1750);
+}
 </script>
