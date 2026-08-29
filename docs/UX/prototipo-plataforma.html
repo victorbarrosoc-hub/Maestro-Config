@@ -11273,6 +11273,7 @@ sbCarregar = (function(orig){
           if(d){
             if(d.cliEdit) S.cliEdit = d.cliEdit;
             if(Array.isArray(d.cliFora)) S.cliFora = d.cliFora;
+            if(d.agencia) S.agencia = d.agencia;
             render();
           }
         }
@@ -11285,7 +11286,7 @@ sbCarregar = (function(orig){
 let _cfgEspelho = null;
 async function sbGravarConfig(){
   if(!_sbLigado) return;
-  const dados = { cliEdit:S.cliEdit, cliFora:S.cliFora, versao:45 };
+  const dados = { cliEdit:S.cliEdit, cliFora:S.cliFora, agencia:(S.agencia||null), versao:53 };
   const corpo = JSON.stringify(dados);
   if(_cfgEspelho === corpo) return;
   try{
@@ -12696,4 +12697,417 @@ modalVer = (function(orig){
       .replace(/<button class="b gho" data-cplink="[^"]*">[\s\S]*?<\/button>/, '');
   };
 })(modalVer);
+</script>
+<style>
+/* =====================================================================
+   v53 — pessoas: cada um entra como ele mesmo, papéis de verdade,
+   perfil da agência, aprovador ligado ao cliente e o fluxo de status
+   completo do card.
+   ================================================================== */
+#quemEsta{ position:fixed; inset:0; z-index:920; background:rgba(8,9,11,.9);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  display:grid; place-items:center; padding:20px }
+#quemEsta .caixa{ width:min(430px,94vw); background:var(--ink-900);
+  border:1px solid var(--ink-700); border-radius:18px; padding:24px;
+  max-height:86vh; overflow:auto }
+#quemEsta h3{ font-family:var(--serif); font-weight:400; font-size:23px;
+  color:var(--ink-50); margin:0 0 4px }
+#quemEsta .sub{ font-size:13px; color:var(--ink-300); margin:0 0 18px }
+#quemEsta .grp{ font-family:var(--mono); font-size:9.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-400); margin:16px 0 8px }
+.qePessoa{ display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  padding:11px 13px; border:1px solid var(--ink-800); border-radius:12px;
+  background:var(--ink-950); margin-bottom:7px;
+  transition:border-color var(--fast) var(--eo), transform var(--fast) var(--eo) }
+.qePessoa:hover{ border-color:var(--brass-600); transform:translateY(-1px) }
+.qePessoa b{ display:block; font-size:14px; color:var(--ink-50) }
+.qePessoa span{ font-size:11.5px; color:var(--ink-400) }
+.qeAtual{ display:inline-flex; align-items:center; gap:8px; padding:5px 11px 5px 6px;
+  border:1px solid var(--ink-700); border-radius:999px; background:var(--ink-950);
+  font-size:12px; color:var(--ink-200) }
+.qeAtual:hover{ border-color:var(--ink-500) }
+
+/* o fluxo de status no card */
+.fxTrilha{ display:flex; align-items:center; gap:0; margin:2px 0 14px; overflow-x:auto;
+  padding:6px 2px; scrollbar-width:none }
+.fxTrilha::-webkit-scrollbar{ display:none }
+.fxPasso{ display:flex; align-items:center; flex:0 0 auto }
+.fxPasso i{ width:9px; height:9px; border-radius:50%; background:var(--ink-700);
+  font-style:normal; flex:0 0 auto }
+.fxPasso.feita i{ background:var(--brass-500) }
+.fxPasso.atual i{ width:12px; height:12px; background:var(--brass-300);
+  box-shadow:0 0 8px 2px rgba(200,150,58,.4) }
+.fxPasso u{ width:22px; height:1.5px; background:var(--ink-700); text-decoration:none }
+.fxPasso.feita u{ background:var(--brass-600) }
+.fxRotulo{ font-family:var(--mono); font-size:10.5px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--brass-300); margin:-6px 0 12px }
+.fxAlteracao{ display:inline-flex; align-items:center; gap:6px; font-family:var(--mono);
+  font-size:9.5px; letter-spacing:.06em; padding:4px 10px; border-radius:999px;
+  color:#E5A54D; background:rgba(229,165,77,.12); margin:0 6px 10px 0 }
+.pill.p-FASE{ background:var(--ink-800); color:var(--brass-300) }
+
+/* fila de revisão */
+.rvItem{ border:1px solid var(--ink-800); border-radius:13px; background:var(--ink-900);
+  padding:14px 15px; margin-bottom:9px }
+.rvItem .top{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:7px }
+.rvTexto{ font-size:13.5px; color:var(--ink-100); line-height:1.6; white-space:pre-wrap }
+.rvAcoes{ display:flex; gap:8px; margin-top:11px; flex-wrap:wrap }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v53 — pessoas e fluxo.
+   ================================================================== */
+
+/* ---------- papéis de uma casa de comunicação de verdade ------------ */
+Object.assign(PERMS, {
+  Revisor:{sim:['ler tudo dos clientes','aprovar texto internamente','sugerir alteração'],nao:['enviar ao cliente','equipe','faturamento','aprovar pelo cliente']},
+  'Social Media':{sim:['pauta e calendário','agendamento','comentários','feed'],nao:['equipe','faturamento','aprovar conteúdo']},
+  'Editor de Vídeo':{sim:['cortes e timecodes','uploads de vídeo','produção'],nao:['enviar lotes','equipe','aprovar conteúdo']},
+  'Motion Designer':{sim:['animações e artes em movimento','produção','uploads'],nao:['enviar lotes','equipe','aprovar conteúdo']},
+  'Gestor de Tráfego':{sim:['resultados e métricas','verbas de mídia','relatórios'],nao:['equipe','aprovar conteúdo']}
+});
+
+/* ---------- quem está usando ---------------------------------------- */
+const CHAVE_USR = 'maestro-usuario-v1';
+try{ S.usuario = JSON.parse(localStorage.getItem(CHAVE_USR)||'null'); }catch(e){ S.usuario = null; }
+const usuarioAtual = () => S.usuario && S.usuario.tipo==='agencia' ? membro(S.usuario.id) : null;
+const ehAdmin = () => {
+  const m = (S.equipe||[]).find(x=>membroId(x)===(S.usuario&&S.usuario.id));
+  return !!(m && (m.dono || m.papel==='Administrador'));
+};
+const ehPapel = papel => {
+  const m = (S.equipe||[]).find(x=>membroId(x)===(S.usuario&&S.usuario.id));
+  return !!(m && m.papel===papel);
+};
+
+function abrirQuemEsta(){
+  const el = document.createElement('div');
+  el.id = 'quemEsta';
+  el.innerHTML = `<div class="caixa">
+    <h3>Quem está aí?</h3>
+    <p class="sub">Cada pessoa entra como ela mesma — o que você faz fica no seu nome.</p>
+    <div class="grp">Equipe da agência</div>
+    ${(S.equipe||[]).map(m=>`<button class="qePessoa" data-qeag="${membroId(m)}">
+      <span class="av">${membroIni(m)}</span>
+      <span style="flex:1"><b>${esc(m.n)}</b><span>${esc(m.papel)}${m.dono?' · dono da conta':''}</span></span>
+      ${ic('chevr',14)}</button>`).join('')}
+    <div class="grp">Sou cliente</div>
+    ${CLIS().map(c=>`<button class="qePessoa" data-qecl="${c.id}">
+      <span class="av" ${c.cor?`style="background:linear-gradient(150deg,${c.cor},#111);color:#fff"`:''}>${esc(c.ini)}</span>
+      <span style="flex:1"><b>${esc(c.nome)}</b><span>vê só o que é seu: pauta, aprovações, resultados</span></span>
+      ${ic('chevr',14)}</button>`).join('')}
+  </div>`;
+  document.body.appendChild(el);
+}
+document.addEventListener('click', e => {
+  const ag = e.target.closest('[data-qeag]');
+  const cl = e.target.closest('[data-qecl]');
+  if(!ag && !cl) return;
+  e.stopImmediatePropagation();
+  if(ag){ S.usuario = {tipo:'agencia', id:ag.dataset.qeag}; S.view='agency'; S.route='dash'; }
+  else { S.usuario = {tipo:'cliente', id:cl.dataset.qecl}; S.view='client'; S.cli=cl.dataset.qecl; S.route='inicio'; }
+  try{ localStorage.setItem(CHAVE_USR, JSON.stringify(S.usuario)); }catch(err){}
+  document.getElementById('quemEsta')?.remove();
+  const m = usuarioAtual();
+  render();
+  toast(m ? `Bem-vindo de volta, ${m.nome.split(' ')[0]}.` : 'Entrando como cliente.');
+}, true);
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-trocausr]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  abrirQuemEsta();
+}, true);
+/* pede a identificação uma vez, depois da abertura */
+setTimeout(()=>{ if(!S.usuario && !document.getElementById('quemEsta')) abrirQuemEsta(); }, 3400);
+
+/* o crachá de quem está logado entra no topo da agência */
+agShell = (function(orig){
+  return function(inner){
+    let html = orig(inner);
+    const m = usuarioAtual();
+    if(!m) return html;
+    const badge = `<button class="qeAtual" data-trocausr="1" title="Trocar de pessoa">
+      <span class="av" style="width:22px;height:22px;font-size:9px">${esc(m.ini)}</span>
+      ${esc(m.nome.split(' ')[0])}</button>`;
+    return html.replace('<div class="grp">Conta</div>',
+      `<div style="padding:0 20px 14px">${badge}</div><div class="grp">Conta</div>`);
+  };
+})(agShell);
+
+/* só o administrador mexe nos papéis dos outros */
+agEquipe = (function(orig){
+  return function(){
+    let html = orig();
+    if(ehAdmin() || !S.usuario) return html;
+    return html.replace(/<select class="selectrole"[\s\S]*?<\/select>/g,
+      '<span class="pill p-DRAFT">papel definido pelo administrador</span>');
+  };
+})(agEquipe);
+
+/* ---------- perfil da agência --------------------------------------- */
+S.agencia = S.agencia || { nome:'Agência Nova', site:'', mail:'' };
+function modalAgencia(){
+  const a = S.agencia;
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>Perfil da agência</h3>
+    <p>O nome que aparece para os clientes e para a equipe.</p>
+    <div class="fld"><label for="agp-nome">Nome da agência</label>
+      <input id="agp-nome" value="${esc(a.nome)}"></div>
+    <div class="fld"><label for="agp-site">Site</label>
+      <input id="agp-site" value="${esc(a.site||'')}" placeholder="agencia.com.br"></div>
+    <div class="fld"><label for="agp-mail">E-mail de contato</label>
+      <input id="agp-mail" value="${esc(a.mail||'')}" placeholder="oi@agencia.com.br"></div>
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b pri" data-agpok="1">Salvar</button></div></div></div>`;
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-agperfil],[data-agpok]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  if(t.dataset.agperfil){
+    if(!ehAdmin() && S.usuario){ toast('Só o administrador edita o perfil da agência.'); return; }
+    S.modal = modalAgencia(); renderLayer(); return; }
+  const v = id => document.getElementById(id)?.value.trim() || '';
+  S.agencia = { nome: v('agp-nome')||'Agência', site: v('agp-site'), mail: v('agp-mail') };
+  S.modal = null; som('toque'); render();
+  toast('Perfil da agência salvo.');
+}, true);
+agConta = (function(orig){
+  return function(){
+    const html = orig();
+    const card = `<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span class="av">${esc((S.agencia.nome||'A').slice(0,2).toUpperCase())}</span>
+        <span style="flex:1;min-width:140px"><b style="color:var(--ink-50)">${esc(S.agencia.nome)}</b>
+          <span style="display:block;font-size:11.5px;color:var(--ink-400)">${esc(S.agencia.site||'sem site cadastrado')}${S.agencia.mail?' · '+esc(S.agencia.mail):''}</span></span>
+        <button class="b gho sm" data-agperfil="1">${ic('pencil',12)} Editar perfil</button>
+      </div></div>`;
+    return html.replace(/(<div class="mtop">[\s\S]*?<\/div>\s*<\/div>)/, `$1${card}`);
+  };
+})(agConta);
+
+/* o perfil da agência viaja no __config__ — edições feitas direto no
+   sbGravarConfig/sbCarregar originais */
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v53b — o aprovador ligado ao cliente, o fluxo de status completo e
+   a fila do revisor.
+   ================================================================== */
+
+/* ---------- aprovador no editar cliente ----------------------------- */
+modalCliente = (function(orig){
+  return function(id){
+    let html = orig(id);
+    const c = CLIS().find(x=>x.id===id);
+    if(!c) return html;
+    const ap = c.aprovador || {};
+    const campos = `
+    <div class="frow">
+      <div class="fld"><label for="cl-apnome">Quem aprova (nome)</label>
+        <input id="cl-apnome" value="${esc(ap.nome||'')}" placeholder="Ex.: Roberto Prado"></div>
+      <div class="fld"><label for="cl-apmail">E-mail do aprovador</label>
+        <input id="cl-apmail" value="${esc(ap.mail||'')}" placeholder="entra por link, sem senha"></div>
+    </div>`;
+    return html.replace('<div class="fld"><label for="cl-brief">',
+      campos + '\n    <div class="fld"><label for="cl-brief">');
+  };
+})(modalCliente);
+/* O salvar original (v45) roda em captura de DOCUMENTO com
+   stopImmediatePropagation — qualquer listener meu no documento morre
+   antes de nascer, e a bolha nem chega a existir. A JANELA captura
+   ANTES do documento: leio os campos ali, e aplico num setTimeout(0),
+   depois que o original já recriou S.cliEdit[id] (ele substitui o
+   objeto inteiro — aplicar antes seria apagado). */
+window.addEventListener('click', e => {
+  const t = e.target.closest('[data-cliok]');
+  if(!t) return;
+  const nome = document.getElementById('cl-apnome')?.value.trim() || '';
+  const mail = document.getElementById('cl-apmail')?.value.trim() || '';
+  const id = t.dataset.cliok;
+  setTimeout(()=>{
+    if(!S.cliEdit[id]) return;
+    S.cliEdit[id].aprovador = (nome||mail) ? {nome, mail} : null;
+    render();
+  }, 0);
+}, true);
+/* e aparece na aba "Quem aprova" */
+agClienteDet = (function(orig){
+  return function(){
+    let html = orig();
+    const c = cliAtual();
+    const ap = c.aprovador;
+    if(S.tab==='equipe' && ap && ap.nome){
+      const ini = ap.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+      html = html
+        .replace('<span class="av">—</span>', `<span class="av">${esc(ini)}</span>`)
+        .replace('<b>Sem aprovador ainda</b>', `<b>${esc(ap.nome)}</b>`)
+        .replace('convide quem aprova', esc(ap.mail || 'entra por link, sem senha'))
+        .replace('aprovadora · acesso por link, sem senha',
+          esc((ap.mail? ap.mail+' · ' : '') + 'entra por link, sem senha'));
+    }
+    return html;
+  };
+})(agClienteDet);
+
+/* ---------- o fluxo de status completo ------------------------------ */
+const FASES = [
+  ['rascunho',   'Rascunho'],
+  ['criado',     'Criado'],
+  ['revisao',    'Aprovação interna'],
+  ['texto_cli',  'Aprovação de textos (cliente)'],
+  ['texto_ok',   'Texto aprovado'],
+  ['producao',   'Em produção'],
+  ['revisao2',   'Aprovação interna'],
+  ['post_cli',   'Aprovação da postagem (cliente)'],
+  ['aprovado',   'Aprovado'],
+  ['agendado',   'Agendado'],
+  ['postado',    'Postado']
+];
+const faseIdx = p => Math.max(0, FASES.findIndex(([k])=>k===faseDe(p)));
+function faseDe(p){
+  if(p.fase) return p.fase;
+  if(p.feito) return 'postado';
+  if(p.st==='SCHEDULED') return 'agendado';
+  return 'rascunho';
+}
+function porFase(p, k){
+  p.fase = k;
+  // os campos antigos acompanham, para nada quebrar
+  p.st = (k==='agendado'||k==='postado') ? 'SCHEDULED' : 'DRAFT';
+  if(k==='postado') p.feito = true;
+}
+const rotuloFase = p => FASES[faseIdx(p)][1];
+
+/* a trilha entra no topo do modo de visualização */
+modalVer = (function(orig){
+  return function(id){
+    let html = orig(id);
+    const p = S.pauta.find(x=>x.id===id);
+    if(!p || p.tarefa) return html;
+    const i = faseIdx(p);
+    const trilha = `<div class="fxTrilha" aria-label="Etapa: ${esc(rotuloFase(p))}">
+      ${FASES.map(([k,n],j)=>`<span class="fxPasso ${j<i?'feita':''} ${j===i?'atual':''}"
+        title="${esc(n)}"><i></i>${j<FASES.length-1?'<u></u>':''}</span>`).join('')}
+    </div>
+    <div class="fxRotulo">${esc(rotuloFase(p))} · etapa ${i+1} de ${FASES.length}</div>
+    ${(p.alteracoes||[]).map(a=>`<span class="fxAlteracao">${ic('warn',10)}
+      Alteração (${esc(a.por)}) · ${esc(a.quando)}</span>`).join('')}`;
+    html = html.replace('<div class="vzTopo">', trilha + '\n    <div class="vzTopo">');
+    // os botões de andar com a etapa (só agência)
+    if(S.view !== 'client'){
+      const btns = `${i>0?`<button class="b gho" data-fxvolta="${p.id}">← etapa</button>`:''}
+        ${i<FASES.length-1?`<button class="b gho" data-fxvai="${p.id}"
+          style="color:var(--brass-300);border-color:var(--brass-700)">${esc(FASES[i+1][1])} →</button>`:''}`;
+      html = html.replace('<div class="modalrow" style="margin-top:14px">',
+        `<div class="modalrow" style="margin-top:14px">${btns}`);
+    }
+    return html;
+  };
+})(modalVer);
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-fxvai],[data-fxvolta]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const id = +(t.dataset.fxvai || t.dataset.fxvolta);
+  const p = S.pauta.find(x=>x.id===id); if(!p) return;
+  const i = faseIdx(p);
+  const novo = t.dataset.fxvai ? Math.min(i+1, FASES.length-1) : Math.max(i-1, 0);
+  porFase(p, FASES[novo][0]);
+  if(FASES[novo][0]==='agendado') somAgendar(); else som('toque');
+  S.modal = modalVer(id); renderLayer(); render();
+}, true);
+
+/* a etiqueta da linha passa a falar a fase, não só rascunho/agendado */
+ptItemHtml = (function(orig){
+  return function(p, i){
+    let html = orig(p, i);
+    if(p.tarefa) return html;
+    const rot = rotuloFase(p);
+    html = html.replace(/<span class="pill p-(SCHEDULED|DRAFT)">[^<]*<\/span>/,
+      `<span class="pill p-FASE">${esc(rot.length>22?rot.slice(0,22)+'…':rot)}</span>`);
+    return html;
+  };
+})(ptItemHtml);
+
+/* ---------- a fila do revisor --------------------------------------- */
+function agRevisao(){
+  const fila = [];
+  for(const c of CLIS()){
+    (S.pautas[c.id]||[]).forEach(p=>{
+      const f = faseDe(p);
+      if(!p.tarefa && (f==='revisao'||f==='revisao2')) fila.push({c, p, f});
+    });
+  }
+  return agShell(`
+  <div class="mtop"><div><h1>Revisão</h1><p>${fila.length
+    ? `${fila.length} ${fila.length===1?'card esperando':'cards esperando'} o olho do revisor`
+    : 'nada esperando revisão'}</p></div></div>
+  ${fila.length ? fila.map(({c,p,f})=>`<div class="rvItem">
+    <div class="top">
+      <span class="av" style="width:24px;height:24px;font-size:9px">${esc(c.ini)}</span>
+      <b style="color:var(--ink-50)">${esc(p.t)}</b>
+      ${p.data?`<span class="ptData">${rotuloData(p.data)}</span>`:''}
+      <span class="pill p-FASE">${f==='revisao'?'antes do texto ir ao cliente':'antes da arte ir ao cliente'}</span>
+    </div>
+    <div class="rvTexto">${esc(p.legenda || p.texto || '— sem texto ainda —')}</div>
+    <div class="rvAcoes">
+      <button class="b gho sm" data-hjabre="${c.id}:${p.id}">${ic('doc',12)} Abrir o card</button>
+      <button class="b gho sm" data-rvsugere="${c.id}:${p.id}">${ic('pencil',12)} Sugerir alteração</button>
+      <button class="b pri sm" data-rvok="${c.id}:${p.id}">${ic('checkc',12)} Aprovar e seguir</button>
+    </div></div>`).join('')
+  : vazio('Fila limpa','Quando um card entrar em Aprovação interna, ele aparece aqui para o revisor antes de ir ao cliente.')}`);
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-rvok],[data-rvsugere]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const [cli, id] = (t.dataset.rvok || t.dataset.rvsugere).split(':');
+  const p = (S.pautas[cli]||[]).find(x=>x.id===+id); if(!p) return;
+  if(t.dataset.rvok){
+    porFase(p, faseDe(p)==='revisao' ? 'texto_cli' : 'post_cli');
+    som('toque'); render();
+    toast(`"${p.t}" aprovado na revisão — seguiu para o cliente.`);
+  } else {
+    const nota = prompt('O que precisa mudar?');
+    if(!nota) return;
+    p.obs = (p.obs ? p.obs + '\n' : '') + '[revisão] ' + nota;
+    (p.alteracoes = p.alteracoes || []).push({
+      por: (usuarioAtual()?.nome || S.agencia.nome), quando: rotuloData(hojeISO()) });
+    porFase(p, faseDe(p)==='revisao' ? 'criado' : 'producao');
+    render();
+    toast('Voltou com a sua sugestão para quem produz.');
+  }
+}, true);
+/* a Revisão entra no menu da Operação */
+AGNAV.splice(AGNAV.findIndex(x=>x.r==='resultados'), 0,
+  {r:'revisao', n:'Revisão', icn:'checkc', bd:()=>{
+    let n=0; for(const c of CLIS()) (S.pautas[c.id]||[]).forEach(p=>{
+      const f=faseDe(p); if(!p.tarefa&&(f==='revisao'||f==='revisao2')) n++; });
+    return n; }});
+(function(){
+  const g = MENU_AG.find(x=>x.g==='Operação');
+  if(g && !g.it.some(([r])=>r==='revisao'))
+    g.it.splice(g.it.findIndex(([r])=>r==='resultados'), 0, ['revisao','Revisão','checkc']);
+})();
+</script>
+<script>
+"use strict";
+/* v53c — a rota da Revisão entra pelo mesmo caminho que a Pauta entrou
+   na v24: um envelope no render. O roteador central é um literal — não
+   dá para acrescentar chave por fora. */
+render = (function(orig){
+  return function(){
+    if(S.view==='agency' && S.route==='revisao' && !S.skel){
+      document.getElementById('root').innerHTML = agRevisao();
+      renderLayer(); ctxBar(); posRender();
+      return;
+    }
+    return orig.apply(this, arguments);
+  };
+})(render);
 </script>
