@@ -3453,10 +3453,8 @@ function showM(){
     const el = document.createElement('div');
     el.className = 'mgest';
     el.style.left = cx+'px'; el.style.top = cy+'px';
-    el.innerHTML = `<svg width="${lado}" height="${lado}" viewBox="0 0 48 48">
-      <circle class="ponto" cx="24" cy="30.5" r="2.6"/>
-      <path pathLength="100" d="M24 30.5Q17.5 30.5 11 12.5L11 35.5"/>
-      <path pathLength="100" d="M24 30.5Q30.5 30.5 37 12.5L37 35.5"/></svg>`;
+    el.innerHTML = `<svg width="${lado}" height="${lado}" viewBox="10 30 240 190">
+      ${LOGO_PAUTA_PATHS(3).replace(/<path /g,'<path pathLength="100" ')}</svg>`;
     const palco = document.getElementById('flash');
     palco.innerHTML = ''; palco.appendChild(el);
     void el.offsetWidth;            // força o navegador a registrar o estado inicial
@@ -3482,9 +3480,8 @@ function medalha(info){
       <circle class="anel" cx="100" cy="100" r="89"/>${ticks}
       <circle class="disco" cx="100" cy="100" r="76"/>
       <circle class="emborda" cx="100" cy="100" r="68"/>
-      <g transform="translate(52,54) scale(2)">
-        <path class="mm" pathLength="100" d="M24 30.5Q17.5 30.5 11 12.5L11 35.5"/>
-        <path class="mm" pathLength="100" d="M24 30.5Q30.5 30.5 37 12.5L37 35.5"/></g>
+      <svg x="55" y="66" width="90" height="70" viewBox="10 30 240 190">
+        ${LOGO_PAUTA_PATHS(3).replace(/<path /g,'<path class="mm" pathLength="100" ')}</svg>
     </svg></div>
     <div class="medaltxt"><b>${esc(info.titulo||'Etapa concluída')}</b>
       <span>${info.sub||''}</span>
@@ -14019,3 +14016,57 @@ function filaPublica(){
 setTimeout(filaPublica, 4200);
 setInterval(filaPublica, 60000);
 </script>
+<style>
+/* =====================================================================
+   v57 — três acertos do primeiro teste do founder acordado.
+   1. A abertura fica só o símbolo: tela escura, as linhas se traçando,
+      e mais nada — sem anel, sem nome, sem legenda, sem "toque para
+      entrar" (tocar continua pulando; só não precisa de aviso).
+   ================================================================== */
+#abertura .anel, #abertura .abTexto, #abertura .abPular{ display:none !important }
+.mDesenho.mPauta{ width:min(62vw,280px) }
+/* o gesto da aprovação com o símbolo novo: traço, não preenchimento */
+.mgest path{ fill:none; stroke-linecap:round }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v57b — MORTE AO FANTASMA. O balão do arrasto ficava preso na tela e
+   viajava junto para outras abas. Causa raiz: no toque, quando o dedo
+   vira ROLAGEM o navegador dispara `pointercancel` — e a limpeza só
+   escutava `pointerup`. Sem o up, o fantasma (filho do body) ficava
+   órfão para sempre. Três cintos e um suspensório:
+   ================================================================== */
+function morteAoFantasma(){
+  document.getElementById('ptGhost')?.remove();
+  document.body.style.touchAction = '';
+  document.querySelectorAll('.alvoDrop').forEach(x=>x.classList.remove('alvoDrop'));
+  document.querySelectorAll('.arrastando').forEach(x=>x.classList.remove('arrastando'));
+  try{ ptDrag = null; }catch(e){}
+  try{ enDrag = null; }catch(e){}
+}
+/* 1. o cancelamento do navegador limpa igual ao soltar */
+addEventListener('pointercancel', morteAoFantasma);
+/* 2. depois de qualquer soltar, se nenhum arrasto está vivo, varre */
+addEventListener('pointerup', ()=>setTimeout(()=>{
+  let vivo = false;
+  try{ vivo = !!ptDrag; }catch(e){}
+  try{ vivo = vivo || !!enDrag; }catch(e){}
+  if(!vivo && document.getElementById('ptGhost')) morteAoFantasma();
+}, 80));
+/* 3. nenhum redesenho de tela convive com fantasma órfão */
+render = (function(orig){
+  return function(){
+    let vivo = false;
+    try{ vivo = !!ptDrag; }catch(e){}
+    try{ vivo = vivo || !!enDrag; }catch(e){}
+    if(!vivo && document.getElementById('ptGhost')) morteAoFantasma();
+    return orig.apply(this, arguments);
+  };
+})(render);
+</script>
+<style>
+/* v57c — a espessura do traço acompanha o viewBox novo (240, não 48) */
+#flash .mgest path{ stroke-width:12 }
+.medal .mm{ stroke-width:14 }
+</style>

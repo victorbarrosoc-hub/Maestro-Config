@@ -929,6 +929,24 @@ perguntar. Tudo abaixo foi construído, testado no navegador e commitado em fase
 > em visual claro) ficou para a próxima sessão; IA de pontuar eficácia de post (ranking)
 > ficou como ideia — o ranking atual usa conduta (prazo).
 
+**Primeiro teste do founder acordado — três consertos (v57).**
+
+> **Abertura só com o símbolo.** Saíram o anel de pontos, o nome, a legenda e o "toque
+> para entrar" — tela escura e as linhas se traçando, nada mais. Tocar continua pulando.
+
+> **O M antigo ainda vivia em dois esconderijos**: o VFX do "gesto" que pisca quando o
+> cliente aprova (`showM`/`.mgest`) e a gravação da medalha do termo — os dois desenhavam
+> o M-batuta na mão, fora do `LOGO()`. Agora usam `LOGO_PAUTA_PATHS(3)`. Detalhe traiçoeiro:
+> o CSS deles forçava `stroke-width:4.6` (calibrado pro viewBox 48) — no viewBox novo de
+> 240 isso vira fio de cabelo; camada posterior corrige (12/14).
+
+> **MORTE AO FANTASMA.** O balão do arrasto ficava preso e viajava entre telas. Causa
+> raiz: no toque, quando o dedo vira ROLAGEM o navegador dispara `pointercancel` — e a
+> limpeza só escutava `pointerup`. Sem o up, o fantasma (filho do body) ficava órfão para
+> sempre. Três cintos: pointercancel limpa igual ao soltar; após qualquer pointerup uma
+> varredura tardia mata sobras; e nenhum render() convive com fantasma órfão. Testado
+> simulando o cancel e um órfão plantado na unha.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
