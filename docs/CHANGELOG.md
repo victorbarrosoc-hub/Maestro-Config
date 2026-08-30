@@ -1,6 +1,6 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.7
+Version: 0.5.8
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
@@ -32,6 +32,28 @@ Nunca apagar versões anteriores.
   `session.read`, e plano e limites da agência saem da resposta do lado cliente (I-12).
 - `POST /batches` com peça sem copy devolvia **500** (`currentVersionId!` mentia).
   Agora é 422 dizendo qual peça falta escrever.
+
+---
+
+## 0.5.8 — 2026-08-30
+
+**Status:** Concluída
+
+### Corrigido
+- **O Ensaio nascia vazio e só com Marketing.** A privacidade por categoria exige uma
+  pessoa identificada; enquanto ninguém usava o "quem está", `podeVerTarefa` devolvia
+  falso para tudo e Financeiro e Sócios sumiam da barra. O quadro ficava vazio sem dizer
+  por quê — parecia defeito, não privacidade. Sem pessoa escolhida, o protótipo mostra
+  tudo; a regra passa a valer assim que alguém entra como alguém.
+
+### Adicionado
+- **As tarefas de execução da pauta entram no quadro.** A pauta da EJUP já trazia cards
+  internos — editar o episódio do Zeca Melo, o do Marco Bruno — que não vão ao ar e
+  ficavam só lá. Tarefa de execução é produção: agora elas aparecem no Inbox do Ensaio,
+  ligadas ao card por `cardId`, com o caminho de volta pelo ícone de documento. Entram
+  uma vez só, e o que já foi concluído não volta.
+- **Financeiro e Sócios ganham conteúdo** — cobrança, nota, pró-labore. Existiam como
+  conceito e nunca como conteúdo: dava para ver a aba e não o que ela guarda.
 
 ---
 

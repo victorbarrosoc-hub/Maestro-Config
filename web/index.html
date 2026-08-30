@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-30 10:12 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-30 10:21 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -14226,14 +14226,19 @@ const catDe = t => CATS_ENSAIO.find(c=>c.id===(t.cat||'marketing')) || CATS_ENSA
    - Financeiro e Sócios: só o responsável, quem foi marcado em "quem
      pode ver" — e os sócios (dono/Administrador), que veem tudo. */
 function podeVerTarefa(t){
-  if(!S.usuario || S.usuario.tipo!=='agencia') return false;
+  /* Ninguém se identificou ainda (o "quem está" nunca foi usado). Esconder
+     tudo deixava o quadro vazio e as categorias sumidas, sem dizer por quê —
+     parecia defeito, não privacidade. Sem pessoa escolhida, o protótipo
+     mostra tudo; a regra passa a valer assim que alguém entra como alguém. */
+  if(!S.usuario) return true;
+  if(S.usuario.tipo!=='agencia') return false;
   if((t.cat||'marketing')==='marketing') return true;
   if(ehAdmin()) return true;
   const eu = S.usuario.id;
   return t.resp===eu || (t.quemVe||[]).includes(eu);
 }
 const catsVisiveis = () => CATS_ENSAIO.filter(c =>
-  c.id==='marketing' || ehAdmin() ||
+  c.id==='marketing' || !S.usuario || ehAdmin() ||
   (S.ensaio && S.ensaio.tarefas.some(t=>(t.cat||'marketing')===c.id && podeVerTarefa(t))));
 
 /* ---------- o quadro, agora por categoria --------------------------- */
@@ -15675,7 +15680,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v60 · 30 ago';
+const VERSAO_PROTOTIPO = 'v61 · 30 ago';
 
 menuSheet = (function(orig){
   return function(){
@@ -16081,3 +16086,79 @@ document.addEventListener('click', e => {
   .hjBarra .seg button{ flex:1 }
 }
 </style>
+<script>
+"use strict";
+/* =====================================================================
+   v61 — as tarefas da pauta entram no Ensaio, e as três categorias
+   passam a existir de verdade.
+
+   A pauta da EJUP já tinha tarefas de execução — cards marcados como
+   internos, que não vão ao ar: editar o episódio do Zeca Melo, o do
+   Marco Bruno. Elas ficavam só lá. Mas tarefa de execução É produção;
+   o lugar dela é o quadro, ao lado do resto do trabalho, com o caminho
+   de volta para o card.
+
+   E o quadro nascia praticamente vazio: `kbSemente` só olhava as
+   pendências. Agora olha as tarefas também.
+   ================================================================== */
+
+/* Tarefa interna da pauta vira tarefa do Ensaio, uma vez só. A ligação é
+   o `cardId` — o mesmo que o cartão já usa para mostrar "card da pauta ·
+   fase" e abrir o card completo. */
+function sincronizarTarefasDaPauta(){
+  if(!S.ensaio) S.ensaio = kbSemente();
+  const jaTem = id => S.ensaio.tarefas.some(t => t.cardId === id && t.daPauta)
+                   || (S.ensaio.feitas||[]).some(t => t.cardId === id && t.daPauta);
+
+  for(const c of CLIS()){
+    for(const p of (S.pautas[c.id] || [])){
+      if(!p.tarefa || p.feito || jaTem(p.id)) continue;
+      const titulo = String(p.t || '').replace(/^\[Tarefa\]\s*/i, '').trim();
+      S.ensaio.tarefas.push({
+        id: S.ensaio.prox++, titulo: titulo || 'Tarefa da pauta',
+        cli: c.id, resp: null, col: 'inbox', cat: 'marketing',
+        criada: Date.now(), prazo: p.data || null, tempoMs: 0, desde: null,
+        cardId: p.id, daPauta: true,
+        pedido: (p.texto || '').slice(0, 160)
+      });
+    }
+  }
+}
+
+/* Financeiro e Sócios existiam como conceito e nunca como conteúdo — dava
+   para ver a aba e não o que ela guarda. Semente mínima, uma vez, só se a
+   categoria estiver vazia: o ponto é mostrar que a privacidade separa
+   assuntos, não encher o quadro. */
+function semearOutrasCategorias(){
+  if(!S.ensaio) return;
+  const vazia = cat => !S.ensaio.tarefas.some(t => t.cat === cat)
+                    && !(S.ensaio.feitas||[]).some(t => t.cat === cat);
+  const nova = (titulo, cat, col, extra) => S.ensaio.tarefas.push({
+    id: S.ensaio.prox++, titulo, cli: null, resp: null, col, cat,
+    criada: Date.now(), prazo: null, tempoMs: 0, desde: null, ...(extra||{}) });
+
+  if(vazia('financeiro')){
+    nova('Emitir a nota da EJUP · agosto', 'financeiro', 'plan',
+      { valor:'4.800', fin:'receber' });
+    nova('Cobrança em atraso · Cortez Jurídico', 'financeiro', 'do',
+      { valor:'3.200', fin:'receber' });
+    nova('Renovar a assinatura do banco de imagens', 'financeiro', 'inbox',
+      { valor:'390', fin:'pagar' });
+  }
+  if(vazia('socios')){
+    nova('Fechar a proposta do quarto cliente', 'socios', 'plan');
+    nova('Revisar a divisão de pró-labore do trimestre', 'socios', 'inbox');
+  }
+}
+
+sincronizarTarefasDaPauta();
+semearOutrasCategorias();
+
+/* pauta que muda depois (importar planilha, criar tarefa) também entra */
+render = (function(orig){
+  return function(){
+    if(S.view === 'agency' && S.route === 'producao') sincronizarTarefasDaPauta();
+    orig();
+  };
+})(render);
+</script>
