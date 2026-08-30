@@ -15324,3 +15324,274 @@ agEnsaio = (function(orig){
   .envioBar .b{ width:100% }
 }
 </style>
+<script>
+"use strict";
+/* =====================================================================
+   v56 — VER O MATERIAL. A miniatura vira tela.
+
+   O material subia e ficava do tamanho de um selo. Não dava para
+   conferir se a arte está certa num quadrado de 90px — e conferir a arte
+   é metade do trabalho de quem produz.
+
+   Três coisas:
+   1. tocar na imagem abre em tela grande, com baixar e fechar;
+   2. passar para o lado percorre a sequência — seta, teclado ou dedo;
+   3. quando a postagem é CARROSSEL, um modo que mostra as telas **coladas,
+      uma ao lado da outra**. Carrossel bem feito costuma ter desenho que
+      atravessa as telas; emendado é o único jeito de ver se a linha
+      continua, se a cor bate, se o corte caiu no lugar. Separado, cada
+      tela mente sobre o conjunto.
+   ================================================================== */
+
+S.lb = null;      // { i, modo:'uma'|'lado' }
+
+const lbMateriais = () => (S.mat[S.mtId] || []).filter(m => m.tipo !== 'link');
+const lbSlides    = () => lbMateriais().filter(m => m.tipo === 'imagem');
+const lbEhCarrossel = () => {
+  const p = S.pauta.find(x => x.id === S.mtId);
+  return !!p && /carrossel/i.test(p.fmt || '') && lbSlides().length > 1;
+};
+
+function abrirLB(i){
+  const ms = lbMateriais();
+  if(!ms.length) return;
+  /* "lado a lado" numa tela estreita mostrando uma tela e meia não é lado
+     a lado. No celular o modo nasce encolhido, mostrando o carrossel
+     inteiro de uma vez; quem quiser detalhe alterna para o tamanho real. */
+  S.lb = { i: Math.max(0, Math.min(i, ms.length-1)), modo:'uma',
+           tudo: innerWidth < 760 };
+  renderLayer();
+}
+function andarLB(passo){
+  if(!S.lb) return;
+  const n = lbMateriais().length; if(!n) return;
+  S.lb.i = (S.lb.i + passo + n) % n;      // dá a volta: depois da última, a primeira
+  renderLayer();
+}
+function fecharLB(){ S.lb = null; renderLayer(); }
+
+/* o mesmo caminho do botão de baixar que já existia, agora reaproveitado */
+async function baixarMaterial(m){
+  if(!m) return;
+  try{
+    let blob = null;
+    if(m.chave) blob = await idbLer(m.chave).catch(()=>null);
+    if(!blob && m.url){ const r = await fetch(m.url); blob = await r.blob(); }
+    if(!blob){ toast('Não achei o arquivo para baixar.'); return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = m.nome || 'arquivo';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  }catch(err){ toast('O download falhou — tente de novo.'); }
+}
+
+/* ---------- a tela ---------------------------------------------------- */
+function vLightbox(){
+  const ms = lbMateriais();
+  if(!S.lb || !ms.length) return '';
+  const i = Math.min(S.lb.i, ms.length-1);
+  const m = ms[i];
+  const carrossel = lbEhCarrossel();
+  const lado = S.lb.modo === 'lado' && carrossel;
+  const p = S.pauta.find(x => x.id === S.mtId);
+
+  const midia = x => x.tipo === 'video'
+    ? `<video src="${x.url}" controls playsinline preload="metadata"
+         ${x.poster?`poster="${x.poster}"`:''}></video>`
+    : x.tipo === 'imagem'
+      ? `<img src="${x.url}" alt="${esc(x.nome)}">`
+      : `<div class="lbSemPrev">${ic(ICONE_TIPO[x.tipo]||'doc',40)}<span>${esc(x.nome)}</span>
+           <span class="peso">${pesoLegivel(x.peso)}</span></div>`;
+
+  const slides = lbSlides();
+
+  return `<div class="lb" role="dialog" aria-modal="true" aria-label="Visualizar material">
+    <div class="lbTopo">
+      <div class="lbQuem">
+        <b>${esc(lado ? (p ? p.t : 'Carrossel') : m.nome)}</b>
+        <span>${lado ? `${slides.length} telas · emendadas`
+                     : `${i+1} de ${ms.length}${m.peso?` · ${pesoLegivel(m.peso)}`:''}`}</span>
+      </div>
+      ${carrossel ? `<div class="lbModo" role="group" aria-label="Modo de visualização">
+        <button class="${lado?'':'on'}" data-lbmodo="uma">Uma a uma</button>
+        <button class="${lado?'on':''}" data-lbmodo="lado">Lado a lado</button>
+      </div>` : ''}
+      ${lado ? `<button class="lbBtn lbTudo" data-lbtudo="1"
+        aria-pressed="${S.lb.tudo?'true':'false'}"
+        title="${S.lb.tudo?'Ver no tamanho real':'Ver o carrossel inteiro'}"
+        aria-label="${S.lb.tudo?'Ver no tamanho real':'Ver o carrossel inteiro'}">${
+          ic(S.lb.tudo?'search':'grid',16)}</button>` : ''}
+      <button class="lbBtn" data-lbbaixa="1" aria-label="Baixar" title="Baixar">${ic('arrowr',17)}</button>
+      <button class="lbBtn" data-lbfecha="1" aria-label="Fechar" title="Fechar (Esc)">${ic('x',17)}</button>
+    </div>
+
+    ${lado
+      ? `<div class="lbFita ${S.lb.tudo?'cabe':''}" id="lbFita">
+           <div class="lbEmenda ${S.lb.tudo?'tudo':''}" style="--n:${slides.length}">${slides.map((s,j)=>`<figure>
+             <img src="${s.url}" alt="${esc(s.nome)}"><figcaption>${j+1}</figcaption>
+           </figure>`).join('')}</div>
+         </div>
+         <p class="lbDica">As telas estão coladas, na ordem de envio — é assim que o desenho
+           atravessa (ou não) de uma para a outra.${S.lb.tudo
+             ? ' Toque na lupa para ver no tamanho real.'
+             : ' Role para o lado.'}</p>`
+      : `<div class="lbPalco" id="lbPalco">
+           ${ms.length>1?`<button class="lbSeta ant" data-lbanda="-1" aria-label="Anterior">${ic('arrowl',20)}</button>`:''}
+           <div class="lbMidia">${midia(m)}</div>
+           ${ms.length>1?`<button class="lbSeta prox" data-lbanda="1" aria-label="Próxima">${ic('arrowr',20)}</button>`:''}
+         </div>
+         ${ms.length>1?`<div class="lbTiras">${ms.map((x,j)=>`
+           <button class="${j===i?'on':''}" data-lbir="${j}" aria-label="${esc(x.nome)}">
+             ${x.tipo==='imagem'?`<img src="${x.url}" alt="">`
+               :`<span>${ic(ICONE_TIPO[x.tipo]||'doc',14)}</span>`}
+             <i>${j+1}</i></button>`).join('')}</div>`:''}`}
+  </div>`;
+}
+
+/* o visualizador vai por cima de tudo, inclusive do modal que o abriu */
+renderLayer = (function(orig){
+  return function(){
+    orig();
+    if(!S.lb) return;
+    const l = document.getElementById('layer');
+    if(l) l.insertAdjacentHTML('beforeend', vLightbox());
+  };
+})(renderLayer);
+
+/* ---------- abrir, andar, baixar, fechar ------------------------------ */
+document.addEventListener('click', e => {
+  /* tocar na miniatura do material abre. No vídeo não: ali o toque é do
+     play, e tirar isso seria trocar uma função por outra. */
+  const mini = e.target.closest('.mtCard .vis img');
+  if(mini && !S.lb){
+    const card = mini.closest('.mtCard');
+    const del = card && card.querySelector('[data-mtdel]');
+    if(del){ e.preventDefault(); e.stopImmediatePropagation();
+      abrirLB(+del.dataset.mtdel); return; }
+  }
+  const t = e.target.closest('[data-lbfecha],[data-lbanda],[data-lbir],[data-lbmodo],[data-lbtudo],[data-lbbaixa],.lb');
+  if(!t) return;
+  const d = t.dataset || {};
+  if(d.lbfecha !== undefined){ e.stopImmediatePropagation(); fecharLB(); return; }
+  if(d.lbanda !== undefined){ e.stopImmediatePropagation(); andarLB(+d.lbanda); return; }
+  if(d.lbir !== undefined){ e.stopImmediatePropagation(); S.lb.i = +d.lbir; renderLayer(); return; }
+  if(d.lbmodo !== undefined){ e.stopImmediatePropagation(); S.lb.modo = d.lbmodo; renderLayer(); return; }
+  if(d.lbtudo !== undefined){ e.stopImmediatePropagation(); S.lb.tudo = !S.lb.tudo; renderLayer(); return; }
+  if(d.lbbaixa !== undefined){ e.stopImmediatePropagation();
+    baixarMaterial(lbMateriais()[S.lb.i]); return; }
+  /* tocar no fundo fecha; no conteúdo, não */
+  if(t.classList && t.classList.contains('lb') && e.target === t){
+    e.stopImmediatePropagation(); fecharLB(); }
+}, true);
+
+document.addEventListener('keydown', e => {
+  if(!S.lb) return;
+  if(e.key === 'Escape'){ e.stopImmediatePropagation(); fecharLB(); }
+  if(e.key === 'ArrowRight') andarLB(1);
+  if(e.key === 'ArrowLeft')  andarLB(-1);
+}, true);
+
+/* o dedo: arrastar para o lado troca de arquivo */
+let _lbX = null;
+document.addEventListener('touchstart', e => {
+  if(!S.lb || S.lb.modo === 'lado') return;
+  _lbX = e.touches[0].clientX;
+}, {passive:true});
+document.addEventListener('touchend', e => {
+  if(_lbX === null || !S.lb) return;
+  const dx = (e.changedTouches[0].clientX - _lbX);
+  _lbX = null;
+  if(Math.abs(dx) > 55) andarLB(dx < 0 ? 1 : -1);
+}, {passive:true});
+</script>
+<style>
+/* ---------- v56 · o visualizador de material -------------------------- */
+/* acima do modal que o abriu (.modal é 940) e abaixo do toast, que
+   precisa continuar aparecendo por cima de tudo */
+.lb{ position:fixed; inset:0; z-index:1200; display:flex; flex-direction:column;
+  background:rgba(6,7,9,.96); backdrop-filter:blur(9px);
+  animation:lbEntra .22s var(--eo) }
+@keyframes lbEntra{ from{opacity:0} to{opacity:1} }
+
+.lbTopo{ display:flex; align-items:center; gap:10px; padding:14px 16px;
+  border-bottom:1px solid rgba(255,255,255,.07); flex:0 0 auto }
+.lbQuem{ display:grid; gap:2px; margin-right:auto; min-width:0 }
+.lbQuem b{ font-size:14px; color:var(--ink-50); font-weight:600;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.lbQuem span{ font-family:var(--mono); font-size:10.5px; color:var(--ink-400) }
+
+.lbBtn{ width:38px; height:38px; flex:0 0 auto; border-radius:11px;
+  border:1px solid var(--ink-700); background:var(--ink-900); color:var(--ink-200);
+  display:grid; place-items:center;
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.lbBtn:hover{ color:var(--brass-300); border-color:var(--brass-600) }
+
+.lbModo{ display:flex; gap:0; border:1px solid var(--ink-700); border-radius:999px;
+  overflow:hidden; flex:0 0 auto }
+.lbModo button{ font-family:var(--mono); font-size:10px; letter-spacing:.06em;
+  text-transform:uppercase; padding:7px 12px; color:var(--ink-300);
+  background:var(--ink-900) }
+.lbModo button.on{ color:var(--ink-950); background:var(--brass-400); font-weight:700 }
+
+/* uma a uma */
+.lbPalco{ flex:1 1 auto; display:flex; align-items:center; justify-content:center;
+  gap:8px; padding:14px; min-height:0; position:relative }
+.lbMidia{ flex:1 1 auto; height:100%; display:grid; place-items:center; min-width:0 }
+.lbMidia img, .lbMidia video{ max-width:100%; max-height:100%;
+  object-fit:contain; border-radius:10px; display:block }
+.lbSemPrev{ display:grid; gap:8px; place-items:center; color:var(--ink-300); font-size:13px }
+.lbSemPrev .peso{ font-family:var(--mono); font-size:11px; color:var(--ink-500) }
+
+.lbSeta{ position:absolute; top:50%; transform:translateY(-50%); z-index:2;
+  width:44px; height:44px; border-radius:50%; display:grid; place-items:center;
+  color:var(--ink-100); background:rgba(20,22,26,.82);
+  border:1px solid rgba(255,255,255,.10) }
+.lbSeta.ant{ left:10px } .lbSeta.prox{ right:10px }
+.lbSeta:hover{ color:var(--brass-300); border-color:var(--brass-600) }
+
+.lbTiras{ display:flex; gap:8px; padding:12px 16px 16px; overflow-x:auto; flex:0 0 auto;
+  border-top:1px solid rgba(255,255,255,.07) }
+.lbTiras button{ position:relative; width:56px; height:56px; flex:0 0 auto;
+  border-radius:9px; overflow:hidden; border:1px solid var(--ink-700);
+  background:var(--ink-900); display:grid; place-items:center; color:var(--ink-400) }
+.lbTiras button.on{ border-color:var(--brass-400) }
+.lbTiras img{ width:100%; height:100%; object-fit:cover }
+.lbTiras i{ position:absolute; left:4px; top:3px; font-style:normal;
+  font-family:var(--mono); font-size:9px; color:#fff;
+  text-shadow:0 1px 3px rgba(0,0,0,.9) }
+
+/* lado a lado — o carrossel emendado */
+.lbFita{ flex:1 1 auto; overflow-x:auto; overflow-y:hidden; padding:16px 0;
+  display:flex; align-items:center; min-height:0 }
+.lbFita.cabe{ overflow-x:hidden }
+.lbEmenda{ display:flex; gap:0; margin:auto; padding:0 16px; height:auto }
+.lbEmenda figure{ margin:0; position:relative; flex:0 0 auto }
+.lbEmenda img{ width:auto; display:block; max-height:min(66vh, 620px) }
+/* encolhido: as N telas dividem a largura e cabem todas na tela */
+.lbEmenda.tudo{ width:100%; padding:0 12px }
+.lbEmenda.tudo figure{ flex:1 1 0; min-width:0 }
+.lbEmenda.tudo img{ width:100%; height:auto; max-height:none }
+.lbEmenda figcaption{ position:absolute; left:7px; top:7px;
+  font-family:var(--mono); font-size:10px; color:#fff; padding:2px 6px;
+  border-radius:999px; background:rgba(0,0,0,.55) }
+.lbDica{ flex:0 0 auto; margin:0; padding:0 20px 18px; text-align:center;
+  font-size:12px; color:var(--ink-400) }
+
+/* a miniatura avisa que abre */
+.mtCard .vis img{ cursor:zoom-in }
+
+@media (max-width:520px){
+  /* duas linhas: em cima quem é o arquivo e o que fazer com ele;
+     embaixo, como olhar. Com quatro controles numa linha só, o fechar
+     caía sozinho para baixo. */
+  .lbTopo{ flex-wrap:wrap; gap:8px; padding:12px 13px }
+  .lbQuem{ order:1; flex:1 1 auto; min-width:0 }
+  .lbBtn{ order:2 }
+  .lbModo{ order:3; flex:1 1 auto; margin-top:2px }
+  .lbModo button{ flex:1 }
+  .lbBtn.lbTudo{ order:4; margin-top:2px }
+  .lbEmenda img{ max-height:52vh }
+  .lbSeta{ width:38px; height:38px }
+}
+</style>

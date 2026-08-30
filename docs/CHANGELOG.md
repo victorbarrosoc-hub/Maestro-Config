@@ -1,6 +1,6 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.3
+Version: 0.5.4
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
@@ -32,6 +32,25 @@ Nunca apagar versões anteriores.
   `session.read`, e plano e limites da agência saem da resposta do lado cliente (I-12).
 - `POST /batches` com peça sem copy devolvia **500** (`currentVersionId!` mentia).
   Agora é 422 dizendo qual peça falta escrever.
+
+---
+
+## 0.5.4 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** ver o material que sobe no card.
+
+### Adicionado
+- **A miniatura vira tela.** Tocar na imagem do material abre em tela cheia, com o nome, o
+  peso, o contador ("2 de 4"), baixar e fechar.
+- **Passar para o lado** percorre a sequência: setas, teclado (← → e Esc) ou o dedo. Dá a
+  volta — depois da última vem a primeira. Tira de miniaturas embaixo para pular direto.
+- **Carrossel lado a lado.** Quando a postagem é carrossel, um modo que mostra as telas
+  **coladas**, na ordem de envio. Carrossel bem feito costuma ter desenho que atravessa as
+  telas; emendado é o único jeito de ver se a linha continua, se a cor bate, se o corte caiu
+  no lugar. Separado, cada tela mente sobre o conjunto.
+- No celular esse modo nasce encolhido, com o carrossel inteiro cabendo na tela; a lupa
+  alterna para o tamanho real.
 
 ---
 
