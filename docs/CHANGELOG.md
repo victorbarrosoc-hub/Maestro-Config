@@ -1,9 +1,26 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.17
+Version: 0.5.18
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.18 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** o símbolo é do founder — O Gesto (D-079).
+
+### Decidido
+- **O Gesto**, desenhado pelo founder, é o símbolo da Maestro. Vetorizado fiel por
+  espinha + perfil de largura em `assets/logo/gerar-gesto.py` — gerado, nunca redesenhado.
+- Assets regerados: símbolo (3 cores), lockups horizontal claro/escuro e vertical
+  (a assinatura), favicon e app icon. Originais do founder guardados em `assets/ref/`.
+- Wordmark proposto: o nome desenhado em monolinha (sem fonte), três rotas na prancha —
+  aguardando o founder escolher para aplicar em produto, MIV e Vercel.
+- Prancha de apresentação reescrita: o original, a vetorização, variações, redução,
+  o nome e a marca no mundo.
 
 ---
 

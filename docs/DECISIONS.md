@@ -984,6 +984,36 @@ de um. Mitigado por serem duas saídas da MESMA função, e não dois arquivos i
 
 ---
 
+# D-079 · Marca · Aprovada
+**Data:** 2026-08-30 · **Responsável:** Founder · **Categoria:** Símbolo
+**Pergunta:** depois de três rodadas de audição (D-078, rodadas 2 e 3), qual é o símbolo?
+**Decisão do founder:** **O Gesto — desenhado por ele.** Um traço único de batuta: entrada
+grossa e redonda, o morro, o vale, e a cauda longa subindo até virar fio. Nas palavras do
+conceito dele: "o símbolo traduz o gesto do maestro em sua forma mais essencial: conduzir.
+Uma linha que guia, conecta e dá ritmo à orquestra."
+**Por que encerra a discussão:** as rodadas anteriores procuravam um gesto desenhável de
+memória; o founder desenhou um. Símbolo com autor não tem cara de máquina — e este é
+literal sem ser clichê: não é clave, não é nota, é a mão.
+**Consequência:**
+- Vetorização **fiel e gerada**: `assets/logo/gerar-gesto.py` guarda a ESPINHA (14 pontos)
+  e o PERFIL DE LARGURA (15 → 0,9). O path final nunca se edita à mão — mudar o símbolo é
+  mudar estes números.
+- O afilamento é a assinatura da forma: entra com o peso do braço, termina no fio da batuta.
+- Uma versão só: o gesto reduz até 16 px sem versão simplificada.
+- Assets regerados: símbolo (brass, ink, branco), lockups horizontal claro/escuro e
+  vertical, favicon e app icon.
+- Proibições que mudam com ele: **nunca girar nem espelhar** (o gesto sobe para a direita —
+  invertido, a música desanda), nunca engrossar a cauda, nunca fechar o contraste
+  grosso/fino.
+**Wordmark (proposta, aguardando o founder):** o nome desenhado em **monolinha** — círculo,
+haste e arco, terminais redondos, sem fonte no caminho (o motor de lettering da rodada 3).
+Três rotas apresentadas: "Maestro" com M versal (recomendada), "maestro" caixa-baixa e
+"MAESTRO" versal espaçada para contextos institucionais. Instrument Serif permanece como
+display do sistema (títulos, números grandes); sai apenas do lockup.
+**Substitui:** D-078 (A Pauta). O M Batuta e a Pauta ficam no histórico.
+
+---
+
 ## Decisões Futuras
 
 Adicionar seguindo o padrão D-073, D-074...
