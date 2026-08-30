@@ -15449,6 +15449,25 @@ function vLightbox(){
   </div>`;
 }
 
+/* A miniatura de vídeo tinha `controls` — e num quadrado de 104px os
+   controles ocupam a peça inteira e não servem para nada. Ela vira prévia
+   com um selo de play, e quem toca vai para a tela grande, onde o vídeo
+   toca no tamanho em que dá para conferir alguma coisa. */
+modalMaterial = (function(orig){
+  return function(id){
+    let html = orig(id);
+    if(!html) return html;
+    const ms = materiaisDe(id);
+    ms.forEach((m,i)=>{
+      if(m.tipo !== 'video') return;
+      html = html.replace(
+        new RegExp(`(<div class="vis">[\\s\\S]*?<video[^>]*?)\\scontrols([^>]*></video>)`),
+        `$1$2<span class="mtPlay" aria-hidden="true">${ic('play',18)}</span>`);
+    });
+    return html;
+  };
+})(modalMaterial);
+
 /* o visualizador vai por cima de tudo, inclusive do modal que o abriu */
 renderLayer = (function(orig){
   return function(){
@@ -15461,9 +15480,9 @@ renderLayer = (function(orig){
 
 /* ---------- abrir, andar, baixar, fechar ------------------------------ */
 document.addEventListener('click', e => {
-  /* tocar na miniatura do material abre. No vídeo não: ali o toque é do
-     play, e tirar isso seria trocar uma função por outra. */
-  const mini = e.target.closest('.mtCard .vis img');
+  /* tocar na miniatura abre — imagem ou vídeo. O vídeo da grade não tem
+     mais `controls` (ver acima), então o toque é livre para isto. */
+  const mini = e.target.closest('.mtCard .vis img, .mtCard .vis video, .mtCard .vis .mtPlay');
   if(mini && !S.lb){
     const card = mini.closest('.mtCard');
     const del = card && card.querySelector('[data-mtdel]');
@@ -15488,6 +15507,8 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if(!S.lb) return;
   if(e.key === 'Escape'){ e.stopImmediatePropagation(); fecharLB(); }
+  /* com o vídeo em foco, as setas avançam o vídeo — deixa com ele */
+  if(document.activeElement && document.activeElement.tagName === 'VIDEO') return;
   if(e.key === 'ArrowRight') andarLB(1);
   if(e.key === 'ArrowLeft')  andarLB(-1);
 }, true);
@@ -15496,6 +15517,8 @@ document.addEventListener('keydown', e => {
 let _lbX = null;
 document.addEventListener('touchstart', e => {
   if(!S.lb || S.lb.modo === 'lado') return;
+  /* arrastar em cima do vídeo é procurar o trecho, não trocar de arquivo */
+  if(e.target.closest('video')) { _lbX = null; return; }
   _lbX = e.touches[0].clientX;
 }, {passive:true});
 document.addEventListener('touchend', e => {
@@ -15579,7 +15602,12 @@ document.addEventListener('touchend', e => {
   font-size:12px; color:var(--ink-400) }
 
 /* a miniatura avisa que abre */
-.mtCard .vis img{ cursor:zoom-in }
+.mtCard .vis img, .mtCard .vis video{ cursor:zoom-in }
+.mtPlay{ position:absolute; inset:0; margin:auto; width:40px; height:40px;
+  display:grid; place-items:center; border-radius:50%; pointer-events:none;
+  color:#fff; background:rgba(12,14,17,.62);
+  border:1px solid rgba(255,255,255,.30);
+  box-shadow:0 3px 14px rgba(0,0,0,.45) }
 
 @media (max-width:520px){
   /* duas linhas: em cima quem é o arquivo e o que fazer com ele;

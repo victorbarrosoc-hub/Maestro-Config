@@ -51,6 +51,11 @@ Nunca apagar versões anteriores.
   no lugar. Separado, cada tela mente sobre o conjunto.
 - No celular esse modo nasce encolhido, com o carrossel inteiro cabendo na tela; a lupa
   alterna para o tamanho real.
+- **O vídeo também abre.** A miniatura tinha `controls` — e num quadrado de 104px os
+  controles ocupam a peça inteira sem servir para nada. Virou prévia com selo de play; o
+  toque leva para a tela grande, onde o vídeo toca com os controles do sistema. Arrastar
+  sobre o vídeo procura o trecho em vez de trocar de arquivo, e com ele em foco as setas
+  do teclado são dele.
 
 ---
 
