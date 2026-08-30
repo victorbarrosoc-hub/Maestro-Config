@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-30 21:40 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-30 21:42 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -15680,7 +15680,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v67 · 30 ago · a medalha';
+const VERSAO_PROTOTIPO = 'v68 · 30 ago · o selo';
 
 menuSheet = (function(orig){
   return function(){
@@ -16898,22 +16898,19 @@ if(typeof render === 'function') render();
 
 <style>
 /* =====================================================================
-   v67 — A MEDALHA VOLTA A SER MEDALHA.
+   v68 — A MEDALHA É O SÍMBOLO.
 
-   O v62 tinha desligado o disco de ouro ("o selo do termo perde a bola
-   dourada e ganha a partitura em 3D"). A pedido do founder ele volta:
-   disco, anel, as marcações dos quatro tempos e os pulsos.
+   Sai a bola dourada, que o v67 tinha trazido de volta: o disco, o anel,
+   as marcações dos quatro tempos e os pulsos voltam a ficar desligados,
+   como o v62 os deixou.
 
-   Com o disco de volta, a marca volta a ser gravada em escuro — é a cor
-   que a medalha usava antes do v62, e a única que sobrevive sobre um
-   disco que vai de #EDD59E a #8a6423.
+   Sai também o plano de linhas de pauta que corria em 3D atrás dela —
+   ele era o motivo do símbolo antigo, e o founder pediu só a animação do
+   símbolo. O que fica é o gesto: revela da esquerda para a direita,
+   deita e assenta.
+
+   A marca volta ao claro do v66, porque sem o disco atrás um traço
+   escuro não existiria na tela.
    ================================================================== */
-.medal .disco, .medal .emborda, .medal .anel, .medal .tick,
-.medal .pulso, .medal .pulso.p2{ display:inline }
-.medal .mm{ fill:#2B2210 !important; filter:none !important }
-/* o gesto é largo: dentro do disco ele precisa de folga para não
-   encostar na borda interna. Vale só aqui — a cortina e o gesto da
-   aprovação não são tocados. */
-.medal .gz{ transform:translate(10px,62.5px)
-  translate(120px,62.5px) scale(.88) translate(-120px,-62.5px) }
+.medalPauta{ display:none !important }
 </style>
