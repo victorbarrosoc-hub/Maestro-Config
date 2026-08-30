@@ -1,9 +1,25 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.15
+Version: 0.5.16
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.16 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** os Cinco Gestos em formato de case, a pedido do founder (refs. Behance).
+
+### Mudado
+- `exploracao-logo-v3.html` reapresentada como case de identidade: cada opção com capa
+  full-bleed, **construção cotada** (malha, guias em cobalt, cotas em coral), variações
+  em quatro fundos, área de respiro, régua de redução, lockup e **a marca no mundo**
+  (celular, boné, letreiro, garrafa, empena, cartão frente e verso, papelaria, camisa,
+  capa de apresentação e assinatura de e-mail).
+- Pranchas compartilhadas de cor e tipografia; fecho em latão com os cinco lado a lado.
+- A geometria dos cinco gestos é idêntica à da prancha anterior — só a apresentação mudou.
 
 ---
 

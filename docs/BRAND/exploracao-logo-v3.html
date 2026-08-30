@@ -1,309 +1,876 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cinco Gestos</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* =====================================================================
-   CINCO GESTOS — segunda audição de símbolo.
-   A Pauta (v2) leu como "cara de IA": sete linhas onduladas é território
-   de clipart de equalizador. Esta prancha ensaia cinco rotas que fogem
-   disso pelo caminho oposto — MENOS traço, mais corte.
-   Nada daqui está aplicado. A decisão é do founder.
+   CINCO GESTOS — segunda audição de símbolo, apresentada em formato de
+   case: capa cheia, construção cotada, variações, redução e mockups.
+   Cada opção é tratada como se já fosse marca — é assim que se julga.
+   Nada aplicado: a plataforma segue com a Pauta até a decisão (D-079).
    ================================================================== */
 :root{
   --ink-950:#08090B; --ink-900:#0D0F12; --ink-850:#121418; --ink-800:#181B20;
   --ink-700:#23272E; --ink-500:#4C535D; --ink-400:#6B7280; --ink-300:#9AA1AC;
-  --ink-100:#E3E6EA; --ink-50:#F4F6F8;
+  --ink-200:#C4C9D0; --ink-100:#E3E6EA; --ink-50:#F4F6F8;
   --brass-300:#E3C173; --brass-400:#D9AC4C; --brass-500:#C8963A; --brass-700:#855F22;
+  --cobalt:#5B8DEF; --coral:#F0784C;
   --serif:'Instrument Serif',Georgia,serif;
   --sans:'Inter',system-ui,-apple-system,sans-serif;
   --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--ink-950);color:var(--ink-100);
-  font-family:var(--sans);font-size:15px;line-height:1.65;
+  font-family:var(--sans);font-size:15px;line-height:1.6;
   -webkit-font-smoothing:antialiased}
-.wrap{max-width:1060px;margin:0 auto;padding:0 26px}
 
-/* ---------- abertura ---------- */
-header{min-height:78vh;display:grid;place-items:center;text-align:center;padding:70px 22px}
-header .selo{font-family:var(--mono);font-size:10px;letter-spacing:.3em;
-  text-transform:uppercase;color:var(--ink-400);margin-bottom:30px}
-header h1{font-family:var(--serif);font-weight:400;font-size:clamp(48px,9vw,100px);
-  line-height:1;margin:0 0 22px;color:var(--ink-50)}
-header h1 em{font-style:italic;color:var(--brass-300)}
-header p{max-width:54ch;margin:0 auto;color:var(--ink-300);font-size:16px}
-header p b{color:var(--ink-100);font-weight:500}
+/* ---------- a prancha ---------- */
+.board{min-height:88vh;display:grid;place-items:center;position:relative;
+  padding:11vmin 7vmin;overflow:hidden}
+.board.curta{min-height:60vh}
+.rotulo{position:absolute;top:26px;left:30px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--ink-400)}
+.rotulo b{color:var(--brass-500);font-weight:500}
+.g-ink{background:var(--ink-950)}
+.g-ink9{background:var(--ink-900)}
+.g-brass{background:var(--brass-500)}
+.g-brass .rotulo{color:rgba(8,9,11,.55)} .g-brass .rotulo b{color:#08090B}
+.g-luz{background:#EEEBE4}
+.g-luz .rotulo{color:#9A958A} .g-luz .rotulo b{color:var(--brass-700)}
 
-/* ---------- a autópsia ---------- */
-.autopsia{border-top:1px solid var(--ink-800);border-bottom:1px solid var(--ink-800);
-  padding:54px 0;margin-bottom:20px}
-.autopsia .par{display:grid;grid-template-columns:200px 1fr;gap:34px;align-items:center}
-@media(max-width:700px){.autopsia .par{grid-template-columns:1fr}}
-.autopsia .morto{background:var(--ink-900);border:1px solid var(--ink-800);
-  border-radius:16px;padding:26px;display:grid;place-items:center;position:relative}
-.autopsia .morto::after{content:'✗';position:absolute;top:8px;right:12px;
-  color:#E5484D;font-size:14px;font-weight:700}
-.autopsia h2{font-family:var(--serif);font-weight:400;font-size:clamp(24px,3.6vw,32px);
-  margin:0 0 10px;color:var(--ink-50)}
-.autopsia p{margin:0;color:var(--ink-300);max-width:56ch}
-.autopsia p b{color:var(--ink-100);font-weight:500}
+/* capa geral */
+.capa h1{font-family:var(--serif);font-weight:400;font-size:clamp(52px,10vw,120px);
+  line-height:.96;margin:0 0 24px;color:var(--ink-50);text-align:center}
+.capa h1 em{font-style:italic;color:var(--brass-300)}
+.capa p{max-width:52ch;margin:0 auto;color:var(--ink-300);text-align:center;font-size:16px}
+.capa p b{color:var(--ink-100);font-weight:500}
+.capa .fila{display:flex;gap:5vmin;justify-content:center;align-items:center;
+  margin:0 0 7vmin;flex-wrap:wrap}
 
-/* ---------- as pranchas ---------- */
-.opcao{padding:74px 0;border-bottom:1px solid var(--ink-800)}
-.opcao:last-of-type{border-bottom:0}
-.opNum{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;
-  text-transform:uppercase;color:var(--brass-500);margin:0 0 12px}
-.opcao h2{font-family:var(--serif);font-weight:400;font-size:clamp(30px,5vw,46px);
-  margin:0 0 12px;color:var(--ink-50)}
-.opcao h2 em{font-style:italic;color:var(--brass-300)}
-.opTese{color:var(--ink-300);max-width:58ch;margin:0 0 30px}
-.opTese b{color:var(--ink-100);font-weight:500}
+/* hero de cada opção */
+.heroOp{display:grid;gap:5vmin;justify-items:center;text-align:center}
+.heroOp .simb{line-height:0}
+.heroOp h2{font-family:var(--serif);font-weight:400;font-size:clamp(40px,7vw,84px);
+  line-height:1;margin:0;color:var(--ink-50)}
+.g-brass .heroOp h2{color:#08090B}
+.heroOp h2 em{font-style:italic;color:var(--brass-300)}
+.g-brass .heroOp h2 em{color:#3D2B10}
+.heroOp .tese{max-width:52ch;color:var(--ink-300);margin:0;font-size:15.5px}
+.heroOp .tese b{color:var(--ink-100);font-weight:500}
+.g-brass .heroOp .tese{color:rgba(8,9,11,.72)}
+.g-brass .heroOp .tese b{color:#08090B}
 
-.opGrade{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px}
-@media(max-width:760px){.opGrade{grid-template-columns:1fr}}
-.palcoG{background:var(--ink-900);border:1px solid var(--ink-800);border-radius:18px;
-  display:grid;place-items:center;min-height:300px;padding:9%}
-.palcoG svg{width:100%;max-width:250px;height:auto;overflow:visible}
-.coluna{display:flex;flex-direction:column;gap:16px}
+/* construção */
+.planta{width:min(560px,92vw);position:relative}
+.planta .malha{position:absolute;inset:0;border-radius:18px;
+  background-image:
+    repeating-linear-gradient(0deg,rgba(35,39,46,.10) 0 1px,transparent 1px 28px),
+    repeating-linear-gradient(90deg,rgba(35,39,46,.10) 0 1px,transparent 1px 28px)}
+.planta svg{position:relative;width:100%;height:auto;display:block;overflow:visible}
+.cotas{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:4vmin}
+.cotas span{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;
+  padding:7px 12px;border-radius:999px;border:1px solid #D8D3C7;color:#6B6558;
+  background:#F6F4EF}
+.cotas span b{color:var(--brass-700);font-weight:500}
+.legenda2{margin-top:18px;text-align:center;font-size:12.5px;color:#8A8578;max-width:58ch}
 
-/* a fila de contextos */
-.contextos{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-@media(max-width:520px){.contextos{grid-template-columns:repeat(2,1fr)}}
-.ctx{border-radius:13px;display:grid;place-items:center;aspect-ratio:1;position:relative;
+/* variações */
+.varGrade{display:grid;grid-template-columns:repeat(4,minmax(120px,150px));gap:12px;
+  justify-content:center}
+@media(max-width:680px){.varGrade{grid-template-columns:repeat(2,minmax(120px,1fr))}}
+.varTile{aspect-ratio:1;border-radius:16px;display:grid;place-items:center;position:relative;
   border:1px solid var(--ink-800)}
-.ctx.escuro{background:var(--ink-950)}
-.ctx.claro{background:#F4F6F8;border-color:#E3E6EA}
-.ctx small{position:absolute;bottom:7px;left:0;right:0;text-align:center;
-  font-family:var(--mono);font-size:8px;letter-spacing:.08em;text-transform:uppercase;
+.varTile small{position:absolute;bottom:9px;left:0;right:0;text-align:center;
+  font-family:var(--mono);font-size:8px;letter-spacing:.12em;text-transform:uppercase;
   color:var(--ink-500)}
-.ctx.claro small{color:#9AA1AC}
-.ctx .chipApp{width:52%;aspect-ratio:1;border-radius:24%;display:grid;place-items:center;
-  background:linear-gradient(180deg,#181B20,#08090B);
-  box-shadow:0 3px 10px rgba(0,0,0,.5), inset 0 0 0 .5px #23272E}
+.varTile.claro{background:var(--ink-50);border-color:transparent}
+.varTile.claro small{color:#9AA1AC}
+.varTile.cheio{background:var(--brass-500);border-color:transparent}
+.varTile.cheio small{color:rgba(8,9,11,.55)}
+.respiro{margin:5vmin auto 0;display:grid;place-items:center}
+.respiro .caixa{border:1.5px dashed var(--ink-600);border-radius:12px;padding:34px;
+  display:grid;place-items:center;position:relative}
+.respiro .caixa i{position:absolute;font-family:var(--mono);font-size:9px;color:var(--coral);
+  font-style:normal}
+.respiro .caixa i.t{top:9px;left:50%;transform:translateX(-50%)}
+.respiro .caixa i.b{bottom:9px;left:50%;transform:translateX(-50%)}
+.respiro .caixa i.l{left:10px;top:50%;transform:translateY(-50%)}
+.respiro .caixa i.r{right:10px;top:50%;transform:translateY(-50%)}
+.reducao2{display:flex;align-items:flex-end;gap:5vmin;justify-content:center;
+  margin-top:6vmin;flex-wrap:wrap}
+.reducao2 figure{margin:0;text-align:center;display:grid;justify-items:center;gap:10px}
+.reducao2 figcaption{font-family:var(--mono);font-size:9px;color:var(--ink-500);
+  letter-spacing:.08em}
+.lockupFaixa{margin-top:6vmin;display:flex;align-items:center;justify-content:center;gap:18px;
+  padding:26px 34px;border:1px solid var(--ink-800);border-radius:18px;background:var(--ink-950)}
+.lockupFaixa b{font-family:var(--serif);font-weight:400;font-size:clamp(26px,4vw,40px);
+  letter-spacing:.2px;color:var(--ink-50)}
 
-.lockupG{background:var(--ink-950);border:1px solid var(--ink-800);border-radius:13px;
-  min-height:86px;display:flex;align-items:center;justify-content:center;gap:14px;
-  padding:18px}
-.lockupG b{font-family:var(--serif);font-weight:400;font-size:30px;letter-spacing:.2px;
-  color:var(--ink-50)}
+/* mockups */
+.mocks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;
+  width:min(1060px,94vw)}
+@media(max-width:760px){.mocks{grid-template-columns:1fr}}
+.mock{border-radius:20px;overflow:hidden;position:relative;border:1px solid var(--ink-800);
+  min-height:330px;display:grid;place-items:center;padding:7%}
+.mock .tag{position:absolute;top:13px;left:15px;font-family:var(--mono);font-size:8.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-400);z-index:5}
+.mock.claroM .tag{color:#9A958A}
 
-.prosContras{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:520px){.prosContras{grid-template-columns:1fr}}
-.pc{border:1px solid var(--ink-800);border-radius:13px;padding:14px 16px;
-  background:var(--ink-900);font-size:12.5px;line-height:1.55;color:var(--ink-300)}
-.pc b{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.16em;
-  text-transform:uppercase;margin-bottom:7px}
-.pc.ganha b{color:#35B87A}
-.pc.perde b{color:#F0784C}
+/* o celular */
+.fone{position:relative;width:min(190px,52vw);aspect-ratio:9/19.5;border-radius:30px;
+  border:5px solid #22262E;background:#05060A;padding:4px;
+  box-shadow:0 24px 48px rgba(0,0,0,.55), inset 0 0 0 1px #33383F}
+.fone .ilha{position:absolute;top:11px;left:50%;transform:translateX(-50%);
+  width:52px;height:14px;border-radius:99px;background:#04050A;z-index:3}
+.telaF{width:100%;height:100%;border-radius:25px;overflow:hidden;position:relative;
+  display:flex;flex-direction:column;background:linear-gradient(165deg,#1a2230,#0b0e14);
+  padding:34px 12px 10px}
+.gradeApps{display:grid;grid-template-columns:repeat(4,1fr);gap:11px 8px}
+.ap{display:block;text-align:center}
+.ap .icx{display:grid;place-items:center;aspect-ratio:1;border-radius:22%;
+  background:rgba(255,255,255,.09)}
+.ap .icx.marca{background:linear-gradient(180deg,#181B20,#08090B);
+  box-shadow:0 3px 9px rgba(0,0,0,.55), inset 0 0 0 .5px #23272E}
+.ap small{display:block;font-size:6px;color:#fff;margin-top:3px;opacity:.9}
+.doca{margin-top:auto;display:flex;gap:8px;padding:7px;border-radius:16px;
+  background:rgba(255,255,255,.10)}
+.doca i{flex:1;aspect-ratio:1;border-radius:22%;background:rgba(255,255,255,.14)}
 
-/* ---------- rodapé ---------- */
-footer{padding:80px 26px 90px;text-align:center;border-top:1px solid var(--ink-800)}
-footer p{font-family:var(--serif);font-size:clamp(20px,3.4vw,30px);color:var(--ink-100);
-  max-width:26ch;margin:0 auto 14px}
-footer small{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--ink-500)}
+/* objetos svg */
+.vestir{position:relative;display:inline-block;width:100%;max-width:250px;
+  filter:drop-shadow(0 22px 34px rgba(0,0,0,.5))}
+.vestir svg{display:block;width:100%;height:auto}
+.vestir .marcaObj{position:absolute;left:50%;transform:translate(-50%,-50%)}
+.vestir.camisa .marcaObj{top:55%}
+.vestir.boneV{max-width:270px}
+.vestir.boneV .marcaObj{top:52%;filter:drop-shadow(0 1px 0 rgba(0,0,0,.55))}
+.vestir.garrafaV{max-width:140px}
+.vestir.garrafaV .marcaObj{top:56%;transform:translate(-50%,-50%) scaleX(.86);opacity:.9;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
+
+/* letreiro do escritório */
+.cenaLetreiro{width:100%;aspect-ratio:16/10;border-radius:16px;position:relative;
+  overflow:hidden;background:linear-gradient(180deg,#171B22 0%,#101319 55%,#0A0C11 100%)}
+.cenaLetreiro .brilho{position:absolute;left:18%;top:14%;width:64%;height:58%;
+  background:radial-gradient(closest-side,rgba(200,150,58,.28),transparent 72%);
+  filter:blur(16px)}
+.cenaLetreiro .conjunto{position:absolute;inset:0;display:grid;place-items:center;
+  filter:drop-shadow(0 0 18px rgba(200,150,58,.55))}
+.cenaLetreiro .conjunto>div{display:flex;align-items:center;gap:3vmin}
+.cenaLetreiro b{font-family:var(--serif);font-weight:400;font-size:clamp(24px,4vw,44px);
+  color:#F0DCAE;letter-spacing:.3px}
+.cenaLetreiro .piso{position:absolute;inset:76% 0 0 0;
+  background:linear-gradient(180deg,#0C0E13,#06070A)}
+.cenaLetreiro .piso::before{content:'';position:absolute;left:22%;width:56%;height:70%;
+  background:radial-gradient(ellipse at top,rgba(200,150,58,.15),transparent 70%);
+  filter:blur(8px)}
+
+/* empena */
+.cenaEmpena{width:100%;aspect-ratio:16/10;border-radius:16px;position:relative;
+  overflow:hidden;background:linear-gradient(180deg,#14203A 0%,#101828 42%,#0A0E16 78%,#07090D 100%)}
+.cenaEmpena .predios{position:absolute;left:0;right:0;bottom:10%;height:52%;
+  display:flex;align-items:flex-end;gap:2%;padding:0 4%}
+.cenaEmpena .predios i{display:block;flex:1;background:#0A0C11;border-top:1px solid #161B24;
+  background-image:radial-gradient(circle,rgba(214,168,80,.4) .9px,transparent 1.4px);
+  background-size:13px 17px;background-position:6px 9px}
+.cenaEmpena .predios i:nth-child(1){height:36%}.cenaEmpena .predios i:nth-child(2){height:54%}
+.cenaEmpena .predios i:nth-child(3){height:28%}.cenaEmpena .predios i:nth-child(4){height:46%}
+.cenaEmpena .predios i:nth-child(5){height:32%}
+.cenaEmpena .painel{position:absolute;left:8%;top:12%;width:46%;padding:4.5% 5% 5.5%;
+  background:linear-gradient(160deg,#12151B,#08090B);border:1px solid #1D222A;border-radius:5px;
+  box-shadow:0 28px 60px rgba(0,0,0,.65);display:flex;flex-direction:column;gap:5%;
+  transform:perspective(1100px) rotateY(-12deg) rotateX(2deg);transform-origin:left center}
+.cenaEmpena .painel b{font-family:var(--serif);font-weight:400;
+  font-size:clamp(17px,2.8vw,34px);color:#F4F6F8;line-height:1}
+.cenaEmpena .painel span.cat{font-family:var(--mono);font-size:clamp(5px,.62vw,8px);
+  letter-spacing:.14em;text-transform:uppercase;color:var(--brass-400);line-height:1.7}
+.cenaEmpena .rua{position:absolute;inset:auto 0 0 0;height:10%;
+  background:linear-gradient(180deg,#0B0D11,#050608)}
+
+/* mesa de papelaria */
+.cenaMesa{width:100%;aspect-ratio:16/10;border-radius:16px;position:relative;overflow:hidden;
+  background:linear-gradient(155deg,#241C13 0%,#171009 48%,#0C0906 100%)}
+.cenaMesa::before{content:'';position:absolute;inset:0;opacity:.5;
+  background-image:repeating-linear-gradient(97deg,rgba(0,0,0,.28) 0 2px,transparent 2px 7px)}
+.cenaMesa::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(120% 90% at 24% 0%,rgba(255,214,150,.12),transparent 62%)}
+.folhaP{position:absolute;left:6%;top:8%;width:38%;aspect-ratio:210/280;background:#FBFAF7;
+  border-radius:3px;padding:6%;display:flex;flex-direction:column;transform:rotate(-3deg);
+  box-shadow:0 26px 46px rgba(0,0,0,.55);z-index:2}
+.folhaP .topoF{display:flex;justify-content:space-between;gap:8%;align-items:flex-start;
+  padding-bottom:8%;border-bottom:1px solid #E4DED2}
+.folhaP .linhas{flex:1;padding-top:9%;display:flex;flex-direction:column;gap:5px}
+.folhaP .linhas i{display:block;height:3px;border-radius:2px;background:#DBD5C9}
+.folhaP .linhas i:nth-child(3){width:78%}.folhaP .linhas i:nth-child(5){width:62%}
+.folhaP .linhas i:nth-child(6){height:8px;background:transparent}
+.folhaP .linhas i:nth-child(8){width:84%}
+.cartaoV{position:absolute;width:37%;aspect-ratio:85/55;border-radius:6px;padding:6%;
+  display:flex;flex-direction:column;justify-content:space-between;
+  box-shadow:0 22px 40px rgba(0,0,0,.6)}
+.cartaoV.frenteC{right:7%;top:14%;transform:rotate(4.5deg);background:#0A0C10;
+  border:1px solid #1A1E25;z-index:3}
+.cartaoV.versoC{right:16%;top:54%;transform:rotate(-2.5deg);background:var(--brass-500);
+  align-items:center;text-align:center;justify-content:center;gap:8%;z-index:1}
+.cartaoV .quemC b{display:block;font-size:9px;color:var(--ink-50)}
+.cartaoV .quemC i{display:block;font-style:normal;font-family:var(--mono);font-size:5.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-400);margin-top:2px}
+.cartaoV .contC{font-family:var(--mono);font-size:5.4px;color:var(--ink-300);line-height:1.8}
+.cartaoV .sloganC{font-family:var(--serif);font-size:clamp(10px,1.8vw,18px);color:#08090B;
+  line-height:1.15}
+.cartaoV .catC{font-family:var(--mono);font-size:5px;letter-spacing:.18em;
+  text-transform:uppercase;color:rgba(8,9,11,.62)}
+
+/* garrafa / camisa / boné svg defs vêm no JS */
+
+/* slide + assinatura (Ligadura) */
+.slideM{width:100%;aspect-ratio:16/9;border-radius:12px;padding:7%;position:relative;
+  display:flex;flex-direction:column;justify-content:space-between;background:var(--ink-950);
+  border:1px solid var(--ink-800);box-shadow:0 20px 44px rgba(0,0,0,.5)}
+.slideM .kick{font-family:var(--mono);font-size:8.5px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--brass-400)}
+.slideM h5{font-family:var(--serif);font-weight:400;font-size:clamp(19px,3vw,32px);
+  line-height:1.15;color:var(--ink-50);margin:0;max-width:18ch}
+.slideM .pe{display:flex;justify-content:space-between;align-items:flex-end}
+.slideM .pe span{font-family:var(--mono);font-size:8px;color:var(--ink-500)}
+.assinE{width:min(400px,86vw);background:#FFF;border-radius:9px;padding:22px 24px;
+  color:#23272E;box-shadow:0 16px 36px rgba(0,0,0,.4)}
+.assinE .div{height:1px;background:#E5E0D6;margin:14px 0}
+.assinE .nm{font-size:14px;font-weight:600;color:#08090B}
+.assinE .cg{font-size:12px;color:#4C535D}
+.assinE .li{font-family:var(--mono);font-size:10.5px;color:#855F22;line-height:1.8;margin-top:8px}
+
+/* declaração entre capítulos */
+.decl{padding:16vmin 7vmin;text-align:center}
+.decl p{font-family:var(--serif);font-weight:400;font-size:clamp(24px,4.4vw,42px);
+  line-height:1.25;color:var(--ink-100);max-width:24ch;margin:0 auto;text-wrap:balance}
+.decl p em{font-style:italic;color:var(--brass-300)}
+
+/* espécime */
+.specGrade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;
+  width:min(1000px,94vw)}
+@media(max-width:760px){.specGrade{grid-template-columns:1fr}}
+.spec{border:1px solid var(--ink-800);border-radius:18px;padding:30px;background:var(--ink-900)}
+.spec h4{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-400);margin:0 0 18px;font-weight:500}
+.paleta{display:grid;grid-template-columns:repeat(5,1fr);border-radius:12px;overflow:hidden}
+.paleta div{aspect-ratio:1/1.3;display:flex;align-items:flex-end;padding:9px}
+.paleta span{font-family:var(--mono);font-size:8px;letter-spacing:.04em}
+.tipoAmostra{font-size:clamp(30px,4.6vw,52px);line-height:1.15;color:var(--ink-50);
+  margin:0 0 8px}
+.tipoNota{font-family:var(--mono);font-size:10px;color:var(--ink-500);letter-spacing:.06em}
+
+/* fim */
+.fim{display:grid;gap:6vmin;justify-items:center;text-align:center}
+.fim .fila{display:flex;gap:6vmin;align-items:center;justify-content:center;flex-wrap:wrap}
+.fim p{font-family:var(--serif);font-size:clamp(22px,3.6vw,34px);color:#08090B;
+  max-width:26ch;margin:0;line-height:1.25}
+.fim small{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:rgba(8,9,11,.6)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
-<header>
+<!-- ================== CAPA ================== -->
+<div class="board capa g-ink" style="min-height:96vh">
+  <span class="rotulo"><b>Maestro</b> · símbolo · segunda audição · formato de case</span>
   <div>
-    <div class="selo">Maestro · símbolo · segunda audição</div>
+    <div class="fila">
+      <span data-g="batida" data-c="#D9AC4C" data-w="54"></span>
+      <span data-g="fermata" data-c="#D9AC4C" data-w="54"></span>
+      <span data-g="mpautado" data-c="#D9AC4C" data-w="50"></span>
+      <span data-g="levare" data-c="#D9AC4C" data-w="50"></span>
+      <span data-g="ligaM" data-c="#D9AC4C" data-w="46"></span>
+    </div>
     <h1>Cinco <em>gestos</em>.</h1>
-    <p>A Pauta leu como feita por máquina — e a crítica procede: sete linhas onduladas é
-      vizinhança de equalizador, e equalizador é clipart. Estes cinco caminhos fogem disso
-      pelo lado oposto: <b>menos traço, mais corte</b>. Cada um mostrado grande, no claro,
-      pequeno, como ícone e ao lado do nome. Nada foi aplicado — a plataforma segue como
-      está até você escolher.</p>
+    <p>Cada opção apresentada como se já fosse marca: capa, construção cotada, variações,
+      redução e a marca no mundo. <b>Nada foi aplicado</b> — a plataforma segue como está
+      até a escolha, que vira o D-079.</p>
   </div>
-</header>
+</div>
 
-<div class="wrap">
-<div class="autopsia">
-  <div class="par">
-    <div class="morto" id="morto-pauta"></div>
-    <div>
-      <h2>Por que a Pauta caiu</h2>
-      <p><b>Traço demais.</b> Sete linhas paralelas ondulando é o vocabulário exato de logo
-        genérico de áudio — e de imagem gerada, que adora repetição com deslocamento. Marca
-        boa costuma ser o contrário: <b>um</b> desenho, com <b>um</b> corte inteligente, que
-        sobrevive a carimbo, bordado e favicon sem virar mancha. O trocadilho da pauta era
-        bom; a forma é que não fazia jus a ele.</p>
+<!-- ================== SISTEMA ================== -->
+<div class="board curta g-ink9">
+  <span class="rotulo">O sistema que recebe o símbolo · cor e tipo valem para os cinco</span>
+  <div class="specGrade">
+    <div class="spec">
+      <h4>Cor · latão sobre tinta</h4>
+      <div class="paleta">
+        <div style="background:#08090B"><span style="color:#4C535D">ink 950</span></div>
+        <div style="background:#181B20"><span style="color:#6B7280">800</span></div>
+        <div style="background:#C8963A"><span style="color:#08090B">brass 500</span></div>
+        <div style="background:#D9AC4C"><span style="color:#3D2B10">400</span></div>
+        <div style="background:#F4F6F8"><span style="color:#9AA1AC">ink 50</span></div>
+      </div>
+    </div>
+    <div class="spec">
+      <h4>Tipo · o serif é da marca</h4>
+      <p class="tipoAmostra" style="font-family:var(--serif)">Instrument Serif</p>
+      <p class="tipoAmostra" style="font-family:var(--sans);font-weight:600;font-size:clamp(20px,3vw,30px)">Inter — a interface inteira</p>
+      <p class="tipoNota">JETBRAINS MONO · IDS, VERSÕES, COTAS · 7F3A·2B91</p>
     </div>
   </div>
 </div>
 
-<!-- ============ 01 · A BATIDA ============ -->
-<section class="opcao" id="op1">
-  <p class="opNum">Opção 01 · o gesto</p>
-  <h2>A <em>Batida</em>.</h2>
-  <p class="opTese">Um traço só: a batuta desce com peso e rebate leve — o <b>downbeat</b>,
-    o gesto que dá o tempo à orquestra inteira. E há uma coincidência honesta demais para
-    ignorar: o mesmo desenho lê como <b>visto de aprovado</b>, que é o momento central do
-    produto. O gesto do maestro e o gesto do cliente são o mesmo movimento.</p>
-  <div class="opGrade">
-    <div class="palcoG"><span data-g="batida" data-c="#C8963A" data-w="220"></span></div>
-    <div class="coluna">
-      <div class="contextos">
-        <div class="ctx claro"><span data-g="batida" data-c="#C8963A" data-w="54"></span><small>claro</small></div>
-        <div class="ctx escuro"><span data-g="batida" data-c="#D9AC4C" data-w="24"></span><small>24 px</small></div>
-        <div class="ctx escuro"><span class="chipApp"><span data-g="batida" data-c="#D9AC4C" data-w="30"></span></span><small>app</small></div>
-        <div class="ctx escuro"><span data-g="batida" data-c="#F4F6F8" data-w="54"></span><small>mono</small></div>
-      </div>
-      <div class="lockupG"><span data-g="batida" data-c="#D9AC4C" data-w="44"></span><b>Maestro</b></div>
-      <div class="prosContras">
-        <div class="pc ganha"><b>Onde ganha</b>Um traço: carimba, borda, grava. O duplo
-          sentido batida/aprovação é raro de conseguir sem forçar.</div>
-        <div class="pc perde"><b>Onde perde</b>Precisa de desenho fino para não ler como
-          "check" genérico de to-do list. O peso variável do traço é obrigatório.</div>
-      </div>
-    </div>
+<!-- ============================================================= -->
+<!-- ===================== 01 · A BATIDA ========================= -->
+<!-- ============================================================= -->
+<div class="board g-ink" id="op1">
+  <span class="rotulo"><b>Opção 01</b> · A Batida · capa</span>
+  <div class="heroOp">
+    <span class="simb" data-g="batida" data-c="#D9AC4C" data-w="min(300px,56vw)"></span>
+    <h2>A <em>Batida</em>.</h2>
+    <p class="tese">A batuta desce com peso e rebate leve — o <b>downbeat</b>, o gesto que dá
+      o tempo à orquestra. E o mesmo desenho lê como <b>visto de aprovado</b>: o gesto do
+      maestro e o gesto do cliente são o mesmo movimento.</p>
   </div>
-</section>
-
-<!-- ============ 02 · A FERMATA ============ -->
-<section class="opcao" id="op2">
-  <p class="opNum">Opção 02 · o sinal</p>
-  <h2>A <em>Fermata</em>.</h2>
-  <p class="opTese">Um arco e um ponto. Na partitura, a fermata é o único sinal que significa
-    literalmente <b>"todos olham para o maestro"</b> — o tempo fica suspenso até ele decidir.
-    É o produto inteiro numa forma: tudo espera a decisão de alguém. E a marca já usa a
-    palavra — <code style="font-family:var(--mono);font-size:12px;color:var(--brass-300)">fermata</code>
-    é o token de 480 ms do motion.</p>
-  <div class="opGrade">
-    <div class="palcoG"><span data-g="fermata" data-c="#C8963A" data-w="210"></span></div>
-    <div class="coluna">
-      <div class="contextos">
-        <div class="ctx claro"><span data-g="fermata" data-c="#C8963A" data-w="54"></span><small>claro</small></div>
-        <div class="ctx escuro"><span data-g="fermata" data-c="#D9AC4C" data-w="24"></span><small>24 px</small></div>
-        <div class="ctx escuro"><span class="chipApp"><span data-g="fermata" data-c="#D9AC4C" data-w="30"></span></span><small>app</small></div>
-        <div class="ctx escuro"><span data-g="fermata" data-c="#F4F6F8" data-w="54"></span><small>mono</small></div>
-      </div>
-      <div class="lockupG"><span data-g="fermata" data-c="#D9AC4C" data-w="46"></span><b>Maestro</b></div>
-      <div class="prosContras">
-        <div class="pc ganha"><b>Onde ganha</b>Duas formas primitivas — indestrutível em
-          qualquer tamanho. Significado exato, e já existe dentro do sistema de motion.</div>
-        <div class="pc perde"><b>Onde perde</b>Quem não lê partitura vê um olho ou uma
-          sobrancelha. O significado pede a história junto, pelo menos no começo.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 03 · O M PAUTADO ============ -->
-<section class="opcao" id="op3">
-  <p class="opNum">Opção 03 · o monograma</p>
-  <h2>O M <em>pautado</em>.</h2>
-  <p class="opTese">O caminho clássico: um M sólido, geométrico, pesado — e a <b>pauta
-    atravessa ele</b> em quatro cortes de luz. Guarda o trocadilho pauta/calendário da
-    versão atual, mas inverte a lógica: em vez de sete traços desenhando um M frágil, um
-    M maciço cortado por quatro respiros. No favicon os cortes somem e sobra um M sólido —
-    a redução já vem grátis.</p>
-  <div class="opGrade">
-    <div class="palcoG"><span data-g="mpautado" data-c="#C8963A" data-w="200"></span></div>
-    <div class="coluna">
-      <div class="contextos">
-        <div class="ctx claro"><span data-g="mpautado" data-c="#C8963A" data-w="54"></span><small>claro</small></div>
-        <div class="ctx escuro"><span data-g="mpautado" data-c="#D9AC4C" data-w="24" data-solido="1"></span><small>24 px</small></div>
-        <div class="ctx escuro"><span class="chipApp"><span data-g="mpautado" data-c="#D9AC4C" data-w="30"></span></span><small>app</small></div>
-        <div class="ctx escuro"><span data-g="mpautado" data-c="#F4F6F8" data-w="54"></span><small>mono</small></div>
-      </div>
-      <div class="lockupG"><span data-g="mpautado" data-c="#D9AC4C" data-w="42"></span><b>Maestro</b></div>
-      <div class="prosContras">
-        <div class="pc ganha"><b>Onde ganha</b>Presença. É o único dos cinco com peso de
-          marca registrada — funciona em prédio, em anel de caneta, em relevo seco.</div>
-        <div class="pc perde"><b>Onde perde</b>Monograma M é terreno disputado (McLaren,
-          metrôs do mundo inteiro). A busca de anterioridade do D-024 pesa mais aqui.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 04 · O LEVARE ============ -->
-<section class="opcao" id="op4">
-  <p class="opNum">Opção 04 · a pauta quieta</p>
-  <h2>O <em>Levare</em>.</h2>
-  <p class="opTese">Cinco linhas de pauta, paradas — e <b>a primeira se ergue</b>, no ângulo
-    da batuta que sobe. Levare é o nome desse instante: a respiração antes da música começar,
-    quando todo mundo olha para cima. Uma linha fora do lugar é toda a mensagem. É o mais
-    calmo dos cinco, e o mais próximo do que a marca diz de si: preciso, quieto, quente.</p>
-  <div class="opGrade">
-    <div class="palcoG"><span data-g="levare" data-c="#C8963A" data-w="200"></span></div>
-    <div class="coluna">
-      <div class="contextos">
-        <div class="ctx claro"><span data-g="levare" data-c="#C8963A" data-w="54"></span><small>claro</small></div>
-        <div class="ctx escuro"><span data-g="levare" data-c="#D9AC4C" data-w="24"></span><small>24 px</small></div>
-        <div class="ctx escuro"><span class="chipApp"><span data-g="levare" data-c="#D9AC4C" data-w="30"></span></span><small>app</small></div>
-        <div class="ctx escuro"><span data-g="levare" data-c="#F4F6F8" data-w="54"></span><small>mono</small></div>
-      </div>
-      <div class="lockupG"><span data-g="levare" data-c="#D9AC4C" data-w="44"></span><b>Maestro</b></div>
-      <div class="prosContras">
-        <div class="pc ganha"><b>Onde ganha</b>Sutileza de gente grande — humor seco à
-          Paul Rand. Linhas retas: perfeito em bordado, gravação e tamanho mínimo.</div>
-        <div class="pc perde"><b>Onde perde</b>Discreto ao ponto do risco: de longe pode
-          ler como ícone de "menu" com uma linha torta. Pede o latão para acender.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 05 · A LIGADURA ============ -->
-<section class="opcao" id="op5">
-  <p class="opNum">Opção 05 · o nome como marca</p>
-  <h2>A <em>Ligadura</em>.</h2>
-  <p class="opTese">A rota sem símbolo: <b>o nome é a marca</b>, em Instrument Serif, com um
-    único gesto em cima — a ligadura, o arco que na partitura une notas numa frase só. Tocar
-    ligado é tocar sem interrupção; é a promessa do produto sobre a operação inteira. Para
-    ícone e favicon, o M inicial herda o arco e vira monograma.</p>
-  <div class="opGrade">
-    <div class="palcoG" style="padding:7%"><span data-g="ligadura" data-c="#F4F6F8" data-w="250"></span></div>
-    <div class="coluna">
-      <div class="contextos">
-        <div class="ctx claro"><span data-g="ligaM" data-c="#C8963A" data-w="50"></span><small>claro</small></div>
-        <div class="ctx escuro"><span data-g="ligaM" data-c="#D9AC4C" data-w="24"></span><small>24 px</small></div>
-        <div class="ctx escuro"><span class="chipApp"><span data-g="ligaM" data-c="#D9AC4C" data-w="30"></span></span><small>app</small></div>
-        <div class="ctx escuro"><span data-g="ligaM" data-c="#F4F6F8" data-w="50"></span><small>mono</small></div>
-      </div>
-      <div class="lockupG" style="padding:22px"><span data-g="ligadura" data-c="#F4F6F8" data-w="230"></span></div>
-      <div class="prosContras">
-        <div class="pc ganha"><b>Onde ganha</b>Elegância editorial — casa perfeitamente com
-          o Instrument Serif que a marca já tem. Impossível de confundir com SaaS azul.</div>
-        <div class="pc perde"><b>Onde perde</b>Wordmark-first exige disciplina: sem o nome
-          por perto, sobra só o monograma — que é o mais convencional dos cinco.</div>
-      </div>
-    </div>
-  </div>
-</section>
 </div>
 
-<footer>
-  <p>Ouça os cinco. Fique com o que você conseguiria desenhar de memória num guardanapo.</p>
-  <small>Maestro · exploração de símbolo v3 · nada aplicado ainda</small>
-</footer>
+<div class="board g-luz">
+  <span class="rotulo"><b>01</b> · construção</span>
+  <div>
+    <div class="planta"><div class="malha"></div>
+      <svg viewBox="-16 -10 80 70">
+        <g stroke="#5B8DEF" stroke-width=".3" stroke-dasharray="1.2 1.2" fill="none">
+          <path d="M3 13 L28 38"/><path d="M18 44 L44 -1"/>
+          <circle cx="21.4" cy="38" r="4.4"/>
+          <path d="M-8 38 L58 38"/>
+        </g>
+        <g fill="none" stroke="#C8963A" stroke-linecap="round">
+          <path d="M9.5 19.5 C14.5 24.5 18.6 31 21.4 38" stroke-width="7.2"/>
+          <path d="M21.4 38 C26.8 30 33.6 19 39.5 8.5 C39.9 7.8 40.4 7.4 41 7.2" stroke-width="2.7"/>
+        </g>
+        <g font-family="JetBrains Mono,monospace" font-size="2.3" fill="#F0784C">
+          <text x="-1" y="24">7,2</text>
+          <text x="44" y="4">2,7</text>
+          <text x="27" y="43">a batida · 21,4 · 38</text>
+          <text x="1" y="9.5" fill="#5B8DEF">45°</text>
+          <text x="45.5" y="-3.5" fill="#5B8DEF">−62°</text>
+        </g>
+      </svg>
+    </div>
+    <div class="cotas">
+      <span>descida <b>7,2</b> · o peso do braço</span>
+      <span>rebate <b>2,7</b> · o pulso</span>
+      <span>razão <b>8 : 3</b></span>
+      <span>terminais <b>arredondados</b></span>
+    </div>
+    <p class="legenda2">O afilamento é a assinatura: check de interface tem peso uniforme —
+      batuta não. Os dois traços se emendam no ponto exato da batida.</p>
+  </div>
+</div>
+
+<div class="board g-ink9">
+  <span class="rotulo"><b>01</b> · variações · respiro · redução</span>
+  <div style="width:min(900px,94vw)">
+    <div class="varGrade">
+      <div class="varTile"><span data-g="batida" data-c="#D9AC4C" data-w="62"></span><small>positivo</small></div>
+      <div class="varTile claro"><span data-g="batida" data-c="#C8963A" data-w="62"></span><small>claro</small></div>
+      <div class="varTile cheio"><span data-g="batida" data-c="#08090B" data-w="62"></span><small>sobre latão</small></div>
+      <div class="varTile"><span data-g="batida" data-c="#F4F6F8" data-w="62"></span><small>mono</small></div>
+    </div>
+    <div class="respiro"><div class="caixa">
+      <i class="t">x</i><i class="b">x</i><i class="l">x</i><i class="r">x</i>
+      <span data-g="batida" data-c="#D9AC4C" data-w="86"></span>
+    </div></div>
+    <div class="reducao2">
+      <figure><span data-g="batida" data-c="#D9AC4C" data-w="72"></span><figcaption>72</figcaption></figure>
+      <figure><span data-g="batida" data-c="#D9AC4C" data-w="44"></span><figcaption>44</figcaption></figure>
+      <figure><span data-g="batida" data-c="#D9AC4C" data-w="24"></span><figcaption>24</figcaption></figure>
+      <figure><span data-g="batida" data-c="#D9AC4C" data-w="16"></span><figcaption>16 · mínimo</figcaption></figure>
+    </div>
+    <div class="lockupFaixa"><span data-g="batida" data-c="#D9AC4C" data-w="42"></span><b>Maestro</b></div>
+  </div>
+</div>
+
+<div class="board g-ink">
+  <span class="rotulo"><b>01</b> · a marca no mundo</span>
+  <div class="mocks">
+    <div class="mock g-ink"><span class="tag">Tela de início</span>
+      <div class="fone"><span class="ilha"></span>
+        <div class="telaF">
+          <div class="gradeApps">
+            <span class="ap"><i class="icx"></i><small>Fotos</small></span>
+            <span class="ap"><i class="icx marca"><span data-g="batida" data-c="#D9AC4C" data-w="26"></span></i><small>Maestro</small></span>
+            <span class="ap"><i class="icx"></i><small>Agenda</small></span>
+            <span class="ap"><i class="icx"></i><small>Notas</small></span>
+            <span class="ap"><i class="icx"></i><small>Mail</small></span>
+            <span class="ap"><i class="icx"></i><small>Arquivos</small></span>
+            <span class="ap"><i class="icx"></i><small>Ajustes</small></span>
+            <span class="ap"><i class="icx"></i><small>Câmera</small></span>
+          </div>
+          <div class="doca"><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+    </div>
+    <div class="mock g-ink9"><span class="tag">Boné da equipe</span>
+      <div class="vestir boneV">
+        <svg viewBox="0 0 260 190">
+          <defs>
+            <linearGradient id="coroa1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2C323D"/><stop offset="1" stop-color="#12151B"/></linearGradient>
+            <linearGradient id="aba1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#161A20"/><stop offset="1" stop-color="#070909"/></linearGradient>
+          </defs>
+          <path d="M36 128 C36 62 76 26 130 26 C184 26 224 62 224 128 Z" fill="url(#coroa1)"/>
+          <path d="M130 26 C130 26 130 90 130 128" stroke="#00000055" stroke-width="2" fill="none"/>
+          <path d="M78 34 C70 66 66 98 66 128" stroke="#00000044" stroke-width="2" fill="none"/>
+          <path d="M182 34 C190 66 194 98 194 128" stroke="#00000044" stroke-width="2" fill="none"/>
+          <circle cx="130" cy="28" r="7" fill="#20252D"/>
+          <path d="M28 128 C28 122 34 118 44 118 L216 118 C226 118 232 122 232 128
+            C232 152 196 168 130 168 C64 168 28 152 28 128 Z" fill="url(#aba1)"/>
+          <ellipse cx="112" cy="66" rx="70" ry="44" fill="#ffffff" opacity=".09"/>
+        </svg>
+        <span class="marcaObj"><span data-g="batida" data-c="#D9AC4C" data-w="46"></span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- ===================== 02 · A FERMATA ======================== -->
+<!-- ============================================================= -->
+<div class="board g-brass" id="op2">
+  <span class="rotulo"><b>Opção 02</b> · A Fermata · capa</span>
+  <div class="heroOp">
+    <span class="simb" data-g="fermata" data-c="#08090B" data-w="min(290px,54vw)"></span>
+    <h2>A <em>Fermata</em>.</h2>
+    <p class="tese">O único sinal da partitura que significa, ao pé da letra,
+      <b>"todos olham para o maestro"</b> — o tempo fica suspenso até ele decidir.
+      O produto inteiro numa forma. E a palavra já mora no sistema: fermata é o token
+      de 480 ms do motion.</p>
+  </div>
+</div>
+
+<div class="board g-luz">
+  <span class="rotulo"><b>02</b> · construção</span>
+  <div>
+    <div class="planta"><div class="malha"></div>
+      <svg viewBox="-2 0 52 44">
+        <g stroke="#5B8DEF" stroke-width=".35" stroke-dasharray="1.3 1.3" fill="none">
+          <path d="M2 33 L46 33"/><path d="M24 5 L24 40"/>
+          <circle cx="24" cy="31.5" r="8.5"/>
+        </g>
+        <g fill="none" stroke="#C8963A" stroke-linecap="round">
+          <path d="M7 33 C10 17 20 10 24 10 C28 10 38 17 41 33" stroke-width="5.5"/>
+        </g>
+        <circle cx="24" cy="31.5" r="4.6" fill="#C8963A"/>
+        <g font-family="JetBrains Mono,monospace" font-size="2.5" fill="#F0784C">
+          <text x="30" y="30">r 4,6</text>
+          <text x="8" y="38.5">vão 34 · arco 5,5</text>
+          <text x="26" y="8" fill="#5B8DEF">eixo</text>
+          <text x="2.5" y="31.5" fill="#5B8DEF">base</text>
+        </g>
+      </svg>
+    </div>
+    <div class="cotas">
+      <span>arco <b>5,5</b></span>
+      <span>ponto <b>r 4,6</b></span>
+      <span>vão <b>34</b> · altura <b>23</b></span>
+      <span>simetria <b>especular</b></span>
+    </div>
+    <p class="legenda2">Duas formas primitivas, uma relação: o ponto senta no centro do vão,
+      a 1,9 pontos da base do arco. Não há terceira medida — é por isso que não quebra nunca.</p>
+  </div>
+</div>
+
+<div class="board g-ink9">
+  <span class="rotulo"><b>02</b> · variações · respiro · redução</span>
+  <div style="width:min(900px,94vw)">
+    <div class="varGrade">
+      <div class="varTile"><span data-g="fermata" data-c="#D9AC4C" data-w="62"></span><small>positivo</small></div>
+      <div class="varTile claro"><span data-g="fermata" data-c="#C8963A" data-w="62"></span><small>claro</small></div>
+      <div class="varTile cheio"><span data-g="fermata" data-c="#08090B" data-w="62"></span><small>sobre latão</small></div>
+      <div class="varTile"><span data-g="fermata" data-c="#F4F6F8" data-w="62"></span><small>mono</small></div>
+    </div>
+    <div class="respiro"><div class="caixa">
+      <i class="t">x</i><i class="b">x</i><i class="l">x</i><i class="r">x</i>
+      <span data-g="fermata" data-c="#D9AC4C" data-w="86"></span>
+    </div></div>
+    <div class="reducao2">
+      <figure><span data-g="fermata" data-c="#D9AC4C" data-w="72"></span><figcaption>72</figcaption></figure>
+      <figure><span data-g="fermata" data-c="#D9AC4C" data-w="44"></span><figcaption>44</figcaption></figure>
+      <figure><span data-g="fermata" data-c="#D9AC4C" data-w="24"></span><figcaption>24</figcaption></figure>
+      <figure><span data-g="fermata" data-c="#D9AC4C" data-w="16"></span><figcaption>16 · mínimo</figcaption></figure>
+    </div>
+    <div class="lockupFaixa"><span data-g="fermata" data-c="#D9AC4C" data-w="44"></span><b>Maestro</b></div>
+  </div>
+</div>
+
+<div class="board g-ink">
+  <span class="rotulo"><b>02</b> · a marca no mundo</span>
+  <div class="mocks">
+    <div class="mock g-ink" style="padding:0"><span class="tag">Recepção do escritório</span>
+      <div class="cenaLetreiro">
+        <div class="brilho"></div>
+        <div class="conjunto"><div>
+          <span data-g="fermata" data-c="#D9AC4C" data-w="min(110px,16vw)"></span>
+          <b>Maestro</b>
+        </div></div>
+        <div class="piso"></div>
+      </div>
+    </div>
+    <div class="mock g-ink9"><span class="tag">Garrafa · gravação a laser</span>
+      <div class="vestir garrafaV">
+        <svg viewBox="0 0 160 330">
+          <defs>
+            <linearGradient id="metal2" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#0A0C10"/><stop offset=".18" stop-color="#242A33"/>
+              <stop offset=".42" stop-color="#313843"/><stop offset=".62" stop-color="#1B1F27"/>
+              <stop offset="1" stop-color="#070809"/></linearGradient>
+            <linearGradient id="tampa2" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#141820"/><stop offset=".4" stop-color="#39404B"/>
+              <stop offset="1" stop-color="#0B0D11"/></linearGradient>
+          </defs>
+          <rect x="52" y="14" width="56" height="34" rx="10" fill="url(#tampa2)"/>
+          <rect x="58" y="44" width="44" height="16" rx="5" fill="#0D1014"/>
+          <path d="M40 76 C40 62 54 56 80 56 C106 56 120 62 120 76 L120 296
+            C120 310 108 316 80 316 C52 316 40 310 40 296 Z" fill="url(#metal2)"/>
+          <rect x="49" y="86" width="9" height="206" rx="4" fill="#ffffff" opacity=".07"/>
+        </svg>
+        <span class="marcaObj"><span data-g="fermata" data-c="#9AA1AC" data-w="44"></span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- ==================== 03 · O M PAUTADO ======================= -->
+<!-- ============================================================= -->
+<div class="board g-ink" id="op3">
+  <span class="rotulo"><b>Opção 03</b> · O M Pautado · capa</span>
+  <div class="heroOp">
+    <span class="simb" data-g="mpautado" data-c="#D9AC4C" data-w="min(270px,52vw)"></span>
+    <h2>O M <em>pautado</em>.</h2>
+    <p class="tese">Um M sólido, geométrico, pesado — e a <b>pauta atravessa ele</b> em quatro
+      cortes de luz. Guarda o trocadilho pauta/calendário, invertendo a lógica: em vez de
+      linhas desenhando um M frágil, um M maciço com quatro respiros.</p>
+  </div>
+</div>
+
+<div class="board g-luz">
+  <span class="rotulo"><b>03</b> · construção</span>
+  <div>
+    <div class="planta"><div class="malha"></div>
+      <svg viewBox="-4 0 56 48">
+        <g stroke="#5B8DEF" stroke-width=".35" stroke-dasharray="1.3 1.3" fill="none">
+          <path d="M-2 14.2 L50 14.2"/><path d="M-2 21.2 L50 21.2"/>
+          <path d="M-2 28.2 L50 28.2"/><path d="M-2 35.2 L50 35.2"/>
+          <path d="M8 4 L8 44"/><path d="M40 4 L40 44"/>
+        </g>
+        <g data-mk-mpautado="1"></g>
+        <g font-family="JetBrains Mono,monospace" font-size="2.5" fill="#F0784C">
+          <text x="42" y="13.2">corte 2,3</text>
+          <text x="42" y="20.2">passo 7</text>
+          <text x="9" y="6.5" fill="#5B8DEF">haste 8→17</text>
+          <text x="20" y="46">vértice 24 · 20,5</text>
+        </g>
+      </svg>
+    </div>
+    <div class="cotas">
+      <span>hastes <b>9</b> de largura</span>
+      <span>4 cortes de <b>2,3</b> · passo <b>7</b></span>
+      <span>vértice em <b>24 · 20,5</b></span>
+      <span>abaixo de 32 px <b>os cortes somem</b></span>
+    </div>
+    <p class="legenda2">A redução já vem grátis: no favicon os cortes fecham sozinhos e
+      sobra um M cheio — o mesmo desenho, sem versão nova para manter.</p>
+  </div>
+</div>
+
+<div class="board g-ink9">
+  <span class="rotulo"><b>03</b> · variações · respiro · redução</span>
+  <div style="width:min(900px,94vw)">
+    <div class="varGrade">
+      <div class="varTile"><span data-g="mpautado" data-c="#D9AC4C" data-w="60"></span><small>positivo</small></div>
+      <div class="varTile claro"><span data-g="mpautado" data-c="#C8963A" data-w="60"></span><small>claro</small></div>
+      <div class="varTile cheio"><span data-g="mpautado" data-c="#08090B" data-w="60"></span><small>sobre latão</small></div>
+      <div class="varTile"><span data-g="mpautado" data-c="#F4F6F8" data-w="60"></span><small>mono</small></div>
+    </div>
+    <div class="respiro"><div class="caixa">
+      <i class="t">x</i><i class="b">x</i><i class="l">x</i><i class="r">x</i>
+      <span data-g="mpautado" data-c="#D9AC4C" data-w="82"></span>
+    </div></div>
+    <div class="reducao2">
+      <figure><span data-g="mpautado" data-c="#D9AC4C" data-w="72"></span><figcaption>72</figcaption></figure>
+      <figure><span data-g="mpautado" data-c="#D9AC4C" data-w="44"></span><figcaption>44</figcaption></figure>
+      <figure><span data-g="mpautado" data-c="#D9AC4C" data-w="24" data-solido="1"></span><figcaption>24 · cheio</figcaption></figure>
+      <figure><span data-g="mpautado" data-c="#D9AC4C" data-w="16" data-solido="1"></span><figcaption>16 · cheio</figcaption></figure>
+    </div>
+    <div class="lockupFaixa"><span data-g="mpautado" data-c="#D9AC4C" data-w="40"></span><b>Maestro</b></div>
+  </div>
+</div>
+
+<div class="board g-ink">
+  <span class="rotulo"><b>03</b> · a marca no mundo</span>
+  <div class="mocks">
+    <div class="mock g-ink" style="padding:0"><span class="tag">Empena · 12 × 8 m</span>
+      <div class="cenaEmpena">
+        <div class="predios"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="painel">
+          <span data-g="mpautado" data-c="#D9AC4C" data-w="min(64px,9vw)"></span>
+          <b>Maestro</b>
+          <span class="cat">The Operating System for Creative Operations</span>
+        </div>
+        <div class="rua"></div>
+      </div>
+    </div>
+    <div class="mock claroM" style="padding:0;background:#20180F"><span class="tag" style="color:#B9A98E">Cartão · frente e verso</span>
+      <div class="cenaMesa" style="aspect-ratio:16/10;border-radius:0">
+        <div class="cartaoV frenteC" style="left:9%;right:auto;top:18%;width:44%">
+          <span data-g="mpautado" data-c="#D9AC4C" data-w="30"></span>
+          <span class="quemC"><b>Marina Costa</b><i>Direção de operações</i></span>
+          <span class="contC">marina@usemaestro.com<br>usemaestro.com</span>
+        </div>
+        <div class="cartaoV versoC" style="right:9%;top:42%;width:44%">
+          <span class="sloganC">Sua operação,<br>no tempo certo.</span>
+          <span class="catC">Creative Operations</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- ===================== 04 · O LEVARE ========================= -->
+<!-- ============================================================= -->
+<div class="board g-ink" id="op4">
+  <span class="rotulo"><b>Opção 04</b> · O Levare · capa</span>
+  <div class="heroOp">
+    <span class="simb" data-g="levare" data-c="#D9AC4C" data-w="min(270px,52vw)"></span>
+    <h2>O <em>Levare</em>.</h2>
+    <p class="tese">Cinco linhas de pauta, paradas — e <b>a primeira se ergue</b>, no ângulo
+      da batuta que sobe. É a respiração antes da música começar, quando todo mundo olha
+      para cima. Uma linha fora do lugar é toda a mensagem.</p>
+  </div>
+</div>
+
+<div class="board g-luz">
+  <span class="rotulo"><b>04</b> · construção</span>
+  <div>
+    <div class="planta"><div class="malha"></div>
+      <svg viewBox="-2 -2 52 50">
+        <g stroke="#5B8DEF" stroke-width=".35" stroke-dasharray="1.3 1.3" fill="none">
+          <path d="M2 12 L46 12"/><path d="M9 2 L9 44"/><path d="M39 2 L39 44"/>
+        </g>
+        <g fill="none" stroke="#C8963A" stroke-width="3.6" stroke-linecap="round">
+          <path d="M9 19 L39 19"/><path d="M9 26 L39 26"/>
+          <path d="M9 33 L39 33"/><path d="M9 40 L39 40"/>
+          <path d="M9 12 L39 4.5"/>
+        </g>
+        <g font-family="JetBrains Mono,monospace" font-size="2.5" fill="#F0784C">
+          <text x="41" y="9">−14°</text>
+          <text x="41" y="20">traço 3,6</text>
+          <text x="41" y="27">passo 7</text>
+          <text x="12" y="10" fill="#5B8DEF">o levare</text>
+        </g>
+      </svg>
+    </div>
+    <div class="cotas">
+      <span>5 linhas · traço <b>3,6</b> · passo <b>7</b></span>
+      <span>a primeira ergue <b>−14°</b></span>
+      <span>pivô <b>na esquerda</b></span>
+      <span>retas: <b>borda, grava, carimba</b></span>
+    </div>
+    <p class="legenda2">Quatro linhas são a espera; a de cima é o começo. O ângulo é fixo —
+      é o que faz o gesto ser gesto, e não um defeito de alinhamento.</p>
+  </div>
+</div>
+
+<div class="board g-ink9">
+  <span class="rotulo"><b>04</b> · variações · respiro · redução</span>
+  <div style="width:min(900px,94vw)">
+    <div class="varGrade">
+      <div class="varTile"><span data-g="levare" data-c="#D9AC4C" data-w="58"></span><small>positivo</small></div>
+      <div class="varTile claro"><span data-g="levare" data-c="#C8963A" data-w="58"></span><small>claro</small></div>
+      <div class="varTile cheio"><span data-g="levare" data-c="#08090B" data-w="58"></span><small>sobre latão</small></div>
+      <div class="varTile"><span data-g="levare" data-c="#F4F6F8" data-w="58"></span><small>mono</small></div>
+    </div>
+    <div class="respiro"><div class="caixa">
+      <i class="t">x</i><i class="b">x</i><i class="l">x</i><i class="r">x</i>
+      <span data-g="levare" data-c="#D9AC4C" data-w="80"></span>
+    </div></div>
+    <div class="reducao2">
+      <figure><span data-g="levare" data-c="#D9AC4C" data-w="72"></span><figcaption>72</figcaption></figure>
+      <figure><span data-g="levare" data-c="#D9AC4C" data-w="44"></span><figcaption>44</figcaption></figure>
+      <figure><span data-g="levare" data-c="#D9AC4C" data-w="24"></span><figcaption>24</figcaption></figure>
+      <figure><span data-g="levare" data-c="#D9AC4C" data-w="16"></span><figcaption>16 · mínimo</figcaption></figure>
+    </div>
+    <div class="lockupFaixa"><span data-g="levare" data-c="#D9AC4C" data-w="40"></span><b>Maestro</b></div>
+  </div>
+</div>
+
+<div class="board g-ink">
+  <span class="rotulo"><b>04</b> · a marca no mundo</span>
+  <div class="mocks">
+    <div class="mock g-ink9"><span class="tag">Camisa · silk 70 mm</span>
+      <div class="vestir camisa">
+        <svg viewBox="0 0 240 260">
+          <defs>
+            <linearGradient id="tecido4" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#1E222A"/><stop offset=".45" stop-color="#14171D"/>
+              <stop offset="1" stop-color="#0B0D11"/></linearGradient>
+            <radialGradient id="luz4" cx=".38" cy=".22" r=".8">
+              <stop offset="0" stop-color="#ffffff" stop-opacity=".14"/>
+              <stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+          </defs>
+          <path d="M78 26 L52 40 L20 66 L44 100 L62 88 L58 244
+            C58 250 62 254 68 254 L172 254 C178 254 182 250 182 244 L178 88 L196 100
+            L220 66 L188 40 L162 26 C150 44 90 44 78 26 Z" fill="url(#tecido4)"/>
+          <path d="M78 26 C90 44 150 44 162 26 C150 36 90 36 78 26 Z" fill="#0B0D11"/>
+          <path d="M78 26 C90 46 150 46 162 26" fill="none" stroke="#2A2F38" stroke-width="2.4"/>
+          <path d="M62 88 L58 244" fill="none" stroke="#00000033" stroke-width="4"/>
+          <path d="M178 88 L182 244" fill="none" stroke="#00000033" stroke-width="4"/>
+          <ellipse cx="120" cy="150" rx="86" ry="96" fill="url(#luz4)"/>
+        </svg>
+        <span class="marcaObj"><span data-g="levare" data-c="#C8963A" data-w="64"></span></span>
+      </div>
+    </div>
+    <div class="mock claroM" style="padding:0;background:#20180F"><span class="tag" style="color:#B9A98E">Papelaria</span>
+      <div class="cenaMesa" style="border-radius:0">
+        <div class="folhaP">
+          <div class="topoF">
+            <span style="display:flex;align-items:center;gap:8px">
+              <span data-g="levare" data-c="#C8963A" data-w="20"></span>
+              <span style="font-family:var(--serif);font-size:13px;color:#08090B">Maestro</span>
+            </span>
+            <span style="font-family:var(--mono);font-size:4.6px;letter-spacing:.1em;color:#6B7280;text-align:right;line-height:1.8">SÃO PAULO · BR<br>USEMAESTRO.COM</span>
+          </div>
+          <div class="linhas"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="cartaoV frenteC">
+          <span data-g="levare" data-c="#D9AC4C" data-w="26"></span>
+          <span class="quemC"><b>Marina Costa</b><i>Direção de operações</i></span>
+          <span class="contC">marina@usemaestro.com</span>
+        </div>
+        <div class="cartaoV versoC">
+          <span class="sloganC">Sua operação,<br>no tempo certo.</span>
+          <span class="catC">Creative Operations</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- ==================== 05 · A LIGADURA ======================== -->
+<!-- ============================================================= -->
+<div class="board g-ink" id="op5">
+  <span class="rotulo"><b>Opção 05</b> · A Ligadura · capa</span>
+  <div class="heroOp">
+    <span class="simb" data-g="ligadura" data-c="#F4F6F8" data-w="min(520px,84vw)"></span>
+    <h2 style="font-size:clamp(28px,4.4vw,52px)">O nome é a <em>marca</em>.</h2>
+    <p class="tese">Instrument Serif, e um único gesto por cima: a <b>ligadura</b>, o arco que
+      na partitura une notas numa frase só. Tocar ligado é tocar sem interrupção — a promessa
+      do produto sobre a operação inteira. O M herda o arco e vira monograma.</p>
+  </div>
+</div>
+
+<div class="board g-luz">
+  <span class="rotulo"><b>05</b> · construção</span>
+  <div>
+    <div class="planta"><div class="malha"></div>
+      <svg viewBox="-2 -4 52 52">
+        <g stroke="#5B8DEF" stroke-width=".35" stroke-dasharray="1.3 1.3" fill="none">
+          <path d="M2 42 L46 42"/><path d="M8 14 L40 14"/>
+          <path d="M24 -2 L24 46"/>
+        </g>
+        <path d="M8 14 C15 6.5 33 6.5 40 14 C33 9.5 15 9.5 8 14 Z" fill="#C8963A"/>
+        <text x="24" y="42" text-anchor="middle"
+          font-family="Instrument Serif, Georgia, serif" font-size="34" fill="#23272E">M</text>
+        <g font-family="JetBrains Mono,monospace" font-size="2.5" fill="#F0784C">
+          <text x="30" y="5.5">nasce fino · engorda · morre fino</text>
+          <text x="2" y="17.5">corda 32</text>
+          <text x="26" y="45.5" fill="#5B8DEF">baseline</text>
+        </g>
+      </svg>
+    </div>
+    <div class="cotas">
+      <span>arco: corda <b>32</b> · flecha <b>7,5</b></span>
+      <span>espessura <b>variável</b>, como gravura</span>
+      <span>tipo <b>Instrument Serif</b>, sem redesenho</span>
+      <span>o arco <b>nunca toca</b> a letra</span>
+    </div>
+    <p class="legenda2">A ligadura de partitura não tem peso uniforme: nasce fina, engorda no
+      meio e morre fina. É esse detalhe de gravura que impede o arco de virar "swoosh".</p>
+  </div>
+</div>
+
+<div class="board g-ink9">
+  <span class="rotulo"><b>05</b> · variações · respiro · redução</span>
+  <div style="width:min(900px,94vw)">
+    <div class="varGrade">
+      <div class="varTile"><span data-g="ligaM" data-c="#D9AC4C" data-w="56"></span><small>positivo</small></div>
+      <div class="varTile claro"><span data-g="ligaM" data-c="#C8963A" data-w="56"></span><small>claro</small></div>
+      <div class="varTile cheio"><span data-g="ligaM" data-c="#08090B" data-w="56"></span><small>sobre latão</small></div>
+      <div class="varTile"><span data-g="ligaM" data-c="#F4F6F8" data-w="56"></span><small>mono</small></div>
+    </div>
+    <div class="respiro"><div class="caixa">
+      <i class="t">x</i><i class="b">x</i><i class="l">x</i><i class="r">x</i>
+      <span data-g="ligaM" data-c="#D9AC4C" data-w="76"></span>
+    </div></div>
+    <div class="reducao2">
+      <figure><span data-g="ligaM" data-c="#D9AC4C" data-w="72"></span><figcaption>72</figcaption></figure>
+      <figure><span data-g="ligaM" data-c="#D9AC4C" data-w="44"></span><figcaption>44</figcaption></figure>
+      <figure><span data-g="ligaM" data-c="#D9AC4C" data-w="24"></span><figcaption>24</figcaption></figure>
+      <figure><span data-g="ligaM" data-c="#D9AC4C" data-w="16"></span><figcaption>16 · mínimo</figcaption></figure>
+    </div>
+    <div class="lockupFaixa" style="padding:30px"><span data-g="ligadura" data-c="#F4F6F8" data-w="min(300px,70vw)"></span></div>
+  </div>
+</div>
+
+<div class="board g-ink">
+  <span class="rotulo"><b>05</b> · a marca no mundo</span>
+  <div class="mocks">
+    <div class="mock g-ink9"><span class="tag">Capa de apresentação</span>
+      <div class="slideM">
+        <span class="kick">Creative Operations</span>
+        <h5>A agência inteira,<br>numa pauta só.</h5>
+        <div class="pe"><span>Maestro · 2026</span>
+          <span data-g="ligaM" data-c="#D9AC4C" data-w="24"></span></div>
+      </div>
+    </div>
+    <div class="mock claroM" style="background:#E9E5DC"><span class="tag">Assinatura de e-mail</span>
+      <div class="assinE">
+        <span data-g="ligadura" data-c="#08090B" data-w="128"></span>
+        <div class="div"></div>
+        <div class="nm">Marina Costa</div>
+        <div class="cg">Direção de operações</div>
+        <div class="li">marina@usemaestro.com · +55 11 9 9999-0000<br>usemaestro.com</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================== FIM ================== -->
+<div class="decl g-ink"><p>Marca boa é a que você desenha de memória<br>num <em>guardanapo</em>.</p></div>
+
+<div class="board g-brass fim" style="min-height:80vh">
+  <span class="rotulo"><b>A escolha</b> · vira o D-079</span>
+  <div class="fim">
+    <div class="fila">
+      <span data-g="batida" data-c="#08090B" data-w="56"></span>
+      <span data-g="fermata" data-c="#08090B" data-w="56"></span>
+      <span data-g="mpautado" data-c="#08090B" data-w="52"></span>
+      <span data-g="levare" data-c="#08090B" data-w="52"></span>
+      <span data-g="ligaM" data-c="#08090B" data-w="48"></span>
+    </div>
+    <p>Escolhido o gesto, tudo troca de uma vez: função, assets, manual, protótipo e Vercel.</p>
+    <small>Maestro · exploração de símbolo v3 · nada aplicado ainda</small>
+  </div>
+</div>
 
 <script>
 'use strict';
 /* =====================================================================
-   Todos os gestos são funções — a mesma regra da casa: gerado, nunca
-   redesenhado. viewBox comum 0 0 48 48, terminais arredondados.
+   Os gestos são funções — gerado, nunca redesenhado. A geometria aqui é
+   IDÊNTICA à da prancha anterior; só a apresentação mudou.
    ================================================================== */
-
-/* 01 · A Batida — a batuta desce com peso e rebate leve. O peso variável
-   é o que separa isto de um check de to-do: desce grosso, sobe fino. */
 function gBatida(cor){
-  /* dois traços emendados no ponto da batida: a descida GROSSA (o peso
-     do braço) e o rebate FINO (o pulso). O afilamento é o que separa
-     isto de um check de interface — check tem peso uniforme. */
   return `<svg viewBox="0 0 48 48" fill="none" stroke="${cor}" stroke-linecap="round">
     <path d="M9.5 19.5 C14.5 24.5 18.6 31 21.4 38" stroke-width="7.2"/>
     <path d="M21.4 38 C26.8 30 33.6 19 39.5 8.5 C39.9 7.8 40.4 7.4 41 7.2"
       stroke-width="2.7"/>
   </svg>`;
 }
-
-/* 02 · A Fermata — o arco e o ponto. As duas formas mais simples que
-   existem, na proporção da fermata de partitura (arco largo, ponto no
-   centro do vão). */
 function gFermata(cor){
   return `<svg viewBox="0 0 48 48" fill="none">
     <path d="M7 33 C10 17 20 10 24 10 C28 10 38 17 41 33"
@@ -311,37 +878,24 @@ function gFermata(cor){
     <circle cx="24" cy="31.5" r="4.6" fill="${cor}"/>
   </svg>`;
 }
-
-/* 03 · O M pautado — M sólido, quatro cortes de pauta atravessando.
-   Máscara: o M em branco, os cortes em preto. Abaixo de 32px os cortes
-   somem sozinhos (data-solido) e fica o M cheio. */
 let _mkid = 0;
+const M_PATH = 'M8 41 L8 7 L17 7 L24 20.5 L31 7 L40 7 L40 41 L32.6 41 L32.6 19.5 L26.4 31.5 L21.6 31.5 L15.4 19.5 L15.4 41 Z';
 function gMPautado(cor, solido){
   const id = 'mp' + (++_mkid);
-  const M = 'M8 41 L8 7 L17 7 L24 20.5 L31 7 L40 7 L40 41 L32.6 41 L32.6 19.5 L26.4 31.5 L21.6 31.5 L15.4 19.5 L15.4 41 Z';
   const cortes = solido ? '' : [14.2, 21.2, 28.2, 35.2]
     .map(y => `<rect x="4" y="${y}" width="40" height="2.3" fill="#000"/>`).join('');
   return `<svg viewBox="0 0 48 48">
-    <defs><mask id="${id}"><path d="${M}" fill="#fff"/>${cortes}</mask></defs>
+    <defs><mask id="${id}"><path d="${M_PATH}" fill="#fff"/>${cortes}</mask></defs>
     <rect width="48" height="48" fill="${cor}" mask="url(#${id})"/>
   </svg>`;
 }
-
-/* 04 · O Levare — cinco linhas de pauta; a primeira se ergue no ângulo
-   da batuta. As quatro de baixo são a espera; a de cima é o começo. */
 function gLevare(cor){
-  const linhas = [19, 26, 33, 40].map(y =>
-    `<path d="M9 ${y} L39 ${y}"/>`).join('');
+  const linhas = [19, 26, 33, 40].map(y => `<path d="M9 ${y} L39 ${y}"/>`).join('');
   return `<svg viewBox="0 0 48 48" fill="none"
     stroke="${cor}" stroke-width="3.6" stroke-linecap="round">
-    ${linhas}
-    <path d="M9 12 L39 4.5"/>
+    ${linhas}<path d="M9 12 L39 4.5"/>
   </svg>`;
 }
-
-/* 05 · A Ligadura — o nome com o arco por cima; e o monograma M+arco
-   para os tamanhos pequenos. O arco nasce fino, engorda no meio e morre
-   fino — como toda ligadura gravada em partitura de verdade. */
 function gLigadura(cor){
   return `<svg viewBox="0 0 210 64">
     <path d="M22 18 C60 -2 150 -2 188 18 C151 4 59 4 22 18 Z" fill="#C8963A"/>
@@ -358,20 +912,6 @@ function gLigaM(cor){
       fill="${cor}">M</text>
   </svg>`;
 }
-
-/* a Pauta que caiu, para a autópsia */
-function gPautaVelha(){
-  const A=84, V=20, out=[];
-  for(let i=0;i<7;i++){
-    const y = 136 + i*14;
-    out.push(`<path d="M22 ${y} L56 ${y} C74 ${y} 76 ${y-A} 94 ${y-A}
-      C110 ${y-A} 114 ${y-V} 130 ${y-V} C146 ${y-V} 150 ${y-A} 166 ${y-A}
-      C184 ${y-A} 186 ${y} 204 ${y} L238 ${y}"/>`);
-  }
-  return `<svg viewBox="10 30 240 190" fill="none" stroke="#6B7280"
-    stroke-width="6.5" stroke-linecap="round" style="width:120px">${out.join('')}</svg>`;
-}
-
 const GESTOS = { batida:gBatida, fermata:gFermata,
   mpautado:(c,s)=>gMPautado(c,s), levare:gLevare,
   ligadura:gLigadura, ligaM:gLigaM };
@@ -379,12 +919,20 @@ const GESTOS = { batida:gBatida, fermata:gFermata,
 document.querySelectorAll('[data-g]').forEach(el=>{
   const f = GESTOS[el.dataset.g];
   if(!f) return;
-  const w = +el.dataset.w || 48;
-  el.style.cssText += `display:inline-block;width:${w}px;line-height:0`;
+  const w = el.dataset.w || '48';
+  const px = parseFloat(w);
+  el.style.cssText += `display:inline-block;width:${/[a-z(%]/.test(w)?w:w+'px'};line-height:0`;
+  const larguraFixa = !/[a-z(%]/.test(w);
   el.innerHTML = f(el.dataset.c || '#C8963A',
-    el.dataset.solido || (el.dataset.g==='mpautado' && w < 32));
+    !!el.dataset.solido || (el.dataset.g==='mpautado' && larguraFixa && px < 32));
   const svg = el.querySelector('svg');
-  if(svg){ svg.style.width='100%'; svg.style.height='auto'; svg.style.display='block'; }
+  if(svg){ svg.style.width='100%'; svg.style.height='auto'; svg.style.display='block';
+    svg.style.overflow='visible'; }
 });
-document.getElementById('morto-pauta').innerHTML = gPautaVelha();
+/* o M da prancha de construção, desenhado no espaço da própria planta */
+document.querySelectorAll('[data-mk-mpautado]').forEach(g=>{
+  g.outerHTML = `<path d="${M_PATH}" fill="#C8963A" opacity=".92"/>` +
+    [14.2,21.2,28.2,35.2].map(y=>
+      `<rect x="4" y="${y}" width="40" height="2.3" fill="#EEEBE4"/>`).join('');
+});
 </script>
