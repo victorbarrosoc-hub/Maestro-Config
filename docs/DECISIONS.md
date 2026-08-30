@@ -995,9 +995,9 @@ Uma linha que guia, conecta e dá ritmo à orquestra."
 memória; o founder desenhou um. Símbolo com autor não tem cara de máquina — e este é
 literal sem ser clichê: não é clave, não é nota, é a mão.
 **Consequência:**
-- Vetorização **fiel e gerada**: `assets/logo/gerar-gesto.py` guarda a ESPINHA (14 pontos)
-  e o PERFIL DE LARGURA (15 → 0,9). O path final nunca se edita à mão — mudar o símbolo é
-  mudar estes números.
+- Vetorização por **decalque**, nunca por redesenho: `assets/logo/tracar-gesto.py` sai da
+  foto do founder (`assets/ref/gesto-founder-foto.jpg`) e chega no path. Mudar o símbolo é
+  trocar a foto e rodar de novo — nunca editar o path.
 - O afilamento é a assinatura da forma: entra com o peso do braço, termina no fio da batuta.
 - Uma versão só: o gesto reduz até 16 px sem versão simplificada.
 - Assets regerados: símbolo (brass, ink, branco), lockups horizontal claro/escuro e
@@ -1019,12 +1019,36 @@ display do sistema (títulos, números grandes); sai apenas do lockup.
   a largura afina cedo: na saída do vale o traço já é fio. Perfil de largura interpolado
   com cosseno, sem quebra de derivada.
 - **Wordmark:** o lettering monolinha caiu; o founder mandou a referência — serifa
-  clássica. O nome compõe em **Source Serif 4 SemiBold** (fallback Georgia), com aviso na
-  prancha quando a fonte oficial não carrega.
+  clássica. O nome compõe em **Source Serif 4 SemiBold**, eixo óptico em 40.
 - **Paleta (do founder):** **eerie black `#1C1C1C`** (fundo) · **purple taupe `#474350`**
   (superfície e apoio) · **mustard `#FFC857`** (o acento — o gesto, o que espera por você)
   · **white smoke `#F4F7F5`** (texto no escuro, fundo no claro). Substitui Ink/Brass na
   identidade; a migração dos tokens do produto acontece quando o founder aprovar a prancha.
+
+**Revisão 3 — o decalque (mesmo dia, pelo founder):**
+> "Qual a dificuldade de fazer o símbolo igual ao que eu mandei. Igual igual, não muda nada."
+
+- **O erro das rodadas 1 e 2:** eu estava *redesenhando* o gesto com uma função paramétrica
+  (espinha + perfil de largura). Por melhor que ficasse o ajuste, o resultado era sempre
+  uma interpretação — "parecido, nunca igual". A pergunta do founder estava certa: não
+  havia dificuldade nenhuma, havia o método errado.
+- **O método certo:** `tracar-gesto.py` **decalca**. Isola o traço dourado da foto por cor
+  (mínimo de R e G contra B, com limiar generoso para não perder a ponta que desvanece),
+  extrai o contorno com precisão de subpixel (marching squares sobre a máscara suavizada) e
+  ajusta cúbicas de Bézier pelo algoritmo de Schneider. Resultado: **31 cúbicas, desvio
+  máximo de 1.81 px** num traço de 594 px — três décimos de um por cento. Nenhum ponto foi
+  movido à mão, e nenhum deve ser.
+- **O nome em curvas:** `assets/logo/gerar-nome.py` baixa a Source Serif 4, instancia o eixo
+  óptico em 40, compõe "Maestro" com kerning de verdade (HarfBuzz) e grava os contornos em
+  `nome-maestro.json`. Motivo: um `font-family` num arquivo de logo é uma dependência que
+  falha em silêncio — e falhava mesmo, porque `Source Serif 4` sem aspas é nome de família
+  inválido em CSS (termina em dígito), o que derrubava a declaração inteira e caía numa
+  sans. Agora não há fonte no caminho.
+- **Assets:** os oito arquivos passaram de ~10 KB de polilinha para ~1,4 KB de curvas, com
+  geometria calculada a partir das medidas reais da tipografia (largura de tinta 3,514 em ·
+  altura de maiúscula 0,664 em), não estimadas.
+- **Regra que fica:** o símbolo da Maestro é o desenho do founder. Não existe versão
+  "melhorada" dele.
 
 
 ---

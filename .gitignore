@@ -18,3 +18,5 @@ npm-debug.log*
 
 # banco de desenvolvimento (PGlite) — ver apps/api/scripts/dev-db.ts
 .pglite/
+
+__pycache__/

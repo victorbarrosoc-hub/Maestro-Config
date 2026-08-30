@@ -1,9 +1,45 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.19
+Version: 0.5.20
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.20 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** parar de redesenhar o gesto do founder e decalcá-lo.
+
+### Mudado
+- **O símbolo agora é decalque, não interpretação.** `assets/logo/tracar-gesto.py` isola o
+  traço dourado da foto do founder por cor, extrai o contorno com precisão de subpixel e
+  ajusta cúbicas de Bézier (Schneider): **31 curvas, desvio máximo de 1.81 px** num traço de
+  594 px de largura. As rodadas anteriores redesenhavam a forma com uma função paramétrica —
+  saía parecido e nunca igual.
+- **O nome virou curva.** `assets/logo/gerar-nome.py` compõe "Maestro" na Source Serif 4
+  SemiBold (eixo óptico 40) com kerning do HarfBuzz e grava os contornos. Nenhum arquivo da
+  marca depende mais de fonte instalada ou de webfont.
+- **Geometria dos lockups calculada**, não estimada: a partir da largura de tinta (3,514 em)
+  e da altura de maiúscula (0,664 em) medidas na própria tipografia.
+
+### Corrigido
+- `font-family="Source Serif 4, ..."` sem aspas era **nome de família inválido** em CSS —
+  termina em dígito, o que invalida a declaração inteira. Os lockups vinham renderizando em
+  sans sem avisar. Resolvido de raiz ao virar contorno.
+- Extração de glifos caía silenciosamente em `.notdef`: o fontTools regravava a fonte em
+  WOFF2, que o HarfBuzz não lê. Agora grava TTF cru e o script falha alto se o "M" cair no
+  glifo nulo.
+
+### Adicionado
+- Prancha com a **prova da sobreposição**: o contorno do vetor sobre o traço da foto, no
+  mesmo enquadramento dos dois painéis de comparação.
+
+### Removido
+- `gerar-gesto.py` (a função paramétrica) e o aviso de fonte da prancha — sem fonte no
+  caminho, não há o que avisar.
+- Os ~10 KB de polilinha em cada SVG: os arquivos agora têm ~1,4 KB.
 
 ---
 
