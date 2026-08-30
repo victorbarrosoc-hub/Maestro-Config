@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-30 11:30 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-30 12:08 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -15680,7 +15680,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v63 · 30 ago';
+const VERSAO_PROTOTIPO = 'v64 · 30 ago';
 
 menuSheet = (function(orig){
   return function(){
@@ -16534,4 +16534,157 @@ render = (function(orig){
     orig();
   };
 })(render);
+</script>
+<style>
+/* =====================================================================
+   v64 — a miniatura do card abre o player.
+   ================================================================== */
+.mtMini[data-mtmini]{ cursor:zoom-in }
+/* o selo de play, em CSS: sem ele o vídeo se passa por foto na tira */
+.mtMini.ehVideo::after{ content:''; position:absolute; left:50%; top:50%;
+  transform:translate(-40%,-50%); width:0; height:0;
+  border-left:10px solid rgba(255,255,255,.94);
+  border-top:7px solid transparent; border-bottom:7px solid transparent;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.75)); pointer-events:none }
+.mtMini.ehVideo.temArte::before{ content:''; position:absolute; inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.42)); pointer-events:none }
+.mtMini.semArquivo{ border-style:dashed; opacity:.72 }
+.lbFalta{ display:flex; flex-direction:column; align-items:center; gap:9px;
+  text-align:center; color:var(--ink-300); font-size:13px; line-height:1.55; padding:0 22px }
+.lbFalta b{ color:var(--ink-100); font-size:14.5px }
+.lbFalta span{ max-width:34ch }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v64 — "não tem um player pra assistir?"
+
+   Tinha, e não estava chegando em ninguém. O visualizador só abria a
+   partir da grade da tela **Material** (`.mtCard .vis`). No CARD — que é
+   onde o vídeo aparece para quem está lendo a pauta — o arquivo virava
+   uma miniatura de 46px sem nenhum toque ligado nela.
+
+   Pior no lado do cliente: ele não tem a tela Material. A miniatura do
+   card era o ÚNICO lugar onde o vídeo dele aparecia — e não abria. Na
+   prática, o cliente nunca conseguiu assistir ao que ia aprovar.
+
+   Três correções:
+     1. a miniatura do card abre o visualizador, no arquivo tocado;
+     2. ela mostra que é vídeo (selo de play), em vez de parecer foto;
+     3. arquivo sem `url` — o que volta do armazenamento antes do blob
+        ser reidratado — deixa de ser um ícone morto: abre e DIZ o que
+        houve, em vez de um player preto sem nada dentro.
+   ================================================================== */
+
+/* ---------- 1. toda miniatura ganha endereço ------------------------
+   São duas tiras diferentes, desenhadas por códigos diferentes: a da
+   LINHA da pauta (`tiraMaterial`, 4 arquivos) e a do CARD aberto
+   (`.vzMats` dentro de `modalVer`, 6). As duas mostram o mesmo `S.mat` e
+   as duas precisam abrir. O índice não é o da tira: o visualizador não
+   lista links, então o mini nº 2 pode ser o arquivo nº 1 lá dentro. */
+function marcarMinis(html, id, lista){
+  const naoLink = lista.filter(m => m.tipo !== 'link');
+  let j = -1;
+  return html.replace(/<span class="mtMini([^"]*)">/g, (todo, cls) => {
+    j++;
+    const m = lista[j];
+    if(!m || m.tipo === 'link') return todo;
+    const k = naoLink.indexOf(m);
+    const video = m.tipo === 'video' ? ' ehVideo' : '';
+    const falta  = !m.url && (m.tipo==='imagem' || m.tipo==='video') ? ' semArquivo' : '';
+    return `<span class="mtMini${cls}${video}${falta}" data-mtmini="${k}">`;
+  });
+}
+
+tiraMaterial = (function(orig){
+  return function(p){
+    let html = orig(p);
+    if(!html || html.indexOf('mtTira') < 0) return html;
+    html = html.replace('<span class="mtTira">',
+      `<span class="mtTira" data-mttira="${p.id}">`);
+    return marcarMinis(html, p.id, materiaisDe(p.id).slice(0,4));
+  };
+})(tiraMaterial);
+
+/* a tira DO CARD — a única que o cliente tem */
+modalVer = (function(orig){
+  return function(id){
+    let html = orig(id);
+    if(!html || html.indexOf('vzMats') < 0) return html;
+    html = html.replace('<div class="vzMats">', `<div class="vzMats" data-mttira="${id}">`);
+    return marcarMinis(html, id, materiaisDe(id).slice(0,6));
+  };
+})(modalVer);
+
+/* ---------- 2. tocar nela abre o visualizador ----------------------- */
+/* No `window`: a linha da pauta e o card já param o clique no `document`,
+   e a captura passa pelo window primeiro. */
+addEventListener('click', e => {
+  const mini = e.target.closest('[data-mtmini]');
+  if(!mini || S.lb) return;
+  const tira = mini.closest('[data-mttira]');
+  if(!tira) return;
+  const id = +tira.dataset.mttira;
+  const ms = (S.mat[id] || []).filter(m => m.tipo !== 'link');
+  if(!ms.length) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  S.mtId = id;
+  abrirLB(+mini.dataset.mtmini || 0);
+}, true);
+
+/* ---------- 2b. na tela Material, o ícone morto também abre ---------- */
+/* Lá a prévia só existia com `url`. Sem ele o card virava um ícone de
+   documento sem toque — e é justamente o estado em que a pessoa mais
+   precisa de uma explicação. Agora abre e diz o que houve.
+   De quebra corrige um deslocamento antigo: `data-mtdel` conta os links,
+   o visualizador não. Com um link no meio, o toque abria o arquivo errado. */
+const lbIndiceDe = (id, j) => {
+  const lista = S.mat[id] || [];
+  const m = lista[j];
+  if(!m || m.tipo === 'link') return -1;
+  return lista.filter(x => x.tipo !== 'link').indexOf(m);
+};
+addEventListener('click', e => {
+  const vis = e.target.closest('.mtCard .vis');
+  if(!vis || S.lb || e.target.closest('[data-mtdel]')) return;
+  const del = vis.querySelector('[data-mtdel]');
+  if(!del) return;
+  const k = lbIndiceDe(S.mtId, +del.dataset.mtdel);
+  if(k < 0) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  abrirLB(k);
+}, true);
+
+/* ---------- 3. arquivo que ainda não voltou não vira player vazio ---- */
+/* `<video src="null" controls>` desenha um retângulo preto com controles
+   que não tocam nada — o pior estado possível, porque parece defeito do
+   vídeo. Quando o blob não está aqui, a tela diz isso com todas as
+   letras, e tenta buscar de volta. */
+vLightbox = (function(orig){
+  return function(){
+    let html = orig();
+    if(!html) return html;
+    const ms = lbMateriais();
+    const m = ms[Math.min(S.lb.i, ms.length-1)];
+    if(!m || m.url) return html;
+    const aviso = `<div class="lbFalta">${ic('warn',34)}
+      <b>O arquivo não está neste aparelho</b>
+      <span>${esc(m.nome)} foi enviado de outro navegador — ou a memória
+      daqui foi limpa. Peça para reenviar, ou abra no aparelho de origem.</span></div>`;
+    return html
+      .replace(/<video[^>]*><\/video>/, aviso)
+      .replace(/<img src="(null|undefined)"[^>]*>/, aviso);
+  };
+})(vLightbox);
+
+/* e, ao abrir, tenta trazer o arquivo de volta antes de desistir */
+abrirLB = (function(orig){
+  return function(i){
+    orig(i);
+    if(!S.lb) return;
+    const m = lbMateriais()[S.lb.i];
+    if(m && !m.url && m.chave && typeof rehidratarArquivos === 'function')
+      Promise.resolve(rehidratarArquivos()).then(()=>{ if(S.lb) renderLayer(); }).catch(()=>{});
+  };
+})(abrirLB);
 </script>
