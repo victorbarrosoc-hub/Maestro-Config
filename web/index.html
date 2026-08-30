@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-30 21:42 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-30 21:49 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -648,6 +648,13 @@ let LOGO = (c,s=26) => `<svg width="${s}" height="${s}" viewBox="0 0 48 48" aria
   <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="${c}" stroke-width="6"
   stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
+/* O GESTO — o símbolo, decalcado da foto do founder por
+   docs/BRAND/assets/logo/tracar-gesto.py. Declarado aqui, antes de
+   qualquer render, porque a home do site desenha o gesto direto no
+   markup e roda antes dos blocos do fim do arquivo.
+   Nunca editar à mão: para mudar o símbolo, troque a foto e rode o script. */
+const GESTO_D = 'M240 0.15C237.57 3.7 229.2 9.47 225.41 12.16C224.11 13.08 222.98 14.23 221.7 15.17C216.09 19.33 210.52 23.57 205.02 27.87C181.45 46.33 158.02 64.96 134.54 83.54C125.04 91.06 111.91 101.85 99.95 104.39C97.51 104.9 94.59 104.73 92.11 104.58C90.46 104.48 89.05 103.75 87.56 103.12C80.95 100.31 77.52 94.13 75.39 87.63C75.08 86.68 74.57 85.8 74.31 84.83C73.96 83.48 73.89 82.06 73.57 80.7C73.3 79.53 72.77 78.44 72.51 77.26C70.85 69.68 68.83 63.19 59.49 64.36C54.87 64.94 48.97 71.6 46.22 75.11C37.33 86.47 31.02 98.04 23.68 110.37C20.03 116.5 10.94 125.03 3.1 121.18C0 119.65 0.27 116.03 1.12 113.31C2.92 107.48 7.1 102.28 10.64 97.39C19.44 85.27 34.17 69.76 46 60.62C52.01 55.98 58.08 51.15 65.47 48.96C67.69 48.31 70.31 48.02 72.59 48.39C90.65 51.32 87.43 73.57 95.35 81.54C101.09 87.31 108.89 85.17 115.51 82.47C118.46 81.27 121.42 80.02 124.21 78.45C133.76 73.1 142.89 66.82 152.03 60.79C162.54 53.85 173.12 47 183.35 39.61C188.2 36.1 193.2 32.78 198 29.21C201.68 26.47 205.33 23.64 209.16 21.12C211.17 19.8 212.9 18.13 214.88 16.79C220.01 13.31 224.95 9.58 230.01 6C232.38 4.33 235.78 1.29 238.38 0.24C238.97 0 239.39 0.19 240 0.15Z';
+
 /* as linhas da Pauta (opção 1) — geradas, nunca redesenhadas à mão */
 function LOGO_PAUTA_PATHS(n, grosso){
   n = n || 7; grosso = grosso || (n<=4 ? 11 : 6.5);
@@ -842,18 +849,11 @@ function vSite(){ return `<div class="site">
 
 <header class="hero">
   <svg class="heroM" viewBox="0 0 260 240">
-    <path d="M22 136 L56 136 C74 136 76 52 94 52 C110 52 114 116 130 116 C146 116 150 52 166 52 C184 52 186 136 204 136 L238 136" fill="none" stroke="#C8963A" stroke-width="6.5" stroke-linecap="round"/>
-    <path d="M22 150 L56 150 C74 150 76 66 94 66 C110 66 114 130 130 130 C146 130 150 66 166 66 C184 66 186 150 204 150 L238 150" fill="none" stroke="#C8963A" stroke-width="6.5" stroke-linecap="round"/>
-    <path d="M22 164 L56 164 C74 164 76 80 94 80 C110 80 114 144 130 144 C146 144 150 80 166 80 C184 80 186 164 204 164 L238 164" fill="none" stroke="#C8963A" stroke-width="6.5" stroke-linecap="round"/>
-    <path d="M22 178 L56 178 C74 178 76 94 94 94 C110 94 114 158 130 158 C146 158 150 94 166 94 C184 94 186 178 204 178 L238 178" fill="none" stroke="#C8963A" stroke-width="6.5" stroke-linecap="round"/>
-    <path d="M22 192 L56 192 C74 192 76 108 94 108 C110 108 114 172 130 172 C146 172 150 108 166 108 C184 108 186 192 204 192 L238 192" fill="none" stroke="#C8963A" stroke-width="6.5" stroke-linecap="round"/>
-    <path d="M22 206 L56 206 C74 206 76 122 94 122 C110 122 114 186 130 186 C146 186 150 122 166 122 C184 122 186 206 204 206 L238 206" fill="none" stroke="#C8963A" stroke-width="6.5" stroke-linecap="round"/>
-    <path d="M22 220 L56 220 C74 220 76 136 94 136 C110 136 114 200 130 200 C146 200 150 136 166 136 C184 136 186 220 204 220 L238 220" fill="none" stroke="#C8963A" stroke-width="6.5" stroke-linecap="round"/></svg>
+    <!-- o gesto do founder; o path vem de docs/BRAND/assets/logo/tracar-gesto.py -->
+    <path fill="#C8963A" transform="translate(10 62.5)" d="${GESTO_D}"/></svg>
   <div class="wrapc inner">
-    <div class="batonwrap fu"><svg viewBox="10 30 240 190" width="96" height="76">
-      <path class="baton" pathLength="100" d="M22 148 L56 148 C74 148 76 64 94 64 C110 64 114 128 130 128 C146 128 150 64 166 64 C184 64 186 148 204 148 L238 148"/>
-      <path class="baton" pathLength="100" d="M22 172 L56 172 C74 172 76 88 94 88 C110 88 114 152 130 152 C146 152 150 88 166 88 C184 88 186 172 204 172 L238 172"/>
-      <path class="baton" pathLength="100" d="M22 196 L56 196 C74 196 76 112 94 112 C110 112 114 176 130 176 C146 176 150 112 166 112 C184 112 186 196 204 196 L238 196"/></svg></div>
+    <div class="batonwrap fu"><svg viewBox="-6 -6 252 137" width="130" height="71">
+      <g class="gz"><path fill="var(--brass-500)" d="${GESTO_D}"/></g></svg></div>
     <div class="eyebrow fu" style="animation-delay:80ms"><i></i>O sistema operacional para agências<i></i></div>
     <h1 class="fu" style="animation-delay:140ms">Sua agência não tem um problema<br>
       de tarefa. Tem um problema<br>de <em>alinhamento</em>.</h1>
@@ -15680,7 +15680,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v68 · 30 ago · o selo';
+const VERSAO_PROTOTIPO = 'v69 · 30 ago · a home';
 
 menuSheet = (function(orig){
   return function(){
@@ -16878,9 +16878,6 @@ modalVer = (function(orig){
 </style>
 <script>
 "use strict";
-/* O GESTO — decalcado da foto do founder. Nunca editar à mão: para mudar
-   o símbolo, troque a foto e rode tracar-gesto.py. */
-const GESTO_D = 'M240 0.15C237.57 3.7 229.2 9.47 225.41 12.16C224.11 13.08 222.98 14.23 221.7 15.17C216.09 19.33 210.52 23.57 205.02 27.87C181.45 46.33 158.02 64.96 134.54 83.54C125.04 91.06 111.91 101.85 99.95 104.39C97.51 104.9 94.59 104.73 92.11 104.58C90.46 104.48 89.05 103.75 87.56 103.12C80.95 100.31 77.52 94.13 75.39 87.63C75.08 86.68 74.57 85.8 74.31 84.83C73.96 83.48 73.89 82.06 73.57 80.7C73.3 79.53 72.77 78.44 72.51 77.26C70.85 69.68 68.83 63.19 59.49 64.36C54.87 64.94 48.97 71.6 46.22 75.11C37.33 86.47 31.02 98.04 23.68 110.37C20.03 116.5 10.94 125.03 3.1 121.18C0 119.65 0.27 116.03 1.12 113.31C2.92 107.48 7.1 102.28 10.64 97.39C19.44 85.27 34.17 69.76 46 60.62C52.01 55.98 58.08 51.15 65.47 48.96C67.69 48.31 70.31 48.02 72.59 48.39C90.65 51.32 87.43 73.57 95.35 81.54C101.09 87.31 108.89 85.17 115.51 82.47C118.46 81.27 121.42 80.02 124.21 78.45C133.76 73.1 142.89 66.82 152.03 60.79C162.54 53.85 173.12 47 183.35 39.61C188.2 36.1 193.2 32.78 198 29.21C201.68 26.47 205.33 23.64 209.16 21.12C211.17 19.8 212.9 18.13 214.88 16.79C220.01 13.31 224.95 9.58 230.01 6C232.38 4.33 235.78 1.29 238.38 0.24C238.97 0 239.39 0.19 240 0.15Z';
 
 /* Os três lugares que desenham o símbolo — o gesto da aprovação, a
    medalha do termo e a cortina de abertura — chamam esta função. Trocar
@@ -16913,4 +16910,17 @@ if(typeof render === 'function') render();
    escuro não existiria na tela.
    ================================================================== */
 .medalPauta{ display:none !important }
+</style>
+
+<style>
+/* =====================================================================
+   v69 — O GESTO NA HOME DO SITE.
+
+   Duas marcas antigas estavam cravadas direto no HTML do site, fora do
+   LOGO(): a clara acima do título e a grande e apagada no fundo. As
+   duas viram o gesto. A caixa da de cima era quadrada (64px) e o gesto
+   é largo — ela abre para caber.
+   ================================================================== */
+.hero .batonwrap{ width:130px }
+.hero .batonwrap .gz{ animation:gestoRevela 1.1s var(--eo) .15s both }
 </style>
