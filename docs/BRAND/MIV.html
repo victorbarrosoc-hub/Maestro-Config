@@ -1,0 +1,1977 @@
+<title>Manual da Maestro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* ==========================================================================
+   MANUAL DE IDENTIDADE — MAESTRO
+   Construído com os próprios tokens da marca (docs/BRAND/tokens).
+   Tema único, deliberado: o canvas Ink é a marca. Toda cor é pintada aqui.
+   ========================================================================== */
+:root{
+  --ink-950:#08090B; --ink-900:#0D0F12; --ink-850:#121418; --ink-800:#181B20;
+  --ink-700:#23272E; --ink-600:#333941; --ink-500:#4C535D; --ink-400:#6B7280;
+  --ink-300:#9AA1AC; --ink-200:#C4C9D0; --ink-100:#E3E6EA; --ink-50:#F4F6F8;
+  --brass-100:#F5E7C9; --brass-200:#EDD59E; --brass-300:#E3C173;
+  --brass-400:#D9AC4C; --brass-500:#C8963A; --brass-600:#A87A2C; --brass-700:#855F22;
+  --cobalt:#5B8DEF; --encore:#35B87A; --coral:#F0784C; --violet:#8B7BF0; --danger:#E5484D;
+
+  --display:'Instrument Serif',Georgia,'Times New Roman',serif;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  --mono:'JetBrains Mono','SF Mono',Menlo,Consolas,monospace;
+
+  --baton:cubic-bezier(.22,1,.36,1);
+  --legato:cubic-bezier(.65,0,.35,1);
+  --upbeat:cubic-bezier(.34,1.4,.64,1);
+  --rest:cubic-bezier(.4,0,1,1);
+
+  --rail:250px;
+  --col:min(760px,100%);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ink-950); color:var(--ink-100);
+  font-family:var(--sans); font-size:15px; line-height:1.6;
+  letter-spacing:-.008em; -webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+}
+::selection{background:var(--brass-500); color:var(--ink-950)}
+:focus-visible{outline:2px solid var(--brass-400); outline-offset:3px; border-radius:4px}
+a{color:var(--brass-300)}
+
+/* ---------- a régua de tempo: progresso do manual ---------------------- */
+#regua{
+  position:fixed; inset:0 0 auto 0; height:3px; z-index:80;
+  background:var(--ink-800);
+}
+#regua i{
+  display:block; height:100%; width:0; background:var(--brass-500);
+  transition:width .32s var(--baton);
+}
+
+/* ---------- a partitura: navegação lateral ----------------------------- */
+#partitura{
+  position:fixed; top:0; left:0; bottom:0; width:var(--rail); z-index:70;
+  background:var(--ink-900); border-right:1px solid var(--ink-800);
+  display:flex; flex-direction:column; padding:26px 0 0;
+}
+#partitura .marca{
+  display:flex; align-items:center; gap:11px; padding:0 22px 20px;
+  border-bottom:1px solid var(--ink-800); margin-bottom:14px;
+}
+#partitura .marca b{ font-family:var(--display); font-size:23px; font-weight:400;
+  letter-spacing:.2px; color:var(--ink-50) }
+#partitura .marca span{ display:block; font-family:var(--mono); font-size:9px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-400); margin-top:1px }
+#trilha{ flex:1; overflow-y:auto; padding:0 12px 20px; scrollbar-width:thin }
+#trilha a{
+  display:grid; grid-template-columns:26px 1fr 12px; align-items:center; gap:9px;
+  padding:8px 10px; border-radius:9px; text-decoration:none; color:var(--ink-300);
+  font-size:12.5px; line-height:1.35; transition:background .16s var(--baton),color .16s var(--baton);
+}
+#trilha a:hover{ background:var(--ink-850); color:var(--ink-100) }
+#trilha a.aqui{ background:var(--ink-800); color:var(--ink-50) }
+#trilha a.aqui em{ color:var(--brass-300) }
+#trilha a em{ font-family:var(--mono); font-size:10px; font-style:normal; color:var(--ink-500);
+  letter-spacing:.04em }
+#trilha a .beat{
+  width:7px; height:7px; border-radius:50%; justify-self:end;
+  border:1.5px solid var(--ink-600); background:transparent;
+  transition:background .2s var(--upbeat),border-color .2s var(--baton);
+}
+#trilha a.lido .beat{ background:var(--brass-500); border-color:var(--brass-500) }
+#painel{
+  border-top:1px solid var(--ink-800); padding:14px 18px 16px;
+  display:flex; flex-direction:column; gap:9px;
+}
+#painel .linha{ display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ink-400) }
+#painel .linha b{ color:var(--brass-300); font-size:11px }
+#painel .barra{ height:3px; border-radius:2px; background:var(--ink-800); overflow:hidden }
+#painel .barra i{ display:block; height:100%; width:0; background:var(--brass-500);
+  transition:width .32s var(--baton) }
+#selos{ display:flex; gap:5px; margin-top:2px }
+#selos span{
+  width:19px; height:19px; border-radius:50%; display:grid; place-items:center;
+  border:1px solid var(--ink-700); color:var(--ink-600); font-size:9px;
+  font-family:var(--mono); transition:all .24s var(--upbeat);
+}
+#selos span.ganho{ border-color:var(--brass-500); color:var(--brass-300);
+  background:rgba(200,150,58,.12) }
+#zerar{ background:none; border:0; padding:0; margin-top:2px; cursor:pointer;
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--ink-500); text-align:left }
+#zerar:hover{ color:var(--ink-300) }
+
+/* botão de abrir a partitura no celular */
+#abreTrilha{
+  position:fixed; top:14px; left:14px; z-index:90; display:none;
+  width:42px; height:42px; border-radius:12px; cursor:pointer;
+  background:rgba(13,15,18,.92); backdrop-filter:blur(10px);
+  border:1px solid var(--ink-700); color:var(--brass-300);
+  align-items:center; justify-content:center;
+}
+
+/* ---------- o corpo ----------------------------------------------------- */
+main{ margin-left:var(--rail); padding:0 0 120px }
+/* Uma coluna de leitura, centralizada como coluna — não bloco a bloco.
+   Com `margin-inline:auto` em cada filho, um parágrafo de 66ch se
+   centralizava dentro dos 760px e desalinhava do título. */
+.mov{ padding:96px 40px 0; scroll-margin-top:20px;
+  display:grid; grid-template-columns:minmax(0,var(--col)); justify-content:center }
+.mov > *{ min-width:0 }
+.eyebrow{
+  display:flex; align-items:center; gap:12px; margin-bottom:14px;
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--brass-400);
+}
+.eyebrow s{ flex:1; height:1px; background:var(--ink-800); text-decoration:none }
+h2{
+  font-family:var(--display); font-weight:400; font-size:clamp(34px,5vw,54px);
+  line-height:1.08; letter-spacing:-.02em; color:var(--ink-50);
+  margin:0 0 18px; text-wrap:balance;
+}
+h3{ font-size:19px; font-weight:600; letter-spacing:-.015em; color:var(--ink-50);
+  margin:30px 0 12px; text-wrap:balance }
+h4{ font-family:var(--mono); font-size:10.5px; font-weight:500; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-400); margin:0 0 10px }
+p{ margin:0 0 16px; color:var(--ink-200); max-width:66ch }
+p.lead{ font-size:19px; line-height:1.6; color:var(--ink-100); max-width:60ch }
+strong{ color:var(--ink-50); font-weight:600 }
+em.br{ font-style:normal; color:var(--brass-300) }
+ul{ margin:0 0 16px; padding-left:20px; color:var(--ink-200); max-width:66ch }
+li{ margin-bottom:7px }
+code{ font-family:var(--mono); font-size:.88em; color:var(--brass-200);
+  background:var(--ink-850); padding:2px 6px; border-radius:5px; border:1px solid var(--ink-800) }
+
+.painel{ background:var(--ink-900); border:1px solid var(--ink-800); border-radius:16px;
+  padding:26px; margin:0 0 20px }
+.painel.solto{ background:var(--ink-950) }
+.nota{ border-left:2px solid var(--brass-600); padding:4px 0 4px 18px; margin:26px 0;
+  color:var(--ink-200); max-width:62ch }
+.nota b{ color:var(--brass-300); font-weight:600 }
+
+/* tabelas */
+.tab{ overflow-x:auto; margin:0 0 20px; border:1px solid var(--ink-800); border-radius:14px }
+table{ border-collapse:collapse; width:100%; min-width:440px; font-size:13.5px }
+th{ text-align:left; font-family:var(--mono); font-size:9.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-400); font-weight:500;
+  padding:12px 16px; background:var(--ink-900); border-bottom:1px solid var(--ink-800) }
+td{ padding:11px 16px; border-bottom:1px solid var(--ink-850); color:var(--ink-200);
+  vertical-align:top }
+tr:last-child td{ border-bottom:0 }
+td b{ color:var(--ink-50) }
+td.mono,th.mono{ font-family:var(--mono); font-size:12px }
+
+/* grades genéricas */
+.grade{ display:grid; gap:14px; margin:0 0 22px }
+.g2{ grid-template-columns:repeat(2,1fr) }
+.g3{ grid-template-columns:repeat(3,1fr) }
+.g4{ grid-template-columns:repeat(4,1fr) }
+@media(max-width:880px){ .g3,.g4{ grid-template-columns:repeat(2,1fr) } }
+
+/* ---------- capa -------------------------------------------------------- */
+#abertura{ min-height:100vh; padding:80px 40px; position:relative; overflow:hidden;
+  display:grid; grid-template-columns:minmax(0,var(--col));
+  justify-content:center; align-content:center }
+#abertura > *{ min-width:0 }
+#abertura .fundo{
+  position:absolute; inset:auto 0 0 0; height:200px; opacity:.055; pointer-events:none;
+  background-repeat:repeat-x; background-size:64px 24px; background-position:bottom;
+}
+.capaMarca{ display:flex; align-items:flex-end; gap:22px; margin-bottom:38px }
+.capaMarca h1{ font-family:var(--display); font-weight:400; font-size:clamp(56px,10vw,92px);
+  line-height:.9; letter-spacing:.2px; color:var(--ink-50); margin:0 }
+.capaSub{ font-family:var(--mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--brass-400); margin-bottom:26px }
+.capaTese{ font-family:var(--display); font-size:clamp(24px,3.4vw,34px); line-height:1.3;
+  color:var(--ink-100); max-width:22ch; margin:0 0 34px }
+.capaMeta{ display:flex; flex-wrap:wrap; gap:26px; padding-top:22px;
+  border-top:1px solid var(--ink-800) }
+.capaMeta div span{ display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-500); margin-bottom:4px }
+.capaMeta div b{ font-size:14px; color:var(--ink-100); font-weight:500 }
+
+.b{ display:inline-flex; align-items:center; gap:8px; height:40px; padding:0 20px;
+  border-radius:10px; border:1px solid var(--brass-600); background:var(--brass-500);
+  color:var(--ink-950); font-family:var(--sans); font-size:13.5px; font-weight:600;
+  cursor:pointer; text-decoration:none; transition:background .16s var(--baton) }
+.b:hover{ background:var(--brass-400) }
+.b.gho{ background:transparent; color:var(--brass-300); border-color:var(--ink-700) }
+.b.gho:hover{ background:var(--ink-850); border-color:var(--brass-700) }
+.b:disabled{ opacity:.4; cursor:not-allowed }
+
+/* ---------- o símbolo, a geometria -------------------------------------- */
+.simPalco{ display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:stretch }
+@media(max-width:880px){ .simPalco{ grid-template-columns:1fr } }
+.simCaixa{ background:var(--ink-900); border:1px solid var(--ink-800); border-radius:16px;
+  padding:22px; display:flex; flex-direction:column; gap:14px }
+.simCaixa svg{ width:100%; max-width:250px; height:auto; display:block; margin:0 auto }
+.chaves{ display:flex; flex-wrap:wrap; gap:8px }
+.chave{ font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; padding:6px 11px;
+  border-radius:999px; border:1px solid var(--ink-700); background:transparent;
+  color:var(--ink-300); cursor:pointer }
+.chave[aria-pressed="true"]{ border-color:var(--brass-600); color:var(--brass-300);
+  background:rgba(200,150,58,.1) }
+
+/* redução */
+.reducao{ display:flex; align-items:flex-end; gap:26px; flex-wrap:wrap;
+  background:var(--ink-900); border:1px solid var(--ink-800); border-radius:16px; padding:26px }
+.reducao figure{ margin:0; text-align:center }
+.reducao figcaption{ font-family:var(--mono); font-size:9.5px; color:var(--ink-500);
+  margin-top:9px; letter-spacing:.06em }
+
+/* certo / errado */
+.ce{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)) }
+.ce figure{ margin:0; background:var(--ink-900); border:1px solid var(--ink-800);
+  border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:12px }
+.ce .palco{ height:74px; display:grid; place-items:center; border-radius:9px;
+  background:var(--ink-950); overflow:hidden }
+.ce figcaption{ font-size:11.5px; line-height:1.45; color:var(--ink-300);
+  display:flex; gap:7px; align-items:flex-start }
+.ce figcaption i{ font-style:normal; font-weight:700; flex:0 0 auto }
+.ce .nao i{ color:var(--danger) } .ce .sim i{ color:var(--encore) }
+.ce .nao{ border-color:rgba(229,72,77,.3) }
+
+/* cor */
+.tira{ display:grid; grid-template-columns:repeat(5,1fr); border-radius:14px; overflow:hidden;
+  border:1px solid var(--ink-800); margin-bottom:14px }
+@media(max-width:700px){ .tira{ grid-template-columns:repeat(3,1fr) } }
+.tira div{ padding:18px 12px 14px; display:flex; flex-direction:column; gap:3px; min-height:104px;
+  justify-content:flex-end }
+.tira b{ font-family:var(--mono); font-size:11px; font-weight:500 }
+.tira span{ font-family:var(--mono); font-size:9.5px; opacity:.72 }
+.semantica{ display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)) }
+.semantica div{ border:1px solid var(--ink-800); border-radius:12px; padding:14px;
+  display:flex; flex-direction:column; gap:7px; background:var(--ink-900) }
+.semantica i{ width:26px; height:4px; border-radius:2px; display:block }
+.semantica b{ font-size:13px; color:var(--ink-50) }
+.semantica span{ font-size:11.5px; color:var(--ink-400); font-family:var(--mono) }
+
+/* dez por cento */
+.dez{ display:grid; grid-template-columns:repeat(10,1fr); gap:3px; height:56px; margin-bottom:10px }
+.dez i{ background:var(--ink-800); border-radius:3px; display:block }
+.dez i.on{ background:var(--brass-500) }
+
+/* tipografia */
+.espec{ border:1px solid var(--ink-800); border-radius:16px; overflow:hidden;
+  background:var(--ink-900); margin-bottom:16px }
+.espec .cab{ padding:12px 20px; border-bottom:1px solid var(--ink-800);
+  display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap;
+  font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-400) }
+.espec .corpo{ padding:26px 20px }
+.espec .amostra{ color:var(--ink-50); line-height:1.05; word-break:break-word }
+.escala li{ display:flex; align-items:baseline; gap:16px; list-style:none;
+  border-bottom:1px solid var(--ink-850); padding:9px 0 }
+.escala{ padding:0; margin:0 }
+.escala li:last-child{ border-bottom:0 }
+.escala .tok{ font-family:var(--mono); font-size:10.5px; color:var(--ink-500); width:92px; flex:0 0 auto }
+.escala .txt{ color:var(--ink-100); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+
+/* motion */
+.pista{ background:var(--ink-900); border:1px solid var(--ink-800); border-radius:14px;
+  padding:18px; margin-bottom:12px }
+.pista .rail{ height:36px; border-radius:8px; background:var(--ink-950);
+  border:1px solid var(--ink-850); position:relative; overflow:hidden }
+.pista .bola{ position:absolute; top:6px; left:6px; width:22px; height:22px; border-radius:6px;
+  background:var(--brass-500) }
+.pista .rot{ display:flex; justify-content:space-between; gap:12px; margin-top:10px;
+  font-family:var(--mono); font-size:10.5px; color:var(--ink-400) }
+
+/* som */
+.teclas{ display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)) }
+.tecla{ background:var(--ink-900); border:1px solid var(--ink-800); border-radius:13px;
+  padding:14px; cursor:pointer; text-align:left; color:var(--ink-100); font-family:var(--sans);
+  display:flex; flex-direction:column; gap:5px; transition:border-color .16s var(--baton) }
+.tecla:hover{ border-color:var(--brass-700) }
+.tecla b{ font-size:13.5px; font-weight:600 }
+.tecla span{ font-family:var(--mono); font-size:10.5px; color:var(--ink-400) }
+.tecla.tocando{ border-color:var(--brass-500) }
+
+/* prova */
+.prova{ border:1px solid var(--brass-700); border-radius:18px; overflow:hidden;
+  background:linear-gradient(180deg,rgba(200,150,58,.07),transparent 42%); margin:34px 0 26px }
+.prova .cab{ padding:16px 22px; border-bottom:1px solid var(--ink-800); display:flex;
+  align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap }
+.prova .cab b{ font-family:var(--mono); font-size:10.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--brass-300) }
+.prova .cab span{ font-family:var(--mono); font-size:10.5px; color:var(--ink-400) }
+.prova .corpo{ padding:22px }
+.q{ margin-bottom:22px }
+.q:last-child{ margin-bottom:0 }
+.q p{ margin:0 0 12px; color:var(--ink-50); font-weight:500; max-width:60ch }
+.ops{ display:flex; flex-direction:column; gap:8px }
+.op{ display:flex; gap:11px; align-items:flex-start; text-align:left; width:100%;
+  padding:12px 14px; border-radius:11px; border:1px solid var(--ink-700);
+  background:var(--ink-900); color:var(--ink-200); font-family:var(--sans); font-size:13.5px;
+  cursor:pointer; transition:border-color .16s var(--baton),background .16s var(--baton) }
+.op:hover:not(:disabled){ border-color:var(--ink-600); background:var(--ink-850) }
+.op i{ font-style:normal; font-family:var(--mono); font-size:11px; color:var(--ink-500);
+  flex:0 0 auto; margin-top:1px }
+.op.certa{ border-color:var(--encore); background:rgba(53,184,122,.1); color:var(--ink-50) }
+.op.certa i{ color:var(--encore) }
+.op.errada{ border-color:var(--danger); background:rgba(229,72,77,.1) }
+.op.errada i{ color:var(--danger) }
+.op:disabled{ cursor:default }
+.expl{ margin-top:11px; padding:12px 14px; border-radius:11px; background:var(--ink-900);
+  border:1px solid var(--ink-800); font-size:12.5px; line-height:1.55; color:var(--ink-300) }
+.expl b{ color:var(--brass-300) }
+.selo{ display:flex; align-items:center; gap:13px; margin-top:18px; padding:14px 16px;
+  border-radius:13px; border:1px dashed var(--ink-700); color:var(--ink-400); font-size:12.5px }
+.selo.ganho{ border-style:solid; border-color:var(--brass-600); color:var(--brass-200);
+  background:rgba(200,150,58,.08) }
+.selo b{ color:var(--ink-50); display:block; font-size:13px }
+.selo.ganho b{ color:var(--brass-300) }
+.selo .disco{ width:34px; height:34px; border-radius:50%; flex:0 0 auto; display:grid;
+  place-items:center; border:1px solid currentColor; opacity:.55 }
+.selo.ganho .disco{ opacity:1 }
+
+/* ---------- aplicações --------------------------------------------------- */
+.apl{ margin-bottom:34px }
+.apl > figcaption{ display:flex; gap:12px; align-items:baseline; margin-top:12px;
+  font-size:12.5px; color:var(--ink-400); line-height:1.5 }
+.apl > figcaption b{ color:var(--ink-100); font-family:var(--mono); font-size:10px;
+  letter-spacing:.12em; text-transform:uppercase; flex:0 0 auto; padding-top:2px }
+.palcoAp{ background:var(--ink-900); border:1px solid var(--ink-800); border-radius:18px;
+  padding:34px; display:grid; place-items:center; gap:22px; overflow:hidden }
+.palcoAp.claro{ background:#EFEAE1; border-color:#DCD5C8 }
+.palcoAp.duplo{ grid-template-columns:1fr 1fr }
+@media(max-width:760px){ .palcoAp.duplo{ grid-template-columns:1fr } }
+
+.cartao{ width:100%; max-width:310px; aspect-ratio:85/55; border-radius:11px; padding:22px;
+  display:flex; flex-direction:column; justify-content:space-between;
+  box-shadow:0 18px 40px rgba(0,0,0,.45) }
+.cartao.frente{ background:var(--ink-950); border:1px solid var(--ink-800) }
+.cartao.verso{ background:var(--brass-500) }
+.cartao .nome{ font-size:13px; font-weight:600; color:var(--ink-50) }
+.cartao .cargo{ font-family:var(--mono); font-size:9.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-400); margin-top:2px }
+.cartao .cont{ font-family:var(--mono); font-size:9.5px; color:var(--ink-300); line-height:1.7 }
+
+.folha{ width:100%; max-width:330px; aspect-ratio:210/297; background:#FBFAF7;
+  border-radius:6px; padding:26px 24px; display:flex; flex-direction:column;
+  box-shadow:0 18px 44px rgba(0,0,0,.4); color:#23272E }
+.folha .topo{ display:flex; justify-content:space-between; align-items:flex-start;
+  padding-bottom:14px; border-bottom:1px solid #E0DACE }
+.folha .corpoF{ flex:1; padding-top:16px; font-size:7.5px; line-height:1.8; color:#4C535D }
+.folha .corpoF b{ color:#23272E; font-size:8.5px; display:block; margin-bottom:6px;
+  font-family:var(--display); font-weight:400; font-size:13px }
+.folha .rodape{ padding-top:12px; border-top:1px solid #E0DACE; font-family:var(--mono);
+  font-size:6.5px; letter-spacing:.08em; color:#855F22; display:flex; justify-content:space-between }
+
+.assin{ width:100%; max-width:420px; background:#FFF; border-radius:8px; padding:20px 22px;
+  color:#23272E; box-shadow:0 14px 34px rgba(0,0,0,.35) }
+.assin .div{ height:1px; background:#E5E0D6; margin:14px 0 }
+.assin .nm{ font-size:14px; font-weight:600; color:#08090B }
+.assin .cg{ font-size:12px; color:#4C535D }
+.assin .li{ font-family:var(--mono); font-size:11px; color:#855F22; line-height:1.8; margin-top:8px }
+
+.slide{ width:100%; aspect-ratio:16/9; border-radius:10px; padding:30px;
+  display:flex; flex-direction:column; justify-content:space-between; position:relative;
+  overflow:hidden; box-shadow:0 18px 40px rgba(0,0,0,.45) }
+.slide.capa{ background:var(--ink-950); border:1px solid var(--ink-800) }
+.slide.conteudo{ background:var(--ink-950); border:1px solid var(--ink-800) }
+.slide h5{ font-family:var(--display); font-weight:400; font-size:clamp(20px,3.4vw,30px);
+  line-height:1.14; color:var(--ink-50); margin:0; max-width:19ch }
+.slide .kicker{ font-family:var(--mono); font-size:9px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--brass-400) }
+.slide .pe{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px }
+.slide .pe span{ font-family:var(--mono); font-size:8.5px; color:var(--ink-500) }
+.slide .barras{ display:flex; gap:14px; margin-top:14px }
+.slide .barras div{ flex:1 }
+.slide .barras b{ font-family:var(--display); font-size:26px; font-weight:400;
+  color:var(--brass-300); display:block; line-height:1 }
+.slide .barras span{ font-size:9px; color:var(--ink-400); display:block; margin-top:5px }
+
+.capaLI{ width:100%; aspect-ratio:4/1; border-radius:10px; background:var(--ink-950);
+  border:1px solid var(--ink-800); padding:26px 30px; display:flex; flex-direction:column;
+  justify-content:space-between; position:relative; overflow:hidden }
+.capaLI .reg{ position:absolute; inset:auto 0 0 0; height:22px; opacity:.16;
+  background-repeat:repeat-x; background-size:64px 24px }
+
+.telaHome{ width:210px; aspect-ratio:9/19.5; border-radius:30px; background:linear-gradient(165deg,#1a2230,#0b0e14);
+  border:5px solid #23272E; padding:34px 18px 18px; position:relative;
+  box-shadow:0 22px 50px rgba(0,0,0,.5) }
+.telaHome .ilha{ position:absolute; top:12px; left:50%; transform:translateX(-50%);
+  width:56px; height:15px; border-radius:99px; background:#05070A }
+.telaHome .apps{ display:grid; grid-template-columns:repeat(4,1fr); gap:13px 10px }
+.telaHome .app{ aspect-ratio:1; border-radius:13px; background:rgba(255,255,255,.09) }
+.telaHome .app.maestro{ background:linear-gradient(180deg,#181B20,#08090B); display:grid;
+  place-items:center; box-shadow:0 3px 10px rgba(0,0,0,.5) }
+.telaHome .rot{ font-family:var(--sans); font-size:7px; color:#fff; text-align:center;
+  margin-top:4px; text-shadow:0 1px 2px rgba(0,0,0,.6) }
+
+.aba{ width:100%; max-width:400px; background:#1B1F26; border-radius:10px 10px 0 0;
+  padding:9px 9px 0; border:1px solid var(--ink-800); border-bottom:0 }
+.aba .t{ display:flex; align-items:center; gap:8px; background:#0D0F12; border-radius:8px 8px 0 0;
+  padding:9px 13px; font-size:11.5px; color:var(--ink-200); max-width:210px }
+.aba .barraURL{ background:#0D0F12; padding:9px 13px; display:flex; gap:9px; align-items:center }
+.aba .url{ flex:1; background:#181B20; border-radius:999px; padding:5px 12px;
+  font-family:var(--mono); font-size:10px; color:var(--ink-400) }
+
+.cracha{ width:190px; background:var(--ink-950); border:1px solid var(--ink-800);
+  border-radius:12px; padding:20px 18px 22px; text-align:center; position:relative;
+  box-shadow:0 18px 40px rgba(0,0,0,.45) }
+.cracha .furo{ width:38px; height:6px; border-radius:99px; background:var(--ink-800);
+  margin:0 auto 18px }
+.cracha .nm{ font-family:var(--display); font-size:20px; color:var(--ink-50); margin-top:14px }
+.cracha .cg{ font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-400); margin-top:3px }
+.cracha .fita{ margin-top:16px; padding-top:14px; border-top:1px solid var(--ink-800);
+  font-family:var(--mono); font-size:8.5px; letter-spacing:.12em; color:var(--brass-400) }
+
+.camisa{ width:100%; max-width:260px; aspect-ratio:1/1.1; background:var(--ink-850);
+  border-radius:16px; display:grid; place-items:center; position:relative; overflow:hidden }
+.camisa::before{ content:''; position:absolute; inset:0;
+  background:radial-gradient(120% 80% at 50% 0%,rgba(255,255,255,.05),transparent 60%) }
+
+.notif{ width:100%; max-width:430px; background:#FFF; border-radius:12px; overflow:hidden;
+  box-shadow:0 18px 40px rgba(0,0,0,.4); color:#23272E }
+.notif .cabE{ background:#08090B; padding:16px 22px }
+.notif .cE{ padding:22px }
+.notif h6{ font-family:var(--display); font-weight:400; font-size:21px; color:#08090B; margin:0 0 8px }
+.notif p{ font-size:12.5px; color:#4C535D; margin:0 0 16px; max-width:none }
+.notif .bt{ display:inline-block; background:#C8963A; color:#08090B; font-size:12.5px;
+  font-weight:600; padding:10px 18px; border-radius:9px }
+.notif .pe{ padding:14px 22px; border-top:1px solid #EAE5DC; font-family:var(--mono);
+  font-size:9px; color:#6B7280; letter-spacing:.06em }
+
+.shell{ border-radius:12px; overflow:hidden; border:1px solid var(--ink-800); width:100% }
+.shell .top{ padding:10px 14px; display:flex; align-items:center; gap:9px;
+  border-bottom:1px solid var(--ink-800) }
+.shell .top .pt{ width:8px; height:8px; border-radius:50%; background:var(--ink-700) }
+.shell .cor{ padding:16px 14px; display:flex; flex-direction:column; gap:9px }
+.shell .ln{ display:flex; align-items:center; gap:9px; padding:9px 11px; border-radius:9px }
+.shell .ln .tt{ flex:1; font-size:11.5px }
+.shell .pill{ font-family:var(--mono); font-size:8.5px; letter-spacing:.08em; padding:3px 8px;
+  border-radius:999px; text-transform:uppercase }
+.shell.escuro{ background:var(--ink-950) }
+.shell.escuro .top{ background:var(--ink-900) }
+.shell.escuro .ln{ background:var(--ink-900); color:var(--ink-100) }
+.shell.claro{ background:#F4F6F8 }
+.shell.claro .top{ background:#FFF; border-color:#E3E6EA }
+.shell.claro .ln{ background:#FFF; color:#23272E; border:1px solid #E9ECEF }
+.shell.claro .top .pt{ background:#C4C9D0 }
+.shell .rotShell{ font-family:var(--mono); font-size:9px; letter-spacing:.12em;
+  text-transform:uppercase }
+
+/* ---------- certificação ------------------------------------------------- */
+.cert{ border:1px solid var(--ink-800); border-radius:20px; padding:34px; background:var(--ink-900) }
+.cert.aberto{ border-color:var(--brass-600); background:linear-gradient(180deg,rgba(200,150,58,.08),var(--ink-900) 45%) }
+.cert .trav{ display:flex; gap:14px; align-items:flex-start; color:var(--ink-400); font-size:13px }
+.campo{ display:flex; gap:10px; flex-wrap:wrap; margin-top:18px }
+.campo input{ flex:1; min-width:190px; height:40px; padding:0 14px; border-radius:10px;
+  border:1px solid var(--ink-700); background:var(--ink-950); color:var(--ink-50);
+  font-family:var(--sans); font-size:14px }
+.campo input::placeholder{ color:var(--ink-500) }
+.diploma{ margin-top:22px; border:1px solid var(--brass-700); border-radius:16px; padding:30px;
+  background:var(--ink-950); text-align:center; display:none }
+.diploma.on{ display:block; animation:sobe .48s var(--upbeat) }
+@keyframes sobe{ from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none} }
+.diploma .kick{ font-family:var(--mono); font-size:9.5px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--brass-400) }
+.diploma .quem{ font-family:var(--display); font-size:clamp(26px,5vw,40px); color:var(--ink-50);
+  margin:12px 0 6px; line-height:1.1 }
+.diploma .frase{ font-size:13px; color:var(--ink-300); max-width:44ch; margin:0 auto 20px }
+.diploma .selim{ font-family:var(--mono); font-size:12px; letter-spacing:.16em;
+  color:var(--brass-300); padding-top:18px; border-top:1px solid var(--ink-800) }
+
+/* ---------- responsivo --------------------------------------------------- */
+@media(max-width:1000px){
+  :root{ --rail:0px }
+  #partitura{ transform:translateX(-100%); transition:transform .32s var(--baton); width:270px }
+  #partitura.aberta{ transform:none; box-shadow:0 0 60px rgba(0,0,0,.6) }
+  #abreTrilha{ display:flex }
+  main{ margin-left:0 }
+  .mov{ padding:76px 20px 0 }
+  #abertura{ padding:96px 20px 60px }
+  .simPalco{ grid-template-columns:1fr }
+  .palcoAp{ padding:20px }
+}
+@media(max-width:560px){
+  .g2,.g3,.g4{ grid-template-columns:1fr }
+  .tira{ grid-template-columns:repeat(2,1fr) }
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{ animation-duration:.01ms!important; transition-duration:.01ms!important }
+}
+</style>
+
+<div id="regua" aria-hidden="true"><i></i></div>
+<button id="abreTrilha" aria-label="Abrir a partitura" aria-expanded="false">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+    stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+</button>
+
+<nav id="partitura" aria-label="Movimentos do manual">
+  <div class="marca">
+    <svg width="26" height="26" viewBox="0 0 48 48" aria-hidden="true">
+      <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C"
+        stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div><b>Maestro</b><span>Manual · v1.0</span></div>
+  </div>
+  <div id="trilha"></div>
+  <div id="painel">
+    <div class="linha"><span>Movimentos</span><b id="pMov">0/16</b></div>
+    <div class="barra"><i id="pBarra"></i></div>
+    <div class="linha" style="margin-top:4px"><span>Selos</span><b id="pSelo">0/5</b></div>
+    <div id="selos"></div>
+    <button id="zerar">Reiniciar leitura</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ===================== ABERTURA ===================== -->
+<header id="abertura">
+  <div class="fundo" id="fundoRegua"></div>
+  <div class="capaMarca">
+    <svg width="74" height="74" viewBox="0 0 48 48" aria-hidden="true">
+      <path id="curvaCapa" d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C"
+        stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h1>Maestro</h1>
+  </div>
+  <p class="capaSub">Manual de Identidade · Versão 1.0 · Uso interno e parceiros</p>
+  <p class="capaTese">O maestro é a única pessoa da orquestra que não emite som.</p>
+  <p style="max-width:56ch">Este manual existe para que a marca chegue igual em toda parte —
+    na tela, no papel, no som e na palavra. São <strong>16 movimentos</strong>, cinco
+    <strong>provas</strong> e uma certificação ao final. A leitura se marca sozinha
+    conforme você avança.</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:34px">
+    <a class="b" href="#m01">Começar pelo primeiro movimento</a>
+    <a class="b gho" href="#m16">Ir para a certificação</a>
+  </div>
+  <div class="capaMeta">
+    <div><span>Posicionamento</span><b>The Operating System for Creative Operations</b></div>
+    <div><span>Slogan</span><b>Sua operação, no tempo certo.</b></div>
+    <div><span>Nota da marca</span><b>Lá 440 Hz</b></div>
+  </div>
+</header>
+
+<!-- ===================== 01 · A IDEIA ===================== -->
+<section class="mov" id="m01" data-mov="01" data-nome="A ideia">
+  <p class="eyebrow">Movimento 01<s></s>A ideia</p>
+  <h2>Não falta talento. Falta regência.</h2>
+  <p class="lead">O maestro não toca, não canta, não escreve a partitura. Ele faz uma coisa só:
+    garante que oitenta pessoas altamente talentosas toquem a mesma música, no mesmo tempo,
+    na mesma intenção.</p>
+  <p>É exatamente o que falta em uma agência. Nenhuma boa ideia morre por falta de talento —
+    ela morre num áudio de três minutos no WhatsApp, num PDF <code>final_final_v3</code>,
+    numa aprovação presa na caixa de entrada de alguém. Agência não sofre de falta de
+    criatividade. Sofre de falta de tempo, e o tempo vai embora na costura.</p>
+  <div class="nota">
+    <b>A ideia central.</b> A Maestro não vende software. Vende clareza, contexto e tempo.
+    A diferença entre barulho e música nunca foi o talento — foi a regência.
+  </div>
+
+  <h3>Onde a metáfora se apoia</h3>
+  <div class="tab"><table>
+    <thead><tr><th>Orquestra</th><th>Agência</th></tr></thead>
+    <tbody>
+      <tr><td>Partitura</td><td><b>Estratégia</b></td></tr>
+      <tr><td>Compasso</td><td><b>Calendário</b></td></tr>
+      <tr><td>Instrumentos</td><td><b>Copy, design, vídeo</b></td></tr>
+      <tr><td>Ensaio</td><td><b>Revisão e comentários</b></td></tr>
+      <tr><td>Afinação</td><td><b>Alinhamento com o cliente</b></td></tr>
+      <tr><td>Regência</td><td><b>A plataforma</b></td></tr>
+      <tr><td>Concerto</td><td><b>Publicação</b></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>E onde ela para</h3>
+  <p>A metáfora sustenta a marca; ela não aparece em cada frase. <strong>Nunca</strong> chamar
+    o cliente de "plateia" — ele é coautor, não espectador. <strong>Nunca</strong> usar
+    "sinfonia de resultados", "harmonize" ou "afine sua agência". Metáfora forçada mata a marca
+    mais rápido do que ausência de metáfora.</p>
+</section>
+
+<!-- ===================== 02 · ATRIBUTOS ===================== -->
+<section class="mov" id="m02" data-mov="02" data-nome="Atributos">
+  <p class="eyebrow">Movimento 02<s></s>Atributos</p>
+  <h2>Preciso, calmo, quente.</h2>
+  <p class="lead">Três atributos governam toda decisão de marca. Diante de qualquer escolha —
+    uma cor, um espaço, uma frase — a pergunta é se ela sustenta os três ao mesmo tempo.</p>
+  <div class="grade g3">
+    <div class="painel">
+      <h4>01 · Preciso</h4>
+      <p style="margin:0;font-size:13.5px">Geometria construída, nada improvisado. Todo número
+        tem razão: o grid de 48, a base 4, o intervalo de quinta justa.</p>
+    </div>
+    <div class="painel">
+      <h4>02 · Calmo</h4>
+      <p style="margin:0;font-size:13.5px">Muito espaço, pouco elemento, contraste alto e limpo.
+        Nada pisca, nada implora atenção, nada tem urgência falsa.</p>
+    </div>
+    <div class="painel">
+      <h4>03 · Quente</h4>
+      <p style="margin:0;font-size:13.5px">O latão impede que a precisão vire frieza. É o que
+        separa a Maestro de um dashboard financeiro.</p>
+    </div>
+  </div>
+  <div class="nota">
+    <b>Personalidade.</b> O profissional mais tranquilo da sala. Preciso sem ser frio.
+    Elegante sem ser formal. Não é o software falando — é um colega experiente que já viu
+    esse problema cem vezes e não precisa levantar a voz.
+  </div>
+</section>
+
+<!-- ===================== 03 · SÍMBOLO ===================== -->
+<section class="mov" id="m03" data-mov="03" data-nome="O símbolo">
+  <p class="eyebrow">Movimento 03<s></s>O símbolo</p>
+  <h2>M Batuta: um gesto, não um instrumento.</h2>
+  <p class="lead">A identidade se constrói sobre <strong>o movimento da regência</strong> — a
+    batida descendente que dá o tempo. Não sobre clave de sol, fone ou partitura, que são
+    literais e colocam a marca na prateleira errada.</p>
+  <p>O símbolo é um monograma <strong>M</strong> cujo vértice central foi substituído pelo arco
+    descendente. Duas leituras simultâneas: a letra que nomeia, e o gesto que explica.</p>
+
+  <div class="simPalco">
+    <div class="simCaixa">
+      <h4>Construção · grid 48 × 48</h4>
+      <svg viewBox="0 0 48 48" aria-label="Geometria do símbolo">
+        <g id="malha" opacity="0">
+          <g stroke="#23272E" stroke-width=".25">
+            <path d="M0 6h48M0 12h48M0 18h48M0 24h48M0 30h48M0 36h48M0 42h48"/>
+            <path d="M6 0v48M12 0v48M18 0v48M24 0v48M30 0v48M36 0v48M42 0v48"/>
+          </g>
+          <g stroke="#4C535D" stroke-width=".4" stroke-dasharray="1 1.5">
+            <path d="M11 0v48M37 0v48M0 12.5h48M0 35.5h48M0 30.5h48"/>
+          </g>
+          <circle cx="24" cy="48.5" r=".9" fill="#5B8DEF"/>
+          <text x="25.5" y="47" font-family="monospace" font-size="2.4" fill="#5B8DEF">controle 24 · 48,5</text>
+          <text x="1" y="11.6" font-family="monospace" font-size="2.4" fill="#6B7280">y 12,5</text>
+          <text x="1" y="34.6" font-family="monospace" font-size="2.4" fill="#6B7280">y 35,5</text>
+          <text x="38.5" y="29.6" font-family="monospace" font-size="2.4" fill="#6B7280">vale 30,5</text>
+        </g>
+        <g id="respiro" opacity="0">
+          <rect x="5" y="6.5" width="38" height="35" fill="none" stroke="#C8963A"
+            stroke-width=".4" stroke-dasharray="1.6 1.6" opacity=".8"/>
+          <text x="5" y="45" font-family="monospace" font-size="2.4" fill="#C8963A">respiro = x = espessura da haste = 6</text>
+        </g>
+        <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C"
+          stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="chaves">
+        <button class="chave" data-alvo="malha" aria-pressed="false">Malha</button>
+        <button class="chave" data-alvo="respiro" aria-pressed="false">Área de respiro</button>
+      </div>
+    </div>
+    <div class="simCaixa">
+      <h4>Leitura</h4>
+      <svg viewBox="0 0 48 48" aria-label="As duas leituras do símbolo">
+        <path d="M11 35.5V12.5" stroke="#4C535D" stroke-width="6" stroke-linecap="round"/>
+        <path d="M37 12.5V35.5" stroke="#4C535D" stroke-width="6" stroke-linecap="round"/>
+        <path d="M11 12.5Q24 48.5 37 12.5" fill="none" stroke="#D9AC4C" stroke-width="6"
+          stroke-linecap="round"/>
+      </svg>
+      <p style="margin:0;font-size:13px;color:var(--ink-300)">
+        <span style="color:var(--ink-500)">■</span> As duas hastes são os tempos firmes.<br>
+        <span style="color:var(--brass-400)">■</span> O arco é o gesto que os une — e o vale,
+        em <code>y 30,5</code>, é a batida.
+      </p>
+      <h4 style="margin-top:8px">Path canônico</h4>
+      <div class="tab"><table><tbody>
+        <tr><td class="mono" style="color:var(--brass-200)">M11 35.5V12.5Q24 48.5 37 12.5V35.5</td></tr>
+      </tbody></table></div>
+      <p style="margin:0;font-size:12.5px;color:var(--ink-400)">Espessura 6 (12,5% do grid).
+        Terminais e junções arredondados. <strong>Nunca redesenhar</strong> — sempre usar os
+        arquivos de <code>assets/logo/</code>.</p>
+    </div>
+  </div>
+
+  <h3>Redução</h3>
+  <p>O símbolo sobrevive até <strong>20 px</strong>. Abaixo disso, usar o favicon, que tem a
+    espessura ajustada — a curva fecha quando a haste engorda proporcionalmente.</p>
+  <div class="reducao">
+    <figure><svg width="88" height="88" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><figcaption>88 px</figcaption></figure>
+    <figure><svg width="48" height="48" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><figcaption>48 px</figcaption></figure>
+    <figure><svg width="28" height="28" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><figcaption>28 px</figcaption></figure>
+    <figure><svg width="20" height="20" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><figcaption>20 px · mínimo</figcaption></figure>
+    <figure><svg width="16" height="16" viewBox="0 0 48 48" opacity=".45"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><figcaption style="color:var(--danger)">16 px · usar favicon</figcaption></figure>
+  </div>
+  <div class="tab"><table>
+    <thead><tr><th>Contexto</th><th>Mínimo</th></tr></thead>
+    <tbody>
+      <tr><td>Símbolo isolado, digital</td><td class="mono">20 px</td></tr>
+      <tr><td>Símbolo isolado, impresso</td><td class="mono">6 mm</td></tr>
+      <tr><td>Lockup horizontal, digital</td><td class="mono">120 px de largura</td></tr>
+      <tr><td>Lockup horizontal, impresso</td><td class="mono">32 mm de largura</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===================== 04 · LOCKUPS ===================== -->
+<section class="mov" id="m04" data-mov="04" data-nome="Lockups">
+  <p class="eyebrow">Movimento 04<s></s>Lockups</p>
+  <h2>Quatro arquivos, quatro situações.</h2>
+  <p class="lead">A distância entre símbolo e wordmark é fixa em <strong>2x</strong> — duas
+    espessuras de haste. Nunca ajustar à mão.</p>
+
+  <div class="grade g2">
+    <div class="painel" style="display:flex;flex-direction:column;gap:16px">
+      <div style="background:var(--ink-950);border-radius:12px;padding:26px;display:grid;place-items:center;min-height:110px">
+        <svg width="200" height="37" viewBox="0 0 260 48" aria-label="Lockup horizontal, fundo escuro">
+          <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="64" y="33.5" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#F4F6F8">Maestro</text>
+        </svg>
+      </div>
+      <h4 style="margin:0">Horizontal · dark</h4>
+      <p style="margin:0;font-size:12.5px">Padrão. Site, apresentação, assinatura, documento.</p>
+    </div>
+    <div class="painel" style="display:flex;flex-direction:column;gap:16px">
+      <div style="background:#F4F6F8;border-radius:12px;padding:26px;display:grid;place-items:center;min-height:110px">
+        <svg width="200" height="37" viewBox="0 0 260 48" aria-label="Lockup horizontal, fundo claro">
+          <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="64" y="33.5" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#08090B">Maestro</text>
+        </svg>
+      </div>
+      <h4 style="margin:0">Horizontal · light</h4>
+      <p style="margin:0;font-size:12.5px">Mesma aplicação sobre fundo claro. Brass 500.</p>
+    </div>
+    <div class="painel" style="display:flex;flex-direction:column;gap:16px">
+      <div style="background:var(--ink-950);border-radius:12px;padding:26px;display:grid;place-items:center;min-height:110px">
+        <svg width="118" height="86" viewBox="0 0 160 116" aria-label="Lockup vertical">
+          <g transform="translate(56 6)"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <text x="80" y="104" text-anchor="middle" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#F4F6F8">Maestro</text>
+        </svg>
+      </div>
+      <h4 style="margin:0">Vertical</h4>
+      <p style="margin:0;font-size:12.5px">Espaços estreitos e centralizados: crachá, stand, avatar grande.</p>
+    </div>
+    <div class="painel" style="display:flex;flex-direction:column;gap:16px">
+      <div style="background:var(--ink-950);border-radius:12px;padding:26px;display:grid;place-items:center;min-height:110px">
+        <svg width="56" height="56" viewBox="0 0 48 48" aria-label="Símbolo isolado"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h4 style="margin:0">Símbolo</h4>
+      <p style="margin:0;font-size:12.5px">App, favicon, avatar, marca d'água — onde o nome já está presente.</p>
+    </div>
+  </div>
+
+  <div class="nota">
+    <b>Wordmark.</b> Instrument Serif Regular, tracking +0,2, caixa alta e baixa. Sempre
+    "Maestro" — nunca "MAESTRO", "maestro" ou "MaeStro". Em produção, convertido em curvas.
+  </div>
+</section>
+
+<!-- ===================== 05 · USOS PROIBIDOS ===================== -->
+<section class="mov" id="m05" data-mov="05" data-nome="Usos proibidos">
+  <p class="eyebrow">Movimento 05<s></s>Usos proibidos</p>
+  <h2>O que destrói a marca.</h2>
+  <p class="lead">Cada proibição abaixo tem um motivo estrutural. Não é preferência estética —
+    é o que quebra a geometria, o sentido ou o contraste.</p>
+
+  <div class="ce">
+    <figure><div class="palco"><svg width="120" height="34" viewBox="0 0 48 48" preserveAspectRatio="none"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <figcaption class="nao"><i>✗</i><span>Esticar ou achatar. Destrói a geometria construída.</span></figcaption></figure>
+    <figure><div class="palco"><svg width="44" height="44" viewBox="0 0 48 48" style="transform:rotate(38deg)"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <figcaption class="nao"><i>✗</i><span>Girar. O gesto tem direção; girado, perde o sentido.</span></figcaption></figure>
+    <figure><div class="palco"><svg width="44" height="44" viewBox="0 0 48 48"><defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5E7C9"/><stop offset=".5" stop-color="#855F22"/><stop offset="1" stop-color="#EDD59E"/></linearGradient></defs><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="url(#gr)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <figcaption class="nao"><i>✗</i><span>Gradiente ou efeito metalizado. Brass é cor sólida, não ouro.</span></figcaption></figure>
+    <figure><div class="palco"><svg width="44" height="44" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#08090B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <figcaption class="nao"><i>✗</i><span>Contornar. O símbolo é traço cheio, sempre.</span></figcaption></figure>
+    <figure><div class="palco" style="background:#F0784C"><svg width="44" height="44" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <figcaption class="nao"><i>✗</i><span>Brass sobre Coral, Encore ou Violet. Contraste insuficiente.</span></figcaption></figure>
+    <figure><div class="palco"><div style="display:flex;align-items:center;gap:1px"><svg width="34" height="34" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-family:var(--display);font-size:20px;color:#F4F6F8">Maestro</span></div></div>
+      <figcaption class="nao"><i>✗</i><span>Invadir a área de respiro. Nada entra na margem de 1x.</span></figcaption></figure>
+    <figure><div class="palco"><svg width="44" height="44" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <figcaption class="sim"><i>✓</i><span>Assim. Proporção original, cor sólida, respiro completo.</span></figcaption></figure>
+    <figure><div class="palco" style="background:#F4F6F8"><svg width="44" height="44" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <figcaption class="sim"><i>✓</i><span>Sobre fundo claro, Brass 500 sólido.</span></figcaption></figure>
+  </div>
+
+  <div class="prova" id="prova-mao" data-prova="mao" data-selo="Mão Firme">
+    <div class="cab"><b>Prova 01 · Mão firme</b><span class="placar">0 de 3</span></div>
+    <div class="corpo"></div>
+  </div>
+</section>
+
+<!-- ===================== 06 · COR ===================== -->
+<section class="mov" id="m06" data-mov="06" data-nome="Cor">
+  <p class="eyebrow">Movimento 06<s></s>Cor</p>
+  <h2>Brass é escassez. Por isso funciona.</h2>
+  <p class="lead">O latão é o metal da orquestra — trompete, trombone, tuba. É quente, tem
+    história de artesanato, e é <strong>raro em software B2B</strong>, onde tudo é azul ou violeta.</p>
+
+  <h3>Brass · primária</h3>
+  <div class="tira">
+    <div style="background:#E3C173;color:#3D2B10"><b>brass-300</b><span>#E3C173</span></div>
+    <div style="background:#D9AC4C;color:#3D2B10"><b>brass-400</b><span>#D9AC4C</span></div>
+    <div style="background:#C8963A;color:#08090B"><b>brass-500</b><span>#C8963A</span></div>
+    <div style="background:#A87A2C;color:#FBF5E9"><b>brass-600</b><span>#A87A2C</span></div>
+    <div style="background:#855F22;color:#FBF5E9"><b>brass-700</b><span>#855F22</span></div>
+  </div>
+  <h3>Ink · canvas</h3>
+  <div class="tira">
+    <div style="background:#F4F6F8;color:#08090B"><b>ink-50</b><span>#F4F6F8</span></div>
+    <div style="background:#9AA1AC;color:#08090B"><b>ink-300</b><span>#9AA1AC</span></div>
+    <div style="background:#333941;color:#F4F6F8"><b>ink-600</b><span>#333941</span></div>
+    <div style="background:#121418;color:#F4F6F8"><b>ink-850</b><span>#121418</span></div>
+    <div style="background:#08090B;color:#F4F6F8;border-left:1px solid #23272E"><b>ink-950</b><span>#08090B</span></div>
+  </div>
+  <p>Ink é um preto levemente azulado, nunca puro. Preto puro em tela cansa e achata a hierarquia.</p>
+
+  <h3>Apoio semântico</h3>
+  <div class="semantica">
+    <div><i style="background:#5B8DEF"></i><b>Cobalt</b><span>#5B8DEF · em produção</span></div>
+    <div><i style="background:#35B87A"></i><b>Encore</b><span>#35B87A · aprovado</span></div>
+    <div><i style="background:#F0784C"></i><b>Coral</b><span>#F0784C · alterações</span></div>
+    <div><i style="background:#8B7BF0"></i><b>Violet</b><span>#8B7BF0 · publicado</span></div>
+    <div><i style="background:#E5484D"></i><b>Danger</b><span>#E5484D · erro</span></div>
+  </div>
+
+  <h3>As seis regras de cor</h3>
+  <div class="tab"><table>
+    <thead><tr><th style="width:52px">#</th><th>Regra</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">R1</td><td><b>Brass significa "espera por você".</b> O estado <em class="br">Aguardando aprovação</em> usa Brass, e nenhum outro pode usá-lo. Quando o cliente abre a Maestro, a cor da marca aponta exatamente para o que depende dele.</td></tr>
+      <tr><td class="mono">R2</td><td><b>Brass nunca é warning.</b> Alerta é Coral. Brass não carrega urgência negativa.</td></tr>
+      <tr><td class="mono">R3</td><td><b>Brass é acento, não superfície.</b> Máximo 10% da tela. Nunca fundo de painel, de card grande ou de barra lateral inteira.</td></tr>
+      <tr><td class="mono">R4</td><td><b>Texto brass em fundo claro usa brass-700.</b> brass-500 sobre branco dá 2,7:1 — reprovado. brass-700 dá 6,5:1.</td></tr>
+      <tr><td class="mono">R5</td><td><b>Botão brass usa rótulo Ink.</b> ink-950 sobre brass-400 = 9:1. Texto branco sobre brass é proibido.</td></tr>
+      <tr><td class="mono">R6</td><td><b>Cor nunca é o único portador de informação.</b> Todo status tem cor <em class="br">e</em> rótulo textual.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>A régua dos 10%</h3>
+  <p>Arraste para ver onde o latão deixa de ser acento e vira superfície. A força do brass
+    vem da escassez — passar de 10% é o erro mais comum de quem aplica a marca pela primeira vez.</p>
+  <div class="painel">
+    <div class="dez" id="dezBarra"></div>
+    <input type="range" id="dezRange" min="0" max="10" value="1" step="1"
+      style="width:100%;accent-color:#C8963A" aria-label="Proporção de brass na composição">
+    <p style="margin:12px 0 0;font-size:13px" id="dezTexto"></p>
+  </div>
+
+  <h3>Contraste verificado · WCAG 2.1</h3>
+  <div class="tab"><table>
+    <thead><tr><th>Combinação</th><th class="mono">Ratio</th><th>Nível</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">ink-950 sobre ink-50</td><td class="mono">17,8:1</td><td style="color:var(--encore)">AAA</td></tr>
+      <tr><td class="mono">brass-400 sobre ink-950</td><td class="mono">9,3:1</td><td style="color:var(--encore)">AAA</td></tr>
+      <tr><td class="mono">ink-950 sobre brass-400</td><td class="mono">9,3:1</td><td style="color:var(--encore)">AAA</td></tr>
+      <tr><td class="mono">ink-300 sobre ink-950</td><td class="mono">8,1:1</td><td style="color:var(--encore)">AAA</td></tr>
+      <tr><td class="mono">brass-700 sobre #FFFFFF</td><td class="mono">6,5:1</td><td style="color:var(--encore)">AA</td></tr>
+      <tr><td class="mono">brass-500 sobre #FFFFFF</td><td class="mono">2,7:1</td><td style="color:var(--danger)">Reprovado</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="prova" id="prova-dez" data-prova="dez" data-selo="Dez Por Cento">
+    <div class="cab"><b>Prova 02 · Dez por cento</b><span class="placar">0 de 3</span></div>
+    <div class="corpo"></div>
+  </div>
+</section>
+
+<!-- ===================== 07 · TIPOGRAFIA ===================== -->
+<section class="mov" id="m07" data-mov="07" data-nome="Tipografia">
+  <p class="eyebrow">Movimento 07<s></s>Tipografia</p>
+  <h2>O serif é da marca. A interface é da Inter.</h2>
+  <p class="lead">Instrument Serif carrega a elegância de um programa de concerto — é o que
+    impede a marca de virar mais um SaaS genérico. A escolha é deliberadamente contra-corrente
+    da categoria.</p>
+
+  <div class="espec">
+    <div class="cab"><span>Instrument Serif · Regular</span><span>Display · marca</span></div>
+    <div class="corpo"><div class="amostra" style="font-family:var(--display);font-size:clamp(38px,7vw,64px)">Sua operação, no tempo certo.</div>
+      <p style="margin:16px 0 0;font-size:12.5px">Wordmark, títulos de marketing, números grandes
+        de relatório, citações. <strong>Nunca</strong> em componente de interface.</p></div>
+  </div>
+  <div class="espec">
+    <div class="cab"><span>Inter · 400 / 500 / 600</span><span>Interface</span></div>
+    <div class="corpo"><div class="amostra" style="font-family:var(--sans);font-size:clamp(24px,4vw,34px);font-weight:600;letter-spacing:-.015em">3 conteúdos aguardando você</div>
+      <p style="margin:16px 0 0;font-size:12.5px">Absolutamente toda a UI. Botão, rótulo, menu,
+        corpo de texto, tabela.</p></div>
+  </div>
+  <div class="espec">
+    <div class="cab"><span>JetBrains Mono · 400 / 500</span><span>Dados</span></div>
+    <div class="corpo"><div class="amostra" style="font-family:var(--mono);font-size:clamp(18px,3vw,26px);letter-spacing:.04em">7F3A·2B91 — v4 · 27/08 09:41</div>
+      <p style="margin:16px 0 0;font-size:12.5px">IDs, selos de versão, timestamps, métricas
+        tabulares, trechos técnicos.</p></div>
+  </div>
+
+  <h3>Escala</h3>
+  <div class="painel"><ul class="escala" id="escala"></ul></div>
+
+  <h3>Regras</h3>
+  <ul>
+    <li>Máximo <strong>3 tamanhos por tela</strong>. Hierarquia se faz com peso e cor, não com quantidade de tamanhos.</li>
+    <li>Máximo <strong>72 caracteres</strong> por linha em texto corrido.</li>
+    <li>Nunca centralizar texto com mais de duas linhas.</li>
+    <li>Números tabulares em toda métrica, data e contador.</li>
+    <li>Instrument Serif <strong>nunca</strong> em botão, label ou menu.</li>
+  </ul>
+</section>
+
+<!-- ===================== 08 · GRID ===================== -->
+<section class="mov" id="m08" data-mov="08" data-nome="Grid e espaço">
+  <p class="eyebrow">Movimento 08<s></s>Grid e espaço</p>
+  <h2>Densa em informação, generosa em respiro.</h2>
+  <p class="lead">Base <strong>4 px</strong>. Todo espaçamento é múltiplo de 4 — sem exceção,
+    sem "só dessa vez 5".</p>
+  <div class="grade g2">
+    <div class="painel">
+      <h4>Grid de aplicação</h4>
+      <p style="margin:0;font-size:13.5px">12 colunas · gutter 24 · margem 32 (desktop ≥ 1280).
+        Leitura no máximo 720 px. Side panel 480. Sidebar 260.</p>
+    </div>
+    <div class="painel">
+      <h4>Raio</h4>
+      <p style="margin:0;font-size:13.5px">Tag e chip <code>full</code> · input e botão
+        <code>10</code> · card e dropdown <code>14</code> · modal e painel <code>20</code> ·
+        app icon squircle.</p>
+    </div>
+  </div>
+  <h3>Densidade</h3>
+  <div class="tab"><table>
+    <thead><tr><th>Elemento</th><th class="mono">Altura</th><th class="mono">Padding</th></tr></thead>
+    <tbody>
+      <tr><td>Linha de lista</td><td class="mono">44</td><td class="mono">12 · 16</td></tr>
+      <tr><td>Botão padrão</td><td class="mono">36</td><td class="mono">0 · 16</td></tr>
+      <tr><td>Botão de aprovação</td><td class="mono">44</td><td class="mono">0 · 24</td></tr>
+      <tr><td>Input</td><td class="mono">36</td><td class="mono">0 · 12</td></tr>
+      <tr><td>Card</td><td class="mono">—</td><td class="mono">20</td></tr>
+      <tr><td>Seção</td><td class="mono">—</td><td class="mono">32</td></tr>
+    </tbody>
+  </table></div>
+  <div class="nota">
+    <b>Elevação em dark mode não vem de sombra.</b> Vem de superfície mais clara + borda de 1 px.
+    Sombra em fundo escuro só suja.
+  </div>
+</section>
+
+<!-- ===================== 09 · O COMPASSO ===================== -->
+<section class="mov" id="m09" data-mov="09" data-nome="O Compasso">
+  <p class="eyebrow">Movimento 09<s></s>Elemento gráfico</p>
+  <h2>O Compasso: quatro tempos.</h2>
+  <p class="lead">O sistema de apoio da marca são quatro hastes verticais de alturas crescentes,
+    com os mesmos terminais arredondados do símbolo.</p>
+  <div class="painel" style="display:grid;place-items:center;padding:44px">
+    <svg width="216" height="96" viewBox="0 0 108 48" id="compassoVivo" aria-label="O Compasso">
+      <g stroke="#C8963A" stroke-width="6" stroke-linecap="round">
+        <line x1="9"  y1="39" x2="9"  y2="27"/>
+        <line x1="33" y1="39" x2="33" y2="21"/>
+        <line x1="57" y1="39" x2="57" y2="15"/>
+        <line x1="81" y1="39" x2="81" y2="9"/>
+      </g>
+    </svg>
+    <button class="b gho" id="pulsaCompasso" style="margin-top:18px">Ver os quatro tempos</button>
+  </div>
+  <div class="grade g2">
+    <div class="painel"><h4>Onde entra</h4>
+      <ul style="margin:0;font-size:13.5px">
+        <li>Loader — as quatro hastes pulsando em sequência, no tempo do metrônomo</li>
+        <li>Progresso de campanha — quatro tempos preenchendo</li>
+        <li>Régua da timeline e do calendário</li>
+        <li>Divisor de seção em marketing</li>
+        <li>Textura de fundo, opacidade máxima <strong>8%</strong></li>
+      </ul></div>
+    <div class="painel"><h4>Onde nunca entra</h4>
+      <p style="margin:0;font-size:13.5px">O Compasso <strong>nunca é logo</strong>. Ele não
+        substitui o símbolo e não aparece ao lado do wordmark. Também não é ícone de interface,
+        nem bullet de lista.</p>
+      <div style="margin-top:16px;height:44px;border-radius:9px;background-repeat:repeat-x;background-size:64px 24px"
+        id="amostraRegua"></div>
+      <p style="margin:9px 0 0;font-family:var(--mono);font-size:10px;color:var(--ink-500)">Régua de tempo · tile 64 × 24</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 10 · ICONOGRAFIA ===================== -->
+<section class="mov" id="m10" data-mov="10" data-nome="Iconografia">
+  <p class="eyebrow">Movimento 10<s></s>Iconografia</p>
+  <h2>Lucide, 1,5 px, terminais arredondados.</h2>
+  <p class="lead">Ícones nunca são Brass por padrão. Só ganham Brass quando representam a ação
+    de aprovação ou um estado de espera — a mesma regra da cor (R1), aplicada ao traço.</p>
+  <div class="painel">
+    <div class="grade g4" style="margin:0">
+      <div style="text-align:center">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9AA1AC" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <p style="font-family:var(--mono);font-size:10px;color:var(--ink-500);margin:8px 0 0">padrão</p></div>
+      <div style="text-align:center">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F4F6F8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <p style="font-family:var(--mono);font-size:10px;color:var(--ink-500);margin:8px 0 0">ativo</p></div>
+      <div style="text-align:center">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#D9AC4C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <p style="font-family:var(--mono);font-size:10px;color:var(--brass-400);margin:8px 0 0">espera</p></div>
+      <div style="text-align:center">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#35B87A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.4 2.4L15.5 10"/></svg>
+        <p style="font-family:var(--mono);font-size:10px;color:var(--encore);margin:8px 0 0">aprovado</p></div>
+    </div>
+  </div>
+  <div class="tab"><table>
+    <thead><tr><th>Parâmetro</th><th>Valor</th></tr></thead>
+    <tbody>
+      <tr><td>Grid</td><td class="mono">24 × 24</td></tr>
+      <tr><td>Espessura</td><td class="mono">1,5 px</td></tr>
+      <tr><td>Terminais</td><td>arredondados</td></tr>
+      <tr><td>Tamanhos</td><td class="mono">16 · 20 · 24</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===================== 11 · MOTION ===================== -->
+<section class="mov" id="m11" data-mov="11" data-nome="Motion">
+  <p class="eyebrow">Movimento 11<s></s>Motion</p>
+  <h2>O movimento é regido: decidido, depois assenta.</h2>
+  <p class="lead">Começa firme e desacelera até parar. Nunca ricocheteia, nunca demora.
+    <strong>Nada acima de 480 ms</strong> — animação longa é a forma mais rápida de fazer um
+    produto parecer lento.</p>
+
+  <h3>As quatro curvas</h3>
+  <div id="pistas"></div>
+
+  <h3>Durações</h3>
+  <div class="tab"><table>
+    <thead><tr><th>Token</th><th class="mono">Valor</th><th>Uso</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">staccato</td><td class="mono">80 ms</td><td>Hover, foco, mudança de cor</td></tr>
+      <tr><td class="mono">quarter</td><td class="mono">160 ms</td><td><b>Padrão.</b> Botão, tooltip, checkbox, tag</td></tr>
+      <tr><td class="mono">half</td><td class="mono">240 ms</td><td>Dropdown, popover, toast</td></tr>
+      <tr><td class="mono">whole</td><td class="mono">320 ms</td><td>Side panel, modal, troca de aba</td></tr>
+      <tr><td class="mono">fermata</td><td class="mono">480 ms</td><td>Transição de página, celebração de aprovação</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>O momento da aprovação</h3>
+  <p>É o momento mais importante do produto e o único com tratamento especial. Elegante,
+    não comemorativo. Sem confete, sem explosão — um maestro não pula quando o ensaio dá certo.</p>
+  <div class="painel">
+    <div class="tab" style="margin:0 0 16px"><table><tbody>
+      <tr><td class="mono" style="width:74px;color:var(--brass-300)">0 ms</td><td>o botão comprime 2% · <em class="br">staccato</em></td></tr>
+      <tr><td class="mono" style="color:var(--brass-300)">80 ms</td><td>o checkmark desenha em stroke-dashoffset · <em class="br">quarter, baton</em></td></tr>
+      <tr><td class="mono" style="color:var(--brass-300)">120 ms</td><td>som: quinta justa ascendente</td></tr>
+      <tr><td class="mono" style="color:var(--brass-300)">160 ms</td><td>o card muda para Encore</td></tr>
+      <tr><td class="mono" style="color:var(--brass-300)">240 ms</td><td>as 4 hastes do Compasso pulsam uma vez · <em class="br">fermata, upbeat</em></td></tr>
+      <tr><td class="mono" style="color:var(--brass-300)">400 ms</td><td>toast "Aprovado. A agência foi avisada." com desfazer por 8 s</td></tr>
+    </tbody></table></div>
+    <div id="palcoAprova" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <button class="b" id="btAprova" style="height:44px;padding:0 24px">Aprovar</button>
+      <div id="cardAprova" style="flex:1;min-width:200px;padding:12px 16px;border-radius:12px;
+        background:var(--ink-950);border:1px solid var(--ink-800);display:flex;align-items:center;
+        gap:12px;transition:border-color .16s var(--baton),background .16s var(--baton)">
+        <span style="flex:1;font-size:13px">Carrossel · Lançamento Verão</span>
+        <span id="pillAprova" class="pill" style="font-family:var(--mono);font-size:9px;
+          letter-spacing:.08em;padding:4px 9px;border-radius:999px;text-transform:uppercase;
+          background:rgba(200,150,58,.15);color:var(--brass-300)">Esperando você</span>
+      </div>
+    </div>
+    <p style="margin:12px 0 0;font-size:12px;color:var(--ink-500)">Com som, se o movimento 12 já
+      tiver sido aberto.</p>
+  </div>
+
+  <h3>Cinco princípios</h3>
+  <ul>
+    <li><strong>Origem.</strong> Todo elemento entra de onde foi acionado.</li>
+    <li><strong>Uma coisa por vez.</strong> Nunca animar posição, escala, opacidade e cor ao mesmo tempo. Escolha duas.</li>
+    <li><strong>Interrompível.</strong> Toda animação pode ser cortada por uma nova ação.</li>
+    <li><strong>Sem loop.</strong> Nada se mexe sem motivo. Exceção: loaders, e só enquanto carregam.</li>
+    <li><strong><code>prefers-reduced-motion</code> é obrigatório.</strong> Movimento vira corte seco; nada quebra.</li>
+  </ul>
+</section>
+
+<!-- ===================== 12 · SOM ===================== -->
+<section class="mov" id="m12" data-mov="12" data-nome="Som">
+  <p class="eyebrow">Movimento 12<s></s>Som</p>
+  <h2>Lá 440: antes da música, o alinhamento.</h2>
+  <p class="lead">Toda orquestra do mundo começa igual — o oboé toca um Lá 440 Hz e todos se
+    afinam por ele. Antes de qualquer música existir, existe o alinhamento. É a metáfora exata
+    do produto.</p>
+  <p>Consequência prática: <strong>todo som do produto vive na escala de Lá maior.</strong>
+    Nenhum som existe fora dela. Isso garante que dois sons disparados ao mesmo tempo nunca
+    colidam — eles sempre formam um acorde. Toque abaixo; use fone se puder.</p>
+
+  <div class="teclas" id="teclas"></div>
+
+  <div class="nota">
+    <b>O detalhe deliberado.</b> O som de <em class="br">desfazer</em> é o som de
+    <em class="br">aprovar</em> tocado ao contrário — a quinta justa invertida. Ninguém percebe
+    conscientemente. Todo mundo sente.
+  </div>
+
+  <h3>Registro · a oitava de baixo</h3>
+  <p>A tabela de notas foi escrita para marimba, de ataque curto. Com corda sustentada aquele
+    registro fica agudo e cansa — medido, o som de aprovar tinha 17,6% da energia entre 2 e 6 kHz,
+    a faixa onde o ouvido mais reclama. <strong>As notas se tocam uma oitava abaixo do escrito.</strong>
+    A escala e os intervalos não mudam; muda só onde eles vivem.</p>
+  <div class="tab"><table>
+    <thead><tr><th>Escrito</th><th>Tocado</th><th>Banda até 250 Hz</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">A4 · 440 Hz</td><td class="mono" style="color:var(--brass-300)">A3 · 220 Hz</td><td class="mono">1,5% → <b style="color:var(--encore)">26,7%</b></td></tr>
+      <tr><td class="mono">C♯5 · 554 Hz</td><td class="mono" style="color:var(--brass-300)">C♯4 · 277 Hz</td><td>—</td></tr>
+      <tr><td class="mono">E5 · 659 Hz</td><td class="mono" style="color:var(--brass-300)">E4 · 330 Hz</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>A restrição que salva</h3>
+  <p><strong>Som só existe em ação de consequência</strong> — aprovar, solicitar alterações,
+    enviar, publicar, erro, desfazer. Nunca em navegação. Som mal feito é a primeira coisa que
+    o usuário desliga; por isso o sistema inteiro é construído sobre restrição.</p>
+
+  <div class="prova" id="prova-ouvido" data-prova="ouvido" data-selo="Ouvido Absoluto">
+    <div class="cab"><b>Prova 03 · Ouvido absoluto</b><span class="placar">0 de 3</span></div>
+    <div class="corpo"></div>
+  </div>
+</section>
+
+<!-- ===================== 13 · VERBO ===================== -->
+<section class="mov" id="m13" data-mov="13" data-nome="Verbo">
+  <p class="eyebrow">Movimento 13<s></s>Verbo</p>
+  <h2>A palavra que define a relação.</h2>
+  <p class="lead">A Maestro fala como o profissional mais tranquilo da sala. Precisa, calma,
+    humana, econômica. Se a frase funciona com metade das palavras, ela tinha o dobro do necessário.</p>
+
+  <div class="nota">
+    <b>O teste da marca.</b> Leia em voz alta imaginando um maestro respeitado no ensaio.
+    Calmo, exato, sem gritar, sem bajular, sem ironia. Se soar estranho na boca dele, está fora.
+  </div>
+
+  <h3>Nunca "reprovar"</h3>
+  <p>O cliente não reprova a agência — ele pede ajuste. A palavra é
+    <strong>Solicitar alterações</strong>. Essa escolha define a relação inteira que o produto
+    quer criar entre agência e cliente, e não é negociável em nenhuma superfície.</p>
+
+  <h3>Léxico</h3>
+  <div class="tab"><table>
+    <thead><tr><th>Dizemos</th><th>Não dizemos</th></tr></thead>
+    <tbody>
+      <tr><td><b>Campanha</b></td><td>Projeto · board</td></tr>
+      <tr><td><b>Conteúdo</b> · Peça</td><td>Card · item · ticket · task</td></tr>
+      <tr><td><b>Aprovar</b></td><td>Validar · homologar · dar OK</td></tr>
+      <tr><td><b>Solicitar alterações</b></td><td>Reprovar · recusar · rejeitar</td></tr>
+      <tr><td><b>Comentário</b></td><td>Feedback · observação</td></tr>
+      <tr><td><b>Agendar</b></td><td>Programar · schedular</td></tr>
+      <tr><td><b>Publicar</b></td><td>Postar · subir</td></tr>
+      <tr><td><b>Equipe</b></td><td>Colaboradores · recursos</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>O mesmo estado, dono diferente</h3>
+  <div class="tab"><table>
+    <thead><tr><th>Estado</th><th>Para a agência</th><th>Para o cliente</th></tr></thead>
+    <tbody>
+      <tr><td><span style="color:var(--brass-300)">■</span> Aguardando</td><td>Aguardando aprovação</td><td><b>Esperando você</b></td></tr>
+      <tr><td><span style="color:var(--coral)">■</span> Alterações</td><td>Alterações solicitadas</td><td>Você pediu ajustes</td></tr>
+      <tr><td><span style="color:var(--encore)">■</span> Aprovado</td><td>Aprovado</td><td>Aprovado</td></tr>
+      <tr><td><span style="color:var(--violet)">■</span> Publicado</td><td>Publicado</td><td>No ar</td></tr>
+      <tr><td><span style="color:var(--ink-400)">■</span> Rascunho</td><td>Rascunho</td><td><em style="color:var(--ink-500)">não visível</em></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Erro: o que aconteceu + o que fazer</h3>
+  <div class="tab"><table>
+    <thead><tr><th>Situação</th><th>Texto</th></tr></thead>
+    <tbody>
+      <tr><td>Arquivo grande demais</td><td>"Esse arquivo tem 240 MB. O limite é 100 MB."</td></tr>
+      <tr><td>Formato inválido</td><td>"Esse formato não é aceito. Use JPG, PNG, MP4 ou MOV."</td></tr>
+      <tr><td>Falha de rede</td><td>"Sem conexão. Seu texto está salvo — vamos tentar de novo sozinhos."</td></tr>
+      <tr><td>Sem permissão</td><td>"Você não tem permissão para aprovar. Peça ao administrador da sua conta."</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Nunca</strong> "ops", "algo deu errado", "simplesmente", "é só", ou "por favor"
+    em botão. E, em marketing, nunca "revolucionário", "disruptivo", "game changer",
+    "potencialize" ou "sinfonia de resultados".</p>
+
+  <div class="prova" id="prova-palavra" data-prova="palavra" data-selo="Palavra Exata">
+    <div class="cab"><b>Prova 04 · Palavra exata</b><span class="placar">0 de 3</span></div>
+    <div class="corpo"></div>
+  </div>
+</section>
+
+<!-- ===================== 14 · APLICAÇÕES ===================== -->
+<section class="mov" id="m14" data-mov="14" data-nome="Aplicações">
+  <p class="eyebrow">Movimento 14<s></s>Aplicações</p>
+  <h2>A marca fora da tela onde ela nasceu.</h2>
+  <p class="lead">Onze aplicações canônicas. Todas obedecem às mesmas três verificações:
+    respiro completo, brass abaixo de 10%, e contraste acima de 4,5:1.</p>
+
+  <figure class="apl">
+    <div class="palcoAp duplo">
+      <div class="cartao frente">
+        <svg width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div>
+          <div class="nome">Marina Costa</div>
+          <div class="cargo">Direção de operações</div>
+          <div class="cont" style="margin-top:10px">marina@usemaestro.com<br>usemaestro.com</div>
+        </div>
+      </div>
+      <div class="cartao verso" style="align-items:center;text-align:center">
+        <div></div>
+        <div>
+          <div style="font-family:var(--display);font-size:27px;color:#08090B;line-height:1.1">Sua operação,<br>no tempo certo.</div>
+        </div>
+        <div style="font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;color:rgba(8,9,11,.62);text-transform:uppercase">Creative Operations</div>
+      </div>
+    </div>
+    <figcaption><b>01 Cartão</b><span>85 × 55 mm. Frente Ink com símbolo brass 30 px; verso brass sólido
+      com o slogan em Instrument Serif e rótulo Ink. Papel: 300 g, sem verniz — brilho confunde
+      latão com ouro.</span></figcaption>
+  </figure>
+
+  <figure class="apl">
+    <div class="palcoAp duplo claro">
+      <div class="folha">
+        <div class="topo">
+          <svg width="98" height="18" viewBox="0 0 260 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><text x="64" y="33.5" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#08090B">Maestro</text></svg>
+          <div style="font-family:var(--mono);font-size:6px;letter-spacing:.1em;color:#6B7280;text-align:right;line-height:1.7">SÃO PAULO · BR<br>USEMAESTRO.COM</div>
+        </div>
+        <div class="corpoF">
+          <b>Proposta de operação</b>
+          Prezada equipe,<br><br>
+          Segue o desenho da operação para o ciclo de setembro. O calendário editorial, a
+          metodologia de dois lotes e os prazos de aprovação estão detalhados nas páginas
+          seguintes.<br><br>
+          Cada peça terá versão registrada e selo de aprovação. Nada vai ao ar sem o aceite
+          formal do cliente.
+        </div>
+        <div class="rodape"><span>MAESTRO · CREATIVE OPERATIONS</span><span>01/02</span></div>
+      </div>
+      <div class="assin">
+        <svg width="118" height="22" viewBox="0 0 260 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><text x="64" y="33.5" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#08090B">Maestro</text></svg>
+        <div class="div"></div>
+        <div class="nm">Marina Costa</div>
+        <div class="cg">Direção de operações</div>
+        <div class="li">marina@usemaestro.com · +55 11 9 9999-0000<br>usemaestro.com</div>
+      </div>
+    </div>
+    <figcaption><b>02 Papelaria</b><span>Carta A4 e assinatura de e-mail. Lockup light a 140 px de
+      largura, Inter 13, sem imagem de fundo. O único brass da assinatura é o símbolo e o link
+      em brass-700 — texto brass-500 sobre branco é reprovado (R4).</span></figcaption>
+  </figure>
+
+  <figure class="apl">
+    <div class="palcoAp duplo">
+      <div class="slide capa">
+        <div class="kicker">Creative Operations</div>
+        <h5>Aprovação não deveria ser a parte difícil.</h5>
+        <div class="pe"><span>Maestro · 2026</span>
+          <svg width="24" height="24" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+      <div class="slide conteudo">
+        <div>
+          <div class="kicker">O que muda no primeiro mês</div>
+          <div class="barras">
+            <div><b>-64%</b><span>tempo até a aprovação</span></div>
+            <div><b>1</b><span>versão da verdade</span></div>
+            <div><b>0</b><span>PDF por e-mail</span></div>
+          </div>
+        </div>
+        <div class="pe"><span>03</span>
+          <svg width="24" height="24" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+    </div>
+    <figcaption><b>03 Apresentação</b><span>Fundo ink-950, título em Instrument Serif, símbolo no canto
+      inferior direito a 24 px. Números de destaque em serif — é o único lugar da marca onde o
+      serif carrega dado.</span></figcaption>
+  </figure>
+
+  <figure class="apl">
+    <div class="palcoAp">
+      <div class="capaLI">
+        <div class="reg" id="reguaLI"></div>
+        <svg width="176" height="33" viewBox="0 0 260 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><text x="64" y="33.5" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#F4F6F8">Maestro</text></svg>
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass-400);position:relative">The Operating System for Creative Operations</div>
+      </div>
+    </div>
+    <figcaption><b>04 Capa social</b><span>LinkedIn e X, 4:1. Lockup dark alinhado à esquerda, régua de
+      tempo no rodapé a 8% — nunca acima disso, ou a textura vira ruído.</span></figcaption>
+  </figure>
+
+  <figure class="apl">
+    <div class="palcoAp duplo">
+      <div class="telaHome">
+        <div class="ilha"></div>
+        <div class="apps">
+          <div><div class="app maestro">
+            <svg width="30" height="30" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div><div class="rot">Maestro</div></div>
+          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
+          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
+          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
+          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
+          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
+          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
+          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
+        </div>
+      </div>
+      <div style="width:100%">
+        <div class="aba">
+          <div class="t">
+            <svg width="14" height="14" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#08090B"/><path d="M13 33V15Q24 43 35 15V33" fill="none" stroke="#D9AC4C" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Maestro</span>
+          </div>
+          <div class="barraURL"><div class="url">usemaestro.com/c/verao-26</div></div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:center;margin-top:22px;flex-wrap:wrap">
+          <div style="width:62px;height:62px;border-radius:50%;background:var(--ink-950);
+            border:1px solid var(--ink-800);display:grid;place-items:center">
+            <svg width="31" height="31" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p style="margin:0;font-size:12.5px;max-width:26ch">Avatar social: símbolo centralizado
+            sobre ink-950, respiro de 25%.</p>
+        </div>
+      </div>
+    </div>
+    <figcaption><b>05 Ícones</b><span>App icon squircle 512, gradiente Ink sutil, símbolo brass-400.
+      Favicon 48 com espessura ajustada — a haste engorda para a curva não fechar a 16 px.</span></figcaption>
+  </figure>
+
+  <figure class="apl">
+    <div class="palcoAp duplo">
+      <div class="cracha">
+        <div class="furo"></div>
+        <svg width="42" height="42" viewBox="0 0 48 48" style="display:block;margin:0 auto"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="nm">Marina Costa</div>
+        <div class="cg">Loja Norte · Cliente</div>
+        <div class="fita">ACESSO · APROVAÇÃO</div>
+      </div>
+      <div class="camisa">
+        <svg width="76" height="76" viewBox="0 0 48 48" style="position:relative"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <figcaption><b>06 Crachá e vestuário</b><span>Lockup vertical no crachá; no tecido, símbolo isolado
+      em silk brass-500 sobre ink-850, 60 mm no peito. Nunca o lockup completo em roupa — o
+      wordmark serif fecha na malha.</span></figcaption>
+  </figure>
+
+  <figure class="apl">
+    <div class="palcoAp claro">
+      <div class="notif">
+        <div class="cabE">
+          <svg width="104" height="19" viewBox="0 0 260 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><text x="64" y="33.5" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#F4F6F8">Maestro</text></svg>
+        </div>
+        <div class="cE">
+          <h6>Marina aprovou 3 peças de Verão 26</h6>
+          <p>Marina Costa aprovou 3 conteúdos há 4 minutos. Nenhuma alteração solicitada.</p>
+          <span class="bt">Ver na Maestro</span>
+        </div>
+        <div class="pe">VOCÊ RECEBE ISTO PORQUE ATENDE ESTE CLIENTE · PREFERÊNCIAS</div>
+      </div>
+    </div>
+    <figcaption><b>07 E-mail transacional</b><span>Estrutura quem + o quê + onde, máximo 12 palavras no
+      assunto. Um único botão brass, rótulo Ink (R5). Sem emoji, sem exclamação.</span></figcaption>
+  </figure>
+
+  <figure class="apl">
+    <div class="palcoAp duplo">
+      <div class="shell escuro">
+        <div class="top"><span class="pt"></span><span class="pt"></span><span class="pt"></span>
+          <span class="rotShell" style="color:var(--ink-500);margin-left:6px">Agência · escuro</span></div>
+        <div class="cor">
+          <div class="ln"><span class="tt">Carrossel · Lançamento</span><span class="pill" style="background:rgba(200,150,58,.16);color:var(--brass-300)">Aguardando</span></div>
+          <div class="ln"><span class="tt">Reels · Bastidor</span><span class="pill" style="background:rgba(91,141,239,.16);color:var(--cobalt)">Em produção</span></div>
+          <div class="ln"><span class="tt">Post · Depoimento</span><span class="pill" style="background:rgba(53,184,122,.16);color:var(--encore)">Aprovado</span></div>
+        </div>
+      </div>
+      <div class="shell claro">
+        <div class="top"><span class="pt"></span><span class="pt"></span><span class="pt"></span>
+          <span class="rotShell" style="color:#6B7280;margin-left:6px">Cliente · claro</span></div>
+        <div class="cor">
+          <div class="ln"><span class="tt">Carrossel · Lançamento</span><span class="pill" style="background:rgba(200,150,58,.18);color:#855F22">Esperando você</span></div>
+          <div class="ln"><span class="tt">Reels · Bastidor</span><span class="pill" style="background:rgba(91,141,239,.14);color:#2B55B8">Em produção</span></div>
+          <div class="ln"><span class="tt">Post · Depoimento</span><span class="pill" style="background:rgba(53,184,122,.16);color:#1F7449">Aprovado</span></div>
+        </div>
+      </div>
+    </div>
+    <figcaption><b>08 Os dois shells</b><span>Agência nasce escuro — uso diário, muitas horas, alta
+      densidade. Cliente nasce claro — entra a cada 10 a 15 dias, muitas vezes na rua, e o lote é
+      documento para ler, não painel para operar. Os dois oferecem os dois temas.</span></figcaption>
+  </figure>
+
+  <figure class="apl">
+    <div class="palcoAp">
+      <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:center;justify-content:center">
+        <div style="width:118px;height:118px;border-radius:50%;border:1px solid var(--brass-600);
+          display:grid;place-items:center;text-align:center;background:rgba(200,150,58,.06)">
+          <div>
+            <svg width="26" height="26" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--brass-300);margin-top:6px">APROVADO</div>
+            <div style="font-family:var(--mono);font-size:8px;color:var(--ink-400);margin-top:2px">7F3A·2B91</div>
+          </div>
+        </div>
+        <div style="max-width:32ch">
+          <h4 style="margin-bottom:8px">O selo de versão</h4>
+          <p style="margin:0;font-size:13px">Toda aprovação registra a versão exata aprovada. O selo
+            é um resumo de quatro bytes do conteúdo, em JetBrains Mono, sempre no formato
+            <code>XXXX·XXXX</code>. Ele aparece no termo, no e-mail e no rodapé da peça.</p>
+        </div>
+      </div>
+    </div>
+    <figcaption><b>09 Selo de aprovação</b><span>O único lugar onde um círculo brass fechado é
+      permitido. Ele carrega consequência jurídica — por isso escapa da regra dos 10%, como o
+      botão de aprovar.</span></figcaption>
+  </figure>
+
+  <h3>Checklist de aplicação</h3>
+  <p>Antes de publicar qualquer peça, os nove itens abaixo. Marque para acompanhar —
+    a lista fica guardada neste navegador.</p>
+  <div class="painel" id="checklist"></div>
+</section>
+
+<!-- ===================== 15 · INEGOCIÁVEIS ===================== -->
+<section class="mov" id="m15" data-mov="15" data-nome="As 12 inegociáveis">
+  <p class="eyebrow">Movimento 15<s></s>Governança</p>
+  <h2>As doze inegociáveis.</h2>
+  <p class="lead">Tudo o mais neste manual é orientação. Estas doze são regras — alterá-las
+    exige decisão registrada em <code>docs/DECISIONS.md</code>.</p>
+  <div class="tab"><table>
+    <thead><tr><th style="width:44px">#</th><th>Regra</th><th style="width:88px">Frente</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">01</td><td>Nunca comunicar a Maestro como "software de aprovação". Sempre como sistema operacional da operação criativa.</td><td class="mono">Marca</td></tr>
+      <tr><td class="mono">02</td><td>A metáfora musical vive na marca, nunca na navegação. Um botão se chama "Aprovar", não "Reger".</td><td class="mono">Marca</td></tr>
+      <tr><td class="mono">03</td><td>Nunca dizer "sinfonia de resultados", "harmonize" ou variações.</td><td class="mono">Marca</td></tr>
+      <tr><td class="mono">04</td><td>Nunca redesenhar o símbolo. Sempre usar os arquivos de <code>assets/logo/</code>.</td><td class="mono">Visual</td></tr>
+      <tr><td class="mono">05</td><td>Brass ocupa no máximo 10% de qualquer composição.</td><td class="mono">Visual</td></tr>
+      <tr><td class="mono">06</td><td>Brass significa uma coisa só na interface: algo espera por você.</td><td class="mono">Visual</td></tr>
+      <tr><td class="mono">07</td><td>Brass nunca é warning. Alerta é Coral.</td><td class="mono">Visual</td></tr>
+      <tr><td class="mono">08</td><td>Instrument Serif nunca entra em componente de interface.</td><td class="mono">Visual</td></tr>
+      <tr><td class="mono">09</td><td>Nenhuma animação passa de 480 ms.</td><td class="mono">Visual</td></tr>
+      <tr><td class="mono">10</td><td>Nunca "reprovar". Sempre "Solicitar alterações".</td><td class="mono">Verbal</td></tr>
+      <tr><td class="mono">11</td><td>Erro nunca é "algo deu errado". Sempre o que aconteceu e o que fazer.</td><td class="mono">Verbal</td></tr>
+      <tr><td class="mono">12</td><td>Som só existe em ação de consequência. Nunca em navegação.</td><td class="mono">Som</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="nota">
+    <b>Governança.</b> Nunca alterar um token sem atualizar o JSON, o CSS e este manual na mesma
+    mudança. Os tokens são a fonte de verdade — se o código e o manual divergirem, o token vence.
+  </div>
+
+  <div class="prova" id="prova-tempo" data-prova="tempo" data-selo="Tempo Certo">
+    <div class="cab"><b>Prova 05 · Tempo certo</b><span class="placar">0 de 4</span></div>
+    <div class="corpo"></div>
+  </div>
+</section>
+
+<!-- ===================== 16 · CERTIFICAÇÃO ===================== -->
+<section class="mov" id="m16" data-mov="16" data-nome="Certificação">
+  <p class="eyebrow">Movimento 16<s></s>Certificação</p>
+  <h2>Regência.</h2>
+  <p class="lead">A certificação abre quando os 16 movimentos estiverem lidos e as 5 provas
+    concluídas. Ela não vale nada juridicamente — vale como acordo entre quem aplica a marca.</p>
+  <div class="cert" id="cert">
+    <div id="certTrava" class="trav">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+        stroke-linecap="round" style="flex:0 0 auto;margin-top:1px"><rect x="4" y="10.5" width="16" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>
+      <span id="certFalta"></span>
+    </div>
+    <div id="certAberto" style="display:none">
+      <p style="margin:0 0 4px">Escreva o nome de quem assume a regência da marca.</p>
+      <div class="campo">
+        <input id="certNome" type="text" placeholder="Nome e sobrenome" maxlength="42" autocomplete="off">
+        <button class="b" id="certEmitir">Emitir certificado</button>
+      </div>
+      <div class="diploma" id="diploma">
+        <div class="kick">Maestro · Certificado de Regência</div>
+        <div class="quem" id="dipNome">—</div>
+        <p class="frase">leu os dezesseis movimentos, concluiu as cinco provas e assume a
+          responsabilidade de aplicar a identidade da Maestro conforme este manual.</p>
+        <svg width="42" height="42" viewBox="0 0 48 48" style="margin-bottom:6px"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="selim" id="dipSelo">—</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>O que ainda falta produzir</h3>
+  <ul>
+    <li>Wordmark convertido em curvas — os SVGs atuais usam <code>&lt;text&gt;</code></li>
+    <li>Arquivos de som em <code>assets/sound/</code></li>
+    <li>Versões PNG e PDF dos lockups para uso externo</li>
+    <li>Busca de anterioridade no INPI e registro de marca mista · <strong>D-024, em aberto</strong></li>
+    <li>Definição de domínio — preferência do time: <code>usemaestro.com</code></li>
+    <li>Biblioteca de componentes no Figma a partir dos tokens</li>
+  </ul>
+
+  <p style="margin-top:34px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-500)">
+    Fonte: docs/BRAND · BRAND_STRATEGY · VERBAL_IDENTITY · VISUAL_IDENTITY · SOUND_IDENTITY
+  </p>
+</section>
+
+</main>
+
+<script>
+"use strict";
+
+/* ---------- persistência tolerante --------------------------------------- */
+const CHAVE = 'maestro.miv.v1';
+const vazio = { lidos:[], provas:{}, check:[] };
+let E = (()=>{ try{ return Object.assign({}, vazio, JSON.parse(localStorage.getItem(CHAVE)||'{}')); }
+               catch(e){ return Object.assign({}, vazio); } })();
+const grava = () => { try{ localStorage.setItem(CHAVE, JSON.stringify(E)); }catch(e){} };
+
+/* ---------- a partitura --------------------------------------------------- */
+const secoes = [...document.querySelectorAll('.mov')];
+const trilha = document.getElementById('trilha');
+trilha.innerHTML = secoes.map(s =>
+  `<a href="#${s.id}" data-ir="${s.id}"><em>${s.dataset.mov}</em><span>${s.dataset.nome}</span><i class="beat"></i></a>`
+).join('');
+
+const PROVAS = ['mao','dez','ouvido','palavra','tempo'];
+const NOMES_SELO = { mao:'Mão Firme', dez:'Dez Por Cento', ouvido:'Ouvido Absoluto',
+  palavra:'Palavra Exata', tempo:'Tempo Certo' };
+const SIGLA = { mao:'MF', dez:'10', ouvido:'OA', palavra:'PE', tempo:'TC' };
+
+document.getElementById('selos').innerHTML =
+  PROVAS.map(p=>`<span data-selo="${p}" title="${NOMES_SELO[p]}">${SIGLA[p]}</span>`).join('');
+
+function pinta(){
+  const total = secoes.length;
+  const lidos = E.lidos.length;
+  trilha.querySelectorAll('a').forEach(a=>
+    a.classList.toggle('lido', E.lidos.includes(a.dataset.ir)));
+  document.getElementById('pMov').textContent = `${lidos}/${total}`;
+  document.getElementById('pBarra').style.width = (lidos/total*100)+'%';
+  const ganhos = PROVAS.filter(p=>E.provas[p]).length;
+  document.getElementById('pSelo').textContent = `${ganhos}/${PROVAS.length}`;
+  document.querySelectorAll('#selos span').forEach(s=>
+    s.classList.toggle('ganho', !!E.provas[s.dataset.selo]));
+  document.querySelectorAll('.selo[data-selo-de]').forEach(s=>
+    s.classList.toggle('ganho', !!E.provas[s.dataset.seloDe]));
+  atualizaCert();
+}
+
+function marcaLido(id){
+  if(E.lidos.includes(id)) return;
+  E.lidos.push(id); grava(); pinta();
+}
+
+/* movimento visível por tempo suficiente conta como lido */
+const relogios = new Map();
+const obs = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    const id = e.target.id;
+    if(e.isIntersecting){
+      trilha.querySelectorAll('a').forEach(a=>a.classList.toggle('aqui', a.dataset.ir===id));
+      if(!relogios.has(id)) relogios.set(id, setTimeout(()=>marcaLido(id), 1400));
+    } else {
+      clearTimeout(relogios.get(id)); relogios.delete(id);
+    }
+  });
+}, { rootMargin:'-35% 0px -45% 0px' });
+secoes.forEach(s=>obs.observe(s));
+
+/* régua de progresso da página */
+addEventListener('scroll', ()=>{
+  const h = document.documentElement;
+  const p = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight);
+  document.querySelector('#regua i').style.width = (p*100)+'%';
+}, { passive:true });
+
+/* rail no celular */
+const rail = document.getElementById('partitura');
+const btRail = document.getElementById('abreTrilha');
+btRail.addEventListener('click', ()=>{
+  const on = rail.classList.toggle('aberta');
+  btRail.setAttribute('aria-expanded', on ? 'true' : 'false');
+});
+trilha.addEventListener('click', ()=>{
+  rail.classList.remove('aberta'); btRail.setAttribute('aria-expanded','false');
+});
+
+document.getElementById('zerar').addEventListener('click', ()=>{
+  E = JSON.parse(JSON.stringify(vazio)); grava();
+  document.querySelectorAll('.op').forEach(b=>{ b.disabled=false; b.className='op'; });
+  document.querySelectorAll('.expl').forEach(x=>x.remove());
+  document.querySelectorAll('.prova .placar').forEach(p=>{
+    p.textContent = '0 de ' + p.dataset.total; });
+  document.querySelectorAll('#checklist input').forEach(i=>i.checked=false);
+  document.getElementById('diploma').classList.remove('on');
+  pinta();
+});
+
+/* ---------- o símbolo: camadas de construção ------------------------------ */
+document.querySelectorAll('.chave').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const on = b.getAttribute('aria-pressed') !== 'true';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    const alvo = document.getElementById(b.dataset.alvo);
+    if(alvo) alvo.style.opacity = on ? '1' : '0';
+  });
+});
+
+/* ---------- a régua de tempo como textura --------------------------------- */
+const reguaSVG = cor => 'url("data:image/svg+xml;utf8,' + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="24" viewBox="0 0 64 24">
+     <g stroke="${cor}" stroke-width="2" stroke-linecap="round">
+       <line x1="4" y1="20" x2="4" y2="6"/><line x1="20" y1="20" x2="20" y2="14"/>
+       <line x1="36" y1="20" x2="36" y2="14"/><line x1="52" y1="20" x2="52" y2="14"/>
+     </g></svg>`) + '")';
+['fundoRegua','amostraRegua','reguaLI'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.style.backgroundImage = reguaSVG('#C8963A');
+});
+
+/* ---------- os 10% --------------------------------------------------------- */
+const dezBarra = document.getElementById('dezBarra');
+dezBarra.innerHTML = Array.from({length:10}, ()=>'<i></i>').join('');
+const dezRange = document.getElementById('dezRange');
+const dezTexto = document.getElementById('dezTexto');
+function pintaDez(){
+  const n = +dezRange.value;
+  [...dezBarra.children].forEach((i,k)=>i.classList.toggle('on', k<n));
+  dezTexto.innerHTML = n <= 1
+    ? '<strong>1 em 10.</strong> É assim que o latão funciona: um acento por composição, e a tela inteira aponta para ele.'
+    : n === 2
+      ? '<strong>2 em 10.</strong> No limite. Só se os dois acentos forem o mesmo tipo de coisa — o que espera por você.'
+      : n <= 4
+        ? `<strong>${n} em 10.</strong> Acima da regra. O brass já não aponta para nada — ele virou decoração.`
+        : `<strong>${n} em 10.</strong> Brass virou superfície. Aqui a marca perde o significado da cor: nada mais espera por você, porque tudo espera.`;
+}
+dezRange.addEventListener('input', pintaDez); pintaDez();
+
+/* ---------- a escala tipográfica ------------------------------------------ */
+const ESCALA = [
+  ['display-xl','72','400 serif','Sua operação'],
+  ['display-l','56','400 serif','Sua operação, no tempo certo'],
+  ['display-m','40','400 serif','Aprovação não deveria ser a parte difícil'],
+  ['h1','32','600','3 conteúdos aguardando você'],
+  ['h2','24','600','Campanha Verão 26'],
+  ['h3','20','600','Lote de aprovação'],
+  ['body-l','16','400','O cliente vê o que vai ao ar antes de ir ao ar.'],
+  ['body','15','400','Aprovado. A agência foi avisada.'],
+  ['body-s','13','400','Esperando você desde segunda'],
+  ['caption','12','500','v4 · 27 de agosto'],
+  ['micro','11','600','AGUARDANDO APROVAÇÃO']
+];
+document.getElementById('escala').innerHTML = ESCALA.map(([tok,px,peso,txt])=>{
+  const serif = peso.includes('serif');
+  const w = serif ? 400 : parseInt(peso,10);
+  const up = tok === 'micro';
+  return `<li><span class="tok">${tok} · ${px}</span>
+    <span class="txt" style="font-family:${serif?'var(--display)':'var(--sans)'};
+      font-size:${Math.min(+px,38)}px;font-weight:${w};
+      letter-spacing:${up?'.06em':(+px>=40?'-.02em':'-.012em')};
+      ${up?'text-transform:uppercase':''}">${txt}</span></li>`;
+}).join('');
+
+/* ---------- o Compasso pulsa ---------------------------------------------- */
+const semMovimento = matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.getElementById('pulsaCompasso').addEventListener('click', ()=>{
+  const linhas = document.querySelectorAll('#compassoVivo line');
+  linhas.forEach((l,i)=>{
+    setTimeout(()=>{
+      l.style.transition = 'stroke .18s linear';
+      l.style.stroke = '#E3C173';
+      setTimeout(()=>{ l.style.stroke = '#C8963A'; }, 170);
+    }, semMovimento ? 0 : i*130);
+  });
+  tocar('publicar');
+});
+
+/* ---------- motion: as quatro curvas -------------------------------------- */
+const CURVAS = [
+  ['baton','cubic-bezier(.22,1,.36,1)','320ms','Padrão. Entrada de elementos — o gesto da batuta: rápido, depois assenta.'],
+  ['legato','cubic-bezier(.65,0,.35,1)','320ms','Movimentos contínuos: arraste, scroll suave.'],
+  ['upbeat','cubic-bezier(.34,1.4,.64,1)','320ms','Overshoot leve. Exclusivo de confirmações positivas.'],
+  ['rest','cubic-bezier(.4,0,1,1)','240ms','Saída de elementos.']
+];
+document.getElementById('pistas').innerHTML = CURVAS.map(([n,b,d,txt])=>`
+  <div class="pista" data-curva="${b}" data-dur="${d}">
+    <div class="rail"><i class="bola"></i></div>
+    <div class="rot"><b style="color:var(--brass-300)">${n}</b><span>${d} · ${b}</span></div>
+    <p style="margin:8px 0 0;font-size:12.5px;color:var(--ink-400);max-width:none">${txt}</p>
+  </div>`).join('');
+document.querySelectorAll('.pista').forEach(p=>{
+  const bola = p.querySelector('.bola');
+  const roda = ()=>{
+    const w = p.querySelector('.rail').clientWidth - 34;
+    bola.style.transition = 'none'; bola.style.transform = 'translateX(0)';
+    requestAnimationFrame(()=>{
+      bola.style.transition = `transform ${p.dataset.dur} ${p.dataset.curva}`;
+      bola.style.transform = `translateX(${w}px)`;
+      setTimeout(()=>{ bola.style.transform = 'translateX(0)'; }, 700);
+    });
+  };
+  p.addEventListener('click', roda);
+  p.style.cursor = 'pointer';
+  p.setAttribute('tabindex','0');
+  p.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); roda(); } });
+});
+
+/* ---------- som: a escala de Lá maior, uma oitava abaixo ------------------- */
+let AC = null;
+const HZ = { A3:220, Cs4:277.18, E4:329.63, A4:440, B4:493.88, As4:466.16, E5:659.25 };
+function ctx(){
+  if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } }
+  if(AC && AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function nota(hz, t0, dur, vol, tipo){
+  const ac = ctx(); if(!ac) return;
+  const o = ac.createOscillator(), g = ac.createGain(), f = ac.createBiquadFilter();
+  o.type = tipo || 'sawtooth'; o.frequency.value = hz;
+  f.type = 'lowpass'; f.frequency.value = 1400;
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + .015);
+  g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  o.connect(f); f.connect(g); g.connect(ac.destination);
+  o.start(t0); o.stop(t0 + dur + .05);
+}
+const SONS = {
+  afinacao:  ac => nota(HZ.A4, ac.currentTime, 1.1, .16, 'triangle'),
+  logo:      ac => { [HZ.A3,HZ.Cs4,HZ.E4].forEach((h,i)=> nota(h, ac.currentTime + i*.19, .8, .17)); },
+  aprovar:   ac => { nota(HZ.A3, ac.currentTime, .34, .18); nota(HZ.E4, ac.currentTime + .09, .38, .18); },
+  alteracao: ac => nota(HZ.E4, ac.currentTime, .22, .14, 'triangle'),
+  enviar:    ac => nota(HZ.Cs4, ac.currentTime, .2, .15, 'triangle'),
+  publicar:  ac => { [HZ.A3,HZ.Cs4,HZ.E4].forEach((h,i)=> nota(h, ac.currentTime + i*.1, .4, .15, 'triangle')); },
+  erro:      ac => { nota(HZ.B4/2, ac.currentTime, .26, .15); nota(HZ.As4/2, ac.currentTime + .1, .3, .15); },
+  desfazer:  ac => { nota(HZ.E4, ac.currentTime, .34, .17); nota(HZ.A3, ac.currentTime + .09, .38, .17); }
+};
+function tocar(k){ const ac = ctx(); if(ac && SONS[k]) SONS[k](ac); }
+
+const TECLAS = [
+  ['afinacao','O Lá 440','a nota da marca · oboé afinando'],
+  ['logo','Logo sonoro','A3 → C♯4 → E4 · 900 ms'],
+  ['aprovar','Aprovar','quinta justa ascendente · 180 ms'],
+  ['alteracao','Solicitar alterações','E4 única · madeira abafada · 120 ms'],
+  ['enviar','Enviar para aprovação','C♯4 curto · sino leve · 100 ms'],
+  ['publicar','Publicar','arpejo rápido · sino brilhante · 320 ms'],
+  ['erro','Erro','segunda menor descendente · o único dissonante'],
+  ['desfazer','Desfazer','a quinta ao contrário · 180 ms']
+];
+document.getElementById('teclas').innerHTML = TECLAS.map(([k,n,d])=>
+  `<button class="tecla" data-som="${k}"><b>${n}</b><span>${d}</span></button>`).join('');
+document.querySelectorAll('[data-som]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    tocar(b.dataset.som);
+    b.classList.add('tocando');
+    setTimeout(()=>b.classList.remove('tocando'), 460);
+  });
+});
+
+/* ---------- o momento da aprovação ---------------------------------------- */
+document.getElementById('btAprova').addEventListener('click', function(){
+  const card = document.getElementById('cardAprova');
+  const pill = document.getElementById('pillAprova');
+  const voltando = pill.textContent === 'Aprovado';
+  if(voltando){
+    pill.textContent = 'Esperando você';
+    pill.style.background = 'rgba(200,150,58,.15)'; pill.style.color = '#E3C173';
+    card.style.borderColor = 'var(--ink-800)';
+    this.textContent = 'Aprovar';
+    tocar('desfazer'); return;
+  }
+  if(!semMovimento){ this.style.transform = 'scale(.98)';
+    setTimeout(()=>{ this.style.transform = ''; }, 80); }
+  setTimeout(()=>tocar('aprovar'), 120);
+  setTimeout(()=>{
+    pill.textContent = 'Aprovado';
+    pill.style.background = 'rgba(53,184,122,.16)'; pill.style.color = '#35B87A';
+    card.style.borderColor = 'rgba(53,184,122,.4)';
+    this.textContent = 'Desfazer';
+  }, 160);
+});
+
+/* ---------- as provas ------------------------------------------------------ */
+const BANCO = {
+  mao:[
+    { p:'Um parceiro pede o símbolo com efeito metalizado para um convite impresso. Qual é a resposta?',
+      o:['Aprovar: em impresso o metalizado valoriza o latão',
+         'Recusar: brass é cor sólida, não efeito — metalizado confunde latão com ouro',
+         'Aprovar se for hot stamping, recusar se for verniz'],
+      c:1, e:'A marca não é luxo, é precisão. Bisel, brilho e metalizado colocam a Maestro na prateleira de ourivesaria — o oposto do posicionamento.' },
+    { p:'O símbolo vai num selo circular e o designer gira 30° para "acompanhar a curva do círculo".',
+      o:['Pode: o símbolo é abstrato o suficiente',
+         'Pode até 15°',
+         'Não pode: o gesto tem direção, e girado ele perde o sentido'],
+      c:2, e:'A batida descendente marca o tempo. Girada, deixa de ser um gesto de regência e vira uma forma qualquer.' },
+    { p:'Qual é o tamanho mínimo do símbolo isolado em digital?',
+      o:['16 px','20 px — abaixo disso, usar o favicon','24 px'],
+      c:1, e:'Abaixo de 20 px a curva começa a fechar. O favicon existe justamente porque tem a espessura ajustada para o tamanho pequeno.' }
+  ],
+  dez:[
+    { p:'Um card de "Alterações solicitadas" foi desenhado com borda e rótulo em Brass. Está certo?',
+      o:['Está: chama atenção do time',
+         'Não: Brass significa "espera por você". Alterações é Coral',
+         'Está, desde que o rótulo seja textual também'],
+      c:1, e:'R1 e R2. Se Brass também marcar alteração, ele deixa de apontar para o que depende do cliente — e a cor perde a única função que tem.' },
+    { p:'Botão de aprovar em brass-400. Qual cor de rótulo?',
+      o:['Branco #FFFFFF','ink-950 — 9:1','brass-900'],
+      c:1, e:'R5. Texto branco sobre brass é proibido: o contraste não passa. ink-950 sobre brass-400 dá 9:1, nível AAA.' },
+    { p:'Um link em brass-500 sobre fundo branco, num e-mail. Passa?',
+      o:['Passa: é a cor da marca','Não: 2,7:1, reprovado. Em fundo claro o texto usa brass-700','Passa se for negrito'],
+      c:1, e:'R4. brass-500 sobre branco dá 2,7:1 — abaixo do mínimo de 4,5:1. brass-700 dá 6,5:1 e mantém o latão.' }
+  ],
+  ouvido:[
+    { p:'Por que o som de desfazer é o som de aprovar invertido?',
+      o:['Economia de produção',
+         'Porque desfazer literalmente desfaz o gesto — ninguém percebe conscientemente, todo mundo sente',
+         'Porque a quinta justa só existe em duas direções'],
+      c:1, e:'É o detalhe deliberado do sistema. Coerência sonora que opera abaixo da consciência é o que separa identidade de efeito.' },
+    { p:'Onde o som pode tocar?',
+      o:['Em toda navegação, para dar resposta',
+         'Só em ação de consequência: aprovar, alterar, enviar, publicar, erro, desfazer',
+         'Em navegação, desde que abaixo de 100 ms'],
+      c:1, e:'Regra 12. Som mal dosado é a primeira coisa que o usuário desliga — e quando ele desliga, perde também o som que importava.' },
+    { p:'Todo som do produto vive na escala de Lá maior. Qual é o ganho prático?',
+      o:['Ficam mais agradáveis',
+         'Dois sons disparados ao mesmo tempo nunca colidem — sempre formam acorde',
+         'Consomem menos processamento'],
+      c:1, e:'A restrição é técnica, não estética. Numa tela com várias ações simultâneas, a escala garante que a sobreposição soe intencional.' }
+  ],
+  palavra:[
+    { p:'O cliente pediu mudança numa peça. Que palavra aparece na interface?',
+      o:['Reprovado','Recusado','Solicitar alterações / Você pediu ajustes'],
+      c:2, e:'Regra 10. O cliente não reprova a agência — ele pede ajuste. Essa escolha define a relação inteira entre agência e cliente.' },
+    { p:'O upload falhou por perda de conexão. Qual texto está dentro da marca?',
+      o:['Ops! Algo deu errado. Tente novamente.',
+         'Sem conexão. Seu texto está salvo — vamos tentar de novo sozinhos.',
+         'Erro 503: service unavailable'],
+      c:1, e:'A fórmula é o que aconteceu + o que fazer. Nunca "algo deu errado", nunca código sem tradução, nunca culpa no usuário.' },
+    { p:'Uma headline de marketing: "Harmonize sua agência com uma sinfonia de resultados."',
+      o:['Aprovada: reforça a metáfora',
+         'Reprovada: metáfora forçada, e as duas expressões estão na lista de proibidas',
+         'Aprovada só para redes sociais'],
+      c:1, e:'Regra 3. A metáfora sustenta a marca por baixo; quando ela sobe para a superfície da copy, vira clichê e mata a credibilidade.' }
+  ],
+  tempo:[
+    { p:'Uma transição de página com 700 ms, com easing bonito. Passa?',
+      o:['Passa: é uma transição de página','Não: nada acima de 480 ms','Passa se tiver reduced-motion'],
+      c:1, e:'Regra 9. Animação longa é a forma mais rápida de fazer um produto parecer lento — e a Maestro vende tempo.' },
+    { p:'Título de seção da interface em Instrument Serif, 24 px. Passa?',
+      o:['Passa: dá personalidade','Não: o serif é da marca, a interface é da Inter','Passa em telas de marketing dentro do app'],
+      c:1, e:'Regra 8. O serif carrega a marca justamente porque é raro. Espalhado pela UI, deixa de significar qualquer coisa.' },
+    { p:'Como a Maestro deve ser apresentada num deck comercial?',
+      o:['Software de aprovação para agências',
+         'Sistema operacional da operação criativa',
+         'Ferramenta de gestão de conteúdo'],
+      c:1, e:'Regra 1. "Software de aprovação" coloca a marca numa categoria pequena, com concorrentes de ticket baixo e sem o escopo real do produto.' },
+    { p:'Um token de cor precisa mudar. Qual é o rito?',
+      o:['Alterar o CSS e avisar o time',
+         'Registrar decisão, atualizar JSON, CSS e o manual na mesma mudança',
+         'Alterar no Figma primeiro e propagar depois'],
+      c:1, e:'Os tokens são a fonte de verdade. Se o código e o manual divergirem, o token vence — e por isso os três andam juntos.' }
+  ]
+};
+
+document.querySelectorAll('.prova').forEach(bloco=>{
+  const chave = bloco.dataset.prova;
+  const perguntas = BANCO[chave];
+  const corpo = bloco.querySelector('.corpo');
+  const placar = bloco.querySelector('.placar');
+  placar.dataset.total = perguntas.length;
+  placar.textContent = `0 de ${perguntas.length}`;
+
+  corpo.innerHTML = perguntas.map((q,i)=>`
+    <div class="q" data-q="${i}">
+      <p>${i+1}. ${q.p}</p>
+      <div class="ops">${q.o.map((t,j)=>
+        `<button class="op" data-q="${i}" data-op="${j}"><i>${String.fromCharCode(65+j)}</i><span>${t}</span></button>`
+      ).join('')}</div>
+    </div>`).join('') +
+    `<div class="selo" data-selo-de="${chave}">
+       <span class="disco">
+         <svg width="15" height="15" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+       </span>
+       <span><b>Selo · ${bloco.dataset.selo}</b>
+       Acerte todas as questões desta prova para conquistar.</span>
+     </div>`;
+
+  const certas = new Set();
+  corpo.querySelectorAll('.op').forEach(bt=>{
+    bt.addEventListener('click', ()=>{
+      const i = +bt.dataset.q, j = +bt.dataset.op, q = perguntas[i];
+      const grupo = corpo.querySelector(`.q[data-q="${i}"]`);
+      if(grupo.querySelector('.expl')) return;
+      grupo.querySelectorAll('.op').forEach(o=>{
+        o.disabled = true;
+        if(+o.dataset.op === q.c) o.classList.add('certa');
+      });
+      const acertou = j === q.c;
+      if(!acertou) bt.classList.add('errada');
+      if(acertou){ certas.add(i); tocar('aprovar'); } else { tocar('erro'); }
+      const ex = document.createElement('div');
+      ex.className = 'expl';
+      ex.innerHTML = `<b>${acertou ? 'Correto.' : 'Resposta correta: ' + String.fromCharCode(65+q.c) + '.'}</b> ${q.e}`;
+      grupo.appendChild(ex);
+      placar.textContent = `${certas.size} de ${perguntas.length}`;
+      if(certas.size === perguntas.length && !E.provas[chave]){
+        E.provas[chave] = true; grava(); pinta();
+        setTimeout(()=>tocar('publicar'), 220);
+      }
+    });
+  });
+});
+
+/* ---------- checklist de aplicação ---------------------------------------- */
+const ITENS = [
+  'O logo tem a área de respiro completa?',
+  'Brass ocupa menos de 10% da composição?',
+  'Todo texto passa em 4,5:1?',
+  'Instrument Serif está fora de qualquer componente de interface?',
+  'Existem no máximo 3 tamanhos de texto?',
+  'Todo status tem rótulo além da cor?',
+  'Existe versão dark e light?',
+  'Nenhuma animação passa de 480 ms?',
+  'prefers-reduced-motion foi testado?'
+];
+document.getElementById('checklist').innerHTML = ITENS.map((t,i)=>`
+  <label style="display:flex;gap:12px;align-items:flex-start;padding:9px 0;
+    border-bottom:1px solid var(--ink-850);cursor:pointer;font-size:13.5px">
+    <input type="checkbox" data-ck="${i}" style="accent-color:#C8963A;width:16px;height:16px;
+      margin-top:2px;flex:0 0 auto">
+    <span>${t}</span></label>`).join('');
+document.querySelectorAll('#checklist input').forEach(inp=>{
+  const i = +inp.dataset.ck;
+  inp.checked = E.check.includes(i);
+  inp.addEventListener('change', ()=>{
+    E.check = inp.checked ? [...new Set([...E.check, i])] : E.check.filter(x=>x!==i);
+    grava();
+  });
+});
+
+/* ---------- certificação --------------------------------------------------- */
+function atualizaCert(){
+  const faltamMov = secoes.length - E.lidos.length;
+  const faltamSel = PROVAS.filter(p=>!E.provas[p]).length;
+  const pronto = faltamMov === 0 && faltamSel === 0;
+  const cert = document.getElementById('cert');
+  cert.classList.toggle('aberto', pronto);
+  document.getElementById('certTrava').style.display = pronto ? 'none' : 'flex';
+  document.getElementById('certAberto').style.display = pronto ? 'block' : 'none';
+  if(!pronto){
+    const partes = [];
+    if(faltamMov) partes.push(`<strong style="color:var(--ink-100)">${faltamMov}</strong> ${faltamMov===1?'movimento':'movimentos'} por ler`);
+    if(faltamSel) partes.push(`<strong style="color:var(--ink-100)">${faltamSel}</strong> ${faltamSel===1?'selo':'selos'} por conquistar`);
+    document.getElementById('certFalta').innerHTML =
+      'Fechada. Faltam ' + partes.join(' e ') + '.';
+  }
+}
+/* o mesmo selo de quatro bytes que o produto usa nas versões aprovadas */
+function selo(txt){
+  let h = 0x811c9dc5;
+  for(let i=0;i<txt.length;i++){
+    h ^= txt.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  const s = h.toString(16).toUpperCase().padStart(8,'0');
+  return s.slice(0,4) + '·' + s.slice(4);
+}
+document.getElementById('certEmitir').addEventListener('click', ()=>{
+  const nome = document.getElementById('certNome').value.trim();
+  if(!nome){ document.getElementById('certNome').focus(); return; }
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+  document.getElementById('dipNome').textContent = nome;
+  document.getElementById('dipSelo').textContent = selo(nome + hoje) + ' · ' + hoje;
+  document.getElementById('diploma').classList.add('on');
+  tocar('publicar');
+});
+
+/* ---------- o traço da capa se desenha ------------------------------------- */
+(function(){
+  const c = document.getElementById('curvaCapa');
+  if(!c || semMovimento) return;
+  const len = c.getTotalLength();
+  c.style.strokeDasharray = len;
+  c.style.strokeDashoffset = len;
+  requestAnimationFrame(()=>{
+    c.style.transition = 'stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1)';
+    c.style.strokeDashoffset = '0';
+  });
+})();
+
+pinta();
+</script>

@@ -1,9 +1,31 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.12
+Version: 0.5.13
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.13 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** o MIV navegável — a marca inteira em uma peça só.
+
+### Adicionado
+- `docs/BRAND/MIV.html` — Manual de Identidade Visual em 16 movimentos, construído com os
+  próprios tokens da marca. Reúne estratégia, símbolo, cor, tipografia, grid, motion, som e
+  verbo, e fecha com as aplicações e as 12 inegociáveis.
+- **Geometria interativa:** o grid 48 × 48 do símbolo e a área de respiro entram e saem por
+  chave; a escala de redução mostra onde o favicon passa a ser obrigatório.
+- **Som tocável:** os oito sons do sistema em Web Audio, na oitava de baixo (D-072) — inclusive
+  o desfazer, que é o aprovar ao contrário.
+- **Aplicações em mockup:** cartão, papelaria, assinatura, apresentação, capa social, app icon,
+  favicon, avatar, crachá, vestuário, e-mail transacional, os dois shells e o selo de versão.
+  Fecham a pendência "Aplicações: cartão, papelaria, template de apresentação" do Brand Book.
+- **Camada de progresso:** os 16 movimentos se marcam sozinhos na leitura, cinco provas de
+  aplicação dão selos, e a certificação abre só com tudo concluído. O progresso fica no
+  navegador de quem lê.
 
 ---
 

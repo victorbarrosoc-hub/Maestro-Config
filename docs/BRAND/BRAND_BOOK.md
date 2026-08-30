@@ -17,6 +17,10 @@ O Brand Book da Maestro está dividido em cinco documentos. Este é o índice e 
 | 4 | [`SOUND_IDENTITY.md`](SOUND_IDENTITY.md) | Como soamos |
 | 5 | **`BRAND_BOOK.md`** | Este arquivo — resumo e regras inegociáveis |
 
+**Manual navegável:** [`MIV.html`](MIV.html) reúne os cinco documentos em 16 movimentos,
+com a geometria do símbolo interativa, os sons tocáveis, as aplicações da marca em mockup
+e cinco provas de aplicação. É a peça para apresentar a marca a alguém de fora.
+
 **Arquivos de trabalho:**
 ```
 assets/logo/     símbolo, wordmark e lockups (SVG)
