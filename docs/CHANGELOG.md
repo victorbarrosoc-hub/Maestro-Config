@@ -1,6 +1,6 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.2
+Version: 0.5.3
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
@@ -32,6 +32,32 @@ Nunca apagar versões anteriores.
   `session.read`, e plano e limites da agência saem da resposta do lado cliente (I-12).
 - `POST /batches` com peça sem copy devolvia **500** (`currentVersionId!` mentia).
   Agora é 422 dizendo qual peça falta escrever.
+
+---
+
+## 0.5.3 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** fechar o fluxo de alteração sobre o card da pauta (D-075).
+
+### Adicionado
+- **Enviar para aprovação, da própria pauta.** Botão em cada card e envio em lote com
+  confirmação, listando o que vai como texto e o que vai como postagem pronta. Uma
+  notificação por lote, nunca uma por card (D-030).
+- **O cliente recebe.** Tela nova na aba Publicações: a lista do que espera por ele e a
+  tela de decisão por publicação, com o texto, a chamada e os dois caminhos — aprovar ou
+  pedir alteração, escrevendo o que precisa mudar.
+- **A decisão volta ao card.** Aprovar leva a `Texto aprovado`/`Aprovado`; pedir alteração
+  devolve o card a `Criado`/`Em produção`, grava o pedido em `alteracoes` e mostra as
+  palavras do cliente no próprio card.
+- **Filtro "com alteração"** na pauta, ao lado dos que já existiam.
+- **Ponte com a produção:** o pedido do cliente vira tarefa no Inbox do Ensaio, marcada
+  como pedido do cliente e com o texto do pedido no cartão. Concluída a tarefa, o card
+  volta para a fila de envio — com o pedido anterior à vista, para a segunda volta.
+
+### Corrigido
+- O Ensaio só nascia quando alguém abria a aba de produção. Um pedido de alteração feito
+  antes disso se perdia — justamente o que não pode se perder.
 
 ---
 

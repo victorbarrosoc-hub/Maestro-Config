@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-30 01:25 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-30 01:41 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -14839,3 +14839,503 @@ if(document.readyState === 'loading')
   document.addEventListener('DOMContentLoaded', armarAbertura, {once:true});
 else armarAbertura();
 </script>
+<script>
+"use strict";
+/* =====================================================================
+   v55 — O FLUXO DE ALTERAÇÃO, fechado.
+
+   O card já tinha as onze fases (`FASES`, v-anterior), a revisão interna
+   já empurrava para `texto_cli`/`post_cli`, e o Ensaio já sabia ligar
+   tarefa a card por `cardId`. Faltavam os três elos do meio:
+
+     1. um botão de enviar na própria pauta — hoje só a fila do revisor
+        empurrava o card para o cliente;
+     2. o cliente **não tinha tela nenhuma** para o que chegava: cards em
+        `texto_cli`/`post_cli` ficavam invisíveis para ele;
+     3. a decisão não voltava — não havia como aprovar nem pedir mudança.
+
+   Nada de campo novo de status: quem manda continua sendo `fase`. Pedido
+   de alteração entra em `p.alteracoes`, que já existia e já era desenhado
+   no modal do card.
+
+     escrever → (revisão) → texto_cli / post_cli → o cliente decide
+                                   ├→ aprova  → texto_ok / aprovado
+                                   └→ altera  → criado / producao
+                                                + tarefa no Ensaio
+                                                + volta a poder enviar
+   ================================================================== */
+
+IC.enviar = '<path d="M21.5 2.5 11 13"/><path d="M21.5 2.5 15 21.5 11 13 2.5 9z"/>';
+
+/* as duas fases em que a bola está com o cliente */
+const NO_CLIENTE = ['texto_cli','post_cli'];
+/* o que ele já decidiu, e o que veio depois */
+const JA_DECIDIU = ['texto_ok','producao','revisao2','aprovado','agendado','postado'];
+
+const comCliente  = p => NO_CLIENTE.includes(faseDe(p));
+const temPedido   = p => (p.alteracoes||[]).length > 0;
+/* o pedido em aberto é o último, enquanto o card não voltou ao cliente */
+const pedidoAberto = p => temPedido(p) && !comCliente(p) && !!p.ajustePendente;
+
+/* Enviar exige texto e um card que não esteja com o cliente nem já
+   aprovado. Tarefa interna nunca vai — é assunto da agência. */
+function podeEnviar(p){
+  if(p.tarefa || comCliente(p)) return false;
+  const f = faseDe(p);
+  if(f==='aprovado' || f==='agendado' || f==='postado') return false;
+  return (p.texto||'').trim().length > 0;
+}
+/* Antes do texto aprovado, o que vai ao cliente é o TEXTO. Depois, a
+   postagem pronta. É o ciclo de dois lotes (D-042) no card. */
+const destinoDoEnvio = p => faseIdx(p) < FASES.findIndex(([k])=>k==='texto_ok')
+  ? 'texto_cli' : 'post_cli';
+
+const cardsProntos    = () => S.pauta.filter(podeEnviar);
+const cardsComCliente = () => S.pauta.filter(comCliente);
+const cardsAlterados  = () => S.pauta.filter(pedidoAberto);
+const cardsAprovados  = () => S.pauta.filter(p => !p.tarefa && JA_DECIDIU.includes(faseDe(p)));
+/* o que o cliente enxerga: o que está com ele e o que ele já decidiu */
+const cardsDoCliente  = () => S.pauta.filter(p =>
+  !p.tarefa && (comCliente(p) || JA_DECIDIU.includes(faseDe(p)) || temPedido(p)));
+
+/* ---------- a agência envia ------------------------------------------ */
+function enviarCards(ids){
+  const alvo = ids ? S.pauta.filter(p => ids.includes(p.id) && podeEnviar(p)) : cardsProntos();
+  if(!alvo.length){ toast('Nada pronto para enviar — o card precisa de texto.'); return; }
+  alvo.forEach(p => { porFase(p, destinoDoEnvio(p)); p.enviadoEm = Date.now();
+                      p.ajustePendente = false; });
+  som('toque'); render();
+  /* D-030: UMA notificação por lote, nunca uma por card. Cinco avisos
+     separados treinam o cliente a ignorar todos. */
+  toast(alvo.length === 1
+    ? `"${alvo[0].t}" foi para Helena — avisada por e-mail e WhatsApp.`
+    : `${alvo.length} cards enviados. Helena recebeu UMA notificação, não ${alvo.length}.`);
+}
+
+/* ---------- o cliente decide, e a decisão volta para o card ---------- */
+function decidirCard(id, decisao, nota){
+  const p = S.pauta.find(x => x.id === id); if(!p) return;
+  const eraTexto = faseDe(p) === 'texto_cli';
+
+  if(decisao === 'APROVADO'){
+    porFase(p, eraTexto ? 'texto_ok' : 'aprovado');
+    p.ajustePendente = false;
+    som('aprovar');
+  } else {
+    /* volta para onde o trabalho acontece: texto reprovado volta a ser
+       escrito, postagem reprovada volta para a produção. */
+    porFase(p, eraTexto ? 'criado' : 'producao');
+    p.alteracoes = [...(p.alteracoes||[]), {
+      por: 'Helena Braga', quando: new Date().toLocaleDateString('pt-BR'),
+      oque: (nota||'').trim(), fase: eraTexto ? 'texto' : 'postagem'
+    }];
+    p.ajustePendente = true;
+    abrirTarefaDeAjuste(p);          // pedido vira trabalho, não recado
+    som('ajuste');
+  }
+  S.route = 'clpauta'; S.pcSel = null; render();
+  toast(decisao === 'APROVADO'
+    ? `"${p.t}" aprovado. A agência já sabe.`
+    : `Alteração pedida em "${p.t}". Já virou tarefa na produção da agência.`);
+}
+
+/* ---------- a ponte com a produção (o Ensaio) ------------------------ */
+/* O Ensaio já sabia ligar tarefa a card (`cardId`) e já mostra a fase do
+   card no cartão. O que faltava era alguém CRIAR essa tarefa quando o
+   cliente pede mudança — senão o pedido vive num toast e morre nele. */
+function abrirTarefaDeAjuste(p){
+  /* o Ensaio só nascia quando alguém abria a aba de produção; um pedido
+     feito antes disso se perdia — justo o que não pode se perder. */
+  if(!S.ensaio) S.ensaio = kbSemente();
+  const jaTem = S.ensaio.tarefas.some(t => t.cardId === p.id && t.doCliente);
+  if(jaTem) return;
+  const ultimo = p.alteracoes[p.alteracoes.length-1];
+  S.ensaio.tarefas.push({
+    id: S.ensaio.prox++, titulo: `Ajustar: ${p.t}`,
+    cli: cliAtual().id, resp: null, col: 'inbox', cat: 'marketing',
+    criada: Date.now(), prazo: p.data || null, tempoMs: 0, desde: null,
+    cardId: p.id, doCliente: true, pedido: ultimo ? ultimo.oque : ''
+  });
+}
+
+/* Tarefa concluída devolve o card para a fila de envio. O pedido fica
+   guardado em `alteracoes` — a segunda volta precisa saber o que se
+   pediu na primeira. */
+function reconciliarAjustes(){
+  if(!S.ensaio || !S.ensaio.feitas) return;
+  for(const t of S.ensaio.feitas){
+    if(!t.cardId || !t.doCliente || t.aplicada) continue;
+    for(const lista of Object.values(S.pautas)){
+      const c = lista.find(x => x.id === t.cardId);
+      if(c && c.ajustePendente){ c.ajustePendente = false; c.refeito = true; }
+    }
+    t.aplicada = true;
+  }
+}
+</script>
+<script>
+"use strict";
+/* ---------- o card: o pedido do cliente, e a porta de saída ---------- */
+/* A etiqueta de status já é a fase (v-anterior a esta), então o card já
+   diz "Aprovação da postagem (cliente)" sozinho. Aqui entra o que ela não
+   conta: o que o cliente pediu, com as palavras dele, e o botão de enviar. */
+ptItemHtml = (function(orig){
+  return function(p, i){
+    let html = orig(p, i);
+    if(p.tarefa) return html;
+
+    const ultimo = (p.alteracoes||[])[ (p.alteracoes||[]).length - 1 ];
+    if(ultimo && ultimo.oque){
+      const feito = !p.ajustePendente;
+      const bloco = `<span class="apNota ${feito?'feito':''}">${ic(feito?'checkc':'warn',12)}
+        <span><b>${feito?'Ajustado':'Helena pediu'}:</b> ${esc(ultimo.oque)}</span></span>`;
+      html = html.replace(/(<\/button>\s*<button class="ptQuick" data-mtabrir=)/, bloco + '$1');
+    }
+
+    if(podeEnviar(p)){
+      const btn = `<button class="ptQuick ptEnviar" data-ptenviar="${p.id}"
+        aria-label="Enviar para aprovação do cliente"
+        title="Enviar para aprovação">${ic('enviar',15)}</button>`;
+      html = html.replace('<button class="ptFeito"', btn + '\n    <button class="ptFeito"');
+    }
+    return html;
+  };
+})(ptItemHtml);
+
+/* ---------- a faixa de envio e o filtro de alterações ---------------- */
+corpoPauta = (function(orig){
+  return function(){
+    let html;
+    if(S.ptFiltro === 'alterados'){
+      /* mesma manobra dos filtros que já existiam: troca o conjunto por
+         baixo, deixa o miolo desenhar, devolve os dados no lugar. */
+      const guardado = S.pautas[cliAtual().id];
+      const antes = S.ptFiltro;
+      S.pautas[cliAtual().id] = guardado.filter(pedidoAberto);
+      S.ptFiltro = 'todas';
+      try{ html = orig(); }
+      finally{ S.pautas[cliAtual().id] = guardado; S.ptFiltro = antes; }
+      html = html.replace(/class="on" data-ptfiltro="todas"/, 'class="" data-ptfiltro="todas"');
+    } else {
+      html = orig();
+    }
+    return faixaDeEnvio() + chipDeAlteracoes(html);
+  };
+})(corpoPauta);
+
+function chipDeAlteracoes(html){
+  const n = cardsAlterados().length;
+  if(!n && S.ptFiltro !== 'alterados') return html;
+  const chip = `<button class="${S.ptFiltro==='alterados'?'on':''} chipAlt"
+    data-ptfiltro="alterados">com alteração<b>${n}</b></button>`;
+  return html.replace(/(<button[^>]*data-ptfiltro="faltam"[^>]*>[\s\S]*?<\/button>)/, '$1' + chip);
+}
+
+/* O estado do ciclo num lugar só, e a ação de consequência.
+   Latão só no que espera por você (D-018) — o resto cede. */
+function faixaDeEnvio(){
+  const prontos = cardsProntos().length;
+  const fora    = cardsComCliente().length;
+  const alt     = cardsAlterados().length;
+  const ok      = cardsAprovados().length;
+  if(!prontos && !fora && !alt && !ok) return '';
+
+  const situacao = [
+    fora && `<b>${fora}</b> com o cliente`,
+    alt  && `<b class="alt">${alt}</b> esperando ajuste`,
+    ok   && `<b class="ok">${ok}</b> aprovad${ok>1?'os':'o'}`
+  ].filter(Boolean).join(' · ');
+
+  return `<div class="envioBar">
+    <div class="t">
+      <b>${prontos ? `${prontos} card${prontos>1?'s':''} pronto${prontos>1?'s':''} para o cliente`
+                   : 'Nada esperando envio'}</b>
+      <span>${situacao || 'Escreva o texto de um card para poder enviar.'}</span>
+    </div>
+    ${prontos ? `<button class="b pri sm" data-ptenviartudo="1">
+      ${ic('enviar',14)} Enviar ${prontos} para aprovação</button>` : ''}
+    ${alt ? `<button class="b gho sm" data-ptfiltro="alterados">Ver o que voltou</button>` : ''}
+  </div>`;
+}
+
+/* ---------- os cliques da agência ------------------------------------ */
+addEventListener('click', e => {
+  const t = e.target.closest('[data-ptenviar],[data-ptenviartudo],[data-enviook]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  if(t.dataset.enviook){ S.modal = null; enviarCards(); return; }
+  if(t.dataset.ptenviartudo){ confirmarEnvio(); return; }
+  enviarCards([+t.dataset.ptenviar]);
+}, true);
+
+/* Enviar é ação de consequência: o cliente vai receber. Confirma, e diz
+   o que cada card vai levar — texto ou postagem pronta. */
+function confirmarEnvio(){
+  const lista = cardsProntos();
+  S.modal = `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>Enviar ${lista.length} card${lista.length>1?'s':''} para Helena?</h3>
+    <p>Ela recebe <b style="color:var(--ink-50)">uma</b> notificação com o conjunto — não uma por
+      card — e decide cada um: aprovar ou pedir alteração.</p>
+    <div class="envioLista">
+      ${lista.map(p=>`<div><span>${esc(p.t)}</span>
+        <i>${destinoDoEnvio(p)==='texto_cli'?'texto':'postagem pronta'}</i></div>`).join('')}
+    </div>
+    <div class="modalrow">
+      <button class="b gho" data-modalno="1">Voltar</button>
+      <button class="b pri" data-enviook="1">Enviar para aprovação</button></div>
+  </div></div>`;
+  renderLayer();
+}
+</script>
+<script>
+"use strict";
+/* ---------- o cliente recebe -----------------------------------------
+   Entra no MESMO lugar onde ele já decide as outras coisas: a aba
+   Publicações. Duas portas onde o cliente aprova seria o começo do fim;
+   uma porta, e os lotes por dentro.
+   ------------------------------------------------------------------- */
+clLote = (function(orig){
+  return function(){
+    const html = orig();
+    const total = cardsDoCliente().length;
+    if(!total) return html;
+    const esperam = cardsComCliente().length;
+    const decid = total - esperam;
+
+    const cartao = `<button class="clrow fu" data-r="clpauta" style="animation-delay:140ms;${
+      esperam ? 'border-color:#E3C173;background:#FEFBF4' : ''}">
+      <span style="display:grid;place-items:center">${anel(decid/Math.max(1,total))}</span>
+      <span class="t"><b>Pauta de ${esc(cliAtual().nome)}</b>
+        <span>${total} publicaç${total>1?'ões':'ão'} · ${decid} decidida${decid!==1?'s':''}</span></span>
+      <span class="clpill ${esperam?'q-AWAITING_APPROVAL':'q-APPROVED'}">${
+        esperam ? esperam+' esperando' : 'Tudo decidido'}</span></button>`;
+
+    return html.replace('<h3>Por que dois lotes?</h3>', cartao + '\n    <h3>Por que dois lotes?</h3>');
+  };
+})(clLote);
+
+/* a aba avisa o que espera, somando tudo que está com ele */
+CLTABS.find(x => x.r === 'lote').bd = () => esperando() + txPend() + cardsComCliente().length;
+
+/* ---------- a lista ---------------------------------------------------- */
+function clPauta(){
+  const esperam = cardsComCliente();
+  const outros  = cardsDoCliente().filter(p => !comCliente(p));
+
+  const rotulo = p => {
+    const f = faseDe(p);
+    if(f==='texto_cli') return ['Esperando você · texto','q-AWAITING_APPROVAL'];
+    if(f==='post_cli')  return ['Esperando você','q-AWAITING_APPROVAL'];
+    if(p.ajustePendente) return ['Você pediu alteração','q-CHANGES_REQUESTED'];
+    if(f==='texto_ok')  return ['Texto aprovado','q-APPROVED'];
+    return ['Você aprovou','q-APPROVED'];
+  };
+
+  const linha = (p, i) => { const [txt, cls] = rotulo(p);
+    return `<button class="clrow fu" data-clcard="${p.id}"
+      style="animation-delay:${Math.min(i*45,300)}ms">
+      <span class="t"><b>${esc(p.t)}</b>
+        <span>${esc(p.fmt)} · ${p.data ? esc(rotuloData(p.data)) : 'sem data'} · ${esc(p.hora)}</span></span>
+      <span class="clpill ${cls}">${txt}</span></button>`; };
+
+  return clShell(`<div class="clbody venter">
+    <div class="kick">${esc(cliAtual().nome)} · pauta</div>
+    <h2>${esperam.length ? `${esperam.length} publicaç${esperam.length>1?'ões esperam':'ão espera'} você`
+                         : 'Tudo decidido'}</h2>
+    <p>${esperam.length
+      ? 'A agência escreveu a pauta. Aprove o que estiver certo e peça alteração no que não estiver — os dois são normais, e pedir ajuste não atrasa: ajuda.'
+      : 'Você decidiu tudo que a agência mandou. Dá para rever qualquer publicação aqui.'}</p>
+    ${esperam.length ? `<h3>Esperando você</h3>${esperam.map(linha).join('')}` : ''}
+    ${outros.length ? `<h3>Já decididas</h3>${outros.map(linha).join('')}` : ''}
+  </div>`);
+}
+
+/* ---------- decidir uma ------------------------------------------------ */
+function clCard(){
+  const p = S.pauta.find(x => x.id === S.pcSel);
+  if(!p) return clPauta();
+  const pedindo = S.pcPedindo;
+  const naMao   = comCliente(p);
+  const soTexto = faseDe(p) === 'texto_cli';
+  const ultimo  = (p.alteracoes||[])[ (p.alteracoes||[]).length - 1 ];
+
+  return clShell(`<div class="clbody fix slin">
+    <div class="clhead">
+      <span class="cltag">${ic('img',12)} ${esc(p.fmt)} · ${p.data?esc(rotuloData(p.data)):'sem data'} · ${esc(p.hora)}</span>
+      <b>${esc(p.t)}</b>
+      <span>${soTexto ? 'O texto decide antes da produção começar — mudar palavra é barato, refazer gravação não.'
+                      : 'Publicação pronta para ir ao ar.'}</span></div>
+
+    <div class="clcap leitura"><div class="caplbl">Texto da publicação</div>
+      <div class="clleitura">${esc(p.texto||'—')}</div></div>
+    ${p.cta ? `<div class="clcap leitura"><div class="caplbl">Chamada</div>
+      <div class="clleitura">${esc(p.cta)}</div></div>` : ''}
+
+    ${ultimo && ultimo.oque ? `<div class="notelist">
+      <div class="caplbl" style="color:#B04725">O que você pediu ${
+        p.ajustePendente ? '' : '· já ajustado'}</div>
+      <div class="noteitem"><span class="nn">${(p.alteracoes||[]).length}</span>
+        <span>${esc(ultimo.oque)}</span></div></div>` : ''}
+
+    ${pedindo ? `<div class="clcap"><div class="caplbl">O que precisa mudar?</div>
+      <textarea id="altnota" rows="4" aria-label="O que precisa mudar"
+        placeholder="Escreva com suas palavras. Ex.: a abertura está formal demais."></textarea>
+      <p class="clnote" style="text-align:left;margin-top:8px">A agência recebe isto e vira tarefa
+        na produção dela — não some numa conversa.</p></div>` : ''}
+  </div>
+  <div class="clfoot">
+    ${pedindo
+      ? `<button class="clbtn chg" data-clalt="${p.id}">Enviar o pedido de alteração</button>
+         <button class="clbtn sec" data-clcancelaalt="1" style="margin-top:9px">Voltar</button>`
+      : naMao
+        ? `<button class="clbtn" data-claprova="${p.id}">Aprovar${soTexto?' o texto':''}</button>
+           <button class="clbtn sec" data-clpedir="${p.id}" style="margin-top:9px">Pedir alteração</button>`
+        : `<div style="text-align:center;padding:5px 0 10px">
+             <span class="clpill ${p.ajustePendente?'q-CHANGES_REQUESTED':'q-APPROVED'}"
+               style="font-size:11px">${p.ajustePendente
+                 ? 'A agência está ajustando' : 'Você aprovou'}</span></div>
+           <button class="clbtn" data-r="clpauta">Voltar para a pauta</button>
+           ${p.ajustePendente ? '' :
+             `<button class="clbtn sec" data-clreabrir="${p.id}" style="margin-top:9px">Mudar minha decisão</button>`}`}
+  </div>`);
+}
+
+/* ---------- os cliques do cliente -------------------------------------- */
+addEventListener('click', e => {
+  const t = e.target.closest('[data-clcard],[data-claprova],[data-clpedir],[data-clalt],[data-clcancelaalt],[data-clreabrir]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+
+  if(d.clcard){ S.pcSel=+d.clcard; S.pcPedindo=false; S.route='clcard'; window.scrollTo(0,0); render(); return; }
+  if(d.claprova){ decidirCard(+d.claprova, 'APROVADO'); return; }
+  if(d.clpedir){ S.pcPedindo = true; render(); return; }
+  if(d.clcancelaalt){ S.pcPedindo = false; render(); return; }
+  if(d.clreabrir){
+    const p = S.pauta.find(x=>x.id===+d.clreabrir);
+    if(p) porFase(p, faseDe(p)==='texto_ok' ? 'texto_cli' : 'post_cli');
+    som('toque'); render();
+    toast('Publicação reaberta — decida de novo quando quiser.');
+    return; }
+  if(d.clalt){
+    const nota = (document.getElementById('altnota')?.value||'').trim();
+    if(nota.length < 3){ toast('Escreva o que precisa mudar — a agência precisa saber o quê.'); return; }
+    S.pcPedindo = false;
+    decidirCard(+d.clalt, 'ALTERACAO', nota);
+    return; }
+}, true);
+
+/* ---------- as rotas novas --------------------------------------------- */
+const ROTAS_CL_PAUTA = { clpauta: clPauta, clcard: clCard };
+
+/* A cadeia de `render` tem muitos elos e cada um faz o seu depois do
+   miolo. Em vez de me meter no meio dela, deixo a cadeia inteira rodar e
+   troco o miolo no fim — o único ponto onde ninguém mais escreve por cima. */
+render = (function(orig){
+  return function(){
+    reconciliarAjustes();                 // a produção devolve o que terminou
+    orig();
+    if(S.view === 'client' && ROTAS_CL_PAUTA[S.route]){
+      document.getElementById('root').innerHTML = ROTAS_CL_PAUTA[S.route]();
+      renderLayer(); ctxBar();
+    }
+  };
+})(render);
+
+/* a aba Publicações fica acesa nas telas da pauta */
+clShell = (function(orig){
+  return function(inner){
+    const html = orig(inner);
+    if(S.route === 'clpauta' || S.route === 'clcard')
+      return html.replace(/<button class="[^"]*" data-r="lote">/, '<button class="on" data-r="lote">');
+    return html;
+  };
+})(clShell);
+
+/* ---------- no Ensaio, a tarefa diz de onde veio ------------------------ */
+/* O cartão já mostra "card da pauta · <fase>". Falta dizer que este pedido
+   veio do CLIENTE — é o que faz o gestor priorizar certo — e trazer o
+   pedido na íntegra, que evita a segunda volta por mal-entendido.
+   O cartão é uma closure dentro de `agEnsaio`; embrulho a tela e marco
+   os cartões pelo id, que já vem no `data-entar`. */
+agEnsaio = (function(orig){
+  return function(){
+    let html = orig();
+    if(!S.ensaio) return html;
+    for(const t of S.ensaio.tarefas){
+      if(!t.doCliente) continue;
+      const etiqueta = `<span class="enDoCliente">${ic('warn',10)} pedido do cliente</span>`
+        + (t.pedido ? `<span class="enPedido">“${esc(t.pedido)}”</span>` : '');
+      html = html.replace(`<div class="enCard" data-entar="${t.id}"`,
+        `<div class="enCard doCliente" data-entar="${t.id}"`);
+      html = html.replace(new RegExp(`(data-entar="${t.id}"[^>]*>\\s*<div class="tit">)`),
+        `$1${etiqueta}`);
+    }
+    return html;
+  };
+})(agEnsaio);
+</script>
+<style>
+/* ---------- v55 · o fluxo de alteração --------------------------------- */
+
+/* o pedido do cliente, com as palavras dele, no card da pauta */
+.apNota{ display:flex; gap:7px; align-items:flex-start; margin-top:9px;
+  padding:9px 11px; border-radius:10px; font-size:12.5px; line-height:1.45;
+  color:#F0C3AE; border:1px solid rgba(240,120,76,.32);
+  background:rgba(240,120,76,.07) }
+.apNota b{ color:var(--coral); font-weight:600 }
+.apNota svg{ flex:0 0 auto; margin-top:2px }
+.apNota.feito{ color:var(--ink-200); border-color:rgba(53,184,122,.28);
+  background:rgba(53,184,122,.06) }
+.apNota.feito b{ color:var(--encore) }
+
+/* o botão de enviar é a ação de consequência: latão (D-018) */
+.ptQuick.ptEnviar{ color:var(--brass-400); border-color:var(--brass-700);
+  background:rgba(200,150,58,.08) }
+.ptQuick.ptEnviar:hover{ color:var(--brass-300); border-color:var(--brass-500) }
+
+/* a faixa de envio, no topo da pauta */
+.envioBar{ display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  padding:14px 16px; margin:0 0 14px; border-radius:14px;
+  border:1px solid var(--ink-800); background:var(--ink-900) }
+.envioBar .t{ display:grid; gap:3px; margin-right:auto; min-width:0 }
+.envioBar .t b{ font-size:14.5px; color:var(--ink-50); font-weight:600 }
+.envioBar .t span{ font-size:12px; color:var(--ink-400) }
+.envioBar .t span b{ color:var(--ink-100); font-size:inherit }
+.envioBar .t span b.alt{ color:var(--coral) }
+.envioBar .t span b.ok{ color:var(--encore) }
+
+/* o chip do filtro novo */
+.ptFiltros button.chipAlt{ color:var(--coral); border-color:rgba(240,120,76,.35) }
+.ptFiltros button.chipAlt b{ color:var(--coral) }
+.ptFiltros button.chipAlt.on{ background:rgba(240,120,76,.12);
+  border-color:rgba(240,120,76,.6) }
+
+/* a lista do modal de envio */
+.envioLista{ max-height:190px; overflow-y:auto; margin:12px 0 4px;
+  border:1px solid var(--ink-800); border-radius:11px }
+.envioLista div{ display:flex; justify-content:space-between; gap:12px;
+  padding:9px 12px; font-size:12.5px; border-bottom:1px solid var(--ink-850) }
+.envioLista div:last-child{ border-bottom:0 }
+.envioLista i{ font-style:normal; font-family:var(--mono); font-size:10.5px;
+  color:var(--ink-400); white-space:nowrap }
+
+/* o texto do card, do lado do cliente. A `.clcap` normal é uma caixa de
+   edição que cresce para ocupar a coluna; esta é de leitura e abraça o
+   conteúdo — senão sobra meia tela de vazio embaixo de duas linhas. */
+.clcap.leitura{ flex:0 0 auto; min-height:0; overflow:visible }
+.clleitura{ font-size:14.5px; line-height:1.6; color:#17181C; white-space:pre-wrap }
+
+/* a tarefa que veio do cliente, no Ensaio */
+.enCard.doCliente{ border-color:rgba(240,120,76,.45) }
+.enDoCliente{ display:flex; align-items:center; gap:5px;
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.07em;
+  text-transform:uppercase; color:var(--coral); margin-bottom:5px }
+.enPedido{ display:block; font-size:11.5px; line-height:1.4; font-weight:400;
+  color:var(--ink-300); font-style:italic; margin:0 0 6px }
+
+@media (max-width:520px){
+  .envioBar{ padding:12px 13px }
+  .envioBar .b{ width:100% }
+}
+</style>

@@ -867,6 +867,31 @@ o cliente nao precisa saber quanto a agencia paga nem quantos assentos ela tem.
 
 ---
 
+# D-075 · Produto · Aprovada
+**Data:** 2026-08-30 · **Responsável:** Founder · **Categoria:** Fluxo de alteração
+**Pergunta:** o card da pauta vira a unidade de aprovacao, ou continua sendo plano e
+alimenta o lote de pecas que ja existe?
+**Contexto:** o prototipo tinha dois mundos que nao se falavam. A pauta (onde a agencia
+escreve, com data, hora, plataforma e texto) e o lote de pecas (onde o cliente aprova, com
+versao, selo e termo). O card ja tinha ONZE fases — `rascunho` a `postado`, com duas
+paradas no cliente — e um registro de `alteracoes`; o Ensaio ja ligava tarefa a card por
+`cardId`. Faltavam tres elos: um botao de enviar na pauta, uma tela onde o cliente
+recebesse o que chegava, e o caminho de volta da decisao.
+**Decisao do founder:** **o card e a unidade.** Ele e escrito, enviado, decidido e volta
+com status, no mesmo objeto. O lote de pecas segue como esta, para o ciclo de copy e arte
+do Verao 26.
+**Consequencia:** nenhum campo novo de status — quem manda continua sendo `fase`, e o
+pedido do cliente entra em `alteracoes`, que ja existia. Enviar move o card para
+`texto_cli` ou `post_cli` conforme ele ja tenha texto aprovado (D-042 no card). Aprovar
+leva a `texto_ok`/`aprovado`; pedir alteracao devolve a `criado`/`producao` e **abre uma
+tarefa no Inbox do Ensaio**, marcada como pedido do cliente. Concluida a tarefa, o card
+volta a poder ser enviado, com o pedido anterior a vista.
+**Risco aceito:** passam a existir dois lugares onde o cliente decide (o lote de pecas e a
+pauta). Mitigado colocando os dois atras da MESMA aba Publicacoes — uma porta, os lotes por
+dentro. Se a fusao das duas colecoes acontecer um dia, e por aqui que ela comeca.
+
+---
+
 ## Decisões Futuras
 
 Adicionar seguindo o padrão D-073, D-074...
