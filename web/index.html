@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-30 21:59 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-30 22:12 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -839,7 +839,7 @@ function precos(){
 
 function vSite(){ return `<div class="site">
 <nav class="snav" id="snav">
-  <div class="logo">${LOGO('#C8963A')}<b>Maestro</b></div>
+  <div class="logo">${LOGO('var(--brass-500)')}<b>Maestro</b></div>
   <div class="sp"></div>
   <a href="#" class="hide" data-scroll="como">Como funciona</a>
   <a href="#" class="hide" data-scroll="dif">O que muda</a>
@@ -850,7 +850,7 @@ function vSite(){ return `<div class="site">
 <header class="hero">
   <svg class="heroM" viewBox="0 0 260 240">
     <!-- o gesto do founder; o path vem de docs/BRAND/assets/logo/tracar-gesto.py -->
-    <path fill="#C8963A" transform="translate(10 62.5)" d="${GESTO_D}"/></svg>
+    <path style="fill:var(--brass-500)" transform="translate(10 62.5)" d="${GESTO_D}"/></svg>
   <div class="wrapc inner">
     <div class="batonwrap fu"><svg viewBox="-6 -6 252 137" width="130" height="71">
       <g class="gz"><path fill="var(--brass-500)" d="${GESTO_D}"/></g></svg></div>
@@ -993,7 +993,7 @@ function vSite(){ return `<div class="site">
 </div></section>
 
 <footer class="sfoot"><div class="wrapc">
-  <div class="logo" style="margin-bottom:12px">${LOGO('#4C535D')}
+  <div class="logo" style="margin-bottom:12px">${LOGO('var(--ink-500)')}
     <b style="color:var(--ink-500);font-size:18px">Maestro</b></div>
   O sistema operacional para agências e equipes criativas.<br>
   Protótipo navegável · não é o produto em produção.
@@ -1001,7 +1001,7 @@ function vSite(){ return `<div class="site">
 </div>`; }
 
 function vGate(){ return `<div class="gate"><div class="gatebox">
-  <div class="logo fu" style="justify-content:center;margin-bottom:24px">${LOGO('#C8963A',30)}<b style="font-family:var(--serif);font-size:23px;font-weight:400;color:var(--ink-50)">Maestro</b></div>
+  <div class="logo fu" style="justify-content:center;margin-bottom:24px">${LOGO('var(--brass-500)',30)}<b style="font-family:var(--serif);font-size:23px;font-weight:400;color:var(--ink-50)">Maestro</b></div>
   <h1 class="fu" style="animation-delay:60ms">Como você entra?</h1>
   <p class="fu" style="animation-delay:120ms">Os dois lados são o mesmo produto — e são experiências
     deliberadamente diferentes.</p>
@@ -1054,7 +1054,7 @@ function agShell(inner){
   const tabs = AGTABS.map(x=>`<button class="tab ${S.route===x.r?'on':''}" data-r="${x.r}">
       ${ic(x.icn)}${x.n}${x.bd&&x.bd()>0?`<span class="bd">${x.bd()}</span>`:''}</button>`).join('');
   return `<div class="app ag">
-    <aside class="aside"><div class="lg">${LOGO('#C8963A')}<b>Maestro</b></div>${side}</aside>
+    <aside class="aside"><div class="lg">${LOGO('var(--brass-500)')}<b>Maestro</b></div>${side}</aside>
     <main class="main"><div class="venter">${inner}</div></main>
   </div><nav class="tabbar">${tabs}</nav>`;
 }
@@ -1363,7 +1363,7 @@ function clShell(inner){
   const tabs = CLTABS.map(x=>`<button class="${(S.route===x.r||(rotaLote&&x.r==='lote')||(S.route==='resultados'&&x.r==='projeto'))?'on':''}" data-r="${x.r}">
     ${ic(x.icn)}${x.n}${x.bd&&x.bd()>0?`<span class="bd">${x.bd()}</span>`:''}</button>`).join('');
   return `<div class="cl"><div class="clframe">
-    <div class="clbar">${LOGO('#855F22',17)}
+    <div class="clbar">${LOGO('var(--brass-700)',17)}
       <div class="who"><b>Agência Nova</b> usa a Maestro</div>
       <span style="font-size:11px;color:#6E6A61">Helena</span></div>
     ${inner}
@@ -1654,7 +1654,7 @@ function ctxBar(){
   const snd = `<button class="ctxbtn" data-sndtoggle="1" aria-label="${S.sound?'Desligar sons':'Ligar sons'}"
     title="Sons da marca (Lá 440)">${ic(S.sound?'sndon':'sndoff',15)}</button>`;
   if(S.view==='site'){
-    el.innerHTML = `<span style="display:inline-flex;align-items:center;gap:8px">${LOGO('#4C535D',15)}
+    el.innerHTML = `<span style="display:inline-flex;align-items:center;gap:8px">${LOGO('var(--ink-500)',15)}
       protótipo navegável</span><span class="sp"></span>${snd}
       <button class="ctxbtn" data-go="entrar">Entrar ${ic('arrowr',12)}</button>`;
     return;
@@ -3052,7 +3052,7 @@ function clShell(inner){
   const tabs = CLTABS.map(x=>`<button class="${(S.route===x.r||(grupoLote&&x.r==='lote')||((S.route==='resultados'||S.route==='agenda')&&x.r==='projeto'))?'on':''}" data-r="${x.r}">
     ${ic(x.icn)}${x.n}${x.bd&&x.bd()>0?`<span class="bd">${x.bd()}</span>`:''}</button>`).join('');
   return `<div class="cl"><div class="clframe">
-    <div class="clbar">${LOGO('#855F22',17)}
+    <div class="clbar">${LOGO('var(--brass-700)',17)}
       <div class="who"><b>Agência Nova</b> usa a Maestro</div>
       <span style="font-size:11px;color:#6E6A61">Helena</span></div>
     ${inner}
@@ -15680,7 +15680,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v70 · 30 ago · as cores';
+const VERSAO_PROTOTIPO = 'v71 · 30 ago · a abertura';
 
 menuSheet = (function(orig){
   return function(){
@@ -16862,12 +16862,12 @@ modalVer = (function(orig){
   animation:none !important;
 }
 /* as mesmas cores de antes, agora preenchendo em vez de riscando */
-#flash .mgest path{ fill:var(--brass-300) !important; fill-opacity:.85 }
-.mDesenho path, .mDesenho.mPauta path{ fill:var(--brass-400) !important }
+#flash .mgest path{ fill:var(--brass-500) !important; fill-opacity:.85 }
+.mDesenho path, .mDesenho.mPauta path{ fill:var(--brass-500) !important }
 /* a medalha mantém a cor que já tinha. O disco de ouro dela não chega a
    renderizar hoje (defeito anterior a esta mudança, igual antes e
    depois), então a marca precisa continuar clara para existir na tela. */
-.medal .mm{ fill:var(--brass-300) !important }
+.medal .mm{ fill:var(--brass-500) !important }
 
 @keyframes gestoRevela{ from{ clip-path:inset(0 100% 0 0) } to{ clip-path:inset(0 -4% 0 0) } }
 #flash .mgest.go .gz{ animation:gestoRevela 1.05s var(--eo) .05s both }
@@ -16888,7 +16888,7 @@ LOGO_PAUTA_PATHS = () =>
 
 LOGO = (c, s=26) =>
   `<svg width="${(s*1.84).toFixed(1)}" height="${s}" viewBox="-6 -6 252 137" aria-hidden="true"
-    ><path fill="${c}" d="${GESTO_D}"/></svg>`;
+    ><path style="fill:${c}" d="${GESTO_D}"/></svg>`;
 
 if(typeof render === 'function') render();
 </script>
@@ -16923,4 +16923,33 @@ if(typeof render === 'function') render();
    ================================================================== */
 .hero .batonwrap{ width:130px }
 .hero .batonwrap .gz{ animation:gestoRevela 1.1s var(--eo) .15s both }
+</style>
+
+<style>
+/* =====================================================================
+   v71 — A SAÍDA DA CORTINA.
+
+   A coreografia antiga mergulhava o símbolo pela partitura: rotateX de
+   70 graus com scale 5.2, mais um plano de linhas correndo em 3D. Foi
+   desenhada para um M quadrado e simétrico. O gesto é largo e
+   assimétrico — girado e ampliado daquele jeito ele se esparrama pela
+   tela, e as linhas por trás completam o estrago. Era isso o "bug de
+   tela" ao abrir.
+
+   No lugar: o gesto abre e se dissolve na aplicação. E o plano de
+   linhas sai, como já saiu da medalha — ele era o motivo do símbolo
+   anterior.
+   ================================================================== */
+.pauta3d{ display:none !important }
+@keyframes gestoSai{
+  0%  { transform:none; opacity:1 }
+  60% { opacity:.85 }
+  100%{ transform:scale(1.32); opacity:0 }
+}
+#abertura.mergulho .mDesenho.mPauta{
+  animation:gestoSai 1.05s cubic-bezier(.4,0,.15,1) forwards !important;
+  filter:drop-shadow(0 0 20px rgba(255,200,87,.32)) }
+@media (prefers-reduced-motion:reduce){
+  #abertura.mergulho .mDesenho.mPauta{ animation:none !important; opacity:0 }
+}
 </style>
