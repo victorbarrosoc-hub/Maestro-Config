@@ -1166,7 +1166,9 @@ classes 9 e 42, e adotar `usemaestro.com` ou `maestro.studio`.
 - **Português do Brasil** em tudo: código, comentário, commit, conversa.
 - Commits em Conventional Commits, sem acento no corpo (o shell reclama).
 - Nunca desenvolver direto na `main` daqui em diante — o histórico até aqui é
-  fundação.
+  fundação. Mas **terminar sempre levando para a `main`**: é dela que o Vercel
+  publica, e é no celular que o fundador testa. Branch de trabalho para
+  escrever, `main` para publicar. Ver `CLAUDE.md §Como publicar`.
 
 ---
 

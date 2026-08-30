@@ -207,6 +207,31 @@ Priorizar escalabilidade, simplicidade e UX.
 
 ---
 
+## Como publicar — **sempre levar até o fim**
+
+O fundador testa no celular. Trabalho que ficou numa branch de trabalho, por
+melhor que esteja, **não existe para ele**. Toda entrega vai até o ar, sem
+esperar autorização a cada rodada:
+
+1. Desenvolver na branch de trabalho (nunca escrever direto na `main`).
+2. Rodar a verificação — o protótipo num browser de verdade, a API nos testes.
+3. `git push` na branch de trabalho.
+4. **Trazer a `main` para dentro da branch, resolver o que conflitar, e levar
+   para a `main`.** É a `main` que o Vercel publica; sem esse passo o Vercel
+   fica parado e parece quebrado.
+5. Regerar `web/index.html` (`bash web/build.sh`) — ele é gerado, nunca
+   editado à mão, e é o que o Vercel serve.
+6. Republicar o artifact no mesmo link.
+
+> **O que já custou uma noite:** oito commits verificados ficaram numa branch
+> que o Vercel não serve. Do lado de fora a leitura foi "não subiu" — três
+> vezes. O passo 4 é o que impede isso.
+
+Ao mudar o protótipo, subir o `VERSAO_PROTOTIPO` (rodapé do Menu). É como o
+fundador confere, em uma batida, se a tela que ele está vendo é a atual.
+
+---
+
 ## Mapa da documentação
 
 ```
