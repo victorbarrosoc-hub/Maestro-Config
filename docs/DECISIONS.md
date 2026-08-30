@@ -892,6 +892,41 @@ dentro. Se a fusao das duas colecoes acontecer um dia, e por aqui que ela comeca
 
 ---
 
+# D-076 · Produto · Aprovada
+**Data:** 2026-08-30 · **Responsável:** Founder · **Categoria:** Card único
+**Pergunta:** como a pauta do cliente e o quadro de produção falam, sem que a agência
+precise criar um card em cada lugar?
+**Contexto:** o founder descreveu a dor com precisão: "o problema maior das agências é
+ficar criando cards específicos pra cada coisa, e isso acaba confundindo muito em qual
+card é o que". No protótipo já havia dois campos dizendo a mesma coisa — `p.fase` (as
+onze fases do card, D-075) e `t.col` (a coluna PDCA da tarefa do Ensaio) — cada um
+podendo discordar do outro. Sincronizar cópias sempre deixa uma para trás.
+**Decisão do founder:** **um card só, duas voltas.** A coluna do quadro deixa de ser um
+campo e passa a ser uma LEITURA da fase do card. Arrastar no quadro escreve a fase; a
+pauta e o quadro passam a ser duas lentes do mesmo objeto.
+**Consequência:**
+- Mapa fixo fase → coluna. **1ª volta = o texto** (`criado` Do · `revisao` Check ·
+  `texto_cli` Com o cliente · `texto_ok` Act). **2ª volta = a peça** (`producao` Do ·
+  `revisao2` Check · `post_cli` Com o cliente · `aprovado` Act). O mesmo card dá as duas
+  voltas — que é o que o PDCA sempre foi: um ciclo, não uma esteira.
+- Entra uma sexta coluna, **Com o cliente**, e ela é travada: ninguém da agência move um
+  card de lá. Só a decisão do cliente move. A regra vira desenho, não aviso.
+- Não se pula o cliente: arrastar para Act antes da decisão é recusado com a razão.
+- **O calendário é o Plan.** Card em `rascunho` vive na semana da pauta — que é a leitura
+  de que o founder gosta — e entra no quadro quando alguém começa. Setenta cards da EJUP
+  em uma coluna seriam um paredão, não um quadro.
+- Pedido de alteração **não cria card**: devolve *este* para Do, em vermelho, com as
+  palavras do cliente coladas nele.
+- Categorias (Marketing · Financeiro · Sócios · Administrativo · Controle) separam
+  assunto, não fluxo: todas passam pelo mesmo PDCA. As restritas (Financeiro, Sócios,
+  Controle) só abrem para o responsável, para quem foi marcado em "quem pode ver" e para
+  os sócios. Fora de Marketing não existe a coluna do cliente — assunto interno não sai.
+**Risco aceito:** a fase passa a ser escrita de dois lugares (o card e o arrasto). Como
+os dois escrevem no MESMO campo, não há divergência possível — o risco é de gesto, não
+de dado, e é mitigado pelas recusas explicadas.
+
+---
+
 ## Decisões Futuras
 
 Adicionar seguindo o padrão D-073, D-074...

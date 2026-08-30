@@ -1,9 +1,32 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.8
+Version: 0.5.9
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.9 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** um card só — a coluna do quadro passa a ser a fase do card (D-076).
+
+### Mudado
+- **O Ensaio e a pauta passam a ser o mesmo objeto.** `t.col` deixou de ser um campo e
+  virou leitura de `p.fase`. Arrastar no quadro muda a fase na pauta; mudar a fase na
+  pauta move o cartão no quadro. Não há mais cópia para sincronizar.
+- Sexta coluna **Com o cliente**, travada para a agência. Quem move de lá é a decisão
+  do cliente.
+- Selo **1ª volta · texto** / **2ª volta · peça** no cartão, com a trilha das onze fases.
+- Pedido de alteração deixou de abrir uma tarefa nova: devolve o próprio card para Do,
+  em vermelho, com o texto do pedido.
+- O Inbox some em Marketing quando está vazio — card de conteúdo nasce na pauta.
+
+### Adicionado
+- Categorias **Administrativo** e **Controle** no Ensaio, com sementes.
+- `c.restrita` na categoria: a privacidade passou a ser propriedade da categoria, não
+  uma lista de nomes no meio da função.
 
 ---
 
