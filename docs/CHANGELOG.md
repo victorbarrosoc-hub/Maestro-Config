@@ -1,9 +1,31 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.10
+Version: 0.5.11
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.11 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** o player chegar em quem precisa dele.
+
+### Corrigido
+- **O cliente nunca conseguiu assistir ao vídeo que ia aprovar.** O visualizador só
+  abria pela grade da tela *Material* — que é da agência. No card, o vídeo era uma
+  miniatura de 46px sem toque ligado, e é o único lugar onde o cliente vê o arquivo.
+  Agora as duas tiras (a da linha da pauta e a do card aberto) abrem o visualizador,
+  no arquivo tocado.
+- A miniatura de vídeo ganhou selo de play — antes se passava por foto.
+- Arquivo sem `url` (voltou do armazenamento, o blob ainda não foi reidratado) deixava
+  de ser clicável na tela Material e virava `<video src="null" controls>` no
+  visualizador: um retângulo preto com controles que não tocam nada, que lê como
+  defeito do vídeo. Agora abre, **diz** que o arquivo não está neste aparelho e tenta
+  buscá-lo de volta.
+- Deslocamento antigo: `data-mtdel` conta os links, o visualizador não. Com um link no
+  meio dos anexos, tocar numa miniatura abria o arquivo errado.
 
 ---
 
