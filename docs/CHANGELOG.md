@@ -1,9 +1,36 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.16
+Version: 0.5.17
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.17 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** terceira audição de símbolo — massa, não traço — e a audição de tipografia.
+
+### Adicionado
+- Quatro símbolos novos, de forma sólida e presença corporativa:
+  **06 O Diapasão** (o Lá 440 em objeto — alinhamento antes da execução),
+  **07 O Ritornelo** (o sinal de repetição: "toca de novo, até ficar redondo" — o ciclo
+  do produto num glifo), **08 A Fermata Sólida** (a favorita da rodada 2 crescida: o arco
+  vira massa, o ponto vira furo) e **09 O Selo** (o M em negativo no squircle — o mesmo
+  formato do selo de aprovação que o produto carimba).
+- **O nome desenhado** — lettering vetorial gerado por função, sem fonte no caminho:
+  L1 Maestro monolinha (círculo, haste e arco — o m com as duas arcadas do gesto),
+  L2 maestro caixa-baixa (rota produto), L3 MAESTRO versal espaçada (rota
+  institucional) e L4 com a fermata pairando sobre o o final.
+- **Vozes prontas** para comparação, seis fontes: Instrument Serif (atual, como
+  régua), Instrument Sans (troca de menor risco), Onest (SaaS grande), Archivo
+  (institucional), Manrope (geométrica) e Fraunces (serifa alternativa, mais quente).
+- **Três chapas** montadas: Fermata Sólida + Onest, O Selo + Archivo, Diapasão +
+  Instrument Sans.
+- Guarda de honestidade: espécime cuja fonte não carregar mostra o aviso em vez de
+  fingir com o fallback.
+- Recapitulação da rodada 2 — os cinco primeiros gestos seguem na mesa.
 
 ---
 
