@@ -1,7 +1,8 @@
 # VISUAL IDENTITY — Maestro
 
-Version: 1.0 · 2026-07-29
+Version: 2.0 · 2026-08-30
 Parte 3 de 5 do Brand Book.
+Revisão 2.0: o símbolo passa a ser **A Pauta** (D-078). Ver §2.
 
 ---
 
@@ -11,79 +12,97 @@ A identidade da Maestro é construída sobre **um gesto, não sobre um instrumen
 
 Não usamos clave de sol, nota musical, fone de ouvido, batuta ilustrada ou partitura. Tudo isso é literal, é clichê e coloca a marca na prateleira errada — a de apps de música.
 
-Usamos o **movimento da regência**: a batida descendente que dá o tempo. É o gesto mais reconhecível do maestro e o mais abstrato dos elementos — vira geometria com facilidade.
+Usamos a **pauta**: em português, a palavra é as duas coisas ao mesmo tempo — as linhas onde a música é escrita, e o calendário editorial, que é o coração da plataforma. O símbolo é esse trocadilho tornado forma.
 
 Três atributos guiam toda decisão visual:
 
-**Preciso** — geometria construída, nada improvisado.
+**Preciso** — geometria gerada por função, nada improvisado.
 **Calmo** — muito espaço, pouco elemento, contraste alto e limpo.
 **Quente** — o latão impede que a precisão vire frieza. É o que separa a Maestro de um dashboard financeiro.
 
 ---
 
-## 2. Símbolo — "M Batuta"
+## 2. Símbolo — "A Pauta"
 
-O símbolo é um monograma **M** cujo vértice central foi substituído pelo **arco descendente da regência**.
+Sete linhas horizontais atravessam o quadro e, no meio do caminho, **sobem juntas**. Onde elas sobem, o **M acontece**.
 
 ```
- ┃            ┃      duas hastes  = os tempos firmes
- ┃            ┃      o arco       = o gesto que os une
- ┗━━━╲   ╱━━━┛
-      ╲_╱            o vale       = a batida (downbeat)
+━━━━━╱▔╲╱▔╲━━━━━      as linhas         = a pauta (e o calendário)
+━━━━━╱▔╲╱▔╲━━━━━      elas subindo      = o M
+━━━━━╱▔╲╱▔╲━━━━━      o vale central    = a batida
 ```
 
-Duas leituras simultâneas:
-1. A letra **M** — reconhecimento imediato do nome.
-2. O **gesto do maestro** — a curva que desce e sobe, marcando o tempo.
+Nada é ilustrado. É exatamente o que um maestro faz com uma orquestra: não emite som, faz todo mundo subir junto.
 
 ### Geometria
 
-Construído em grid de **48 × 48**.
+Área de desenho **viewBox `10 30 240 190`**. Cada linha é o mesmo perfil deslocado no eixo Y.
 
-| Parâmetro | Valor |
-|---|---|
-| Hastes verticais | x = 11 e x = 37 |
-| Topo das hastes | y = 12,5 |
-| Base das hastes | y = 35,5 |
-| Curva central | quadrática, controle em (24; 48,5) |
-| Vale da curva | y = 30,5 |
-| Espessura | 6 (12,5% do grid) |
-| Terminais | arredondados (round cap e round join) |
+| Parâmetro | Versão cheia | Versão reduzida |
+|---|---|---|
+| Linhas | 7 | 3 |
+| Distância entre linhas | 14 | 24 |
+| Espessura | 6,5 | 11 |
+| Primeira linha (`y0`) | 136 | 148 |
+| Amplitude do pico (`A`) | 84 | 84 |
+| Vale central (`V`) | 20 | 20 |
+| Terminais | arredondados | arredondados |
 
-Path canônico:
+Perfil de uma linha: **asa plana → pico → vale raso → pico → asa plana**. O vale central a 20 é a batida — o único ponto em que as linhas quase se reencontram.
 
+Função canônica:
+
+```js
+function pautaPaths(n, grosso){
+  n = n || 7;
+  grosso = grosso || (n <= 4 ? 11 : 6.5);
+  const gap = n <= 4 ? 24 : 14, A = 84, V = 20,
+        y0  = n <= 4 ? 148 : 136;
+  return Array.from({length:n}, (_, i) => {
+    const y = y0 + i * gap;
+    return `M22 ${y} L56 ${y}
+            C74 ${y} 76 ${y-A} 94 ${y-A}
+            C110 ${y-A} 114 ${y-V} 130 ${y-V}
+            C146 ${y-V} 150 ${y-A} 166 ${y-A}
+            C184 ${y-A} 186 ${y} 204 ${y} L238 ${y}`;
+  });
+}
 ```
-M11 35.5V12.5Q24 48.5 37 12.5V35.5
-```
 
-**Nunca redesenhar o símbolo.** Sempre usar os arquivos em `assets/logo/`.
+**Nunca redesenhar o símbolo.** Copiar a função, ou usar os arquivos em `assets/logo/`.
+
+### Redução
+
+Abaixo de **40 px** o símbolo troca de versão: **três linhas**, traço mais grosso, distância maior. Não é o mesmo desenho reduzido — é outra saída da mesma função. Sete linhas em 26 px viram mingau.
 
 ### Área de respiro
 
-A margem mínima ao redor do símbolo é **igual à espessura da haste** (1 unidade `x` = 6 no grid de 48, ou 12,5% da largura total do símbolo).
+A margem mínima ao redor do símbolo é **a altura de um degrau** — a distância entre duas linhas da versão cheia (14 unidades, ou 5,8% da largura do símbolo).
 
 Nada — texto, borda, imagem ou outro logo — invade essa área.
 
-```
-┌─────────────────────────┐
-│         x               │
-│    ┌───────────┐        │
-│  x │  símbolo  │  x     │
-│    └───────────┘        │
-│         x               │
-└─────────────────────────┘
-```
-
 ### Tamanho mínimo
 
-| Contexto | Mínimo |
-|---|---|
-| Símbolo isolado, digital | 20 px |
-| Símbolo isolado, impresso | 6 mm |
-| Lockup horizontal, digital | 120 px de largura |
-| Lockup horizontal, impresso | 32 mm de largura |
+| Contexto | Mínimo | Versão |
+|---|---|---|
+| Símbolo isolado, digital | 20 px | 3 linhas |
+| Símbolo isolado, impresso | 6 mm | 3 linhas |
+| Símbolo em destaque | acima de 40 px | 7 linhas |
+| Lockup horizontal, digital | 120 px de largura | 7 linhas |
+| Lockup horizontal, impresso | 32 mm de largura | 7 linhas |
 
-Abaixo de 20 px, usar o favicon (`assets/icon/favicon.svg`), que tem espessura ajustada para pequenos tamanhos.
+### Movimento próprio
+
+As linhas se traçam **uma a uma, de baixo para cima, 90 ms entre elas** — a ordem em que a orquestra entra. É o único movimento da marca que se repete, e só quando alguém pede: abertura da plataforma, splash, vídeo institucional.
+
+### Os caminhos que perderam
+
+Dois outros gestos foram desenhados antes da decisão e ficam guardados em `exploracao-logo-v2.html`:
+
+- **O Compasso** — o M como equalizador, com o vale central como batida. Perdeu para o conceito, mas sobreviveu como **elemento gráfico de apoio** (§11).
+- **A Frequência** — a marca abstrata, sem letra. Elegante, mas pede uma marca já conhecida.
+
+O símbolo anterior, o **"M Batuta"** (monograma M com o arco descendente no vértice), foi substituído por esta versão. Ver D-078.
 
 ---
 
@@ -108,9 +127,10 @@ O serif carrega a elegância de um programa de concerto — é o que impede a ma
 | `maestro-lockup-horizontal.svg` | Padrão. Site, apresentações, assinatura de e-mail, documentos. |
 | `maestro-lockup-horizontal-dark.svg` | Mesma aplicação sobre fundo escuro. |
 | `maestro-lockup-vertical.svg` | Espaços estreitos e centralizados: crachá, stand, avatar de perfil grande. |
-| `maestro-symbol.svg` | App, favicon, avatar, marca d'água, uso onde o nome já está presente. |
+| `maestro-symbol.svg` | Sete linhas. Uso acima de 40 px, onde o nome já está presente. |
+| `maestro-symbol-3.svg` | Três linhas. Uso abaixo de 40 px: app, favicon, avatar pequeno, bordado. |
 
-**Espaçamento do lockup horizontal:** a distância entre símbolo e wordmark é fixa em **2x** (duas espessuras de haste). Nunca ajustar manualmente.
+**Espaçamento do lockup horizontal:** a distância entre símbolo e wordmark é fixa em **0,38 × a largura do símbolo**; o corpo do wordmark é **0,80 × a largura do símbolo**. Nunca ajustar manualmente.
 
 ---
 
@@ -119,13 +139,15 @@ O serif carrega a elegância de um programa de concerto — é o que impede a ma
 | ✗ | Motivo |
 |---|---|
 | Alterar a proporção (esticar/achatar) | Destrói a geometria |
-| Girar o símbolo | O gesto tem direção; girado, perde o sentido |
+| Girar o símbolo | As linhas são horizontais porque a pauta é horizontal |
 | Aplicar gradiente no símbolo | Brass é uma cor sólida, não um efeito metálico |
 | Efeito metalizado, bisel, brilho | Confunde "latão" com "ouro" — a marca não é luxo, é precisão |
 | Trocar a tipografia do wordmark | — |
 | Usar o símbolo sem área de respiro | — |
 | Colocar o logo sobre foto de baixo contraste | Usar sempre versão sólida sobre área limpa ou overlay |
 | Contornar (outline) o símbolo | — |
+| Usar sete linhas abaixo de 40 px | As linhas se fecham e o símbolo vira mancha — usar a versão de três |
+| Alterar o número de linhas fora de 7 e 3 | São as duas únicas saídas previstas da função |
 | Adicionar tagline dentro do lockup | Tagline é elemento separado |
 | Usar Brass sobre Coral, Encore ou Violet | Contraste insuficiente e ruído cromático |
 

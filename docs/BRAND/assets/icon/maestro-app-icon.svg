@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Maestro">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"
+     role="img" aria-label="Maestro">
   <title>Maestro — App icon</title>
   <defs>
     <linearGradient id="canvas" x1="0" y1="0" x2="0" y2="1">
@@ -6,11 +7,11 @@
       <stop offset="1" stop-color="#08090B"/>
     </linearGradient>
   </defs>
-  <!-- Squircle (superelipse aproximada) -->
   <path d="M256 0C74 0 0 74 0 256s74 256 256 256 256-74 256-256S438 0 256 0Z" fill="url(#canvas)"/>
-  <g transform="translate(101.3 101.3) scale(6.4444)">
-    <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5"
-          fill="none" stroke="#D9AC4C" stroke-width="6"
-          stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(77.25 84.25) scale(1.375)" fill="none" stroke="#D9AC4C"
+     stroke-width="11" stroke-linecap="round">
+    <path d="M22 148 L56 148 C74 148 76 64 94 64 C110 64 114 128 130 128 C146 128 150 64 166 64 C184 64 186 148 204 148 L238 148"/>
+    <path d="M22 172 L56 172 C74 172 76 88 94 88 C110 88 114 152 130 152 C146 152 150 88 166 88 C184 88 186 172 204 172 L238 172"/>
+    <path d="M22 196 L56 196 C74 196 76 112 94 112 C110 112 114 176 130 176 C146 176 150 112 166 112 C184 112 186 196 204 196 L238 196"/>
   </g>
 </svg>

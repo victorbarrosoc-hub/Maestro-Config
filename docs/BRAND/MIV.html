@@ -39,6 +39,17 @@ body{
 :focus-visible{outline:2px solid var(--brass-400); outline-offset:3px; border-radius:4px}
 a{color:var(--brass-300)}
 
+/* ---------- a marca: marcadores declarativos ---------------------------- */
+/* A Pauta é gerada por função, nunca redesenhada. No HTML entra só o
+   marcador; o desenho vem do mesmo código que a plataforma usa. */
+.mk{ display:inline-block; line-height:0 }
+.mk svg{ display:block; width:100%; height:auto; overflow:visible }
+/* lockup: símbolo + wordmark, com o afastamento fixo de 0,38x */
+.lk{ display:inline-flex; align-items:center; line-height:1 }
+.lk b{ font-family:var(--display); font-weight:400; letter-spacing:.2px; white-space:nowrap }
+.lk[data-lk="dark"] b{ color:var(--ink-50) }
+.lk[data-lk="light"] b{ color:#08090B }
+
 /* ---------- a régua de tempo: progresso do manual ---------------------- */
 #regua{
   position:fixed; inset:0 0 auto 0; height:3px; z-index:80;
@@ -457,6 +468,181 @@ td.mono,th.mono{ font-family:var(--mono); font-size:12px }
 .shell .rotShell{ font-family:var(--mono); font-size:9px; letter-spacing:.12em;
   text-transform:uppercase }
 
+/* ---------- mockups: cenas e objetos ------------------------------------- */
+/* Renders vetoriais. Materialidade vem de gradiente, ruído e sombra —
+   nenhuma imagem externa, tudo viaja com o arquivo. */
+.cena{ position:relative; border-radius:18px; overflow:hidden;
+  border:1px solid var(--ink-800); background:var(--ink-950) }
+
+/* 01 · escritório */
+.cena.escritorio{ aspect-ratio:16/9 }
+.escritorio .parede{ position:absolute; inset:0 0 30% 0;
+  background:linear-gradient(180deg,#171B22 0%,#101319 55%,#0A0C11 100%) }
+.escritorio .parede::after{ content:''; position:absolute; inset:0;
+  background:linear-gradient(100deg,rgba(255,255,255,.05),transparent 45%) }
+.escritorio .brilho{ position:absolute; left:8%; top:16%; width:46%; height:46%;
+  background:radial-gradient(closest-side,rgba(200,150,58,.30),transparent 72%);
+  filter:blur(14px) }
+.escritorio .letreiro{ position:absolute; left:10%; top:26%; display:flex;
+  align-items:center; gap:min(3vw,22px); z-index:2 }
+.escritorio .letreiro b{ font-family:var(--display); font-weight:400;
+  font-size:clamp(26px,4.6vw,54px); color:#F0DCAE; letter-spacing:.3px;
+  text-shadow:0 0 26px rgba(200,150,58,.55) }
+.escritorio .letreiro .mk{ filter:drop-shadow(0 0 16px rgba(200,150,58,.6)) }
+.escritorio .piso{ position:absolute; inset:70% 0 0 0;
+  background:linear-gradient(180deg,#0C0E13,#06070A) }
+.escritorio .piso::before{ content:''; position:absolute; left:8%; top:0; width:46%; height:60%;
+  background:radial-gradient(ellipse at top,rgba(200,150,58,.16),transparent 70%);
+  filter:blur(8px) }
+.escritorio .balcao{ position:absolute; right:7%; bottom:8%; width:34%; height:30%;
+  background:linear-gradient(180deg,#171B21,#0B0D12); border-radius:6px 6px 3px 3px;
+  box-shadow:0 20px 40px rgba(0,0,0,.6) }
+.escritorio .balcao .tampo{ position:absolute; inset:0 -3% auto -3%; height:9px;
+  background:linear-gradient(180deg,#3A3125,#241E15); border-radius:4px }
+.escritorio .planta{ position:absolute; left:4%; bottom:9%; display:flex; align-items:flex-end;
+  gap:5px; opacity:.75 }
+.escritorio .planta i{ display:block; width:4px; border-radius:99px;
+  background:linear-gradient(180deg,#2C3A2A,#121A12) }
+.escritorio .planta i:nth-child(1){ height:14% }
+.escritorio .planta i:nth-child(2){ height:21% }
+.escritorio .planta i:nth-child(3){ height:11% }
+.escritorio .luz{ position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(120% 60% at 22% -10%,rgba(255,214,150,.10),transparent 60%) }
+
+/* 02 · empena */
+.cena.empena{ aspect-ratio:16/9 }
+.empena .ceu{ position:absolute; inset:0;
+  background:linear-gradient(180deg,#14203A 0%,#101828 42%,#0A0E16 78%,#07090D 100%) }
+.empena .predios{ position:absolute; inset:auto 0 12% 0; display:flex; align-items:flex-end;
+  gap:2%; padding:0 4% }
+.empena .predios i{ display:block; flex:1; background:#0A0C11;
+  border-top:1px solid #161B24;
+  background-image:radial-gradient(circle,rgba(214,168,80,.42) .9px,transparent 1.4px);
+  background-size:13px 17px; background-position:6px 9px }
+.empena .predios i:nth-child(1){ height:34% } .empena .predios i:nth-child(2){ height:52% }
+.empena .predios i:nth-child(3){ height:26% } .empena .predios i:nth-child(4){ height:44% }
+.empena .predios i:nth-child(5){ height:30% }
+.empena .predioDono{ position:absolute; left:5%; top:8%; width:41%; bottom:12%;
+  background:linear-gradient(170deg,#12161D,#080A0E); border-right:1px solid #1A1F27;
+  box-shadow:0 0 60px rgba(0,0,0,.6);
+  background-image:radial-gradient(circle,rgba(214,168,80,.16) .9px,transparent 1.4px);
+  background-size:15px 19px }
+.empena .painelOut{ position:absolute; left:8.5%; top:13%; width:35%; padding:4% 4.5% 5%;
+  background:linear-gradient(160deg,#12151B,#08090B); border:1px solid #1D222A;
+  border-radius:4px; box-shadow:0 28px 60px rgba(0,0,0,.65);
+  transform:perspective(1100px) rotateY(-13deg) rotateX(2deg); transform-origin:left center;
+  display:flex; flex-direction:column; gap:5% }
+.empena .painelOut b{ font-family:var(--display); font-weight:400;
+  font-size:clamp(16px,2.7vw,32px); color:#F4F6F8; line-height:1 }
+.empena .painelOut .tag{ font-family:var(--mono); font-size:clamp(5px,.62vw,8px);
+  letter-spacing:.14em; text-transform:uppercase; color:var(--brass-400); line-height:1.7 }
+.empena .painelOut .holo{ position:absolute; inset:auto 8% -14% 8%; height:26%;
+  background:radial-gradient(ellipse at top,rgba(255,214,150,.22),transparent 70%);
+  filter:blur(6px) }
+.empena .rua{ position:absolute; inset:auto 0 0 0; height:12%;
+  background:linear-gradient(180deg,#0B0D11,#050608) }
+
+/* 03 · o aparelho */
+.fone{ position:relative; width:100%; max-width:186px; aspect-ratio:9/19.5;
+  border-radius:30px; border:5px solid #22262E; background:#05060A; padding:4px;
+  box-shadow:0 22px 46px rgba(0,0,0,.55), inset 0 0 0 1px #33383F; justify-self:center }
+.fone .ilha{ position:absolute; top:11px; left:50%; transform:translateX(-50%);
+  width:52px; height:14px; border-radius:99px; background:#04050A; z-index:3 }
+.telaF{ width:100%; height:100%; border-radius:25px; overflow:hidden; position:relative;
+  display:flex; flex-direction:column }
+.telaF.trava{ background:linear-gradient(165deg,#1B2534 0%,#0E1420 55%,#07090E 100%);
+  align-items:center; padding:44px 10px 12px }
+.telaF.trava .hora{ font-family:var(--sans); font-size:44px; font-weight:500; color:#fff;
+  line-height:1; letter-spacing:-.02em }
+.telaF.trava .hora span{ opacity:.6 }
+.telaF.trava .dataF{ font-size:9.5px; color:rgba(255,255,255,.62); margin-top:5px }
+.telaF.trava .aviso{ margin-top:auto; width:100%; display:flex; gap:8px; align-items:flex-start;
+  padding:9px 10px; border-radius:14px; background:rgba(255,255,255,.13);
+  backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.08) }
+.telaF.trava .aviso b{ display:block; font-size:8.5px; color:#fff; margin-bottom:2px }
+.telaF.trava .aviso span:last-child{ font-size:8.5px; line-height:1.35;
+  color:rgba(255,255,255,.82) }
+.telaF.inicio{ background:linear-gradient(165deg,#1a2230,#0b0e14); padding:34px 12px 10px }
+.gradeApps{ display:grid; grid-template-columns:repeat(4,1fr); gap:11px 8px }
+.ap{ display:block; text-align:center }
+.ap .ic{ display:grid; place-items:center; aspect-ratio:1; border-radius:22%;
+  background:rgba(255,255,255,.09) }
+.ap .ic.maestro{ border-radius:22%; background:linear-gradient(180deg,#181B20,#08090B);
+  box-shadow:0 3px 9px rgba(0,0,0,.55), inset 0 0 0 .5px #23272E }
+.ap small{ display:block; font-size:6px; color:#fff; margin-top:3px; opacity:.9 }
+.doca{ margin-top:auto; display:flex; gap:8px; padding:7px; border-radius:16px;
+  background:rgba(255,255,255,.10) }
+.doca i{ flex:1; aspect-ratio:1; border-radius:22%; background:rgba(255,255,255,.14) }
+.telaF.app{ background:var(--ink-950); padding:32px 9px 10px; gap:6px }
+.barraApp{ display:flex; justify-content:center; padding-bottom:8px;
+  border-bottom:1px solid var(--ink-800); margin-bottom:4px }
+.linhaApp{ display:flex; align-items:center; gap:6px; padding:7px 8px; border-radius:9px;
+  background:var(--ink-900); font-size:7.5px; color:var(--ink-100) }
+.linhaApp span{ flex:1 }
+.linhaApp .pill{ font-family:var(--mono); font-size:5.5px; letter-spacing:.06em; padding:3px 5px;
+  border-radius:99px; text-transform:uppercase; font-style:normal; white-space:nowrap }
+.linhaApp .pill.br{ background:rgba(200,150,58,.18); color:var(--brass-300) }
+.linhaApp .pill.co{ background:rgba(91,141,239,.18); color:var(--cobalt) }
+.linhaApp .pill.en{ background:rgba(53,184,122,.18); color:var(--encore) }
+.botaoApp{ margin-top:auto; text-align:center; padding:8px; border-radius:9px;
+  background:var(--brass-500); color:var(--ink-950); font-size:8.5px; font-weight:600 }
+
+/* 04–05 · objetos */
+.vestir{ position:relative; display:inline-block; width:100%; max-width:250px;
+  filter:drop-shadow(0 22px 34px rgba(0,0,0,.5)) }
+.vestir svg{ display:block; width:100%; height:auto }
+.vestir .estampa,.vestir .bordado,.vestir .rotuloG{ position:absolute; left:50%;
+  transform:translate(-50%,-50%) }
+.vestir .estampa{ top:56%; opacity:.94; filter:blur(.25px) }
+.vestir .bordado{ top:53%; filter:drop-shadow(0 1px 0 rgba(0,0,0,.55))
+  drop-shadow(0 -.5px 0 rgba(255,255,255,.12)) }
+.vestir.bone{ max-width:270px }
+.vestir.garrafa{ max-width:150px }
+.vestir .rotuloG{ top:56%; transform:translate(-50%,-50%) scaleX(.86); opacity:.9;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.5)) }
+
+/* 06 · a mesa */
+.cena.mesa{ aspect-ratio:16/10;
+  background:linear-gradient(155deg,#241C13 0%,#171009 48%,#0C0906 100%) }
+.cena.mesa::before{ content:''; position:absolute; inset:0; opacity:.5;
+  background-image:repeating-linear-gradient(97deg,rgba(0,0,0,.28) 0 2px,transparent 2px 7px) }
+.cena.mesa::after{ content:''; position:absolute; inset:0;
+  background:radial-gradient(120% 90% at 24% 0%,rgba(255,214,150,.13),transparent 62%) }
+.folhaP{ position:absolute; left:5%; top:7%; width:37%; aspect-ratio:210/297;
+  background:#FBFAF7; border-radius:3px; padding:6% 6% 5%; display:flex; flex-direction:column;
+  transform:rotate(-3.2deg); box-shadow:0 26px 46px rgba(0,0,0,.55) }
+.folhaP .topoP{ display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8%; padding-bottom:7%; border-bottom:1px solid #E4DED2 }
+.folhaP .endP{ font-family:var(--mono); font-size:4.6px; flex:0 0 auto; letter-spacing:.1em; color:#6B7280;
+  text-align:right; line-height:1.8 }
+.folhaP .corpoP{ flex:1; padding-top:8%; display:flex; flex-direction:column; gap:5px }
+.folhaP .corpoP b{ font-family:var(--display); font-weight:400; font-size:13px; color:#23272E;
+  margin-bottom:4px }
+.folhaP .corpoP i{ display:block; height:3px; border-radius:2px; background:#DBD5C9; width:100% }
+.folhaP .corpoP i.vazio{ background:transparent; height:8px }
+.folhaP .peP{ padding-top:5%; border-top:1px solid #E4DED2; font-family:var(--mono);
+  font-size:4.5px; letter-spacing:.1em; color:#855F22; display:flex; justify-content:space-between }
+.cartaoV{ position:absolute; width:36%; aspect-ratio:85/55; border-radius:6px; padding:6%;
+  display:flex; flex-direction:column; justify-content:space-between;
+  box-shadow:0 22px 40px rgba(0,0,0,.6) }
+.cartaoV.frente{ right:7%; top:16%; transform:rotate(4.5deg);
+  background:#0A0C10; border:1px solid #1A1E25 }
+.cartaoV.verso{ right:15%; top:52%; transform:rotate(-2.5deg); background:#C8963A;
+  align-items:center; text-align:center; justify-content:center; gap:9% }
+.cartaoV .quemC b{ display:block; font-size:9px; color:var(--ink-50) }
+.cartaoV .quemC i{ display:block; font-style:normal; font-family:var(--mono); font-size:6px;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--ink-400); margin-top:2px }
+.cartaoV .contC{ font-family:var(--mono); font-size:5.4px; color:var(--ink-300); line-height:1.8 }
+.cartaoV .sloganC{ font-family:var(--display); font-size:clamp(11px,1.9vw,20px); color:#08090B;
+  line-height:1.15 }
+.cartaoV .catC{ font-family:var(--mono); font-size:5.5px; letter-spacing:.18em;
+  text-transform:uppercase; color:rgba(8,9,11,.66) }
+
+@media(max-width:700px){
+  .palcoAp.duplo,[style*="repeat(3,minmax(0,1fr))"]{ grid-template-columns:1fr !important }
+  .escritorio .letreiro{ left:8%; top:24% }
+}
+
 /* ---------- certificação ------------------------------------------------- */
 .cert{ border:1px solid var(--ink-800); border-radius:20px; padding:34px; background:var(--ink-900) }
 .cert.aberto{ border-color:var(--brass-600); background:linear-gradient(180deg,rgba(200,150,58,.08),var(--ink-900) 45%) }
@@ -507,10 +693,7 @@ td.mono,th.mono{ font-family:var(--mono); font-size:12px }
 
 <nav id="partitura" aria-label="Movimentos do manual">
   <div class="marca">
-    <svg width="26" height="26" viewBox="0 0 48 48" aria-hidden="true">
-      <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C"
-        stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+    <span class="mk" data-mk="#D9AC4C" data-w="26px"></span>
     <div><b>Maestro</b><span>Manual · v1.0</span></div>
   </div>
   <div id="trilha"></div>
@@ -529,10 +712,7 @@ td.mono,th.mono{ font-family:var(--mono); font-size:12px }
 <header id="abertura">
   <div class="fundo" id="fundoRegua"></div>
   <div class="capaMarca">
-    <svg width="74" height="74" viewBox="0 0 48 48" aria-hidden="true">
-      <path id="curvaCapa" d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C"
-        stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+    <span class="mk" id="capaPauta" data-mk="#D9AC4C" data-w="132px" data-traca="1"></span>
     <h1>Maestro</h1>
   </div>
   <p class="capaSub">Manual de Identidade · Versão 1.0 · Uso interno e parceiros</p>
@@ -622,86 +802,111 @@ td.mono,th.mono{ font-family:var(--mono); font-size:12px }
 <!-- ===================== 03 · SÍMBOLO ===================== -->
 <section class="mov" id="m03" data-mov="03" data-nome="O símbolo">
   <p class="eyebrow">Movimento 03<s></s>O símbolo</p>
-  <h2>M Batuta: um gesto, não um instrumento.</h2>
-  <p class="lead">A identidade se constrói sobre <strong>o movimento da regência</strong> — a
-    batida descendente que dá o tempo. Não sobre clave de sol, fone ou partitura, que são
-    literais e colocam a marca na prateleira errada.</p>
-  <p>O símbolo é um monograma <strong>M</strong> cujo vértice central foi substituído pelo arco
-    descendente. Duas leituras simultâneas: a letra que nomeia, e o gesto que explica.</p>
+  <h2>A Pauta: as linhas se erguem e o M acontece.</h2>
+  <p class="lead">Em português, <strong>pauta</strong> é as duas coisas ao mesmo tempo: as
+    linhas onde a música é escrita — e o calendário editorial, o coração da plataforma.
+    O símbolo é esse trocadilho tornado forma.</p>
+  <p>Nada é ilustrado. Não há clave, batuta, fone ou partitura desenhada. Sete linhas
+    horizontais atravessam o quadro e, no meio do caminho, sobem juntas: onde elas sobem,
+    <strong>o M acontece</strong>. É exatamente o que um maestro faz com uma orquestra —
+    não emite som, faz todo mundo subir junto.</p>
+
+  <div class="painel solto" style="display:grid;place-items:center;padding:44px 26px">
+    <span class="mk" id="pautaGrande" data-mk="#C8963A" data-w="min(420px,100%)"></span>
+    <button class="b gho" id="pautaTraca" style="margin-top:26px">Ver as linhas se traçarem</button>
+    <p style="margin:12px 0 0;font-size:12px;color:var(--ink-500);text-align:center">
+      De baixo para cima, 90 ms entre elas — a ordem em que a orquestra entra.</p>
+  </div>
+
+  <h3>Construção</h3>
+  <p>A geometria é <strong>gerada por função</strong>, nunca redesenhada à mão. Toda linha
+    é o mesmo perfil deslocado no eixo Y; mudar o símbolo significa mudar a função.</p>
 
   <div class="simPalco">
     <div class="simCaixa">
-      <h4>Construção · grid 48 × 48</h4>
-      <svg viewBox="0 0 48 48" aria-label="Geometria do símbolo">
-        <g id="malha" opacity="0">
-          <g stroke="#23272E" stroke-width=".25">
-            <path d="M0 6h48M0 12h48M0 18h48M0 24h48M0 30h48M0 36h48M0 42h48"/>
-            <path d="M6 0v48M12 0v48M18 0v48M24 0v48M30 0v48M36 0v48M42 0v48"/>
-          </g>
-          <g stroke="#4C535D" stroke-width=".4" stroke-dasharray="1 1.5">
-            <path d="M11 0v48M37 0v48M0 12.5h48M0 35.5h48M0 30.5h48"/>
-          </g>
-          <circle cx="24" cy="48.5" r=".9" fill="#5B8DEF"/>
-          <text x="25.5" y="47" font-family="monospace" font-size="2.4" fill="#5B8DEF">controle 24 · 48,5</text>
-          <text x="1" y="11.6" font-family="monospace" font-size="2.4" fill="#6B7280">y 12,5</text>
-          <text x="1" y="34.6" font-family="monospace" font-size="2.4" fill="#6B7280">y 35,5</text>
-          <text x="38.5" y="29.6" font-family="monospace" font-size="2.4" fill="#6B7280">vale 30,5</text>
-        </g>
-        <g id="respiro" opacity="0">
-          <rect x="5" y="6.5" width="38" height="35" fill="none" stroke="#C8963A"
-            stroke-width=".4" stroke-dasharray="1.6 1.6" opacity=".8"/>
-          <text x="5" y="45" font-family="monospace" font-size="2.4" fill="#C8963A">respiro = x = espessura da haste = 6</text>
-        </g>
-        <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C"
-          stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <h4>O perfil de uma linha</h4>
+      <div id="perfilPalco"></div>
       <div class="chaves">
-        <button class="chave" data-alvo="malha" aria-pressed="false">Malha</button>
-        <button class="chave" data-alvo="respiro" aria-pressed="false">Área de respiro</button>
+        <button class="chave" data-perfil="malha" aria-pressed="false">Malha</button>
+        <button class="chave" data-perfil="cotas" aria-pressed="false">Cotas</button>
+        <button class="chave" data-perfil="uma" aria-pressed="false">Uma linha só</button>
       </div>
     </div>
     <div class="simCaixa">
-      <h4>Leitura</h4>
-      <svg viewBox="0 0 48 48" aria-label="As duas leituras do símbolo">
-        <path d="M11 35.5V12.5" stroke="#4C535D" stroke-width="6" stroke-linecap="round"/>
-        <path d="M37 12.5V35.5" stroke="#4C535D" stroke-width="6" stroke-linecap="round"/>
-        <path d="M11 12.5Q24 48.5 37 12.5" fill="none" stroke="#D9AC4C" stroke-width="6"
-          stroke-linecap="round"/>
-      </svg>
-      <p style="margin:0;font-size:13px;color:var(--ink-300)">
-        <span style="color:var(--ink-500)">■</span> As duas hastes são os tempos firmes.<br>
-        <span style="color:var(--brass-400)">■</span> O arco é o gesto que os une — e o vale,
-        em <code>y 30,5</code>, é a batida.
-      </p>
-      <h4 style="margin-top:8px">Path canônico</h4>
-      <div class="tab"><table><tbody>
-        <tr><td class="mono" style="color:var(--brass-200)">M11 35.5V12.5Q24 48.5 37 12.5V35.5</td></tr>
+      <h4>Parâmetros</h4>
+      <div class="tab" style="margin:0"><table><tbody>
+        <tr><td>Linhas</td><td class="mono"><b>7</b> na versão cheia · <b>3</b> abaixo de 40 px</td></tr>
+        <tr><td>Perfil</td><td>asa plana → pico → vale raso → pico → asa plana</td></tr>
+        <tr><td>Amplitude</td><td class="mono">picos a <b>84</b> · vale central a <b>20</b></td></tr>
+        <tr><td>Distância entre linhas</td><td class="mono">14 (sete linhas) · 24 (três)</td></tr>
+        <tr><td>Espessura</td><td class="mono">6,5 (sete linhas) · 11 (três)</td></tr>
+        <tr><td>Terminais</td><td>sempre arredondados</td></tr>
+        <tr><td>Área de desenho</td><td class="mono">viewBox 10 30 240 190</td></tr>
       </tbody></table></div>
-      <p style="margin:0;font-size:12.5px;color:var(--ink-400)">Espessura 6 (12,5% do grid).
-        Terminais e junções arredondados. <strong>Nunca redesenhar</strong> — sempre usar os
-        arquivos de <code>assets/logo/</code>.</p>
+      <p style="margin:0;font-size:12.5px;color:var(--ink-400)">O <strong>vale central a 20</strong>
+        é a batida — o único ponto em que as linhas quase se reencontram. É o downbeat do
+        gesto de reger, e a razão de o M ter um vértice raso em vez de fundo.</p>
     </div>
   </div>
 
-  <h3>Redução</h3>
-  <p>O símbolo sobrevive até <strong>20 px</strong>. Abaixo disso, usar o favicon, que tem a
-    espessura ajustada — a curva fecha quando a haste engorda proporcionalmente.</p>
+  <h3>A função canônica</h3>
+  <p>Este é o código que desenha o símbolo na plataforma, neste manual e em qualquer peça.
+    <strong>Nunca redesenhar à mão</strong> — copiar a função, ou exportar dela.</p>
+  <div class="tab"><table><tbody><tr><td class="mono" style="white-space:pre;color:var(--brass-200);font-size:11.5px;line-height:1.7">function pautaPaths(n, grosso){
+  n = n || 7;
+  grosso = grosso || (n &lt;= 4 ? 11 : 6.5);
+  const gap = n &lt;= 4 ? 24 : 14, A = 84, V = 20,
+        y0  = n &lt;= 4 ? 148 : 136;
+  return Array.from({length:n}, (_, i) =&gt; {
+    const y = y0 + i * gap;
+    return `M22 ${y} L56 ${y}
+            C74 ${y} 76 ${y-A} 94 ${y-A}
+            C110 ${y-A} 114 ${y-V} 130 ${y-V}
+            C146 ${y-V} 150 ${y-A} 166 ${y-A}
+            C184 ${y-A} 186 ${y} 204 ${y} L238 ${y}`;
+  });
+}</td></tr></tbody></table></div>
+
+  <h3>Redução: sete linhas viram três</h3>
+  <p>Sete linhas em 26 px viram mingau. Abaixo de <strong>40 px</strong> o símbolo troca de
+    versão: <strong>três linhas</strong>, traço mais grosso, distância maior. Não é o mesmo
+    desenho reduzido — é outra saída da mesma função.</p>
   <div class="reducao">
-    <figure><svg width="88" height="88" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><figcaption>88 px</figcaption></figure>
-    <figure><svg width="48" height="48" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><figcaption>48 px</figcaption></figure>
-    <figure><svg width="28" height="28" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><figcaption>28 px</figcaption></figure>
-    <figure><svg width="20" height="20" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><figcaption>20 px · mínimo</figcaption></figure>
-    <figure><svg width="16" height="16" viewBox="0 0 48 48" opacity=".45"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><figcaption style="color:var(--danger)">16 px · usar favicon</figcaption></figure>
+    <figure><span class="mk" data-mk="#D9AC4C" data-w="150px"></span><figcaption>150 px · sete linhas</figcaption></figure>
+    <figure><span class="mk" data-mk="#D9AC4C" data-w="88px"></span><figcaption>88 px · sete</figcaption></figure>
+    <figure><span class="mk" data-mk="#D9AC4C" data-w="48px"></span><figcaption>48 px · sete</figcaption></figure>
+    <figure><span class="mk" data-mk="#D9AC4C" data-w="34px"></span><figcaption>34 px · três</figcaption></figure>
+    <figure><span class="mk" data-mk="#D9AC4C" data-w="20px"></span><figcaption>20 px · mínimo</figcaption></figure>
   </div>
+  <div class="ce" style="margin-top:14px">
+    <figure><div class="palco"><span class="mk" data-mk="#D9AC4C" data-w="30px" data-n="3"></span></div>
+      <figcaption class="sim"><i>✓</i><span>30 px com três linhas: o gesto continua legível.</span></figcaption></figure>
+    <figure><div class="palco"><span class="mk" data-mk="#D9AC4C" data-w="30px" data-n="7"></span></div>
+      <figcaption class="nao"><i>✗</i><span>30 px com sete: as linhas se fecham e viram mancha.</span></figcaption></figure>
+  </div>
+
+  <h3>Área de respiro e tamanho mínimo</h3>
+  <p>A margem mínima ao redor do símbolo é <strong>a altura de um degrau</strong> — a
+    distância entre duas linhas da versão cheia. Nada invade: nem texto, nem borda, nem
+    imagem, nem outro logo.</p>
   <div class="tab"><table>
-    <thead><tr><th>Contexto</th><th>Mínimo</th></tr></thead>
+    <thead><tr><th>Contexto</th><th>Mínimo</th><th>Versão</th></tr></thead>
     <tbody>
-      <tr><td>Símbolo isolado, digital</td><td class="mono">20 px</td></tr>
-      <tr><td>Símbolo isolado, impresso</td><td class="mono">6 mm</td></tr>
-      <tr><td>Lockup horizontal, digital</td><td class="mono">120 px de largura</td></tr>
-      <tr><td>Lockup horizontal, impresso</td><td class="mono">32 mm de largura</td></tr>
+      <tr><td>Símbolo isolado, digital</td><td class="mono">20 px</td><td class="mono">3 linhas</td></tr>
+      <tr><td>Símbolo isolado, impresso</td><td class="mono">6 mm</td><td class="mono">3 linhas</td></tr>
+      <tr><td>Símbolo em destaque</td><td class="mono">acima de 40 px</td><td class="mono">7 linhas</td></tr>
+      <tr><td>Lockup horizontal, digital</td><td class="mono">120 px de largura</td><td class="mono">7 linhas</td></tr>
+      <tr><td>Lockup horizontal, impresso</td><td class="mono">32 mm de largura</td><td class="mono">7 linhas</td></tr>
     </tbody>
   </table></div>
+
+  <div class="nota">
+    <b>Os caminhos que perderam.</b> Duas outras rotas foram desenhadas antes: o
+    <em class="br">Compasso</em> — o M como equalizador, com o vale central como batida — e a
+    <em class="br">Frequência</em>, a marca abstrata, sem letra. A primeira perdeu para o
+    conceito; a segunda pede uma marca já conhecida. O Compasso sobreviveu como
+    <strong>elemento gráfico de apoio</strong> (movimento 09), não como símbolo.
+  </div>
 </section>
 
 <!-- ===================== 04 · LOCKUPS ===================== -->
@@ -714,37 +919,29 @@ td.mono,th.mono{ font-family:var(--mono); font-size:12px }
   <div class="grade g2">
     <div class="painel" style="display:flex;flex-direction:column;gap:16px">
       <div style="background:var(--ink-950);border-radius:12px;padding:26px;display:grid;place-items:center;min-height:110px">
-        <svg width="200" height="37" viewBox="0 0 260 48" aria-label="Lockup horizontal, fundo escuro">
-          <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-          <text x="64" y="33.5" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#F4F6F8">Maestro</text>
-        </svg>
+        <span class="lk" data-lk="dark" data-w="64px" aria-label="Lockup horizontal, fundo escuro"></span>
       </div>
       <h4 style="margin:0">Horizontal · dark</h4>
       <p style="margin:0;font-size:12.5px">Padrão. Site, apresentação, assinatura, documento.</p>
     </div>
     <div class="painel" style="display:flex;flex-direction:column;gap:16px">
       <div style="background:#F4F6F8;border-radius:12px;padding:26px;display:grid;place-items:center;min-height:110px">
-        <svg width="200" height="37" viewBox="0 0 260 48" aria-label="Lockup horizontal, fundo claro">
-          <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-          <text x="64" y="33.5" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#08090B">Maestro</text>
-        </svg>
+        <span class="lk" data-lk="light" data-w="64px" aria-label="Lockup horizontal, fundo claro"></span>
       </div>
       <h4 style="margin:0">Horizontal · light</h4>
       <p style="margin:0;font-size:12.5px">Mesma aplicação sobre fundo claro. Brass 500.</p>
     </div>
     <div class="painel" style="display:flex;flex-direction:column;gap:16px">
       <div style="background:var(--ink-950);border-radius:12px;padding:26px;display:grid;place-items:center;min-height:110px">
-        <svg width="118" height="86" viewBox="0 0 160 116" aria-label="Lockup vertical">
-          <g transform="translate(56 6)"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
-          <text x="80" y="104" text-anchor="middle" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#F4F6F8">Maestro</text>
-        </svg>
+        <span class="lk vert" data-lk="dark" data-w="84px" aria-label="Lockup vertical"
+          style="flex-direction:column;gap:12px"></span>
       </div>
       <h4 style="margin:0">Vertical</h4>
       <p style="margin:0;font-size:12.5px">Espaços estreitos e centralizados: crachá, stand, avatar grande.</p>
     </div>
     <div class="painel" style="display:flex;flex-direction:column;gap:16px">
       <div style="background:var(--ink-950);border-radius:12px;padding:26px;display:grid;place-items:center;min-height:110px">
-        <svg width="56" height="56" viewBox="0 0 48 48" aria-label="Símbolo isolado"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="mk" data-mk="#D9AC4C" data-w="56px"></span>
       </div>
       <h4 style="margin:0">Símbolo</h4>
       <p style="margin:0;font-size:12.5px">App, favicon, avatar, marca d'água — onde o nome já está presente.</p>
@@ -765,21 +962,21 @@ td.mono,th.mono{ font-family:var(--mono); font-size:12px }
     é o que quebra a geometria, o sentido ou o contraste.</p>
 
   <div class="ce">
-    <figure><div class="palco"><svg width="120" height="34" viewBox="0 0 48 48" preserveAspectRatio="none"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <figure><div class="palco"><span class="mk" data-mk="#D9AC4C" data-w="120px"></span></div>
       <figcaption class="nao"><i>✗</i><span>Esticar ou achatar. Destrói a geometria construída.</span></figcaption></figure>
-    <figure><div class="palco"><svg width="44" height="44" viewBox="0 0 48 48" style="transform:rotate(38deg)"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <figure><div class="palco"><span class="mk" data-mk="#D9AC4C" data-w="44px" style="transform:rotate(38deg)"></span></div>
       <figcaption class="nao"><i>✗</i><span>Girar. O gesto tem direção; girado, perde o sentido.</span></figcaption></figure>
-    <figure><div class="palco"><svg width="44" height="44" viewBox="0 0 48 48"><defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5E7C9"/><stop offset=".5" stop-color="#855F22"/><stop offset="1" stop-color="#EDD59E"/></linearGradient></defs><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="url(#gr)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <figure><div class="palco"><span class="mk" data-mk="grad" data-w="76px"></span></div>
       <figcaption class="nao"><i>✗</i><span>Gradiente ou efeito metalizado. Brass é cor sólida, não ouro.</span></figcaption></figure>
-    <figure><div class="palco"><svg width="44" height="44" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#08090B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <figcaption class="nao"><i>✗</i><span>Contornar. O símbolo é traço cheio, sempre.</span></figcaption></figure>
-    <figure><div class="palco" style="background:#F0784C"><svg width="44" height="44" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <figure><div class="palco"><span class="mk" data-mk="#D9AC4C" data-w="30px" data-n="7"></span></div>
+      <figcaption class="nao"><i>✗</i><span>Reduzir sem trocar de versão. Sete linhas em 30 px viram mingau — abaixo de 40 px são três.</span></figcaption></figure>
+    <figure><div class="palco" style="background:#F0784C"><span class="mk" data-mk="#C8963A" data-w="44px"></span></div>
       <figcaption class="nao"><i>✗</i><span>Brass sobre Coral, Encore ou Violet. Contraste insuficiente.</span></figcaption></figure>
-    <figure><div class="palco"><div style="display:flex;align-items:center;gap:1px"><svg width="34" height="34" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-family:var(--display);font-size:20px;color:#F4F6F8">Maestro</span></div></div>
+    <figure><div class="palco"><div style="display:flex;align-items:center;gap:0"><span class="mk" data-mk="#D9AC4C" data-w="58px"></span><span style="font-family:var(--display);font-size:19px;color:#F4F6F8">Maestro</span></div></div>
       <figcaption class="nao"><i>✗</i><span>Invadir a área de respiro. Nada entra na margem de 1x.</span></figcaption></figure>
-    <figure><div class="palco"><svg width="44" height="44" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <figure><div class="palco"><span class="mk" data-mk="#D9AC4C" data-w="44px"></span></div>
       <figcaption class="sim"><i>✓</i><span>Assim. Proporção original, cor sólida, respiro completo.</span></figcaption></figure>
-    <figure><div class="palco" style="background:#F4F6F8"><svg width="44" height="44" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <figure><div class="palco" style="background:#F4F6F8"><span class="mk" data-mk="#C8963A" data-w="44px"></span></div>
       <figcaption class="sim"><i>✓</i><span>Sobre fundo claro, Brass 500 sólido.</span></figcaption></figure>
   </div>
 
@@ -1183,71 +1380,239 @@ td.mono,th.mono{ font-family:var(--mono); font-size:12px }
 <!-- ===================== 14 · APLICAÇÕES ===================== -->
 <section class="mov" id="m14" data-mov="14" data-nome="Aplicações">
   <p class="eyebrow">Movimento 14<s></s>Aplicações</p>
-  <h2>A marca fora da tela onde ela nasceu.</h2>
-  <p class="lead">Onze aplicações canônicas. Todas obedecem às mesmas três verificações:
-    respiro completo, brass abaixo de 10%, e contraste acima de 4,5:1.</p>
+  <h2>Da empena ao ícone de 20 px.</h2>
+  <p class="lead">A mesma geometria, o mesmo silêncio em volta. Onze aplicações canônicas,
+    todas verificadas nas mesmas três perguntas: respiro completo, brass abaixo de 10%,
+    contraste acima de 4,5:1.</p>
+  <div class="nota">
+    <b>Sobre estas pranchas.</b> São renders vetoriais, desenhados com a própria função da
+    marca — não fotografias. Servem para decidir proporção, posição e cor antes de mandar
+    produzir. Antes de imprimir, exportar o símbolo de <code>assets/logo/</code>.
+  </div>
 
+  <!-- 01 · escritório -->
+  <figure class="apl">
+    <div class="cena escritorio">
+      <div class="parede">
+        <div class="letreiro"><span class="mk" data-mk="#D9AC4C" data-w="128px"></span>
+          <b>Maestro</b></div>
+        <div class="brilho"></div>
+      </div>
+      <div class="piso"></div>
+      <div class="balcao"><span class="tampo"></span></div>
+      <div class="planta"><i></i><i></i><i></i></div>
+      <div class="luz"></div>
+    </div>
+    <figcaption><b>01 Escritório</b><span>Recepção. Símbolo e wordmark em latão escovado sobre
+      parede Ink, retroiluminados a 2700 K — o halo faz o papel do respiro. Altura do lockup
+      420 mm, a 1,55 m do piso. Nunca iluminar de frente: o latão vira ouro sob luz direta.</span></figcaption>
+  </figure>
+
+  <!-- 02 · empena -->
+  <figure class="apl">
+    <div class="cena empena">
+      <div class="ceu"></div>
+      <div class="predios"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="predioDono"></div>
+      <div class="painelOut">
+        <span class="mk" data-mk="#D9AC4C" data-w="min(72px,42%)"></span>
+        <b>Maestro</b>
+        <span class="tag">The Operating System for Creative Operations</span>
+        <span class="holo"></span>
+      </div>
+      <div class="rua"></div>
+    </div>
+    <figcaption><b>02 Empena</b><span>Fachada cega, 12 × 8 m. Só três elementos: símbolo,
+      wordmark e categoria. Nenhuma URL, nenhum telefone, nenhuma chamada — a distância de
+      leitura não comporta uma quarta informação.</span></figcaption>
+  </figure>
+
+  <!-- 03 · o app no celular -->
+  <figure class="apl">
+    <div class="palcoAp" style="grid-template-columns:repeat(3,minmax(0,1fr));align-items:start">
+      <div class="fone">
+        <span class="ilha"></span>
+        <div class="telaF trava">
+          <div class="hora">09<span>:</span>41</div>
+          <div class="dataF">sexta-feira, 27 de agosto</div>
+          <div class="aviso">
+            <span class="mk" data-mk="#D9AC4C" data-w="20px"></span>
+            <span><b>Maestro</b>Helena aprovou 3 peças de Verão 26</span>
+          </div>
+        </div>
+      </div>
+      <div class="fone">
+        <span class="ilha"></span>
+        <div class="telaF inicio">
+          <div class="gradeApps">
+            <span class="ap"><i class="ic"></i><small>Fotos</small></span>
+            <span class="ap"><i class="ic maestro"><span class="mk" data-mk="#D9AC4C" data-w="30px"></span></i><small>Maestro</small></span>
+            <span class="ap"><i class="ic"></i><small>Agenda</small></span>
+            <span class="ap"><i class="ic"></i><small>Notas</small></span>
+            <span class="ap"><i class="ic"></i><small>Mail</small></span>
+            <span class="ap"><i class="ic"></i><small>Arquivos</small></span>
+            <span class="ap"><i class="ic"></i><small>Ajustes</small></span>
+            <span class="ap"><i class="ic"></i><small>Câmera</small></span>
+          </div>
+          <div class="doca"><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+      <div class="fone">
+        <span class="ilha"></span>
+        <div class="telaF app">
+          <div class="barraApp"><span class="lk" data-lk="dark" data-w="22px"></span></div>
+          <div class="linhaApp"><span>Carrossel · Lançamento</span><i class="pill br">Esperando você</i></div>
+          <div class="linhaApp"><span>Reels · Bastidor</span><i class="pill co">Em produção</i></div>
+          <div class="linhaApp"><span>Post · Depoimento</span><i class="pill en">Aprovado</i></div>
+          <div class="linhaApp"><span>Story · Enquete</span><i class="pill en">Aprovado</i></div>
+          <div class="linhaApp"><span>Carrossel · Bastidores</span><i class="pill co">Em produção</i></div>
+          <div class="linhaApp"><span>Reels · Corte 02</span><i class="pill br">Esperando você</i></div>
+          <div class="botaoApp">Aprovar</div>
+        </div>
+      </div>
+    </div>
+    <figcaption><b>03 O app</b><span>Tela bloqueada, tela de início e o produto. O ícone é
+      squircle com o símbolo de três linhas — em 58 px as sete linhas fecham. Na notificação o
+      símbolo aparece a 20 px, no limite: é o menor lugar onde a marca ainda se lê.</span></figcaption>
+  </figure>
+
+  <!-- 04 · camisa -->
+  <figure class="apl">
+    <div class="palcoAp duplo" style="background:var(--ink-850)">
+      <div class="vestir">
+        <svg viewBox="0 0 240 260" class="camisaSVG" aria-label="Camisa da equipe">
+          <defs>
+            <linearGradient id="tecido" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#1E222A"/><stop offset=".45" stop-color="#14171D"/>
+              <stop offset="1" stop-color="#0B0D11"/>
+            </linearGradient>
+            <filter id="malhaTec"><feTurbulence type="fractalNoise" baseFrequency="0.9"
+              numOctaves="3" result="n"/><feColorMatrix in="n" type="saturate" values="0"/>
+              <feComponentTransfer><feFuncA type="linear" slope=".14"/></feComponentTransfer>
+              <feComposite operator="in" in2="SourceGraphic"/></filter>
+          </defs>
+          <path id="corpoCamisa" d="M78 26 L52 40 L20 66 L44 100 L62 88 L58 244
+            C58 250 62 254 68 254 L172 254 C178 254 182 250 182 244 L178 88 L196 100
+            L220 66 L188 40 L162 26 C150 44 90 44 78 26 Z" fill="url(#tecido)"/>
+          <path d="M78 26 L52 40 L20 66 L44 100 L62 88 L58 244
+            C58 250 62 254 68 254 L172 254 C178 254 182 250 182 244 L178 88 L196 100
+            L220 66 L188 40 L162 26 C150 44 90 44 78 26 Z" fill="#fff" filter="url(#malhaTec)" opacity=".5"/>
+          <path d="M78 26 C90 44 150 44 162 26 C150 36 90 36 78 26 Z" fill="#0B0D11"/>
+          <path d="M78 26 C90 46 150 46 162 26" fill="none" stroke="#2A2F38" stroke-width="2.4"/>
+          <path d="M62 88 L58 244" fill="none" stroke="#00000033" stroke-width="4"/>
+          <path d="M178 88 L182 244" fill="none" stroke="#00000033" stroke-width="4"/>
+          <ellipse cx="120" cy="150" rx="86" ry="96" fill="url(#luzCamisa)" opacity=".5"/>
+          <radialGradient id="luzCamisa" cx=".38" cy=".22" r=".8">
+            <stop offset="0" stop-color="#ffffff" stop-opacity=".16"/>
+            <stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+        </svg>
+        <span class="estampa"><span class="mk" data-mk="#C8963A" data-w="74px"></span></span>
+      </div>
+      <div class="vestir bone">
+        <svg viewBox="0 0 260 190" class="boneSVG" aria-label="Boné da equipe">
+          <defs>
+            <linearGradient id="coroa" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#232830"/><stop offset="1" stop-color="#0D1014"/></linearGradient>
+            <linearGradient id="aba" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#161A20"/><stop offset="1" stop-color="#070909"/></linearGradient>
+          </defs>
+          <path d="M36 128 C36 62 76 26 130 26 C184 26 224 62 224 128 Z" fill="url(#coroa)"/>
+          <path d="M130 26 C130 26 130 90 130 128" stroke="#00000066" stroke-width="2" fill="none"/>
+          <path d="M78 34 C70 66 66 98 66 128" stroke="#00000055" stroke-width="2" fill="none"/>
+          <path d="M182 34 C190 66 194 98 194 128" stroke="#00000055" stroke-width="2" fill="none"/>
+          <circle cx="130" cy="28" r="7" fill="#20252D"/>
+          <path d="M28 128 C28 122 34 118 44 118 L216 118 C226 118 232 122 232 128
+            C232 152 196 168 130 168 C64 168 28 152 28 128 Z" fill="url(#aba)"/>
+          <path d="M32 130 C44 152 82 164 130 164 C178 164 216 152 228 130"
+            fill="none" stroke="#2A2F38" stroke-width="1.6"/>
+          <ellipse cx="112" cy="66" rx="70" ry="44" fill="#ffffff" opacity=".05"/>
+        </svg>
+        <span class="bordado"><span class="mk" data-mk="#D9AC4C" data-w="52px" data-n="3"></span></span>
+      </div>
+    </div>
+    <figcaption><b>04 Camisa e boné</b><span>Camisa: símbolo isolado em silk latão sobre malha
+      Ink, 70 mm no peito, alinhado ao centro a 80 mm do decote. Boné: bordado matiz único em
+      três linhas — bordado não resolve sete. Nunca o lockup completo em tecido: o wordmark
+      serif fecha na malha.</span></figcaption>
+  </figure>
+
+  <!-- 05 · garrafa -->
   <figure class="apl">
     <div class="palcoAp duplo">
-      <div class="cartao frente">
-        <svg width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <div>
-          <div class="nome">Marina Costa</div>
-          <div class="cargo">Direção de operações</div>
-          <div class="cont" style="margin-top:10px">marina@usemaestro.com<br>usemaestro.com</div>
-        </div>
+      <div class="vestir garrafa">
+        <svg viewBox="0 0 160 330" aria-label="Garrafa">
+          <defs>
+            <linearGradient id="metal" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#0A0C10"/><stop offset=".18" stop-color="#242A33"/>
+              <stop offset=".42" stop-color="#313843"/><stop offset=".62" stop-color="#1B1F27"/>
+              <stop offset="1" stop-color="#070809"/></linearGradient>
+            <linearGradient id="tampa" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#141820"/><stop offset=".4" stop-color="#39404B"/>
+              <stop offset="1" stop-color="#0B0D11"/></linearGradient>
+          </defs>
+          <rect x="52" y="14" width="56" height="34" rx="10" fill="url(#tampa)"/>
+          <rect x="58" y="44" width="44" height="16" rx="5" fill="#0D1014"/>
+          <path d="M40 76 C40 62 54 56 80 56 C106 56 120 62 120 76 L120 296
+            C120 310 108 316 80 316 C52 316 40 310 40 296 Z" fill="url(#metal)"/>
+          <rect x="49" y="86" width="9" height="206" rx="4" fill="#ffffff" opacity=".07"/>
+          <path d="M40 292 C40 306 52 314 80 314 C108 314 120 306 120 292"
+            fill="none" stroke="#000" stroke-width="3" opacity=".5"/>
+        </svg>
+        <span class="rotuloG"><span class="mk" data-mk="#D9AC4C" data-w="52px" data-n="3"></span></span>
       </div>
-      <div class="cartao verso" style="align-items:center;text-align:center">
-        <div></div>
-        <div>
-          <div style="font-family:var(--display);font-size:27px;color:#08090B;line-height:1.1">Sua operação,<br>no tempo certo.</div>
-        </div>
-        <div style="font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;color:rgba(8,9,11,.62);text-transform:uppercase">Creative Operations</div>
+      <div style="align-self:center">
+        <h4 style="margin-bottom:10px">Brinde e objeto</h4>
+        <p style="margin:0 0 12px;font-size:13.5px">Garrafa térmica preta fosca, gravação a
+          laser em três linhas, 46 mm, centralizada e a 1/3 da altura. A gravação sai na cor do
+          metal — não em latão. <strong>Latão é tinta, não acabamento.</strong></p>
+        <p style="margin:0;font-size:13.5px;color:var(--ink-400)">Vale para caneta, caderno,
+          copo e qualquer superfície em que o processo seja gravação ou relevo seco: o símbolo
+          vira textura, e a cor da marca fica para as peças impressas.</p>
       </div>
     </div>
-    <figcaption><b>01 Cartão</b><span>85 × 55 mm. Frente Ink com símbolo brass 30 px; verso brass sólido
-      com o slogan em Instrument Serif e rótulo Ink. Papel: 300 g, sem verniz — brilho confunde
-      latão com ouro.</span></figcaption>
+    <figcaption><b>05 Garrafa</b><span>A regra do objeto: onde não há tinta, não há latão.
+      Gravação, relevo seco e bordado tonal usam o próprio material — e o símbolo continua
+      reconhecível porque o gesto sobrevive sem a cor.</span></figcaption>
   </figure>
 
+  <!-- 06 · papelaria e cartão -->
   <figure class="apl">
-    <div class="palcoAp duplo claro">
-      <div class="folha">
-        <div class="topo">
-          <svg width="98" height="18" viewBox="0 0 260 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><text x="64" y="33.5" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#08090B">Maestro</text></svg>
-          <div style="font-family:var(--mono);font-size:6px;letter-spacing:.1em;color:#6B7280;text-align:right;line-height:1.7">SÃO PAULO · BR<br>USEMAESTRO.COM</div>
-        </div>
-        <div class="corpoF">
+    <div class="cena mesa">
+      <div class="folhaP">
+        <div class="topoP"><span class="lk" data-lk="light" data-w="24px"></span>
+          <span class="endP">SÃO PAULO · BR<br>USEMAESTRO.COM</span></div>
+        <div class="corpoP">
           <b>Proposta de operação</b>
-          Prezada equipe,<br><br>
-          Segue o desenho da operação para o ciclo de setembro. O calendário editorial, a
-          metodologia de dois lotes e os prazos de aprovação estão detalhados nas páginas
-          seguintes.<br><br>
-          Cada peça terá versão registrada e selo de aprovação. Nada vai ao ar sem o aceite
-          formal do cliente.
+          <i></i><i></i><i style="width:82%"></i><i></i><i style="width:64%"></i>
+          <i class="vazio"></i>
+          <i></i><i style="width:88%"></i><i style="width:71%"></i>
         </div>
-        <div class="rodape"><span>MAESTRO · CREATIVE OPERATIONS</span><span>01/02</span></div>
+        <div class="peP"><span>MAESTRO · CREATIVE OPERATIONS</span><span>01/02</span></div>
       </div>
-      <div class="assin">
-        <svg width="118" height="22" viewBox="0 0 260 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><text x="64" y="33.5" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#08090B">Maestro</text></svg>
-        <div class="div"></div>
-        <div class="nm">Marina Costa</div>
-        <div class="cg">Direção de operações</div>
-        <div class="li">marina@usemaestro.com · +55 11 9 9999-0000<br>usemaestro.com</div>
+      <div class="cartaoV frente">
+        <span class="mk" data-mk="#D9AC4C" data-w="34px" data-n="3"></span>
+        <span class="quemC"><b>Marina Costa</b><i>Direção de operações</i></span>
+        <span class="contC">marina@usemaestro.com<br>usemaestro.com</span>
+      </div>
+      <div class="cartaoV verso">
+        <span class="sloganC">Sua operação,<br>no tempo certo.</span>
+        <span class="catC">Creative Operations</span>
       </div>
     </div>
-    <figcaption><b>02 Papelaria</b><span>Carta A4 e assinatura de e-mail. Lockup light a 140 px de
-      largura, Inter 13, sem imagem de fundo. O único brass da assinatura é o símbolo e o link
-      em brass-700 — texto brass-500 sobre branco é reprovado (R4).</span></figcaption>
+    <figcaption><b>06 Papelaria e cartão</b><span>Carta A4 com lockup light a 34 mm no topo e
+      régua de tempo ausente — papel não pede textura. Cartão 85 × 55 mm: frente Ink com símbolo
+      de três linhas, verso latão sólido com o slogan em Instrument Serif e rótulo Ink.
+      Papel 300 g, sem verniz — brilho confunde latão com ouro.</span></figcaption>
   </figure>
 
+  <!-- 07 · apresentação -->
   <figure class="apl">
     <div class="palcoAp duplo">
       <div class="slide capa">
         <div class="kicker">Creative Operations</div>
-        <h5>Aprovação não deveria ser a parte difícil.</h5>
+        <h5>A agência inteira,<br>numa pauta só.</h5>
         <div class="pe"><span>Maestro · 2026</span>
-          <svg width="24" height="24" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="mk" data-mk="#D9AC4C" data-w="26px"></span></div>
       </div>
       <div class="slide conteudo">
         <div>
@@ -1259,101 +1624,74 @@ td.mono,th.mono{ font-family:var(--mono); font-size:12px }
           </div>
         </div>
         <div class="pe"><span>03</span>
-          <svg width="24" height="24" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="mk" data-mk="#D9AC4C" data-w="26px"></span></div>
       </div>
     </div>
-    <figcaption><b>03 Apresentação</b><span>Fundo ink-950, título em Instrument Serif, símbolo no canto
-      inferior direito a 24 px. Números de destaque em serif — é o único lugar da marca onde o
-      serif carrega dado.</span></figcaption>
+    <figcaption><b>07 Apresentação</b><span>Fundo Ink, título em Instrument Serif, símbolo no
+      canto inferior direito a 26 px. Números de destaque em serif — é o único lugar da marca
+      onde o serif carrega dado.</span></figcaption>
   </figure>
 
+  <!-- 08 · assinatura e e-mail -->
   <figure class="apl">
-    <div class="palcoAp">
-      <div class="capaLI">
-        <div class="reg" id="reguaLI"></div>
-        <svg width="176" height="33" viewBox="0 0 260 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><text x="64" y="33.5" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#F4F6F8">Maestro</text></svg>
-        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass-400);position:relative">The Operating System for Creative Operations</div>
-      </div>
-    </div>
-    <figcaption><b>04 Capa social</b><span>LinkedIn e X, 4:1. Lockup dark alinhado à esquerda, régua de
-      tempo no rodapé a 8% — nunca acima disso, ou a textura vira ruído.</span></figcaption>
-  </figure>
-
-  <figure class="apl">
-    <div class="palcoAp duplo">
-      <div class="telaHome">
-        <div class="ilha"></div>
-        <div class="apps">
-          <div><div class="app maestro">
-            <svg width="30" height="30" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div><div class="rot">Maestro</div></div>
-          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
-          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
-          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
-          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
-          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
-          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
-          <div><div class="app"></div><div class="rot" style="opacity:.4">—</div></div>
-        </div>
-      </div>
-      <div style="width:100%">
-        <div class="aba">
-          <div class="t">
-            <svg width="14" height="14" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#08090B"/><path d="M13 33V15Q24 43 35 15V33" fill="none" stroke="#D9AC4C" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Maestro</span>
-          </div>
-          <div class="barraURL"><div class="url">usemaestro.com/c/verao-26</div></div>
-        </div>
-        <div style="display:flex;gap:16px;align-items:center;margin-top:22px;flex-wrap:wrap">
-          <div style="width:62px;height:62px;border-radius:50%;background:var(--ink-950);
-            border:1px solid var(--ink-800);display:grid;place-items:center">
-            <svg width="31" height="31" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <p style="margin:0;font-size:12.5px;max-width:26ch">Avatar social: símbolo centralizado
-            sobre ink-950, respiro de 25%.</p>
-        </div>
-      </div>
-    </div>
-    <figcaption><b>05 Ícones</b><span>App icon squircle 512, gradiente Ink sutil, símbolo brass-400.
-      Favicon 48 com espessura ajustada — a haste engorda para a curva não fechar a 16 px.</span></figcaption>
-  </figure>
-
-  <figure class="apl">
-    <div class="palcoAp duplo">
-      <div class="cracha">
-        <div class="furo"></div>
-        <svg width="42" height="42" viewBox="0 0 48 48" style="display:block;margin:0 auto"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div class="palcoAp duplo claro">
+      <div class="assin">
+        <span class="lk" data-lk="light" data-w="30px"></span>
+        <div class="div"></div>
         <div class="nm">Marina Costa</div>
-        <div class="cg">Loja Norte · Cliente</div>
-        <div class="fita">ACESSO · APROVAÇÃO</div>
+        <div class="cg">Direção de operações</div>
+        <div class="li">marina@usemaestro.com · +55 11 9 9999-0000<br>usemaestro.com</div>
       </div>
-      <div class="camisa">
-        <svg width="76" height="76" viewBox="0 0 48 48" style="position:relative"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#C8963A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-    </div>
-    <figcaption><b>06 Crachá e vestuário</b><span>Lockup vertical no crachá; no tecido, símbolo isolado
-      em silk brass-500 sobre ink-850, 60 mm no peito. Nunca o lockup completo em roupa — o
-      wordmark serif fecha na malha.</span></figcaption>
-  </figure>
-
-  <figure class="apl">
-    <div class="palcoAp claro">
       <div class="notif">
-        <div class="cabE">
-          <svg width="104" height="19" viewBox="0 0 260 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><text x="64" y="33.5" font-family="Instrument Serif, Georgia, serif" font-size="34" letter-spacing="0.2" fill="#F4F6F8">Maestro</text></svg>
-        </div>
+        <div class="cabE"><span class="lk" data-lk="dark" data-w="26px"></span></div>
         <div class="cE">
-          <h6>Marina aprovou 3 peças de Verão 26</h6>
-          <p>Marina Costa aprovou 3 conteúdos há 4 minutos. Nenhuma alteração solicitada.</p>
+          <h6>Helena aprovou 3 peças de Verão 26</h6>
+          <p>Helena Braga aprovou 3 conteúdos há 4 minutos. Nenhuma alteração solicitada.</p>
           <span class="bt">Ver na Maestro</span>
         </div>
         <div class="pe">VOCÊ RECEBE ISTO PORQUE ATENDE ESTE CLIENTE · PREFERÊNCIAS</div>
       </div>
     </div>
-    <figcaption><b>07 E-mail transacional</b><span>Estrutura quem + o quê + onde, máximo 12 palavras no
-      assunto. Um único botão brass, rótulo Ink (R5). Sem emoji, sem exclamação.</span></figcaption>
+    <figcaption><b>08 Assinatura e e-mail</b><span>Estrutura quem + o quê + onde, máximo 12
+      palavras no assunto. Um único botão brass, rótulo Ink (R5). O link da assinatura em
+      brass-700 — brass-500 sobre branco é reprovado (R4). Sem emoji, sem exclamação.</span></figcaption>
   </figure>
 
+  <!-- 09 · social -->
+  <figure class="apl">
+    <div class="palcoAp">
+      <div class="capaLI">
+        <div class="reg" id="reguaLI"></div>
+        <span class="lk" data-lk="dark" data-w="54px" style="position:relative"></span>
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass-400);position:relative">The Operating System for Creative Operations</div>
+      </div>
+    </div>
+    <div class="palcoAp duplo" style="margin-top:14px">
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center">
+        <div style="width:78px;height:78px;border-radius:50%;background:var(--ink-950);
+          border:1px solid var(--ink-800);display:grid;place-items:center">
+          <span class="mk" data-mk="#D9AC4C" data-w="38px" data-n="3"></span>
+        </div>
+        <p style="margin:0;font-size:12.5px;max-width:22ch">Avatar: três linhas centralizadas
+          sobre Ink, respiro de 25% do diâmetro.</p>
+      </div>
+      <div style="width:100%">
+        <div class="aba">
+          <div class="t">
+            <span class="mk" data-mk="#D9AC4C" data-w="15px" style="flex:0 0 auto"></span>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Maestro</span>
+          </div>
+          <div class="barraURL"><div class="url">usemaestro.com/c/verao-26</div></div>
+        </div>
+        <p style="margin:12px 0 0;font-size:12.5px">Favicon a 16 px: três linhas, traço 11.
+          É o menor uso permitido da marca.</p>
+      </div>
+    </div>
+    <figcaption><b>09 Social e favicon</b><span>Capa 4:1 com lockup dark à esquerda e régua de
+      tempo no rodapé a 8% — nunca acima disso, ou a textura vira ruído.</span></figcaption>
+  </figure>
+
+  <!-- 10 · os dois shells -->
   <figure class="apl">
     <div class="palcoAp duplo">
       <div class="shell escuro">
@@ -1375,31 +1713,33 @@ td.mono,th.mono{ font-family:var(--mono); font-size:12px }
         </div>
       </div>
     </div>
-    <figcaption><b>08 Os dois shells</b><span>Agência nasce escuro — uso diário, muitas horas, alta
-      densidade. Cliente nasce claro — entra a cada 10 a 15 dias, muitas vezes na rua, e o lote é
-      documento para ler, não painel para operar. Os dois oferecem os dois temas.</span></figcaption>
+    <figcaption><b>10 Os dois shells</b><span>Agência nasce escuro — uso diário, muitas horas,
+      alta densidade. Cliente nasce claro — entra a cada 10 a 15 dias, muitas vezes na rua, e o
+      lote é documento para ler, não painel para operar. Os dois oferecem os dois temas.</span></figcaption>
   </figure>
 
+  <!-- 11 · selo -->
   <figure class="apl">
     <div class="palcoAp">
-      <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:center;justify-content:center">
-        <div style="width:118px;height:118px;border-radius:50%;border:1px solid var(--brass-600);
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;justify-content:center">
+        <div style="width:126px;height:126px;border-radius:50%;border:1px solid var(--brass-600);
           display:grid;place-items:center;text-align:center;background:rgba(200,150,58,.06)">
           <div>
-            <svg width="26" height="26" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <div style="font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--brass-300);margin-top:6px">APROVADO</div>
+            <span class="mk" data-mk="#D9AC4C" data-w="34px" data-n="3"
+              style="margin:0 auto 6px"></span>
+            <div style="font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--brass-300)">APROVADO</div>
             <div style="font-family:var(--mono);font-size:8px;color:var(--ink-400);margin-top:2px">7F3A·2B91</div>
           </div>
         </div>
         <div style="max-width:32ch">
           <h4 style="margin-bottom:8px">O selo de versão</h4>
-          <p style="margin:0;font-size:13px">Toda aprovação registra a versão exata aprovada. O selo
-            é um resumo de quatro bytes do conteúdo, em JetBrains Mono, sempre no formato
-            <code>XXXX·XXXX</code>. Ele aparece no termo, no e-mail e no rodapé da peça.</p>
+          <p style="margin:0;font-size:13px">Toda aprovação registra a versão exata aprovada. O
+            selo é um resumo de quatro bytes do conteúdo, em JetBrains Mono, sempre no formato
+            <code>XXXX·XXXX</code>. Aparece no termo, no e-mail e no rodapé da peça.</p>
         </div>
       </div>
     </div>
-    <figcaption><b>09 Selo de aprovação</b><span>O único lugar onde um círculo brass fechado é
+    <figcaption><b>11 Selo de aprovação</b><span>O único lugar onde um círculo brass fechado é
       permitido. Ele carrega consequência jurídica — por isso escapa da regra dos 10%, como o
       botão de aprovar.</span></figcaption>
   </figure>
@@ -1468,7 +1808,7 @@ td.mono,th.mono{ font-family:var(--mono); font-size:12px }
         <div class="quem" id="dipNome">—</div>
         <p class="frase">leu os dezesseis movimentos, concluiu as cinco provas e assume a
           responsabilidade de aplicar a identidade da Maestro conforme este manual.</p>
-        <svg width="42" height="42" viewBox="0 0 48 48" style="margin-bottom:6px"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="#D9AC4C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="mk" data-mk="#D9AC4C" data-w="42px" style="margin-bottom:6px"></span>
         <div class="selim" id="dipSelo">—</div>
       </div>
     </div>
@@ -1494,6 +1834,59 @@ td.mono,th.mono{ font-family:var(--mono); font-size:12px }
 
 <script>
 "use strict";
+
+/* =========================================================================
+   A PAUTA — a mesma função que desenha o símbolo na plataforma.
+   Sete linhas atravessam o quadro e sobem juntas: onde sobem, o M acontece.
+   Nunca redesenhar à mão. Se o símbolo mudar, muda aqui.
+   ========================================================================= */
+const VB_PAUTA = '10 30 240 190';
+function pautaPaths(n, grosso){
+  n = n || 7;
+  grosso = grosso || (n <= 4 ? 11 : 6.5);
+  const gap = n <= 4 ? 24 : 14, A = 84, V = 20, y0 = n <= 4 ? 148 : 136;
+  const out = [];
+  for(let i = 0; i < n; i++){
+    const y = y0 + i * gap;
+    out.push(`M22 ${y} L56 ${y} C74 ${y} 76 ${y-A} 94 ${y-A}`
+      + ` C110 ${y-A} 114 ${y-V} 130 ${y-V} C146 ${y-V} 150 ${y-A} 166 ${y-A}`
+      + ` C184 ${y-A} 186 ${y} 204 ${y} L238 ${y}`);
+  }
+  return { d: out, grosso };
+}
+function pautaSVG(cor, n, grosso, extra){
+  const { d, grosso:g } = pautaPaths(n, grosso);
+  const traco = cor === 'grad' ? 'url(#mkGrad)' : cor;
+  return `<svg viewBox="${VB_PAUTA}" fill="none" stroke="${traco}" stroke-width="${g}"
+    stroke-linecap="round" aria-hidden="true">${
+    cor === 'grad' ? `<defs><linearGradient id="mkGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F5E7C9"/><stop offset=".5" stop-color="#855F22"/>
+      <stop offset="1" stop-color="#EDD59E"/></linearGradient></defs>` : ''}${
+    d.map((p,i)=>`<path d="${p}" pathLength="100" style="--i:${i}"${extra||''}/>`).join('')}</svg>`;
+}
+/* o marcador: largura manda no número de linhas, como na plataforma */
+function desenhaMarcas(raiz){
+  (raiz || document).querySelectorAll('.mk[data-mk]').forEach(el=>{
+    const larg = el.dataset.w || '100%';
+    el.style.width = larg;
+    const px = parseFloat(larg);
+    const n = el.dataset.n ? +el.dataset.n
+      : (larg.endsWith('px') && px < 40 ? 3 : 7);
+    const cor = el.dataset.mk === 'corrente' ? 'currentColor' : el.dataset.mk;
+    el.innerHTML = pautaSVG(cor, n, el.dataset.g ? +el.dataset.g : null);
+  });
+  /* lockup: símbolo + wordmark, afastamento 0,38x e corpo 0,80x */
+  (raiz || document).querySelectorAll('.lk[data-lk]').forEach(el=>{
+    const larg = el.dataset.w || '64px';
+    const px = parseFloat(larg) || 64;
+    const vert = el.classList.contains('vert');
+    el.style.gap = el.style.gap || Math.round(px * 0.38) + 'px';
+    el.innerHTML = `<span class="mk" style="width:${larg};flex:0 0 auto">${
+      pautaSVG(el.dataset.lk === 'light' ? '#C8963A' : '#D9AC4C', px < 40 ? 3 : 7)}</span>`
+      + `<b style="font-size:${Math.round(px * 0.80)}px">Maestro</b>`;
+    if(vert) el.style.textAlign = 'center';
+  });
+}
 
 /* ---------- persistência tolerante --------------------------------------- */
 const CHAVE = 'maestro.miv.v1';
@@ -1580,16 +1973,6 @@ document.getElementById('zerar').addEventListener('click', ()=>{
   document.querySelectorAll('#checklist input').forEach(i=>i.checked=false);
   document.getElementById('diploma').classList.remove('on');
   pinta();
-});
-
-/* ---------- o símbolo: camadas de construção ------------------------------ */
-document.querySelectorAll('.chave').forEach(b=>{
-  b.addEventListener('click', ()=>{
-    const on = b.getAttribute('aria-pressed') !== 'true';
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    const alvo = document.getElementById(b.dataset.alvo);
-    if(alvo) alvo.style.opacity = on ? '1' : '0';
-  });
 });
 
 /* ---------- a régua de tempo como textura --------------------------------- */
@@ -1776,11 +2159,13 @@ const BANCO = {
     { p:'O símbolo vai num selo circular e o designer gira 30° para "acompanhar a curva do círculo".',
       o:['Pode: o símbolo é abstrato o suficiente',
          'Pode até 15°',
-         'Não pode: o gesto tem direção, e girado ele perde o sentido'],
-      c:2, e:'A batida descendente marca o tempo. Girada, deixa de ser um gesto de regência e vira uma forma qualquer.' },
-    { p:'Qual é o tamanho mínimo do símbolo isolado em digital?',
-      o:['16 px','20 px — abaixo disso, usar o favicon','24 px'],
-      c:1, e:'Abaixo de 20 px a curva começa a fechar. O favicon existe justamente porque tem a espessura ajustada para o tamanho pequeno.' }
+         'Não pode: as linhas são horizontais porque a pauta é horizontal'],
+      c:2, e:'Girada, a pauta deixa de ser pauta. As linhas horizontais são metade do sentido do símbolo — a outra metade é o M que aparece quando elas sobem.' },
+    { p:'O símbolo precisa entrar num ícone de 26 px. O que se faz?',
+      o:['Reduzir o símbolo de sete linhas',
+         'Usar a versão de três linhas, com traço mais grosso',
+         'Usar só o wordmark'],
+      c:1, e:'Abaixo de 40 px o símbolo troca de versão: três linhas, traço 11, distância 24. Não é o mesmo desenho reduzido — é outra saída da mesma função.' }
   ],
   dez:[
     { p:'Um card de "Alterações solicitadas" foi desenhado com borda e rótulo em Brass. Está certo?',
@@ -1864,7 +2249,7 @@ document.querySelectorAll('.prova').forEach(bloco=>{
     </div>`).join('') +
     `<div class="selo" data-selo-de="${chave}">
        <span class="disco">
-         <svg width="15" height="15" viewBox="0 0 48 48"><path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+         <span class="mk" data-mk="corrente" data-w="19px" data-n="3"></span>
        </span>
        <span><b>Selo · ${bloco.dataset.selo}</b>
        Acerte todas as questões desta prova para conquistar.</span>
@@ -1960,18 +2345,71 @@ document.getElementById('certEmitir').addEventListener('click', ()=>{
   tocar('publicar');
 });
 
-/* ---------- o traço da capa se desenha ------------------------------------- */
+/* ---------- o traçado: as linhas entram de baixo para cima ---------------- */
+/* 90 ms entre elas, como a orquestra entra. É o único movimento da marca
+   que se repete — e só quando alguém pede. */
+function tracarPauta(el){
+  if(!el) return;
+  const paths = [...el.querySelectorAll('path')];
+  if(!paths.length) return;
+  if(semMovimento){ paths.forEach(p=>{ p.style.strokeDasharray=''; p.style.strokeDashoffset=''; }); return; }
+  paths.slice().reverse().forEach((p, ordem)=>{
+    p.style.transition = 'none';
+    p.style.strokeDasharray = '100';
+    p.style.strokeDashoffset = '100';
+    setTimeout(()=>{
+      p.style.transition = 'stroke-dashoffset .62s cubic-bezier(.22,1,.36,1)';
+      p.style.strokeDashoffset = '0';
+    }, 60 + ordem * 90);
+  });
+}
+document.getElementById('pautaTraca')?.addEventListener('click', ()=>{
+  tracarPauta(document.getElementById('pautaGrande'));
+  tocar('logo');
+});
+
+/* ---------- o perfil de uma linha, com malha e cotas ---------------------- */
 (function(){
-  const c = document.getElementById('curvaCapa');
-  if(!c || semMovimento) return;
-  const len = c.getTotalLength();
-  c.style.strokeDasharray = len;
-  c.style.strokeDashoffset = len;
-  requestAnimationFrame(()=>{
-    c.style.transition = 'stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1)';
-    c.style.strokeDashoffset = '0';
+  const palco = document.getElementById('perfilPalco');
+  if(!palco) return;
+  const estado = { malha:false, cotas:false, uma:false };
+  function pinta(){
+    const { d } = pautaPaths(estado.uma ? 1 : 7);
+    const linhas = estado.uma
+      ? `<path d="${pautaPaths(7).d[3]}" pathLength="100" stroke="#C8963A" stroke-width="6.5"/>`
+      : pautaPaths(7).d.map((p,i)=>
+          `<path d="${p}" stroke="${i===3?'#E3C173':'#4C535D'}" stroke-width="6.5"/>`).join('');
+    palco.innerHTML = `<svg viewBox="${VB_PAUTA}" fill="none" stroke-linecap="round"
+      style="width:100%;max-width:280px;display:block;margin:0 auto;overflow:visible">
+      ${estado.malha ? `<g stroke="#23272E" stroke-width="1">
+        ${[60,90,120,150,180,210].map(x=>`<line x1="${x}" y1="34" x2="${x}" y2="216"/>`).join('')}
+        ${[60,90,120,150,180].map(y=>`<line x1="14" y1="${y}" x2="246" y2="${y}"/>`).join('')}
+      </g>` : ''}
+      ${estado.cotas ? `<g stroke="#5B8DEF" stroke-width="1.2" stroke-dasharray="3 3">
+        <line x1="94" y1="52" x2="94" y2="136"/>
+        <line x1="130" y1="116" x2="130" y2="136"/>
+      </g>
+      <g font-family="ui-monospace,monospace" font-size="9" fill="#5B8DEF">
+        <text x="99" y="94">A = 84 · pico</text>
+        <text x="135" y="130">V = 20 · a batida</text>
+        <text x="22" y="240">asa plana</text>
+      </g>` : ''}
+      ${linhas}
+    </svg>`;
+  }
+  pinta();
+  document.querySelectorAll('.chave[data-perfil]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const k = b.dataset.perfil;
+      estado[k] = b.getAttribute('aria-pressed') !== 'true';
+      b.setAttribute('aria-pressed', estado[k] ? 'true' : 'false');
+      pinta();
+    });
   });
 })();
+
+desenhaMarcas();
+if(!semMovimento) setTimeout(()=>tracarPauta(document.getElementById('capaPauta')), 240);
 
 pinta();
 </script>

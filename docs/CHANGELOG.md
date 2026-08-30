@@ -1,9 +1,36 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.13
+Version: 0.5.14
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.14 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** o símbolo novo alcança a documentação — e o MIV ganha as aplicações físicas.
+
+### Corrigido
+- **O manual e os assets estavam com o símbolo antigo.** A troca do "M Batuta" pela
+  **Pauta** aconteceu na v50 do protótipo e nunca chegou ao `VISUAL_IDENTITY.md` nem a
+  `assets/logo/` — justamente os arquivos que o manual manda todo mundo usar. Registrada
+  agora como **D-078**.
+- `VISUAL_IDENTITY.md` §2 reescrito: conceito, geometria, função canônica, as duas versões
+  (7 e 3 linhas), respiro, tamanhos mínimos e o movimento próprio.
+- Espaçamento do lockup passa a 0,38 × a largura do símbolo (a regra de "2x" era da haste
+  do M antigo).
+
+### Adicionado
+- Assets regerados a partir da função: `maestro-symbol.svg`, `maestro-symbol-3.svg`,
+  `-ink`, `-white`, os três lockups, `favicon.svg` e `maestro-app-icon.svg`.
+- **MIV: onze aplicações, agora com as peças físicas** — escritório com letreiro
+  retroiluminado, empena, os três estados no celular, camisa, boné, garrafa, papelaria com
+  cartão, apresentação, social e favicon, os dois shells e o selo. Renders vetoriais,
+  desenhados com a própria função da marca.
+- Movimento 03 refeito: perfil de uma linha com malha e cotas, a função canônica em código,
+  a escala de redução e o traçado linha a linha.
 
 ---
 

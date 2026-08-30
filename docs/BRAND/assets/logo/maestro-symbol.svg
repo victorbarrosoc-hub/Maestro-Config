@@ -1,6 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Maestro">
-  <title>Maestro — Símbolo "M Batuta"</title>
-  <path d="M11 35.5V12.5Q24 48.5 37 12.5V35.5"
-        fill="none" stroke="#C8963A" stroke-width="6"
-        stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 30 240 190" width="240" height="190"
+     role="img" aria-label="Maestro" fill="none" stroke="#C8963A" stroke-width="6.5"
+     stroke-linecap="round">
+  <title>Maestro — Símbolo "A Pauta"</title>
+  <path d="M22 136 L56 136 C74 136 76 52 94 52 C110 52 114 116 130 116 C146 116 150 52 166 52 C184 52 186 136 204 136 L238 136"/>
+  <path d="M22 150 L56 150 C74 150 76 66 94 66 C110 66 114 130 130 130 C146 130 150 66 166 66 C184 66 186 150 204 150 L238 150"/>
+  <path d="M22 164 L56 164 C74 164 76 80 94 80 C110 80 114 144 130 144 C146 144 150 80 166 80 C184 80 186 164 204 164 L238 164"/>
+  <path d="M22 178 L56 178 C74 178 76 94 94 94 C110 94 114 158 130 158 C146 158 150 94 166 94 C184 94 186 178 204 178 L238 178"/>
+  <path d="M22 192 L56 192 C74 192 76 108 94 108 C110 108 114 172 130 172 C146 172 150 108 166 108 C184 108 186 192 204 192 L238 192"/>
+  <path d="M22 206 L56 206 C74 206 76 122 94 122 C110 122 114 186 130 186 C146 186 150 122 166 122 C184 122 186 206 204 206 L238 206"/>
+  <path d="M22 220 L56 220 C74 220 76 136 94 136 C110 136 114 200 130 200 C146 200 150 136 166 136 C184 136 186 220 204 220 L238 220"/>
 </svg>

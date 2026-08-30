@@ -42,7 +42,7 @@ tokens/          maestro.tokens.json · maestro.tokens.css
 
 **Personalidade** — O profissional mais tranquilo da sala. Preciso sem ser frio. Elegante sem ser formal.
 
-**Símbolo** — "M Batuta": monograma M cujo vértice central é o arco descendente da regência.
+**Símbolo** — "A Pauta": sete linhas horizontais que sobem juntas no meio do caminho — onde sobem, o M acontece. Abaixo de 40 px, três linhas.
 **Cor** — Brass `#C8963A` sobre Ink `#08090B`.
 **Tipografia** — Instrument Serif (marca) · Inter (interface) · JetBrains Mono (dados).
 **Som** — Lá 440 Hz, a nota de afinação da orquestra. Aprovar = quinta justa ascendente.
@@ -59,7 +59,7 @@ tokens/          maestro.tokens.json · maestro.tokens.css
 
 **Visual**
 
-4. Nunca redesenhar o símbolo. Sempre usar os arquivos de `assets/logo/`.
+4. Nunca redesenhar o símbolo. Ele é gerado por função — copiar a função, ou usar os arquivos de `assets/logo/`.
 5. Brass ocupa no máximo 10% de qualquer composição. Ele é acento, nunca superfície.
 6. Brass significa uma coisa só na interface: **algo espera por você**. Nenhum outro status pode usá-lo.
 7. Brass nunca é warning. Alerta é Coral `#F0784C`.
@@ -113,6 +113,7 @@ Danger  400  #E5484D   erro
 ## O que ainda falta produzir
 
 - [ ] Wordmark convertido em curvas (os SVGs atuais usam `<text>`)
+- [ ] Versão monocromática do símbolo para gravação e bordado (um matiz só)
 - [ ] Arquivos de som (`assets/sound/`)
 - [ ] Versões PNG e PDF dos lockups para uso externo
 - [ ] Aplicações: cartão, papelaria, template de apresentação

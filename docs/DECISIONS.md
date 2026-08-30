@@ -951,6 +951,39 @@ deveria ver (horas, custo). Mitigado pelo nível 2: o card que precisar, tranca.
 
 ---
 
+# D-078 · Marca · Aprovada
+**Data:** 2026-08-30 · **Responsável:** Founder · **Categoria:** Símbolo
+**Pergunta:** o "M Batuta" sustenta a marca?
+**Contexto:** o símbolo original era um monograma M cujo vértice central virava o arco
+descendente da regência. Funcionava, mas era **um M com um truque** — a leitura do gesto
+dependia de alguém explicar. Três caminhos foram desenhados em
+`exploracao-logo-v2.html`: A Pauta, O Compasso e A Frequência.
+**Decisão do founder:** **A Pauta.** Sete linhas horizontais atravessam o quadro e, no meio
+do caminho, sobem juntas. Onde sobem, o M acontece.
+**Por que ela ganha:** em português, *pauta* é as duas coisas ao mesmo tempo — as linhas
+onde a música é escrita e o **calendário editorial**, que é o coração do produto. O
+trocadilho não precisa de legenda: quem é de agência lê "pauta" antes de ler "música". E o
+gesto é literal sem ser ilustrativo — as linhas subindo juntas é exatamente o que um maestro
+faz com uma orquestra.
+**Consequência:**
+- Geometria **gerada por função**, nunca redesenhada: `pautaPaths(n, grosso)`, viewBox
+  `10 30 240 190`, picos a 84, vale central a 20, terminais arredondados.
+- **Duas versões, não uma reduzida:** 7 linhas acima de 40 px; **3 linhas** abaixo, com
+  traço 11 e distância 24. Sete linhas em 26 px viram mingau.
+- Movimento próprio: as linhas se traçam de baixo para cima, 90 ms entre elas.
+- Espaçamento do lockup passa a **0,38 × a largura do símbolo**, e o corpo do wordmark a
+  **0,80 ×** — a regra de "2x" era da haste do M antigo e deixou de existir.
+- Assets regerados: símbolo (7 e 3 linhas), três lockups, favicon e app icon.
+- **O Compasso sobreviveu como elemento gráfico de apoio** (VISUAL_IDENTITY §11), não como
+  símbolo. A Frequência foi arquivada.
+**Dívida quitada aqui:** a troca aconteceu na v50 do protótipo e nunca foi registrada — o
+`VISUAL_IDENTITY.md` e os arquivos de `assets/logo/` seguiram meses descrevendo o símbolo
+antigo, que é justamente o arquivo que o manual manda todo mundo usar.
+**Risco aceito:** a marca fica mais dependente de tamanho — há dois desenhos a manter em vez
+de um. Mitigado por serem duas saídas da MESMA função, e não dois arquivos independentes.
+
+---
+
 ## Decisões Futuras
 
 Adicionar seguindo o padrão D-073, D-074...
