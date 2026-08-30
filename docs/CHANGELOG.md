@@ -1,9 +1,28 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.18
+Version: 0.5.19
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.19 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** a revisão do founder na marca — curva perfeita, serifa da referência, paleta dele.
+
+### Mudado
+- **O Gesto, revisão 2:** espinha de três arcos cúbicos com tangente contínua (acabou a
+  ondulação parasita), vale em "u" fundo, largura afinando cedo — peso na onda, fio na
+  batuta. Confirmado lado a lado com a referência do founder.
+- **Wordmark:** serifa clássica conforme a referência dele — Source Serif 4 SemiBold, com
+  fallback honesto e aviso quando a fonte oficial não carrega.
+- **Paleta do founder:** eerie black `#1C1C1C` · purple taupe `#474350` · mustard
+  `#FFC857` · white smoke `#F4F7F5`. Aplicada na prancha e nos assets; a migração dos
+  tokens do produto vai junto com a aprovação da prancha.
+- Assets regerados na paleta nova; prancha reescrita (capa, lado a lado com a referência,
+  cores, variações, lockups e mockups).
 
 ---
 

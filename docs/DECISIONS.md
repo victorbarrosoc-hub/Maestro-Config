@@ -1012,6 +1012,21 @@ Três rotas apresentadas: "Maestro" com M versal (recomendada), "maestro" caixa-
 display do sistema (títulos, números grandes); sai apenas do lockup.
 **Substitui:** D-078 (A Pauta). O M Batuta e a Pauta ficam no histórico.
 
+**Revisão 2 (mesmo dia, pelo founder):**
+- **Curva:** "quero que ele fique curvilíneo como um movimento perfeito". A espinha passou
+  de 14 pontos suavizados para **três arcos cúbicos com tangente contínua** (subida ao
+  morro, morro→vale, vale→ponta) — sem ondulação parasita. O vale fechou num "u" fundo, e
+  a largura afina cedo: na saída do vale o traço já é fio. Perfil de largura interpolado
+  com cosseno, sem quebra de derivada.
+- **Wordmark:** o lettering monolinha caiu; o founder mandou a referência — serifa
+  clássica. O nome compõe em **Source Serif 4 SemiBold** (fallback Georgia), com aviso na
+  prancha quando a fonte oficial não carrega.
+- **Paleta (do founder):** **eerie black `#1C1C1C`** (fundo) · **purple taupe `#474350`**
+  (superfície e apoio) · **mustard `#FFC857`** (o acento — o gesto, o que espera por você)
+  · **white smoke `#F4F7F5`** (texto no escuro, fundo no claro). Substitui Ink/Brass na
+  identidade; a migração dos tokens do produto acontece quando o founder aprovar a prancha.
+
+
 ---
 
 ## Decisões Futuras
