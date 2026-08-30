@@ -1,9 +1,31 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.11
+Version: 0.5.12
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.12 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** vídeo em link ganha player, e a ausência do vídeo se anuncia.
+
+### Adicionado
+- **Link de vídeo é vídeo.** Um link do YouTube, Vimeo, Drive ou um arquivo direto
+  (.mp4/.mov/.webm) passa a ser guardado como `tipo:'video'` com `link:true`, e o
+  visualizador toca dentro da plataforma. Antes o visualizador filtrava
+  `tipo!=='link'`: mesmo com o vídeo lá, não havia como assistir — nem a agência,
+  nem o cliente. Como o vídeo de um Reels raramente cabe no upload, esse era o
+  caminho real do arquivo e ele não tinha player.
+- A capa do YouTube vira `poster` da miniatura, de graça.
+- Num link, o botão de baixar (que o navegador barra entre domínios) dá lugar a
+  **abrir onde o arquivo mora**.
+- **A ausência do vídeo se anuncia.** Um Reels, um story, um corte de podcast ou um
+  card com roteiro que só tem imagem diz, na tela de Material e no card: falta o
+  vídeo, o que está aqui é a capa. Silêncio, aqui, lê como defeito do produto — foi
+  exatamente o que aconteceu com o card "Corte do podcast · Maria Luiza".
 
 ---
 
