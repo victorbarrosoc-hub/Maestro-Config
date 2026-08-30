@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-30 09:26 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-30 09:50 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -2690,7 +2690,7 @@ function agClientes(){
 
 function agClienteDet(){
   const c = cliAtual();
-  const tab = S.tab || 'marca';
+  const tab = S.tab || 'pauta';
   const corpo = {
     marca:`<div class="card"><h4>Briefing — o que a equipe precisa saber</h4><p>${esc(c.brief)}</p></div>
       <div class="card"><h4>Links</h4><p>${c.links.length?c.links.map(l=>`<span class="seal" style="margin-right:8px">${ic('linkic',12)} ${esc(l)}</span>`).join(''):'Nenhum link cadastrado ainda.'}</p></div>
@@ -3275,7 +3275,7 @@ document.addEventListener('click', e => {
   if(!t) return;
   const d = t.dataset;
   if(d.cli && !d.clidet){ S.cli=d.cli; render(); return; }
-  if(d.clidet){ S.cli=d.clidet; S.route='clientedet'; S.tab='marca'; window.scrollTo(0,0); render(); return; }
+  if(d.clidet){ S.cli=d.clidet; S.route='clientedet'; S.tab='pauta'; window.scrollTo(0,0); render(); return; }
   if(d.editcrono){ S.modal=modalCrono(); renderLayer(); return; }
   if(d.savecrono){
     const pj = S.proj[cliAtual().id];
@@ -6515,7 +6515,7 @@ render = function(){
 /* =====================================================================
    v25 — Semana · Mês · Tabela, e o filtro do que falta.
    ================================================================== */
-S.ptVista  = S.ptVista  || 'semana';
+S.ptVista  = S.ptVista  || 'dia';   /* v58: o dia e o que a agencia opera */
 S.ptFiltro = S.ptFiltro || 'todas';
 S.ptMDia   = (S.ptMDia===undefined) ? null : S.ptMDia;
 
@@ -7032,11 +7032,13 @@ agClienteDet = function(){
   // nas outras abas, so acrescenta a Pauta na regua
   return _agClienteDetV27().replace(
     /<div class="tabs">[\s\S]*?<\/div>/,
-    abasCliente(S.tab || 'marca'));
+    abasCliente(S.tab || 'pauta'));
 };
 
 function abasCliente(atual){
-  const abas = [['marca','Marca e briefing'],['pauta','Pauta'],
+  /* A Pauta na frente: e a tela onde a agencia passa o dia. Marca e
+     briefing se le uma vez por trimestre; a pauta, todo dia. */
+  const abas = [['pauta','Pauta'],['marca','Marca e briefing'],
                 ['projetos','Projetos'],['equipe','Quem aprova']];
   return `<div class="tabs">${abas.map(([t,n])=>
     `<button data-tab="${t}" class="${atual===t?'on':''}">${n}</button>`).join('')}</div>`;
@@ -14866,6 +14868,8 @@ else armarAbertura();
    ================================================================== */
 
 IC.enviar = '<path d="M21.5 2.5 11 13"/><path d="M21.5 2.5 15 21.5 11 13 2.5 9z"/>';
+/* a seta para a direita lia como "proximo", nao como baixar */
+IC.baixar = '<path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 19h16"/>';
 
 /* as duas fases em que a bola está com o cliente */
 const NO_CLIENTE = ['texto_cli','post_cli'];
@@ -15437,8 +15441,9 @@ function vLightbox(){
         title="${S.lb.tudo?'Ver no tamanho real':'Ver o carrossel inteiro'}"
         aria-label="${S.lb.tudo?'Ver no tamanho real':'Ver o carrossel inteiro'}">${
           ic(S.lb.tudo?'search':'grid',16)}</button>` : ''}
-      <button class="lbBtn" data-lbbaixa="1" aria-label="Baixar" title="Baixar">${ic('arrowr',17)}</button>
-      <button class="lbBtn" data-lbfecha="1" aria-label="Fechar" title="Fechar (Esc)">${ic('x',17)}</button>
+      <button class="lbBtn" data-lbbaixa="1" aria-label="Baixar" title="Baixar">${ic('baixar',17)}</button>
+      <button class="lbBtn fechar" data-lbfecha="1" aria-label="Fechar"
+        title="Fechar (Esc)">${ic('x',18)}</button>
     </div>
 
     ${lado
@@ -15514,8 +15519,11 @@ document.addEventListener('click', e => {
   if(d.lbtudo !== undefined){ e.stopImmediatePropagation(); S.lb.tudo = !S.lb.tudo; renderLayer(); return; }
   if(d.lbbaixa !== undefined){ e.stopImmediatePropagation();
     baixarMaterial(lbMateriais()[S.lb.i]); return; }
-  /* tocar no fundo fecha; no conteúdo, não */
-  if(t.classList && t.classList.contains('lb') && e.target === t){
+  /* Tocar no vazio fecha. Antes exigia acertar a moldura exata, que fica
+     coberta pelo palco — na prática não fechava por aí. Agora vale o palco
+     e a moldura; a mídia, os botões e a fita seguem intocados. */
+  if(e.target === t || e.target.id === 'lbPalco' || e.target.classList.contains('lbMidia')
+     || e.target.id === 'lbFita'){
     e.stopImmediatePropagation(); fecharLB(); }
 }, true);
 
@@ -15552,8 +15560,17 @@ document.addEventListener('touchend', e => {
   animation:lbEntra .22s var(--eo) }
 @keyframes lbEntra{ from{opacity:0} to{opacity:1} }
 
-.lbTopo{ display:flex; align-items:center; gap:10px; padding:14px 16px;
+/* A ÁREA SEGURA. No iPhone o topo da tela é da barra de status e da ilha
+   dinâmica: sem esta folga o fechar e o baixar nascem debaixo dela — dá
+   para ver, não dá para tocar, e o visualizador vira armadilha. O resto do
+   app já respeitava isso; este painel tinha nascido sem. */
+.lbTopo{ display:flex; align-items:center; gap:10px;
+  padding:max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+          14px max(16px, env(safe-area-inset-left));
   border-bottom:1px solid rgba(255,255,255,.07); flex:0 0 auto }
+/* e o fechar é o que mais precisa ser achado de primeira */
+.lbBtn.fechar{ border-color:rgba(255,255,255,.22); background:var(--ink-850) }
+.lbBtn.fechar:hover{ color:var(--danger); border-color:rgba(229,72,77,.55) }
 .lbQuem{ display:grid; gap:2px; margin-right:auto; min-width:0 }
 .lbQuem b{ font-size:14px; color:var(--ink-50); font-weight:600;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
@@ -15574,7 +15591,8 @@ document.addEventListener('touchend', e => {
 
 /* uma a uma */
 .lbPalco{ flex:1 1 auto; display:flex; align-items:center; justify-content:center;
-  gap:8px; padding:14px; min-height:0; position:relative }
+  gap:8px; min-height:0; position:relative;
+  padding:14px max(14px, env(safe-area-inset-right)) 14px max(14px, env(safe-area-inset-left)) }
 .lbMidia{ flex:1 1 auto; height:100%; display:grid; place-items:center; min-width:0 }
 .lbMidia img, .lbMidia video{ max-width:100%; max-height:100%;
   object-fit:contain; border-radius:10px; display:block }
@@ -15588,7 +15606,9 @@ document.addEventListener('touchend', e => {
 .lbSeta.ant{ left:10px } .lbSeta.prox{ right:10px }
 .lbSeta:hover{ color:var(--brass-300); border-color:var(--brass-600) }
 
-.lbTiras{ display:flex; gap:8px; padding:12px 16px 16px; overflow-x:auto; flex:0 0 auto;
+.lbTiras{ display:flex; gap:8px; overflow-x:auto; flex:0 0 auto;
+  padding:12px max(16px, env(safe-area-inset-left))
+          max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   border-top:1px solid rgba(255,255,255,.07) }
 .lbTiras button{ position:relative; width:56px; height:56px; flex:0 0 auto;
   border-radius:9px; overflow:hidden; border:1px solid var(--ink-700);
@@ -15613,7 +15633,8 @@ document.addEventListener('touchend', e => {
 .lbEmenda figcaption{ position:absolute; left:7px; top:7px;
   font-family:var(--mono); font-size:10px; color:#fff; padding:2px 6px;
   border-radius:999px; background:rgba(0,0,0,.55) }
-.lbDica{ flex:0 0 auto; margin:0; padding:0 20px 18px; text-align:center;
+.lbDica{ flex:0 0 auto; margin:0; text-align:center;
+  padding:0 20px max(18px, env(safe-area-inset-bottom));
   font-size:12px; color:var(--ink-400) }
 
 /* a miniatura avisa que abre */
@@ -15628,7 +15649,8 @@ document.addEventListener('touchend', e => {
   /* duas linhas: em cima quem é o arquivo e o que fazer com ele;
      embaixo, como olhar. Com quatro controles numa linha só, o fechar
      caía sozinho para baixo. */
-  .lbTopo{ flex-wrap:wrap; gap:8px; padding:12px 13px }
+  .lbTopo{ flex-wrap:wrap; gap:8px;
+    padding:max(12px, env(safe-area-inset-top)) 13px 12px 13px }
   .lbQuem{ order:1; flex:1 1 auto; min-width:0 }
   .lbBtn{ order:2 }
   .lbModo{ order:3; flex:1 1 auto; margin-top:2px }
@@ -15649,7 +15671,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v57 · 30 ago, 02h';
+const VERSAO_PROTOTIPO = 'v58 · 30 ago';
 
 menuSheet = (function(orig){
   return function(){
@@ -15666,3 +15688,94 @@ menuSheet = (function(orig){
   color:var(--ink-500) }
 .msheet.lt .msVersao{ color:#9A958C }
 </style>
+<script>
+"use strict";
+/* =====================================================================
+   v58 — a ordem das abas, a doca, e o material a um toque.
+
+   Quatro coisas que o uso real pediu:
+
+   1. As visões da pauta estavam na ordem em que foram construídas
+      (Semana, Mês, Tabela, Stories, Dia), não na ordem em que se usa. O
+      dia é o que a agência opera — vem primeiro, e é o que abre.
+   2. A Pauta virou a primeira aba do cliente, e a que abre. Marca e
+      briefing se lê uma vez por trimestre; a pauta, todo dia.
+   3. O Ensaio estava só no menu. É o quadro de produção — entra na doca,
+      e a Conta sai dela (ninguém abre a plataforma para ver Conta; ela
+      continua a um toque, no menu).
+   4. Tocar no material dentro do card abre o visualizador direto, sem o
+      desvio pelo "Abrir material".
+   ================================================================== */
+/* ---------- 3. a doca -------------------------------------------------
+   A ordem conta o dia: o que sai hoje → a pauta do cliente → o quadro de
+   produção → como o feed vai ficar. */
+AGTABS.length = 0;
+AGTABS.push(
+  {r:'dash',     n:'Hoje',     icn:'home'},
+  {r:'clientes', n:'Clientes', icn:'users'},
+  {r:'producao', n:'Ensaio',   icn:'kanban'},
+  {r:'feed',     n:'Feed',     icn:'img'}
+);
+/* a Conta sai da doca mas não pode sumir: entra no grupo do menu */
+(function(){
+  const g = MENU_AG.find(x => x.g === 'Conta');
+  if(g && g.it && !g.it.some(([r]) => r === 'conta'))
+    g.it.unshift(['conta','Conta','sliders']);
+})();
+
+/* ---------- 1. a ordem das visões da pauta ---------------------------
+   Os botões nascem de três wrappers diferentes, cada um acrescentando o
+   seu no fim. Reordenar por CSS é mais honesto do que reescrever a
+   cadeia — e o cursor do seletor MEDE o botão ligado (fixSegs), então
+   ele acompanha sozinho. */
+</script>
+<style>
+.ptSeg .seg button[data-ptvista="dia"]{ order:1 }
+.ptSeg .seg button[data-ptvista="semana"]{ order:2 }
+.ptSeg .seg button[data-ptvista="mes"]{ order:3 }
+.ptSeg .seg button[data-ptvista="tabela"]{ order:4 }
+.ptSeg .seg button[data-ptvista="stories"]{ order:5 }
+
+/* 4. o material dentro do card avisa que abre */
+.vzMats .mtMini{ cursor:zoom-in }
+.vzMats .mtMini.temArte:hover{ outline:1px solid var(--brass-600); outline-offset:1px }
+</style>
+<script>
+"use strict";
+/* ---------- 1b. o Dia abre onde o Dia existe --------------------------
+   `ptVistaAgenda` monta a agenda a partir da DATA da postagem. Pauta que
+   só tem dia da semana (a da Loja Norte, por exemplo) não tem o que
+   montar, e o Dia abriria em "Sem datas" — primeira tela do cliente, e
+   vazia. O Dia segue sendo o padrão e o primeiro da fila; quando não há
+   data, a Semana entra no lugar até alguém escolher outra coisa. */
+S.ptVista = 'dia';
+S.ptVistaAuto = true;              // ninguém escolheu ainda
+
+document.addEventListener('click', e => {
+  if(e.target.closest('[data-ptvista]')) S.ptVistaAuto = false;
+}, true);
+
+corpoPauta = (function(orig){
+  return function(){
+    const temData = (S.pauta || []).some(p => p.data);
+    if(!(S.ptVistaAuto && S.ptVista === 'dia' && !temData)) return orig();
+    S.ptVista = 'semana';
+    try { return orig(); }
+    finally { S.ptVista = 'dia'; }     // volta, para o próximo cliente
+  };
+})(corpoPauta);
+
+/* ---------- 4. o material a um toque, de dentro do card -------------- */
+document.addEventListener('click', e => {
+  const mini = e.target.closest('.vzMats .mtMini');
+  if(!mini || S.lb) return;
+  const caixa = mini.closest('.vzMats');
+  const botao = caixa && caixa.parentElement
+    ? caixa.parentElement.querySelector('[data-mtabrir]') : null;
+  if(!botao) return;                       // sem o dono, não sei de quem é
+  e.preventDefault(); e.stopImmediatePropagation();
+  S.mtId = +botao.dataset.mtabrir;
+  const i = [...caixa.querySelectorAll('.mtMini')].indexOf(mini);
+  abrirLB(Math.max(0, i));
+}, true);
+</script>

@@ -1,6 +1,6 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.4
+Version: 0.5.5
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
@@ -32,6 +32,34 @@ Nunca apagar versões anteriores.
   `session.read`, e plano e limites da agência saem da resposta do lado cliente (I-12).
 - `POST /batches` com peça sem copy devolvia **500** (`currentVersionId!` mentia).
   Agora é 422 dizendo qual peça falta escrever.
+
+---
+
+## 0.5.5 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** o visualizador que dava para fechar, e as abas na ordem de quem usa.
+
+### Corrigido
+- **O visualizador virava armadilha no iPhone.** O topo da tela é da barra de status e da
+  ilha dinâmica; sem folga de área segura, o fechar e o baixar nasciam debaixo dela — dava
+  para ver, não dava para tocar. O resto do app já respeitava isso; este painel tinha
+  nascido sem. Emulador nenhum reproduz o recorte, e foi por isso que passou.
+- **Tocar no vazio não fechava.** Exigia acertar a moldura exata, que fica coberta pelo
+  palco. Agora o palco e a moldura fecham; a mídia, os botões e a fita seguem intocados.
+- **O ícone de baixar era uma seta para a direita** — lia como "próximo". Virou uma seta
+  para baixo sobre a linha, que é o que todo mundo reconhece.
+
+### Mudado
+- **A ordem das visões da pauta** passa a ser a de quem usa: Dia, Semana, Mês, Tabela,
+  Stories. O Dia é o que abre — e, em pauta sem data, a Semana entra no lugar até alguém
+  escolher, para a primeira tela do cliente nunca ser um vazio.
+- **A Pauta é a primeira aba do cliente e a que abre.** Marca e briefing se lê uma vez por
+  trimestre; a pauta, todo dia.
+- **A doca da agência** vira Hoje · Clientes · Ensaio · Feed. O Ensaio sai do menu e entra
+  na doca — é o quadro de produção. A Conta sai da doca e fica no menu: ninguém abre a
+  plataforma para ver Conta.
+- **O material abre a um toque de dentro do card**, sem o desvio pelo "Abrir material".
 
 ---
 
