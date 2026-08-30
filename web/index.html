@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-29 21:04 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-29 21:45 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -745,12 +745,32 @@ const CC = { AWAITING_APPROVAL:'Esperando você', APPROVED:'Aprovado',
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ativos    = () => S.pecas.filter(p=>p.st!=='CANCELLED');
 const finAtivos = () => ativos().filter(p=>p.fase!=='TEXTO');
-const decididas = () => finAtivos().filter(p=>p.st==='APPROVED'||p.st==='CHANGES_REQUESTED').length;
-const aprovadas = () => finAtivos().filter(p=>p.st==='APPROVED').length;
-const pedidas   = () => finAtivos().filter(p=>p.st==='CHANGES_REQUESTED').length;
-const esperando = () => finAtivos().filter(p=>p.st==='AWAITING_APPROVAL').length;
+/**
+ * O LOTE — conjunto fechado, e a correção de um beco sem saída real.
+ *
+ * `finAtivos()` é toda peça final que existe. O lote é outra coisa: é o que
+ * foi **enviado ao cliente** nesta rodada. As duas se confundiam, e as peças
+ * do lote de copy que seguiram para produção (D-042) entravam no denominador
+ * do lote final sem nunca terem sido enviadas.
+ *
+ * O efeito para o cliente: "8 de 13 decididas" com 13 inalcançável. Nada
+ * pendente, então o botão virava "Ver o resumo"; o resumo não abria porque
+ * faltavam 5; a capa oferecia "Continuar"; e "Continuar" devolvia à peça 1,
+ * já aprovada. O founder dava a volta inteira e voltava à mesma tela.
+ *
+ * Rascunho e peça em produção não são deste lote. Quem não foi enviado não
+ * conta — nem no total, nem na barra, nem na porta do termo.
+ */
+const NO_LOTE   = ['AWAITING_APPROVAL','APPROVED','CHANGES_REQUESTED'];
+const doLote    = () => finAtivos().filter(p=>NO_LOTE.includes(p.st));
+const decididas = () => doLote().filter(p=>p.st==='APPROVED'||p.st==='CHANGES_REQUESTED').length;
+const aprovadas = () => doLote().filter(p=>p.st==='APPROVED').length;
+const pedidas   = () => doLote().filter(p=>p.st==='CHANGES_REQUESTED').length;
+const esperando = () => doLote().filter(p=>p.st==='AWAITING_APPROVAL').length;
 const fmtSeal   = s => s.slice(0,4)+'·'+s.slice(4);
-const proxima   = () => finAtivos().find(p=>p.st==='AWAITING_APPROVAL');
+const proxima   = () => doLote().find(p=>p.st==='AWAITING_APPROVAL');
+/** Só fecha com lote existente e tudo dentro dele decidido (I-11). */
+const tudoDecidido = () => doLote().length>0 && decididas()===doLote().length;
 const stg       = i => `class="fu" style="animation-delay:${Math.min(i*40,360)}ms"`;
 const saudacao  = () => { const h=new Date().getHours();
   return h<6?'Boa madrugada':h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'; };
@@ -1070,7 +1090,7 @@ function agDash(){
   ${!espera.length&&!volta.length&&!ok.length?`<div class="empty"><div class="eic">${ic('stack')}</div>
     <b>Nenhuma peça no ciclo</b><p>Monte o lote de agosto para começar.</p>
     <button class="b pri sm" data-r="lote">Preparar lote</button></div>`:''}
-  ${!espera.length&&decididas()===S.pecas.length?`<div class="card fu" style="margin-top:16px;border-color:rgba(200,150,58,.4)">
+  ${!espera.length&&tudoDecidido()?`<div class="card fu" style="margin-top:16px;border-color:rgba(200,150,58,.4)">
     <h4>Ciclo fechado</h4><p>${aprovadas()} aprovadas, ${pedidas()} com ajuste pedido.
     ${S.signed?`Termo assinado por <b style="color:var(--ink-50)">${esc(S.signName)}</b>.`:'Falta o cliente assinar o termo.'}</p></div>`:''}`);
 }
@@ -1245,8 +1265,8 @@ function agLote(){
       impede o envio — só a visão de conjunto revela isso.</span></div></div>
   <div class="sechd">Estado <i></i></div>
   <div class="card"><p>${enviado?`Lote enviado. Helena Braga foi avisada por e-mail e WhatsApp.
-    <b style="color:var(--ink-50)">${decididas()} de ${finAtivos().length}</b> decididas.`:'Ainda não enviado.'}</p></div>
-  ${!esperando()&&decididas()===S.pecas.length?`<div class="check" style="margin-top:12px">${ic('sealic')}
+    <b style="color:var(--ink-50)">${decididas()} de ${doLote().length}</b> decididas.`:'Ainda não enviado.'}</p></div>
+  ${!esperando()&&tudoDecidido()?`<div class="check" style="margin-top:12px">${ic('sealic')}
     <div><b>Tudo decidido</b><span>${S.signed
       ?'Termo assinado por '+esc(S.signName)+'. O lote está fechado.'
       :'Falta o cliente assinar o termo para fechar o lote.'}</span></div></div>`:''}
@@ -1266,7 +1286,7 @@ function agAprovacoes(){
       <span class="t"><b>${esc(p.t)}</b><span>Helena Braga · ${p.f} · ${p.d}</span></span>
       <span class="pill p-${p.st}">Aguardando</span><span class="chev">${ic('chevr')}</span></span></button>`).join('')}`
   :`<div class="empty fu"><div class="eic">${ic('checkc')}</div><b>Nada esperando o cliente</b>
-     <p>Todas as ${finAtivos().length} publicações foram decididas.
+     <p>Todas as ${doLote().length} publicações foram decididas.
      ${S.signed?'O termo foi assinado.':'Falta o cliente assinar o termo.'}</p>
      <button class="b gho sm" data-enter="client">Ver o lado do cliente</button></div>`}
   ${volta.length?`<div class="sechd">Voltaram com ajuste <i></i></div>
@@ -1364,9 +1384,9 @@ function clInicio(){ return clShell(`<div class="clbody venter">
     :S.signed?'Tudo decidido e assinado. Nada pendente.':'Tudo decidido — falta só assinar o termo.'}</p>
   <h3>Esperando você</h3>
   ${esperando()||!S.signed?`<button class="clrow fu" data-r="lote" style="border-color:#E3C173;background:#FEFBF4">
-    <span style="display:grid;place-items:center">${anel(decididas()/Math.max(1,finAtivos().length))}</span>
+    <span style="display:grid;place-items:center">${anel(decididas()/Math.max(1,doLote().length))}</span>
     <span class="t"><b>Publicações de agosto</b>
-      <span>${esperando()?`${decididas()} de ${finAtivos().length} decididas · leva uns ${Math.max(2,esperando())} minutos`
+      <span>${esperando()?`${decididas()} de ${doLote().length} decididas · leva uns ${Math.max(2,esperando())} minutos`
         :'tudo decidido · falta assinar'}</span></span>
     <span class="clpill q-AWAITING_APPROVAL">Abrir</span></button>`
   :`<p style="color:#1F7449">Nada pendente. Obrigado!</p>`}
@@ -1383,7 +1403,7 @@ function clInicio(){ return clShell(`<div class="clbody venter">
 </div>`); }
 
 function clCapa(){
-  if(!esperando() && decididas()===S.pecas.length){
+  if(!esperando() && tudoDecidido()){
     return clShell(`<div class="clbody venter">
       <div class="kick">Verão 26 · Lote de agosto</div>
       <h2>${S.signed?'Lote fechado':'Tudo decidido'}</h2>
@@ -1397,7 +1417,7 @@ function clCapa(){
           <div style="display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:17px">
             ${ic('sealic',18)} Termo assinado</div>
           <dl><dt>Assinado por</dt><dd>${esc(S.signName)}</dd>
-            <dt>Publicações</dt><dd>${finAtivos().length}</dd>
+            <dt>Publicações</dt><dd>${doLote().length}</dd>
             <dt>Aprovadas</dt><dd>${aprovadas()}</dd>
             <dt>Com alterações</dt><dd>${pedidas()}</dd>
             <dt>Registro</dt><dd style="font-family:var(--mono);font-size:12px">apr_a19c4e</dd></dl></div>`}
@@ -1425,7 +1445,7 @@ function clCapa(){
     <p>Apresentar a coleção sem entrar em preço. Falar de durabilidade, não de novidade.</p>
     <p style="font-size:13px"><b style="color:#17181C">Leva uns ${Math.max(2,esperando())} minutos.</b>
       A primeira vai ao ar quinta, 6 de agosto.</p>
-    ${decididas()?`<p style="font-size:13px;color:#1F7449"><b>${decididas()} de ${finAtivos().length}</b> já decididas.</p>`:''}
+    ${decididas()?`<p style="font-size:13px;color:#1F7449"><b>${decididas()} de ${doLote().length}</b> já decididas.</p>`:''}
     <button class="clbtn" data-abrir="1" style="margin-top:6px">${decididas()?'Continuar':'Começar'}</button>
     <p class="clnote">Não precisa instalar nada nem criar senha.</p>
   </div>`);
@@ -1434,12 +1454,12 @@ function clCapa(){
 function clPeca(){
   const p = S.pecas.find(x=>x.id===S.sel) || proxima() || S.pecas[0];
   const n = p.notes.length;
-  const idx = S.pecas.indexOf(p)+1;
+  const idx = doLote().findIndex(x=>x.id===p.id)+1;
   const decidida = p.st==='APPROVED'||p.st==='CHANGES_REQUESTED';
   return clShell(`
   <div class="clbody fix slin">
-    <div class="clprog"><span>${idx} de ${finAtivos().length}</span>
-      <div class="bar"><i style="width:${decididas()/Math.max(1,finAtivos().length)*100}%"></i></div>
+    <div class="clprog"><span>${idx} de ${doLote().length}</span>
+      <div class="bar"><i style="width:${decididas()/Math.max(1,doLote().length)*100}%"></i></div>
       <span>${decididas()} decididas</span></div>
     <div class="clhead">
       <span class="cltag">${ic(p.f==='Reels'?'play':'img',12)} ${p.plat||'Instagram'} · ${p.f} · ${p.d}</span>
@@ -1468,7 +1488,7 @@ function clPeca(){
 }
 
 function clTermo(){ return clShell(`<div class="clbody venter">
-  <div class="clprog" style="margin-bottom:16px"><span>${finAtivos().length} de ${finAtivos().length}</span>
+  <div class="clprog" style="margin-bottom:16px"><span>${doLote().length} de ${doLote().length}</span>
     <div class="bar"><i style="width:100%"></i></div></div>
   <div class="kick">Verão 26 · Lote de agosto</div>
   <h2>Tudo decidido</h2>
@@ -1477,7 +1497,7 @@ function clTermo(){ return clShell(`<div class="clbody venter">
     <div style="font-family:var(--serif);font-size:18px;margin-bottom:3px">Termo de aprovação</div>
     <div style="font-size:11.5px;color:#6E6A61">Loja Norte · Verão 26 · Lote 01 · Agosto</div>
     <dl>
-      <dt>Publicações</dt><dd>${finAtivos().length}</dd>
+      <dt>Publicações</dt><dd>${doLote().length}</dd>
       <dt>Aprovadas</dt><dd>${aprovadas()}</dd>
       <dt>Com alterações</dt><dd>${pedidas()}</dd>
       <dt>Selo do lote</dt><dd style="font-family:var(--mono);font-size:12px;color:#855F22">A19C·4E30</dd>
@@ -1487,7 +1507,7 @@ function clTermo(){ return clShell(`<div class="clbody venter">
   <input class="sigfield" id="sig" placeholder="Seu nome completo" value="${esc(S.signName)}"
     aria-label="Seu nome">
   <p style="font-size:11.5px;margin-top:10px">Ao assinar, você confirma que revisou as
-    ${finAtivos().length} publicações. O registro fica guardado com data, hora e o selo de cada peça.</p>
+    ${doLote().length} publicações. O registro fica guardado com data, hora e o selo de cada peça.</p>
 </div>
 <div class="clfoot">
   <button class="clbtn" data-sign="1">Assinar e fechar o lote</button>
@@ -1767,11 +1787,16 @@ document.addEventListener('click', e => {
     return; }
 
   if(d.r){ S.route=d.r; S.tab=null;
-    if(d.r==='peca'&&!S.sel) S.sel=(proxima()||S.pecas[0]).id;
+    if(d.r==='peca'&&!S.sel) S.sel=(proxima()||doLote()[0]||S.pecas[0]).id;
     window.scrollTo(0,0); render(); return; }
   if(d.tab){ S.tab=d.tab; render(); return; }
   if(d.peca){ S.sel=+d.peca; S.route='peca'; window.scrollTo(0,0); render(); return; }
-  if(d.abrir){ const p=proxima()||S.pecas[0]; S.sel=p.id; S.route='peca'; render(); return; }
+  /* Continuar/Comecar abre a proxima PENDENTE. Sem pendente, o lugar de ir e
+     o resumo — cair na primeira peca, ja decidida, era o beco: dali o botao
+     so oferecia "Ver o resumo", que trazia de volta para ca. */
+  if(d.abrir){ const p=proxima()||doLote()[0];
+    if(!p){ S.route='capa'; render(); return; }
+    S.sel=p.id; S.route=proxima()?'peca':'capa'; render(); return; }
 
   if(d.full){ S.full=+d.full; S.marking=false; S.pendPos=null; S.draftNote=''; renderLayer(); return; }
   if(d.closefull){ S.full=null; S.marking=false; S.pendPos=null; renderLayer(); return; }
@@ -2257,12 +2282,12 @@ function renderLayer(){
 function clPeca(){
   const p = S.pecas.find(x=>x.id===S.sel) || proxima() || S.pecas[0];
   const n = p.notes.length;
-  const idx = S.pecas.indexOf(p)+1;
+  const idx = doLote().findIndex(x=>x.id===p.id)+1;
   const decidida = p.st==='APPROVED'||p.st==='CHANGES_REQUESTED';
   return clShell(`
   <div class="clbody fix slin">
-    <div class="clprog"><span>${idx} de ${finAtivos().length}</span>
-      <div class="bar"><i style="width:${decididas()/Math.max(1,finAtivos().length)*100}%"></i></div>
+    <div class="clprog"><span>${idx} de ${doLote().length}</span>
+      <div class="bar"><i style="width:${decididas()/Math.max(1,doLote().length)*100}%"></i></div>
       <span>${decididas()} decididas</span></div>
     <div class="clhead">
       <span class="cltag">${ic(p.f==='Reels'?'play':'img',12)} ${p.f} · ${p.d}</span>
@@ -2294,14 +2319,14 @@ function clPeca(){
 }
 
 function clCapa(){
-  if(!esperando() && decididas()===S.pecas.length){
+  if(!esperando() && tudoDecidido()){
     return clShell(`<div class="clbody venter">
       <div class="kick">Verão 26 · Lote de agosto</div>
       <h2>${S.signed?'Lote fechado':'Tudo decidido'}</h2>
       <p>${S.signed?`Assinado por ${esc(S.signName)}. Toque numa publicação para rever — o lote
           está fechado, mas nada some.`
         :'Revise o que quiser — dá para mudar qualquer decisão até assinar.'}</p>
-      ${finAtivos().map((p,i)=>`<button class="clrow fu" data-peca="${p.id}"
+      ${doLote().map((p,i)=>`<button class="clrow fu" data-peca="${p.id}"
         style="animation-delay:${Math.min(i*40,280)}ms">
         <span class="t"><b>${esc(p.t)}</b><span>${p.notes.length?p.notes.length+' nota(s)':p.d}</span></span>
         <span class="clpill q-${p.st}">${CC[p.st]}</span></button>`).join('')}
@@ -2310,7 +2335,7 @@ function clCapa(){
           <div style="display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:17px">
             ${ic('sealic',18)} Termo assinado</div>
           <dl><dt>Assinado por</dt><dd>${esc(S.signName)}</dd>
-            <dt>Publicações</dt><dd>${finAtivos().length}</dd>
+            <dt>Publicações</dt><dd>${doLote().length}</dd>
             <dt>Aprovadas</dt><dd>${aprovadas()}</dd>
             <dt>Com alterações</dt><dd>${pedidas()}</dd>
             <dt>Registro</dt><dd style="font-family:var(--mono);font-size:12px">apr_a19c4e</dd></dl></div>
@@ -2339,7 +2364,7 @@ function clCapa(){
     <p>Apresentar a coleção sem entrar em preço. Falar de durabilidade, não de novidade.</p>
     <p style="font-size:13px"><b style="color:#17181C">Leva uns ${Math.max(2,esperando())} minutos.</b>
       A primeira vai ao ar quinta, 6 de agosto.</p>
-    ${decididas()?`<p style="font-size:13px;color:#1F7449"><b>${decididas()} de ${finAtivos().length}</b> já decididas — e dá para mudar qualquer uma até assinar o termo.</p>`:''}
+    ${decididas()?`<p style="font-size:13px;color:#1F7449"><b>${decididas()} de ${doLote().length}</b> já decididas — e dá para mudar qualquer uma até assinar o termo.</p>`:''}
     <button class="clbtn" data-abrir="1" style="margin-top:6px">${decididas()?'Continuar':'Começar'}</button>
     <p class="clnote">Não precisa instalar nada nem criar senha.</p>
   </div>`);
@@ -2352,9 +2377,9 @@ function clInicio(){ return clShell(`<div class="clbody venter">
     :S.signed?'Tudo decidido e assinado. Nada pendente.':'Tudo decidido — falta só assinar o termo.'}</p>
   <h3>Esperando você</h3>
   ${esperando()||!S.signed?`<button class="clrow fu" data-r="lote" style="border-color:#E3C173;background:#FEFBF4">
-    <span style="display:grid;place-items:center">${anel(decididas()/Math.max(1,finAtivos().length))}</span>
+    <span style="display:grid;place-items:center">${anel(decididas()/Math.max(1,doLote().length))}</span>
     <span class="t"><b>Publicações de agosto</b>
-      <span>${esperando()?`${decididas()} de ${finAtivos().length} decididas · leva uns ${Math.max(2,esperando())} minutos`
+      <span>${esperando()?`${decididas()} de ${doLote().length} decididas · leva uns ${Math.max(2,esperando())} minutos`
         :'tudo decidido · falta assinar'}</span></span>
     <span class="clpill q-AWAITING_APPROVAL">Abrir</span></button>`
   :`<p style="color:#1F7449">Nada pendente. Obrigado!</p>`}
@@ -2853,7 +2878,7 @@ function agLote(){
   <div class="mtop"><div><h1>Lotes</h1><p>Loja Norte · ciclo de agosto/setembro</p></div></div>
   ${chips()}
   <button class="lothub fu" data-r="aprovacoes"><span class="av">▤</span>
-    <span class="t"><b>Lote 01 · Agosto — final</b><span>${finAtivos().length} publicações ·
+    <span class="t"><b>Lote 01 · Agosto — final</b><span>${doLote().length} publicações ·
       ${decididas()} decididas${S.signed?' · termo assinado':''}</span></span>
     <span class="pill p-${esperando()?'AWAITING_APPROVAL':'APPROVED'}">${esperando()?esperando()+' com o cliente':'Fechado'}</span></button>
   <button class="lothub fu" style="animation-delay:60ms" data-r="aprovacoes"><span class="av">✎</span>
@@ -2880,7 +2905,7 @@ function agLote(){
   <div class="check">${ic('checkc')}<div><b>Objetivo do mês declarado</b>
     <span>"Apresentar a coleção sem entrar em preço."</span></div></div>
   <div class="check">${ic('checkc')}<div><b>Todas com título, propósito e data</b>
-    <span>${finAtivos().length} de ${finAtivos().length}.</span></div></div>
+    <span>${doLote().length} de ${doLote().length}.</span></div></div>
   <div class="check warn">${ic('warn')}<div><b>3 publicações falam do mesmo tema</b>
     <span>Só a visão de conjunto revela isso. Aviso não impede o envio.</span></div></div>
   <div style="margin-top:16px"><button class="b pri sm" data-enter="client">Ver como o cliente vê ${ic('arrowr')}</button></div>`);
@@ -3044,8 +3069,8 @@ function clLote(){ // hub: os dois lotes
       txp?txp+' esperando':S.signedT?'Fechado':'Falta assinar',
       txp?'q-AWAITING_APPROVAL':'q-APPROVED',0)}
     ${cartao('capa','Publicações de agosto',
-      `${S.pecas.length} peças finais · ${decididas()} decididas`,
-      decididas()/Math.max(1,finAtivos().length),
+      `${doLote().length} peças finais · ${decididas()} decididas`,
+      decididas()/Math.max(1,doLote().length),
       fin?fin+' esperando':S.signed?'Fechado':'Falta assinar',
       fin?'q-AWAITING_APPROVAL':'q-APPROVED',70)}
     <h3>Por que dois lotes?</h3>
@@ -4670,7 +4695,7 @@ function preparaRota(r){
   const ag = S.view==='agency';
   if(r==='peca'){
     const alvo = ag ? (S.pecas.find(x=>x.id===S.sel && x.st!=='CANCELLED') || proxima() || finAtivos()[0] || S.pecas[0])
-                    : (proxima() || finAtivos()[0]);
+                    : (proxima() || doLote()[0]);
     if(!alvo) return ag ? 'conteudos' : 'lote';
     S.sel = alvo.id;
   }
@@ -14524,7 +14549,7 @@ window.addEventListener('click', e => {
   // esperando() é 1, não 0. O sinal de revisita é: nenhuma OUTRA peça
   // pendente além desta. Aí não existe "próxima", e mandar para a capa
   // é o beco sem saída que o founder viu.
-  const outrasPendentes = finAtivos().filter(x=>x.st==='AWAITING_APPROVAL' && x.id!==id).length;
+  const outrasPendentes = doLote().filter(x=>x.st==='AWAITING_APPROVAL' && x.id!==id).length;
   if(outrasPendentes > 0) return;
   setTimeout(()=>{
     S.sel = id; S.route = 'peca';       // fica onde a pessoa estava
@@ -14537,9 +14562,9 @@ clPeca = (function(orig){
   return function(){
     const html = orig();
     const p = S.pecas.find(x=>x.id===S.sel) || proxima() || S.pecas[0];
-    const idx = finAtivos().findIndex(x=>x.id===p.id) + 1;
+    const idx = doLote().findIndex(x=>x.id===p.id) + 1;
     return html.replace(/<span>\d+ de \d+<\/span>/,
-      `<span>${idx||1} de ${finAtivos().length}</span>`);
+      `<span>${idx||1} de ${doLote().length}</span>`);
   };
 })(clPeca);
 

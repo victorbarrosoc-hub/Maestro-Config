@@ -1026,6 +1026,32 @@ partitura e caminhasse por ela em 3D" até a homepage.
 > do story, sticker, observação e corte de podcast têm o botãozinho — telas e timecodes
 > são serializados em texto legível (`Tela 1 — …`, `1. 00:12 → 00:14`).
 
+**A causa raiz do beco do cliente: o LOTE não era o que parecia (v63).** A v61 tinha
+tratado só um sintoma. Uma correção republicada no artifact (outra sessão, sobre a minha
+v62) foi ao fundo e é a que ficou — trazida de volta ao repositório aqui.
+
+> `finAtivos()` é toda peça final que existe. O **lote** é outra coisa: o que foi
+> **enviado ao cliente nesta rodada**. As duas se confundiam, e as peças que seguiram
+> para produção (D-042) entravam no denominador sem nunca terem sido enviadas. Daí o
+> "8 de 13" com 13 inalcançável — e a volta completa que o founder descreveu: nada
+> pendente → botão vira "Ver o resumo" → o resumo não abre porque faltam 5 → a capa
+> oferece "Continuar" → "Continuar" cai na peça 1, já aprovada.
+
+> Agora existe `doLote()` (só AWAITING_APPROVAL/APPROVED/CHANGES_REQUESTED) e
+> `tudoDecidido()` (exige lote não-vazio); os **37 pontos** que usavam `finAtivos()` ou
+> `S.pecas.length` como denominador passaram a usar o lote. E o `data-abrir`
+> ("Continuar") deixou de cair na primeira peça decidida: sem pendente, o lugar é o
+> resumo.
+
+> Verificado: percurso completo do lote fecha em "8 de 8"; o resumo abre em "Tudo
+> decidido" com o termo disponível; revisitar e redecidir mantém saída. As camadas
+> v61/v62 (interceptação do clique, selo 3D, copiar em toda caixa) continuam vivas,
+> adaptadas para `doLote()`.
+
+> ⚠️ **Nota de processo**: o artifact virou um segundo caminho de escrita. Ao receber
+> aviso de republicação, o certo é LER e comparar antes de republicar por cima — foi
+> assim que esta correção melhor não se perdeu.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
