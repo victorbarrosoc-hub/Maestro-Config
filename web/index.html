@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-30 12:08 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-30 12:24 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -15680,7 +15680,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v64 · 30 ago';
+const VERSAO_PROTOTIPO = 'v65 · 30 ago';
 
 menuSheet = (function(orig){
   return function(){
@@ -16687,4 +16687,161 @@ abrirLB = (function(orig){
       Promise.resolve(rehidratarArquivos()).then(()=>{ if(S.lb) renderLayer(); }).catch(()=>{});
   };
 })(abrirLB);
+</script>
+<style>
+/* =====================================================================
+   v65 — o vídeo que mora num link, e a ausência que se anuncia.
+   ================================================================== */
+.mtFalta{ display:flex; gap:9px; align-items:flex-start; margin:12px 0 0;
+  padding:11px 13px; border-radius:12px; line-height:1.55; font-size:12.5px;
+  color:#F0D9A8; background:rgba(200,150,58,.09);
+  border:1px solid rgba(200,150,58,.28) }
+.mtFalta b{ color:var(--brass-300); display:block; margin-bottom:2px }
+.mtMini.ehLinkVideo{ background:linear-gradient(160deg,#1B1F26,#0E1116) }
+.lbEmbed{ width:100%; height:100%; border:0; background:#000; border-radius:12px }
+.lbAbrir{ position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
+  display:inline-flex; align-items:center; gap:7px; padding:10px 16px;
+  border-radius:999px; font-size:13px; font-weight:600; text-decoration:none;
+  color:var(--ink-950); background:var(--brass-500) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v65 — "n tem player".
+
+   Não tinha, e estava certo: naquele card só existe a CAPA. Um .png de
+   2 MB, "1 de 1". O visualizador abriu a imagem, que é o que havia. O
+   erro não é o player — é a tela ter deixado o founder procurar por ele.
+
+   Duas coisas saem daqui:
+
+   1. **A ausência passa a se anunciar.** Um Reels (ou um corte de
+      podcast, ou qualquer card com roteiro) que só tem imagem diz, na
+      tela de Material e no card: falta o vídeo. Silêncio, aqui, lê como
+      defeito do produto.
+
+   2. **Vídeo em link ganha player.** O caminho real do vídeo de um Reels
+      não é o upload — é o Drive, o YouTube. E link era invisível para o
+      visualizador (`lbMateriais` filtra `tipo!=='link'`): mesmo com o
+      vídeo lá, não havia como assistir, nem para a agência nem para o
+      cliente. Agora um link que É vídeo entra como vídeo, e a tela
+      grande toca dentro da plataforma.
+   ================================================================== */
+
+/* ---------- 1. que link é vídeo, e como se toca --------------------- */
+const RE_YT    = /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{6,})/i;
+const RE_VIMEO = /vimeo\.com\/(?:video\/)?(\d+)/i;
+const RE_DRIVE = /drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{10,})/i;
+const RE_ARQ   = /\.(mp4|mov|m4v|webm|ogv)(\?|#|$)/i;
+
+function embedDeVideo(url){
+  let m;
+  if((m = String(url||'').match(RE_YT)))    return `https://www.youtube.com/embed/${m[1]}`;
+  if((m = String(url||'').match(RE_VIMEO))) return `https://player.vimeo.com/video/${m[1]}`;
+  if((m = String(url||'').match(RE_DRIVE))) return `https://drive.google.com/file/d/${m[1]}/preview`;
+  return null;
+}
+const capaDoYT = url => { const m = String(url||'').match(RE_YT);
+  return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : null; };
+const ehLinkDeVideo = u => !!embedDeVideo(u) || RE_ARQ.test(String(u||''));
+
+/* O visualizador lista `tipo!=='link'` — e `lbMateriais` é `const`, não
+   dá para reescrever. Então não se reescreve: o link que é vídeo passa a
+   ser guardado COMO vídeo (`tipo:'video'`, `link:true`), e todo o motor
+   que já existe o enxerga sem saber que veio de um link. A capa do
+   YouTube vira `poster` de graça. */
+function migrarLinksDeVideo(){
+  for(const arr of Object.values(S.mat||{})){
+    for(const m of arr){
+      if(m.tipo !== 'link' || !ehLinkDeVideo(m.url)) continue;
+      m.tipo = 'video'; m.link = true;
+      m.poster = m.poster || capaDoYT(m.url);
+      if(m.nome === m.url) m.nome = dominioDe(m.url) + ' · vídeo';
+    }
+  }
+}
+migrarLinksDeVideo();
+render = (function(orig){
+  return function(){ migrarLinksDeVideo(); orig(); };
+})(render);
+
+/* na tira, o link de vídeo não tem arquivo local para desenhar — dá um
+   fundo em vez do retângulo quebrado do `<video>` sem stream */
+marcarMinis = (function(orig){
+  return function(html, id, lista){
+    let out = orig(html, id, lista);
+    let j = -1;
+    return out.replace(/<span class="mtMini([^"]*)"/g, (todo, cls) => {
+      j++;
+      const m = lista[j];
+      return (m && m.link) ? `<span class="mtMini${cls} ehLinkVideo"` : todo;
+    });
+  };
+})(marcarMinis);
+
+/* ---------- 2. a tela grande toca o embed --------------------------- */
+vLightbox = (function(orig){
+  return function(){
+    let html = orig();
+    if(!html) return html;
+    const ms = lbMateriais();
+    const m = ms[Math.min(S.lb.i, ms.length-1)];
+    if(!m || !m.link) return html;
+    const emb = embedDeVideo(m.url);
+    const dentro = emb
+      ? `<iframe class="lbEmbed" src="${esc(emb)}" allow="autoplay; fullscreen;
+           picture-in-picture" allowfullscreen title="${esc(m.nome)}"></iframe>`
+      : `<video src="${esc(m.url)}" controls playsinline preload="metadata"></video>`;
+    html = html.replace(/<video[^>]*><\/video>/, dentro);
+    /* baixar um link de outro domínio não funciona — o navegador barra.
+       No lugar, o que serve: abrir onde o arquivo mora de verdade. */
+    html = html.replace(/<button class="lbBtn" data-lbbaixa="1"[\s\S]*?<\/button>/,
+      `<a class="lbBtn" href="${esc(m.url)}" target="_blank" rel="noopener noreferrer"
+         aria-label="Abrir no ${esc(dominioDe(m.url))}"
+         title="Abrir no ${esc(dominioDe(m.url))}">${ic('linkic',16)}</a>`);
+    return html;
+  };
+})(vLightbox);
+
+/* ---------- 3. a ausência se anuncia -------------------------------- */
+/* Um Reels sem vídeo não é um estado de erro — é o meio do trabalho. Mas
+   precisa estar ESCRITO, senão a pessoa procura um player que não existe
+   e conclui que o produto quebrou. Foi exatamente o que aconteceu. */
+const PEDE_VIDEO = p => !!p && (/reels|story/i.test(p.fmt||'')
+  || !!(p.corte && (p.corte.ep || (p.corte.tcs||[]).length))
+  || !!(p.roteiro && (p.roteiro.hook || p.roteiro.des || p.roteiro.cta)));
+function faltaVideo(p){
+  if(!PEDE_VIDEO(p)) return false;
+  const ms = materiaisDe(p.id);
+  if(!ms.length) return false;                       // "sem arquivo" já é dito
+  return !ms.some(m => m.tipo === 'video');
+}
+const AVISO_FALTA = `<div class="mtFalta">${ic('warn',15)}
+  <span><b>Falta o vídeo — o que está aqui é a capa.</b>
+  Suba o arquivo, ou cole o link do Drive/YouTube: link de vídeo abre com
+  player aqui dentro, e o cliente assiste sem sair da plataforma.</span></div>`;
+
+modalMaterial = (function(orig){
+  return function(id){
+    /* o botão "Adicionar link" remonta o modal ANTES do próximo render —
+       sem isto o link recém-colado ainda apareceria como link */
+    migrarLinksDeVideo();
+    let html = orig(id);
+    if(!html) return html;
+    const p = S.pauta.find(x => x.id === id);
+    if(!faltaVideo(p)) return html;
+    return html.replace('<div class="modalrow"', AVISO_FALTA + '\n    <div class="modalrow"');
+  };
+})(modalMaterial);
+
+modalVer = (function(orig){
+  return function(id){
+    let html = orig(id);
+    if(!html || html.indexOf('vzMats') < 0) return html;
+    const p = S.pauta.find(x => x.id === id);
+    if(!faltaVideo(p)) return html;
+    return html.replace(/(<button class="b gho sm" style="margin-top:10px" data-mtabrir=)/,
+      AVISO_FALTA + '$1');
+  };
+})(modalVer);
 </script>
