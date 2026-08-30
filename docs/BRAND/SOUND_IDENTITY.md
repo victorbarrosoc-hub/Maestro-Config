@@ -41,6 +41,22 @@ Consequência prática: **todo som do produto vive na escala de Lá maior** (A �
 
 Usos: abertura de vídeo institucional, splash do app mobile, fim de onboarding. **Máximo uma vez por sessão.**
 
+### Como está implementado no protótipo (v53)
+
+A cortina de abertura toca o arpejo **uma oitava abaixo** (A3 → C♯4 → E4), como
+manda a §4b/D-072, precedido do **obó dando o Lá 440** — a orquestra afinando, que
+é o que a tela mostra escrito — e seguido de um Lá grave que assenta: a
+aterrissagem na plataforma. Do primeiro sopro ao último grave são ~1,9s; o arpejo
+em si fica dentro dos 900ms da especificação.
+
+**O gesto é obrigatório e não é escolha nossa.** Nenhum navegador libera áudio
+antes de um toque, clique ou tecla, e a cortina abre no carregamento. Enquanto
+ela está no ar, o primeiro gesto solta o áudio e dispara a abertura — o "toque
+para entrar" que já existia é o gatilho natural. Sumiu a cortina, o arme sai
+junto: fanfarra tocando com a plataforma já aberta seria defeito, não marca (R2).
+
+Quem for produzir o `maestro-logo.webm` da §6: é este o registro que vale.
+
 ---
 
 ## 4. Sons funcionais

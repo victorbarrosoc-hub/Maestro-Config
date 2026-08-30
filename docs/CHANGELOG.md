@@ -1,6 +1,6 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.1
+Version: 0.5.2
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
@@ -32,6 +32,39 @@ Nunca apagar versões anteriores.
   `session.read`, e plano e limites da agência saem da resposta do lado cliente (I-12).
 - `POST /batches` com peça sem copy devolvia **500** (`currentVersionId!` mentia).
   Agora é 422 dizendo qual peça falta escrever.
+
+---
+
+## 0.5.2 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** o som da abertura, a pauta no celular e o beco sem saída do lote.
+
+### Adicionado
+- **A abertura tem som.** O logo sonoro da marca (`SOUND_IDENTITY` §3) já estava
+  especificado e já era chamado pela cortina, mas quase nunca tocava: `AC.resume()`
+  é assíncrono e o código testava o estado no instante seguinte, quando ainda era
+  `suspended`. Agora o som sai dentro da promessa, e o primeiro gesto sobre a
+  cortina libera o áudio. Arpejo de Lá maior ascendente, uma oitava abaixo (D-072),
+  precedido do obó dando o Lá 440 e seguido do grave que assenta.
+- **R9, enfim implementada:** no primeiro som da sessão, um aviso discreto de que
+  a Maestro tem som e de onde desligar.
+- **A pauta no celular** (v52): abaixo de 520px o card ocupa a linha inteira e as
+  ações descem para uma faixa própria. Card de 47% para 94% da largura, título de
+  duas linhas para uma, alvo de toque de 29px para 38px. Desktop inalterado.
+
+### Corrigido
+- **O beco sem saída do lote** (v52): o cliente decidia tudo e voltava sempre à
+  mesma tela. O denominador contava toda peça final existente — inclusive as que
+  vieram do lote de copy e estão em produção, que ele nunca poderia decidir. Daí
+  "8 de 13", com 13 inalcançável, e o "Continuar" devolvendo à peça 1.
+- **O termo recém-assinado mostrava números errados** (v53): assinar agenda o que
+  foi aprovado, a peça vira `SCHEDULED`, e o lote encolhia no mesmo instante — um
+  lote de 8 com 6 aprovadas virava "2 publicações, 0 aprovadas". Aprovada,
+  agendada e publicada dizem a mesma coisa sobre a decisão; agora as três contam.
+- A abertura tocava duas ou três vezes quando o áudio já estava liberado. A guarda
+  de "máximo uma vez por sessão" passou para dentro do `som()`, onde alcança
+  também o `afinar()` antigo da cortina.
 
 ---
 

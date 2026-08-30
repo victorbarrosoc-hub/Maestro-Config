@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-30 00:48 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-30 01:25 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -761,10 +761,17 @@ const finAtivos = () => ativos().filter(p=>p.fase!=='TEXTO');
  * Rascunho e peça em produção não são deste lote. Quem não foi enviado não
  * conta — nem no total, nem na barra, nem na porta do termo.
  */
-const NO_LOTE   = ['AWAITING_APPROVAL','APPROVED','CHANGES_REQUESTED'];
+/* Aprovar nao e o fim da linha: assinar o termo agenda o que foi aprovado
+   (S.autoAg), e a peca vira SCHEDULED e depois PUBLISHED. Os tres estados
+   dizem a mesma coisa sobre a DECISAO — o cliente aprovou. Contar so
+   'APPROVED' fazia o lote encolher no instante da assinatura: o termo
+   recem-assinado dizia "2 publicacoes, 0 aprovadas" para um lote de 8. */
+const APROVADA  = ['APPROVED','SCHEDULED','PUBLISHED'];
+const NO_LOTE   = ['AWAITING_APPROVAL','CHANGES_REQUESTED', ...APROVADA];
 const doLote    = () => finAtivos().filter(p=>NO_LOTE.includes(p.st));
-const decididas = () => doLote().filter(p=>p.st==='APPROVED'||p.st==='CHANGES_REQUESTED').length;
-const aprovadas = () => doLote().filter(p=>p.st==='APPROVED').length;
+/* no lote, decidido e tudo que nao esta esperando */
+const decididas = () => doLote().filter(p=>p.st!=='AWAITING_APPROVAL').length;
+const aprovadas = () => doLote().filter(p=>APROVADA.includes(p.st)).length;
 const pedidas   = () => doLote().filter(p=>p.st==='CHANGES_REQUESTED').length;
 const esperando = () => doLote().filter(p=>p.st==='AWAITING_APPROVAL').length;
 const fmtSeal   = s => s.slice(0,4)+'·'+s.slice(4);
@@ -5926,10 +5933,22 @@ function som(tipo){
       barra(MI4b, .52, .14, 'vibrafone', -.1);
       fundo(220, .54, .16);
     }
-    if(tipo === 'afinacao'){                    // a abertura: o obo da o La
-      sopro(LA4b, 0, 1.9, .085);
-      barra(LA3b, .05, .13, 'vibrafone', -.2);
-      fundo(110, .04, .13);
+    if(tipo === 'afinacao' || tipo === 'abertura'){
+      /* O LOGO SONORO (BRAND/SOUND_IDENTITY §3): arpejo de La maior
+         ascendente com crescendo leve e cauda de sino — uma oitava
+         abaixo do escrito, como toda a paleta desde a D-072.
+         Antes dele o obo da o La 440: a orquestra afinando, que e o que
+         a tela mostra por escrito. Depois, o La grave assenta — a
+         aterrissagem na plataforma.
+         E UM gesto sonoro, nao seis efeitos soltos: a R3 e a R4 valem
+         entre sons, e isto aqui e um som so. Maximo uma vez por sessao. */
+      sopro(LA4b, 0, 1.30, .075);                     // o la 440 da tela
+      fundo(110, .02, .09);
+      [[LA3b, .46, .13], [CS4b, .64, .17], [MI4b, .82, .21]]
+        .forEach(([f, t0, g], i) => barra(f, t0, g, 'marimba', -.18 + i*.18));
+      barra(MI4b, 1.00, .10, 'celesta',  .07);        // a cauda de sino
+      barra(LA4b, 1.03, .06, 'celesta', -.07);
+      fundo(110, 1.20, .12);                          // aterrissa
     }
   }catch(e){}
 }
@@ -14717,3 +14736,106 @@ document.addEventListener('click', async e => {
   .ptItem > .ptFeito svg{ font-size:15px }
 }
 </style>
+<script>
+"use strict";
+/* =====================================================================
+   v53 — a abertura ganha som de verdade.
+
+   O logo sonoro já existia na marca (SOUND_IDENTITY §3) e já era
+   chamado pela cortina — mas quase nunca tocava. Navegador nenhum
+   libera áudio antes de um gesto do usuário, e a cortina abre no
+   carregamento; o código tentava tocar e desistia em silêncio se o
+   contexto ainda estivesse suspenso. Na prática a abertura era muda.
+
+   Duas correções:
+
+   1. `AC.resume()` é assíncrono. O código antigo chamava resume e no
+      instante seguinte testava `AC.state !== 'running'` — que ainda era
+      'suspended'. Desistia sempre, inclusive no toque em "toque para
+      entrar", onde o gesto existia e o áudio estava liberado. Agora o
+      som sai *dentro* da promessa do resume.
+
+   2. Enquanto a cortina está no ar, o primeiro gesto — toque, clique ou
+      tecla — solta o áudio e dispara a abertura. Some com a cortina, o
+      arme sai junto: fanfarra tocando três segundos depois, com a
+      plataforma já aberta, seria defeito, não marca (R2).
+
+   Junto vai a R9, que nunca tinha sido implementada: no primeiro som da
+   sessão, um aviso discreto de que a Maestro tem som e de onde desligar.
+   ================================================================== */
+
+/* R9 — o primeiro som se apresenta. Uma vez por sessão, e nunca por
+   cima do próprio som: o aviso espera a frase terminar. */
+let avisouDosSons = false;
+function avisarDosSons(atraso){
+  if(avisouDosSons) return;
+  avisouDosSons = true;
+  setTimeout(() => {
+    if(S.sound) toast('A Maestro tem sons. Para desligar: Conta → Preferências.');
+  }, atraso ?? 2200);
+}
+
+let aberturaTocada = false;
+
+/* A guarda da abertura mora AQUI, não em quem chama: a cortina antiga
+   tem o seu próprio `afinar()`, que dispara no carregamento e de novo no
+   toque. Com o áudio já liberado — segunda visita, outra aba tocando —
+   isso fazia a fanfarra tocar duas e até três vezes, sobrepostas. O §3
+   é claro: máximo uma vez por sessão.
+   De quebra, qualquer som da sessão dispara o aviso da R9. */
+som = (function(orig){
+  return function(tipo){
+    if(!S.sound) return;
+    if(tipo === 'afinacao' || tipo === 'abertura'){
+      if(aberturaTocada) return;
+      aberturaTocada = true;
+    }
+    orig(tipo);
+    avisarDosSons();
+  };
+})(som);
+function tocarAbertura(){
+  // R7: com movimento reduzido a cortina dura 700ms — fanfarra ali é ruído.
+  if(aberturaTocada || !S.sound || REDUZ) return;
+  let ctx;
+  try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); ctx = AC; }
+  catch(e){ return; }
+
+  const soltar = () => {
+    if(aberturaTocada || ctx.state !== 'running') return;
+    som('abertura');            // a guarda de uma vez por sessão está no `som`
+    desarmarGesto();
+  };
+
+  if(ctx.state === 'running'){ soltar(); return; }
+  ctx.resume().then(soltar).catch(()=>{});
+}
+
+const GESTOS = ['pointerdown','touchstart','keydown'];
+const aoGesto = () => tocarAbertura();
+function desarmarGesto(){
+  GESTOS.forEach(g => removeEventListener(g, aoGesto, true));
+}
+
+/* Não dá para embrulhar `abrirCortina`: o `addEventListener` lá em cima
+   guardou a referência da função original, e reatribuir o nome depois não
+   troca o que já foi registrado. Registrar o nosso ouvinte é o caminho —
+   e como este script é analisado depois daquele, o nosso corre em segundo,
+   com a cortina já na tela. */
+function armarAbertura(){
+  tocarAbertura();                         // se o áudio já estiver liberado
+  if(aberturaTocada) return;
+  GESTOS.forEach(g => addEventListener(g, aoGesto, true));
+
+  /* o arme vive o tempo da cortina e nem um segundo a mais */
+  const fim = new MutationObserver(() => {
+    if(!document.getElementById('abertura')){ desarmarGesto(); fim.disconnect(); }
+  });
+  fim.observe(document.body, { childList:true });
+  setTimeout(() => { desarmarGesto(); fim.disconnect(); }, 8000);
+}
+
+if(document.readyState === 'loading')
+  document.addEventListener('DOMContentLoaded', armarAbertura, {once:true});
+else armarAbertura();
+</script>
