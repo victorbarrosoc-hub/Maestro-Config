@@ -14665,3 +14665,40 @@ document.addEventListener('click', async e => {
   }
 }, true);
 </script>
+<style>
+/* =====================================================================
+   v64 — a pauta no celular: o card deitado, as ações embaixo.
+
+   No desktop o card e os cinco botões lado a lado cabem folgados. No
+   celular não cabiam: os botões reservavam ~180px fixos da direita e
+   sobrava menos da metade da tela para o conteúdo. O card ficava com
+   47% da largura, o título quebrava em três linhas, cada item passava
+   de 300px de altura e **um** card por tela era tudo que se via.
+
+   Aqui o card ocupa a linha inteira e as ações descem para uma faixa
+   própria, dividindo a largura entre si. Ganha-se leitura (o título
+   deixa de quebrar), densidade (mais cards por tela) e alvo de toque:
+   os botões saem de 29px — abaixo de qualquer mínimo de acessibilidade
+   — para 38px de altura e uns 70px de largura.
+
+   Só no celular. O desktop continua como está (o founder confirmou).
+   ================================================================== */
+@media (max-width:520px){
+  .ptItem{ flex-wrap:wrap; align-items:stretch }
+
+  /* o card deitado, ocupando a linha toda */
+  .ptItem > .ptRow{ flex:1 1 100%; order:1 }
+
+  /* a observação é do card, não da faixa de ações — desce junto */
+  .ptItem > .ptObsLinha{ flex:1 1 100%; order:2; margin-top:0 }
+
+  /* a faixa de ações: divide a largura, dá alvo de toque de verdade */
+  /* `max-width` porque nem todo card tem os cinco: tarefa interna traz
+     tres, e sem teto cada um viraria uma barra de 120px. */
+  .ptItem > .ptQuick,
+  .ptItem > .ptFeito{ order:3; flex:1 1 0; width:auto; min-width:0;
+    max-width:96px; height:38px; border-radius:10px }
+  .ptItem > .ptQuick svg,
+  .ptItem > .ptFeito svg{ font-size:15px }
+}
+</style>

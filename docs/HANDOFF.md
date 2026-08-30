@@ -1052,6 +1052,15 @@ v62) foi ao fundo e é a que ficou — trazida de volta ao repositório aqui.
 > aviso de republicação, o certo é LER e comparar antes de republicar por cima — foi
 > assim que esta correção melhor não se perdeu.
 
+**O card da pauta deitado no celular (v64).** Outra correção chegada pelo artifact e
+trazida ao repositório: no desktop o card e os cinco botões lado a lado cabem, no celular
+os botões reservavam ~180px fixos da direita e sobrava menos da metade da tela para o
+conteúdo. Agora o card ocupa a linha inteira e as ações descem para uma faixa própria.
+Medido em 375px: o conteúdo foi de ~47% para **93%** da largura, e os botões de 29px
+(abaixo de qualquer mínimo de acessibilidade) para **38px** de altura. Só abaixo de
+520px — o desktop segue como estava. *(A camada veio numerada "v52" da outra sessão;
+renumerada para v64 aqui, para a cronologia do arquivo não mentir.)*
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
