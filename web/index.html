@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-30 22:12 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-30 22:32 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -71,7 +71,7 @@ svg.i{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;
 
 /* ---------- barra de contexto ---------------------------------------- */
 .ctx{position:fixed;top:0;left:0;right:0;height:42px;z-index:900;
-  background:rgba(8,9,11,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--ink-800);
+  background:rgba(22,22,22,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--ink-800);
   display:flex;align-items:center;gap:10px;padding:0 14px;font-size:12px;color:var(--ink-400)}
 .ctx .sp{flex:1}
 .ctxbtn{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:8px;
@@ -5008,8 +5008,11 @@ function som(tipo){
 /* ---------- 1 · a abertura ------------------------------------------ */
 #abertura{
   position:fixed; inset:0; z-index:2000; display:grid; place-items:center;
+  /* nasce da mesma família do fundo do corpo: senão o primeiro quadro
+     pinta o corpo e a cortina cobre com um preto muito mais escuro —
+     era esse o flash ao abrir */
   background:
-    radial-gradient(120% 90% at 50% 42%, #14161B 0%, #0A0B0E 55%, #060709 100%);
+    radial-gradient(120% 90% at 50% 42%, #1C1C1C 0%, #161616 58%, #101010 100%);
   overflow:hidden; cursor:pointer;
 }
 #abertura.saindo{ animation:abSai .85s var(--eo) forwards; pointer-events:none }
@@ -15680,7 +15683,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v71 · 30 ago · a abertura';
+const VERSAO_PROTOTIPO = 'v72 · 30 ago · sem flash';
 
 menuSheet = (function(orig){
   return function(){
@@ -16953,3 +16956,4 @@ if(typeof render === 'function') render();
   #abertura.mergulho .mDesenho.mPauta{ animation:none !important; opacity:0 }
 }
 </style>
+
