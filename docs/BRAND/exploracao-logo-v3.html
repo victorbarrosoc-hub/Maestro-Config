@@ -1,0 +1,390 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cinco Gestos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* =====================================================================
+   CINCO GESTOS — segunda audição de símbolo.
+   A Pauta (v2) leu como "cara de IA": sete linhas onduladas é território
+   de clipart de equalizador. Esta prancha ensaia cinco rotas que fogem
+   disso pelo caminho oposto — MENOS traço, mais corte.
+   Nada daqui está aplicado. A decisão é do founder.
+   ================================================================== */
+:root{
+  --ink-950:#08090B; --ink-900:#0D0F12; --ink-850:#121418; --ink-800:#181B20;
+  --ink-700:#23272E; --ink-500:#4C535D; --ink-400:#6B7280; --ink-300:#9AA1AC;
+  --ink-100:#E3E6EA; --ink-50:#F4F6F8;
+  --brass-300:#E3C173; --brass-400:#D9AC4C; --brass-500:#C8963A; --brass-700:#855F22;
+  --serif:'Instrument Serif',Georgia,serif;
+  --sans:'Inter',system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink-950);color:var(--ink-100);
+  font-family:var(--sans);font-size:15px;line-height:1.65;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:0 26px}
+
+/* ---------- abertura ---------- */
+header{min-height:78vh;display:grid;place-items:center;text-align:center;padding:70px 22px}
+header .selo{font-family:var(--mono);font-size:10px;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--ink-400);margin-bottom:30px}
+header h1{font-family:var(--serif);font-weight:400;font-size:clamp(48px,9vw,100px);
+  line-height:1;margin:0 0 22px;color:var(--ink-50)}
+header h1 em{font-style:italic;color:var(--brass-300)}
+header p{max-width:54ch;margin:0 auto;color:var(--ink-300);font-size:16px}
+header p b{color:var(--ink-100);font-weight:500}
+
+/* ---------- a autópsia ---------- */
+.autopsia{border-top:1px solid var(--ink-800);border-bottom:1px solid var(--ink-800);
+  padding:54px 0;margin-bottom:20px}
+.autopsia .par{display:grid;grid-template-columns:200px 1fr;gap:34px;align-items:center}
+@media(max-width:700px){.autopsia .par{grid-template-columns:1fr}}
+.autopsia .morto{background:var(--ink-900);border:1px solid var(--ink-800);
+  border-radius:16px;padding:26px;display:grid;place-items:center;position:relative}
+.autopsia .morto::after{content:'✗';position:absolute;top:8px;right:12px;
+  color:#E5484D;font-size:14px;font-weight:700}
+.autopsia h2{font-family:var(--serif);font-weight:400;font-size:clamp(24px,3.6vw,32px);
+  margin:0 0 10px;color:var(--ink-50)}
+.autopsia p{margin:0;color:var(--ink-300);max-width:56ch}
+.autopsia p b{color:var(--ink-100);font-weight:500}
+
+/* ---------- as pranchas ---------- */
+.opcao{padding:74px 0;border-bottom:1px solid var(--ink-800)}
+.opcao:last-of-type{border-bottom:0}
+.opNum{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--brass-500);margin:0 0 12px}
+.opcao h2{font-family:var(--serif);font-weight:400;font-size:clamp(30px,5vw,46px);
+  margin:0 0 12px;color:var(--ink-50)}
+.opcao h2 em{font-style:italic;color:var(--brass-300)}
+.opTese{color:var(--ink-300);max-width:58ch;margin:0 0 30px}
+.opTese b{color:var(--ink-100);font-weight:500}
+
+.opGrade{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px}
+@media(max-width:760px){.opGrade{grid-template-columns:1fr}}
+.palcoG{background:var(--ink-900);border:1px solid var(--ink-800);border-radius:18px;
+  display:grid;place-items:center;min-height:300px;padding:9%}
+.palcoG svg{width:100%;max-width:250px;height:auto;overflow:visible}
+.coluna{display:flex;flex-direction:column;gap:16px}
+
+/* a fila de contextos */
+.contextos{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:520px){.contextos{grid-template-columns:repeat(2,1fr)}}
+.ctx{border-radius:13px;display:grid;place-items:center;aspect-ratio:1;position:relative;
+  border:1px solid var(--ink-800)}
+.ctx.escuro{background:var(--ink-950)}
+.ctx.claro{background:#F4F6F8;border-color:#E3E6EA}
+.ctx small{position:absolute;bottom:7px;left:0;right:0;text-align:center;
+  font-family:var(--mono);font-size:8px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-500)}
+.ctx.claro small{color:#9AA1AC}
+.ctx .chipApp{width:52%;aspect-ratio:1;border-radius:24%;display:grid;place-items:center;
+  background:linear-gradient(180deg,#181B20,#08090B);
+  box-shadow:0 3px 10px rgba(0,0,0,.5), inset 0 0 0 .5px #23272E}
+
+.lockupG{background:var(--ink-950);border:1px solid var(--ink-800);border-radius:13px;
+  min-height:86px;display:flex;align-items:center;justify-content:center;gap:14px;
+  padding:18px}
+.lockupG b{font-family:var(--serif);font-weight:400;font-size:30px;letter-spacing:.2px;
+  color:var(--ink-50)}
+
+.prosContras{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.prosContras{grid-template-columns:1fr}}
+.pc{border:1px solid var(--ink-800);border-radius:13px;padding:14px 16px;
+  background:var(--ink-900);font-size:12.5px;line-height:1.55;color:var(--ink-300)}
+.pc b{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;margin-bottom:7px}
+.pc.ganha b{color:#35B87A}
+.pc.perde b{color:#F0784C}
+
+/* ---------- rodapé ---------- */
+footer{padding:80px 26px 90px;text-align:center;border-top:1px solid var(--ink-800)}
+footer p{font-family:var(--serif);font-size:clamp(20px,3.4vw,30px);color:var(--ink-100);
+  max-width:26ch;margin:0 auto 14px}
+footer small{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-500)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header>
+  <div>
+    <div class="selo">Maestro · símbolo · segunda audição</div>
+    <h1>Cinco <em>gestos</em>.</h1>
+    <p>A Pauta leu como feita por máquina — e a crítica procede: sete linhas onduladas é
+      vizinhança de equalizador, e equalizador é clipart. Estes cinco caminhos fogem disso
+      pelo lado oposto: <b>menos traço, mais corte</b>. Cada um mostrado grande, no claro,
+      pequeno, como ícone e ao lado do nome. Nada foi aplicado — a plataforma segue como
+      está até você escolher.</p>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="autopsia">
+  <div class="par">
+    <div class="morto" id="morto-pauta"></div>
+    <div>
+      <h2>Por que a Pauta caiu</h2>
+      <p><b>Traço demais.</b> Sete linhas paralelas ondulando é o vocabulário exato de logo
+        genérico de áudio — e de imagem gerada, que adora repetição com deslocamento. Marca
+        boa costuma ser o contrário: <b>um</b> desenho, com <b>um</b> corte inteligente, que
+        sobrevive a carimbo, bordado e favicon sem virar mancha. O trocadilho da pauta era
+        bom; a forma é que não fazia jus a ele.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 01 · A BATIDA ============ -->
+<section class="opcao" id="op1">
+  <p class="opNum">Opção 01 · o gesto</p>
+  <h2>A <em>Batida</em>.</h2>
+  <p class="opTese">Um traço só: a batuta desce com peso e rebate leve — o <b>downbeat</b>,
+    o gesto que dá o tempo à orquestra inteira. E há uma coincidência honesta demais para
+    ignorar: o mesmo desenho lê como <b>visto de aprovado</b>, que é o momento central do
+    produto. O gesto do maestro e o gesto do cliente são o mesmo movimento.</p>
+  <div class="opGrade">
+    <div class="palcoG"><span data-g="batida" data-c="#C8963A" data-w="220"></span></div>
+    <div class="coluna">
+      <div class="contextos">
+        <div class="ctx claro"><span data-g="batida" data-c="#C8963A" data-w="54"></span><small>claro</small></div>
+        <div class="ctx escuro"><span data-g="batida" data-c="#D9AC4C" data-w="24"></span><small>24 px</small></div>
+        <div class="ctx escuro"><span class="chipApp"><span data-g="batida" data-c="#D9AC4C" data-w="30"></span></span><small>app</small></div>
+        <div class="ctx escuro"><span data-g="batida" data-c="#F4F6F8" data-w="54"></span><small>mono</small></div>
+      </div>
+      <div class="lockupG"><span data-g="batida" data-c="#D9AC4C" data-w="44"></span><b>Maestro</b></div>
+      <div class="prosContras">
+        <div class="pc ganha"><b>Onde ganha</b>Um traço: carimba, borda, grava. O duplo
+          sentido batida/aprovação é raro de conseguir sem forçar.</div>
+        <div class="pc perde"><b>Onde perde</b>Precisa de desenho fino para não ler como
+          "check" genérico de to-do list. O peso variável do traço é obrigatório.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 · A FERMATA ============ -->
+<section class="opcao" id="op2">
+  <p class="opNum">Opção 02 · o sinal</p>
+  <h2>A <em>Fermata</em>.</h2>
+  <p class="opTese">Um arco e um ponto. Na partitura, a fermata é o único sinal que significa
+    literalmente <b>"todos olham para o maestro"</b> — o tempo fica suspenso até ele decidir.
+    É o produto inteiro numa forma: tudo espera a decisão de alguém. E a marca já usa a
+    palavra — <code style="font-family:var(--mono);font-size:12px;color:var(--brass-300)">fermata</code>
+    é o token de 480 ms do motion.</p>
+  <div class="opGrade">
+    <div class="palcoG"><span data-g="fermata" data-c="#C8963A" data-w="210"></span></div>
+    <div class="coluna">
+      <div class="contextos">
+        <div class="ctx claro"><span data-g="fermata" data-c="#C8963A" data-w="54"></span><small>claro</small></div>
+        <div class="ctx escuro"><span data-g="fermata" data-c="#D9AC4C" data-w="24"></span><small>24 px</small></div>
+        <div class="ctx escuro"><span class="chipApp"><span data-g="fermata" data-c="#D9AC4C" data-w="30"></span></span><small>app</small></div>
+        <div class="ctx escuro"><span data-g="fermata" data-c="#F4F6F8" data-w="54"></span><small>mono</small></div>
+      </div>
+      <div class="lockupG"><span data-g="fermata" data-c="#D9AC4C" data-w="46"></span><b>Maestro</b></div>
+      <div class="prosContras">
+        <div class="pc ganha"><b>Onde ganha</b>Duas formas primitivas — indestrutível em
+          qualquer tamanho. Significado exato, e já existe dentro do sistema de motion.</div>
+        <div class="pc perde"><b>Onde perde</b>Quem não lê partitura vê um olho ou uma
+          sobrancelha. O significado pede a história junto, pelo menos no começo.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 · O M PAUTADO ============ -->
+<section class="opcao" id="op3">
+  <p class="opNum">Opção 03 · o monograma</p>
+  <h2>O M <em>pautado</em>.</h2>
+  <p class="opTese">O caminho clássico: um M sólido, geométrico, pesado — e a <b>pauta
+    atravessa ele</b> em quatro cortes de luz. Guarda o trocadilho pauta/calendário da
+    versão atual, mas inverte a lógica: em vez de sete traços desenhando um M frágil, um
+    M maciço cortado por quatro respiros. No favicon os cortes somem e sobra um M sólido —
+    a redução já vem grátis.</p>
+  <div class="opGrade">
+    <div class="palcoG"><span data-g="mpautado" data-c="#C8963A" data-w="200"></span></div>
+    <div class="coluna">
+      <div class="contextos">
+        <div class="ctx claro"><span data-g="mpautado" data-c="#C8963A" data-w="54"></span><small>claro</small></div>
+        <div class="ctx escuro"><span data-g="mpautado" data-c="#D9AC4C" data-w="24" data-solido="1"></span><small>24 px</small></div>
+        <div class="ctx escuro"><span class="chipApp"><span data-g="mpautado" data-c="#D9AC4C" data-w="30"></span></span><small>app</small></div>
+        <div class="ctx escuro"><span data-g="mpautado" data-c="#F4F6F8" data-w="54"></span><small>mono</small></div>
+      </div>
+      <div class="lockupG"><span data-g="mpautado" data-c="#D9AC4C" data-w="42"></span><b>Maestro</b></div>
+      <div class="prosContras">
+        <div class="pc ganha"><b>Onde ganha</b>Presença. É o único dos cinco com peso de
+          marca registrada — funciona em prédio, em anel de caneta, em relevo seco.</div>
+        <div class="pc perde"><b>Onde perde</b>Monograma M é terreno disputado (McLaren,
+          metrôs do mundo inteiro). A busca de anterioridade do D-024 pesa mais aqui.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 · O LEVARE ============ -->
+<section class="opcao" id="op4">
+  <p class="opNum">Opção 04 · a pauta quieta</p>
+  <h2>O <em>Levare</em>.</h2>
+  <p class="opTese">Cinco linhas de pauta, paradas — e <b>a primeira se ergue</b>, no ângulo
+    da batuta que sobe. Levare é o nome desse instante: a respiração antes da música começar,
+    quando todo mundo olha para cima. Uma linha fora do lugar é toda a mensagem. É o mais
+    calmo dos cinco, e o mais próximo do que a marca diz de si: preciso, quieto, quente.</p>
+  <div class="opGrade">
+    <div class="palcoG"><span data-g="levare" data-c="#C8963A" data-w="200"></span></div>
+    <div class="coluna">
+      <div class="contextos">
+        <div class="ctx claro"><span data-g="levare" data-c="#C8963A" data-w="54"></span><small>claro</small></div>
+        <div class="ctx escuro"><span data-g="levare" data-c="#D9AC4C" data-w="24"></span><small>24 px</small></div>
+        <div class="ctx escuro"><span class="chipApp"><span data-g="levare" data-c="#D9AC4C" data-w="30"></span></span><small>app</small></div>
+        <div class="ctx escuro"><span data-g="levare" data-c="#F4F6F8" data-w="54"></span><small>mono</small></div>
+      </div>
+      <div class="lockupG"><span data-g="levare" data-c="#D9AC4C" data-w="44"></span><b>Maestro</b></div>
+      <div class="prosContras">
+        <div class="pc ganha"><b>Onde ganha</b>Sutileza de gente grande — humor seco à
+          Paul Rand. Linhas retas: perfeito em bordado, gravação e tamanho mínimo.</div>
+        <div class="pc perde"><b>Onde perde</b>Discreto ao ponto do risco: de longe pode
+          ler como ícone de "menu" com uma linha torta. Pede o latão para acender.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 · A LIGADURA ============ -->
+<section class="opcao" id="op5">
+  <p class="opNum">Opção 05 · o nome como marca</p>
+  <h2>A <em>Ligadura</em>.</h2>
+  <p class="opTese">A rota sem símbolo: <b>o nome é a marca</b>, em Instrument Serif, com um
+    único gesto em cima — a ligadura, o arco que na partitura une notas numa frase só. Tocar
+    ligado é tocar sem interrupção; é a promessa do produto sobre a operação inteira. Para
+    ícone e favicon, o M inicial herda o arco e vira monograma.</p>
+  <div class="opGrade">
+    <div class="palcoG" style="padding:7%"><span data-g="ligadura" data-c="#F4F6F8" data-w="250"></span></div>
+    <div class="coluna">
+      <div class="contextos">
+        <div class="ctx claro"><span data-g="ligaM" data-c="#C8963A" data-w="50"></span><small>claro</small></div>
+        <div class="ctx escuro"><span data-g="ligaM" data-c="#D9AC4C" data-w="24"></span><small>24 px</small></div>
+        <div class="ctx escuro"><span class="chipApp"><span data-g="ligaM" data-c="#D9AC4C" data-w="30"></span></span><small>app</small></div>
+        <div class="ctx escuro"><span data-g="ligaM" data-c="#F4F6F8" data-w="50"></span><small>mono</small></div>
+      </div>
+      <div class="lockupG" style="padding:22px"><span data-g="ligadura" data-c="#F4F6F8" data-w="230"></span></div>
+      <div class="prosContras">
+        <div class="pc ganha"><b>Onde ganha</b>Elegância editorial — casa perfeitamente com
+          o Instrument Serif que a marca já tem. Impossível de confundir com SaaS azul.</div>
+        <div class="pc perde"><b>Onde perde</b>Wordmark-first exige disciplina: sem o nome
+          por perto, sobra só o monograma — que é o mais convencional dos cinco.</div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<footer>
+  <p>Ouça os cinco. Fique com o que você conseguiria desenhar de memória num guardanapo.</p>
+  <small>Maestro · exploração de símbolo v3 · nada aplicado ainda</small>
+</footer>
+
+<script>
+'use strict';
+/* =====================================================================
+   Todos os gestos são funções — a mesma regra da casa: gerado, nunca
+   redesenhado. viewBox comum 0 0 48 48, terminais arredondados.
+   ================================================================== */
+
+/* 01 · A Batida — a batuta desce com peso e rebate leve. O peso variável
+   é o que separa isto de um check de to-do: desce grosso, sobe fino. */
+function gBatida(cor){
+  /* dois traços emendados no ponto da batida: a descida GROSSA (o peso
+     do braço) e o rebate FINO (o pulso). O afilamento é o que separa
+     isto de um check de interface — check tem peso uniforme. */
+  return `<svg viewBox="0 0 48 48" fill="none" stroke="${cor}" stroke-linecap="round">
+    <path d="M9.5 19.5 C14.5 24.5 18.6 31 21.4 38" stroke-width="7.2"/>
+    <path d="M21.4 38 C26.8 30 33.6 19 39.5 8.5 C39.9 7.8 40.4 7.4 41 7.2"
+      stroke-width="2.7"/>
+  </svg>`;
+}
+
+/* 02 · A Fermata — o arco e o ponto. As duas formas mais simples que
+   existem, na proporção da fermata de partitura (arco largo, ponto no
+   centro do vão). */
+function gFermata(cor){
+  return `<svg viewBox="0 0 48 48" fill="none">
+    <path d="M7 33 C10 17 20 10 24 10 C28 10 38 17 41 33"
+      stroke="${cor}" stroke-width="5.5" stroke-linecap="round"/>
+    <circle cx="24" cy="31.5" r="4.6" fill="${cor}"/>
+  </svg>`;
+}
+
+/* 03 · O M pautado — M sólido, quatro cortes de pauta atravessando.
+   Máscara: o M em branco, os cortes em preto. Abaixo de 32px os cortes
+   somem sozinhos (data-solido) e fica o M cheio. */
+let _mkid = 0;
+function gMPautado(cor, solido){
+  const id = 'mp' + (++_mkid);
+  const M = 'M8 41 L8 7 L17 7 L24 20.5 L31 7 L40 7 L40 41 L32.6 41 L32.6 19.5 L26.4 31.5 L21.6 31.5 L15.4 19.5 L15.4 41 Z';
+  const cortes = solido ? '' : [14.2, 21.2, 28.2, 35.2]
+    .map(y => `<rect x="4" y="${y}" width="40" height="2.3" fill="#000"/>`).join('');
+  return `<svg viewBox="0 0 48 48">
+    <defs><mask id="${id}"><path d="${M}" fill="#fff"/>${cortes}</mask></defs>
+    <rect width="48" height="48" fill="${cor}" mask="url(#${id})"/>
+  </svg>`;
+}
+
+/* 04 · O Levare — cinco linhas de pauta; a primeira se ergue no ângulo
+   da batuta. As quatro de baixo são a espera; a de cima é o começo. */
+function gLevare(cor){
+  const linhas = [19, 26, 33, 40].map(y =>
+    `<path d="M9 ${y} L39 ${y}"/>`).join('');
+  return `<svg viewBox="0 0 48 48" fill="none"
+    stroke="${cor}" stroke-width="3.6" stroke-linecap="round">
+    ${linhas}
+    <path d="M9 12 L39 4.5"/>
+  </svg>`;
+}
+
+/* 05 · A Ligadura — o nome com o arco por cima; e o monograma M+arco
+   para os tamanhos pequenos. O arco nasce fino, engorda no meio e morre
+   fino — como toda ligadura gravada em partitura de verdade. */
+function gLigadura(cor){
+  return `<svg viewBox="0 0 210 64">
+    <path d="M22 18 C60 -2 150 -2 188 18 C151 4 59 4 22 18 Z" fill="#C8963A"/>
+    <text x="105" y="52" text-anchor="middle"
+      font-family="Instrument Serif, Georgia, serif" font-size="40"
+      letter-spacing=".5" fill="${cor}">Maestro</text>
+  </svg>`;
+}
+function gLigaM(cor){
+  return `<svg viewBox="0 0 48 48">
+    <path d="M8 14 C15 6.5 33 6.5 40 14 C33 9.5 15 9.5 8 14 Z" fill="${cor}"/>
+    <text x="24" y="42" text-anchor="middle"
+      font-family="Instrument Serif, Georgia, serif" font-size="34"
+      fill="${cor}">M</text>
+  </svg>`;
+}
+
+/* a Pauta que caiu, para a autópsia */
+function gPautaVelha(){
+  const A=84, V=20, out=[];
+  for(let i=0;i<7;i++){
+    const y = 136 + i*14;
+    out.push(`<path d="M22 ${y} L56 ${y} C74 ${y} 76 ${y-A} 94 ${y-A}
+      C110 ${y-A} 114 ${y-V} 130 ${y-V} C146 ${y-V} 150 ${y-A} 166 ${y-A}
+      C184 ${y-A} 186 ${y} 204 ${y} L238 ${y}"/>`);
+  }
+  return `<svg viewBox="10 30 240 190" fill="none" stroke="#6B7280"
+    stroke-width="6.5" stroke-linecap="round" style="width:120px">${out.join('')}</svg>`;
+}
+
+const GESTOS = { batida:gBatida, fermata:gFermata,
+  mpautado:(c,s)=>gMPautado(c,s), levare:gLevare,
+  ligadura:gLigadura, ligaM:gLigaM };
+
+document.querySelectorAll('[data-g]').forEach(el=>{
+  const f = GESTOS[el.dataset.g];
+  if(!f) return;
+  const w = +el.dataset.w || 48;
+  el.style.cssText += `display:inline-block;width:${w}px;line-height:0`;
+  el.innerHTML = f(el.dataset.c || '#C8963A',
+    el.dataset.solido || (el.dataset.g==='mpautado' && w < 32));
+  const svg = el.querySelector('svg');
+  if(svg){ svg.style.width='100%'; svg.style.height='auto'; svg.style.display='block'; }
+});
+document.getElementById('morto-pauta').innerHTML = gPautaVelha();
+</script>

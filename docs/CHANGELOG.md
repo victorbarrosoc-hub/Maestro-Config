@@ -1,9 +1,32 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.14
+Version: 0.5.15
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.15 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** segunda audição de símbolo — a Pauta leu como "cara de IA".
+
+### Adicionado
+- `docs/BRAND/exploracao-logo-v3.html` — **Cinco Gestos**, prancha de decisão com a
+  autópsia da Pauta (sete linhas onduladas é vizinhança de equalizador; traço demais) e
+  cinco rotas pelo caminho oposto, menos traço e mais corte:
+  **01 A Batida** (a batuta desce grossa e rebate fina — e lê como o gesto de aprovar),
+  **02 A Fermata** (arco e ponto: o sinal que significa "todos olham para o maestro"),
+  **03 O M Pautado** (M sólido com a pauta atravessando em quatro cortes),
+  **04 O Levare** (cinco linhas de pauta; a primeira se ergue) e
+  **05 A Ligadura** (o nome como marca, com o arco que une as notas numa frase).
+- Cada opção mostrada grande, no claro, a 24 px, como ícone de app, em mono e no lockup,
+  com onde ganha e onde perde.
+
+### Aberto
+- A escolha é do founder. **Nada foi aplicado** — a plataforma segue com a Pauta até a
+  decisão (será D-079).
 
 ---
 
