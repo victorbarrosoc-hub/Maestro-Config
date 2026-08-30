@@ -917,13 +917,37 @@ pauta e o quadro passam a ser duas lentes do mesmo objeto.
   em uma coluna seriam um paredão, não um quadro.
 - Pedido de alteração **não cria card**: devolve *este* para Do, em vermelho, com as
   palavras do cliente coladas nele.
-- Categorias (Marketing · Financeiro · Sócios · Administrativo · Controle) separam
-  assunto, não fluxo: todas passam pelo mesmo PDCA. As restritas (Financeiro, Sócios,
-  Controle) só abrem para o responsável, para quem foi marcado em "quem pode ver" e para
-  os sócios. Fora de Marketing não existe a coluna do cliente — assunto interno não sai.
+- Categorias separam assunto, não fluxo: todas passam pelo mesmo PDCA. Fora de Produção
+  não existe a coluna do cliente — assunto da casa não sai. Quais são elas: D-077.
 **Risco aceito:** a fase passa a ser escrita de dois lugares (o card e o arrasto). Como
 os dois escrevem no MESMO campo, não há divergência possível — o risco é de gesto, não
 de dado, e é mitigado pelas recusas explicadas.
+
+---
+
+# D-077 · Produto · Aprovada
+**Data:** 2026-08-30 · **Responsável:** Founder · **Categoria:** Card único
+**Pergunta:** quais são as frentes que separam os cards do Ensaio?
+**Contexto:** a primeira tentativa foi Marketing · Financeiro · Sócios · Administrativo ·
+Controle. Era um recorte de ferramenta — nomeava onde o dado mora, não o que a agência
+faz. Ninguém sabe se "renovar o contrato da EJUP" é Administrativo ou Financeiro, e um
+card que cabe em dois lugares é um card que vira dois.
+**Decisão do founder:** **Produção · Estratégico · Comercial · Acompanhamento · Pessoas e
+Conhecimento.** Cinco frentes da operação, não cinco gavetas de arquivo.
+**Consequência:**
+- **Produção** é a única com cliente do lado de fora: é ela que tem a coluna *Com o
+  cliente* e o card de conteúdo. As outras quatro são a casa, e param no Act.
+- Privacidade em **dois níveis**, e essa é a mudança de fundo. (1) A frente pode ser
+  restrita — **Estratégico** e **Comercial** são. (2) **Qualquer card, em qualquer
+  frente, pode ser trancado sozinho** em "quem pode ver". Foi o que o founder descreveu:
+  nem toda conversa de Pessoas é sigilosa, mas uma delas é. O sigilo é do card, não da
+  aba — travar a aba inteira esconderia o que o time precisa ler.
+- O cadeado no cartão diz qual dos dois: o nome da frente quando ela é restrita, "só os
+  marcados" quando é o card.
+- Nomes antigos continuam abrindo (`CAT_LEGADO`): marketing→Produção,
+  financeiro→Comercial, sócios→Estratégico, administrativo e controle→Acompanhamento.
+**Risco aceito:** "Acompanhamento" é frente aberta e pode receber número que o time não
+deveria ver (horas, custo). Mitigado pelo nível 2: o card que precisar, tranca.
 
 ---
 

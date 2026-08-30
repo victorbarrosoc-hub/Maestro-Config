@@ -1,9 +1,26 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.9
+Version: 0.5.10
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.10 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** as cinco frentes da agência, no lugar das cinco gavetas (D-077).
+
+### Mudado
+- Categorias do Ensaio: **Produção · Estratégico · Comercial · Acompanhamento · Pessoas
+  e Conhecimento**. Produção é a única com a coluna *Com o cliente*.
+- **Privacidade em dois níveis.** A frente pode ser restrita (Estratégico, Comercial) e,
+  em cima disso, qualquer card de qualquer frente tranca sozinho em "quem pode ver". O
+  cadeado no cartão diz qual dos dois está valendo.
+- O modal da tarefa acompanha: os campos de valor passam para Comercial, os de cliente e
+  card da pauta para Produção, e "quem pode ver" aparece em tudo que não for Produção.
+- `CAT_LEGADO` traduz os nomes antigos — quadro salvo antes continua abrindo.
 
 ---
 

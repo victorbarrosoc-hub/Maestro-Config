@@ -14274,7 +14274,7 @@ agEnsaio = function(){
     </div>`;
   }).join('');
   const chips = cats.map(c=>{
-    const n = S.ensaio.tarefas.filter(t=>(t.cat||'marketing')===c.id && podeVerTarefa(t)).length;
+    const n = S.ensaio.tarefas.filter(t=>catIdDe(t)===c.id && podeVerTarefa(t)).length;
     return `<button class="enCat ${c.id===S.enCat?'on':''}" data-encat="${c.id}"
       style="--catCor:${c.cor}"><i style="background:${c.cor}"></i>${c.nome}<b>${n||''}</b></button>`;
   }).join('');
@@ -14305,7 +14305,7 @@ modalTarefa = function(id){
   const t = id ? S.ensaio.tarefas.find(x=>x.id===id) : null;
   S.enResp = t ? t.resp : null;
   S.enCli = t ? t.cli : (CLIS()[0]||{}).id;
-  S.enCatModal = t ? (t.cat||'marketing') : (S.enCat||'marketing');
+  S.enCatModal = t ? catIdDe(t) : (S.enCat||'producao');
   S.enQuemVe = new Set(t ? (t.quemVe||[]) : []);
   const cat = CATS_ENSAIO.find(c=>c.id===S.enCatModal);
   const job = t && t.cardId && (S.pautas[t.cli]||[]).find(p=>p.id===t.cardId);
@@ -14321,7 +14321,7 @@ modalTarefa = function(id){
     <div class="fld"><label for="en-desc">Detalhes</label>
       <textarea id="en-desc" rows="2" placeholder="O contexto que quem executa precisa.">${t?esc(t.desc||''):''}</textarea></div>
 
-    <div class="tcCorpo" data-encampo="marketing" ${S.enCatModal!=='marketing'?'hidden':''}>
+    <div class="tcCorpo" data-encampo="producao" ${S.enCatModal!=='producao'?'hidden':''}>
       <div class="fld"><label>Cliente</label><div class="ptChips">
         ${CLIS().map(c=>`<button data-enclipick="${c.id}" class="${S.enCli===c.id?'on':''}">${esc(c.nome)}</button>`).join('')}</div></div>
       <div class="fld"><label for="en-card">O card da pauta deste job</label>
@@ -14336,7 +14336,7 @@ modalTarefa = function(id){
         ${ic('doc',12)} Abrir o card completo</button>`:''}
     </div>
 
-    <div class="tcCorpo" data-encampo="financeiro" ${S.enCatModal!=='financeiro'?'hidden':''}>
+    <div class="tcCorpo" data-encampo="comercial" ${S.enCatModal!=='comercial'?'hidden':''}>
       <div class="frow">
         <div class="fld"><label for="en-valor">Valor (R$)</label>
           <input id="en-valor" inputmode="decimal" value="${t&&t.valor?esc(String(t.valor)):''}" placeholder="0,00"></div>
@@ -14353,7 +14353,7 @@ modalTarefa = function(id){
         class="${S.enResp===membroId(m)?'on':''}">${esc(m.n)}</button>`).join('')}
       <button data-enresppick="" class="${!S.enResp?'on':''}">inbox (sem dono)</button></div></div>
 
-    <div class="tcCorpo" data-encampo="privado" ${S.enCatModal==='marketing'?'hidden':''}>
+    <div class="tcCorpo" data-encampo="privado" ${S.enCatModal==='producao'?'hidden':''}>
       <div class="fld"><label>Quem pode ver — além do responsável e dos sócios</label>
         <div class="ptChips">${(S.equipe||[]).map(m=>`<button data-enquemve="${membroId(m)}"
           class="${S.enQuemVe.has(membroId(m))?'on':''}">${esc(m.n)}</button>`).join('')}</div>
@@ -14378,7 +14378,7 @@ document.addEventListener('click', e => {
       b.classList.toggle('on', b.dataset.encatpick===S.enCatModal));
     document.querySelectorAll('.tcCorpo[data-encampo]').forEach(c=>{
       c.hidden = c.dataset.encampo==='privado'
-        ? S.enCatModal==='marketing'
+        ? S.enCatModal==='producao'
         : c.dataset.encampo!==S.enCatModal;
     });
     return;
@@ -14400,7 +14400,7 @@ window.addEventListener('click', e => {
   if(!t || !document.getElementById('en-desc')) return;
   const v = id => document.getElementById(id)?.value.trim() || '';
   const extras = {
-    cat: S.enCatModal || 'marketing',
+    cat: S.enCatModal || 'producao',
     desc: v('en-desc'),
     quemVe: [...S.enQuemVe],
     valor: v('en-valor') || null,
@@ -14414,8 +14414,8 @@ window.addEventListener('click', e => {
       : S.ensaio.tarefas[S.ensaio.tarefas.length-1];
     if(!tr) return;
     Object.assign(tr, { cat:extras.cat, desc:extras.desc, quemVe:extras.quemVe });
-    if(extras.cat==='financeiro'){ tr.valor = extras.valor; tr.fin = extras.fin; }
-    if(extras.cat==='marketing'){
+    if(extras.cat==='comercial'){ tr.valor = extras.valor; tr.fin = extras.fin; }
+    if(extras.cat==='producao'){
       if(extras.cardSel==='novo'){
         // o job nasce nos dois lugares de uma vez
         const arr = S.pautas[tr.cli] = S.pautas[tr.cli] || [];
@@ -14458,7 +14458,7 @@ document.addEventListener('click', e => {
   if(!S.ensaio) S.ensaio = kbSemente();
   S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo:p.t, cli:cliAtual().id,
     resp:p.resp||null, col: p.resp?'plan':'inbox', criada:Date.now(),
-    prazo:p.data||null, tempoMs:0, desde:null, cat:'marketing', cardId:p.id, quemVe:[] });
+    prazo:p.data||null, tempoMs:0, desde:null, cat:'producao', cardId:p.id, quemVe:[] });
   som('toque');
   S.modal = modalVer(p.id); renderLayer(); render();
   toast(`"${p.t}" agora também está no Ensaio — o mesmo job, nos dois lugares.`);
@@ -14946,7 +14946,7 @@ function abrirTarefaDeAjuste(p){
   const ultimo = p.alteracoes[p.alteracoes.length-1];
   S.ensaio.tarefas.push({
     id: S.ensaio.prox++, titulo: `Ajustar: ${p.t}`,
-    cli: cliAtual().id, resp: null, col: 'inbox', cat: 'marketing',
+    cli: cliAtual().id, resp: null, col: 'inbox', cat: 'producao',
     criada: Date.now(), prazo: p.data || null, tempoMs: 0, desde: null,
     cardId: p.id, doCliente: true, pedido: ultimo ? ultimo.oque : ''
   });
@@ -15665,7 +15665,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v62 · 30 ago';
+const VERSAO_PROTOTIPO = 'v63 · 30 ago';
 
 menuSheet = (function(orig){
   return function(){
@@ -16101,7 +16101,7 @@ function sincronizarTarefasDaPauta(){
       const titulo = String(p.t || '').replace(/^\[Tarefa\]\s*/i, '').trim();
       S.ensaio.tarefas.push({
         id: S.ensaio.prox++, titulo: titulo || 'Tarefa da pauta',
-        cli: c.id, resp: null, col: 'inbox', cat: 'marketing',
+        cli: c.id, resp: null, col: 'inbox', cat: 'producao',
         criada: Date.now(), prazo: p.data || null, tempoMs: 0, desde: null,
         cardId: p.id, daPauta: true,
         pedido: (p.texto || '').slice(0, 160)
@@ -16205,20 +16205,40 @@ render = (function(orig){
    com as palavras do cliente coladas nele.
    ================================================================== */
 
-/* ---------- as duas categorias que faltavam ------------------------- */
-CATS_ENSAIO.forEach(c => c.restrita = (c.id==='financeiro' || c.id==='socios'));
+/* ---------- as cinco frentes da agência ------------------------------
+   Marketing/Financeiro/Sócios/Administrativo/Controle era um recorte de
+   ferramenta. O founder deu o recorte da operação: as cinco frentes por
+   onde passa tudo que uma agência faz. Produção é a única com cliente do
+   lado de fora — as outras quatro são a casa. */
+CATS_ENSAIO.length = 0;
 CATS_ENSAIO.push(
-  { id:'administrativo', nome:'Administrativo', cor:'#9AA1AC', restrita:false,
-    dica:'contratos, processos e o que mantém a casa em pé' },
-  { id:'controle',       nome:'Controle',       cor:'#B06AC9', restrita:true,
-    dica:'metas, indicadores e pessoas — só quem for escolhido vê' });
+  { id:'producao',       nome:'Produção',              cor:'#C8963A', restrita:false,
+    dica:'o conteúdo dos clientes — cada tarefa É um card da pauta' },
+  { id:'estrategico',    nome:'Estratégico',           cor:'#5B8DEF', restrita:true,
+    dica:'para onde a agência vai: sociedade, posicionamento, metas' },
+  { id:'comercial',      nome:'Comercial',             cor:'#35B87A', restrita:true,
+    dica:'propostas, contratos, cobranças — o dinheiro entrando' },
+  { id:'acompanhamento', nome:'Acompanhamento',        cor:'#E5854D', restrita:false,
+    dica:'como estamos indo: prazos, horas, indicadores e o que corrigir' },
+  { id:'pessoas',        nome:'Pessoas e Conhecimento',cor:'#B06AC9', restrita:false,
+    dica:'time, processos e o que a agência aprendeu' });
 
-/* privacidade: a categoria diz se é restrita, não o nome dela */
+/* quadros antigos continuam abrindo: o nome velho vira o nome novo */
+const CAT_LEGADO = { marketing:'producao', financeiro:'comercial', socios:'estrategico',
+  administrativo:'acompanhamento', controle:'acompanhamento' };
+const CAT_PADRAO = 'producao';
+const catIdDe = t => CAT_LEGADO[t && t.cat] || (t && t.cat) || CAT_PADRAO;
+
+/* privacidade em dois níveis:
+   1. a CATEGORIA pode ser restrita — Estratégico e Comercial são;
+   2. qualquer card, em qualquer categoria, pode ter "quem pode ver".
+   O segundo nível é o que o founder pediu: nem toda conversa de pessoas
+   é sigilosa, mas uma delas é — e o sigilo é do card, não da aba. */
+const trancada = t => catDe(t).restrita || (t.quemVe||[]).length > 0;
 podeVerTarefa = function(t){
   if(!S.usuario) return true;
   if(S.usuario.tipo !== 'agencia') return false;
-  const c = catDe(t);
-  if(!c.restrita) return true;
+  if(!trancada(t)) return true;
   if(ehAdmin()) return true;
   const eu = S.usuario.id;
   return t.resp === eu || (t.quemVe||[]).includes(eu);
@@ -16227,7 +16247,7 @@ podeVerTarefa = function(t){
    o nome novo diz a regra nova. */
 const catsDoQuadro = () => CATS_ENSAIO.filter(c =>
   !c.restrita || !S.usuario || ehAdmin() ||
-  (S.ensaio && S.ensaio.tarefas.some(t => (t.cat||'marketing')===c.id && podeVerTarefa(t))));
+  (S.ensaio && S.ensaio.tarefas.some(t => catIdDe(t)===c.id && podeVerTarefa(t))));
 
 /* ---------- a coluna do cliente entra entre Check e Act -------------- */
 if(!EN_COLS.some(([k])=>k==='cliente'))
@@ -16297,6 +16317,8 @@ function ligarTarefaAoCard(t){
    Ele aparece no quadro quando alguém começa — e some quando vai ao ar. */
 function sincronizarJobs(){
   if(!S.ensaio) S.ensaio = kbSemente();
+  migrarCategorias();
+  semearAsFrentes();
   const tem = (cli,id) => S.ensaio.tarefas.some(t => t.cli===cli && t.cardId===id)
                        || (S.ensaio.feitas||[]).some(t => t.cli===cli && t.cardId===id);
   for(const c of CLIS()){
@@ -16306,7 +16328,7 @@ function sincronizarJobs(){
       if(f==='rascunho' || f==='postado') continue;
       if(tem(c.id, p.id)) continue;
       S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo:p.t, cli:c.id, resp:p.resp||null,
-        cat:'marketing', criada:Date.now(), prazo:p.data||null, tempoMs:0, desde:null,
+        cat:'producao', criada:Date.now(), prazo:p.data||null, tempoMs:0, desde:null,
         cardId:p.id, job:true, col:'do' });
     }
   }
@@ -16321,7 +16343,7 @@ abrirTarefaDeAjuste = function(p){
   let t = S.ensaio.tarefas.find(x => x.cardId===p.id && x.cli===cliAtual().id);
   if(!t){
     t = { id:S.ensaio.prox++, titulo:p.t, cli:cliAtual().id, resp:p.resp||null,
-      cat:'marketing', criada:Date.now(), prazo:p.data||null, tempoMs:0, desde:null,
+      cat:'producao', criada:Date.now(), prazo:p.data||null, tempoMs:0, desde:null,
       cardId:p.id, job:true, col:'do' };
     S.ensaio.tarefas.push(t); ligarTarefaAoCard(t);
   }
@@ -16334,11 +16356,11 @@ agEnsaio = function(){
   if(!S.ensaio) S.ensaio = kbSemente();
   sincronizarJobs();
   const cats = catsDoQuadro();
-  if(!cats.some(c=>c.id===S.enCat)) S.enCat = 'marketing';
+  if(!cats.some(c=>c.id===S.enCat)) S.enCat = 'producao';
   const catAtiva = CATS_ENSAIO.find(c=>c.id===S.enCat);
-  const marketing = S.enCat === 'marketing';
+  const producao = S.enCat === 'producao';
   const minhas = S.enSoMinhas && S.usuario ? S.usuario.id : null;
-  const doQuadro = t => (t.cat||'marketing')===S.enCat && podeVerTarefa(t)
+  const doQuadro = t => catIdDe(t)===S.enCat && podeVerTarefa(t)
     && (!minhas || t.resp===minhas);
 
   const cartao = t => {
@@ -16355,8 +16377,8 @@ agEnsaio = function(){
     return `<div class="enCard ${pedido?'pedido':''}" data-entar="${t.id}" style="--catCor:${cat.cor}">
       <div class="tit">${esc(t.titulo)}</div>
       <div class="meta">
-        ${c && marketing ? `<span class="cli">${esc(c.ini)}</span>`:''}
-        ${cat.restrita ? `<span class="priv">🔒 ${esc(cat.nome)}</span>`:''}
+        ${c && producao ? `<span class="cli">${esc(c.ini)}</span>`:''}
+        ${trancada(t) ? `<span class="priv">🔒 ${cat.restrita?esc(cat.nome):'só os marcados'}</span>`:''}
         ${job?`<span class="enVolta ${v===2?'v2':''}">${v}ª volta · ${v===1?'texto':'peça'}</span>`:''}
         ${r?`<span class="ptResp" title="${esc(r.nome)}">${esc(r.ini)}</span>`
            :`<span class="prazo" style="color:#E5A54D">sem dono</span>`}
@@ -16388,7 +16410,7 @@ agEnsaio = function(){
      inteiro para fora da tela do celular. Some quando não tem nada. */
   const vazioNoQuadro = k => !S.ensaio.tarefas.some(t=>t.col===k && doQuadro(t));
   const cols = EN_COLS
-    .filter(([k]) => (k!=='cliente' || marketing) && !(k==='inbox' && marketing && vazioNoQuadro('inbox')))
+    .filter(([k]) => (k!=='cliente' || producao) && !(k==='inbox' && producao && vazioNoQuadro('inbox')))
     .map(([k, nome, cor, dica])=>{
       const ts = S.ensaio.tarefas.filter(t=>t.col===k && doQuadro(t));
       return `<div class="enCol ${k==='cliente'?'travada':''}" data-encol="${k}">
@@ -16414,40 +16436,61 @@ agEnsaio = function(){
       <button class="b pri sm" data-ennova="1">${ic('pencil',13)} Nova tarefa</button></div></div>
   <div class="enCats">${chips}</div>
   <div class="enRolo">${cols}</div>
-  ${marketing ? `<p class="enLegenda"><b>Um card só, duas voltas.</b> O calendário da
+  ${producao ? `<p class="enLegenda"><b>Um card só, duas voltas.</b> O calendário da
     semana é o Plan — o card entra aqui quando alguém começa. Na <b>1ª volta</b> vai o
     <b>texto</b>; na <b>2ª</b>, a <b>peça pronta</b>. Arrastar aqui muda a fase lá: é o
     mesmo card, na pauta e no quadro. Em <b>Com o cliente</b> ninguém da agência mexe —
     a decisão dele é que move. Pedido de alteração devolve <i>este</i> card para Do,
     em vermelho, com as palavras dele. Nenhum card novo é criado em lugar nenhum.</p>`
   : `<p class="enLegenda">${esc(catAtiva.nome)} passa pelo mesmo PDCA, sem a coluna do
-    cliente — assunto interno não vai para fora.${catAtiva.restrita
-    ? ' <b>Só quem for escolhido em “quem pode ver” abre estes cards.</b>':''}</p>`}`);
+    cliente — assunto da casa não vai para fora.${catAtiva.restrita
+    ? ' <b>Frente restrita:</b> só o responsável, quem for marcado em “quem pode ver” e os sócios.'
+    : ' Frente aberta ao time — mas qualquer card pode ser trancado sozinho, em “quem pode ver”.'}</p>`}`);
 };
 
-/* ---------- sementes das duas categorias novas ---------------------- */
-(function(){
-  const orig = semearOutrasCategorias;
-  semearOutrasCategorias = function(){
-    orig();
-    if(!S.ensaio) return;
-    const vazia = cat => !S.ensaio.tarefas.some(t=>t.cat===cat)
-                      && !(S.ensaio.feitas||[]).some(t=>t.cat===cat);
-    const nova = (titulo, cat, col, extra) => S.ensaio.tarefas.push({
-      id:S.ensaio.prox++, titulo, cli:null, resp:null, col, cat,
-      criada:Date.now(), prazo:null, tempoMs:0, desde:null, ...(extra||{}) });
-    if(vazia('administrativo')){
-      nova('Renovar o contrato da EJUP · setembro', 'administrativo', 'plan');
-      nova('Organizar as notas fiscais do trimestre', 'administrativo', 'do');
-      nova('Atualizar o modelo de proposta comercial', 'administrativo', 'inbox');
-    }
-    if(vazia('controle')){
-      nova('Fechar as horas do time · agosto', 'controle', 'check');
-      nova('Revisar as metas do trimestre', 'controle', 'plan');
-    }
-  };
-  semearOutrasCategorias();
-})();
+/* ---------- migrar o que existe e semear as quatro frentes da casa ---- */
+function migrarCategorias(){
+  if(!S.ensaio) return;
+  for(const t of S.ensaio.tarefas) t.cat = catIdDe(t);
+  for(const t of (S.ensaio.feitas||[])) t.cat = catIdDe(t);
+}
+
+/* As sementes antigas falavam a língua antiga ("Renovar a assinatura do
+   banco de imagens" em Financeiro). Migrar o rótulo deixaria o conteúdo
+   torto na frente nova. Elas saem uma vez — são exemplos, não trabalho —
+   e as quatro frentes da casa nascem inteiras. A bandeira garante que
+   isso aconteça uma vez só e nunca apague tarefa de ninguém. */
+function semearAsFrentes(){
+  if(!S.ensaio || S.ensaio.frentes) return;
+  S.ensaio.frentes = true;
+  S.ensaio.tarefas = S.ensaio.tarefas.filter(t => t.cli || t.cardId);
+  const eq = (S.equipe||[]).map(membroId);
+  const nova = (titulo, cat, col, extra) => S.ensaio.tarefas.push({
+    id:S.ensaio.prox++, titulo, cli:null, resp:null, col, cat,
+    criada:Date.now(), prazo:null, tempoMs:0, desde:null, quemVe:[], ...(extra||{}) });
+
+  nova('Decidir se abrimos a vertical de vídeo',        'estrategico', 'plan');
+  nova('Revisar a divisão de pró-labore do trimestre',  'estrategico', 'do');
+  nova('Definir o posicionamento para 2027',            'estrategico', 'inbox');
+
+  nova('Fechar a proposta do quarto cliente',           'comercial', 'plan');
+  nova('Renovar o contrato da EJUP · setembro',         'comercial', 'do',
+    { valor:'4.800', fin:'receber' });
+  nova('Cobrança em atraso · Cortez Jurídico',          'comercial', 'check',
+    { valor:'3.200', fin:'receber' });
+
+  nova('Fechar as horas do time · agosto',              'acompanhamento', 'check');
+  nova('Revisar os prazos estourados da semana',        'acompanhamento', 'do');
+  nova('Relatório de resultados · Loja Norte',          'acompanhamento', 'plan');
+
+  nova('Documentar o padrão de corte dos Reels',        'pessoas', 'do');
+  nova('Onboarding da nova designer',                   'pessoas', 'plan');
+  /* o cadeado por card, dentro de uma frente aberta */
+  nova('Conversa de desenvolvimento · Rafa',            'pessoas', 'inbox',
+    { quemVe: eq.slice(0,1) });
+}
+migrarCategorias();
+semearAsFrentes();
 
 /* fechar a volta: o botão do Act. Vale para o card de qualquer cliente —
    por isso carrega o cliente junto, e não confia em quem está aberto. */
