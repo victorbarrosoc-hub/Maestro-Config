@@ -12,15 +12,15 @@ CABECA = '''<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#08090B">
+<meta name="theme-color" content="#1C1C1C">
 <meta name="description" content="O sistema operacional para agências e equipes criativas. Briefing, estratégia, aprovação e publicação num lugar só — com o cliente dentro.">
 <!-- tela de início do iPhone -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Maestro">
-<link rel="apple-touch-icon" href="icones/maestro-180.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icones/maestro-192.png">
+<link rel="apple-touch-icon" href="icones/maestro-gesto-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icones/maestro-gesto-192.png">
 <meta property="og:title" content="Maestro">
 <meta property="og:description" content="O sistema operacional para agências e equipes criativas.">
 <meta property="og:type" content="website">
