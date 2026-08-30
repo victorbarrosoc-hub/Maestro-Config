@@ -1,431 +1,272 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>O Card Único</title>
+<title>Antes e Depois do Card</title>
 <style>
 /* =====================================================================
-   Maquete do modelo de card único — Maestro.
-   Tokens de packages/tokens, os mesmos do protótipo. Latão só no que
-   está selecionado (D-018); as cores de categoria vêm do Ensaio.
-   Tema único e escuro, de propósito: é o mundo do produto.
+   Uma pergunta só: quando a agência corrige o texto na pauta, o quadro
+   de produção fica sabendo? Hoje não. Do lado direito, sim.
+   Tokens do protótipo. Tema escuro único — é o mundo do produto.
    ================================================================== */
 :root{
   --ink-50:#F4F6F8; --ink-100:#E3E6EA; --ink-200:#C4C9D0; --ink-300:#9AA1AC;
-  --ink-400:#6B7280; --ink-500:#4C535D; --ink-600:#333941; --ink-700:#23272E;
-  --ink-800:#181B20; --ink-850:#121418; --ink-900:#0D0F12; --ink-950:#08090B;
-  --brass-300:#E3C173; --brass-400:#D9AC4C; --brass-500:#C8963A; --brass-700:#855F22;
-  --marketing:#C8963A; --financeiro:#35B87A; --socios:#5B8DEF;
+  --ink-400:#6B7280; --ink-600:#333941; --ink-700:#23272E; --ink-800:#181B20;
+  --ink-850:#121418; --ink-900:#0D0F12; --ink-950:#08090B;
+  --brass-300:#E3C173; --brass-400:#D9AC4C; --brass-700:#855F22;
+  --encore:#35B87A; --coral:#F0784C; --danger:#E5484D;
   --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --eo:cubic-bezier(.22,1,.36,1);
 }
-*{box-sizing:border-box}
+*{ box-sizing:border-box }
 body{ margin:0; background:var(--ink-950); color:var(--ink-100);
   font-family:var(--sans); font-size:15px; line-height:1.55;
   -webkit-font-smoothing:antialiased }
 button{ font:inherit; cursor:pointer; border:0; background:none; color:inherit }
 :focus-visible{ outline:2px solid var(--brass-400); outline-offset:2px; border-radius:6px }
 
-.env{ max-width:1240px; margin:0 auto; padding:34px 20px 60px }
+.env{ max-width:1000px; margin:0 auto; padding:34px 20px 56px }
 
-/* ---------- cabeçalho ---------- */
-header h1{ font-family:var(--serif); font-weight:400; font-size:clamp(28px,4vw,40px);
-  margin:0 0 8px; text-wrap:balance; color:var(--ink-50) }
-header p{ margin:0; max-width:62ch; color:var(--ink-300) }
 .eyebrow{ font-family:var(--mono); font-size:10.5px; letter-spacing:.16em;
   text-transform:uppercase; color:var(--brass-300); margin:0 0 10px }
+h1{ font-family:var(--serif); font-weight:400; font-size:clamp(27px,4vw,38px);
+  margin:0 0 10px; text-wrap:balance; color:var(--ink-50) }
+.intro{ margin:0; max-width:60ch; color:var(--ink-300) }
 
-/* ---------- a tese, em números ---------- */
-.tese{ display:flex; gap:10px; flex-wrap:wrap; margin:22px 0 4px }
-.teseItem{ display:flex; align-items:baseline; gap:8px; padding:9px 15px;
-  border:1px solid var(--ink-800); border-radius:12px; background:var(--ink-900) }
-.teseItem b{ font-family:var(--serif); font-weight:400; font-size:22px; color:var(--ink-50) }
-.teseItem span{ font-size:11.5px; color:var(--ink-300) }
+/* ---------- o controle: uma coisa só para mexer ---------- */
+.mesa{ margin:26px 0 22px; padding:18px; border-radius:16px;
+  border:1px solid var(--brass-700); background:rgba(200,150,58,.05) }
+.mesa label{ display:block; font-family:var(--mono); font-size:10px;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--brass-300);
+  margin-bottom:9px }
+.mesa input{ width:100%; padding:12px 14px; border-radius:11px;
+  border:1px solid var(--ink-700); background:var(--ink-900); color:var(--ink-50);
+  font:inherit; font-size:16px }
+.mesa input:focus{ border-color:var(--brass-400); outline:none }
+.mesa .ajuda{ margin:9px 0 0; font-size:12.5px; color:var(--ink-400) }
+.mesaLinha{ display:flex; gap:10px; flex-wrap:wrap; margin-top:13px }
+.b{ padding:9px 15px; border-radius:10px; font-size:13px; font-weight:600;
+  border:1px solid var(--ink-700); background:var(--ink-900); color:var(--ink-200) }
+.b:hover{ border-color:var(--ink-600) }
+.b.pri{ background:var(--brass-400); border-color:var(--brass-400); color:var(--ink-950) }
 
-/* ---------- as três lentes ---------- */
-.lentes{ display:grid; gap:14px; margin:26px 0 0;
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr)) }
-.lente{ border:1px solid var(--ink-800); border-radius:16px;
-  background:var(--ink-900); padding:16px; min-width:0 }
-.lenteHd{ display:flex; align-items:baseline; gap:9px; margin:0 0 4px }
-.lenteHd b{ font-family:var(--serif); font-weight:400; font-size:19px; color:var(--ink-50) }
-.lenteHd span{ font-family:var(--mono); font-size:9.5px; letter-spacing:.1em;
-  text-transform:uppercase; color:var(--ink-400); margin-left:auto }
-.lenteSub{ margin:0 0 14px; font-size:12px; color:var(--ink-400); line-height:1.5 }
-.lenteSub code{ font-family:var(--mono); font-size:11px; color:var(--brass-300) }
+/* ---------- os dois lados ---------- */
+.lados{ display:grid; gap:16px; grid-template-columns:1fr 1fr }
+@media (max-width:760px){ .lados{ grid-template-columns:1fr } }
 
-.grupo{ margin-bottom:13px }
-.grupoHd{ font-family:var(--mono); font-size:9.5px; letter-spacing:.12em;
-  text-transform:uppercase; color:var(--ink-400); display:flex; gap:8px;
-  align-items:center; margin-bottom:7px }
-.grupoHd i{ flex:1; height:1px; background:var(--ink-800) }
+.lado{ border:1px solid var(--ink-800); border-radius:16px; background:var(--ink-900);
+  padding:16px; display:flex; flex-direction:column; gap:12px }
+.lado.hoje{ border-color:rgba(229,72,77,.28) }
+.lado.novo{ border-color:rgba(53,184,122,.30) }
+.ladoHd{ display:flex; align-items:baseline; gap:10px }
+.ladoHd b{ font-family:var(--serif); font-weight:400; font-size:20px; color:var(--ink-50) }
+.ladoHd span{ font-family:var(--mono); font-size:9.5px; letter-spacing:.11em;
+  text-transform:uppercase; margin-left:auto }
+.lado.hoje .ladoHd span{ color:var(--danger) }
+.lado.novo .ladoHd span{ color:var(--encore) }
 
-/* ---------- o card, em qualquer lente ---------- */
-.card{ display:block; width:100%; text-align:left; padding:9px 11px;
-  margin-bottom:6px; border-radius:10px; background:var(--ink-850);
-  border:1px solid var(--ink-800); border-left:3px solid var(--cat);
-  transition:border-color 140ms var(--eo), background 140ms var(--eo),
-    transform 140ms var(--eo) }
-.card:hover{ border-color:var(--ink-600) }
-/* selecionado ganha latão nas bordas — menos na esquerda, que é a
-   categoria. A cor do card é o assunto da maquete; ela não pode sumir
-   justamente quando você está olhando para ele. */
-.card.sel{ border-color:var(--brass-400); border-left-color:var(--cat);
-  background:rgba(200,150,58,.10); transform:translateX(2px) }
-.card .t{ display:block; font-size:13px; font-weight:600; color:var(--ink-50);
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-.card .m{ display:flex; gap:7px; align-items:center; margin-top:3px;
-  font-family:var(--mono); font-size:9.5px; color:var(--ink-400) }
-.card .m .pt{ color:var(--cat) }
-.vazio{ font-size:12px; color:var(--ink-500); font-style:italic; padding:6px 2px }
+.tela{ border:1px solid var(--ink-800); border-radius:12px; background:var(--ink-950);
+  padding:12px }
+.telaHd{ font-family:var(--mono); font-size:9.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-400); margin-bottom:9px;
+  display:flex; align-items:center; gap:8px }
+.telaHd i{ flex:1; height:1px; background:var(--ink-800) }
 
-/* ---------- o objeto ---------- */
-.objeto{ margin-top:26px; border:1px solid var(--brass-700); border-radius:16px;
-  background:var(--ink-900); overflow:hidden }
-.objetoHd{ display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-  padding:14px 18px; border-bottom:1px solid var(--ink-800);
-  background:rgba(200,150,58,.06) }
-.objetoHd b{ font-family:var(--serif); font-weight:400; font-size:18px; color:var(--ink-50) }
-.objetoHd span{ font-family:var(--mono); font-size:10px; letter-spacing:.1em;
-  text-transform:uppercase; color:var(--brass-300) }
-.objetoCorpo{ display:grid; gap:18px; padding:18px;
-  grid-template-columns:minmax(0,1fr) minmax(0,300px) }
-@media (max-width:720px){ .objetoCorpo{ grid-template-columns:1fr } }
+.card{ border-radius:10px; padding:11px 12px; background:var(--ink-850);
+  border:1px solid var(--ink-800); border-left:3px solid var(--brass-400);
+  transition:border-color 160ms var(--eo), background 160ms var(--eo) }
+.card .t{ display:block; font-size:14px; font-weight:600; color:var(--ink-50);
+  line-height:1.4 }
+.card .m{ display:block; margin-top:5px; font-family:var(--mono); font-size:9.5px;
+  color:var(--ink-400) }
+.card.velho{ border-color:rgba(229,72,77,.5); border-left-color:var(--danger);
+  background:rgba(229,72,77,.07) }
+.card.feito .t{ text-decoration:line-through; text-decoration-color:var(--ink-600);
+  color:var(--ink-300) }
+.card.piscou{ animation:pisca .7s var(--eo) }
+@keyframes pisca{ 0%{ background:rgba(200,150,58,.22) } 100%{} }
 
-.campos{ display:grid; gap:13px }
-.campo{ display:grid; gap:6px }
-.campo label{ font-family:var(--mono); font-size:9.5px; letter-spacing:.12em;
-  text-transform:uppercase; color:var(--ink-400) }
-.campo input{ width:100%; padding:9px 11px; border-radius:9px;
-  border:1px solid var(--ink-700); background:var(--ink-850); color:var(--ink-50);
-  font:inherit; font-size:14px }
-.opcoes{ display:flex; gap:6px; flex-wrap:wrap }
-.opcoes button{ padding:6px 12px; border-radius:999px; font-size:11.5px;
-  border:1px solid var(--ink-700); color:var(--ink-300); background:var(--ink-850);
-  display:inline-flex; align-items:center; gap:6px }
-.opcoes button i{ width:7px; height:7px; border-radius:50%; background:currentColor }
-.opcoes button.on{ color:var(--ink-950); background:var(--brass-400);
-  border-color:var(--brass-400); font-weight:700 }
-.opcoes button.on i{ background:var(--ink-950) }
-.opcoes.cores button.on{ color:#08090B; font-weight:700 }
+.aviso{ display:flex; gap:8px; align-items:flex-start; margin-top:9px;
+  padding:9px 11px; border-radius:9px; font-size:12.5px; line-height:1.45;
+  border:1px solid rgba(229,72,77,.32); background:rgba(229,72,77,.07);
+  color:#F2B5B5 }
+.aviso b{ color:var(--danger) }
+.ok{ display:flex; gap:8px; align-items:flex-start; margin-top:9px;
+  padding:9px 11px; border-radius:9px; font-size:12.5px; line-height:1.45;
+  border:1px solid rgba(53,184,122,.28); background:rgba(53,184,122,.06);
+  color:#A7DCC2 }
+.ok b{ color:var(--encore) }
 
-.json{ font-family:var(--mono); font-size:11.5px; line-height:1.7;
-  background:var(--ink-950); border:1px solid var(--ink-800); border-radius:12px;
-  padding:14px; overflow-x:auto; color:var(--ink-300); margin:0 }
-.json .k{ color:var(--brass-300) }
-.json .v{ color:var(--ink-100) }
-.json .n{ color:var(--socios) }
-.json .destaque{ background:rgba(200,150,58,.18); border-radius:3px }
+.placar{ margin-top:auto; padding-top:12px; border-top:1px solid var(--ink-800);
+  font-family:var(--mono); font-size:11px; color:var(--ink-400) }
+.placar b{ font-size:15px; font-family:var(--sans) }
+.lado.hoje .placar b{ color:var(--danger) }
+.lado.novo .placar b{ color:var(--encore) }
 
-/* ---------- rodapé de leitura ---------- */
-.notas{ margin-top:30px; display:grid; gap:12px;
-  grid-template-columns:repeat(auto-fit,minmax(260px,1fr)) }
-.nota{ border:1px solid var(--ink-800); border-radius:14px; padding:15px 17px;
-  background:var(--ink-900) }
-/* só o título da nota vira bloco. `.nota b` pegava também o negrito no
-   meio da frase e a quebrava em duas linhas, deixando a vírgula órfã. */
-.nota > b:first-child{ display:block; font-family:var(--serif); font-weight:400;
-  font-size:16px; color:var(--ink-50); margin-bottom:6px }
-.nota p b{ color:var(--ink-50); font-weight:600 }
-.nota p{ margin:0; font-size:13px; color:var(--ink-300); line-height:1.6 }
-.nota.alerta{ border-color:rgba(240,120,76,.35) }
-.nota.alerta > b:first-child{ color:#F0784C }
+/* ---------- o fecho ---------- */
+.fecho{ margin-top:26px; border:1px solid var(--ink-800); border-radius:16px;
+  padding:18px 20px; background:var(--ink-900) }
+/* só o título vira bloco — `.fecho b` pegava o negrito no meio da frase e
+   a quebrava em duas, com corpo de título. */
+.fecho > b:first-child{ display:block; font-family:var(--serif); font-weight:400;
+  font-size:18px; color:var(--ink-50); margin-bottom:7px }
+.fecho p b{ color:var(--ink-50); font-weight:600 }
+.fecho p{ margin:0 0 9px; color:var(--ink-300); font-size:14px; max-width:66ch }
+.fecho p:last-child{ margin-bottom:0 }
+.fecho .risco{ color:var(--coral) }
 
-@media (prefers-reduced-motion:reduce){ *{ transition:none !important } }
+@media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important } }
 </style>
 
 <div class="env">
-  <header>
-    <p class="eyebrow">Maquete · não é o protótipo</p>
-    <h1>Um card, três lentes</h1>
-    <p>Hoje a pauta e o Ensaio guardam <b style="color:var(--ink-50)">dois objetos</b> ligados
-      por um ponteiro. Aqui existe <b style="color:var(--ink-50)">um só</b>. Toque em qualquer
-      card: ele acende nas três lentes ao mesmo tempo, porque é o mesmo objeto. Mude a
-      categoria e veja a cor mudar em todas; mude a coluna e veja ele andar só no Ensaio.</p>
-    <div class="tese">
-      <div class="teseItem"><b id="nObj">9</b><span>objetos no total</span></div>
-      <div class="teseItem"><b>3</b><span>lentes sobre eles</span></div>
-      <div class="teseItem"><b>0</b><span>cópias</span></div>
+  <p class="eyebrow">Maquete · não é o protótipo</p>
+  <h1>A agência corrige o texto. O quadro de produção fica sabendo?</h1>
+  <p class="intro">Um card do EJUP, visto na pauta e no quadro de produção. À esquerda, como
+    a Maestro funciona hoje. À direita, como ficaria com o card único. Mexa numa coisa só
+    e olhe os dois lados.</p>
+
+  <div class="mesa">
+    <label for="titulo">Escreva aqui, como a agência escreveria na pauta</label>
+    <input id="titulo" autocomplete="off" spellcheck="false">
+    <p class="ajuda">Experimente apagar “Zeca Melo” e escrever outro nome.</p>
+    <div class="mesaLinha">
+      <button class="b" id="btConcluir">Concluir no quadro de produção</button>
+      <button class="b" id="btZerar">Começar de novo</button>
     </div>
-  </header>
+  </div>
 
-  <div class="lentes">
-    <section class="lente" aria-labelledby="l1">
-      <div class="lenteHd"><b id="l1">Pauta</b><span>por data</span></div>
-      <p class="lenteSub">Filtra <code>cli</code> e arruma por <code>data</code>.
-        Mostra o que vai ao ar e as tarefas internas daquele cliente.</p>
-      <div class="opcoes" id="filtroCli" style="margin-bottom:12px"></div>
-      <div id="lentePauta"></div>
+  <div class="lados">
+    <section class="lado hoje" aria-labelledby="h1x">
+      <div class="ladoHd"><b id="h1x">Hoje</b><span id="selo1">dois objetos</span></div>
+
+      <div class="tela">
+        <div class="telaHd">Na pauta<i></i>EJUP</div>
+        <div class="card" id="cardPautaA">
+          <span class="t"></span><span class="m"></span>
+        </div>
+      </div>
+
+      <div class="tela">
+        <div class="telaHd">No quadro de produção<i></i>Inbox</div>
+        <div class="card" id="cardEnsaioA">
+          <span class="t"></span><span class="m"></span>
+        </div>
+        <div id="avisoA"></div>
+      </div>
+
+      <p class="placar"><b id="placarA">0</b> coisa fora de sincronia</p>
     </section>
 
-    <section class="lente" aria-labelledby="l2">
-      <div class="lenteHd"><b id="l2">Ensaio</b><span>por coluna</span></div>
-      <p class="lenteSub">Arruma por <code>col</code> e colore por <code>cat</code>.
-        Mesmos cards — só que agrupados pelo estado da execução.</p>
-      <div id="lenteEnsaio"></div>
-    </section>
+    <section class="lado novo" aria-labelledby="h2x">
+      <div class="ladoHd"><b id="h2x">Como ficaria</b><span id="selo2">um objeto</span></div>
 
-    <section class="lente" aria-labelledby="l3">
-      <div class="lenteHd"><b id="l3">Hoje</b><span>por hora</span></div>
-      <p class="lenteSub">Filtra <code>data = hoje</code> em todos os clientes e arruma
-        por <code>hora</code>. Aqui a coluna é o cliente.</p>
-      <div id="lenteHoje"></div>
+      <div class="tela">
+        <div class="telaHd">Na pauta<i></i>EJUP</div>
+        <div class="card" id="cardPautaB">
+          <span class="t"></span><span class="m"></span>
+        </div>
+      </div>
+
+      <div class="tela">
+        <div class="telaHd">No quadro de produção<i></i>Inbox</div>
+        <div class="card" id="cardEnsaioB">
+          <span class="t"></span><span class="m"></span>
+        </div>
+        <div id="avisoB"></div>
+      </div>
+
+      <p class="placar"><b id="placarB">0</b> coisa fora de sincronia</p>
     </section>
   </div>
 
-  <section class="objeto" aria-labelledby="obj">
-    <div class="objetoHd">
-      <b id="obj">O objeto</b>
-      <span id="objId">#—</span>
-      <span style="margin-left:auto;color:var(--ink-400)">edite e olhe as três lentes</span>
-    </div>
-    <div class="objetoCorpo">
-      <div class="campos">
-        <div class="campo">
-          <label for="fTitulo">Título</label>
-          <input id="fTitulo" autocomplete="off">
-        </div>
-        <div class="campo">
-          <label>Categoria — é a cor</label>
-          <div class="opcoes cores" id="fCat"></div>
-        </div>
-        <div class="campo">
-          <label>Coluna — onde a execução está</label>
-          <div class="opcoes" id="fCol"></div>
-        </div>
-        <div class="campo">
-          <label>Vai ao ar?</label>
-          <div class="opcoes" id="fTipo"></div>
-        </div>
-        <div class="campo">
-          <label for="fHora">Hora</label>
-          <input id="fHora" autocomplete="off" style="max-width:120px">
-        </div>
-      </div>
-      <pre class="json" id="fJson"></pre>
-    </div>
-  </section>
-
-  <div class="notas">
-    <div class="nota">
-      <b>Dois eixos, não um</b>
-      <p><code style="font-family:var(--mono);font-size:11.5px;color:var(--brass-300)">fase</code>
-        diz onde o card está na <i>aprovação</i> — rascunho, com o cliente, aprovado.
-        <code style="font-family:var(--mono);font-size:11.5px;color:var(--brass-300)">col</code>
-        diz onde o <i>trabalho</i> está. Um card aprovado ainda pode estar em produção.
-        Os dois fazem falta; nenhum substitui o outro.</p>
-    </div>
-    <div class="nota">
-      <b>A cor é a categoria</b>
-      <p>Marketing, Financeiro e Sócios não são quadros diferentes: são o mesmo quadro,
-        com um campo a mais. É esse campo que a privacidade lê para decidir quem enxerga
-        o quê.</p>
-    </div>
-    <div class="nota alerta">
-      <b>O que ainda precisa de decisão</b>
-      <p>Cards da agência — a nota, o pró-labore — não têm cliente. Aqui eles moram num
-        cliente interno chamado <b>A agência</b>, que a lente da Pauta ignora. É a única
-        peça do modelo que ainda é escolha, não consequência.</p>
-    </div>
+  <div class="fecho">
+    <b>O que muda de verdade</b>
+    <p>Hoje a pauta e o quadro guardam duas cópias do mesmo trabalho. Elas nascem iguais e
+      se afastam a cada correção — e ninguém é avisado, porque, do ponto de vista do
+      programa, nada quebrou.</p>
+    <p>Com o card único não existe cópia para se afastar. As duas telas continuam existindo
+      e continuam diferentes: a pauta arruma por data, o quadro arruma por etapa da
+      produção. <b style="color:var(--ink-50)">Muda a cor e o filtro — não o card.</b></p>
+    <p class="risco">O que ainda é decisão sua: tarefa da agência (emitir nota, pró-labore)
+      não pertence a cliente nenhum. Ela precisa de um lugar antes de a fusão acontecer.</p>
   </div>
 </div>
 
 <script>
 "use strict";
-/* =====================================================================
-   UM array. Tudo que as três lentes mostram sai daqui.
-   ================================================================== */
-const HOJE = '2026-08-30';
+const ORIGINAL = 'Editar o episódio · Zeca Melo';
 
-const CATS = [
-  { id:'marketing',  nome:'Marketing',  cor:'#C8963A' },
-  { id:'financeiro', nome:'Financeiro', cor:'#35B87A' },
-  { id:'socios',     nome:'Sócios',     cor:'#5B8DEF' }
-];
-const COLS = [
-  { id:'inbox', nome:'Inbox' }, { id:'plan', nome:'Plan' },
-  { id:'do',    nome:'Do' },    { id:'check', nome:'Check' },
-  { id:'act',   nome:'Act' }
-];
-const CLIS = [
-  { id:'ejup',   nome:'EJUP',       ini:'EJ' },
-  { id:'ln',     nome:'Loja Norte', ini:'LN' },
-  { id:'casa',   nome:'A agência',  ini:'AG', interno:true }
-];
+/* HOJE: duas cópias. A do quadro foi criada quando a tarefa nasceu e
+   ficou congelada ali. AMANHÃ: uma só. */
+let pauta   = { titulo: ORIGINAL, feito:false };   // o card da pauta
+let copia   = { titulo: ORIGINAL, feito:false };   // a cópia no quadro, lado "hoje"
+let unico   = { titulo: ORIGINAL, feito:false };   // o objeto único, lado "como ficaria"
 
-/* o card: um objeto, com os campos das três lentes juntos */
-const CARDS = [
-  { id:1, cli:'ejup', titulo:'Corte do podcast · Maria Luiza', vaiAoAr:true,
-    cat:'marketing', col:'check', fase:'Em produção', data:HOJE, hora:'10:00', fmt:'Reels' },
-  { id:2, cli:'ejup', titulo:'Editar o episódio · Zeca Melo', vaiAoAr:false,
-    cat:'marketing', col:'do', fase:'Interno', data:HOJE, hora:'14:00', fmt:'Tarefa' },
-  { id:3, cli:'ejup', titulo:'Carrossel sobre o artigo', vaiAoAr:true,
-    cat:'marketing', col:'plan', fase:'Aprovação do cliente', data:'2026-08-31', hora:'19:30', fmt:'Carrossel' },
-  { id:4, cli:'ln', titulo:'Verão sem pressa', vaiAoAr:true,
-    cat:'marketing', col:'act', fase:'Aprovado', data:HOJE, hora:'18:00', fmt:'Carrossel' },
-  { id:5, cli:'ln', titulo:'Bastidores da Dona Rosa', vaiAoAr:true,
-    cat:'marketing', col:'do', fase:'Em produção', data:'2026-08-31', hora:'11:00', fmt:'Reels' },
-  { id:6, cli:'ln', titulo:'Subir as artes do lote de agosto', vaiAoAr:false,
-    cat:'marketing', col:'inbox', fase:'Interno', data:'', hora:'', fmt:'Tarefa' },
-  { id:7, cli:'casa', titulo:'Emitir a nota da EJUP · agosto', vaiAoAr:false,
-    cat:'financeiro', col:'plan', fase:'Interno', data:HOJE, hora:'09:00', fmt:'Tarefa' },
-  { id:8, cli:'casa', titulo:'Cobrança em atraso · Cortez', vaiAoAr:false,
-    cat:'financeiro', col:'do', fase:'Interno', data:'', hora:'', fmt:'Tarefa' },
-  { id:9, cli:'casa', titulo:'Revisar o pró-labore do trimestre', vaiAoAr:false,
-    cat:'socios', col:'inbox', fase:'Interno', data:'', hora:'', fmt:'Tarefa' }
-];
-
-let sel = 1;
-let cliPauta = 'ejup';
-let ultimoCampo = null;      // o campo que acabou de mudar, para destacar no objeto
-
+const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const corDe = c => (CATS.find(x=>x.id===c) || CATS[0]).cor;
-const cli  = id => CLIS.find(c=>c.id===id) || CLIS[0];
-const dataCurta = d => d ? d.slice(8,10) + '/' + d.slice(5,7) : 'sem data';
 
-/* ---------- o card, desenhado igual em qualquer lente ---------- */
-function cardHtml(c, meta){
-  return `<button class="card ${c.id===sel?'sel':''}" data-card="${c.id}"
-    style="--cat:${corDe(c.cat)}" aria-pressed="${c.id===sel}">
-    <span class="t">${esc(c.titulo)}</span>
-    <span class="m">${meta}</span>
-  </button>`;
+function pinta(el, obj, marcarVelho){
+  el.querySelector('.t').textContent = obj.titulo || '(sem título)';
+  el.querySelector('.m').textContent = obj.feito ? 'concluído' : 'EJUP · tarefa interna';
+  el.classList.toggle('velho', !!marcarVelho);
+  el.classList.toggle('feito', !!obj.feito);
 }
 
-/* ---------- lente 1: a pauta ---------- */
-function desenhaPauta(){
-  const alvo = CARDS.filter(c => c.cli === cliPauta);
-  const dias = [...new Set(alvo.map(c=>c.data))].sort();
-  const html = dias.map(d=>{
-    const doDia = alvo.filter(c=>c.data===d).sort((a,b)=>a.hora<b.hora?-1:1);
-    return `<div class="grupo">
-      <div class="grupoHd">${d ? esc(dataCurta(d)) : 'Sem data'}<i></i>${doDia.length}</div>
-      ${doDia.map(c=>cardHtml(c, `<span class="pt">${esc(c.fmt)}</span>
-        ${c.hora?'· '+esc(c.hora):''} ${c.vaiAoAr?'':'· interno'}`)).join('')}
-    </div>`;
-  }).join('');
-  document.getElementById('lentePauta').innerHTML =
-    html || `<p class="vazio">Este cliente não tem card nenhum.</p>`;
+function pisca(el){
+  el.classList.remove('piscou');
+  void el.offsetWidth;
+  el.classList.add('piscou');
 }
 
-/* ---------- lente 2: o Ensaio ---------- */
-function desenhaEnsaio(){
-  document.getElementById('lenteEnsaio').innerHTML = COLS.map(col=>{
-    const nesta = CARDS.filter(c=>c.col===col.id);
-    return `<div class="grupo">
-      <div class="grupoHd">${col.nome}<i></i>${nesta.length}</div>
-      ${nesta.length
-        ? nesta.map(c=>cardHtml(c, `<span class="pt">${esc(cli(c.cli).ini)}</span>
-            · ${esc((CATS.find(x=>x.id===c.cat)||{}).nome)}`)).join('')
-        : `<p class="vazio">vazio</p>`}
-    </div>`;
-  }).join('');
+function desenha(){
+  const textoDescolado = pauta.titulo !== copia.titulo;
+  const feitoDescolado = pauta.feito !== copia.feito;
+  const fora = (textoDescolado ? 1 : 0) + (feitoDescolado ? 1 : 0);
+
+  pinta($('cardPautaA'),  pauta, false);
+  pinta($('cardEnsaioA'), copia, textoDescolado || feitoDescolado);
+  pinta($('cardPautaB'),  unico, false);
+  pinta($('cardEnsaioB'), unico, false);
+
+  $('avisoA').innerHTML = fora
+    ? `<div class="aviso"><span>⚠</span><span>${
+        textoDescolado ? '<b>O quadro ficou com o texto antigo.</b> Quem for produzir vai ler o que já foi corrigido. ' : ''}${
+        feitoDescolado ? '<b>A pauta não sabe que já foi feito.</b> Continua aparecendo como pendente para quem olha o calendário.' : ''}</span></div>`
+    : `<div class="ok"><span>✓</span><span>Iguais — por enquanto. Elas só se afastam quando alguém mexe.</span></div>`;
+
+  $('avisoB').innerHTML = `<div class="ok"><span>✓</span><span>É o mesmo card.
+    ${unico.feito ? 'Concluir aqui já apareceu na pauta.' : 'Nada para sincronizar, porque não há cópia.'}</span></div>`;
+
+  $('placarA').textContent = fora;
+  $('placarB').textContent = 0;
+  $('selo1').textContent = fora ? `${fora} descolamento${fora>1?'s':''}` : 'dois objetos';
 }
 
-/* ---------- lente 3: o Hoje ---------- */
-function desenhaHoje(){
-  const doDia = CARDS.filter(c=>c.data===HOJE);
-  const porCli = CLIS.filter(cl=>doDia.some(c=>c.cli===cl.id));
-  document.getElementById('lenteHoje').innerHTML = porCli.length
-    ? porCli.map(cl=>{
-        const seus = doDia.filter(c=>c.cli===cl.id).sort((a,b)=>a.hora<b.hora?-1:1);
-        return `<div class="grupo">
-          <div class="grupoHd">${esc(cl.nome)}<i></i>${seus.length}</div>
-          ${seus.map(c=>cardHtml(c, `<span class="pt">${esc(c.hora)}</span>
-            · ${esc(c.fmt)}`)).join('')}
-        </div>`;
-      }).join('')
-    : `<p class="vazio">Nada sai hoje.</p>`;
-}
-
-/* ---------- o objeto selecionado ---------- */
-function desenhaObjeto(){
-  const c = CARDS.find(x=>x.id===sel);
-  document.getElementById('objId').textContent = '#' + c.id;
-  document.getElementById('fTitulo').value = c.titulo;
-  document.getElementById('fHora').value = c.hora;
-
-  document.getElementById('fCat').innerHTML = CATS.map(k=>
-    `<button data-cat="${k.id}" class="${c.cat===k.id?'on':''}"
-      style="${c.cat===k.id?`background:${k.cor};border-color:${k.cor}`:`color:${k.cor}`}">
-      <i></i>${k.nome}</button>`).join('');
-
-  document.getElementById('fCol').innerHTML = COLS.map(k=>
-    `<button data-col="${k.id}" class="${c.col===k.id?'on':''}">${k.nome}</button>`).join('');
-
-  document.getElementById('fTipo').innerHTML = [
-    ['true','Vai ao ar'], ['false','Trabalho interno']
-  ].map(([v,n])=>
-    `<button data-tipo="${v}" class="${String(c.vaiAoAr)===v?'on':''}">${n}</button>`).join('');
-
-  const linha = (k, v, tipo) => {
-    const marca = k === ultimoCampo ? ' destaque' : '';
-    const val = tipo === 'n' ? `<span class="n${marca}">${v}</span>`
-              : tipo === 'b' ? `<span class="n${marca}">${v}</span>`
-              : `<span class="v${marca}">"${esc(String(v))}"</span>`;
-    return `  <span class="k">${k}</span>: ${val},`;
-  };
-  document.getElementById('fJson').innerHTML =
-    '{\n' +
-    linha('id', c.id, 'n') + '\n' +
-    linha('cli', c.cli) + '\n' +
-    linha('titulo', c.titulo) + '\n' +
-    linha('vaiAoAr', c.vaiAoAr, 'b') + '\n' +
-    linha('cat', c.cat) + '\n' +
-    linha('col', c.col) + '\n' +
-    linha('fase', c.fase) + '\n' +
-    linha('data', c.data || '') + '\n' +
-    linha('hora', c.hora || '').replace(/,$/,'') + '\n}';
-}
-
-function desenhaFiltroCli(){
-  document.getElementById('filtroCli').innerHTML = CLIS.map(cl=>
-    `<button data-clipauta="${cl.id}" class="${cliPauta===cl.id?'on':''}">${esc(cl.nome)}</button>`
-  ).join('');
-}
-
-function tudo(){
-  document.getElementById('nObj').textContent = CARDS.length;
-  desenhaFiltroCli(); desenhaPauta(); desenhaEnsaio(); desenhaHoje(); desenhaObjeto();
-}
-
-/* ---------- interação ---------- */
-document.addEventListener('click', e => {
-  const t = e.target.closest('[data-card],[data-cat],[data-col],[data-tipo],[data-clipauta]');
-  if(!t) return;
-  const d = t.dataset;
-  const c = CARDS.find(x=>x.id===sel);
-
-  if(d.card){ sel = +d.card; ultimoCampo = null; }
-  if(d.clipauta){ cliPauta = d.clipauta; }
-  if(d.cat){ c.cat = d.cat; ultimoCampo = 'cat'; }
-  if(d.col){ c.col = d.col; ultimoCampo = 'col'; }
-  if(d.tipo){ c.vaiAoAr = d.tipo === 'true'; ultimoCampo = 'vaiAoAr'; }
-  tudo();
+$('titulo').addEventListener('input', e => {
+  /* a agência escreve na PAUTA. Hoje, a cópia do quadro não fica sabendo. */
+  pauta.titulo = e.target.value;
+  unico.titulo = e.target.value;
+  desenha();
+  pisca($('cardEnsaioB'));
 });
 
-document.getElementById('fTitulo').addEventListener('input', e => {
-  const c = CARDS.find(x=>x.id===sel);
-  c.titulo = e.target.value;
-  ultimoCampo = 'titulo';
-  desenhaPauta(); desenhaEnsaio(); desenhaHoje(); desenhaObjetoSemFoco();
+$('btConcluir').addEventListener('click', () => {
+  /* alguém conclui no QUADRO. Hoje, a pauta não fica sabendo. */
+  copia.feito = true;
+  unico.feito = true;
+  desenha();
+  pisca($('cardPautaB'));
 });
-document.getElementById('fHora').addEventListener('input', e => {
-  const c = CARDS.find(x=>x.id===sel);
-  c.hora = e.target.value;
-  ultimoCampo = 'hora';
-  desenhaPauta(); desenhaHoje(); desenhaObjetoSemFoco();
-});
-/* redesenha o objeto sem mexer nos inputs que estão sendo digitados */
-function desenhaObjetoSemFoco(){
-  const foco = document.activeElement && document.activeElement.id;
-  const pos = foco && document.activeElement.selectionStart;
-  desenhaObjeto();
-  if(foco){ const el = document.getElementById(foco);
-    if(el){ el.focus(); if(pos!=null && el.setSelectionRange) el.setSelectionRange(pos,pos); } }
-}
 
-tudo();
+$('btZerar').addEventListener('click', () => {
+  pauta = { titulo:ORIGINAL, feito:false };
+  copia = { titulo:ORIGINAL, feito:false };
+  unico = { titulo:ORIGINAL, feito:false };
+  $('titulo').value = ORIGINAL;
+  desenha();
+});
+
+$('titulo').value = ORIGINAL;
+desenha();
 </script>
