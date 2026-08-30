@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-30 10:06 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-30 10:12 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -15675,7 +15675,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v59 · 30 ago';
+const VERSAO_PROTOTIPO = 'v60 · 30 ago';
 
 menuSheet = (function(orig){
   return function(){
@@ -15939,7 +15939,9 @@ document.addEventListener('click', e => {
    AGENDA (o dia inteiro, uma coluna por cliente). E o filtro por cliente
    vale para as duas — de todos juntos a um só.
    ================================================================== */
-S.hjVista = S.hjVista || 'lista';     // 'lista' | 'agenda'
+/* A agenda primeiro: quem abre a Maestro de manha quer ver o DIA, nao a
+   soma. A lista continua a um toque, para conferir o que falta. */
+S.hjVista = S.hjVista || 'agenda';    // 'lista' | 'agenda'
 S.hjCli   = S.hjCli   || 'todos';
 
 /* o card da agenda do Hoje leva o cliente junto: clicar tem de trocar de
@@ -16019,6 +16021,7 @@ function hjControles(grupos){
 
   return `<div class="hjBarra">
     <div class="seg" data-autothumb="1">
+      <div class="thumb"></div>
       <button class="${S.hjVista==='lista'?'on':''}" data-hjvista="lista">Lista</button>
       <button class="${S.hjVista==='agenda'?'on':''}" data-hjvista="agenda">Agenda</button>
     </div>

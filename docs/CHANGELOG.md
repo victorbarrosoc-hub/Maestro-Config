@@ -1,6 +1,6 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.6
+Version: 0.5.7
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
@@ -32,6 +32,23 @@ Nunca apagar versões anteriores.
   `session.read`, e plano e limites da agência saem da resposta do lado cliente (I-12).
 - `POST /batches` com peça sem copy devolvia **500** (`currentVersionId!` mentia).
   Agora é 422 dizendo qual peça falta escrever.
+
+---
+
+## 0.5.7 — 2026-08-30
+
+**Status:** Concluída
+
+### Corrigido
+- **O seletor Lista/Agenda não mostrava qual estava ativo.** `.seg button.on` é texto quase
+  preto, feito para ficar sobre o `.thumb` de latão que desliza atrás — e o seletor tinha
+  nascido sem o `.thumb`. Resultado: o botão ativo era preto no escuro, invisível.
+  `fixSegs()` mede o botão ligado e posiciona o cursor, mas não faz nada quando o elemento
+  não existe. Agora existe, e o ativo é o botão de latão do padrão da plataforma.
+
+### Mudado
+- **O Hoje abre na Agenda.** Quem abre a Maestro de manhã quer ver o dia, não a soma. A
+  lista continua a um toque, para conferir o que falta.
 
 ---
 
