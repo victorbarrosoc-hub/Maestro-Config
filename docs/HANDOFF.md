@@ -101,7 +101,7 @@ packages/tokens/   tokens + 228 strings pt-BR
 packages/ui/       Button, StatusPill, ApprovalActions
 ```
 
-**148 testes passando, typecheck limpo.**
+**173 testes passando, typecheck limpo.**
 
 | Suíte | O que cobre |
 |---|---|
@@ -112,6 +112,7 @@ packages/ui/       Button, StatusPill, ApprovalActions
 | `test/seal.test.ts` | 21 · determinismo, roteiro, colisão por concatenação |
 | `test/preflight.test.ts` | 24 · o checklist pré-envio |
 | `test/http.spec.ts` | 24 · **a API pela porta da frente**: guard, link mágico, sessão, **cadastro da agência**, validação, isolamento |
+| `test/produto.spec.ts` | 25 · **o produto por HTTP**: convite e aceite, ciclo, lote, checklist, envio, decisão, selo, desfazer, termo |
 
 ```bash
 npm -w @maestro/api test        # as duas suítes, sem banco no ar
@@ -154,12 +155,36 @@ fora do git.
 
 ### ⚠ O que ainda NÃO foi verificado
 
-- **O produto em si nunca passou por HTTP.** Os 16 testes de HTTP cobrem
-  autenticação, o guard e o isolamento — não o ciclo, o lote, a decisão nem o
-  termo. Esses só foram exercitados chamando o serviço direto. Bater neles
-  pela API é a próxima coisa a fazer.
 - `apps/web` não existe. Os componentes nunca foram renderizados.
 - Blocos 4, 6, 7 e 8 não existem.
+- O worker de notificação não existe: a decisão **enfileira** e-mail e WhatsApp
+  (`scheduledFor`), ninguém entrega. A janela de resfriamento está testada; o
+  envio depois dela, não.
+- `POST /cycles/:id/schedule` (bloco 6) e o recibo em PDF do termo continuam
+  no contrato e fora do código.
+
+### O que o produto por HTTP encontrou (2026-08-30)
+
+O caminho inteiro — **fundar → convidar → cliente → projeto → ciclo → peça →
+copy → lote → checklist → envio → decisão → desfazer → termo** — agora passa
+pela porta da frente, com 24 testes e um percurso manual com `curl` contra a
+API rodando de verdade. Quatro achados, em ordem de gravidade:
+
+1. **O convite não levava a lugar nenhum (D-073).** `acceptedAt` só era escrito
+   ao fundar a agência; o guard exige vínculo aceito. Todo convidado abria
+   sessão com zero organizações. **O lado cliente do produto era inalcançável
+   fora dos testes** — que criavam o vínculo direto no Prisma, e por isso
+   nunca viram o buraco. Corrigido: entrar pelo link é o aceite.
+2. **O ciclo não tinha rota.** `POST /batches` exigia um `cycleId` que nenhuma
+   rota sabia produzir — o `Cycle` existia no banco e no contrato desde o
+   começo, sem `GET /cycles`, `POST /cycles` nem `GET /cycles/:id`. O produto
+   só fechava chamando o Prisma direto. Implementado.
+3. **`/auth/me` recusava o cliente (D-074).** Exigia `org.read`, permissão de
+   agência. Agora usa `session.read`, e o plano e os limites da agência saem
+   da resposta para papéis de cliente (I-12).
+4. **Lote com peça sem copy devolvia 500.** `versionId: c.currentVersionId!` —
+   a asserção de não-nulo mentia, e o erro estourava no banco. Agora é 422
+   dizendo **qual** peça falta escrever.
 
 ### O que a primeira subida da API encontrou (2026-08-04/05)
 

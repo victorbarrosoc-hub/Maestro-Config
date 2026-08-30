@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { Auth, AuthGuard, Public, RequirePermission, type AuthContext } from './auth.guard';
+import { isClientRole } from '../common/permissions';
 import { MagicLinkDto, SessionDto } from './auth.dto';
 
 const COOKIE = 'maestro_session';
@@ -53,9 +54,19 @@ export class AuthController {
     return { ok: true };
   }
 
-  @RequirePermission('org.read')
+  /**
+   * Quem sou eu, em que agência, com que papel — a primeira chamada dos dois
+   * shells. Exigia `org.read`, que é permissão de agência: o cliente entrava e
+   * levava 403 na porta seguinte, sem como descobrir a própria organização.
+   *
+   * Plano e limites ficam de fora do shell do cliente. São dado comercial da
+   * agência, e a barreira entre os dois shells é dura (I-12).
+   */
+  @RequirePermission('session.read')
   @Get('me')
   async me(@Auth() auth: AuthContext) {
+    const daAgencia = !isClientRole(auth.role);
+
     const [user, org] = await Promise.all([
       auth.db.user.findUnique({
         where: { id: auth.userId },
@@ -63,7 +74,14 @@ export class AuthController {
       }),
       auth.db.organization.findUnique({
         where: { id: auth.organizationId },
-        select: { id: true, name: true, slug: true, plan: true, seatLimit: true, projectLimit: true },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          plan: daAgencia,
+          seatLimit: daAgencia,
+          projectLimit: daAgencia,
+        },
       }),
     ]);
 

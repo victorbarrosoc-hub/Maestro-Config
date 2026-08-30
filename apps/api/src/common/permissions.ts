@@ -35,6 +35,9 @@ export type Permission = keyof typeof MATRIX;
  */
 export const MATRIX = {
   // ── organização e equipe ──────────────────────────────────────────────
+  /// A própria sessão: quem sou eu, em que agência, com que papel. Todo mundo
+  /// que entrou precisa disso — é a primeira chamada dos dois shells.
+  'session.read': [SUPER_ADMIN, ...AGENCY, CLIENT, CLIENT_VIEWER],
   'org.read': [SUPER_ADMIN, ...AGENCY],
   'org.update': [SUPER_ADMIN, AGENCY_ADMIN],
   'member.invite': [SUPER_ADMIN, AGENCY_ADMIN, MANAGER],
@@ -62,6 +65,11 @@ export const MATRIX = {
   'campaign.create': [SUPER_ADMIN, AGENCY_ADMIN, MANAGER, ACCOUNT],
   'campaign.update': [SUPER_ADMIN, AGENCY_ADMIN, MANAGER, ACCOUNT],
   'campaign.archive': [SUPER_ADMIN, AGENCY_ADMIN, MANAGER],
+
+  /// O ciclo e o mes de trabalho (D-042). Quem o abre e a agencia; o cliente
+  /// enxerga, porque e a tela onde ele acompanha os dois lotes.
+  'cycle.create': [SUPER_ADMIN, AGENCY_ADMIN, MANAGER, ACCOUNT],
+  'cycle.read': [SUPER_ADMIN, ...AGENCY, CLIENT, CLIENT_VIEWER],
 
   // ── estratégia e calendário ───────────────────────────────────────────
   'strategy.read': [SUPER_ADMIN, ...AGENCY, CLIENT, CLIENT_VIEWER],

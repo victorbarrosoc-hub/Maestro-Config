@@ -10,11 +10,16 @@ import { InviteMemberDto, UpdateRoleDto } from './members.dto';
 export class MembersController {
   constructor(private readonly auth: AuthService) {}
 
+  /**
+   * Inclui quem ainda não entrou. `acceptedAt: null` é o convite pendente — a
+   * tela precisa dele para dizer "convite enviado" e oferecer o reenvio.
+   * Escondê-lo fazia o convite sumir sem deixar rastro: quem convidava não
+   * tinha como saber se tinha funcionado.
+   */
   @RequirePermission('org.read')
   @Get()
   async list(@Auth() ctx: AuthContext) {
     return ctx.db.organizationMember.findMany({
-      where: { acceptedAt: { not: null } },
       select: {
         id: true,
         role: true,

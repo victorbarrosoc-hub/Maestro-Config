@@ -57,6 +57,22 @@ export const Problems = {
       detail: `A fase ${order} está sem pergunta-guia. É ela que separa método de cronograma.`,
     }),
 
+  phaseNotInProject: () =>
+    new ProblemException(HttpStatus.UNPROCESSABLE_ENTITY, {
+      type: `${BASE}/phase-not-in-project`,
+      title: 'Esta fase é de outro projeto',
+      detail: 'Escolha uma fase do cronograma deste projeto.',
+    }),
+
+  contentWithoutVersion: (titulos: string[]) =>
+    new ProblemException(HttpStatus.UNPROCESSABLE_ENTITY, {
+      type: `${BASE}/content-without-version`,
+      title: titulos.length === 1 ? 'Uma peça ainda não tem copy' : 'Algumas peças ainda não têm copy',
+      // Beco sem saída é falha de design: dizemos qual peça e o que fazer.
+      detail: `Escreva a copy de ${titulos.join(', ')} antes de montar o lote.`,
+      contents: titulos,
+    }),
+
   planLimit: (what: 'seat' | 'project', limit: number) =>
     new ProblemException(HttpStatus.PAYMENT_REQUIRED, {
       type: `${BASE}/plan-limit`,

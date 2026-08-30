@@ -834,6 +834,39 @@ implementacao tem aprovar a ~1,2s e a cadencia do termo a ~2,2s.
 
 ---
 
+# D-073 · Engenharia · Aprovada
+**Data:** 2026-08-30 · **Categoria:** Convite e aceite
+**Problema:** ao percorrer o produto por HTTP pela primeira vez, o convite nao levava a
+lugar nenhum. `POST /members/invite` criava o vinculo com `acceptedAt` nulo, o guard exige
+vinculo aceito, e **nenhuma linha do codigo escrevia `acceptedAt`** fora do ato de fundar a
+agencia (D-065). Quem era convidado — o cliente que aprova, o designer, a copywriter —
+abria sessao com zero organizacoes e parava ali.
+**Por que ninguem tinha visto:** todos os testes criavam o vinculo direto no Prisma, ja com
+`acceptedAt` preenchido. O atalho que fazia o teste passar era exatamente o passo que o
+produto nao sabia dar.
+**Decisao:** **entrar pelo link e o aceite.** Quem convida escolhe um e-mail; quem prova o
+e-mail aceita. `createSession` grava `acceptedAt` em todo vinculo pendente do usuario.
+**Alternativa descartada:** endpoint separado de aceite. Mesma consequencia, mais cerimonia,
+e mais uma tela onde dar errado — o link ja e a prova de posse da caixa de entrada.
+**Consequencia:** `GET /members` passa a listar tambem quem nao entrou, com `acceptedAt`
+nulo. Esconder o pendente fazia o convite sumir sem rastro: quem convidava nao tinha como
+saber se tinha funcionado, nem a quem reenviar.
+
+---
+
+# D-074 · Engenharia · Aprovada
+**Data:** 2026-08-30 · **Categoria:** Os dois shells
+**Problema:** `GET /auth/me` — a primeira chamada de qualquer shell, "quem sou eu e em que
+agencia" — exigia `org.read`, que e permissao de agencia. O cliente entrava e levava 403 na
+porta seguinte, sem como descobrir a propria organizacao.
+**Decisao:** nova permissao `session.read`, de todos os papeis. Ler a propria identidade
+nao e ler a organizacao.
+**Junto:** a resposta deixa de trazer `plan`, `seatLimit` e `projectLimit` para papeis de
+cliente. Sao dado comercial da agencia, e a barreira entre os dois shells e dura (I-12) —
+o cliente nao precisa saber quanto a agencia paga nem quantos assentos ela tem.
+
+---
+
 ## Decisões Futuras
 
 Adicionar seguindo o padrão D-073, D-074...

@@ -82,6 +82,10 @@ GET  /auth/me         → usuário, papéis e escopos
 
 Access token: 15 min. Refresh: 30 dias, rotativo. Token de link mágico: uso único, 15 min (convite: 7 dias).
 
+**Entrar pelo link é o aceite do convite** (D-073): abrir sessão marca `acceptedAt` em todo vínculo pendente daquele e-mail. Sem isso o convidado entra sem organização nenhuma e não tem para onde ir.
+
+`GET /auth/me` responde a **qualquer papel** (`session.read`) — é a primeira chamada dos dois shells. Para papéis de cliente a organização vem sem `plan`, `seatLimit` nem `projectLimit`: é dado comercial da agência (D-074, I-12).
+
 **Papéis de agência podem ter senha** (`POST /auth/password`). Para `CLIENT` e `CLIENT_VIEWER` o endpoint responde `403` — a decisão é do produto, não do usuário.
 
 ---
@@ -119,7 +123,7 @@ Domínio de e-mail pessoal não dispara o aviso.
 ```
 GET    /organizations/me
 PATCH  /organizations/me
-GET    /members
+GET    /members               inclui o convite pendente (`acceptedAt: null`)
 POST   /members/invite        { email, role }
 PATCH  /members/:id           { role }
 DELETE /members/:id
@@ -248,6 +252,16 @@ GET  /cycles?projectId=&phaseId=
 POST /cycles                  { projectId, phaseId, name }
 GET  /cycles/:id              estado + os dois lotes
 ```
+
+O ciclo nasce sempre em `COPY_DRAFT` — **`status` não vem do corpo**; quem move o ciclo pelos oito estados é o fluxo. `phaseId` de outro projeto responde `422`.
+
+`GET /cycles/:id` devolve `batches: { copy, final }` com `null` no lote que ainda não existe: a tela do ciclo mostra o caminho inteiro, não só o trecho já andado.
+
+```
+POST /batches → 422 content-without-version
+```
+
+Peça sem versão não entra em lote: o lote carimba a versão de cada peça, e não há o que carimbar. A resposta nomeia **qual** peça falta escrever.
 
 ```
 POST /batches

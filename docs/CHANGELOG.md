@@ -1,9 +1,37 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.4
+Version: 0.5.1
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.1 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** o produto pela porta da frente — ciclo, lote, decisão e termo por HTTP.
+
+### Adicionado
+- `GET /cycles`, `POST /cycles`, `GET /cycles/:id` — o ciclo existia no banco e no
+  contrato desde o começo e não tinha rota. `POST /batches` exigia um `cycleId` que
+  nenhum cliente da API conseguia produzir.
+- `apps/api/test/produto.spec.ts` — 25 testes que percorrem fundar → convidar →
+  cliente → projeto → ciclo → peça → copy → lote → checklist → envio → decisão →
+  desfazer → termo, tudo por HTTP. **173 testes no total.**
+- Permissões `cycle.create`, `cycle.read` e `session.read`.
+
+### Corrigido
+- **O convite não levava a lugar nenhum** (D-073). `acceptedAt` só era escrito ao
+  fundar a agência, e o guard exige vínculo aceito: todo convidado abria sessão com
+  zero organizações. O lado cliente do produto era inalcançável fora dos testes —
+  que criavam o vínculo direto no Prisma. Entrar pelo link agora é o aceite.
+- `GET /members` escondia o convite pendente: quem convidava não sabia se tinha
+  funcionado, nem a quem reenviar.
+- `GET /auth/me` exigia `org.read` e recusava o cliente com 403 (D-074). Agora usa
+  `session.read`, e plano e limites da agência saem da resposta do lado cliente (I-12).
+- `POST /batches` com peça sem copy devolvia **500** (`currentVersionId!` mentia).
+  Agora é 422 dizendo qual peça falta escrever.
 
 ---
 

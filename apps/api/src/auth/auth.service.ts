@@ -93,6 +93,21 @@ export class AuthService {
       create: { email: token.email, name: token.email.split('@')[0] ?? token.email },
     });
 
+    /**
+     * Entrar pelo link **é** o aceite.
+     *
+     * Quem convida escolhe um e-mail; quem prova o e-mail aceita. Sem isto o
+     * `acceptedAt` só era gravado ao fundar a agência (D-065) e nada mais no
+     * código o escrevia: todo convidado — o cliente que aprova, o designer, a
+     * copywriter — abria sessão com zero organizações e ficava sem saída. O
+     * lado cliente do produto era inalcançável fora dos testes, que criavam o
+     * vínculo direto no banco.
+     */
+    await prismaRoot.organizationMember.updateMany({
+      where: { userId: user.id, acceptedAt: null },
+      data: { acceptedAt: new Date() },
+    });
+
     const memberships = await prismaRoot.organizationMember.findMany({
       where: { userId: user.id, acceptedAt: { not: null } },
       select: { organizationId: true, role: true },

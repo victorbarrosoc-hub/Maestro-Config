@@ -19,27 +19,36 @@ export class BatchesController {
   ) {
     const { contentIds, ...data } = body;
 
+    const pecas = await Promise.all(
+      contentIds.map((contentId) =>
+        ctx.db.content.findUniqueOrThrow({
+          where: { id: contentId },
+          select: { id: true, title: true, currentVersionId: true },
+        }),
+      ),
+    );
+
+    // O lote carimba a versão de cada peça. Peça sem versão não tem o que
+    // carimbar — e sem esta checagem virava 500 no banco, com a agência sem
+    // saber qual peça faltava.
+    const semCopy = pecas.filter((p) => !p.currentVersionId);
+    if (semCopy.length > 0) {
+      throw Problems.contentWithoutVersion(semCopy.map((p) => p.title));
+    }
+
     return ctx.db.batch.create({
       data: {
         organizationId: ctx.organizationId,
         ...data,
         referenceIds: body.referenceIds ?? [],
         items: {
-          create: await Promise.all(
-            contentIds.map(async (contentId, order) => {
-              const c = await ctx.db.content.findUniqueOrThrow({
-                where: { id: contentId },
-                select: { currentVersionId: true },
-              });
-              // Escrita aninhada: o carimbo automático não alcança aqui (I-01).
-              return {
-                organizationId: ctx.organizationId,
-                contentId,
-                versionId: c.currentVersionId!,
-                order,
-              };
-            }),
-          ),
+          // Escrita aninhada: o carimbo automático não alcança aqui (I-01).
+          create: pecas.map((p, order) => ({
+            organizationId: ctx.organizationId,
+            contentId: p.id,
+            versionId: p.currentVersionId!,
+            order,
+          })),
         },
       },
       include: { items: true },

@@ -10,6 +10,7 @@ import { ClientsController } from './clients/clients.controller';
 import { ProjectsController } from './projects/projects.controller';
 import { ProjectsService } from './projects/projects.service';
 import { ContentController } from './content/content.controller';
+import { CyclesController } from './cycles/cycles.controller';
 import { ContentService } from './content/content.service';
 import { BatchesController, DecisionsController } from './batches/batches.controller';
 import { DecisionService } from './approvals/decision.service';
@@ -25,7 +26,7 @@ import { ProblemFilter } from './common/problem.filter';
  */
 @Module({
   controllers: [AuthController, OrganizationsController, MembersController, ClientsController, ProjectsController, ContentController,
-    BatchesController, DecisionsController,
+    CyclesController, BatchesController, DecisionsController,
   ],
   providers: [
     AuthService,
