@@ -15665,7 +15665,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v66 · 30 ago · o gesto';
+const VERSAO_PROTOTIPO = 'v67 · 30 ago · a medalha';
 
 menuSheet = (function(orig){
   return function(){
@@ -16880,3 +16880,25 @@ LOGO = (c, s=26) =>
 
 if(typeof render === 'function') render();
 </script>
+
+<style>
+/* =====================================================================
+   v67 — A MEDALHA VOLTA A SER MEDALHA.
+
+   O v62 tinha desligado o disco de ouro ("o selo do termo perde a bola
+   dourada e ganha a partitura em 3D"). A pedido do founder ele volta:
+   disco, anel, as marcações dos quatro tempos e os pulsos.
+
+   Com o disco de volta, a marca volta a ser gravada em escuro — é a cor
+   que a medalha usava antes do v62, e a única que sobrevive sobre um
+   disco que vai de #EDD59E a #8a6423.
+   ================================================================== */
+.medal .disco, .medal .emborda, .medal .anel, .medal .tick,
+.medal .pulso, .medal .pulso.p2{ display:inline }
+.medal .mm{ fill:#2B2210 !important; filter:none !important }
+/* o gesto é largo: dentro do disco ele precisa de folga para não
+   encostar na borda interna. Vale só aqui — a cortina e o gesto da
+   aprovação não são tocados. */
+.medal .gz{ transform:translate(10px,62.5px)
+  translate(120px,62.5px) scale(.88) translate(-120px,-62.5px) }
+</style>
