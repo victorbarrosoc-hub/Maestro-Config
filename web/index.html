@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-30 02:06 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-30 02:21 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -15637,4 +15637,32 @@ document.addEventListener('touchend', e => {
   .lbEmenda img{ max-height:52vh }
   .lbSeta{ width:38px; height:38px }
 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v57 — o carimbo da versão.
+
+   Perguntar "subiu?" e não ter como responder olhando a tela é um
+   problema de verdade: o link do artifact pode estar preso numa versão
+   antiga, o celular pode ter guardado uma cópia, e por fora as telas são
+   idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
+   batida no Menu e a resposta está lá.
+   ================================================================== */
+const VERSAO_PROTOTIPO = 'v57 · 30 ago, 02h';
+
+menuSheet = (function(orig){
+  return function(){
+    const html = orig();
+    if(!html) return html;
+    return html.replace('</div></div>',
+      `<div class="msVersao">Protótipo ${VERSAO_PROTOTIPO}</div></div></div>`);
+  };
+})(menuSheet);
+</script>
+<style>
+.msVersao{ padding:10px 0 2px; text-align:center; font-family:var(--mono);
+  font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-500) }
+.msheet.lt .msVersao{ color:#9A958C }
 </style>
