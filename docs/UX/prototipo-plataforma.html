@@ -14475,3 +14475,168 @@ function sairPauta(el){
   setTimeout(()=>{ el.remove(); }, 1750);
 }
 </script>
+<script>
+"use strict";
+/* =====================================================================
+   v61 — o cliente travava depois de pedir alteração.
+
+   Três defeitos somados:
+   1. `aprovar`/`pedirAlteracoes` mandavam para `proxima()` — a próxima
+      AGUARDANDO. Quando o cliente REVISITA uma peça já decidida (via
+      "Mudar minha decisão") e decide de novo, não existe "próxima
+      aguardando": ele era jogado para a capa sem escolha, parecendo
+      que o fluxo voltou ao começo.
+   2. O contador dizia "1 de 13" usando S.pecas (que inclui as peças de
+      TEXTO), enquanto o lote de arte tem 8 — o "13" nunca fechava.
+   3. Sem `data-next` na tela decidida em modo revisita, não havia como
+      seguir: era beco sem saída.
+
+   Agora a decisão respeita ONDE a pessoa está: se ainda há pendentes,
+   segue para a próxima; se a pessoa está revisitando um lote já
+   decidido, FICA na peça mostrando o resultado, com caminho de volta.
+   ================================================================== */
+/* Envolver `aprovar`/`pedirAlteracoes` NÃO funciona: as duas são
+   `function` declaradas mais de uma vez no arquivo, e a declaração
+   mais tardia (hoisting por bloco de script) sobrescreve qualquer
+   reatribuição minha. A saída é interceptar o CLIQUE — na janela, que
+   captura antes do documento — e corrigir a rota depois que o handler
+   original terminou. */
+window.addEventListener('click', e => {
+  const t = e.target.closest('[data-approve],[data-send],[data-modalyes]');
+  if(!t || S.view !== 'client') return;
+  const id = +(t.dataset.approve || t.dataset.send || t.dataset.modalyes);
+  // "Mudar minha decisão" devolve a peça para AGUARDANDO — então
+  // esperando() é 1, não 0. O sinal de revisita é: nenhuma OUTRA peça
+  // pendente além desta. Aí não existe "próxima", e mandar para a capa
+  // é o beco sem saída que o founder viu.
+  const outrasPendentes = finAtivos().filter(x=>x.st==='AWAITING_APPROVAL' && x.id!==id).length;
+  if(outrasPendentes > 0) return;
+  setTimeout(()=>{
+    S.sel = id; S.route = 'peca';       // fica onde a pessoa estava
+    render();
+  }, 0);
+}, true);
+
+/* o contador conta o LOTE (finAtivos), não S.pecas */
+clPeca = (function(orig){
+  return function(){
+    const html = orig();
+    const p = S.pecas.find(x=>x.id===S.sel) || proxima() || S.pecas[0];
+    const idx = finAtivos().findIndex(x=>x.id===p.id) + 1;
+    return html.replace(/<span>\d+ de \d+<\/span>/,
+      `<span>${idx||1} de ${finAtivos().length}</span>`);
+  };
+})(clPeca);
+
+/* e a peça decidida sempre tem saída: próxima pendente, ou o resumo */
+clPeca = (function(orig){
+  return function(){
+    let html = orig();
+    if(html.includes('data-next=')) return html;
+    const p = S.pecas.find(x=>x.id===S.sel) || proxima() || S.pecas[0];
+    const decidida = p.st==='APPROVED' || p.st==='CHANGES_REQUESTED';
+    if(!decidida) return html;
+    const prox = proxima();
+    const btn = `<button class="clbtn" data-next="1">${prox
+      ? 'Próxima publicação' : 'Ver o resumo'}</button>`;
+    return html.replace('<div class="clfoot">', `<div class="clfoot">${btn}`);
+  };
+})(clPeca);
+</script>
+<style>
+/* =====================================================================
+   v62 — o selo do termo perde a bola dourada e ganha a partitura em 3D:
+   a mesma linguagem da abertura, agora como celebração da assinatura.
+   ================================================================== */
+.medal .disco, .medal .emborda, .medal .anel, .medal .tick,
+.medal .pulso, .medal .pulso.p2{ display:none }
+.medal{ perspective:640px; display:grid; place-items:center; overflow:visible }
+.medal svg{ overflow:visible }
+/* o símbolo assinado: deita, entra em profundidade e assenta */
+.medal .mm{ stroke:var(--brass-300) !important; stroke-width:13 !important;
+  fill:none; stroke-linecap:round;
+  filter:drop-shadow(0 0 14px rgba(200,150,58,.5)) }
+.medal svg > svg{ transform-origin:50% 60%;
+  animation:seloEntra 1.25s cubic-bezier(.4,0,.15,1) forwards }
+@keyframes seloEntra{
+  0%  { transform:rotateX(78deg) scale(2.6) translateY(22%); opacity:0 }
+  45% { opacity:1 }
+  100%{ transform:rotateX(0deg) scale(1) translateY(0); opacity:1 }
+}
+/* a partitura correndo por trás, como na abertura */
+.medalPauta{ position:absolute; inset:-40% -120% auto -120%; height:220%;
+  transform:rotateX(74deg); transform-origin:top center; pointer-events:none;
+  background:repeating-linear-gradient(to bottom,
+    rgba(200,150,58,.5) 0 2px, transparent 2px 42px);
+  -webkit-mask-image:linear-gradient(to bottom, transparent, #000 22%, transparent 72%);
+  mask-image:linear-gradient(to bottom, transparent, #000 22%, transparent 72%);
+  opacity:0; animation:medalPautaCorre 1.5s cubic-bezier(.35,0,.2,1) forwards }
+@keyframes medalPautaCorre{
+  0%  { opacity:0; background-position:0 0 }
+  30% { opacity:.85 }
+  100%{ opacity:0; background-position:0 480px }
+}
+@media (prefers-reduced-motion:reduce){
+  .medal svg > svg, .medalPauta{ animation:none }
+  .medalPauta{ display:none }
+}
+</style>
+<script>
+"use strict";
+/* v62 — a medalha ganha o plano de partitura (o mesmo gesto da abertura) */
+medalha = (function(orig){
+  return function(info){
+    return orig(info).replace('<div class="medal">',
+      '<div class="medal"><div class="medalPauta"></div>');
+  };
+})(medalha);
+
+/* =====================================================================
+   v62b — na leitura do card (agência), a legenda e as demais caixas já
+   apareciam; faltava o mesmo botão de copiar nas de roteiro, telas,
+   sticker e observação. Agora TODA caixa de texto tem o seu.
+   ================================================================== */
+modalVer = (function(orig){
+  return function(id){
+    let html = orig(id);
+    const p = S.pauta.find(x=>x.id===id);
+    if(!p) return html;
+    const põe = (rotulo, campo) => {
+      const marca = `<b>${rotulo}</b>`;
+      if(!html.includes(marca)) return;
+      html = html.replace(marca,
+        `<button class="b gho sm cp" data-cpbox="${id}|${campo}"
+          title="Copiar tudo desta caixa">${ic('doc',12)} Copiar</button>${marca}`);
+    };
+    põe('Roteiro de vídeo', 'roteiro');
+    põe('Telas do story', 'telas');
+    põe('Interação / sticker', 'sticker');
+    põe('Observação', 'obs');
+    põe('Corte de podcast', 'corte');
+    return html;
+  };
+})(modalVer);
+
+/* o copiador entende os campos que não são texto puro */
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-cpbox]');
+  if(!t) return;
+  const [id, campo] = t.dataset.cpbox.split('|');
+  if(!['telas','corte'].includes(campo)) return;   // os outros já são tratados
+  e.stopImmediatePropagation();
+  const p = S.pauta.find(x=>x.id===+id); if(!p) return;
+  const txt = campo==='telas'
+    ? (p.telas||[]).map((x,i)=>`Tela ${i+1} — ${x}`).join('\n')
+    : [(p.corte?.ep||''), ...(p.corte?.tcs||[]).map(tc=>`${tc.ordem}. ${tc.de} → ${tc.ate}`)]
+        .filter(Boolean).join('\n');
+  const confirma = () => { const a = t.innerHTML; t.innerHTML='✓ Copiado';
+    setTimeout(()=>{ t.innerHTML=a; },1400); };
+  try{ await navigator.clipboard.writeText(txt); confirma(); }
+  catch(err){
+    try{ const ta=document.createElement('textarea'); ta.value=txt;
+      ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); ta.remove(); confirma();
+    }catch(e2){ toast('Não consegui copiar — o navegador bloqueou.'); }
+  }
+}, true);
+</script>

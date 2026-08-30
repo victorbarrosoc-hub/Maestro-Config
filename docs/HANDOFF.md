@@ -1004,6 +1004,28 @@ partitura e caminhasse por ela em 3D" até a homepage.
 > deu `matrix3d` com escala ~4,5 e rotação X no meio do mergulho, e o fundo da
 > partitura andado 542px. Fica registrado como técnica da casa.
 
+**O beco sem saída do cliente, o selo em 3D e copiar em toda caixa (v61–v62).**
+
+> 🔴 **Bug travante (v61)**: depois de "Mudar minha decisão" e decidir de novo, o cliente
+> ia parar na capa sem caminho — parecia ter voltado à etapa 1. Três defeitos somados:
+> (a) `aprovar`/`pedirAlteracoes` mandavam sempre para `proxima()`, e numa REVISITA não
+> existe próxima pendente; (b) o contador dizia "1 de 13" usando `S.pecas` (que inclui
+> as peças de TEXTO) enquanto o lote de arte tem 8 — nunca fechava; (c) a peça decidida
+> em revisita não tinha `data-next`, então era beco literal.
+> **Duas lições de arquitetura**: `aprovar`/`pedirAlteracoes` são `function` DECLARADAS
+> mais de uma vez no arquivo — envolvê-las não adianta, a declaração mais tardia vence
+> por hoisting; a saída é interceptar o CLIQUE na janela. E o sinal de "revisita" não é
+> `esperando()===0` (reabrir devolve a peça para AGUARDANDO, então é 1): é **nenhuma
+> OUTRA pendente além desta**.
+
+> **O selo (v62)**: a bola dourada (disco, anel, ticks, pulsos) saiu; no lugar, o símbolo
+> assinado entra deitado em `rotateX(78deg)` e assenta, com um plano de partitura correndo
+> por trás — a mesma linguagem da abertura, agora como celebração da assinatura.
+
+> **Copiar em TODA caixa da leitura**: além de conteúdo/legenda/CTA, agora roteiro, telas
+> do story, sticker, observação e corte de podcast têm o botãozinho — telas e timecodes
+> são serializados em texto legível (`Tela 1 — …`, `1. 00:12 → 00:14`).
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
