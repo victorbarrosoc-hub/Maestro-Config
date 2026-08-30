@@ -1,6 +1,6 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.5
+Version: 0.5.6
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
@@ -32,6 +32,25 @@ Nunca apagar versões anteriores.
   `session.read`, e plano e limites da agência saem da resposta do lado cliente (I-12).
 - `POST /batches` com peça sem copy devolvia **500** (`currentVersionId!` mentia).
   Agora é 422 dizendo qual peça falta escrever.
+
+---
+
+## 0.5.6 — 2026-08-30
+
+**Status:** Concluída
+**Objetivo:** escolher o que vai no lote, e ver o dia inteiro da agência.
+
+### Adicionado
+- **O envio ganha seletor.** Era tudo ou nada: o botão levava todos os cards prontos. Mas
+  quem monta pauta fecha a semana que vem e segura a outra. Agora abre uma lista do que
+  está pronto, **agrupada por semana ou por mês**, com "marcar todos" por grupo. Abre com
+  tudo marcado — o caminho rápido continua sendo um toque — e continua saindo **uma**
+  notificação para o conjunto (D-030).
+- **O Hoje ganha a agenda.** Era lista: boa para conferir o que falta, ruim para ver o dia.
+  Numa agência com cinco clientes o que importa às nove da manhã não é a soma — é onde os
+  horários se atropelam, e duas peças às 10h em clientes diferentes é o que a lista esconde
+  e a grade grita. Agora há **Lista** e **Agenda**, com uma coluna por cliente.
+- **Filtro por cliente no Hoje**, valendo para as duas visões: de todos juntos a um só.
 
 ---
 
