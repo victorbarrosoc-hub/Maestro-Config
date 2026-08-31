@@ -8,6 +8,13 @@ destino = os.path.join(raiz, 'web', 'index.html')
 
 s = io.open(origem, encoding='utf-8').read()
 
+# As telas de lancamento do iPhone. Sem elas o iOS mostra preto puro
+# enquanto carrega, e a pagina pinta #161616 logo depois: o degrau de
+# preto para cinza e a piscada que se ve ao abrir o app. Geradas por
+# web/icones/gerar-icones.py, que tambem escreve as tags.
+tags = os.path.join(raiz, 'web', 'icones', 'lancamento.html')
+LANCAMENTO = io.open(tags, encoding='utf-8').read().strip() if os.path.exists(tags) else ''
+
 CABECA = '''<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -20,11 +27,12 @@ CABECA = '''<meta charset="utf-8">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Maestro">
 <link rel="apple-touch-icon" href="icones/maestro-gesto-180.png">
+__LANCAMENTO__
 <link rel="icon" type="image/png" sizes="192x192" href="icones/maestro-gesto-192.png">
 <meta property="og:title" content="Maestro">
 <meta property="og:description" content="O sistema operacional para agências e equipes criativas.">
 <meta property="og:type" content="website">
-'''
+'''.replace('__LANCAMENTO__', LANCAMENTO)
 
 # troca o cabecalho antigo (charset + viewport + title) pelo novo
 antigo = re.compile(

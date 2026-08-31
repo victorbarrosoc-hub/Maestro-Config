@@ -55,6 +55,45 @@ def icone(lado, fracao, saida):
     print('  %-30s %d px · gesto em %d%% da largura' % (saida, lado, round(fracao * 100)))
 
 
+# As telas de lançamento do iPhone. O iOS não usa o background_color do
+# manifesto: sem apple-touch-startup-image ele mostra PRETO PURO enquanto
+# carrega, e a página pinta #161616 logo depois — o degrau de preto para
+# cinza é a piscada que se vê ao abrir o app. Cada arquivo é a cor do
+# primeiro quadro da página, na resolução exata de um aparelho.
+FUNDO_INICIAL = '#161616'
+APARELHOS = [   # (largura css, altura css, dpr)
+    (440, 956, 3),   # 16 Pro Max
+    (430, 932, 3),   # 15/16 Pro Max, 14 Pro Max
+    (428, 926, 3),   # 12/13/14 Pro Max
+    (402, 874, 3),   # 16 Pro
+    (393, 852, 3),   # 14 Pro, 15, 16
+    (390, 844, 3),   # 12, 13, 14
+    (375, 812, 3),   # X, XS, 11 Pro, 12/13 mini
+    (414, 896, 3),   # XS Max, 11 Pro Max
+    (414, 896, 2),   # XR, 11
+    (414, 736, 3),   # 8 Plus
+    (375, 667, 2),   # 8, SE
+]
+
+
+def lancamento():
+    saidas = []
+    for lc, ac, dpr in APARELHOS:
+        arq = 'lancamento-%dx%d@%dx.png' % (lc, ac, dpr)
+        Image.new('RGB', (lc * dpr, ac * dpr), FUNDO_INICIAL).save(AQUI / arq, optimize=True)
+        saidas.append((arq, lc, ac, dpr))
+    return saidas
+
+
+def tags_html(saidas):
+    """As tags para o cabeçalho — o iOS só aceita a imagem com media exato."""
+    return '\n'.join(
+        '<link rel="apple-touch-startup-image" href="icones/%s"\n'
+        '      media="(device-width:%dpx) and (device-height:%dpx) and '
+        '(-webkit-device-pixel-ratio:%d) and (orientation:portrait)">' % (a, lc, ac, d)
+        for a, lc, ac, d in saidas)
+
+
 if __name__ == '__main__':
     print('ícones do app, a partir do gesto decalcado:')
     for lado, arq in [(180, 'maestro-gesto-180.png'), (192, 'maestro-gesto-192.png'),
@@ -62,3 +101,8 @@ if __name__ == '__main__':
         icone(lado, .76, arq)
     # maskable: o Android recorta em círculo, então o gesto fica na zona segura
     icone(512, .56, 'maestro-gesto-maskable-512.png')
+
+    saidas = lancamento()
+    print('telas de lançamento (%s): %d aparelhos' % (FUNDO_INICIAL, len(saidas)))
+    (AQUI / 'lancamento.html').write_text(tags_html(saidas) + '\n', encoding='utf-8')
+    print('  tags do cabeçalho em icones/lancamento.html — montar.py lê daqui')
