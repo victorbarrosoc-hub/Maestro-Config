@@ -1,0 +1,11 @@
+# O protótipo da Maestro não é para ser encontrado no Google.
+#
+# Ele fala com um banco usando uma chave que, por natureza, viaja no HTML —
+# então quem tem o link tem os dados. Isso está registrado como dívida em
+# docs/ENGINEERING/SUPABASE_FECHAR_A_BRECHA.md e o conserto de verdade é login
+# de verdade. Enquanto isso não acontece, o mínimo é não entregar o endereço
+# de graça para quem não foi convidado.
+#
+# Isto NÃO é proteção — é reduzir quem tropeça. Buscador respeita; gente não.
+User-agent: *
+Disallow: /

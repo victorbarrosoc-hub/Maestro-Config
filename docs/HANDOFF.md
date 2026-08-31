@@ -656,6 +656,15 @@ no protótipo pare de morrer no navegador e que outras pessoas possam editar jun
 > (a API em `apps/api` já tem RBAC — o protótipo não). Não há política de DELETE, de
 > propósito. Sobrou uma linha `__teste__` na tabela, inofensiva e ignorada pelo código
 > (só clientes conhecidos são aplicados); dá para apagar pelo Table Editor.
+>
+> **O passo a passo para fechar está escrito:**
+> [`docs/ENGINEERING/SUPABASE_FECHAR_A_BRECHA.md`](ENGINEERING/SUPABASE_FECHAR_A_BRECHA.md).
+> Parte 1 é do founder (15 min no painel: ligar login por e-mail, criar as contas da
+> equipe, trocar as três políticas por `to authenticated`, e conferir que um `curl`
+> com a chave pública devolve `[]`). Parte 2 é código: a tela de entrada passa a pedir
+> e-mail e senha de verdade e o protótipo manda `Bearer <token>` no lugar da chave.
+> Enquanto a parte 1 não for feita, a brecha continua aberta — não há meio-termo para
+> uma página estática.
 
 **Agenda do dia e edição completa do story (v42).** Dois pedidos, um deles com
 referência visual: um app de salão, colunas por profissional, hora na lateral e o buraco
