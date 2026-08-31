@@ -15671,7 +15671,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v82 · 31 ago · chave de acesso';
+const VERSAO_PROTOTIPO = 'v83 · 31 ago · acentos e chave';
 
 menuSheet = (function(orig){
   return function(){
@@ -18430,4 +18430,168 @@ function pedirChave(id){
     abrirQuemEsta();
   };
 }
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v83 — OS ACENTOS QUE VIRARAM &#227;
+
+   Na tela do founder: "Se n&#227;o tiver coragem para a mudan&#231;a".
+   Trinta e poucos cards da EJUP com todo acento quebrado.
+
+   A CAUSA. O leitor de .xlsx decodifica as entidades do XML na mão, e a
+   lista tem cinco itens:
+
+       &lt;  &gt;  &amp;  &quot;  &#39;
+
+   Só que XML não tem só cinco entidades — tem infinitas, porque
+   `&#NNN;` é uma referência numérica válida para QUALQUER caractere. E o
+   Excel escreve exatamente isso para acento: `ã` sai como `&#227;`. A
+   lista de cinco passava reto por elas, e o texto era guardado com a
+   entidade dentro. Na hora de desenhar, `esc()` faz o certo — transforma
+   o `&` em `&amp;` — e o navegador mostra `&#227;` literal.
+
+   Não é bug de renderização: o dado está corrompido desde a importação.
+   Por isso não basta consertar o leitor. Tem de consertar o que já foi
+   guardado, no navegador e no banco.
+
+   O CONSERTO. Parei de manter lista de entidades. Quem sabe decodificar
+   HTML é o navegador: um <textarea> recebe o texto em innerHTML e
+   devolve em .value já decodificado — todas as entidades, nomeadas,
+   decimais e hexadecimais, e as desconhecidas ficam intactas. (É seguro:
+   textarea é elemento de texto cru no parser, nada dentro dele vira
+   elemento.) Entra junto o `_x000D_`, escape próprio do Excel que a
+   lista também não pegava.
+
+   O REPARO. Uma passada única sobre o que já está guardado. Duas travas
+   para ela não estragar texto bom:
+
+   · só mexe em string que TEM uma entidade fechada com ponto e vírgula.
+     "Fulano & Cia" não casa com o padrão e não é tocado;
+   · uma passada só. Decodificar em laço transformaria `&amp;#227;` —
+     que pode ser texto legítimo — em `ã`.
+
+   Roda na abertura e nas duas portas por onde dado entra: o que vem do
+   `__estado__` e o que vem da pauta por cliente. Assim o celular repara
+   o que o computador ainda não reparou, e vice-versa.
+   ================================================================== */
+
+const _cx = document.createElement('textarea');
+function decodificarHtml(s){
+  if(typeof s !== 'string' || s.indexOf('&') < 0 && s.indexOf('_x') < 0) return s;
+  _cx.innerHTML = s;
+  return _cx.value.replace(/_x([0-9A-Fa-f]{4})_/g,
+    (todo, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+
+/* tem entidade fechada? só aí vale mexer */
+const TEM_ENTIDADE = /&(#\d+|#x[0-9A-Fa-f]+|[A-Za-z][A-Za-z0-9]{1,9});|_x[0-9A-Fa-f]{4}_/;
+const consertarTexto = s =>
+  (typeof s === 'string' && TEM_ENTIDADE.test(s)) ? decodificarHtml(s) : s;
+
+/* caminhada rasa e sem susto: só string, e no máximo alguns níveis */
+function consertarDentro(v, fundo){
+  if(typeof v === 'string') return consertarTexto(v);
+  if(fundo > 6 || v === null || typeof v !== 'object') return v;
+  if(Array.isArray(v)){
+    for(let i = 0; i < v.length; i++) v[i] = consertarDentro(v[i], fundo + 1);
+    return v;
+  }
+  for(const k of Object.keys(v)){
+    if(k === 'art' || k === 'url' || k === 'chave') continue;   // não são texto de gente
+    v[k] = consertarDentro(v[k], fundo + 1);
+  }
+  return v;
+}
+
+let _quantosConsertados = 0;
+function repararEntidades(){
+  let n = 0;
+  const conta = obj => {
+    const antes = JSON.stringify(obj);
+    consertarDentro(obj, 0);
+    if(JSON.stringify(obj) !== antes) n++;
+  };
+  try{
+    for(const id of Object.keys(S.pautas || {}))
+      for(const item of (S.pautas[id] || [])) conta(item);
+    for(const c of (S.novos || [])) conta(c);
+    if(S.chat) for(const canal of S.chat.canais || []) conta(canal);
+  }catch(e){}
+  _quantosConsertados += n;
+  return n;
+}
+
+/* 1. o leitor de planilha para de manter lista própria */
+lerXlsx = (function(orig){
+  return async function(){
+    const linhas = await orig.apply(this, arguments);
+    return Array.isArray(linhas)
+      ? linhas.map(l => Array.isArray(l) ? l.map(consertarTexto) : l)
+      : linhas;
+  };
+})(lerXlsx);
+
+/* e o texto colado direto também passa pelo mesmo conserto */
+if(typeof entenderPlanilha === 'function'){
+  entenderPlanilha = (function(orig){
+    return function(txt){ return orig.call(this, consertarTexto(txt)); };
+  })(entenderPlanilha);
+}
+
+/* 2. as duas portas por onde dado entra */
+aplicarEstado = (function(orig){
+  return function(sv){ const n = orig.apply(this, arguments); repararEntidades(); return n; };
+})(aplicarEstado);
+
+sbAplicar = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); repararEntidades(); return r; };
+})(sbAplicar);
+
+/* 3. e o que já estava aqui quando esta versão chegou */
+setTimeout(() => {
+  const n = repararEntidades();
+  if(n){
+    try{ render(); }catch(e){}
+    if(typeof toast === 'function')
+      toast(`${n} ${n === 1 ? 'card teve o acento' : 'cards tiveram os acentos'} consertados.`);
+  }
+}, 3400);
+</script>
+
+<style>
+.mbAcoes .chaveBt{ display:inline-flex; align-items:center; gap:6px; white-space:nowrap }
+.mbAcoes .chaveBt.tem{ border-color:var(--brass-600); color:var(--brass-400) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v83b — A CHAVE ESTAVA ESCONDIDA.
+
+   "Coloca a aba pra criar ou mudar chave de acesso do login do usuário,
+   no mobile. Não está."
+
+   Está — e é por isso que o problema é meu. A v82 pôs a chave em dois
+   lugares que ninguém acha: dentro do modal de Editar (dois toques e uma
+   rolagem) e num atalho da tela que o menu do celular chama de "Plano e
+   equipe" — nome que não promete chave nenhuma.
+
+   O lugar certo é onde a pessoa já está olhando para as pessoas: a linha
+   de cada membro na tela de Equipe, ao lado de Editar e Remover. Com o
+   cadeado dizendo, sem abrir nada, quem já tem chave e quem não tem.
+   ================================================================== */
+agEquipe = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    return html.replace(/<button class="b gho" data-editmembro="(\d+)">Editar<\/button>/g,
+      (todo, i) => {
+        const m = membroPorIndice(i);
+        const tem = temChave(m);
+        return todo + ` <button class="b gho chaveBt${tem ? ' tem' : ''}" data-chaveabre="${i}"
+          title="${tem ? 'Trocar a chave de acesso' : 'Criar uma chave de acesso'}">
+          ${ic(tem ? 'lock' : 'unlock', 13)}Chave</button>`;
+      });
+  };
+})(agEquipe);
 </script>
