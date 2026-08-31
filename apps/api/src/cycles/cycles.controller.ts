@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { BatchKind, ContentStatus, CycleStatus } from '@prisma/client';
+import { BatchKind, CycleStatus } from '@prisma/client';
+import { NO_CLIENTE } from '../content/fases';
 import { Auth, RequirePermission, type AuthContext } from '../auth/auth.guard';
 import { Problems } from '../common/problem.filter';
 import { CreateCycleDto, ListCyclesQueryDto } from './cycles.dto';
@@ -91,7 +92,7 @@ export class CyclesController {
               select: {
                 id: true,
                 order: true,
-                content: { select: { id: true, title: true, status: true } },
+                content: { select: { id: true, title: true, phase: true } },
               },
             },
           },
@@ -103,14 +104,13 @@ export class CyclesController {
     // ciclo mostra o caminho inteiro, nao so o trecho ja andado.
     const porTipo = (kind: BatchKind) => cycle.batches.find((b) => b.kind === kind) ?? null;
 
-    const DECIDIDO: ContentStatus[] = [ContentStatus.APPROVED, ContentStatus.CHANGES_REQUESTED];
-
     const decididos = (batch: (typeof cycle.batches)[number] | null) =>
       batch === null
         ? { total: 0, decided: 0 }
         : {
             total: batch.items.length,
-            decided: batch.items.filter((i) => DECIDIDO.includes(i.content.status)).length,
+            // decidido = saiu da mão do cliente, aprovando ou pedindo alteração
+            decided: batch.items.filter((i) => !NO_CLIENTE.includes(i.content.phase)).length,
           };
 
     const copy = porTipo(BatchKind.COPY);

@@ -525,11 +525,15 @@ describe('a decisão — o endpoint mais importante do produto', () => {
     assert.match(decisao.seal, /^[0-9A-F]{4}·[0-9A-F]{4}$/, 'o selo volta legível ao cliente');
     assert.ok(new Date(decisao.undoUntil) > new Date(), 'a janela de desfazer precisa estar aberta');
 
-    const detalhe = await ok<{ status: string }>(
+    const detalhe = await ok<{ phase: string }>(
       await palco.agencia(`/contents/${peca.contentId}`),
       'ler a peça',
     );
-    assert.equal(detalhe.status, 'APPROVED');
+    /* Um lote de COPY: o que o cliente aprovou aqui foi o TEXTO, e o card
+       fecha a primeira volta em TEXTO_OK. Antes da D-080 este mesmo caminho
+       dizia 'APPROVED' — o mesmo valor que a peça pronta usaria, sem jeito de
+       saber qual das duas tinha sido aprovada. */
+    assert.equal(detalhe.phase, 'TEXTO_OK');
   });
 
   test('o selo vale com e sem o separador', async () => {
@@ -606,11 +610,13 @@ describe('a decisão — o endpoint mais importante do produto', () => {
       'pedir alteração',
     );
 
-    const detalhe = await ok<{ status: string }>(
+    const detalhe = await ok<{ phase: string }>(
       await palco.agencia(`/contents/${peca.contentId}`),
       'ler a peça',
     );
-    assert.equal(detalhe.status, 'CHANGES_REQUESTED');
+    /* pedir alteração não é estado: o card volta uma casa — e como este lote
+       é de copy, a casa é CRIADO, a mesa do copywriter (D-080) */
+    assert.equal(detalhe.phase, 'CRIADO');
   });
 
   test('desfazer dentro da janela não avisa a agência (D-025)', async () => {
@@ -632,11 +638,11 @@ describe('a decisão — o endpoint mais importante do produto', () => {
     assert.equal(desfeito.undone, true);
     assert.equal(desfeito.notified, false, 'hesitar cinco segundos não pode virar e-mail');
 
-    const detalhe = await ok<{ status: string }>(
+    const detalhe = await ok<{ phase: string }>(
       await palco.agencia(`/contents/${peca.contentId}`),
       'ler a peça',
     );
-    assert.equal(detalhe.status, 'AWAITING_APPROVAL', 'a peça volta a esperar decisão');
+    assert.equal(detalhe.phase, 'TEXTO_CLI', 'o texto volta a esperar decisão');
   });
 });
 

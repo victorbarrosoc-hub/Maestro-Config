@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Channel, ContentStatus, Decision } from '@prisma/client';
+import { Channel, ContentPhase, Decision } from '@prisma/client';
+import { NO_CLIENTE, aoAprovar, aoDesfazer, aoPedirAlteracao } from '../content/fases';
 import type { ScopedPrisma } from '../prisma';
 import { Problems } from '../common/problem.filter';
 import { formatSeal } from '../content/seal';
@@ -42,7 +43,7 @@ export class DecisionService {
         content: {
           select: {
             id: true,
-            status: true,
+            phase: true,
             updatedAt: true,
             currentVersionId: true,
             current: { select: { id: true, seal: true } },
@@ -82,7 +83,7 @@ export class DecisionService {
       await tx.content.update({
         where: { id: item.contentId },
         data: {
-          status: approved ? ContentStatus.APPROVED : ContentStatus.CHANGES_REQUESTED,
+          phase: approved ? aoAprovar(item.content.phase) : aoPedirAlteracao(item.content.phase),
           updatedById: userId,
         },
       });
@@ -126,6 +127,10 @@ export class DecisionService {
    */
   async undo(db: ScopedPrisma, organizationId: string, userId: string, approvalId: string) {
     const approval = await db.approval.findUniqueOrThrow({ where: { id: approvalId } });
+    const conteudo = await db.content.findUniqueOrThrow({
+      where: { id: approval.contentId },
+      select: { phase: true },
+    });
     const insideWindow = approval.notifyAfter > new Date() && !approval.notifiedAt;
 
     return db.$transaction(async (tx) => {
@@ -134,7 +139,7 @@ export class DecisionService {
 
       await tx.content.update({
         where: { id: approval.contentId },
-        data: { status: ContentStatus.AWAITING_APPROVAL, updatedById: userId },
+        data: { phase: aoDesfazer(conteudo.phase), updatedById: userId },
       });
 
       if (insideWindow) {
@@ -187,11 +192,14 @@ export class DecisionService {
   ) {
     const items = await db.batchItem.findMany({
       where: { batchId },
-      include: { content: { select: { status: true, current: { select: { seal: true } } } } },
+      include: { content: { select: { phase: true, current: { select: { seal: true } } } } },
     });
 
-    const DECIDED: ContentStatus[] = [ContentStatus.APPROVED, ContentStatus.CHANGES_REQUESTED];
-    const decided = items.filter((i) => DECIDED.includes(i.content.status));
+    /* decidido = não está mais na mão do cliente. Aprovar leva a TEXTO_OK ou
+       APROVADO; pedir alteração leva de volta a CRIADO ou PRODUCAO. Qualquer
+       uma delas é uma decisão tomada. */
+    const naMaoDoCliente = (f: ContentPhase) => NO_CLIENTE.includes(f);
+    const decided = items.filter((i) => !naMaoDoCliente(i.content.phase));
 
     if (decided.length !== items.length) {
       throw Problems.blockingChecks([
@@ -202,7 +210,9 @@ export class DecisionService {
       ]);
     }
 
-    const approvedCount = items.filter((i) => i.content.status === ContentStatus.APPROVED).length;
+    const approvedCount = items.filter(
+      (i) => i.content.phase === ContentPhase.APROVADO || i.content.phase === ContentPhase.TEXTO_OK,
+    ).length;
 
     // Selo do lote: encadeia os selos das peças, na ordem.
     const { computeSeal } = await import('../content/seal');

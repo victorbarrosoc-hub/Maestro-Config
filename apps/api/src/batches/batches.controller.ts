@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
-import { BatchKind, BatchStatus, ContentStatus } from '@prisma/client';
+import { BatchKind, BatchStatus, ContentPhase } from '@prisma/client';
 import { Auth, RequirePermission, type AuthContext } from '../auth/auth.guard';
 import { DecisionService } from '../approvals/decision.service';
 import { preflight, summarize, type BatchSnapshot } from './preflight';
@@ -83,9 +83,14 @@ export class BatchesController {
       include: { items: true },
     });
 
+    /* Para onde o card vai depende de o lote ser de texto ou de peça — a
+       pergunta que o ContentStatus não sabia responder (D-080). Aqui nem
+       precisa deduzir da fase: o lote já diz qual das duas voltas é. */
     await ctx.db.content.updateMany({
       where: { id: { in: batch.items.map((i) => i.contentId) } },
-      data: { status: ContentStatus.AWAITING_APPROVAL },
+      data: {
+        phase: batch.kind === BatchKind.COPY ? ContentPhase.TEXTO_CLI : ContentPhase.POST_CLI,
+      },
     });
 
     return { sentAt: batch.sentAt, items: batch.items.length, notified: ['email', 'whatsapp'] };
@@ -108,7 +113,7 @@ export class BatchesController {
                 role: true,
                 format: true,
                 platform: true,
-                status: true,
+                phase: true,
                 current: { select: { id: true, seal: true, copy: true } },
                 slot: { select: { scheduledFor: true } },
               },
@@ -167,7 +172,7 @@ export class BatchesController {
         scriptBlockCount: i.content.current?._count.script ?? 0,
         hasSlot: Boolean(i.content.slot),
         scheduledFor: i.content.slot?.scheduledFor ?? null,
-        internallyReviewed: i.content.status !== ContentStatus.DRAFT,
+        internallyReviewed: i.content.phase !== ContentPhase.RASCUNHO,
       })),
     };
   }

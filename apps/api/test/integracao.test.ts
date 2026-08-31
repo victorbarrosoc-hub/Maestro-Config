@@ -51,7 +51,7 @@ let forOrganization: typeof import('../src/prisma')['forOrganization'];
 let ContentService: typeof import('../src/content/content.service')['ContentService'];
 let DecisionService: typeof import('../src/approvals/decision.service')['DecisionService'];
 let Decision: typeof import('@prisma/client')['Decision'];
-let ContentStatus: typeof import('@prisma/client')['ContentStatus'];
+let ContentPhase: typeof import('@prisma/client')['ContentPhase'];
 
 /** Uma organização inteira, do zero até uma peça pronta para decisão. */
 interface Cenario {
@@ -96,7 +96,7 @@ before(async () => {
 
   ({ ContentService } = await import('../src/content/content.service'));
   ({ DecisionService } = await import('../src/approvals/decision.service'));
-  ({ Decision, ContentStatus } = await import('@prisma/client'));
+  ({ Decision, ContentPhase } = await import('@prisma/client'));
 
   conteudo = new ContentService();
   decisao = new DecisionService();
@@ -191,7 +191,7 @@ async function montarCenario(sufixo: string): Promise<Cenario> {
 
   await db.content.update({
     where: { id: peca.id },
-    data: { status: ContentStatus.AWAITING_APPROVAL },
+    data: { phase: ContentPhase.POST_CLI },
   });
 
   return {
@@ -241,7 +241,7 @@ describe('a decisão — o endpoint mais importante do produto', () => {
     assert.ok(r.notifyAfter > new Date(), 'a notificação precisa sair no futuro');
 
     const peca = await db.content.findUniqueOrThrow({ where: { id: c.contentId } });
-    assert.equal(peca.status, ContentStatus.APPROVED);
+    assert.equal(peca.phase, ContentPhase.APROVADO);
 
     const apr = await prismaRoot.approval.findUniqueOrThrow({ where: { id: r.id } });
     assert.equal(apr.versionId, c.versionId, 'a aprovação aponta para a versão exata (I-05)');
@@ -324,7 +324,8 @@ describe('a decisão — o endpoint mais importante do produto', () => {
     });
 
     const peca = await db.content.findUniqueOrThrow({ where: { id: c.contentId } });
-    assert.equal(peca.status, ContentStatus.CHANGES_REQUESTED);
+    // pedir alteração não é estado: o card volta uma casa, para a produção (D-080)
+    assert.equal(peca.phase, ContentPhase.PRODUCAO);
     assert.ok(r.seal, 'pedir alteração também carimba o selo');
   });
 });
@@ -352,7 +353,7 @@ describe('o selo derruba a aprovação quando o conteúdo muda (D-032)', () => {
     assert.equal(effects[0].type, 'approval-dropped');
 
     const peca = await db.content.findUniqueOrThrow({ where: { id: c.contentId } });
-    assert.notEqual(peca.status, ContentStatus.APPROVED, 'o trigger tira de aprovado (I-05)');
+    assert.notEqual(peca.phase, ContentPhase.APROVADO, 'o trigger tira de aprovado (I-05)');
   });
 });
 
@@ -380,7 +381,7 @@ describe('desfazer dentro da janela não incomoda ninguém (D-025)', () => {
     }
 
     const peca = await db.content.findUniqueOrThrow({ where: { id: c.contentId } });
-    assert.equal(peca.status, ContentStatus.AWAITING_APPROVAL, 'a peça volta a esperar');
+    assert.equal(peca.phase, ContentPhase.POST_CLI, 'a peça volta a esperar');
   });
 
   test('a aprovação não é apagada — nada se perde (Regra #6)', async () => {

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ContentStatus } from '@prisma/client';
+import { ContentPhase } from '@prisma/client';
 import type { ScopedPrisma } from '../prisma';
 import { computeSeal, type SealPayload } from './seal';
 
@@ -28,7 +28,7 @@ export class ContentService {
   async createVersion(db: ScopedPrisma, organizationId: string, input: CreateVersionInput, userId: string) {
     const content = await db.content.findUniqueOrThrow({
       where: { id: input.contentId },
-      select: { id: true, status: true, format: true, platform: true, currentVersionId: true },
+      select: { id: true, phase: true, format: true, platform: true, currentVersionId: true },
     });
 
     const last = await db.contentVersion.findFirst({
@@ -48,7 +48,10 @@ export class ContentService {
       assetIds: input.assetIds,
     };
 
-    const wasApproved = content.status === ContentStatus.APPROVED || content.status === ContentStatus.SCHEDULED;
+    const wasApproved =
+      content.phase === ContentPhase.APROVADO ||
+      content.phase === ContentPhase.AGENDADO ||
+      content.phase === ContentPhase.TEXTO_OK;
 
     return db.$transaction(async (tx) => {
       const version = await tx.contentVersion.create({
@@ -93,7 +96,7 @@ export class ContentService {
               {
                 type: 'approval-dropped' as const,
                 contentId: content.id,
-                previousStatus: content.status,
+                previousPhase: content.phase,
                 detail: 'A peça mudou depois de aprovada. Ela volta para o cliente.',
               },
             ]

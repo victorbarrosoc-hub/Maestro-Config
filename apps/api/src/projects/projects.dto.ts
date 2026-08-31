@@ -1,4 +1,4 @@
-import { ContentStatus, ProjectStatus } from '@prisma/client';
+import { StrategyStatus, ProjectStatus } from '@prisma/client';
 import {
   IsArray,
   IsDateString,
@@ -102,8 +102,8 @@ export class UpdateProjectDto {
   referenceIds?: string[];
 
   @IsOptional()
-  @IsEnum(ContentStatus)
-  strategyStatus?: ContentStatus;
+  @IsEnum(StrategyStatus)
+  strategyStatus?: StrategyStatus;
 
   @IsOptional()
   @IsObject()

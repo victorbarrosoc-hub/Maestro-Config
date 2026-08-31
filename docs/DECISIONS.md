@@ -1053,8 +1053,9 @@ display do sistema (títulos, números grandes); sai apenas do lockup.
 
 ---
 
-# D-080 · Engenharia · Aberta
-**Data:** 2026-08-31 · **Responsável:** Founder (decisão pendente) · **Categoria:** Modelo de dados
+# D-080 · Engenharia · Resolvida
+**Data:** 2026-08-31 · **Resolvida em:** 2026-08-31 · **Responsável:** Founder · **Categoria:** Modelo de dados
+**Decisão: caminho A — a fase substitui o status.** Implementada e verificada; os 173 testes passam.
 **Pergunta:** o `ContentStatus` da API consegue expressar o card único de duas voltas (D-076)?
 **Contexto:** a D-076 decidiu que existe **um card só**, com um único campo de estado — a
 `fase` — e que a coluna do Ensaio é uma LEITURA dessa fase, nunca um segundo campo. O
@@ -1095,7 +1096,7 @@ Ensaio a leitura deve dar, nem se o próximo envio ao cliente é de texto ou de 
   cada consumidor, e o primeiro cliente de API de terceiro (D-061, o servidor MCP) herda
   o problema sem o mapa.
 
-**Recomendação:** **A**. É a única que preserva o princípio que fez a D-076 existir: *um
+**Decisão:** **A**, pela recomendação abaixo. É a única que preserva o princípio que fez a D-076 existir: *um
 campo, uma verdade*. O custo é uma migração de enum feita uma vez, contra uma classe de
 bug que voltaria para sempre. E ela cabe agora, porque os blocos que escrevem conteúdo
 (4, 6, 7 e 8) ainda não foram implementados — depois deles, sai caro.
@@ -1105,7 +1106,51 @@ bug que voltaria para sempre. E ela cabe agora, porque os blocos que escrevem co
 enviada, decidida e volta; o lote continua sendo como um conjunto de cards vai ao cliente
 de uma vez, com selo e termo. São coisas diferentes e as duas existem.
 
-**Bloqueia:** blocos 4, 6, 7 e 8 da API · servidor MCP (D-061).
+## Como ficou
+
+`enum ContentPhase` com as onze fases da D-076 mais `FALHOU` e `CANCELADO`; o campo
+`Content.status` virou `Content.phase`; `ContentStatus` deixou de existir. A lógica das
+duas voltas mora em **um** arquivo — `apps/api/src/content/fases.ts` — e é dali que
+todo mundo pergunta para onde o card vai ao ser enviado, ao ser aprovado, ao voltar com
+alteração e ao ter a decisão desfeita.
+
+**Chaves iguais às do protótipo** (`TEXTO_CLI`, `POST_CLI`…), só em maiúsculas. A
+diferença de caixa é mecânica e total; não é tradução de significado, que é justamente o
+que o caminho C reintroduziria.
+
+Quatro coisas que a implementação revelou e que valem tanto quanto a decisão:
+
+1. **`CHANGES_REQUESTED` não era um estado.** Pedir alteração é um evento — já gravado em
+   `Approval`, com autor, selo, IP e a decisão. O efeito sobre o card é voltar uma casa
+   (`CRIADO` na 1ª volta, `PRODUCAO` na 2ª). Guardar também um estado era a mesma coisa
+   dita duas vezes. O enum tem treze valores para uma máquina que tinha oito e dizia menos.
+
+2. **A visibilidade do cliente estava errada, e a lista de status escondia isso.** A regra
+   era "status em [AWAITING_APPROVAL, CHANGES_REQUESTED, APPROVED, SCHEDULED, PUBLISHED]".
+   Em fases, um card que voltou com alteração some da vista de quem acabou de pedir a
+   alteração. A regra verdadeira nunca foi o estado: é **ter sido enviado** — e isso já
+   estava gravado, é pertencer a algum lote. Virou `batchItems: { some: {} }`.
+
+3. **O gatilho da I-05 ganhou alcance.** `maestro_drop_approval_on_change` só protegia
+   `APPROVED`/`SCHEDULED`. A aprovação do TEXTO não era protegida porque o status antigo
+   não sabia expressá-la. Agora `TEXTO_OK` também cai, para `CRIADO`, quando o conteúdo
+   muda. A invariante central passou a valer nas duas voltas.
+
+4. **`Project.strategyStatus` pegava carona no `ContentStatus`** e herdava cinco valores
+   que nunca fizeram sentido para uma estratégia. Ganhou o `StrategyStatus` próprio, com
+   os quatro que usava.
+
+O aterro não perde nada, e a razão é exata: o modelo antigo **só conseguia expressar a
+segunda volta**. A primeira — o ciclo do texto — é conceito novo, que o `ContentStatus`
+nunca representou. Todo registro existente é, por definição, de segunda volta.
+
+**A prova de que a ambiguidade era real:** três testes de produto quebraram na migração,
+todos no mesmo lugar — o lote de COPY. Eles afirmavam `APPROVED`, `CHANGES_REQUESTED` e
+`AWAITING_APPROVAL` para o que era, o tempo todo, aprovação de TEXTO. As asserções novas
+dizem `TEXTO_OK`, `CRIADO` e `TEXTO_CLI`. Nenhum comportamento mudou; o sistema apenas
+passou a conseguir dizer o que estava fazendo.
+
+**Desbloqueia:** blocos 4, 6, 7 e 8 da API · servidor MCP (D-061).
 **O fluxo desenhado:** `docs/UX/fluxo-um-card-duas-voltas.html` — três diagramas: o campo
 único escrito por três telas, as duas voltas do card, e a colisão das seis fases nos três
 valores do enum.

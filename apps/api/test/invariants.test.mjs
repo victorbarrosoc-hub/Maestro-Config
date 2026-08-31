@@ -68,7 +68,7 @@ before(async () => {
       VALUES ('${CNT}','${ORG}','${CMP}','Verão sem pressa','Apresentar a coleção','CAROUSEL','INSTAGRAM',now());
     INSERT INTO "ContentVersion" ("id","organizationId","contentId","number","copy","seal")
       VALUES ('${V1}','${ORG}','${CNT}',1,'O verão não precisa de pressa.','7F3A2B91');
-    UPDATE "Content" SET "currentVersionId"='${V1}', "status"='APPROVED' WHERE "id"='${CNT}';
+    UPDATE "Content" SET "currentVersionId"='${V1}', "phase"='APROVADO' WHERE "id"='${CNT}';
     INSERT INTO "Phase" ("id","organizationId","projectId","order","name","question","startsAt","endsAt")
       VALUES ('${PHS}','${ORG}','${PRJ}',1,'Estreia','A marca existe e tem padrão?',now(),now());
     INSERT INTO "Cycle" ("id","organizationId","projectId","phaseId","name","updatedAt")
@@ -100,14 +100,14 @@ describe('I-03 · auditoria é append-only', () => {
 });
 
 describe('I-05 · a invariante central', () => {
-  test('nova versão derruba APPROVED', async () => {
+  test('nova versão derruba a peça aprovada', async () => {
     await db.exec(`
       INSERT INTO "ContentVersion" ("id","organizationId","contentId","number","copy","seal")
         VALUES ('${V2}','${ORG}','${CNT}',2,'Linho lavado e algodão cru.','4B7C1E93');
       UPDATE "Content" SET "currentVersionId"='${V2}' WHERE "id"='${CNT}';
     `);
-    const r = await db.query(`SELECT "status"::text AS s FROM "Content" WHERE "id"='${CNT}'`);
-    assert.equal(r.rows[0].s, 'IN_PRODUCTION', 'conteúdo alterado tem que sair de APPROVED');
+    const r = await db.query(`SELECT "phase"::text AS s FROM "Content" WHERE "id"='${CNT}'`);
+    assert.equal(r.rows[0].s, 'PRODUCAO', 'conteúdo alterado tem que sair de aprovado');
   });
 
   test('a queda fica registrada na auditoria', async () => {
@@ -127,7 +127,7 @@ describe('I-07 · publicação exige aprovação', () => {
   });
 
   test('aceita conteúdo aprovado', async () => {
-    await db.exec(`UPDATE "Content" SET "status"='APPROVED' WHERE "id"='${CNT}'`);
+    await db.exec(`UPDATE "Content" SET "phase"='APROVADO' WHERE "id"='${CNT}'`);
     await db.exec(
       `INSERT INTO "Publication" ("id","organizationId","contentId","versionId","platform","scheduledFor")
        VALUES (gen_random_uuid(),'${ORG}','${CNT}','${V2}','INSTAGRAM',now())`,

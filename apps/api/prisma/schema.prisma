@@ -79,15 +79,35 @@ enum ContentFormat {
   ARTICLE
 }
 
-enum ContentStatus {
+/// As onze fases do card (D-076) mais as duas saídas. Um campo, uma verdade:
+/// substituiu o ContentStatus, que não sabia dizer em qual das duas voltas o
+/// card estava — quatro dos oito valores dele eram ambíguos (D-080).
+/// "Alterações solicitadas" não está aqui de propósito: é evento (Approval),
+/// não estado. O efeito dele é o card voltar uma casa. Ver src/content/fases.ts.
+enum ContentPhase {
+  RASCUNHO
+  CRIADO
+  REVISAO
+  TEXTO_CLI
+  TEXTO_OK
+  PRODUCAO
+  REVISAO2
+  POST_CLI
+  APROVADO
+  AGENDADO
+  POSTADO
+  FALHOU
+  CANCELADO
+}
+
+/// A estratégia tem ciclo próprio e curto. Antes pegava carona no
+/// ContentStatus, o que dava a ela cinco valores que nunca fizeram sentido
+/// para uma estratégia (SCHEDULED, PUBLISHED, FAILED…).
+enum StrategyStatus {
   DRAFT
-  IN_PRODUCTION
   AWAITING_APPROVAL
   CHANGES_REQUESTED
   APPROVED
-  SCHEDULED
-  PUBLISHED
-  FAILED
 }
 
 enum SuggestionStatus {
@@ -428,7 +448,7 @@ model Project {
   toneOfVoice        String?
   /// ContentIds que servem de referência visual (D-031)
   referenceIds       Json          @default("[]")
-  strategyStatus     ContentStatus @default(DRAFT)
+  strategyStatus     StrategyStatus @default(DRAFT)
   strategyApprovedAt DateTime?
 
   createdAt DateTime  @default(now())
@@ -592,7 +612,7 @@ model Content {
 
   format ContentFormat
   platform Platform
-  status ContentStatus @default(DRAFT)
+  phase ContentPhase @default(RASCUNHO)
 
   currentVersionId String? @unique @db.Uuid
 
@@ -604,7 +624,9 @@ model Content {
   updatedById String?   @db.Uuid
 
   campaign    Campaign         @relation(fields: [campaignId], references: [id])
-  phase       Phase?           @relation(fields: [phaseId], references: [id])
+  /// A fase do CRONOGRAMA do projeto — nada a ver com `phase` acima, que é
+  /// a fase do CARD (D-076). A coluna continua sendo `phaseId`.
+  schedulePhase Phase?         @relation(fields: [phaseId], references: [id])
   versions    ContentVersion[] @relation("ContentVersions")
   current     ContentVersion?  @relation("CurrentVersion", fields: [currentVersionId], references: [id])
   comments    Comment[]
@@ -614,8 +636,8 @@ model Content {
   slot        CalendarSlot?
   publication Publication?
 
-  @@index([campaignId, status])
-  @@index([organizationId, status])
+  @@index([campaignId, phase])
+  @@index([organizationId, phase])
 }
 
 /// IMUTÁVEL. Nunca UPDATE — trigger BEFORE UPDATE recusa (D-007, I-02).

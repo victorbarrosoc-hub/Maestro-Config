@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { ContentStatus } from '@prisma/client';
+
 import { Auth, RequirePermission, type AuthContext } from '../auth/auth.guard';
 import { ContentService } from './content.service';
 import {
@@ -18,8 +18,12 @@ export class ContentController {
   /**
    * O cliente só enxerga o que já foi enviado.
    *
-   * `DRAFT` e `IN_PRODUCTION` ficam fora — e `FAILED` também: ele não precisa
-   * saber que a publicação falhou antes de a agência conseguir resolver.
+   * Antes isso era uma lista de status, e a lista mentia nos dois sentidos: um
+   * card que voltou com alteração pedida sai de AWAITING_APPROVAL e sumiria da
+   * vista de quem acabou de pedir a alteração. A regra verdadeira nunca foi o
+   * estado — é ter sido enviado. E "ter sido enviado" já está gravado: é
+   * pertencer a algum lote. Um card em rascunho não tem BatchItem; um card que
+   * o cliente já viu tem, para sempre.
    */
   @RequirePermission('content.readSent')
   @Get()
@@ -28,19 +32,11 @@ export class ContentController {
     @Query('campaignId') campaignId?: string,
     @Query('phaseId') phaseId?: string,
   ) {
-    const clientVisible: ContentStatus[] = [
-      ContentStatus.AWAITING_APPROVAL,
-      ContentStatus.CHANGES_REQUESTED,
-      ContentStatus.APPROVED,
-      ContentStatus.SCHEDULED,
-      ContentStatus.PUBLISHED,
-    ];
-
     return ctx.db.content.findMany({
       where: {
         ...(campaignId ? { campaignId } : {}),
         ...(phaseId ? { phaseId } : {}),
-        ...(isClientRole(ctx.role) ? { status: { in: clientVisible } } : {}),
+        ...(isClientRole(ctx.role) ? { batchItems: { some: {} } } : {}),
       },
       select: {
         id: true,
@@ -49,7 +45,7 @@ export class ContentController {
         role: true,
         format: true,
         platform: true,
-        status: true,
+        phase: true,
         current: { select: { id: true, number: true, seal: true } },
         slot: { select: { scheduledFor: true } },
       },
@@ -86,7 +82,7 @@ export class ContentController {
         current: { include: { script: { orderBy: { order: 'asc' } }, assets: { orderBy: { order: 'asc' } } } },
         slot: true,
         campaign: { select: { id: true, name: true, projectId: true } },
-        phase: { select: { id: true, name: true, question: true } },
+        schedulePhase: { select: { id: true, name: true, question: true } },
       },
     });
 
