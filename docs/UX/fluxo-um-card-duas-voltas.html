@@ -1,0 +1,423 @@
+<title>Um Card, Duas Voltas</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* ======================================================================
+   A paleta é a da Maestro — as quatro cores do founder e as rampas que
+   saem delas. A serifa é a mesma da marca. Escuro por padrão, porque a
+   plataforma é escura; o claro existe e foi desenhado, não invertido.
+   ==================================================================== */
+:root{
+  --bg:#1C1C1C; --sup:#212122; --sup2:#29272B; --linha:#35333A; --linha2:#474350;
+  --txt:#F4F7F5; --txt2:#A0A0A6; --txt3:#72707A;
+  --acento:#FFC857; --acento-txt:#FFC857; --acento-fraco:rgba(255,200,87,.10);
+  --alerta:#EF8A8E; --alerta-traco:#E5484D;
+  --serif:'Source Serif 4','Source Serif Pro',Georgia,'Times New Roman',serif;
+  --sans:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F4F7F5; --sup:#FFFFFF; --sup2:#E4E6E6; --linha:#C7C8CB; --linha2:#A0A0A6;
+    --txt:#1C1C1C; --txt2:#54505C; --txt3:#72707A;
+    --acento:#FFC857; --acento-txt:#8A6423; --acento-fraco:rgba(255,200,87,.22);
+    --alerta:#C62F34; --alerta-traco:#C62F34;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F4F7F5; --sup:#FFFFFF; --sup2:#E4E6E6; --linha:#C7C8CB; --linha2:#A0A0A6;
+  --txt:#1C1C1C; --txt2:#54505C; --txt3:#72707A;
+  --acento:#FFC857; --acento-txt:#8A6423; --acento-fraco:rgba(255,200,87,.22);
+  --alerta:#C62F34; --alerta-traco:#C62F34;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);
+  font-family:var(--sans);font-size:16px;line-height:1.65;
+  -webkit-font-smoothing:antialiased}
+.pag{max-width:1020px;margin:0 auto;padding:clamp(40px,7vw,88px) clamp(20px,5vw,44px) 96px}
+
+/* ---------- cabeçalho ---------- */
+.olho{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--acento-txt);margin:0 0 18px}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(38px,6.6vw,64px);
+  line-height:1.04;letter-spacing:-.015em;margin:0 0 20px;text-wrap:balance}
+.abre{font-size:clamp(17px,2.2vw,20px);line-height:1.55;color:var(--txt2);
+  max-width:62ch;margin:0}
+.abre b{color:var(--txt);font-weight:600}
+.credito{margin-top:26px;padding-top:18px;border-top:1px solid var(--linha);
+  font-family:var(--mono);font-size:11.5px;color:var(--txt3);
+  display:flex;flex-wrap:wrap;gap:8px 20px}
+
+/* ---------- seções ---------- */
+section{margin-top:clamp(52px,7vw,84px)}
+h2{font-family:var(--serif);font-weight:600;font-size:clamp(25px,3.4vw,34px);
+  line-height:1.2;margin:0 0 14px;text-wrap:balance}
+h3{font-family:var(--serif);font-weight:600;font-size:19px;margin:0 0 8px}
+p{max-width:66ch;margin:0 0 16px}
+p b{font-weight:600}
+.resposta{font-family:var(--serif);font-size:clamp(20px,2.6vw,25px);line-height:1.42;
+  color:var(--txt);max-width:26ch;margin:0 0 18px}
+.resposta em{font-style:normal;color:var(--acento-txt)}
+
+/* ---------- figuras ---------- */
+figure{margin:34px 0 0;padding:0}
+.moldura{background:var(--sup);border:1px solid var(--linha);border-radius:14px;
+  padding:clamp(16px,3vw,28px);overflow-x:auto}
+.moldura svg{display:block;width:100%;min-width:640px;height:auto;color:var(--txt)}
+figcaption{margin-top:14px;font-size:13.5px;line-height:1.55;color:var(--txt2);max-width:70ch}
+figcaption b{color:var(--txt);font-weight:600}
+
+/* elementos comuns dos diagramas */
+.cx{fill:var(--sup2);stroke:var(--linha2);stroke-width:1}
+.cx-luz{fill:var(--acento-fraco);stroke:var(--acento);stroke-width:1.2}
+.faixa{fill:var(--acento-fraco)}
+.rot{fill:var(--txt);font-family:var(--mono);font-size:12.5px}
+.rot-t{fill:var(--txt);font-family:var(--sans);font-size:13px;font-weight:600}
+.col{fill:var(--txt3);font-family:var(--mono);font-size:10.5px;letter-spacing:.14em}
+.vol{fill:var(--acento-txt);font-family:var(--mono);font-size:10.5px;letter-spacing:.14em}
+.nota{fill:var(--txt2);font-family:var(--sans);font-size:11.5px}
+.seta{stroke:currentColor;stroke-width:1.4;fill:none;opacity:.55}
+.seta-f{stroke:var(--acento);stroke-width:1.6;fill:none}
+.volta{stroke:var(--alerta-traco);stroke-width:1.5;fill:none;stroke-dasharray:5 4}
+.rot-volta{fill:var(--alerta);font-family:var(--sans);font-size:11.5px}
+.trava{fill:var(--acento-txt);font-family:var(--sans);font-size:11.5px}
+
+/* ---------- as três regras ---------- */
+.regras{display:grid;gap:14px;margin-top:28px}
+@media(min-width:760px){.regras{grid-template-columns:repeat(3,1fr)}}
+.regra{background:var(--sup);border:1px solid var(--linha);border-radius:12px;
+  padding:20px 20px 22px}
+.regra .n{font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+  color:var(--acento-txt);display:block;margin-bottom:10px}
+.regra p{font-size:14.5px;line-height:1.55;color:var(--txt2);margin:0}
+.regra p b{color:var(--txt)}
+
+/* ---------- passo a passo do pedido de alteração ---------- */
+.passos{list-style:none;counter-reset:p;padding:0;margin:26px 0 0;display:grid;gap:2px}
+.passos li{counter-increment:p;display:grid;grid-template-columns:38px 1fr;gap:14px;
+  padding:15px 18px;background:var(--sup);border:1px solid var(--linha);
+  font-size:14.5px;line-height:1.55;color:var(--txt2)}
+.passos li:first-child{border-radius:12px 12px 0 0}
+.passos li:last-child{border-radius:0 0 12px 12px}
+.passos li+li{border-top:0}
+.passos li::before{content:counter(p);font-family:var(--mono);font-size:12px;
+  color:var(--acento-txt);padding-top:2px}
+.passos b{color:var(--txt);font-weight:600}
+code{font-family:var(--mono);font-size:.88em;background:var(--sup2);
+  border:1px solid var(--linha);border-radius:5px;padding:1px 5px;color:var(--txt)}
+
+/* ---------- o buraco da API ---------- */
+.alerta-cx{border:1px solid var(--alerta-traco);border-radius:14px;
+  background:var(--sup);padding:clamp(18px,3vw,26px);margin-top:26px}
+.alerta-cx .marca{font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--alerta);display:block;margin-bottom:10px}
+.alerta-cx p:last-child{margin-bottom:0}
+
+.caminhos{display:grid;gap:14px;margin-top:26px}
+@media(min-width:820px){.caminhos{grid-template-columns:repeat(3,1fr)}}
+.cam{background:var(--sup);border:1px solid var(--linha);border-radius:12px;padding:20px}
+.cam.rec{border-color:var(--acento);background:var(--acento-fraco)}
+.cam .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--txt3);display:block;margin-bottom:9px}
+.cam.rec .tag{color:var(--acento-txt)}
+.cam h3{font-size:16.5px;margin-bottom:7px}
+.cam p{font-size:14px;line-height:1.5;color:var(--txt2);margin:0}
+.cam p b{color:var(--txt)}
+
+.fecho{margin-top:clamp(52px,7vw,80px);padding-top:26px;border-top:1px solid var(--linha);
+  font-size:14px;color:var(--txt3);font-family:var(--mono);line-height:1.7}
+.fecho b{color:var(--txt2);font-weight:500}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="pag">
+
+<header>
+  <p class="olho">Maestro · modelo de fluxo · D-075 e D-076</p>
+  <h1>Um card, duas voltas</h1>
+  <p class="abre">A pauta, o ensaio e o cliente parecem três coisas que precisam ficar se
+    atualizando. <b>Não são.</b> São três leituras do mesmo objeto — e é por isso que o
+    modelo se sustenta.</p>
+  <p class="credito"><span>Decidido pelo founder</span><span>Implementado no protótipo</span>
+    <span>Pendente na API — ver o fim</span></p>
+</header>
+
+<section>
+  <h2>Onde o card nasce</h2>
+  <p class="resposta">Na <em>pauta</em>, não no ensaio.</p>
+  <p>O card nasce no calendário, em <code>rascunho</code>. O calendário é o <b>Plan</b> — é
+    onde o trabalho é planejado antes de existir. Ele <b>aparece no quadro do Ensaio quando
+    alguém começa</b>, ou seja, quando sai de rascunho.</p>
+  <p>Essa parte é deliberada: setenta cards de um cliente parados numa coluna seriam um
+    paredão, não um quadro. O quadro mostra o que está em movimento.</p>
+</section>
+
+<section>
+  <h2>Não há três lados. Há um campo.</h2>
+  <p>O estado do card mora em <b>um único campo</b>, chamado <code>fase</code>. A coluna do
+    Ensaio não é um segundo campo guardando a mesma coisa — ela é uma <b>leitura</b> da
+    fase. Arrastar no quadro escreve a fase. A decisão do cliente escreve a mesma fase. O
+    calendário lê a mesma fase.</p>
+  <p>Ninguém sincroniza nada porque <b>nada é copiado</b>. Não existe "atualizar o outro
+    lado": o outro lado é o mesmo dado.</p>
+
+  <figure>
+    <div class="moldura">
+      <svg viewBox="0 0 720 292" role="img"
+           aria-label="Três telas — pauta, ensaio e cliente — escrevem no mesmo campo fase; não há cópia entre elas.">
+        <defs>
+          <marker id="pt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor" opacity=".55"/>
+          </marker>
+        </defs>
+
+        <rect class="cx" x="24" y="26" width="188" height="62" rx="10"/>
+        <text class="rot-t" x="118" y="52" text-anchor="middle">Pauta</text>
+        <text class="nota" x="118" y="71" text-anchor="middle">o calendário</text>
+
+        <rect class="cx" x="266" y="26" width="188" height="62" rx="10"/>
+        <text class="rot-t" x="360" y="52" text-anchor="middle">Ensaio</text>
+        <text class="nota" x="360" y="71" text-anchor="middle">o quadro</text>
+
+        <rect class="cx" x="508" y="26" width="188" height="62" rx="10"/>
+        <text class="rot-t" x="602" y="52" text-anchor="middle">Cliente</text>
+        <text class="nota" x="602" y="71" text-anchor="middle">o que foi enviado</text>
+
+        <path class="seta" marker-end="url(#pt)" d="M118 88 L118 138 L330 138 L330 186"/>
+        <path class="seta" marker-end="url(#pt)" d="M360 88 L360 186"/>
+        <path class="seta" marker-end="url(#pt)" d="M602 88 L602 138 L390 138 L390 186"/>
+
+        <text class="nota" x="112" y="124" text-anchor="end">cria e envia</text>
+        <text class="nota" x="368" y="124">arrastar</text>
+        <text class="nota" x="608" y="124">a decisão</text>
+
+        <rect class="cx-luz" x="266" y="188" width="188" height="64" rx="10"/>
+        <text class="rot" x="360" y="214" text-anchor="middle">fase</text>
+        <text class="nota" x="360" y="234" text-anchor="middle">um campo, uma verdade</text>
+
+        <text class="nota" x="360" y="278" text-anchor="middle">nenhuma cópia · nada para sincronizar</text>
+      </svg>
+    </div>
+    <figcaption>As três telas escrevem no <b>mesmo campo</b>. Como não existe segunda cópia
+      do estado, não existe divergência possível — o risco vira de gesto, não de dado.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>O card dá duas voltas</h2>
+  <p>Não é uma esteira que anda para a frente uma vez só. É um ciclo que roda <b>duas
+    vezes</b> no mesmo card: a primeira volta aprova <b>o texto</b>, a segunda aprova
+    <b>a peça</b>. É o que PDCA sempre foi.</p>
+
+  <figure>
+    <div class="moldura">
+      <svg viewBox="0 0 1000 340" role="img"
+           aria-label="O mesmo card percorre as colunas Plan, Do, Check, Com o cliente e Act duas vezes: a primeira volta pelo texto, a segunda pela peça. A coluna do cliente é travada e o pedido de alteração devolve o card para Do.">
+        <defs>
+          <marker id="s1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor" opacity=".55"/>
+          </marker>
+          <marker id="s2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" style="fill:var(--acento)"/>
+          </marker>
+          <marker id="s3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" style="fill:var(--alerta-traco)"/>
+          </marker>
+        </defs>
+
+        <!-- a coluna do cliente é uma faixa, porque é uma fronteira -->
+        <rect class="faixa" x="547" y="6" width="146" height="318" rx="10"/>
+
+        <text class="col" x="95"  y="24" text-anchor="middle">PLAN</text>
+        <text class="col" x="270" y="24" text-anchor="middle">DO</text>
+        <text class="col" x="445" y="24" text-anchor="middle">CHECK</text>
+        <text class="col" x="620" y="24" text-anchor="middle">COM O CLIENTE</text>
+        <text class="col" x="795" y="24" text-anchor="middle">ACT</text>
+
+        <!-- 1ª volta -->
+        <text class="vol" x="30" y="58">1ª VOLTA · O TEXTO</text>
+        <rect class="cx" x="30"  y="68" width="130" height="48" rx="9"/>
+        <text class="rot" x="95"  y="97" text-anchor="middle">rascunho</text>
+        <rect class="cx" x="205" y="68" width="130" height="48" rx="9"/>
+        <text class="rot" x="270" y="97" text-anchor="middle">criado</text>
+        <rect class="cx" x="380" y="68" width="130" height="48" rx="9"/>
+        <text class="rot" x="445" y="97" text-anchor="middle">revisao</text>
+        <rect class="cx-luz" x="555" y="68" width="130" height="48" rx="9"/>
+        <text class="rot" x="620" y="97" text-anchor="middle">texto_cli</text>
+        <rect class="cx" x="730" y="68" width="130" height="48" rx="9"/>
+        <text class="rot" x="795" y="97" text-anchor="middle">texto_ok</text>
+
+        <path class="seta" marker-end="url(#s1)" d="M160 92 L200 92"/>
+        <path class="seta" marker-end="url(#s1)" d="M335 92 L375 92"/>
+        <path class="seta" marker-end="url(#s1)" d="M510 92 L550 92"/>
+        <path class="seta" marker-end="url(#s1)" d="M685 92 L725 92"/>
+        <text class="nota" x="530" y="60" text-anchor="middle">enviar</text>
+        <text class="nota" x="705" y="60" text-anchor="middle">aprovado</text>
+
+        <!-- a volta do pedido de alteração, 1ª volta -->
+        <path class="volta" marker-end="url(#s3)" d="M620 116 L620 148 L270 148 L270 120"/>
+        <text class="rot-volta" x="445" y="143" text-anchor="middle">alteração pedida</text>
+
+        <!-- 2ª volta -->
+        <text class="vol" x="30" y="196">2ª VOLTA · A PEÇA</text>
+        <rect class="cx" x="205" y="206" width="130" height="48" rx="9"/>
+        <text class="rot" x="270" y="235" text-anchor="middle">producao</text>
+        <rect class="cx" x="380" y="206" width="130" height="48" rx="9"/>
+        <text class="rot" x="445" y="235" text-anchor="middle">revisao2</text>
+        <rect class="cx-luz" x="555" y="206" width="130" height="48" rx="9"/>
+        <text class="rot" x="620" y="235" text-anchor="middle">post_cli</text>
+        <rect class="cx" x="730" y="206" width="130" height="48" rx="9"/>
+        <text class="rot" x="795" y="235" text-anchor="middle">aprovado</text>
+
+        <path class="seta" marker-end="url(#s1)" d="M335 230 L375 230"/>
+        <path class="seta" marker-end="url(#s1)" d="M510 230 L550 230"/>
+        <path class="seta" marker-end="url(#s1)" d="M685 230 L725 230"/>
+        <text class="nota" x="530" y="198" text-anchor="middle">enviar</text>
+        <text class="nota" x="705" y="198" text-anchor="middle">aprovado</text>
+
+        <!-- a virada de volta: o texto aprovado abre a peça -->
+        <path class="seta-f" marker-end="url(#s2)" d="M860 92 L920 92 L920 176 L150 176 L150 230 L200 230"/>
+        <text class="nota" x="912" y="140" text-anchor="end">o texto aprovado</text>
+        <text class="nota" x="912" y="156" text-anchor="end">abre a peça</text>
+
+        <!-- a volta do pedido de alteração, 2ª volta -->
+        <path class="volta" marker-end="url(#s3)" d="M620 254 L620 286 L270 286 L270 258"/>
+        <text class="rot-volta" x="445" y="281" text-anchor="middle">alteração pedida</text>
+
+        <text class="trava" x="620" y="316" text-anchor="middle">travada — só a decisão do cliente move</text>
+      </svg>
+    </div>
+    <figcaption>O mesmo card, duas passagens. <b>A coluna do cliente é travada</b>: ninguém
+      da agência tira um card de lá, e arrastar para Act antes da decisão é recusado com a
+      razão. Depois de <code>aprovado</code> ainda vêm <code>agendado</code> e
+      <code>postado</code> — as três leem Act, porque publicar não é outra volta.</figcaption>
+  </figure>
+
+  <div class="regras">
+    <div class="regra"><span class="n">A TRAVA</span>
+      <p><b>A regra virou desenho, não aviso.</b> A coluna "Com o cliente" não aceita ser
+        movida por ninguém da agência. Não há como burlar por distração.</p></div>
+    <div class="regra"><span class="n">A DEVOLUÇÃO</span>
+      <p><b>Pedido de alteração não cria card.</b> Devolve <i>este</i> para Do, em vermelho,
+        com as palavras do cliente coladas nele.</p></div>
+    <div class="regra"><span class="n">O AVISO</span>
+      <p><b>Uma notificação por lote, nunca uma por card.</b> Cinco avisos separados treinam
+        o cliente a ignorar todos.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>O que acontece quando o cliente pede mudança</h2>
+  <p>Este é o caminho que costuma se perder nas ferramentas: o pedido chega, alguém lê, e
+    ele morre num aviso. Aqui ele vira trabalho.</p>
+  <ol class="passos">
+    <li><b>O cliente escreve o que quer mudar</b> e decide. Só isso move o card para fora
+      da coluna dele.</li>
+    <li><b>O card volta para Do</b> — <code>criado</code> se era texto, <code>producao</code>
+      se era peça. É o mesmo card, não um novo.</li>
+    <li><b>As palavras do cliente ficam coladas no card</b>, com autor e data, no registro
+      de alterações. Não viram mensagem solta.</li>
+    <li><b>Abre uma tarefa no Ensaio</b>, ligada a esse card. O pedido entra na fila de
+      quem produz, com nome e dono.</li>
+    <li><b>A agência refaz e envia de novo.</b> O card recomeça a volta em que estava — não
+      volta ao começo de tudo.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>Onde isso ainda não está de pé</h2>
+  <p>Tudo acima está decidido e funcionando <b>no protótipo</b>. Na API, não — e a razão é
+    específica o bastante para valer uma decisão antes de escrever código.</p>
+
+  <div class="alerta-cx">
+    <span class="marca">O problema, em uma frase</span>
+    <p>A API tem <b>um <code>AWAITING_APPROVAL</code> só</b>. Ela não consegue distinguir
+      "com o cliente pelo texto" de "com o cliente pela peça".</p>
+  </div>
+
+  <figure>
+    <div class="moldura">
+      <svg viewBox="0 0 720 330" role="img"
+           aria-label="Seis fases do card colapsam em três valores do enum ContentStatus da API: cada par de fases, uma de cada volta, cai no mesmo valor.">
+        <defs>
+          <marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" style="fill:var(--alerta-traco)"/>
+          </marker>
+        </defs>
+
+        <text class="col" x="40"  y="20">A FASE DO CARD</text>
+        <text class="col" x="470" y="20">O ENUM DA API</text>
+
+        <!-- par 1 -->
+        <rect class="cx" x="40" y="34" width="170" height="34" rx="8"/>
+        <text class="rot" x="56" y="56">texto_cli</text>
+        <text class="vol" x="196" y="56" text-anchor="end">1ª</text>
+        <rect class="cx" x="40" y="78" width="170" height="34" rx="8"/>
+        <text class="rot" x="56" y="100">post_cli</text>
+        <text class="vol" x="196" y="100" text-anchor="end">2ª</text>
+        <path class="volta" marker-end="url(#c1)" d="M210 51 L340 51 L340 73 L455 73"/>
+        <path class="volta" marker-end="url(#c1)" d="M210 95 L340 95 L340 73 L455 73"/>
+        <rect class="cx" x="458" y="56" width="222" height="34" rx="8"/>
+        <text class="rot" x="474" y="78">AWAITING_APPROVAL</text>
+
+        <!-- par 2 -->
+        <rect class="cx" x="40" y="140" width="170" height="34" rx="8"/>
+        <text class="rot" x="56" y="162">criado</text>
+        <text class="vol" x="196" y="162" text-anchor="end">1ª</text>
+        <rect class="cx" x="40" y="184" width="170" height="34" rx="8"/>
+        <text class="rot" x="56" y="206">producao</text>
+        <text class="vol" x="196" y="206" text-anchor="end">2ª</text>
+        <path class="volta" marker-end="url(#c1)" d="M210 157 L340 157 L340 179 L455 179"/>
+        <path class="volta" marker-end="url(#c1)" d="M210 201 L340 201 L340 179 L455 179"/>
+        <rect class="cx" x="458" y="162" width="222" height="34" rx="8"/>
+        <text class="rot" x="474" y="184">IN_PRODUCTION</text>
+
+        <!-- par 3 -->
+        <rect class="cx" x="40" y="246" width="170" height="34" rx="8"/>
+        <text class="rot" x="56" y="268">texto_ok</text>
+        <text class="vol" x="196" y="268" text-anchor="end">1ª</text>
+        <rect class="cx" x="40" y="290" width="170" height="34" rx="8"/>
+        <text class="rot" x="56" y="312">aprovado</text>
+        <text class="vol" x="196" y="312" text-anchor="end">2ª</text>
+        <path class="volta" marker-end="url(#c1)" d="M210 263 L340 263 L340 285 L455 285"/>
+        <path class="volta" marker-end="url(#c1)" d="M210 307 L340 307 L340 285 L455 285"/>
+        <rect class="cx" x="458" y="268" width="222" height="34" rx="8"/>
+        <text class="rot" x="474" y="290">APPROVED</text>
+      </svg>
+    </div>
+    <figcaption>Seis fases distintas colapsam em três valores. Para a API, <b>o card que
+      voltou com alteração no texto e o que voltou com alteração na arte são o mesmo
+      estado</b> — e sem saber a volta, o servidor não sabe para onde devolver o card, qual
+      coluna a leitura deve dar, nem se o próximo envio é de texto ou de peça.</figcaption>
+  </figure>
+
+  <h3 style="margin-top:38px">Os três caminhos</h3>
+  <div class="caminhos">
+    <div class="cam rec"><span class="tag">A · recomendado</span>
+      <h3>A fase substitui o status</h3>
+      <p>Um enum com as onze fases, no lugar do <code>ContentStatus</code>. <b>Um campo,
+        uma verdade</b> — nenhuma divergência é possível porque não há o que divergir.</p></div>
+    <div class="cam"><span class="tag">B</span>
+      <h3>Status mais um campo de volta</h3>
+      <p>Barato de escrever e <b>reintroduz exatamente o defeito que a decisão do card único
+        matou</b>: dois campos dizendo parte da mesma coisa, podendo discordar.</p></div>
+    <div class="cam"><span class="tag">C</span>
+      <h3>Deixar como está e traduzir na borda</h3>
+      <p>Empurra a ambiguidade para cada consumidor. <b>O primeiro cliente de API de
+        terceiro herda o problema sem o mapa.</b></p></div>
+  </div>
+
+  <p style="margin-top:26px">O custo de <b>A</b> é uma migração de enum feita uma vez,
+    contra uma classe de bug que voltaria para sempre. E ela cabe agora, porque os blocos
+    que escrevem conteúdo ainda não foram implementados — depois deles, sai caro.</p>
+  <p>Nada disso mexe no <b>lote</b>. O card é a unidade que é escrita, enviada, decidida e
+    volta; o lote continua sendo como um conjunto de cards vai ao cliente de uma vez, com
+    selo e termo. São coisas diferentes e as duas existem.</p>
+</section>
+
+<p class="fecho"><b>D-075</b> o card é a unidade · <b>D-076</b> um card só, duas voltas ·
+  <b>D-080</b> o enum da API, decisão aberta<br>
+  Implementado em docs/UX/prototipo-plataforma.html · pendente nos blocos 4, 6, 7 e 8 da API</p>
+
+</div>

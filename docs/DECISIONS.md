@@ -1053,6 +1053,65 @@ display do sistema (títulos, números grandes); sai apenas do lockup.
 
 ---
 
+# D-080 · Engenharia · Aberta
+**Data:** 2026-08-31 · **Responsável:** Founder (decisão pendente) · **Categoria:** Modelo de dados
+**Pergunta:** o `ContentStatus` da API consegue expressar o card único de duas voltas (D-076)?
+**Contexto:** a D-076 decidiu que existe **um card só**, com um único campo de estado — a
+`fase` — e que a coluna do Ensaio é uma LEITURA dessa fase, nunca um segundo campo. O
+protótipo implementa isso com onze fases e o mapa `FASE_COL`/`COL_FASE`, e a chave do
+modelo é o card dar DUAS voltas pelo mesmo ciclo: a primeira pelo texto
+(`criado` · `revisao` · `texto_cli` · `texto_ok`) e a segunda pela peça
+(`producao` · `revisao2` · `post_cli` · `aprovado`).
+
+A API, porém, foi modelada antes disso. `model Content` guarda `status: ContentStatus`, um
+enum de oito valores:
+
+    DRAFT · IN_PRODUCTION · AWAITING_APPROVAL · CHANGES_REQUESTED
+    APPROVED · SCHEDULED · PUBLISHED · FAILED
+
+**O problema, em uma frase:** existe **um `AWAITING_APPROVAL` só**. A API não consegue
+distinguir "com o cliente pelo texto" de "com o cliente pela peça" — e o mesmo vale para
+`IN_PRODUCTION` (que é `criado` na 1ª volta e `producao` na 2ª), `CHANGES_REQUESTED` e
+`APPROVED`. Quatro dos oito valores são ambíguos entre as duas voltas. Um card que volta
+do cliente com alteração no texto e um que volta com alteração na arte são, para a API, o
+mesmo estado.
+
+Isso não é um detalhe de nomenclatura: sem saber a volta, o servidor não sabe para onde
+devolver o card num pedido de alteração (`criado` ou `producao`?), nem qual coluna do
+Ensaio a leitura deve dar, nem se o próximo envio ao cliente é de texto ou de peça.
+
+**Caminhos:**
+
+- **A. A fase substitui o status.** Um enum `ContentPhase` com as onze fases do protótipo,
+  no lugar de `ContentStatus`. Um campo só, como a D-076 exige — nenhuma divergência é
+  possível porque não há o que divergir. Custo: migração do enum, e os consumidores atuais
+  do status precisam ser reapontados.
+- **B. Status + volta.** Mantém os oito valores e acrescenta `lap: 1 | 2`. Barato de
+  escrever. **Reintroduz exatamente o defeito que a D-076 matou:** dois campos dizendo
+  parte da mesma coisa, podendo discordar (status `APPROVED` com `lap: 1` é o mesmo que
+  `texto_ok`, mas nada impede gravar `APPROVED` com `lap: 2` num card que nunca teve
+  texto aprovado). Sincronizar cópias sempre deixa uma para trás.
+- **C. Deixar como está e mapear na borda.** O front traduz. Empurra a ambiguidade para
+  cada consumidor, e o primeiro cliente de API de terceiro (D-061, o servidor MCP) herda
+  o problema sem o mapa.
+
+**Recomendação:** **A**. É a única que preserva o princípio que fez a D-076 existir: *um
+campo, uma verdade*. O custo é uma migração de enum feita uma vez, contra uma classe de
+bug que voltaria para sempre. E ela cabe agora, porque os blocos que escrevem conteúdo
+(4, 6, 7 e 8) ainda não foram implementados — depois deles, sai caro.
+
+**O que NÃO muda em nenhum dos caminhos:** o lote (`Batch`, `BatchItem`, `Approval`,
+`ApprovalTerm`) segue como está. A D-075 já decidiu isso: o card é a unidade que é escrita,
+enviada, decidida e volta; o lote continua sendo como um conjunto de cards vai ao cliente
+de uma vez, com selo e termo. São coisas diferentes e as duas existem.
+
+**Bloqueia:** blocos 4, 6, 7 e 8 da API · servidor MCP (D-061).
+**O fluxo desenhado:** `docs/UX/fluxo-um-card-duas-voltas.html` — três diagramas: o campo
+único escrito por três telas, as duas voltas do card, e a colisão das seis fases nos três
+valores do enum.
+
+---
+
 ## Decisões Futuras
 
 Adicionar seguindo o padrão D-073, D-074...
