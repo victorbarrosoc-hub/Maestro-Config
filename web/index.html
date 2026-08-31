@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-31 14:14 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-31 14:31 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -15708,7 +15708,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v77 · 31 ago · o campo não foge';
+const VERSAO_PROTOTIPO = 'v78 · 31 ago · squad com gente';
 
 menuSheet = (function(orig){
   return function(){
@@ -17588,4 +17588,174 @@ botaoAtualizar();
     devolverOCursor(cursor);
   };
 })();
+</script>
+
+<style>
+/* o cabeçalho do canal: quem está aqui, e o caminho para mudar */
+.cvTopo{ display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  padding:12px 14px; border-bottom:1px solid var(--ink-800) }
+.cvTopo b{ font-size:14px; color:var(--ink-50) }
+.cvTopo .quem{ font-size:11.5px; color:var(--ink-400) }
+.cvTopo .sp{ flex:1 }
+.cvTopo .b{ padding:5px 10px; font-size:11.5px }
+.cvCaras{ display:flex; gap:-6px }
+.cvCaras .av{ width:22px; height:22px; font-size:8.5px; margin-right:-6px;
+  border:1.5px solid var(--ink-900) }
+
+/* a escolha de quem entra */
+.sqLista{ display:grid; gap:6px; margin:4px 0 14px; max-height:44vh; overflow:auto }
+.sqPessoa{ display:flex; align-items:center; gap:11px; width:100%; text-align:left;
+  padding:9px 11px; border:1px solid var(--ink-800); border-radius:11px;
+  background:var(--ink-950); cursor:pointer }
+.sqPessoa:hover{ border-color:var(--ink-600) }
+.sqPessoa.dentro{ border-color:var(--brass-600); background:var(--ink-900) }
+.sqPessoa b{ display:block; font-size:13.5px; color:var(--ink-50) }
+.sqPessoa span{ font-size:11px; color:var(--ink-400) }
+.sqPessoa .marca{ width:20px; height:20px; border-radius:6px; display:grid; place-items:center;
+  border:1px solid var(--ink-600); color:transparent; font-size:12px; flex:none }
+.sqPessoa.dentro .marca{ background:var(--brass-500); border-color:var(--brass-500);
+  color:var(--ink-950) }
+.sqPessoa.euMesmo{ opacity:.85 }
+.sqNota{ font-size:11.5px; color:var(--ink-400); margin:0 0 12px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v78 — A SQUAD PASSA A TER GENTE DENTRO.
+
+   O filtro por membro já existia e já funcionava: `canaisVisiveis()`
+   esconde de quem não está na lista. O que faltava era o começo — criar
+   um squad usava um `prompt()` e deixava `membros: null`, ou seja,
+   TODO SQUAD NOVO NASCIA ABERTO PARA A AGÊNCIA INTEIRA. E, depois de
+   criado, não havia como pôr nem tirar ninguém.
+
+   Agora se escolhe quem entra na hora de criar, e se muda depois.
+
+   Três travas que o caso pede:
+   · quem cria entra — senão a pessoa monta uma sala que ela mesma não vê;
+   · um squad não fica sem ninguém: o último membro não sai;
+   · o Geral não tem lista. Ele é de todo mundo, por definição, e fingir
+     que dá para tirar alguém de lá seria mentir.
+   ================================================================== */
+const euAgora = () => (S.usuario && S.usuario.tipo !== 'cliente' && S.usuario.id)
+  || (S.equipe[0] ? membroId(S.equipe[0]) : 'victor');
+
+const canalPorId = id => (S.chat && S.chat.canais.find(c => c.id === id)) || null;
+const podeMexerNosMembros = c => !!c && c.id !== 'geral';
+
+function modalSquad(canalId){
+  const c = canalId ? canalPorId(canalId) : null;
+  const criando = !c;
+  const eu = euAgora();
+  const dentro = new Set(criando ? [eu] : (c.membros || S.equipe.map(membroId)));
+  const podeRenomear = criando || c.tipo === 'squad';
+
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>${criando ? 'Novo squad' : esc(c.nome)}</h3>
+    ${podeRenomear ? `<div class="fld"><label for="sq-nome">Nome</label>
+      <input id="sq-nome" placeholder="Ex.: Vídeo" value="${criando ? '' : esc(c.nome.replace(/^Squad /, ''))}"></div>` : ''}
+    <p class="sqNota">${criando
+      ? 'Quem estiver aqui vê o canal. Quem não estiver, não vê que ele existe.'
+      : 'Tirar alguém tira o acesso ao canal — as mensagens que a pessoa escreveu ficam.'}</p>
+    <div class="sqLista" id="sq-lista">
+      ${S.equipe.map(m => {
+        const id = membroId(m), tem = dentro.has(id), souEu = id === eu;
+        return `<button type="button" class="sqPessoa${tem ? ' dentro' : ''}${souEu ? ' euMesmo' : ''}"
+          data-sqalterna="${id}" aria-pressed="${tem}">
+          <span class="marca">✓</span>
+          <span class="av">${membroIni(m)}</span>
+          <span style="flex:1"><b>${esc(m.n)}</b><span>${esc(m.papel)}${souEu ? ' · você' : ''}</span></span>
+        </button>`;
+      }).join('')}
+    </div>
+    <div class="modalrow"><button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b pri" data-sqsalvar="${canalId || ''}">${criando ? 'Criar squad' : 'Salvar'}</button>
+    </div></div></div>`;
+}
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest(
+    '[data-cvnovo],[data-sqalterna],[data-sqsalvar],[data-sqmembros]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+
+  /* criar: entra pelo modal, não mais pelo prompt do navegador */
+  if(d.cvnovo !== undefined){
+    if(!S.chat) S.chat = chatSemente();
+    S.modal = modalSquad(null); renderLayer();
+    setTimeout(() => document.getElementById('sq-nome')?.focus(), 50);
+    return; }
+
+  if(d.sqmembros !== undefined){
+    S.modal = modalSquad(d.sqmembros); renderLayer(); return; }
+
+  /* marcar e desmarcar acontece no DOM: o modal não é remontado, então
+     o que já foi escolhido não se perde */
+  if(d.sqalterna !== undefined){
+    const dentro = t.classList.toggle('dentro');
+    t.setAttribute('aria-pressed', dentro ? 'true' : 'false');
+    return; }
+
+  if(d.sqsalvar !== undefined){
+    const escolhidos = [...document.querySelectorAll('#sq-lista .sqPessoa.dentro')]
+      .map(el => el.dataset.sqalterna);
+    if(!escolhidos.length){ toast('Um squad precisa de pelo menos uma pessoa.'); return; }
+
+    const id = d.sqsalvar;
+    if(!id){                                        // criando
+      const bruto = (document.getElementById('sq-nome')?.value || '').trim();
+      if(bruto.length < 2){
+        const el = document.getElementById('sq-nome');
+        el.style.borderColor = 'var(--danger)'; el.focus(); return; }
+      const eu = euAgora();
+      if(!escolhidos.includes(eu)) escolhidos.push(eu);   // quem cria, entra
+      S.chat.canais.splice(3, 0, { id: 'sq_' + Date.now(),
+        nome: /^squad/i.test(bruto) ? bruto : 'Squad ' + bruto,
+        tipo: 'squad', membros: escolhidos, msgs: [] });
+      S.cvAtivo = S.chat.canais[3].id;
+      S.modal = null; som('toque'); render();
+      toast(`Squad criado com ${escolhidos.length} ${escolhidos.length === 1 ? 'pessoa' : 'pessoas'}.`);
+      return; }
+
+    const c = canalPorId(id); if(!c) return;
+    if(c.tipo === 'squad'){
+      const bruto = (document.getElementById('sq-nome')?.value || '').trim();
+      if(bruto.length >= 2) c.nome = /^squad/i.test(bruto) ? bruto : 'Squad ' + bruto;
+    }
+    const saiuEu = !escolhidos.includes(euAgora());
+    c.membros = escolhidos;
+    S.modal = null; som('toque'); render();
+    toast(saiuEu && !ehAdmin()
+      ? 'Salvo — você saiu deste canal e ele não aparece mais para você.'
+      : `Salvo: ${escolhidos.length} ${escolhidos.length === 1 ? 'pessoa' : 'pessoas'} no canal.`);
+    return; }
+}, true);
+
+/* ---------- o cabeçalho do canal: mostrar quem está ali ---------- */
+telaConversas = (function(orig){
+  return function(shell){
+    let html = orig(shell);
+    const c = canalPorId(S.cvAtivo);
+    if(!c || html.indexOf('<div class="cvMsgs"') < 0) return html;
+
+    const ids = c.membros || S.equipe.map(membroId);
+    const caras = ids.slice(0, 4).map(id => {
+      const m = membro(id);
+      return `<span class="av">${m ? m.ini : '?'}</span>`;
+    }).join('');
+    const quem = c.id === 'geral' ? 'toda a agência'
+      : c.tipo === 'cliente' ? `${ids.length} da agência neste canal`
+      : `${ids.length} ${ids.length === 1 ? 'pessoa' : 'pessoas'}`;
+
+    const topo = `<div class="cvTopo">
+      <div class="cvCaras">${caras}</div>
+      <span><b>${esc(c.nome)}</b><span class="quem" style="display:block">${quem}</span></span>
+      <span class="sp"></span>
+      ${podeMexerNosMembros(c) && S.usuario && S.usuario.tipo !== 'cliente'
+        ? `<button class="b gho" data-sqmembros="${c.id}">Membros</button>` : ''}
+    </div>`;
+    return html.replace('<div class="cvMsgs"', topo + '<div class="cvMsgs"');
+  };
+})(telaConversas);
 </script>
