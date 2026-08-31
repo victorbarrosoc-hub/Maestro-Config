@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-31 13:06 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-31 13:13 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -15708,7 +15708,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v74 · 31 ago · nada se perde';
+const VERSAO_PROTOTIPO = 'v75 · 31 ago · guarda tudo';
 
 menuSheet = (function(orig){
   return function(){
@@ -17126,7 +17126,7 @@ document.addEventListener('click', e => {
 <script>
 "use strict";
 /* =====================================================================
-   v74 — A EQUIPE NÃO PODE SUMIR, E ENTRAR COMO AGÊNCIA PERGUNTA QUEM.
+   v74 — ENTRAR COMO AGÊNCIA PERGUNTA QUEM VOCÊ É.
 
    1. O que já se guardava. A v27 salva no navegador `pautas`, `novos`,
       `mat` e `refs`. A EQUIPE nunca entrou nessa lista — quem cadastrava
@@ -17143,30 +17143,8 @@ document.addEventListener('click', e => {
       A lista sai da equipe de verdade, então quem você cadastrar aparece
       aqui — as duas coisas desta versão se encontram nesse ponto.
    ================================================================== */
-const CHAVE_CONTA = 'maestro-conta-v1';
-
-function salvarConta(){
-  try{ localStorage.setItem(CHAVE_CONTA, JSON.stringify({
-    equipe: S.equipe, plan: S.plan, quando: Date.now() })); }catch(e){}
-}
-
-(function restaurarConta(){
-  try{
-    const g = JSON.parse(localStorage.getItem(CHAVE_CONTA) || 'null');
-    if(!g) return;
-    /* nunca restaura uma equipe vazia: a conta ficaria sem administrador */
-    if(Array.isArray(g.equipe) && g.equipe.length && g.equipe.some(m => m && m.n))
-      S.equipe = g.equipe.filter(m => m && m.n);
-    if(g.plan && typeof PLANOS === 'object' && PLANOS[g.plan]) S.plan = g.plan;
-  }catch(e){}
-})();
-
-const _renderV74 = render;
-let _tmConta = 0;
-render = function(){
-  _renderV74();
-  clearTimeout(_tmConta); _tmConta = setTimeout(salvarConta, 250);
-};
+/* Guardar equipe e plano virou um caso particular de guardar TUDO — quem
+   faz isso agora é a v75, no fim do arquivo, com uma dona só. */
 
 /* ---------- entrar como agência: escolher quem você é ---------------- */
 function abrirQuemAgencia(){
@@ -17206,5 +17184,118 @@ addEventListener('click', e => {
 }, true);
 
 /* a equipe restaurada precisa aparecer na tela que já foi desenhada */
+if(typeof render === 'function') render();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v75 — GUARDAR TUDO QUE VOCÊ MUDA.
+
+   Até aqui a persistência era uma LISTA DE COISAS QUE SE SALVAM: a v27
+   guardava pautas, clientes novos, material e referências; a v74
+   guardava equipe e plano; o Ensaio só ia para o Supabase, e quando ele
+   não responde o quadro se perdia. Tudo que ninguém tinha lembrado de
+   incluir sumia ao fechar a aba — e a lista nunca ia acompanhar o
+   produto crescendo.
+
+   Inverteu-se a regra: guarda-se TUDO que é dado, e existe uma lista
+   curta do que é passageiro — onde eu estou, o que está aberto. O que
+   entrar no produto depois passa a ser guardado sem ninguém lembrar.
+
+   O que tornou isso possível: as peças pesavam 581 KB, e 76 KB de cada
+   uma é a ARTE, que já vem no código e nunca muda. Guardando tudo menos
+   a arte, as treze peças cabem em 5,7 KB. Guarda-se o que você muda,
+   não o que já está no arquivo.
+
+   O limite continua honesto: é o armazenamento do navegador. Fica NESTE
+   aparelho e NESTE navegador, e limpar os dados do site apaga. A
+   promessa de verdade é a API.
+   ================================================================== */
+const CHAVE_TUDO = 'maestro-estado-v1';
+
+/* passageiro: onde estou e o que está aberto — restaurar isso seria
+   devolver a pessoa para uma tela que ela já fechou */
+const PASSAGEIRO = new Set([
+  'view','route','tab','sel','full','cli','marking','pendPos','draftNote',
+  'toast','modal','pal','palq','palidx','skel','stampShow','txnote','txsel',
+  'mflash','agDia','agOpen','ptMDia','chat','lb','envSel','seen','sb',
+  /* estes já têm dono e sabem coisas que aqui não caberiam: a v27 anula
+     as urls blob: que morreram com a aba, e o usuário tem chave própria */
+  'pautas','novos','mat','refs','usuario'
+]);
+
+/* a arte das peças já vem no código; o que muda é o resto */
+const semArte = pecas => (pecas || []).map(({ art, ...resto }) => resto);
+
+function estadoParaGuardar(){
+  const fora = {};
+  for(const k of Object.keys(S)){
+    if(PASSAGEIRO.has(k)) continue;
+    const d = Object.getOwnPropertyDescriptor(S, k);
+    if(!d || d.get) continue;                    // `pauta` é leitura de `pautas`
+    const v = S[k];
+    if(typeof v === 'function' || v === undefined) continue;
+    try{
+      fora[k] = (k === 'pecas') ? semArte(v) : JSON.parse(JSON.stringify(v));
+    }catch(e){}                                  // uma chave ruim não derruba o resto
+  }
+  return fora;
+}
+
+let _avisouCheio = false;
+function guardarTudo(){
+  try{
+    localStorage.setItem(CHAVE_TUDO, JSON.stringify({ s: estadoParaGuardar(), quando: Date.now() }));
+  }catch(e){
+    /* cota estourada: dizer, em vez de perder em silêncio */
+    if(!_avisouCheio){
+      _avisouCheio = true;
+      if(typeof toast === 'function')
+        toast('O navegador ficou sem espaço — as mudanças novas não estão sendo guardadas.');
+    }
+  }
+}
+
+(function restaurarTudo(){
+  let g = null;
+  try{ g = JSON.parse(localStorage.getItem(CHAVE_TUDO) || 'null'); }catch(e){}
+  /* migração: quem já tinha equipe e plano guardados pela v74 não perde */
+  if(!g || !g.s){
+    try{
+      const antigo = JSON.parse(localStorage.getItem('maestro-conta-v1') || 'null');
+      if(antigo) g = { s: { equipe: antigo.equipe, plan: antigo.plan } };
+    }catch(e){}
+  }
+  if(!g || !g.s) return;
+
+  for(const [k, v] of Object.entries(g.s)){
+    if(PASSAGEIRO.has(k) || v === undefined) continue;
+    try{
+      if(k === 'pecas'){
+        /* devolve o que mudou por cima da arte que veio do código */
+        if(!Array.isArray(v) || !Array.isArray(S.pecas)) continue;
+        const porId = new Map(v.map(p => [p.id, p]));
+        S.pecas = S.pecas.map(p => porId.has(p.id) ? { ...p, ...porId.get(p.id), art: p.art } : p);
+      }
+      else if(k === 'equipe'){
+        /* nunca uma equipe vazia: a conta ficaria sem administrador */
+        if(Array.isArray(v) && v.some(m => m && m.n)) S.equipe = v.filter(m => m && m.n);
+      }
+      else if(k === 'plan'){
+        if(typeof PLANOS === 'object' && PLANOS[v]) S.plan = v;
+      }
+      else S[k] = v;
+    }catch(e){}
+  }
+})();
+
+const _renderV75 = render;
+let _tmTudo = 0;
+render = function(){
+  _renderV75();
+  clearTimeout(_tmTudo); _tmTudo = setTimeout(guardarTudo, 300);
+};
+
 if(typeof render === 'function') render();
 </script>
