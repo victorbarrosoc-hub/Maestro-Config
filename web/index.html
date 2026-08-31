@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-31 21:57 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-31 22:00 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -15708,7 +15708,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v83 · 31 ago · acentos e chave';
+const VERSAO_PROTOTIPO = 'v84 · 31 ago · sem o aviso de som';
 
 menuSheet = (function(orig){
   return function(){
@@ -18631,4 +18631,22 @@ agEquipe = (function(orig){
       });
   };
 })(agEquipe);
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v83c — o aviso de que a Maestro tem som sai de cena.
+
+   Ele era a R9: no primeiro som da sessão, contar que existe som e onde
+   desligar. A intenção era boa e a regra continua válida no papel — o
+   problema é a frequência com que o founder abre a plataforma para
+   testar. O que seria uma apresentação virou um aviso batendo toda
+   abertura, por cima do trabalho.
+
+   Um aviso que aparece sempre não informa mais: só ocupa. O caminho de
+   desligar continua onde estava e continua descoberto sozinho, em
+   Conta → Preferências, e o botão de som segue na barra de cima.
+   ================================================================== */
+avisarDosSons = function(){};
 </script>
