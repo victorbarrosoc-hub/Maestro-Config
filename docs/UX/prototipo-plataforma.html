@@ -15671,7 +15671,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v73 · 31 ago · a equipe';
+const VERSAO_PROTOTIPO = 'v74 · 31 ago · nada se perde';
 
 menuSheet = (function(orig){
   return function(){
@@ -17074,4 +17074,100 @@ document.addEventListener('click', e => {
     S.modal = null; som('toque'); render();
     toast(`${m.n.split(' ')[0]} saiu da equipe — assento liberado.`); return; }
 });
+</script>
+
+<style>
+/* quem já está logado aparece marcado, para não escolher no escuro */
+.qePessoa.euAgora{ border-color:var(--brass-600); background:var(--ink-900) }
+.qePessoa .euTag{ font-family:var(--mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--brass-500) }
+#quemEsta .qeVoltar{ display:block; width:100%; margin-top:14px; padding:10px;
+  border:1px solid var(--ink-800); border-radius:11px; background:none;
+  font-size:12.5px; color:var(--ink-300) }
+#quemEsta .qeVoltar:hover{ border-color:var(--ink-600); color:var(--ink-50) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v74 — A EQUIPE NÃO PODE SUMIR, E ENTRAR COMO AGÊNCIA PERGUNTA QUEM.
+
+   1. O que já se guardava. A v27 salva no navegador `pautas`, `novos`,
+      `mat` e `refs`. A EQUIPE nunca entrou nessa lista — quem cadastrava
+      o time e fechava a aba perdia tudo. O plano também não entrava.
+      Agora os dois são guardados, numa chave própria, para não mexer no
+      formato do que já funciona.
+
+      O limite honesto: isto é o armazenamento do navegador. Fica NESTE
+      aparelho e NESTE navegador. Não viaja para o celular, não volta
+      depois de limpar os dados do site. É o que um protótipo consegue
+      prometer sem servidor — e a promessa de verdade é a API.
+
+   2. Entrar como agência agora PERGUNTA quem você é, em vez de assumir.
+      A lista sai da equipe de verdade, então quem você cadastrar aparece
+      aqui — as duas coisas desta versão se encontram nesse ponto.
+   ================================================================== */
+const CHAVE_CONTA = 'maestro-conta-v1';
+
+function salvarConta(){
+  try{ localStorage.setItem(CHAVE_CONTA, JSON.stringify({
+    equipe: S.equipe, plan: S.plan, quando: Date.now() })); }catch(e){}
+}
+
+(function restaurarConta(){
+  try{
+    const g = JSON.parse(localStorage.getItem(CHAVE_CONTA) || 'null');
+    if(!g) return;
+    /* nunca restaura uma equipe vazia: a conta ficaria sem administrador */
+    if(Array.isArray(g.equipe) && g.equipe.length && g.equipe.some(m => m && m.n))
+      S.equipe = g.equipe.filter(m => m && m.n);
+    if(g.plan && typeof PLANOS === 'object' && PLANOS[g.plan]) S.plan = g.plan;
+  }catch(e){}
+})();
+
+const _renderV74 = render;
+let _tmConta = 0;
+render = function(){
+  _renderV74();
+  clearTimeout(_tmConta); _tmConta = setTimeout(salvarConta, 250);
+};
+
+/* ---------- entrar como agência: escolher quem você é ---------------- */
+function abrirQuemAgencia(){
+  if(document.getElementById('quemEsta')) return;
+  const atual = (S.usuario && S.usuario.tipo === 'agencia') ? S.usuario.id : null;
+  const el = document.createElement('div');
+  el.id = 'quemEsta';
+  el.innerHTML = `<div class="caixa">
+    <h3>Quem está entrando?</h3>
+    <p class="sub">Escolha o seu nome — o que você fizer fica no seu nome.</p>
+    <div class="grp">Equipe da agência</div>
+    ${(S.equipe || []).map(m => {
+      const eu = membroId(m) === atual;
+      return `<button class="qePessoa${eu ? ' euAgora' : ''}" data-qeag="${membroId(m)}">
+        <span class="av">${membroIni(m)}</span>
+        <span style="flex:1"><b>${esc(m.n)}</b><span>${esc(m.papel)}${m.dono ? ' · dono da conta' : ''}</span></span>
+        ${eu ? '<span class="euTag">você</span>' : ic('chevr', 14)}</button>`;
+    }).join('')}
+    <button class="qeVoltar" data-qevoltar="1">Voltar</button>
+  </div>`;
+  document.body.appendChild(el);
+}
+
+/* na janela e em captura: chega antes do handler que entrava direto */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-enter="agency"]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  abrirQuemAgencia();
+}, true);
+
+addEventListener('click', e => {
+  const v = e.target.closest && e.target.closest('[data-qevoltar]');
+  if(!v) return;
+  e.stopImmediatePropagation();
+  document.getElementById('quemEsta')?.remove();
+}, true);
+
+/* a equipe restaurada precisa aparecer na tela que já foi desenhada */
+if(typeof render === 'function') render();
 </script>
