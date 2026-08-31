@@ -15671,7 +15671,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v79 · 31 ago · avisos';
+const VERSAO_PROTOTIPO = 'v80 · 31 ago · apagar squad';
 
 menuSheet = (function(orig){
   return function(){
@@ -17921,4 +17921,133 @@ render = function(){
   }
   _renderV79();
 };
+</script>
+
+<style>
+/* apagar squad não é irmão de "Salvar": mora sozinho, embaixo, em voz baixa */
+.sqApagar{ display:flex; align-items:center; gap:7px; margin:14px 0 0; padding-top:13px;
+  border-top:1px solid var(--ink-800); font-size:12px; color:var(--ink-400) }
+.sqApagar button{ font-size:12px; color:var(--danger); font-weight:600;
+  text-decoration:underline; text-underline-offset:3px }
+.sqApagar button:hover{ opacity:.8 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v80 — APAGAR SQUAD.
+
+   Duas decisões de produto antes da primeira linha de código:
+
+   1. Apagar NÃO joga fora as mensagens. O princípio 6 do CLAUDE.md é
+      "tudo possui histórico" e o 6º diz que nada pode ser perdido. Um
+      squad apagado sai da lista de todo mundo; a conversa fica parada,
+      invisível, do mesmo jeito que a pauta de um cliente excluído fica
+      (v45b — foi o que salvou os 70 itens reais da EJUP). Custa nada
+      guardar e transforma um clique errado num "Desfazer".
+
+   2. O Geral e os canais de cliente não se apagam. O Geral é de todo
+      mundo por definição; o canal do cliente é a única porta dele para
+      dentro da agência — apagá-lo seria fechar a porta na cara de quem
+      paga. Só squad se apaga.
+
+   Quem pode: quem está dentro do squad, e o administrador. É a mesma
+   régua que já valia para mexer nos membros.
+   ================================================================== */
+const apagados = () => (S.chat && S.chat.fora) || [];
+const squadApagado = id => apagados().includes(id);
+const podeApagar = c => !!c && c.tipo === 'squad' && c.id !== 'geral' && souAgencia();
+
+/* some da lista — mas continua existindo em S.chat.canais */
+canaisVisiveis = (function(orig){
+  return function(){ return orig().filter(c => !squadApagado(c.id)); };
+})(canaisVisiveis);
+
+/* e não gera aviso de mensagem nova vindo de outro aparelho */
+olharMensagens = (function(orig){
+  return function(){
+    if(!S.chat || !apagados().length) return orig();
+    const todos = S.chat.canais;
+    S.chat.canais = todos.filter(c => !squadApagado(c.id));
+    try { return orig(); } finally { S.chat.canais = todos; }
+  };
+})(olharMensagens);
+
+/* ---------- o botão, dentro do modal de membros ---------- */
+modalSquad = (function(orig){
+  return function(canalId){
+    let html = orig(canalId);
+    const c = canalId ? canalPorId(canalId) : null;
+    if(!podeApagar(c)) return html;
+    const n = c.msgs.length;
+    const rodape = `<div class="sqApagar">
+      <span style="flex:1">${n ? `${n} ${n === 1 ? 'mensagem' : 'mensagens'} aqui dentro.` : 'Nenhuma mensagem ainda.'}</span>
+      <button type="button" data-sqapagar="${c.id}">Apagar squad</button></div>`;
+    return html.replace('</div></div></div>', '</div>' + rodape + '</div></div>');
+  };
+})(modalSquad);
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-sqapagar],[data-sqapagarok]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+
+  if(d.sqapagar !== undefined){
+    const c = canalPorId(d.sqapagar);
+    if(!podeApagar(c)) return;
+    const n = c.msgs.length;
+    S.modal = `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+      <h3>Apagar ${esc(c.nome)}?</h3>
+      <p>Sai da lista de todo mundo que está no squad${n ? `, com as ${n} ${n === 1 ? 'mensagem' : 'mensagens'} da conversa` : ''}.
+        O histórico não é destruído — fica guardado, fora da vista.
+        Você tem 8 segundos para desfazer.</p>
+      <div class="modalrow"><button class="b gho" data-modalno="1">Voltar</button>
+        <button class="b pri" style="background:var(--danger);color:#fff"
+          data-sqapagarok="${c.id}">Apagar squad</button></div></div></div>`;
+    renderLayer(); return; }
+
+  if(d.sqapagarok !== undefined){
+    const id = d.sqapagarok, c = canalPorId(id);
+    if(!podeApagar(c)) return;
+
+    const eram = c.membros || S.equipe.map(membroId);
+    /* os avisos daquele canal saem junto: um sino que leva a um canal
+       que não existe mais é pior do que sino nenhum */
+    const avisosDele = S.avisos.filter(a => a.canal === id);
+    S.avisos = S.avisos.filter(a => a.canal !== id);
+
+    if(!S.chat.fora) S.chat.fora = [];
+    S.chat.fora.push(id);
+
+    const quem = membro(euAgora());
+    avisar({ para: eram, txt: `${c.nome} foi apagado`,
+      sub: `${quem ? quem.nome.split(' ')[0] : 'Alguém'} apagou o canal` });
+
+    ultimoSqRm = { id, avisos: avisosDele, ativoAntes: S.cvAtivo };
+    clearTimeout(_sqUndo);
+    _sqUndo = setTimeout(() => { ultimoSqRm = null; }, 8000);
+
+    if(S.cvAtivo === id) S.cvAtivo = (canaisVisiveis()[0] || {}).id || null;
+    S.modal = null; som('toque'); render();
+    toast(`"${c.nome}" apagado.`, true);
+    return; }
+}, true);
+
+/* ---------- desfazer sabe mais uma coisa ---------- */
+let ultimoSqRm = null, _sqUndo = null;
+desfazer = (function(base){
+  return function(){
+    if(ultimoSqRm){
+      const { id, avisos, ativoAntes } = ultimoSqRm;
+      S.chat.fora = apagados().filter(x => x !== id);
+      S.avisos = [...avisos, ...S.avisos];
+      S.cvAtivo = ativoAntes; ultimoSqRm = null; S.toast = null;
+      render();
+      const c = canalPorId(id);
+      toast(`"${c ? c.nome : 'Squad'}" de volta.`);
+      return;
+    }
+    return base();
+  };
+})(desfazer);
 </script>
