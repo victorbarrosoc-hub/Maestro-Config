@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-31 11:54 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-31 12:08 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -60,7 +60,7 @@
   --tabh:0px;
 }
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;background:var(--ink-950)}
 body{margin:0;background:var(--ink-950);color:var(--ink-100);font-family:var(--sans);
   font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 button{font:inherit;cursor:pointer;border:0;background:none;color:inherit;padding:0}
@@ -5030,11 +5030,14 @@ function som(tipo){
 /* ---------- 1 · a abertura ------------------------------------------ */
 #abertura{
   position:fixed; inset:0; z-index:2000; display:grid; place-items:center;
-  /* nasce da mesma família do fundo do corpo: senão o primeiro quadro
-     pinta o corpo e a cortina cobre com um preto muito mais escuro —
-     era esse o flash ao abrir */
+  /* Nenhuma parada pode ser mais escura que o fundo do corpo. Nos
+     primeiros quadros a cortina chega a pintar chapada na parada
+     externa, antes de a geometria do gradiente assentar — com um tom
+     mais escuro ali, isso vira uma piscada. Medido no vídeo do founder:
+     a tela caía de (22,22,22) para (17,17,17) por dois quadros, e
+     (17,17,17) é justamente o #101010 que estava aqui. */
   background:
-    radial-gradient(120% 90% at 50% 42%, #1C1C1C 0%, #161616 58%, #101010 100%);
+    radial-gradient(120% 90% at 50% 42%, #1C1C1C 0%, var(--ink-950) 62%, var(--ink-950) 100%);
   overflow:hidden; cursor:pointer;
 }
 #abertura.saindo{ animation:abSai .85s var(--eo) forwards; pointer-events:none }
@@ -15705,7 +15708,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v72 · 30 ago · sem flash';
+const VERSAO_PROTOTIPO = 'v73 · 31 ago · a equipe';
 
 menuSheet = (function(orig){
   return function(){
@@ -16979,3 +16982,133 @@ if(typeof render === 'function') render();
 }
 </style>
 
+<style>
+/* a fileira de ações do membro, discreta até você precisar dela */
+.mbAcoes{ display:flex; gap:8px; margin-top:12px; padding-top:12px;
+  border-top:1px solid var(--ink-800) }
+.mbAcoes .b{ padding:6px 11px; font-size:12px }
+.mbAcoes .sp{ flex:1 }
+.mbDono{ font-size:11.5px; color:var(--ink-400); align-self:center }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v73 — EDITAR E REMOVER NA EQUIPE.
+
+   Antes só dava para trocar o papel num select: nome e e-mail entravam
+   no convite e ficavam presos para sempre, e não havia como tirar
+   ninguém — o assento seguia ocupado por quem já tinha saído da agência.
+
+   Três travas que o caso pede:
+   · o dono da conta não pode ser removido nem rebaixado, senão a conta
+     fica sem administrador;
+   · remover libera o assento na hora, e o texto diz isso, porque é o
+     motivo mais comum de se estar removendo alguém;
+   · o histórico de quem sai não some. Remover tira o acesso, não apaga
+     o que a pessoa fez — nada na Maestro se perde (princípio 6).
+   ================================================================== */
+const membroPorIndice = i => S.equipe[+i];
+
+function modalMembro(i){
+  const m = membroPorIndice(i); if(!m) return '';
+  const papeis = Object.keys(PERMS).filter(r => r !== 'Administrador');
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>Editar ${esc(m.n.split(' ')[0])}</h3>
+    <div class="fld"><label for="mb-n">Nome</label>
+      <input id="mb-n" value="${esc(m.n)}"></div>
+    <div class="fld"><label for="mb-m">E-mail</label>
+      <input id="mb-m" value="${esc(m.mail)}"></div>
+    ${m.dono ? `<p style="font-size:12.5px;color:var(--ink-400);margin:0 0 4px">
+        Dono da conta — o papel de administrador não muda por aqui.</p>`
+      : `<div class="fld"><label for="mb-p">Papel</label><select id="mb-p">
+        ${papeis.map(r => `<option ${m.papel === r ? 'selected' : ''}>${r}</option>`).join('')}
+        </select></div>`}
+    <div class="modalrow"><button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b pri" data-savemembro="${i}">Salvar</button></div></div></div>`;
+}
+
+function modalRemoverMembro(i){
+  const m = membroPorIndice(i); if(!m) return '';
+  const lim = plano().assentos;
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>Remover ${esc(m.n)} da equipe?</h3>
+    <p>${esc(m.n.split(' ')[0])} perde o acesso agora. <b style="color:var(--ink-50)">O que
+      ela já fez continua no histórico</b> — comentários, versões e decisões seguem com o nome
+      dela, como sempre.</p>
+    <p style="color:var(--ink-400);font-size:12.5px">Libera um assento:
+      ficam ${assentosUsados() - 1} de ${lim}.</p>
+    <div class="modalrow"><button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b pri" data-dormembro="${i}">Remover da equipe</button></div></div></div>`;
+}
+
+/* a tela inteira, agora com as ações — a original só tinha o select de papel */
+agEquipe = function(){
+  const usados = assentosUsados(), lim = plano().assentos;
+  return agShell(`
+  <div class="mtop"><div><h1>Equipe</h1><p>${usados} de ${lim} assentos ·
+    aprovadores de cliente não contam</p></div>
+    <button class="b pri sm" data-invite="1">${ic('users')} Convidar</button></div>
+  ${S.equipe.map((m, i) => `<div class="card" style="margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span class="av">${m.n.split(' ').map(w => w[0]).slice(0, 2).join('')}</span>
+      <span style="flex:1;min-width:150px"><b style="color:var(--ink-50);font-size:13.5px">${esc(m.n)}</b>
+        <span style="display:block;font-size:11.5px;color:var(--ink-400)">${esc(m.mail)}${m.dono ? ' · dono da conta' : ''}</span></span>
+      ${m.dono ? `<span class="pill p-APPROVED">Administrador</span>`
+        : `<select class="selectrole" data-role="${i}" aria-label="Papel de ${esc(m.n)}">
+          ${Object.keys(PERMS).map(r => `<option ${m.papel === r ? 'selected' : ''}>${r}</option>`).join('')}</select>`}
+    </div>
+    <div class="permchips">
+      ${PERMS[m.papel].sim.map(x => `<span>✓ ${x}</span>`).join('')}
+      ${PERMS[m.papel].nao.map(x => `<span class="no">${x}</span>`).join('')}
+    </div>
+    <div class="mbAcoes">
+      <button class="b gho" data-editmembro="${i}">Editar</button>
+      <span class="sp"></span>
+      ${m.dono ? `<span class="mbDono">O dono da conta não pode ser removido</span>`
+        : `<button class="b gho" data-rmmembro="${i}">Remover</button>`}
+    </div></div>`).join('')}
+  <div class="card"><h4>Uma regra acima de todas</h4>
+    <p><b style="color:var(--ink-50)">Ninguém da agência aprova conteúdo — nem o dono.</b>
+      Quem aprova é o cliente. A única exceção é o registro offline, sempre marcado e auditado.</p></div>
+  ${usados >= lim ? `<div class="check warn" style="margin-top:12px">${ic('warn')}
+    <div><b>Assentos esgotados (${usados}/${lim})</b><span>Convidar mais alguém pede um plano maior.
+      O que já roda continua funcionando.</span></div></div>
+    <div style="margin-top:10px"><button class="b pri sm" data-r="planos">Ver planos</button></div>` : ''}`);
+};
+
+document.addEventListener('click', e => {
+  const alvo = e.target.closest('[data-editmembro],[data-rmmembro],[data-savemembro],[data-dormembro]');
+  if(!alvo) return;
+  const d = alvo.dataset;
+
+  if(d.editmembro !== undefined){
+    S.modal = modalMembro(d.editmembro); renderLayer();
+    setTimeout(() => document.getElementById('mb-n')?.focus(), 50); return; }
+
+  if(d.savemembro !== undefined){
+    const m = membroPorIndice(d.savemembro); if(!m) return;
+    const nome = (document.getElementById('mb-n')?.value || '').trim();
+    const mail = (document.getElementById('mb-m')?.value || '').trim();
+    if(nome.length < 2){
+      const el = document.getElementById('mb-n');
+      el.style.borderColor = 'var(--danger)'; el.focus(); return; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){
+      const el = document.getElementById('mb-m');
+      el.style.borderColor = 'var(--danger)'; el.focus();
+      toast('E-mail inválido — é por ele que a pessoa entra.'); return; }
+    m.n = nome; m.mail = mail;
+    if(!m.dono){ const p = document.getElementById('mb-p')?.value; if(p) m.papel = p; }
+    S.modal = null; som('toque'); render();
+    toast(`${nome.split(' ')[0]} atualizado.`); return; }
+
+  if(d.rmmembro !== undefined){
+    S.modal = modalRemoverMembro(d.rmmembro); renderLayer(); return; }
+
+  if(d.dormembro !== undefined){
+    const i = +d.dormembro, m = membroPorIndice(i);
+    if(!m || m.dono) return;                       /* a trava, também no fim da linha */
+    S.equipe.splice(i, 1);
+    S.modal = null; som('toque'); render();
+    toast(`${m.n.split(' ')[0]} saiu da equipe — assento liberado.`); return; }
+});
+</script>
