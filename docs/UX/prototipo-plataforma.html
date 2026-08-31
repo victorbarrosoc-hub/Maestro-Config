@@ -15671,7 +15671,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v80 · 31 ago · apagar squad';
+const VERSAO_PROTOTIPO = 'v81 · 31 ago · salvar de verdade';
 
 menuSheet = (function(orig){
   return function(){
@@ -18050,4 +18050,144 @@ desfazer = (function(base){
     return base();
   };
 })(desfazer);
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v81 — POR QUE NADA SALVAVA NA ABA DE CONVERSAS.
+
+   O relato do founder: mensagem e squad não salvam; o outro aparelho
+   recebe a NOTIFICAÇÃO mas não encontra a squad; cliente criado num
+   celular não existe no outro. Três sintomas, três causas diferentes —
+   e todas encontradas rodando dois "aparelhos" contra um banco falso,
+   não lendo código no escuro.
+
+   ── CAUSA 1: três rotas cortam caminho e o resto do render nunca roda.
+
+   O `render()` deste protótipo é uma pilha de dezesseis embrulhos. Três
+   deles (revisão, produção e conversas) desenham a própria tela e dão
+   `return` sem chamar o de baixo:
+
+       if(S.route==='conversas'){ ...desenha...; return; }   // ← nunca chama orig()
+
+   Tudo que mora ABAIXO desse ponto deixa de acontecer enquanto você
+   está naquela tela. E o que mora abaixo é justamente `sbAgendar()` —
+   quem agenda a gravação no banco. Ou seja: na aba de Conversas o
+   produto ficava, por construção, sem salvar nada. Vale também para o
+   Ensaio e para a Revisão — lá a PAUTA parava de ser gravada, e disso
+   ninguém tinha reclamado ainda.
+
+   O conserto não é reescrever os dezesseis embrulhos: é tirar a
+   persistência da carona do render. Salvar não é um efeito colateral de
+   desenhar. Agora existe um PULSO próprio, de um segundo e pouco, que
+   compara uma assinatura do estado e grava quando ela muda. Nenhuma
+   tela consegue mais desligar o salvamento — nem esta, nem a próxima que
+   alguém escrever com um `return` no meio.
+
+   ── CAUSA 2: o chat viajava numa linha separada, e só na ida.
+
+   `S.chat` estava na lista de "passageiro" — fora do pacote que a v76
+   sincroniza — e ia para uma linha própria (`__chat__`), gravada por
+   aquele mesmo caminho que a causa 1 desligava. Pior: o botão de
+   atualizar puxava só o `__estado__`; a linha do chat nunca era relida.
+   Por isso a NOTIFICAÇÃO chegava (ela vive em `S.avisos`, que viaja no
+   `__estado__`) e a SQUAD não: dois donos para o mesmo assunto, e um
+   deles quebrado.
+
+   Agora o chat viaja no mesmo pacote que o resto. Um dono só.
+
+   ── CAUSA 3: o cliente novo subia e era jogado fora na volta.
+
+   `estadoParaSincronizar()` acrescentava `novos` na ida (linha escrita
+   de propósito, com comentário e tudo) — mas `aplicarEstado()` ignora
+   toda chave "passageira" na volta, e `novos` é uma delas. O cliente
+   chegava no banco e o outro aparelho descartava em silêncio. Estava no
+   banco o tempo todo; ninguém lia.
+
+   Além de ler, agora ele UNE em vez de substituir: dois aparelhos que
+   criam clientes diferentes sem atualizar no meio ficam com os dois. Um
+   campo editado pode perder para o último que gravou — um cliente
+   inteiro desaparecer, não.
+
+   ── E o Menu, que não abria no celular.
+
+   Regressão minha, da v77: aquele bloco reescreveu `renderLayer` do
+   zero e levou junto a linha que pendurava a folha do menu. O botão
+   marcava `S.menu = true` e não havia mais quem desenhasse. A folha
+   ganha agora uma casa própria, como os avisos — assim ela não depende
+   de o `layer` ter mudado para reaparecer.
+   ================================================================== */
+
+/* ---------- 1. o Menu volta, numa casa própria ---------- */
+(function(){
+  const casa = document.createElement('div');
+  casa.id = 'menuhost';
+  document.body.appendChild(casa);
+  let ultimoMenu = null;
+  const _renderLayerV81 = renderLayer;
+  renderLayer = function(){
+    _renderLayerV81();
+    const h = (typeof menuSheet === 'function') ? menuSheet() : '';
+    if(h !== ultimoMenu){ casa.innerHTML = h; ultimoMenu = h; }
+  };
+})();
+
+/* Um limite que fica escrito, porque é real: o id de um cliente novo é
+   POSICIONAL (`n0`, `n1`…) e a pauta segue o id. Se dois aparelhos
+   criarem clientes diferentes sem atualizar no meio, a união abaixo
+   guarda os dois — mas a ordem pode ficar diferente nos dois lados, e aí
+   os ids trocam de dono. Não dá para consertar renumerando: mudar o id
+   de quem já existe ORFANARIA a pauta dele (a EJUP tem 70 itens reais em
+   `n0`). Isso é trabalho de id vindo do servidor — API, não protótipo.
+   Criar num aparelho e atualizar no outro antes de criar lá funciona. */
+
+/* ---------- 3. o chat passa a viajar no pacote de todo mundo ------- */
+PASSAGEIRO.delete('chat');
+
+const _aplicarV81 = aplicarEstado;
+aplicarEstado = function(sv){
+  if(!sv) return 0;
+  const chatDeLa = sv.chat, novosDeLa = sv.novos;
+  const n = _aplicarV81(sv);
+
+  /* chat: só entra inteiro e coerente — meio chat é pior que nenhum */
+  if(chatDeLa && Array.isArray(chatDeLa.canais)) S.chat = chatDeLa;
+
+  /* novos: UNE. Perder um campo editado é aceitável; perder um cliente
+     inteiro que alguém cadastrou no celular, não. */
+  if(Array.isArray(novosDeLa)){
+    const chave = c => c.id || c.nome;
+    const tenho = new Map((S.novos || []).map(c => [chave(c), c]));
+    for(const c of novosDeLa){
+      const k = chave(c);
+      if(tenho.has(k)) Object.assign(tenho.get(k), c);   // o de lá é mais novo
+      else { S.novos.push(c); tenho.set(k, c); }
+    }
+  }
+  return n;
+};
+
+/* ---------- 4. o PULSO: salvar deixa de ser efeito colateral ------- */
+/* Um relógio próprio, fora da pilha do render. Compara uma assinatura
+   barata do que importa e só age quando ela muda — então ficar parado
+   não custa requisição nenhuma. */
+let _assinatura = null;
+function assinaturaDoEstado(){
+  try{ return JSON.stringify(estadoParaSincronizar()); }
+  catch(e){ return null; }
+}
+function pulso(){
+  const a = assinaturaDoEstado();
+  if(a === null || a === _assinatura) return;
+  _assinatura = a;
+  try{ guardarTudo(); }catch(e){}      // navegador
+  try{ sbAgendar(); }catch(e){}        // pauta por cliente + __config__
+  try{ enviarEstado(); }catch(e){}     // o pacote inteiro, para os outros aparelhos
+}
+setInterval(pulso, 1200);
+
+/* o botão de atualizar também precisa existir nas telas que cortam
+   caminho — ele é criado no fim do render, que lá não chega */
+setInterval(() => { try{ botaoAtualizar(); }catch(e){} }, 1500);
 </script>
