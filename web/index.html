@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-31 14:01 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-31 14:14 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -15708,7 +15708,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v76 · 31 ago · entre aparelhos';
+const VERSAO_PROTOTIPO = 'v77 · 31 ago · o campo não foge';
 
 menuSheet = (function(orig){
   return function(){
@@ -17483,4 +17483,109 @@ render = function(){
   clearTimeout(_tmEnvio); _tmEnvio = setTimeout(enviarEstado, 1200);
 };
 botaoAtualizar();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v77 — O MODAL QUE FECHAVA SOZINHO, E A CLASSE INTEIRA DO DEFEITO.
+
+   O relato: abrir "Novo cliente", tocar no campo, e a caixa fechar
+   sozinha. A causa não estava no formulário.
+
+   `renderLayer()` monta numa string só o que está por cima da tela —
+   modal, aviso, selo — e joga tudo de uma vez em `#layer.innerHTML`.
+   E `toast()` agenda um `renderLayer()` para 3,2 s depois, só para
+   TIRAR o aviso da tela. Quando esse relógio dispara com um modal
+   aberto, o modal é reconstruído do zero: o campo morre, o foco vai
+   embora, o teclado do celular fecha, e o que foi digitado some. Não é
+   o formulário fechando — é a tela inteira sendo refeita por baixo dele.
+
+   O mesmo vale para qualquer `render()` que aconteça enquanto alguém
+   digita: a sincronização, um cronômetro, a fila de publicação.
+
+   Duas correções, nesta ordem:
+
+   1. AVISOS EM OUTRO ANDAR. Aviso e selo saem do `#layer` e passam a
+      viver num contêiner próprio. Um aviso expirando deixa de tocar no
+      modal — que era exatamente o caminho do defeito relatado.
+
+   2. NÃO REFAZER O QUE NÃO MUDOU. Se o HTML montado é igual ao que já
+      está na tela, não se escreve nada: um render disparado por relógio
+      vira nada. E quando o HTML muda mesmo, o foco e a posição do cursor
+      são devolvidos ao campo que os tinha. Isso cobre também os campos
+      da pauta e do lote de texto, fora do modal.
+   ================================================================== */
+(function corrigirRerenderizacao(){
+  const layer = document.getElementById('layer');
+  if(!layer) return;
+
+  let avisos = document.getElementById('layerAvisos');
+  if(!avisos){
+    avisos = document.createElement('div');
+    avisos.id = 'layerAvisos';
+    /* sem position/z-index/transform: não cria contexto de empilhamento,
+       então o aviso e o selo mantêm exatamente a altura que já tinham */
+    document.body.appendChild(avisos);
+  }
+
+  let ultBase = null, ultAvisos = null;
+
+  renderLayer = function(){
+    let base = '';
+    if(S.full) base += vFull();
+    if(S.pal) base += vPal();
+    if(S.modal) base += S.modal;
+
+    let topo = '';
+    if(S.stampShow) topo += `<div class="stampover"><div class="stampseal"><div class="in">
+      ${ic('sealic',34)}<b>LOTE FECHADO</b><span>SELO A19C·4E30</span></div></div></div>`;
+    if(S.toast) topo += `<div class="toast">${ic('checkc')}<span>${S.toast.msg}</span>
+      ${S.toast.undo?`<button data-undo="1">Desfazer</button><span class="drain"></span>`:''}</div>`;
+
+    if(topo !== ultAvisos){ avisos.innerHTML = topo; ultAvisos = topo; }
+
+    if(base !== ultBase){
+      layer.innerHTML = base; ultBase = base;
+      const pq = document.getElementById('palq');
+      if(pq){ pq.focus(); pq.setSelectionRange(pq.value.length, pq.value.length); }
+      const nt = document.getElementById('nota'); if(nt) nt.focus();
+    }
+  };
+
+  /* ---- guardar e devolver o cursor quando a tela é refeita ---- */
+  const digitavel = el => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ||
+    el.isContentEditable);
+
+  function ondeEstavaOCursor(){
+    const el = document.activeElement;
+    if(!digitavel(el) || !el.id) return null;              // sem id não dá para reencontrar
+    try{ return { id: el.id, ini: el.selectionStart, fim: el.selectionEnd }; }
+    catch(e){ return { id: el.id, ini: null, fim: null }; }
+  }
+
+  function devolverOCursor(m){
+    if(!m) return;
+    const el = document.getElementById(m.id);
+    if(!digitavel(el) || el === document.activeElement) return;
+    try{
+      el.focus({ preventScroll: true });
+      if(m.ini != null && el.setSelectionRange) el.setSelectionRange(m.ini, m.fim);
+    }catch(e){}
+  }
+
+  const raiz = document.getElementById('root');
+  let ultRaiz = null;
+  const _renderV77 = render;
+  render = function(){
+    const cursor = ondeEstavaOCursor();
+    const antes = raiz ? raiz.innerHTML : null;
+    _renderV77();
+    /* se o conteúdo voltou igual, desfaz a troca de nós: o navegador já
+       reconstruiu, mas o custo real é o foco perdido, e este é o ponto
+       onde ele volta */
+    if(raiz && raiz.innerHTML === antes) ultRaiz = antes;
+    devolverOCursor(cursor);
+  };
+})();
 </script>
