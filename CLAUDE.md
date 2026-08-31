@@ -2,6 +2,7 @@
 
 Version: 0.5
 Status: Implementação — blocos 1, 2, 3 e 5 da API prontos, verificados por HTTP
+        · D-080 resolvida (a fase substitui o status): blocos 4, 6, 7 e 8 liberados
 Codename: Project Symphony
 Última atualização: 2026-08-30
 
@@ -274,9 +275,11 @@ migrations e seed executados · 9 protótipos navegáveis · 2 rodadas de teste
 com clientes reais
 
 **Não verificado:** `apps/web` não existe; o worker que entrega as notificações
-enfileiradas não existe.
+enfileiradas não existe (o protótipo tem aviso dentro do produto, nada de e-mail).
 
 **Aberto e bloqueante:** D-024 — INPI e domínio. Rodada 3 do teste com clientes.
+**Aberto e do founder:** fechar a RLS do Supabase — passo a passo em
+`docs/ENGINEERING/SUPABASE_FECHAR_A_BRECHA.md`. Hoje quem tem o link lê e escreve tudo.
 
 **Próximos passos:** blocos 4, 6, 7 e 8 → servidor MCP (D-061) → `apps/web`.
 
