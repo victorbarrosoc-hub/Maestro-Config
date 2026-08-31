@@ -746,10 +746,17 @@ const finAtivos = () => ativos().filter(p=>p.fase!=='TEXTO');
  * Rascunho e peça em produção não são deste lote. Quem não foi enviado não
  * conta — nem no total, nem na barra, nem na porta do termo.
  */
-const NO_LOTE   = ['AWAITING_APPROVAL','APPROVED','CHANGES_REQUESTED'];
+/* Aprovar nao e o fim da linha: assinar o termo agenda o que foi aprovado
+   (S.autoAg), e a peca vira SCHEDULED e depois PUBLISHED. Os tres estados
+   dizem a mesma coisa sobre a DECISAO — o cliente aprovou. Contar so
+   'APPROVED' fazia o lote encolher no instante da assinatura: o termo
+   recem-assinado dizia "2 publicacoes, 0 aprovadas" para um lote de 8. */
+const APROVADA  = ['APPROVED','SCHEDULED','PUBLISHED'];
+const NO_LOTE   = ['AWAITING_APPROVAL','CHANGES_REQUESTED', ...APROVADA];
 const doLote    = () => finAtivos().filter(p=>NO_LOTE.includes(p.st));
-const decididas = () => doLote().filter(p=>p.st==='APPROVED'||p.st==='CHANGES_REQUESTED').length;
-const aprovadas = () => doLote().filter(p=>p.st==='APPROVED').length;
+/* no lote, decidido e tudo que nao esta esperando */
+const decididas = () => doLote().filter(p=>p.st!=='AWAITING_APPROVAL').length;
+const aprovadas = () => doLote().filter(p=>APROVADA.includes(p.st)).length;
 const pedidas   = () => doLote().filter(p=>p.st==='CHANGES_REQUESTED').length;
 const esperando = () => doLote().filter(p=>p.st==='AWAITING_APPROVAL').length;
 const fmtSeal   = s => s.slice(0,4)+'·'+s.slice(4);
@@ -2668,7 +2675,7 @@ function agClientes(){
 
 function agClienteDet(){
   const c = cliAtual();
-  const tab = S.tab || 'marca';
+  const tab = S.tab || 'pauta';
   const corpo = {
     marca:`<div class="card"><h4>Briefing — o que a equipe precisa saber</h4><p>${esc(c.brief)}</p></div>
       <div class="card"><h4>Links</h4><p>${c.links.length?c.links.map(l=>`<span class="seal" style="margin-right:8px">${ic('linkic',12)} ${esc(l)}</span>`).join(''):'Nenhum link cadastrado ainda.'}</p></div>
@@ -3253,7 +3260,7 @@ document.addEventListener('click', e => {
   if(!t) return;
   const d = t.dataset;
   if(d.cli && !d.clidet){ S.cli=d.cli; render(); return; }
-  if(d.clidet){ S.cli=d.clidet; S.route='clientedet'; S.tab='marca'; window.scrollTo(0,0); render(); return; }
+  if(d.clidet){ S.cli=d.clidet; S.route='clientedet'; S.tab='pauta'; window.scrollTo(0,0); render(); return; }
   if(d.editcrono){ S.modal=modalCrono(); renderLayer(); return; }
   if(d.savecrono){
     const pj = S.proj[cliAtual().id];
@@ -5911,10 +5918,22 @@ function som(tipo){
       barra(MI4b, .52, .14, 'vibrafone', -.1);
       fundo(220, .54, .16);
     }
-    if(tipo === 'afinacao'){                    // a abertura: o obo da o La
-      sopro(LA4b, 0, 1.9, .085);
-      barra(LA3b, .05, .13, 'vibrafone', -.2);
-      fundo(110, .04, .13);
+    if(tipo === 'afinacao' || tipo === 'abertura'){
+      /* O LOGO SONORO (BRAND/SOUND_IDENTITY §3): arpejo de La maior
+         ascendente com crescendo leve e cauda de sino — uma oitava
+         abaixo do escrito, como toda a paleta desde a D-072.
+         Antes dele o obo da o La 440: a orquestra afinando, que e o que
+         a tela mostra por escrito. Depois, o La grave assenta — a
+         aterrissagem na plataforma.
+         E UM gesto sonoro, nao seis efeitos soltos: a R3 e a R4 valem
+         entre sons, e isto aqui e um som so. Maximo uma vez por sessao. */
+      sopro(LA4b, 0, 1.30, .075);                     // o la 440 da tela
+      fundo(110, .02, .09);
+      [[LA3b, .46, .13], [CS4b, .64, .17], [MI4b, .82, .21]]
+        .forEach(([f, t0, g], i) => barra(f, t0, g, 'marimba', -.18 + i*.18));
+      barra(MI4b, 1.00, .10, 'celesta',  .07);        // a cauda de sino
+      barra(LA4b, 1.03, .06, 'celesta', -.07);
+      fundo(110, 1.20, .12);                          // aterrissa
     }
   }catch(e){}
 }
@@ -6481,7 +6500,7 @@ render = function(){
 /* =====================================================================
    v25 — Semana · Mês · Tabela, e o filtro do que falta.
    ================================================================== */
-S.ptVista  = S.ptVista  || 'semana';
+S.ptVista  = S.ptVista  || 'dia';   /* v58: o dia e o que a agencia opera */
 S.ptFiltro = S.ptFiltro || 'todas';
 S.ptMDia   = (S.ptMDia===undefined) ? null : S.ptMDia;
 
@@ -6998,11 +7017,13 @@ agClienteDet = function(){
   // nas outras abas, so acrescenta a Pauta na regua
   return _agClienteDetV27().replace(
     /<div class="tabs">[\s\S]*?<\/div>/,
-    abasCliente(S.tab || 'marca'));
+    abasCliente(S.tab || 'pauta'));
 };
 
 function abasCliente(atual){
-  const abas = [['marca','Marca e briefing'],['pauta','Pauta'],
+  /* A Pauta na frente: e a tela onde a agencia passa o dia. Marca e
+     briefing se le uma vez por trimestre; a pauta, todo dia. */
+  const abas = [['pauta','Pauta'],['marca','Marca e briefing'],
                 ['projetos','Projetos'],['equipe','Quem aprova']];
   return `<div class="tabs">${abas.map(([t,n])=>
     `<button data-tab="${t}" class="${atual===t?'on':''}">${n}</button>`).join('')}</div>`;
@@ -14190,14 +14211,19 @@ const catDe = t => CATS_ENSAIO.find(c=>c.id===(t.cat||'marketing')) || CATS_ENSA
    - Financeiro e Sócios: só o responsável, quem foi marcado em "quem
      pode ver" — e os sócios (dono/Administrador), que veem tudo. */
 function podeVerTarefa(t){
-  if(!S.usuario || S.usuario.tipo!=='agencia') return false;
+  /* Ninguém se identificou ainda (o "quem está" nunca foi usado). Esconder
+     tudo deixava o quadro vazio e as categorias sumidas, sem dizer por quê —
+     parecia defeito, não privacidade. Sem pessoa escolhida, o protótipo
+     mostra tudo; a regra passa a valer assim que alguém entra como alguém. */
+  if(!S.usuario) return true;
+  if(S.usuario.tipo!=='agencia') return false;
   if((t.cat||'marketing')==='marketing') return true;
   if(ehAdmin()) return true;
   const eu = S.usuario.id;
   return t.resp===eu || (t.quemVe||[]).includes(eu);
 }
 const catsVisiveis = () => CATS_ENSAIO.filter(c =>
-  c.id==='marketing' || ehAdmin() ||
+  c.id==='marketing' || !S.usuario || ehAdmin() ||
   (S.ensaio && S.ensaio.tarefas.some(t=>(t.cat||'marketing')===c.id && podeVerTarefa(t))));
 
 /* ---------- o quadro, agora por categoria --------------------------- */
@@ -14248,7 +14274,7 @@ agEnsaio = function(){
     </div>`;
   }).join('');
   const chips = cats.map(c=>{
-    const n = S.ensaio.tarefas.filter(t=>(t.cat||'marketing')===c.id && podeVerTarefa(t)).length;
+    const n = S.ensaio.tarefas.filter(t=>catIdDe(t)===c.id && podeVerTarefa(t)).length;
     return `<button class="enCat ${c.id===S.enCat?'on':''}" data-encat="${c.id}"
       style="--catCor:${c.cor}"><i style="background:${c.cor}"></i>${c.nome}<b>${n||''}</b></button>`;
   }).join('');
@@ -14279,7 +14305,7 @@ modalTarefa = function(id){
   const t = id ? S.ensaio.tarefas.find(x=>x.id===id) : null;
   S.enResp = t ? t.resp : null;
   S.enCli = t ? t.cli : (CLIS()[0]||{}).id;
-  S.enCatModal = t ? (t.cat||'marketing') : (S.enCat||'marketing');
+  S.enCatModal = t ? catIdDe(t) : (S.enCat||'producao');
   S.enQuemVe = new Set(t ? (t.quemVe||[]) : []);
   const cat = CATS_ENSAIO.find(c=>c.id===S.enCatModal);
   const job = t && t.cardId && (S.pautas[t.cli]||[]).find(p=>p.id===t.cardId);
@@ -14295,7 +14321,7 @@ modalTarefa = function(id){
     <div class="fld"><label for="en-desc">Detalhes</label>
       <textarea id="en-desc" rows="2" placeholder="O contexto que quem executa precisa.">${t?esc(t.desc||''):''}</textarea></div>
 
-    <div class="tcCorpo" data-encampo="marketing" ${S.enCatModal!=='marketing'?'hidden':''}>
+    <div class="tcCorpo" data-encampo="producao" ${S.enCatModal!=='producao'?'hidden':''}>
       <div class="fld"><label>Cliente</label><div class="ptChips">
         ${CLIS().map(c=>`<button data-enclipick="${c.id}" class="${S.enCli===c.id?'on':''}">${esc(c.nome)}</button>`).join('')}</div></div>
       <div class="fld"><label for="en-card">O card da pauta deste job</label>
@@ -14310,7 +14336,7 @@ modalTarefa = function(id){
         ${ic('doc',12)} Abrir o card completo</button>`:''}
     </div>
 
-    <div class="tcCorpo" data-encampo="financeiro" ${S.enCatModal!=='financeiro'?'hidden':''}>
+    <div class="tcCorpo" data-encampo="comercial" ${S.enCatModal!=='comercial'?'hidden':''}>
       <div class="frow">
         <div class="fld"><label for="en-valor">Valor (R$)</label>
           <input id="en-valor" inputmode="decimal" value="${t&&t.valor?esc(String(t.valor)):''}" placeholder="0,00"></div>
@@ -14327,7 +14353,7 @@ modalTarefa = function(id){
         class="${S.enResp===membroId(m)?'on':''}">${esc(m.n)}</button>`).join('')}
       <button data-enresppick="" class="${!S.enResp?'on':''}">inbox (sem dono)</button></div></div>
 
-    <div class="tcCorpo" data-encampo="privado" ${S.enCatModal==='marketing'?'hidden':''}>
+    <div class="tcCorpo" data-encampo="privado" ${S.enCatModal==='producao'?'hidden':''}>
       <div class="fld"><label>Quem pode ver — além do responsável e dos sócios</label>
         <div class="ptChips">${(S.equipe||[]).map(m=>`<button data-enquemve="${membroId(m)}"
           class="${S.enQuemVe.has(membroId(m))?'on':''}">${esc(m.n)}</button>`).join('')}</div>
@@ -14352,7 +14378,7 @@ document.addEventListener('click', e => {
       b.classList.toggle('on', b.dataset.encatpick===S.enCatModal));
     document.querySelectorAll('.tcCorpo[data-encampo]').forEach(c=>{
       c.hidden = c.dataset.encampo==='privado'
-        ? S.enCatModal==='marketing'
+        ? S.enCatModal==='producao'
         : c.dataset.encampo!==S.enCatModal;
     });
     return;
@@ -14374,7 +14400,7 @@ window.addEventListener('click', e => {
   if(!t || !document.getElementById('en-desc')) return;
   const v = id => document.getElementById(id)?.value.trim() || '';
   const extras = {
-    cat: S.enCatModal || 'marketing',
+    cat: S.enCatModal || 'producao',
     desc: v('en-desc'),
     quemVe: [...S.enQuemVe],
     valor: v('en-valor') || null,
@@ -14388,8 +14414,8 @@ window.addEventListener('click', e => {
       : S.ensaio.tarefas[S.ensaio.tarefas.length-1];
     if(!tr) return;
     Object.assign(tr, { cat:extras.cat, desc:extras.desc, quemVe:extras.quemVe });
-    if(extras.cat==='financeiro'){ tr.valor = extras.valor; tr.fin = extras.fin; }
-    if(extras.cat==='marketing'){
+    if(extras.cat==='comercial'){ tr.valor = extras.valor; tr.fin = extras.fin; }
+    if(extras.cat==='producao'){
       if(extras.cardSel==='novo'){
         // o job nasce nos dois lugares de uma vez
         const arr = S.pautas[tr.cli] = S.pautas[tr.cli] || [];
@@ -14432,7 +14458,7 @@ document.addEventListener('click', e => {
   if(!S.ensaio) S.ensaio = kbSemente();
   S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo:p.t, cli:cliAtual().id,
     resp:p.resp||null, col: p.resp?'plan':'inbox', criada:Date.now(),
-    prazo:p.data||null, tempoMs:0, desde:null, cat:'marketing', cardId:p.id, quemVe:[] });
+    prazo:p.data||null, tempoMs:0, desde:null, cat:'producao', cardId:p.id, quemVe:[] });
   som('toque');
   S.modal = modalVer(p.id); renderLayer(); render();
   toast(`"${p.t}" agora também está no Ensaio — o mesmo job, nos dois lugares.`);
@@ -14667,7 +14693,7 @@ document.addEventListener('click', async e => {
 </script>
 <style>
 /* =====================================================================
-   v64 — a pauta no celular: o card deitado, as ações embaixo.
+   v52 — a pauta no celular: o card deitado, as ações embaixo.
 
    No desktop o card e os cinco botões lado a lado cabem folgados. No
    celular não cabiam: os botões reservavam ~180px fixos da direita e
@@ -14702,3 +14728,2105 @@ document.addEventListener('click', async e => {
   .ptItem > .ptFeito svg{ font-size:15px }
 }
 </style>
+<script>
+"use strict";
+/* =====================================================================
+   v53 — a abertura ganha som de verdade.
+
+   O logo sonoro já existia na marca (SOUND_IDENTITY §3) e já era
+   chamado pela cortina — mas quase nunca tocava. Navegador nenhum
+   libera áudio antes de um gesto do usuário, e a cortina abre no
+   carregamento; o código tentava tocar e desistia em silêncio se o
+   contexto ainda estivesse suspenso. Na prática a abertura era muda.
+
+   Duas correções:
+
+   1. `AC.resume()` é assíncrono. O código antigo chamava resume e no
+      instante seguinte testava `AC.state !== 'running'` — que ainda era
+      'suspended'. Desistia sempre, inclusive no toque em "toque para
+      entrar", onde o gesto existia e o áudio estava liberado. Agora o
+      som sai *dentro* da promessa do resume.
+
+   2. Enquanto a cortina está no ar, o primeiro gesto — toque, clique ou
+      tecla — solta o áudio e dispara a abertura. Some com a cortina, o
+      arme sai junto: fanfarra tocando três segundos depois, com a
+      plataforma já aberta, seria defeito, não marca (R2).
+
+   Junto vai a R9, que nunca tinha sido implementada: no primeiro som da
+   sessão, um aviso discreto de que a Maestro tem som e de onde desligar.
+   ================================================================== */
+
+/* R9 — o primeiro som se apresenta. Uma vez por sessão, e nunca por
+   cima do próprio som: o aviso espera a frase terminar. */
+let avisouDosSons = false;
+function avisarDosSons(atraso){
+  if(avisouDosSons) return;
+  avisouDosSons = true;
+  setTimeout(() => {
+    if(S.sound) toast('A Maestro tem sons. Para desligar: Conta → Preferências.');
+  }, atraso ?? 2200);
+}
+
+let aberturaTocada = false;
+
+/* A guarda da abertura mora AQUI, não em quem chama: a cortina antiga
+   tem o seu próprio `afinar()`, que dispara no carregamento e de novo no
+   toque. Com o áudio já liberado — segunda visita, outra aba tocando —
+   isso fazia a fanfarra tocar duas e até três vezes, sobrepostas. O §3
+   é claro: máximo uma vez por sessão.
+   De quebra, qualquer som da sessão dispara o aviso da R9. */
+som = (function(orig){
+  return function(tipo){
+    if(!S.sound) return;
+    if(tipo === 'afinacao' || tipo === 'abertura'){
+      if(aberturaTocada) return;
+      aberturaTocada = true;
+    }
+    orig(tipo);
+    avisarDosSons();
+  };
+})(som);
+function tocarAbertura(){
+  // R7: com movimento reduzido a cortina dura 700ms — fanfarra ali é ruído.
+  if(aberturaTocada || !S.sound || REDUZ) return;
+  let ctx;
+  try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); ctx = AC; }
+  catch(e){ return; }
+
+  const soltar = () => {
+    if(aberturaTocada || ctx.state !== 'running') return;
+    som('abertura');            // a guarda de uma vez por sessão está no `som`
+    desarmarGesto();
+  };
+
+  if(ctx.state === 'running'){ soltar(); return; }
+  ctx.resume().then(soltar).catch(()=>{});
+}
+
+const GESTOS = ['pointerdown','touchstart','keydown'];
+const aoGesto = () => tocarAbertura();
+function desarmarGesto(){
+  GESTOS.forEach(g => removeEventListener(g, aoGesto, true));
+}
+
+/* Não dá para embrulhar `abrirCortina`: o `addEventListener` lá em cima
+   guardou a referência da função original, e reatribuir o nome depois não
+   troca o que já foi registrado. Registrar o nosso ouvinte é o caminho —
+   e como este script é analisado depois daquele, o nosso corre em segundo,
+   com a cortina já na tela. */
+function armarAbertura(){
+  tocarAbertura();                         // se o áudio já estiver liberado
+  if(aberturaTocada) return;
+  GESTOS.forEach(g => addEventListener(g, aoGesto, true));
+
+  /* o arme vive o tempo da cortina e nem um segundo a mais */
+  const fim = new MutationObserver(() => {
+    if(!document.getElementById('abertura')){ desarmarGesto(); fim.disconnect(); }
+  });
+  fim.observe(document.body, { childList:true });
+  setTimeout(() => { desarmarGesto(); fim.disconnect(); }, 8000);
+}
+
+if(document.readyState === 'loading')
+  document.addEventListener('DOMContentLoaded', armarAbertura, {once:true});
+else armarAbertura();
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v55 — O FLUXO DE ALTERAÇÃO, fechado.
+
+   O card já tinha as onze fases (`FASES`, v-anterior), a revisão interna
+   já empurrava para `texto_cli`/`post_cli`, e o Ensaio já sabia ligar
+   tarefa a card por `cardId`. Faltavam os três elos do meio:
+
+     1. um botão de enviar na própria pauta — hoje só a fila do revisor
+        empurrava o card para o cliente;
+     2. o cliente **não tinha tela nenhuma** para o que chegava: cards em
+        `texto_cli`/`post_cli` ficavam invisíveis para ele;
+     3. a decisão não voltava — não havia como aprovar nem pedir mudança.
+
+   Nada de campo novo de status: quem manda continua sendo `fase`. Pedido
+   de alteração entra em `p.alteracoes`, que já existia e já era desenhado
+   no modal do card.
+
+     escrever → (revisão) → texto_cli / post_cli → o cliente decide
+                                   ├→ aprova  → texto_ok / aprovado
+                                   └→ altera  → criado / producao
+                                                + tarefa no Ensaio
+                                                + volta a poder enviar
+   ================================================================== */
+
+IC.enviar = '<path d="M21.5 2.5 11 13"/><path d="M21.5 2.5 15 21.5 11 13 2.5 9z"/>';
+/* a seta para a direita lia como "proximo", nao como baixar */
+IC.baixar = '<path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 19h16"/>';
+
+/* as duas fases em que a bola está com o cliente */
+const NO_CLIENTE = ['texto_cli','post_cli'];
+/* o que ele já decidiu, e o que veio depois */
+const JA_DECIDIU = ['texto_ok','producao','revisao2','aprovado','agendado','postado'];
+
+const comCliente  = p => NO_CLIENTE.includes(faseDe(p));
+const temPedido   = p => (p.alteracoes||[]).length > 0;
+/* o pedido em aberto é o último, enquanto o card não voltou ao cliente */
+const pedidoAberto = p => temPedido(p) && !comCliente(p) && !!p.ajustePendente;
+
+/* Enviar exige texto e um card que não esteja com o cliente nem já
+   aprovado. Tarefa interna nunca vai — é assunto da agência. */
+function podeEnviar(p){
+  if(p.tarefa || comCliente(p)) return false;
+  const f = faseDe(p);
+  if(f==='aprovado' || f==='agendado' || f==='postado') return false;
+  return (p.texto||'').trim().length > 0;
+}
+/* Antes do texto aprovado, o que vai ao cliente é o TEXTO. Depois, a
+   postagem pronta. É o ciclo de dois lotes (D-042) no card. */
+const destinoDoEnvio = p => faseIdx(p) < FASES.findIndex(([k])=>k==='texto_ok')
+  ? 'texto_cli' : 'post_cli';
+
+const cardsProntos    = () => S.pauta.filter(podeEnviar);
+const cardsComCliente = () => S.pauta.filter(comCliente);
+const cardsAlterados  = () => S.pauta.filter(pedidoAberto);
+const cardsAprovados  = () => S.pauta.filter(p => !p.tarefa && JA_DECIDIU.includes(faseDe(p)));
+/* o que o cliente enxerga: o que está com ele e o que ele já decidiu */
+const cardsDoCliente  = () => S.pauta.filter(p =>
+  !p.tarefa && (comCliente(p) || JA_DECIDIU.includes(faseDe(p)) || temPedido(p)));
+
+/* ---------- a agência envia ------------------------------------------ */
+function enviarCards(ids){
+  const alvo = ids ? S.pauta.filter(p => ids.includes(p.id) && podeEnviar(p)) : cardsProntos();
+  if(!alvo.length){ toast('Nada pronto para enviar — o card precisa de texto.'); return; }
+  alvo.forEach(p => { porFase(p, destinoDoEnvio(p)); p.enviadoEm = Date.now();
+                      p.ajustePendente = false; });
+  som('toque'); render();
+  /* D-030: UMA notificação por lote, nunca uma por card. Cinco avisos
+     separados treinam o cliente a ignorar todos. */
+  toast(alvo.length === 1
+    ? `"${alvo[0].t}" foi para Helena — avisada por e-mail e WhatsApp.`
+    : `${alvo.length} cards enviados. Helena recebeu UMA notificação, não ${alvo.length}.`);
+}
+
+/* ---------- o cliente decide, e a decisão volta para o card ---------- */
+function decidirCard(id, decisao, nota){
+  const p = S.pauta.find(x => x.id === id); if(!p) return;
+  const eraTexto = faseDe(p) === 'texto_cli';
+
+  if(decisao === 'APROVADO'){
+    porFase(p, eraTexto ? 'texto_ok' : 'aprovado');
+    p.ajustePendente = false;
+    som('aprovar');
+  } else {
+    /* volta para onde o trabalho acontece: texto reprovado volta a ser
+       escrito, postagem reprovada volta para a produção. */
+    porFase(p, eraTexto ? 'criado' : 'producao');
+    p.alteracoes = [...(p.alteracoes||[]), {
+      por: 'Helena Braga', quando: new Date().toLocaleDateString('pt-BR'),
+      oque: (nota||'').trim(), fase: eraTexto ? 'texto' : 'postagem'
+    }];
+    p.ajustePendente = true;
+    abrirTarefaDeAjuste(p);          // pedido vira trabalho, não recado
+    som('ajuste');
+  }
+  S.route = 'clpauta'; S.pcSel = null; render();
+  toast(decisao === 'APROVADO'
+    ? `"${p.t}" aprovado. A agência já sabe.`
+    : `Alteração pedida em "${p.t}". Já virou tarefa na produção da agência.`);
+}
+
+/* ---------- a ponte com a produção (o Ensaio) ------------------------ */
+/* O Ensaio já sabia ligar tarefa a card (`cardId`) e já mostra a fase do
+   card no cartão. O que faltava era alguém CRIAR essa tarefa quando o
+   cliente pede mudança — senão o pedido vive num toast e morre nele. */
+function abrirTarefaDeAjuste(p){
+  /* o Ensaio só nascia quando alguém abria a aba de produção; um pedido
+     feito antes disso se perdia — justo o que não pode se perder. */
+  if(!S.ensaio) S.ensaio = kbSemente();
+  const jaTem = S.ensaio.tarefas.some(t => t.cardId === p.id && t.doCliente);
+  if(jaTem) return;
+  const ultimo = p.alteracoes[p.alteracoes.length-1];
+  S.ensaio.tarefas.push({
+    id: S.ensaio.prox++, titulo: `Ajustar: ${p.t}`,
+    cli: cliAtual().id, resp: null, col: 'inbox', cat: 'producao',
+    criada: Date.now(), prazo: p.data || null, tempoMs: 0, desde: null,
+    cardId: p.id, doCliente: true, pedido: ultimo ? ultimo.oque : ''
+  });
+}
+
+/* Tarefa concluída devolve o card para a fila de envio. O pedido fica
+   guardado em `alteracoes` — a segunda volta precisa saber o que se
+   pediu na primeira. */
+function reconciliarAjustes(){
+  if(!S.ensaio || !S.ensaio.feitas) return;
+  for(const t of S.ensaio.feitas){
+    if(!t.cardId || !t.doCliente || t.aplicada) continue;
+    for(const lista of Object.values(S.pautas)){
+      const c = lista.find(x => x.id === t.cardId);
+      if(c && c.ajustePendente){ c.ajustePendente = false; c.refeito = true; }
+    }
+    t.aplicada = true;
+  }
+}
+</script>
+<script>
+"use strict";
+/* ---------- o card: o pedido do cliente, e a porta de saída ---------- */
+/* A etiqueta de status já é a fase (v-anterior a esta), então o card já
+   diz "Aprovação da postagem (cliente)" sozinho. Aqui entra o que ela não
+   conta: o que o cliente pediu, com as palavras dele, e o botão de enviar. */
+ptItemHtml = (function(orig){
+  return function(p, i){
+    let html = orig(p, i);
+    if(p.tarefa) return html;
+
+    const ultimo = (p.alteracoes||[])[ (p.alteracoes||[]).length - 1 ];
+    if(ultimo && ultimo.oque){
+      const feito = !p.ajustePendente;
+      const bloco = `<span class="apNota ${feito?'feito':''}">${ic(feito?'checkc':'warn',12)}
+        <span><b>${feito?'Ajustado':'Helena pediu'}:</b> ${esc(ultimo.oque)}</span></span>`;
+      html = html.replace(/(<\/button>\s*<button class="ptQuick" data-mtabrir=)/, bloco + '$1');
+    }
+
+    if(podeEnviar(p)){
+      const btn = `<button class="ptQuick ptEnviar" data-ptenviar="${p.id}"
+        aria-label="Enviar para aprovação do cliente"
+        title="Enviar para aprovação">${ic('enviar',15)}</button>`;
+      html = html.replace('<button class="ptFeito"', btn + '\n    <button class="ptFeito"');
+    }
+    return html;
+  };
+})(ptItemHtml);
+
+/* ---------- a faixa de envio e o filtro de alterações ---------------- */
+corpoPauta = (function(orig){
+  return function(){
+    let html;
+    if(S.ptFiltro === 'alterados'){
+      /* mesma manobra dos filtros que já existiam: troca o conjunto por
+         baixo, deixa o miolo desenhar, devolve os dados no lugar. */
+      const guardado = S.pautas[cliAtual().id];
+      const antes = S.ptFiltro;
+      S.pautas[cliAtual().id] = guardado.filter(pedidoAberto);
+      S.ptFiltro = 'todas';
+      try{ html = orig(); }
+      finally{ S.pautas[cliAtual().id] = guardado; S.ptFiltro = antes; }
+      html = html.replace(/class="on" data-ptfiltro="todas"/, 'class="" data-ptfiltro="todas"');
+    } else {
+      html = orig();
+    }
+    return faixaDeEnvio() + chipDeAlteracoes(html);
+  };
+})(corpoPauta);
+
+function chipDeAlteracoes(html){
+  const n = cardsAlterados().length;
+  if(!n && S.ptFiltro !== 'alterados') return html;
+  const chip = `<button class="${S.ptFiltro==='alterados'?'on':''} chipAlt"
+    data-ptfiltro="alterados">com alteração<b>${n}</b></button>`;
+  return html.replace(/(<button[^>]*data-ptfiltro="faltam"[^>]*>[\s\S]*?<\/button>)/, '$1' + chip);
+}
+
+/* O estado do ciclo num lugar só, e a ação de consequência.
+   Latão só no que espera por você (D-018) — o resto cede. */
+function faixaDeEnvio(){
+  const prontos = cardsProntos().length;
+  const fora    = cardsComCliente().length;
+  const alt     = cardsAlterados().length;
+  const ok      = cardsAprovados().length;
+  if(!prontos && !fora && !alt && !ok) return '';
+
+  const situacao = [
+    fora && `<b>${fora}</b> com o cliente`,
+    alt  && `<b class="alt">${alt}</b> esperando ajuste`,
+    ok   && `<b class="ok">${ok}</b> aprovad${ok>1?'os':'o'}`
+  ].filter(Boolean).join(' · ');
+
+  return `<div class="envioBar">
+    <div class="t">
+      <b>${prontos ? `${prontos} card${prontos>1?'s':''} pronto${prontos>1?'s':''} para o cliente`
+                   : 'Nada esperando envio'}</b>
+      <span>${situacao || 'Escreva o texto de um card para poder enviar.'}</span>
+    </div>
+    ${prontos ? `<button class="b pri sm" data-ptenviartudo="1">
+      ${ic('enviar',14)} Enviar ${prontos} para aprovação</button>` : ''}
+    ${alt ? `<button class="b gho sm" data-ptfiltro="alterados">Ver o que voltou</button>` : ''}
+  </div>`;
+}
+
+/* ---------- os cliques da agência ------------------------------------ */
+addEventListener('click', e => {
+  const t = e.target.closest('[data-ptenviar],[data-ptenviartudo],[data-enviook]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  if(t.dataset.enviook){
+    /* o seletor (v59) manda a lista; sem ele, vai tudo que está pronto */
+    const ids = S.envSel ? [...S.envSel] : null;
+    S.modal = null; S.envSel = null;
+    enviarCards(ids && ids.length ? ids : undefined); return; }
+  if(t.dataset.ptenviartudo){ confirmarEnvio(); return; }
+  enviarCards([+t.dataset.ptenviar]);
+}, true);
+
+/* Enviar é ação de consequência: o cliente vai receber. Confirma, e diz
+   o que cada card vai levar — texto ou postagem pronta. */
+function confirmarEnvio(){
+  const lista = cardsProntos();
+  S.modal = `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>Enviar ${lista.length} card${lista.length>1?'s':''} para Helena?</h3>
+    <p>Ela recebe <b style="color:var(--ink-50)">uma</b> notificação com o conjunto — não uma por
+      card — e decide cada um: aprovar ou pedir alteração.</p>
+    <div class="envioLista">
+      ${lista.map(p=>`<div><span>${esc(p.t)}</span>
+        <i>${destinoDoEnvio(p)==='texto_cli'?'texto':'postagem pronta'}</i></div>`).join('')}
+    </div>
+    <div class="modalrow">
+      <button class="b gho" data-modalno="1">Voltar</button>
+      <button class="b pri" data-enviook="1">Enviar para aprovação</button></div>
+  </div></div>`;
+  renderLayer();
+}
+</script>
+<script>
+"use strict";
+/* ---------- o cliente recebe -----------------------------------------
+   Entra no MESMO lugar onde ele já decide as outras coisas: a aba
+   Publicações. Duas portas onde o cliente aprova seria o começo do fim;
+   uma porta, e os lotes por dentro.
+   ------------------------------------------------------------------- */
+clLote = (function(orig){
+  return function(){
+    const html = orig();
+    const total = cardsDoCliente().length;
+    if(!total) return html;
+    const esperam = cardsComCliente().length;
+    const decid = total - esperam;
+
+    const cartao = `<button class="clrow fu" data-r="clpauta" style="animation-delay:140ms;${
+      esperam ? 'border-color:#E3C173;background:#FEFBF4' : ''}">
+      <span style="display:grid;place-items:center">${anel(decid/Math.max(1,total))}</span>
+      <span class="t"><b>Pauta de ${esc(cliAtual().nome)}</b>
+        <span>${total} publicaç${total>1?'ões':'ão'} · ${decid} decidida${decid!==1?'s':''}</span></span>
+      <span class="clpill ${esperam?'q-AWAITING_APPROVAL':'q-APPROVED'}">${
+        esperam ? esperam+' esperando' : 'Tudo decidido'}</span></button>`;
+
+    return html.replace('<h3>Por que dois lotes?</h3>', cartao + '\n    <h3>Por que dois lotes?</h3>');
+  };
+})(clLote);
+
+/* a aba avisa o que espera, somando tudo que está com ele */
+CLTABS.find(x => x.r === 'lote').bd = () => esperando() + txPend() + cardsComCliente().length;
+
+/* ---------- a lista ---------------------------------------------------- */
+function clPauta(){
+  const esperam = cardsComCliente();
+  const outros  = cardsDoCliente().filter(p => !comCliente(p));
+
+  const rotulo = p => {
+    const f = faseDe(p);
+    if(f==='texto_cli') return ['Esperando você · texto','q-AWAITING_APPROVAL'];
+    if(f==='post_cli')  return ['Esperando você','q-AWAITING_APPROVAL'];
+    if(p.ajustePendente) return ['Você pediu alteração','q-CHANGES_REQUESTED'];
+    if(f==='texto_ok')  return ['Texto aprovado','q-APPROVED'];
+    return ['Você aprovou','q-APPROVED'];
+  };
+
+  const linha = (p, i) => { const [txt, cls] = rotulo(p);
+    return `<button class="clrow fu" data-clcard="${p.id}"
+      style="animation-delay:${Math.min(i*45,300)}ms">
+      <span class="t"><b>${esc(p.t)}</b>
+        <span>${esc(p.fmt)} · ${p.data ? esc(rotuloData(p.data)) : 'sem data'} · ${esc(p.hora)}</span></span>
+      <span class="clpill ${cls}">${txt}</span></button>`; };
+
+  return clShell(`<div class="clbody venter">
+    <div class="kick">${esc(cliAtual().nome)} · pauta</div>
+    <h2>${esperam.length ? `${esperam.length} publicaç${esperam.length>1?'ões esperam':'ão espera'} você`
+                         : 'Tudo decidido'}</h2>
+    <p>${esperam.length
+      ? 'A agência escreveu a pauta. Aprove o que estiver certo e peça alteração no que não estiver — os dois são normais, e pedir ajuste não atrasa: ajuda.'
+      : 'Você decidiu tudo que a agência mandou. Dá para rever qualquer publicação aqui.'}</p>
+    ${esperam.length ? `<h3>Esperando você</h3>${esperam.map(linha).join('')}` : ''}
+    ${outros.length ? `<h3>Já decididas</h3>${outros.map(linha).join('')}` : ''}
+  </div>`);
+}
+
+/* ---------- decidir uma ------------------------------------------------ */
+function clCard(){
+  const p = S.pauta.find(x => x.id === S.pcSel);
+  if(!p) return clPauta();
+  const pedindo = S.pcPedindo;
+  const naMao   = comCliente(p);
+  const soTexto = faseDe(p) === 'texto_cli';
+  const ultimo  = (p.alteracoes||[])[ (p.alteracoes||[]).length - 1 ];
+
+  return clShell(`<div class="clbody fix slin">
+    <div class="clhead">
+      <span class="cltag">${ic('img',12)} ${esc(p.fmt)} · ${p.data?esc(rotuloData(p.data)):'sem data'} · ${esc(p.hora)}</span>
+      <b>${esc(p.t)}</b>
+      <span>${soTexto ? 'O texto decide antes da produção começar — mudar palavra é barato, refazer gravação não.'
+                      : 'Publicação pronta para ir ao ar.'}</span></div>
+
+    <div class="clcap leitura"><div class="caplbl">Texto da publicação</div>
+      <div class="clleitura">${esc(p.texto||'—')}</div></div>
+    ${p.cta ? `<div class="clcap leitura"><div class="caplbl">Chamada</div>
+      <div class="clleitura">${esc(p.cta)}</div></div>` : ''}
+
+    ${ultimo && ultimo.oque ? `<div class="notelist">
+      <div class="caplbl" style="color:#B04725">O que você pediu ${
+        p.ajustePendente ? '' : '· já ajustado'}</div>
+      <div class="noteitem"><span class="nn">${(p.alteracoes||[]).length}</span>
+        <span>${esc(ultimo.oque)}</span></div></div>` : ''}
+
+    ${pedindo ? `<div class="clcap"><div class="caplbl">O que precisa mudar?</div>
+      <textarea id="altnota" rows="4" aria-label="O que precisa mudar"
+        placeholder="Escreva com suas palavras. Ex.: a abertura está formal demais."></textarea>
+      <p class="clnote" style="text-align:left;margin-top:8px">A agência recebe isto e vira tarefa
+        na produção dela — não some numa conversa.</p></div>` : ''}
+  </div>
+  <div class="clfoot">
+    ${pedindo
+      ? `<button class="clbtn chg" data-clalt="${p.id}">Enviar o pedido de alteração</button>
+         <button class="clbtn sec" data-clcancelaalt="1" style="margin-top:9px">Voltar</button>`
+      : naMao
+        ? `<button class="clbtn" data-claprova="${p.id}">Aprovar${soTexto?' o texto':''}</button>
+           <button class="clbtn sec" data-clpedir="${p.id}" style="margin-top:9px">Pedir alteração</button>`
+        : `<div style="text-align:center;padding:5px 0 10px">
+             <span class="clpill ${p.ajustePendente?'q-CHANGES_REQUESTED':'q-APPROVED'}"
+               style="font-size:11px">${p.ajustePendente
+                 ? 'A agência está ajustando' : 'Você aprovou'}</span></div>
+           <button class="clbtn" data-r="clpauta">Voltar para a pauta</button>
+           ${p.ajustePendente ? '' :
+             `<button class="clbtn sec" data-clreabrir="${p.id}" style="margin-top:9px">Mudar minha decisão</button>`}`}
+  </div>`);
+}
+
+/* ---------- os cliques do cliente -------------------------------------- */
+addEventListener('click', e => {
+  const t = e.target.closest('[data-clcard],[data-claprova],[data-clpedir],[data-clalt],[data-clcancelaalt],[data-clreabrir]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+
+  if(d.clcard){ S.pcSel=+d.clcard; S.pcPedindo=false; S.route='clcard'; window.scrollTo(0,0); render(); return; }
+  if(d.claprova){ decidirCard(+d.claprova, 'APROVADO'); return; }
+  if(d.clpedir){ S.pcPedindo = true; render(); return; }
+  if(d.clcancelaalt){ S.pcPedindo = false; render(); return; }
+  if(d.clreabrir){
+    const p = S.pauta.find(x=>x.id===+d.clreabrir);
+    if(p) porFase(p, faseDe(p)==='texto_ok' ? 'texto_cli' : 'post_cli');
+    som('toque'); render();
+    toast('Publicação reaberta — decida de novo quando quiser.');
+    return; }
+  if(d.clalt){
+    const nota = (document.getElementById('altnota')?.value||'').trim();
+    if(nota.length < 3){ toast('Escreva o que precisa mudar — a agência precisa saber o quê.'); return; }
+    S.pcPedindo = false;
+    decidirCard(+d.clalt, 'ALTERACAO', nota);
+    return; }
+}, true);
+
+/* ---------- as rotas novas --------------------------------------------- */
+const ROTAS_CL_PAUTA = { clpauta: clPauta, clcard: clCard };
+
+/* A cadeia de `render` tem muitos elos e cada um faz o seu depois do
+   miolo. Em vez de me meter no meio dela, deixo a cadeia inteira rodar e
+   troco o miolo no fim — o único ponto onde ninguém mais escreve por cima. */
+render = (function(orig){
+  return function(){
+    reconciliarAjustes();                 // a produção devolve o que terminou
+    orig();
+    if(S.view === 'client' && ROTAS_CL_PAUTA[S.route]){
+      document.getElementById('root').innerHTML = ROTAS_CL_PAUTA[S.route]();
+      renderLayer(); ctxBar();
+    }
+  };
+})(render);
+
+/* a aba Publicações fica acesa nas telas da pauta */
+clShell = (function(orig){
+  return function(inner){
+    const html = orig(inner);
+    if(S.route === 'clpauta' || S.route === 'clcard')
+      return html.replace(/<button class="[^"]*" data-r="lote">/, '<button class="on" data-r="lote">');
+    return html;
+  };
+})(clShell);
+
+/* ---------- no Ensaio, a tarefa diz de onde veio ------------------------ */
+/* O cartão já mostra "card da pauta · <fase>". Falta dizer que este pedido
+   veio do CLIENTE — é o que faz o gestor priorizar certo — e trazer o
+   pedido na íntegra, que evita a segunda volta por mal-entendido.
+   O cartão é uma closure dentro de `agEnsaio`; embrulho a tela e marco
+   os cartões pelo id, que já vem no `data-entar`. */
+agEnsaio = (function(orig){
+  return function(){
+    let html = orig();
+    if(!S.ensaio) return html;
+    for(const t of S.ensaio.tarefas){
+      if(!t.doCliente) continue;
+      const etiqueta = `<span class="enDoCliente">${ic('warn',10)} pedido do cliente</span>`
+        + (t.pedido ? `<span class="enPedido">“${esc(t.pedido)}”</span>` : '');
+      html = html.replace(`<div class="enCard" data-entar="${t.id}"`,
+        `<div class="enCard doCliente" data-entar="${t.id}"`);
+      html = html.replace(new RegExp(`(data-entar="${t.id}"[^>]*>\\s*<div class="tit">)`),
+        `$1${etiqueta}`);
+    }
+    return html;
+  };
+})(agEnsaio);
+</script>
+<style>
+/* ---------- v55 · o fluxo de alteração --------------------------------- */
+
+/* o pedido do cliente, com as palavras dele, no card da pauta */
+.apNota{ display:flex; gap:7px; align-items:flex-start; margin-top:9px;
+  padding:9px 11px; border-radius:10px; font-size:12.5px; line-height:1.45;
+  color:#F0C3AE; border:1px solid rgba(240,120,76,.32);
+  background:rgba(240,120,76,.07) }
+.apNota b{ color:var(--coral); font-weight:600 }
+.apNota svg{ flex:0 0 auto; margin-top:2px }
+.apNota.feito{ color:var(--ink-200); border-color:rgba(53,184,122,.28);
+  background:rgba(53,184,122,.06) }
+.apNota.feito b{ color:var(--encore) }
+
+/* o botão de enviar é a ação de consequência: latão (D-018) */
+.ptQuick.ptEnviar{ color:var(--brass-400); border-color:var(--brass-700);
+  background:rgba(200,150,58,.08) }
+.ptQuick.ptEnviar:hover{ color:var(--brass-300); border-color:var(--brass-500) }
+
+/* a faixa de envio, no topo da pauta */
+.envioBar{ display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  padding:14px 16px; margin:0 0 14px; border-radius:14px;
+  border:1px solid var(--ink-800); background:var(--ink-900) }
+.envioBar .t{ display:grid; gap:3px; margin-right:auto; min-width:0 }
+.envioBar .t b{ font-size:14.5px; color:var(--ink-50); font-weight:600 }
+.envioBar .t span{ font-size:12px; color:var(--ink-400) }
+.envioBar .t span b{ color:var(--ink-100); font-size:inherit }
+.envioBar .t span b.alt{ color:var(--coral) }
+.envioBar .t span b.ok{ color:var(--encore) }
+
+/* o chip do filtro novo */
+.ptFiltros button.chipAlt{ color:var(--coral); border-color:rgba(240,120,76,.35) }
+.ptFiltros button.chipAlt b{ color:var(--coral) }
+.ptFiltros button.chipAlt.on{ background:rgba(240,120,76,.12);
+  border-color:rgba(240,120,76,.6) }
+
+/* a lista do modal de envio */
+.envioLista{ max-height:190px; overflow-y:auto; margin:12px 0 4px;
+  border:1px solid var(--ink-800); border-radius:11px }
+.envioLista div{ display:flex; justify-content:space-between; gap:12px;
+  padding:9px 12px; font-size:12.5px; border-bottom:1px solid var(--ink-850) }
+.envioLista div:last-child{ border-bottom:0 }
+.envioLista i{ font-style:normal; font-family:var(--mono); font-size:10.5px;
+  color:var(--ink-400); white-space:nowrap }
+
+/* o texto do card, do lado do cliente. A `.clcap` normal é uma caixa de
+   edição que cresce para ocupar a coluna; esta é de leitura e abraça o
+   conteúdo — senão sobra meia tela de vazio embaixo de duas linhas. */
+.clcap.leitura{ flex:0 0 auto; min-height:0; overflow:visible }
+.clleitura{ font-size:14.5px; line-height:1.6; color:#17181C; white-space:pre-wrap }
+
+/* a tarefa que veio do cliente, no Ensaio */
+.enCard.doCliente{ border-color:rgba(240,120,76,.45) }
+.enDoCliente{ display:flex; align-items:center; gap:5px;
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.07em;
+  text-transform:uppercase; color:var(--coral); margin-bottom:5px }
+.enPedido{ display:block; font-size:11.5px; line-height:1.4; font-weight:400;
+  color:var(--ink-300); font-style:italic; margin:0 0 6px }
+
+@media (max-width:520px){
+  .envioBar{ padding:12px 13px }
+  .envioBar .b{ width:100% }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v56 — VER O MATERIAL. A miniatura vira tela.
+
+   O material subia e ficava do tamanho de um selo. Não dava para
+   conferir se a arte está certa num quadrado de 90px — e conferir a arte
+   é metade do trabalho de quem produz.
+
+   Três coisas:
+   1. tocar na imagem abre em tela grande, com baixar e fechar;
+   2. passar para o lado percorre a sequência — seta, teclado ou dedo;
+   3. quando a postagem é CARROSSEL, um modo que mostra as telas **coladas,
+      uma ao lado da outra**. Carrossel bem feito costuma ter desenho que
+      atravessa as telas; emendado é o único jeito de ver se a linha
+      continua, se a cor bate, se o corte caiu no lugar. Separado, cada
+      tela mente sobre o conjunto.
+   ================================================================== */
+
+S.lb = null;      // { i, modo:'uma'|'lado' }
+
+const lbMateriais = () => (S.mat[S.mtId] || []).filter(m => m.tipo !== 'link');
+const lbSlides    = () => lbMateriais().filter(m => m.tipo === 'imagem');
+const lbEhCarrossel = () => {
+  const p = S.pauta.find(x => x.id === S.mtId);
+  return !!p && /carrossel/i.test(p.fmt || '') && lbSlides().length > 1;
+};
+
+function abrirLB(i){
+  const ms = lbMateriais();
+  if(!ms.length) return;
+  /* "lado a lado" numa tela estreita mostrando uma tela e meia não é lado
+     a lado. No celular o modo nasce encolhido, mostrando o carrossel
+     inteiro de uma vez; quem quiser detalhe alterna para o tamanho real. */
+  S.lb = { i: Math.max(0, Math.min(i, ms.length-1)), modo:'uma',
+           tudo: innerWidth < 760 };
+  renderLayer();
+}
+function andarLB(passo){
+  if(!S.lb) return;
+  const n = lbMateriais().length; if(!n) return;
+  S.lb.i = (S.lb.i + passo + n) % n;      // dá a volta: depois da última, a primeira
+  renderLayer();
+}
+function fecharLB(){ S.lb = null; renderLayer(); }
+
+/* o mesmo caminho do botão de baixar que já existia, agora reaproveitado */
+async function baixarMaterial(m){
+  if(!m) return;
+  try{
+    let blob = null;
+    if(m.chave) blob = await idbLer(m.chave).catch(()=>null);
+    if(!blob && m.url){ const r = await fetch(m.url); blob = await r.blob(); }
+    if(!blob){ toast('Não achei o arquivo para baixar.'); return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = m.nome || 'arquivo';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  }catch(err){ toast('O download falhou — tente de novo.'); }
+}
+
+/* ---------- a tela ---------------------------------------------------- */
+function vLightbox(){
+  const ms = lbMateriais();
+  if(!S.lb || !ms.length) return '';
+  const i = Math.min(S.lb.i, ms.length-1);
+  const m = ms[i];
+  const carrossel = lbEhCarrossel();
+  const lado = S.lb.modo === 'lado' && carrossel;
+  const p = S.pauta.find(x => x.id === S.mtId);
+
+  const midia = x => x.tipo === 'video'
+    ? `<video src="${x.url}" controls playsinline preload="metadata"
+         ${x.poster?`poster="${x.poster}"`:''}></video>`
+    : x.tipo === 'imagem'
+      ? `<img src="${x.url}" alt="${esc(x.nome)}">`
+      : `<div class="lbSemPrev">${ic(ICONE_TIPO[x.tipo]||'doc',40)}<span>${esc(x.nome)}</span>
+           <span class="peso">${pesoLegivel(x.peso)}</span></div>`;
+
+  const slides = lbSlides();
+
+  return `<div class="lb" role="dialog" aria-modal="true" aria-label="Visualizar material">
+    <div class="lbTopo">
+      <div class="lbQuem">
+        <b>${esc(lado ? (p ? p.t : 'Carrossel') : m.nome)}</b>
+        <span>${lado ? `${slides.length} telas · emendadas`
+                     : `${i+1} de ${ms.length}${m.peso?` · ${pesoLegivel(m.peso)}`:''}`}</span>
+      </div>
+      ${carrossel ? `<div class="lbModo" role="group" aria-label="Modo de visualização">
+        <button class="${lado?'':'on'}" data-lbmodo="uma">Uma a uma</button>
+        <button class="${lado?'on':''}" data-lbmodo="lado">Lado a lado</button>
+      </div>` : ''}
+      ${lado ? `<button class="lbBtn lbTudo" data-lbtudo="1"
+        aria-pressed="${S.lb.tudo?'true':'false'}"
+        title="${S.lb.tudo?'Ver no tamanho real':'Ver o carrossel inteiro'}"
+        aria-label="${S.lb.tudo?'Ver no tamanho real':'Ver o carrossel inteiro'}">${
+          ic(S.lb.tudo?'search':'grid',16)}</button>` : ''}
+      <button class="lbBtn" data-lbbaixa="1" aria-label="Baixar" title="Baixar">${ic('baixar',17)}</button>
+      <button class="lbBtn fechar" data-lbfecha="1" aria-label="Fechar"
+        title="Fechar (Esc)">${ic('x',18)}</button>
+    </div>
+
+    ${lado
+      ? `<div class="lbFita ${S.lb.tudo?'cabe':''}" id="lbFita">
+           <div class="lbEmenda ${S.lb.tudo?'tudo':''}" style="--n:${slides.length}">${slides.map((s,j)=>`<figure>
+             <img src="${s.url}" alt="${esc(s.nome)}"><figcaption>${j+1}</figcaption>
+           </figure>`).join('')}</div>
+         </div>
+         <p class="lbDica">As telas estão coladas, na ordem de envio — é assim que o desenho
+           atravessa (ou não) de uma para a outra.${S.lb.tudo
+             ? ' Toque na lupa para ver no tamanho real.'
+             : ' Role para o lado.'}</p>`
+      : `<div class="lbPalco" id="lbPalco">
+           ${ms.length>1?`<button class="lbSeta ant" data-lbanda="-1" aria-label="Anterior">${ic('arrowl',20)}</button>`:''}
+           <div class="lbMidia">${midia(m)}</div>
+           ${ms.length>1?`<button class="lbSeta prox" data-lbanda="1" aria-label="Próxima">${ic('arrowr',20)}</button>`:''}
+         </div>
+         ${ms.length>1?`<div class="lbTiras">${ms.map((x,j)=>`
+           <button class="${j===i?'on':''}" data-lbir="${j}" aria-label="${esc(x.nome)}">
+             ${x.tipo==='imagem'?`<img src="${x.url}" alt="">`
+               :`<span>${ic(ICONE_TIPO[x.tipo]||'doc',14)}</span>`}
+             <i>${j+1}</i></button>`).join('')}</div>`:''}`}
+  </div>`;
+}
+
+/* A miniatura de vídeo tinha `controls` — e num quadrado de 104px os
+   controles ocupam a peça inteira e não servem para nada. Ela vira prévia
+   com um selo de play, e quem toca vai para a tela grande, onde o vídeo
+   toca no tamanho em que dá para conferir alguma coisa. */
+modalMaterial = (function(orig){
+  return function(id){
+    let html = orig(id);
+    if(!html) return html;
+    const ms = materiaisDe(id);
+    ms.forEach((m,i)=>{
+      if(m.tipo !== 'video') return;
+      html = html.replace(
+        new RegExp(`(<div class="vis">[\\s\\S]*?<video[^>]*?)\\scontrols([^>]*></video>)`),
+        `$1$2<span class="mtPlay" aria-hidden="true">${ic('play',18)}</span>`);
+    });
+    return html;
+  };
+})(modalMaterial);
+
+/* o visualizador vai por cima de tudo, inclusive do modal que o abriu */
+renderLayer = (function(orig){
+  return function(){
+    orig();
+    if(!S.lb) return;
+    const l = document.getElementById('layer');
+    if(l) l.insertAdjacentHTML('beforeend', vLightbox());
+  };
+})(renderLayer);
+
+/* ---------- abrir, andar, baixar, fechar ------------------------------ */
+document.addEventListener('click', e => {
+  /* tocar na miniatura abre — imagem ou vídeo. O vídeo da grade não tem
+     mais `controls` (ver acima), então o toque é livre para isto. */
+  const mini = e.target.closest('.mtCard .vis img, .mtCard .vis video, .mtCard .vis .mtPlay');
+  if(mini && !S.lb){
+    const card = mini.closest('.mtCard');
+    const del = card && card.querySelector('[data-mtdel]');
+    if(del){ e.preventDefault(); e.stopImmediatePropagation();
+      abrirLB(+del.dataset.mtdel); return; }
+  }
+  const t = e.target.closest('[data-lbfecha],[data-lbanda],[data-lbir],[data-lbmodo],[data-lbtudo],[data-lbbaixa],.lb');
+  if(!t) return;
+  const d = t.dataset || {};
+  if(d.lbfecha !== undefined){ e.stopImmediatePropagation(); fecharLB(); return; }
+  if(d.lbanda !== undefined){ e.stopImmediatePropagation(); andarLB(+d.lbanda); return; }
+  if(d.lbir !== undefined){ e.stopImmediatePropagation(); S.lb.i = +d.lbir; renderLayer(); return; }
+  if(d.lbmodo !== undefined){ e.stopImmediatePropagation(); S.lb.modo = d.lbmodo; renderLayer(); return; }
+  if(d.lbtudo !== undefined){ e.stopImmediatePropagation(); S.lb.tudo = !S.lb.tudo; renderLayer(); return; }
+  if(d.lbbaixa !== undefined){ e.stopImmediatePropagation();
+    baixarMaterial(lbMateriais()[S.lb.i]); return; }
+  /* Tocar no vazio fecha. Antes exigia acertar a moldura exata, que fica
+     coberta pelo palco — na prática não fechava por aí. Agora vale o palco
+     e a moldura; a mídia, os botões e a fita seguem intocados. */
+  if(e.target === t || e.target.id === 'lbPalco' || e.target.classList.contains('lbMidia')
+     || e.target.id === 'lbFita'){
+    e.stopImmediatePropagation(); fecharLB(); }
+}, true);
+
+document.addEventListener('keydown', e => {
+  if(!S.lb) return;
+  if(e.key === 'Escape'){ e.stopImmediatePropagation(); fecharLB(); }
+  /* com o vídeo em foco, as setas avançam o vídeo — deixa com ele */
+  if(document.activeElement && document.activeElement.tagName === 'VIDEO') return;
+  if(e.key === 'ArrowRight') andarLB(1);
+  if(e.key === 'ArrowLeft')  andarLB(-1);
+}, true);
+
+/* o dedo: arrastar para o lado troca de arquivo */
+let _lbX = null;
+document.addEventListener('touchstart', e => {
+  if(!S.lb || S.lb.modo === 'lado') return;
+  /* arrastar em cima do vídeo é procurar o trecho, não trocar de arquivo */
+  if(e.target.closest('video')) { _lbX = null; return; }
+  _lbX = e.touches[0].clientX;
+}, {passive:true});
+document.addEventListener('touchend', e => {
+  if(_lbX === null || !S.lb) return;
+  const dx = (e.changedTouches[0].clientX - _lbX);
+  _lbX = null;
+  if(Math.abs(dx) > 55) andarLB(dx < 0 ? 1 : -1);
+}, {passive:true});
+</script>
+<style>
+/* ---------- v56 · o visualizador de material -------------------------- */
+/* acima do modal que o abriu (.modal é 940) e abaixo do toast, que
+   precisa continuar aparecendo por cima de tudo */
+.lb{ position:fixed; inset:0; z-index:1200; display:flex; flex-direction:column;
+  background:rgba(6,7,9,.96); backdrop-filter:blur(9px);
+  animation:lbEntra .22s var(--eo) }
+@keyframes lbEntra{ from{opacity:0} to{opacity:1} }
+
+/* A ÁREA SEGURA. No iPhone o topo da tela é da barra de status e da ilha
+   dinâmica: sem esta folga o fechar e o baixar nascem debaixo dela — dá
+   para ver, não dá para tocar, e o visualizador vira armadilha. O resto do
+   app já respeitava isso; este painel tinha nascido sem. */
+.lbTopo{ display:flex; align-items:center; gap:10px;
+  padding:max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+          14px max(16px, env(safe-area-inset-left));
+  border-bottom:1px solid rgba(255,255,255,.07); flex:0 0 auto }
+/* e o fechar é o que mais precisa ser achado de primeira */
+.lbBtn.fechar{ border-color:rgba(255,255,255,.22); background:var(--ink-850) }
+.lbBtn.fechar:hover{ color:var(--danger); border-color:rgba(229,72,77,.55) }
+.lbQuem{ display:grid; gap:2px; margin-right:auto; min-width:0 }
+.lbQuem b{ font-size:14px; color:var(--ink-50); font-weight:600;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.lbQuem span{ font-family:var(--mono); font-size:10.5px; color:var(--ink-400) }
+
+.lbBtn{ width:38px; height:38px; flex:0 0 auto; border-radius:11px;
+  border:1px solid var(--ink-700); background:var(--ink-900); color:var(--ink-200);
+  display:grid; place-items:center;
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.lbBtn:hover{ color:var(--brass-300); border-color:var(--brass-600) }
+
+.lbModo{ display:flex; gap:0; border:1px solid var(--ink-700); border-radius:999px;
+  overflow:hidden; flex:0 0 auto }
+.lbModo button{ font-family:var(--mono); font-size:10px; letter-spacing:.06em;
+  text-transform:uppercase; padding:7px 12px; color:var(--ink-300);
+  background:var(--ink-900) }
+.lbModo button.on{ color:var(--ink-950); background:var(--brass-400); font-weight:700 }
+
+/* uma a uma */
+.lbPalco{ flex:1 1 auto; display:flex; align-items:center; justify-content:center;
+  gap:8px; min-height:0; position:relative;
+  padding:14px max(14px, env(safe-area-inset-right)) 14px max(14px, env(safe-area-inset-left)) }
+.lbMidia{ flex:1 1 auto; height:100%; display:grid; place-items:center; min-width:0 }
+.lbMidia img, .lbMidia video{ max-width:100%; max-height:100%;
+  object-fit:contain; border-radius:10px; display:block }
+.lbSemPrev{ display:grid; gap:8px; place-items:center; color:var(--ink-300); font-size:13px }
+.lbSemPrev .peso{ font-family:var(--mono); font-size:11px; color:var(--ink-500) }
+
+.lbSeta{ position:absolute; top:50%; transform:translateY(-50%); z-index:2;
+  width:44px; height:44px; border-radius:50%; display:grid; place-items:center;
+  color:var(--ink-100); background:rgba(20,22,26,.82);
+  border:1px solid rgba(255,255,255,.10) }
+.lbSeta.ant{ left:10px } .lbSeta.prox{ right:10px }
+.lbSeta:hover{ color:var(--brass-300); border-color:var(--brass-600) }
+
+.lbTiras{ display:flex; gap:8px; overflow-x:auto; flex:0 0 auto;
+  padding:12px max(16px, env(safe-area-inset-left))
+          max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  border-top:1px solid rgba(255,255,255,.07) }
+.lbTiras button{ position:relative; width:56px; height:56px; flex:0 0 auto;
+  border-radius:9px; overflow:hidden; border:1px solid var(--ink-700);
+  background:var(--ink-900); display:grid; place-items:center; color:var(--ink-400) }
+.lbTiras button.on{ border-color:var(--brass-400) }
+.lbTiras img{ width:100%; height:100%; object-fit:cover }
+.lbTiras i{ position:absolute; left:4px; top:3px; font-style:normal;
+  font-family:var(--mono); font-size:9px; color:#fff;
+  text-shadow:0 1px 3px rgba(0,0,0,.9) }
+
+/* lado a lado — o carrossel emendado */
+.lbFita{ flex:1 1 auto; overflow-x:auto; overflow-y:hidden; padding:16px 0;
+  display:flex; align-items:center; min-height:0 }
+.lbFita.cabe{ overflow-x:hidden }
+.lbEmenda{ display:flex; gap:0; margin:auto; padding:0 16px; height:auto }
+.lbEmenda figure{ margin:0; position:relative; flex:0 0 auto }
+.lbEmenda img{ width:auto; display:block; max-height:min(66vh, 620px) }
+/* encolhido: as N telas dividem a largura e cabem todas na tela */
+.lbEmenda.tudo{ width:100%; padding:0 12px }
+.lbEmenda.tudo figure{ flex:1 1 0; min-width:0 }
+.lbEmenda.tudo img{ width:100%; height:auto; max-height:none }
+.lbEmenda figcaption{ position:absolute; left:7px; top:7px;
+  font-family:var(--mono); font-size:10px; color:#fff; padding:2px 6px;
+  border-radius:999px; background:rgba(0,0,0,.55) }
+.lbDica{ flex:0 0 auto; margin:0; text-align:center;
+  padding:0 20px max(18px, env(safe-area-inset-bottom));
+  font-size:12px; color:var(--ink-400) }
+
+/* a miniatura avisa que abre */
+.mtCard .vis img, .mtCard .vis video{ cursor:zoom-in }
+.mtPlay{ position:absolute; inset:0; margin:auto; width:40px; height:40px;
+  display:grid; place-items:center; border-radius:50%; pointer-events:none;
+  color:#fff; background:rgba(12,14,17,.62);
+  border:1px solid rgba(255,255,255,.30);
+  box-shadow:0 3px 14px rgba(0,0,0,.45) }
+
+@media (max-width:520px){
+  /* duas linhas: em cima quem é o arquivo e o que fazer com ele;
+     embaixo, como olhar. Com quatro controles numa linha só, o fechar
+     caía sozinho para baixo. */
+  .lbTopo{ flex-wrap:wrap; gap:8px;
+    padding:max(12px, env(safe-area-inset-top)) 13px 12px 13px }
+  .lbQuem{ order:1; flex:1 1 auto; min-width:0 }
+  .lbBtn{ order:2 }
+  .lbModo{ order:3; flex:1 1 auto; margin-top:2px }
+  .lbModo button{ flex:1 }
+  .lbBtn.lbTudo{ order:4; margin-top:2px }
+  .lbEmenda img{ max-height:52vh }
+  .lbSeta{ width:38px; height:38px }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v57 — o carimbo da versão.
+
+   Perguntar "subiu?" e não ter como responder olhando a tela é um
+   problema de verdade: o link do artifact pode estar preso numa versão
+   antiga, o celular pode ter guardado uma cópia, e por fora as telas são
+   idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
+   batida no Menu e a resposta está lá.
+   ================================================================== */
+const VERSAO_PROTOTIPO = 'v65 · 30 ago';
+
+menuSheet = (function(orig){
+  return function(){
+    const html = orig();
+    if(!html) return html;
+    return html.replace('</div></div>',
+      `<div class="msVersao">Protótipo ${VERSAO_PROTOTIPO}</div></div></div>`);
+  };
+})(menuSheet);
+</script>
+<style>
+.msVersao{ padding:10px 0 2px; text-align:center; font-family:var(--mono);
+  font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-500) }
+.msheet.lt .msVersao{ color:#9A958C }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v58 — a ordem das abas, a doca, e o material a um toque.
+
+   Quatro coisas que o uso real pediu:
+
+   1. As visões da pauta estavam na ordem em que foram construídas
+      (Semana, Mês, Tabela, Stories, Dia), não na ordem em que se usa. O
+      dia é o que a agência opera — vem primeiro, e é o que abre.
+   2. A Pauta virou a primeira aba do cliente, e a que abre. Marca e
+      briefing se lê uma vez por trimestre; a pauta, todo dia.
+   3. O Ensaio estava só no menu. É o quadro de produção — entra na doca,
+      e a Conta sai dela (ninguém abre a plataforma para ver Conta; ela
+      continua a um toque, no menu).
+   4. Tocar no material dentro do card abre o visualizador direto, sem o
+      desvio pelo "Abrir material".
+   ================================================================== */
+/* ---------- 3. a doca -------------------------------------------------
+   A ordem conta o dia: o que sai hoje → a pauta do cliente → o quadro de
+   produção → como o feed vai ficar. */
+AGTABS.length = 0;
+AGTABS.push(
+  {r:'dash',     n:'Hoje',     icn:'home'},
+  {r:'clientes', n:'Clientes', icn:'users'},
+  {r:'producao', n:'Ensaio',   icn:'kanban'},
+  {r:'feed',     n:'Feed',     icn:'img'}
+);
+/* a Conta sai da doca mas não pode sumir: entra no grupo do menu */
+(function(){
+  const g = MENU_AG.find(x => x.g === 'Conta');
+  if(g && g.it && !g.it.some(([r]) => r === 'conta'))
+    g.it.unshift(['conta','Conta','sliders']);
+})();
+
+/* ---------- 1. a ordem das visões da pauta ---------------------------
+   Os botões nascem de três wrappers diferentes, cada um acrescentando o
+   seu no fim. Reordenar por CSS é mais honesto do que reescrever a
+   cadeia — e o cursor do seletor MEDE o botão ligado (fixSegs), então
+   ele acompanha sozinho. */
+</script>
+<style>
+.ptSeg .seg button[data-ptvista="dia"]{ order:1 }
+.ptSeg .seg button[data-ptvista="semana"]{ order:2 }
+.ptSeg .seg button[data-ptvista="mes"]{ order:3 }
+.ptSeg .seg button[data-ptvista="tabela"]{ order:4 }
+.ptSeg .seg button[data-ptvista="stories"]{ order:5 }
+
+/* 4. o material dentro do card avisa que abre */
+.vzMats .mtMini{ cursor:zoom-in }
+.vzMats .mtMini.temArte:hover{ outline:1px solid var(--brass-600); outline-offset:1px }
+</style>
+<script>
+"use strict";
+/* ---------- 1b. o Dia abre onde o Dia existe --------------------------
+   `ptVistaAgenda` monta a agenda a partir da DATA da postagem. Pauta que
+   só tem dia da semana (a da Loja Norte, por exemplo) não tem o que
+   montar, e o Dia abriria em "Sem datas" — primeira tela do cliente, e
+   vazia. O Dia segue sendo o padrão e o primeiro da fila; quando não há
+   data, a Semana entra no lugar até alguém escolher outra coisa. */
+S.ptVista = 'dia';
+S.ptVistaAuto = true;              // ninguém escolheu ainda
+
+document.addEventListener('click', e => {
+  if(e.target.closest('[data-ptvista]')) S.ptVistaAuto = false;
+}, true);
+
+corpoPauta = (function(orig){
+  return function(){
+    const temData = (S.pauta || []).some(p => p.data);
+    if(!(S.ptVistaAuto && S.ptVista === 'dia' && !temData)) return orig();
+    S.ptVista = 'semana';
+    try { return orig(); }
+    finally { S.ptVista = 'dia'; }     // volta, para o próximo cliente
+  };
+})(corpoPauta);
+
+/* ---------- 4. o material a um toque, de dentro do card -------------- */
+document.addEventListener('click', e => {
+  const mini = e.target.closest('.vzMats .mtMini');
+  if(!mini || S.lb) return;
+  const caixa = mini.closest('.vzMats');
+  const botao = caixa && caixa.parentElement
+    ? caixa.parentElement.querySelector('[data-mtabrir]') : null;
+  if(!botao) return;                       // sem o dono, não sei de quem é
+  e.preventDefault(); e.stopImmediatePropagation();
+  S.mtId = +botao.dataset.mtabrir;
+  const i = [...caixa.querySelectorAll('.mtMini')].indexOf(mini);
+  abrirLB(Math.max(0, i));
+}, true);
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v59 — o seletor do envio, e o lote por semana ou por mês.
+
+   Enviar era tudo ou nada: o botão levava todos os cards prontos. Mas
+   quem monta pauta não fecha o mês de uma vez — fecha a semana que vem,
+   segura a outra, manda o mês inteiro quando o cliente pediu assim. Sem
+   escolher, a agência era obrigada a esperar tudo ficar pronto ou mandar
+   coisa que ainda não estava.
+
+   Agora o envio abre uma lista com o que está pronto, agrupada por
+   SEMANA ou por MÊS, cada grupo com o seu "selecionar todos". O lote é o
+   que você marcou — e continua saindo UMA notificação para o conjunto,
+   nunca uma por card (D-030).
+   ================================================================== */
+S.envSel = null;                 // Set de ids marcados; null = ainda não abriu
+S.envGrupo = 'semana';           // 'semana' | 'mes'
+
+/* MESNOME é a lista curta, boa para "de 24 a 30 de ago". Um cabeçalho de
+   mês pede o nome inteiro. */
+const MESNOME_INTEIRO = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+/* a chave do grupo, e o nome que ela mostra */
+function envGrupoDe(p){
+  if(!p.data) return { k:'sem-data', n:'Sem data marcada' };
+  if(S.envGrupo === 'mes'){
+    const [a,m] = p.data.split('-');
+    return { k:`${a}-${m}`, n:`${MESNOME_INTEIRO[+m-1]} de ${a}` };
+  }
+  const seg = inicioDaSemana(p.data);
+  return { k:seg, n:rotuloSemana(seg) };
+}
+
+confirmarEnvio = function(){
+  const lista = cardsProntos();
+  if(!lista.length){ toast('Nada pronto para enviar — o card precisa de texto.'); return; }
+  /* abre com tudo marcado: o caminho rápido continua sendo um toque */
+  S.envSel = new Set(lista.map(p=>p.id));
+  S.modal = modalEnvio();
+  renderLayer();
+};
+
+function modalEnvio(){
+  const lista = cardsProntos();
+  const sel = S.envSel || new Set();
+
+  /* agrupa mantendo a ordem cronológica; sem data vai para o fim */
+  const grupos = new Map();
+  [...lista].sort((a,b)=> (a.data||'9999').localeCompare(b.data||'9999')
+                       || (a.hora<b.hora?-1:1))
+    .forEach(p=>{ const g = envGrupoDe(p);
+      if(!grupos.has(g.k)) grupos.set(g.k, { nome:g.n, itens:[] });
+      grupos.get(g.k).itens.push(p); });
+
+  const corpo = [...grupos.values()].map(g=>{
+    const ids = g.itens.map(p=>p.id);
+    const marcados = ids.filter(i=>sel.has(i)).length;
+    const todos = marcados === ids.length;
+    return `<div class="envGrupo">
+      <div class="envGrupoHd">
+        <b>${esc(g.nome)}</b>
+        <span>${marcados} de ${ids.length}</span>
+        <button class="b gho sm" data-envtodos="${ids.join(',')}">${
+          todos ? 'Desmarcar' : 'Marcar todos'}</button>
+      </div>
+      ${g.itens.map(p=>`<button class="envItem ${sel.has(p.id)?'on':''}" data-envmarca="${p.id}"
+          role="checkbox" aria-checked="${sel.has(p.id)}">
+        <span class="cx">${sel.has(p.id)?ic('checkc',13):''}</span>
+        <span class="t"><b>${esc(p.t)}</b>
+          <span>${esc(p.fmt)} · ${p.data?esc(rotuloData(p.data)):'sem data'} · ${esc(p.hora)}</span></span>
+        <span class="oque">${destinoDoEnvio(p)==='texto_cli'?'texto':'postagem'}</span>
+      </button>`).join('')}
+    </div>`;
+  }).join('');
+
+  const n = sel.size;
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3>Enviar para ${esc(cliAtual().nome)}</h3>
+    <p>Escolha o que vai agora. O cliente recebe <b style="color:var(--ink-50)">uma</b>
+      notificação com o conjunto — não uma por card.</p>
+    <div class="envSeg" role="group" aria-label="Agrupar por">
+      <button class="${S.envGrupo==='semana'?'on':''}" data-envgrupo="semana">Por semana</button>
+      <button class="${S.envGrupo==='mes'?'on':''}" data-envgrupo="mes">Por mês</button>
+    </div>
+    <div class="envLista">${corpo}</div>
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Voltar</button>
+      <button class="b pri" data-enviook="1" ${n?'':'disabled style="opacity:.45"'}>
+        ${ic('enviar',13)} Enviar ${n} para aprovação</button></div>
+  </div></div>`;
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-envmarca],[data-envtodos],[data-envgrupo]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+  S.envSel = S.envSel || new Set();
+  if(d.envmarca){ const i = +d.envmarca;
+    S.envSel.has(i) ? S.envSel.delete(i) : S.envSel.add(i); }
+  if(d.envtodos){
+    const ids = d.envtodos.split(',').map(Number);
+    const todos = ids.every(i=>S.envSel.has(i));
+    ids.forEach(i=> todos ? S.envSel.delete(i) : S.envSel.add(i));
+  }
+  if(d.envgrupo) S.envGrupo = d.envgrupo;
+  S.modal = modalEnvio(); renderLayer();
+}, true);
+
+</script>
+<style>
+.envSeg{ display:flex; gap:0; margin:14px 0 12px; border:1px solid var(--ink-700);
+  border-radius:999px; overflow:hidden; width:max-content }
+.envSeg button{ font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
+  text-transform:uppercase; padding:8px 16px; color:var(--ink-300); background:var(--ink-900) }
+.envSeg button.on{ color:var(--ink-950); background:var(--brass-400); font-weight:700 }
+
+.envLista{ max-height:min(46vh,380px); overflow-y:auto; margin:0 -4px;
+  padding:0 4px }
+.envGrupo{ margin-bottom:14px }
+.envGrupoHd{ display:flex; align-items:center; gap:10px; margin:0 0 7px }
+.envGrupoHd b{ font-family:var(--serif); font-weight:400; font-size:15px; color:var(--ink-50) }
+.envGrupoHd span{ font-family:var(--mono); font-size:10px; color:var(--ink-400);
+  margin-right:auto }
+
+.envItem{ display:flex; align-items:center; gap:11px; width:100%; text-align:left;
+  padding:10px 12px; margin-bottom:6px; border-radius:11px;
+  border:1px solid var(--ink-800); background:var(--ink-900);
+  transition:border-color var(--fast) var(--eo), background var(--fast) var(--eo) }
+.envItem .cx{ width:20px; height:20px; flex:0 0 auto; border-radius:6px;
+  border:1px solid var(--ink-600); display:grid; place-items:center; color:var(--ink-950) }
+.envItem.on{ border-color:var(--brass-600); background:rgba(200,150,58,.07) }
+.envItem.on .cx{ background:var(--brass-400); border-color:var(--brass-400) }
+.envItem .t{ display:grid; gap:2px; min-width:0; margin-right:auto }
+.envItem .t b{ font-size:13.5px; color:var(--ink-50); font-weight:600;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.envItem .t span{ font-size:11.5px; color:var(--ink-400) }
+.envItem .oque{ font-family:var(--mono); font-size:9.5px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink-400); white-space:nowrap }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v59b — o Hoje ganha a agenda, e ela atravessa os clientes.
+
+   O Hoje era uma lista: bom para conferir o que falta, ruim para ver o
+   dia. Numa agência com cinco clientes, o que importa às nove da manhã
+   não é a soma — é onde os horários se atropelam. Duas peças às 10h em
+   clientes diferentes é a informação que a lista esconde e a grade grita.
+
+   Então o Hoje passa a ter as duas: LISTA (o que falta, por cliente) e
+   AGENDA (o dia inteiro, uma coluna por cliente). E o filtro por cliente
+   vale para as duas — de todos juntos a um só.
+   ================================================================== */
+/* A agenda primeiro: quem abre a Maestro de manha quer ver o DIA, nao a
+   soma. A lista continua a um toque, para conferir o que falta. */
+S.hjVista = S.hjVista || 'agenda';    // 'lista' | 'agenda'
+S.hjCli   = S.hjCli   || 'todos';
+
+/* o card da agenda do Hoje leva o cliente junto: clicar tem de trocar de
+   cliente antes de abrir, senão abre a peça errada. É por isso que ele
+   não reaproveita o `agCardHtml` da pauta, que assume o cliente atual. */
+function hjCardHtml(c, cliId){
+  const {p, topo, faixa, de} = c;
+  const cor = p.tarefa ? '#5B8DEF' : (PLATS[(p.plats||[])[0]] || {c:'#9AA1AC'}).c;
+  const larg = 100/de, esq = larg*faixa;
+  return `<button class="agCard ${p.feito?'feito':''}" data-hjabre="${cliId}:${p.id}"
+    style="top:${topo + AG_TOPO}px;height:${AG_MIN}px;
+      left:calc(5px + ${esq}%);width:calc(${larg}% - 10px);
+      border-left-color:${cor};background:${cor}14">
+    <b style="color:${cor}">${p.hora}</b>
+    <i>${esc(p.t)}</i>
+    <small>${p.tarefa ? 'tarefa interna' : esc(p.fmt)}</small>
+  </button>`;
+}
+
+function hjAgenda(grupos){
+  const visiveis = S.hjCli === 'todos' ? grupos : grupos.filter(g=>g.cli.id === S.hjCli);
+  if(!visiveis.length) return `<div class="hjVazio"><b style="color:var(--ink-100)">Nada
+    deste cliente hoje.</b><br>Escolha outro, ou volte para todos.</div>`;
+
+  const todos = visiveis.flatMap(g=>g.itens);
+  const horas = todos.map(p=>horaEmNum(p.hora));
+  const h0 = Math.max(0, Math.floor(Math.min(...horas)) - 1);
+  const h1 = Math.min(24, Math.ceil(Math.max(...horas)) + 2);
+  const altura = (h1 - h0) * AG_H;
+  const alturaCx = altura + AG_TOPO * 2;
+
+  const cab = visiveis.map(g=>{
+    const n = g.itens.length, feitos = g.itens.filter(p=>p.feito).length;
+    return `<div class="agCabCol">
+      <div class="agAv" style="background:${g.cli.cor || '#4C535D'};color:#fff">${esc(g.cli.ini)}</div>
+      <b>${esc(g.cli.nome)}</b>
+      <span>${n} ${n===1?'peça':'peças'}${feitos?` · ${feitos} feito${feitos>1?'s':''}`:''}</span>
+    </div>`;
+  }).join('');
+
+  const colunas = visiveis.map(g=>{
+    const cx = agPosicionar(g.itens, h0);
+    return `<div class="agCol" style="height:${alturaCx}px">
+      <div class="agLinhas"></div>
+      ${agLivresHtml(cx, altura)}
+      ${cx.map(c=>hjCardHtml(c, g.cli.id)).join('')}
+    </div>`;
+  }).join('');
+
+  let marcas = '';
+  for(let h=h0; h<=h1; h++)
+    marcas += `<span style="top:${(h-h0)*AG_H + AG_TOPO}px">${D2(h)}h</span>`;
+
+  return `<div class="agRolo"><div class="agGrade"
+      style="--agCols:52px repeat(${visiveis.length}, minmax(150px,1fr));
+             --agH:${AG_H}px; --agTopo:${AG_TOPO}px">
+      <div class="agCantoCab"></div>
+      ${cab}
+      <div class="agHoras" style="height:${alturaCx}px">${marcas}</div>
+      ${colunas}
+    </div></div>
+    <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">O dia inteiro, uma
+      coluna por cliente. Toque num card para abrir a postagem. Tracejado é buraco na
+      agenda daquele cliente.</p>`;
+}
+
+/* a barra: como olhar, e de quem */
+function hjControles(grupos){
+  const chips = ['todos', ...grupos.map(g=>g.cli.id)].map(k=>{
+    const c = k==='todos' ? null : grupos.find(g=>g.cli.id===k).cli;
+    const n = k==='todos' ? grupos.flatMap(g=>g.itens).length
+                          : grupos.find(g=>g.cli.id===k).itens.length;
+    return `<button class="${S.hjCli===k?'on':''}" data-hjcli="${k}">${
+      c ? `<i style="background:${c.cor || '#6B7280'}"></i>${esc(c.nome)}` : 'Todos'
+    }<b style="font-family:var(--mono);font-size:9.5px;margin-left:5px">${n}</b></button>`;
+  }).join('');
+
+  return `<div class="hjBarra">
+    <div class="seg" data-autothumb="1">
+      <div class="thumb"></div>
+      <button class="${S.hjVista==='lista'?'on':''}" data-hjvista="lista">Lista</button>
+      <button class="${S.hjVista==='agenda'?'on':''}" data-hjvista="agenda">Agenda</button>
+    </div>
+    ${grupos.length>1 ? `<div class="ptChips hjChips">${chips}</div>` : ''}
+  </div>`;
+}
+
+/* o Hoje passa a escolher entre as duas visões, e a respeitar o cliente */
+agDash = (function(orig){
+  return function(){
+    const grupos = itensDoDia(hojeISO());
+    let html = orig();
+    if(!grupos.length) return html;          // dia vazio não precisa de seletor
+
+    const controles = hjControles(grupos);
+    /* a barra entra logo depois do resumo de números */
+    html = html.replace(/(<\/div>)(\s*<div class="hjBar">|\s*<div class="hjCli">|\s*<div class="hjVazio">)/,
+      `$1${controles}$2`);
+
+    if(S.hjVista === 'agenda'){
+      /* troca o miolo — a lista inteira sai, a grade entra */
+      const i = html.indexOf('<div class="hjCli">');
+      const j = html.lastIndexOf('</div>');
+      if(i > 0) html = html.slice(0, i) + hjAgenda(grupos) + html.slice(j);
+    } else if(S.hjCli !== 'todos'){
+      /* na lista, o filtro esconde os outros clientes */
+      html = html.replace(/<div class="hjCli">[\s\S]*?(?=<div class="hjCli">|$)/g, bloco =>
+        bloco.includes(`data-hjabre="${S.hjCli}:`) ? bloco : '');
+    }
+    return html;
+  };
+})(agDash);
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-hjvista],[data-hjcli]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  if(t.dataset.hjvista) S.hjVista = t.dataset.hjvista;
+  if(t.dataset.hjcli)   S.hjCli   = t.dataset.hjcli;
+  som('toque'); render();
+}, true);
+</script>
+<style>
+.hjBarra{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 16px }
+.hjBarra .seg{ flex:0 0 auto }
+.hjBarra .seg button{ padding:6px 18px }
+.hjChips{ display:flex; gap:7px; flex-wrap:wrap }
+.hjChips button{ display:inline-flex; align-items:center; gap:6px;
+  font-size:11.5px; padding:6px 12px; border-radius:999px;
+  border:1px solid var(--ink-700); color:var(--ink-300); background:var(--ink-900) }
+.hjChips button i{ width:7px; height:7px; border-radius:50%; flex:0 0 auto }
+.hjChips button.on{ color:var(--brass-300); border-color:var(--brass-600);
+  background:rgba(200,150,58,.09) }
+@media (max-width:520px){
+  .hjBarra{ gap:9px }
+  .hjBarra .seg{ width:100% }
+  .hjBarra .seg button{ flex:1 }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v61 — as tarefas da pauta entram no Ensaio, e as três categorias
+   passam a existir de verdade.
+
+   A pauta da EJUP já tinha tarefas de execução — cards marcados como
+   internos, que não vão ao ar: editar o episódio do Zeca Melo, o do
+   Marco Bruno. Elas ficavam só lá. Mas tarefa de execução É produção;
+   o lugar dela é o quadro, ao lado do resto do trabalho, com o caminho
+   de volta para o card.
+
+   E o quadro nascia praticamente vazio: `kbSemente` só olhava as
+   pendências. Agora olha as tarefas também.
+   ================================================================== */
+
+/* Tarefa interna da pauta vira tarefa do Ensaio, uma vez só. A ligação é
+   o `cardId` — o mesmo que o cartão já usa para mostrar "card da pauta ·
+   fase" e abrir o card completo. */
+function sincronizarTarefasDaPauta(){
+  if(!S.ensaio) S.ensaio = kbSemente();
+  const jaTem = id => S.ensaio.tarefas.some(t => t.cardId === id && t.daPauta)
+                   || (S.ensaio.feitas||[]).some(t => t.cardId === id && t.daPauta);
+
+  for(const c of CLIS()){
+    for(const p of (S.pautas[c.id] || [])){
+      if(!p.tarefa || p.feito || jaTem(p.id)) continue;
+      const titulo = String(p.t || '').replace(/^\[Tarefa\]\s*/i, '').trim();
+      S.ensaio.tarefas.push({
+        id: S.ensaio.prox++, titulo: titulo || 'Tarefa da pauta',
+        cli: c.id, resp: null, col: 'inbox', cat: 'producao',
+        criada: Date.now(), prazo: p.data || null, tempoMs: 0, desde: null,
+        cardId: p.id, daPauta: true,
+        pedido: (p.texto || '').slice(0, 160)
+      });
+    }
+  }
+}
+
+/* Financeiro e Sócios existiam como conceito e nunca como conteúdo — dava
+   para ver a aba e não o que ela guarda. Semente mínima, uma vez, só se a
+   categoria estiver vazia: o ponto é mostrar que a privacidade separa
+   assuntos, não encher o quadro. */
+function semearOutrasCategorias(){
+  if(!S.ensaio) return;
+  const vazia = cat => !S.ensaio.tarefas.some(t => t.cat === cat)
+                    && !(S.ensaio.feitas||[]).some(t => t.cat === cat);
+  const nova = (titulo, cat, col, extra) => S.ensaio.tarefas.push({
+    id: S.ensaio.prox++, titulo, cli: null, resp: null, col, cat,
+    criada: Date.now(), prazo: null, tempoMs: 0, desde: null, ...(extra||{}) });
+
+  if(vazia('financeiro')){
+    nova('Emitir a nota da EJUP · agosto', 'financeiro', 'plan',
+      { valor:'4.800', fin:'receber' });
+    nova('Cobrança em atraso · Cortez Jurídico', 'financeiro', 'do',
+      { valor:'3.200', fin:'receber' });
+    nova('Renovar a assinatura do banco de imagens', 'financeiro', 'inbox',
+      { valor:'390', fin:'pagar' });
+  }
+  if(vazia('socios')){
+    nova('Fechar a proposta do quarto cliente', 'socios', 'plan');
+    nova('Revisar a divisão de pró-labore do trimestre', 'socios', 'inbox');
+  }
+}
+
+sincronizarTarefasDaPauta();
+semearOutrasCategorias();
+
+/* pauta que muda depois (importar planilha, criar tarefa) também entra */
+render = (function(orig){
+  return function(){
+    if(S.view === 'agency' && S.route === 'producao') sincronizarTarefasDaPauta();
+    orig();
+  };
+})(render);
+</script>
+<style>
+/* =====================================================================
+   v62 — UM CARD SÓ. A coluna do quadro passa a ser a fase do card.
+   ================================================================== */
+.enCol.travada{ background:linear-gradient(180deg,rgba(200,150,58,.07),transparent 60%);
+  border-color:rgba(200,150,58,.28) }
+.enCol.travada .enColHd b{ color:var(--brass-300) }
+.enVolta{ font-family:var(--mono); font-size:9px; letter-spacing:.08em;
+  text-transform:uppercase; padding:2px 7px; border-radius:999px;
+  border:1px solid var(--ink-700); color:var(--ink-300) }
+.enVolta.v2{ border-color:rgba(200,150,58,.4); color:var(--brass-300) }
+.enCard.pedido{ border-color:rgba(224,90,90,.5);
+  box-shadow:inset 3px 0 0 var(--danger) }
+.enPedido{ display:flex; gap:6px; margin-top:8px; font-size:11.5px; line-height:1.45;
+  color:#F0B5B5; background:rgba(224,90,90,.09); border-radius:9px; padding:7px 9px }
+.enPedido b{ color:#FF9E9E }
+.enBola{ display:flex; align-items:center; gap:6px; margin-top:8px;
+  font-size:11px; color:var(--ink-300) }
+.enBola b{ color:var(--ink-100); font-weight:600 }
+.enPasso{ width:auto !important; padding:0 11px !important; font-family:var(--mono);
+  font-size:9.5px; letter-spacing:.06em; color:var(--brass-300) !important;
+  border-color:var(--brass-700) !important }
+.enTrilho{ display:flex; gap:3px; margin-top:9px }
+.enTrilho i{ height:3px; flex:1; border-radius:2px; background:var(--ink-800) }
+.enTrilho i.feita{ background:var(--brass-600) }
+.enTrilho i.atual{ background:var(--brass-300) }
+.enLegenda{ margin:10px 2px 0; font-size:11.5px; color:var(--ink-300); line-height:1.6 }
+.enLegenda b{ color:var(--ink-100) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v62 — O CARD ÚNICO.
+
+   O problema que o fundador descreveu: agência cria um card para cada
+   coisa — um na pauta, outro na produção, outro para a alteração — e
+   ninguém sabe mais qual é qual.
+
+   A correção não é sincronizar cópias. É parar de ter cópias.
+
+   O card da pauta JÁ tem as onze fases. O quadro do Ensaio JÁ tem o PDCA.
+   Eram dois campos dizendo a mesma coisa (`p.fase` e `t.col`), cada um
+   podendo discordar do outro. Aqui `t.col` deixa de ser um campo: vira
+   uma LEITURA de `p.fase`. Arrastar no quadro escreve a fase. Um objeto,
+   uma verdade, duas telas.
+
+     PLAN ······ DO ······· CHECK ······ COM O CLIENTE ······ ACT
+     (a semana)  escrever   aprovação    o cliente decide     fecha a volta
+                            interna
+     1ª volta = o TEXTO · 2ª volta = a PEÇA
+
+   O mesmo card dá as duas voltas. É isso que o PDCA sempre foi: um ciclo
+   que se repete, não uma esteira que anda uma vez.
+
+   Pedido de alteração não cria card: devolve ESTE para Do, em vermelho,
+   com as palavras do cliente coladas nele.
+   ================================================================== */
+
+/* ---------- as cinco frentes da agência ------------------------------
+   Marketing/Financeiro/Sócios/Administrativo/Controle era um recorte de
+   ferramenta. O founder deu o recorte da operação: as cinco frentes por
+   onde passa tudo que uma agência faz. Produção é a única com cliente do
+   lado de fora — as outras quatro são a casa. */
+CATS_ENSAIO.length = 0;
+CATS_ENSAIO.push(
+  { id:'producao',       nome:'Produção',              cor:'#C8963A', restrita:false,
+    dica:'o conteúdo dos clientes — cada tarefa É um card da pauta' },
+  { id:'estrategico',    nome:'Estratégico',           cor:'#5B8DEF', restrita:true,
+    dica:'para onde a agência vai: sociedade, posicionamento, metas' },
+  { id:'comercial',      nome:'Comercial',             cor:'#35B87A', restrita:true,
+    dica:'propostas, contratos, cobranças — o dinheiro entrando' },
+  { id:'acompanhamento', nome:'Acompanhamento',        cor:'#E5854D', restrita:false,
+    dica:'como estamos indo: prazos, horas, indicadores e o que corrigir' },
+  { id:'pessoas',        nome:'Pessoas e Conhecimento',cor:'#B06AC9', restrita:false,
+    dica:'time, processos e o que a agência aprendeu' });
+
+/* quadros antigos continuam abrindo: o nome velho vira o nome novo */
+const CAT_LEGADO = { marketing:'producao', financeiro:'comercial', socios:'estrategico',
+  administrativo:'acompanhamento', controle:'acompanhamento' };
+const CAT_PADRAO = 'producao';
+const catIdDe = t => CAT_LEGADO[t && t.cat] || (t && t.cat) || CAT_PADRAO;
+
+/* privacidade em dois níveis:
+   1. a CATEGORIA pode ser restrita — Estratégico e Comercial são;
+   2. qualquer card, em qualquer categoria, pode ter "quem pode ver".
+   O segundo nível é o que o founder pediu: nem toda conversa de pessoas
+   é sigilosa, mas uma delas é — e o sigilo é do card, não da aba. */
+const trancada = t => catDe(t).restrita || (t.quemVe||[]).length > 0;
+podeVerTarefa = function(t){
+  if(!S.usuario) return true;
+  if(S.usuario.tipo !== 'agencia') return false;
+  if(!trancada(t)) return true;
+  if(ehAdmin()) return true;
+  const eu = S.usuario.id;
+  return t.resp === eu || (t.quemVe||[]).includes(eu);
+};
+/* `catsVisiveis` nasceu `const` — não dá para reescrever, e nem deve:
+   o nome novo diz a regra nova. */
+const catsDoQuadro = () => CATS_ENSAIO.filter(c =>
+  !c.restrita || !S.usuario || ehAdmin() ||
+  (S.ensaio && S.ensaio.tarefas.some(t => catIdDe(t)===c.id && podeVerTarefa(t))));
+
+/* ---------- a coluna do cliente entra entre Check e Act -------------- */
+if(!EN_COLS.some(([k])=>k==='cliente'))
+  EN_COLS.splice(EN_COLS.findIndex(([k])=>k==='act'), 0,
+    ['cliente','Com o cliente','#C8963A','esperando a decisão — daqui quem move é ele']);
+
+/* ---------- fase ⇄ coluna: a tabela inteira do fluxo ---------------- */
+const VOLTA_1  = ['rascunho','criado','revisao','texto_cli'];
+const voltaDe  = f => VOLTA_1.includes(f) ? 1 : 2;
+const FASE_COL = { rascunho:'plan', criado:'do', revisao:'check', texto_cli:'cliente',
+  texto_ok:'act', producao:'do', revisao2:'check', post_cli:'cliente',
+  aprovado:'act', agendado:'act', postado:'act' };
+const COL_FASE = {
+  1:{ plan:'rascunho', do:'criado',   check:'revisao',  cliente:'texto_cli', act:'texto_ok' },
+  2:{ plan:'texto_ok', do:'producao', check:'revisao2', cliente:'post_cli',  act:'aprovado' }
+};
+const cardDaTarefa = t => t && t.cardId
+  ? (S.pautas[t.cli]||[]).find(p => p.id === t.cardId) : null;
+
+/* mover no quadro = mudar a fase do card. As recusas ensinam o fluxo. */
+function moverJob(p, col){
+  const f = faseDe(p);
+  if(col === FASE_COL[f]) return;
+  if(NO_CLIENTE.includes(f)){
+    toast('Está com o cliente. Daqui quem move é ele.'); return; }
+  if(f==='agendado' || f==='postado'){ toast('Esse já foi ao ar.'); return; }
+  if(f==='aprovado' && col!=='act'){
+    toast('O cliente já aprovou. O próximo passo é agendar.'); return; }
+  if(col==='inbox'){
+    toast('Card de conteúdo não volta para o Inbox — ele nasce na pauta.'); return; }
+  if(col==='cliente'){
+    if(!(p.texto||'').trim()){
+      toast('Falta o texto. O cliente precisa de algo para ler.'); return; }
+    porFase(p, destinoDoEnvio(p));
+    p.enviadoEm = Date.now(); p.ajustePendente = false;
+    som('toque');
+    toast(`"${p.t}" foi para aprovação — ${faseDe(p)==='texto_cli'?'o texto':'a peça pronta'}.`);
+    return; }
+  if(col==='act' && f!=='texto_ok'){
+    toast('Act é depois do cliente. Mande para aprovação primeiro.'); return; }
+  const destino = COL_FASE[voltaDe(f)][col];
+  if(!destino) return;
+  porFase(p, destino);
+  som('toque');
+}
+
+/* `t.col` deixa de ser campo e passa a ser leitura da fase. Todo o motor
+   que já existia — arrastar, as setas, os filtros — continua igual. */
+function ligarTarefaAoCard(t){
+  if(!t || !t.cardId) return;
+  /* o quadro viaja no `__config__` e volta como JSON puro — o getter se
+     perde na viagem. Quem manda é o descritor, nunca uma bandeira. */
+  const d = Object.getOwnPropertyDescriptor(t, 'col');
+  if(d && d.get) return;
+  t._col = t.col;
+  Object.defineProperty(t, 'col', {
+    configurable:true, enumerable:true,
+    get(){ const p = cardDaTarefa(this); return p ? (FASE_COL[faseDe(p)] || 'plan') : this._col; },
+    set(v){ const p = cardDaTarefa(this); if(p) moverJob(p, v); else this._col = v; }
+  });
+}
+
+/* ---------- o que entra no quadro ----------------------------------- */
+/* A pauta da EJUP tem setenta cards de calendário. Setenta cartões em
+   Plan não é um quadro, é um paredão. O calendário É o Plan: enquanto o
+   card está em rascunho ele vive na semana, onde o fundador gosta de ler.
+   Ele aparece no quadro quando alguém começa — e some quando vai ao ar. */
+function sincronizarJobs(){
+  if(!S.ensaio) S.ensaio = kbSemente();
+  migrarCategorias();
+  semearAsFrentes();
+  const tem = (cli,id) => S.ensaio.tarefas.some(t => t.cli===cli && t.cardId===id)
+                       || (S.ensaio.feitas||[]).some(t => t.cli===cli && t.cardId===id);
+  for(const c of CLIS()){
+    for(const p of (S.pautas[c.id]||[])){
+      if(p.tarefa || p.feito) continue;
+      const f = faseDe(p);
+      if(f==='rascunho' || f==='postado') continue;
+      if(tem(c.id, p.id)) continue;
+      S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo:p.t, cli:c.id, resp:p.resp||null,
+        cat:'producao', criada:Date.now(), prazo:p.data||null, tempoMs:0, desde:null,
+        cardId:p.id, job:true, col:'do' });
+    }
+  }
+  S.ensaio.tarefas.forEach(ligarTarefaAoCard);
+}
+
+/* o pedido de alteração não abre outro card: acha o que já existe */
+abrirTarefaDeAjuste = function(p){
+  if(!S.ensaio) S.ensaio = kbSemente();
+  sincronizarJobs();
+  const ultimo = (p.alteracoes||[])[p.alteracoes.length-1];
+  let t = S.ensaio.tarefas.find(x => x.cardId===p.id && x.cli===cliAtual().id);
+  if(!t){
+    t = { id:S.ensaio.prox++, titulo:p.t, cli:cliAtual().id, resp:p.resp||null,
+      cat:'producao', criada:Date.now(), prazo:p.data||null, tempoMs:0, desde:null,
+      cardId:p.id, job:true, col:'do' };
+    S.ensaio.tarefas.push(t); ligarTarefaAoCard(t);
+  }
+  t.pedido = ultimo ? ultimo.oque : '';
+  t.doCliente = true;
+};
+
+/* ---------- o quadro, agora lendo a fase ---------------------------- */
+agEnsaio = function(){
+  if(!S.ensaio) S.ensaio = kbSemente();
+  sincronizarJobs();
+  const cats = catsDoQuadro();
+  if(!cats.some(c=>c.id===S.enCat)) S.enCat = 'producao';
+  const catAtiva = CATS_ENSAIO.find(c=>c.id===S.enCat);
+  const producao = S.enCat === 'producao';
+  const minhas = S.enSoMinhas && S.usuario ? S.usuario.id : null;
+  const doQuadro = t => catIdDe(t)===S.enCat && podeVerTarefa(t)
+    && (!minhas || t.resp===minhas);
+
+  const cartao = t => {
+    const c = CLIS().find(x=>x.id===t.cli);
+    const r = membro(t.resp);
+    const tarde = t.prazo && t.prazo < hojeISO();
+    const cat = catDe(t);
+    const job = cardDaTarefa(t);
+    const f = job ? faseDe(job) : null;
+    const v = f ? voltaDe(f) : 0;
+    const pedido = job && job.ajustePendente
+      ? (job.alteracoes||[])[job.alteracoes.length-1] : null;
+    const i = job ? faseIdx(job) : 0;
+    return `<div class="enCard ${pedido?'pedido':''}" data-entar="${t.id}" style="--catCor:${cat.cor}">
+      <div class="tit">${esc(t.titulo)}</div>
+      <div class="meta">
+        ${c && producao ? `<span class="cli">${esc(c.ini)}</span>`:''}
+        ${trancada(t) ? `<span class="priv">🔒 ${cat.restrita?esc(cat.nome):'só os marcados'}</span>`:''}
+        ${job?`<span class="enVolta ${v===2?'v2':''}">${v}ª volta · ${v===1?'texto':'peça'}</span>`:''}
+        ${r?`<span class="ptResp" title="${esc(r.nome)}">${esc(r.ini)}</span>`
+           :`<span class="prazo" style="color:#E5A54D">sem dono</span>`}
+        ${t.prazo?`<span class="prazo ${tarde?'tarde':''}">${rotuloData(t.prazo)}</span>`:''}
+        ${t.valor?`<span class="prazo" style="color:${cat.cor}">R$ ${esc(String(t.valor))}${t.fin==='receber'?' ↓':' ↑'}</span>`:''}
+        <span class="kbTempo ${t.desde?'rodando':''}" data-kbtempo="${t.id}">${kbFmt(kbTempoTotal(t))}</span>
+      </div>
+      ${pedido && pedido.oque ? `<div class="enPedido">${ic('warn',12)}
+        <span><b>Helena pediu:</b> ${esc(pedido.oque)}</span></div>`:''}
+      ${job?`<div class="enBola">${ic('linkic',11)} <span>é o card da pauta ·
+        <b>${esc(rotuloFase(job))}</b></span></div>
+      <div class="enTrilho">${FASES.map((_,j)=>
+        `<i class="${j<i?'feita':''}${j===i?'atual':''}"></i>`).join('')}</div>`:''}
+      <div class="acoes">
+        <button data-enmove="${t.id}|-1" aria-label="Coluna anterior">${ic('arrowl',12)}</button>
+        <button data-enmove="${t.id}|1" aria-label="Próxima coluna">${ic('arrowr',12)}</button>
+        <button data-entimer="${t.id}" aria-label="${t.desde?'Pausar':'Contar tempo'}"
+          title="${t.desde?'Pausar':'Contar tempo'}">${ic(t.desde?'sndoff':'clock',12)}</button>
+        ${job?`<button data-hjabre="${t.cli}:${t.cardId}" title="Abrir o card completo"
+          aria-label="Abrir o card completo">${ic('doc',12)}</button>`:''}
+        ${job && f==='texto_ok' ? `<button class="enPasso" data-jbpasso="${t.cli}:${job.id}">começar a peça →</button>`:''}
+        ${job && f==='aprovado' ? `<button class="enPasso" data-jbpasso="${t.cli}:${job.id}">agendar ✓</button>`:''}
+        ${!job && t.col==='act' ? `<button class="conclui" data-enfim="${t.id}">concluir ✓</button>`:''}
+      </div></div>`;
+  };
+
+  /* Em Marketing o Inbox nunca recebe card de conteúdo — ele nasce na
+     pauta, com data. Uma coluna vazia na frente empurrava o quadro
+     inteiro para fora da tela do celular. Some quando não tem nada. */
+  const vazioNoQuadro = k => !S.ensaio.tarefas.some(t=>t.col===k && doQuadro(t));
+  const cols = EN_COLS
+    .filter(([k]) => (k!=='cliente' || producao) && !(k==='inbox' && producao && vazioNoQuadro('inbox')))
+    .map(([k, nome, cor, dica])=>{
+      const ts = S.ensaio.tarefas.filter(t=>t.col===k && doQuadro(t));
+      return `<div class="enCol ${k==='cliente'?'travada':''}" data-encol="${k}">
+        <div class="enColHd"><i style="background:${cor}"></i><b>${nome}</b>
+          <span>${ts.length}</span></div>
+        ${ts.map(cartao).join('') || `<div class="enVazia">${dica}</div>`}
+      </div>`;
+    }).join('');
+
+  const chips = cats.map(c=>{
+    const n = S.ensaio.tarefas.filter(t=>(t.cat||'marketing')===c.id && podeVerTarefa(t)).length;
+    return `<button class="enCat ${c.id===S.enCat?'on':''}" data-encat="${c.id}"
+      style="--catCor:${c.cor}"><i style="background:${c.cor}"></i>${c.nome}<b>${n||''}</b></button>`;
+  }).join('');
+  const feitasMes = S.ensaio.feitas.length;
+  return agShell(`
+  <div class="mtop"><div><h1>Ensaio</h1><p>${esc(catAtiva.dica)}</p></div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="b gho sm" data-enminhas="1"
+        style="${S.enSoMinhas?'border-color:var(--brass-500);color:var(--brass-300)':''}">
+        ${ic('person',13)} ${S.enSoMinhas?'Só as minhas':'Todas'}</button>
+      <button class="b gho sm" data-enranking="1">${ic('chart',13)} Ranking${feitasMes?` (${feitasMes})`:''}</button>
+      <button class="b pri sm" data-ennova="1">${ic('pencil',13)} Nova tarefa</button></div></div>
+  <div class="enCats">${chips}</div>
+  <div class="enRolo">${cols}</div>
+  ${producao ? `<p class="enLegenda"><b>Um card só, duas voltas.</b> O calendário da
+    semana é o Plan — o card entra aqui quando alguém começa. Na <b>1ª volta</b> vai o
+    <b>texto</b>; na <b>2ª</b>, a <b>peça pronta</b>. Arrastar aqui muda a fase lá: é o
+    mesmo card, na pauta e no quadro. Em <b>Com o cliente</b> ninguém da agência mexe —
+    a decisão dele é que move. Pedido de alteração devolve <i>este</i> card para Do,
+    em vermelho, com as palavras dele. Nenhum card novo é criado em lugar nenhum.</p>`
+  : `<p class="enLegenda">${esc(catAtiva.nome)} passa pelo mesmo PDCA, sem a coluna do
+    cliente — assunto da casa não vai para fora.${catAtiva.restrita
+    ? ' <b>Frente restrita:</b> só o responsável, quem for marcado em “quem pode ver” e os sócios.'
+    : ' Frente aberta ao time — mas qualquer card pode ser trancado sozinho, em “quem pode ver”.'}</p>`}`);
+};
+
+/* ---------- migrar o que existe e semear as quatro frentes da casa ---- */
+function migrarCategorias(){
+  if(!S.ensaio) return;
+  for(const t of S.ensaio.tarefas) t.cat = catIdDe(t);
+  for(const t of (S.ensaio.feitas||[])) t.cat = catIdDe(t);
+}
+
+/* As sementes antigas falavam a língua antiga ("Renovar a assinatura do
+   banco de imagens" em Financeiro). Migrar o rótulo deixaria o conteúdo
+   torto na frente nova. Elas saem uma vez — são exemplos, não trabalho —
+   e as quatro frentes da casa nascem inteiras. A bandeira garante que
+   isso aconteça uma vez só e nunca apague tarefa de ninguém. */
+function semearAsFrentes(){
+  if(!S.ensaio || S.ensaio.frentes) return;
+  S.ensaio.frentes = true;
+  S.ensaio.tarefas = S.ensaio.tarefas.filter(t => t.cli || t.cardId);
+  const eq = (S.equipe||[]).map(membroId);
+  const nova = (titulo, cat, col, extra) => S.ensaio.tarefas.push({
+    id:S.ensaio.prox++, titulo, cli:null, resp:null, col, cat,
+    criada:Date.now(), prazo:null, tempoMs:0, desde:null, quemVe:[], ...(extra||{}) });
+
+  nova('Decidir se abrimos a vertical de vídeo',        'estrategico', 'plan');
+  nova('Revisar a divisão de pró-labore do trimestre',  'estrategico', 'do');
+  nova('Definir o posicionamento para 2027',            'estrategico', 'inbox');
+
+  nova('Fechar a proposta do quarto cliente',           'comercial', 'plan');
+  nova('Renovar o contrato da EJUP · setembro',         'comercial', 'do',
+    { valor:'4.800', fin:'receber' });
+  nova('Cobrança em atraso · Cortez Jurídico',          'comercial', 'check',
+    { valor:'3.200', fin:'receber' });
+
+  nova('Fechar as horas do time · agosto',              'acompanhamento', 'check');
+  nova('Revisar os prazos estourados da semana',        'acompanhamento', 'do');
+  nova('Relatório de resultados · Loja Norte',          'acompanhamento', 'plan');
+
+  nova('Documentar o padrão de corte dos Reels',        'pessoas', 'do');
+  nova('Onboarding da nova designer',                   'pessoas', 'plan');
+  /* o cadeado por card, dentro de uma frente aberta */
+  nova('Conversa de desenvolvimento · Rafa',            'pessoas', 'inbox',
+    { quemVe: eq.slice(0,1) });
+}
+migrarCategorias();
+semearAsFrentes();
+
+/* fechar a volta: o botão do Act. Vale para o card de qualquer cliente —
+   por isso carrega o cliente junto, e não confia em quem está aberto. */
+/* no `window`, não no `document`: a captura passa pelo window primeiro, e
+   o ouvinte do quadro (que é do document) começa com
+   `stopImmediatePropagation` — de lá ninguém mais escuta. */
+addEventListener('click', e => {
+  const b = e.target.closest('[data-jbpasso]');
+  if(!b) return;
+  e.stopImmediatePropagation();
+  const [cli, id] = b.dataset.jbpasso.split(':');
+  const p = (S.pautas[cli]||[]).find(x => x.id === +id); if(!p) return;
+  const f = faseDe(p);
+  if(f === 'texto_ok'){ porFase(p, 'producao'); som('toque');
+    toast(`"${p.t}" voltou para a produção — 2ª volta, a peça.`); }
+  else if(f === 'aprovado'){ porFase(p, 'agendado');
+    (typeof somAgendar==='function' ? somAgendar : ()=>som('toque'))();
+    toast(`"${p.t}" agendado. O cliente aprovou esta versão.`); }
+  render();
+}, true);
+
+sincronizarJobs();
+render = (function(orig){
+  return function(){
+    if(S.view === 'agency') sincronizarJobs();
+    orig();
+  };
+})(render);
+</script>
+<style>
+/* =====================================================================
+   v64 — a miniatura do card abre o player.
+   ================================================================== */
+.mtMini[data-mtmini]{ cursor:zoom-in }
+/* o selo de play, em CSS: sem ele o vídeo se passa por foto na tira */
+.mtMini.ehVideo::after{ content:''; position:absolute; left:50%; top:50%;
+  transform:translate(-40%,-50%); width:0; height:0;
+  border-left:10px solid rgba(255,255,255,.94);
+  border-top:7px solid transparent; border-bottom:7px solid transparent;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.75)); pointer-events:none }
+.mtMini.ehVideo.temArte::before{ content:''; position:absolute; inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.42)); pointer-events:none }
+.mtMini.semArquivo{ border-style:dashed; opacity:.72 }
+.lbFalta{ display:flex; flex-direction:column; align-items:center; gap:9px;
+  text-align:center; color:var(--ink-300); font-size:13px; line-height:1.55; padding:0 22px }
+.lbFalta b{ color:var(--ink-100); font-size:14.5px }
+.lbFalta span{ max-width:34ch }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v64 — "não tem um player pra assistir?"
+
+   Tinha, e não estava chegando em ninguém. O visualizador só abria a
+   partir da grade da tela **Material** (`.mtCard .vis`). No CARD — que é
+   onde o vídeo aparece para quem está lendo a pauta — o arquivo virava
+   uma miniatura de 46px sem nenhum toque ligado nela.
+
+   Pior no lado do cliente: ele não tem a tela Material. A miniatura do
+   card era o ÚNICO lugar onde o vídeo dele aparecia — e não abria. Na
+   prática, o cliente nunca conseguiu assistir ao que ia aprovar.
+
+   Três correções:
+     1. a miniatura do card abre o visualizador, no arquivo tocado;
+     2. ela mostra que é vídeo (selo de play), em vez de parecer foto;
+     3. arquivo sem `url` — o que volta do armazenamento antes do blob
+        ser reidratado — deixa de ser um ícone morto: abre e DIZ o que
+        houve, em vez de um player preto sem nada dentro.
+   ================================================================== */
+
+/* ---------- 1. toda miniatura ganha endereço ------------------------
+   São duas tiras diferentes, desenhadas por códigos diferentes: a da
+   LINHA da pauta (`tiraMaterial`, 4 arquivos) e a do CARD aberto
+   (`.vzMats` dentro de `modalVer`, 6). As duas mostram o mesmo `S.mat` e
+   as duas precisam abrir. O índice não é o da tira: o visualizador não
+   lista links, então o mini nº 2 pode ser o arquivo nº 1 lá dentro. */
+function marcarMinis(html, id, lista){
+  const naoLink = lista.filter(m => m.tipo !== 'link');
+  let j = -1;
+  return html.replace(/<span class="mtMini([^"]*)">/g, (todo, cls) => {
+    j++;
+    const m = lista[j];
+    if(!m || m.tipo === 'link') return todo;
+    const k = naoLink.indexOf(m);
+    const video = m.tipo === 'video' ? ' ehVideo' : '';
+    const falta  = !m.url && (m.tipo==='imagem' || m.tipo==='video') ? ' semArquivo' : '';
+    return `<span class="mtMini${cls}${video}${falta}" data-mtmini="${k}">`;
+  });
+}
+
+tiraMaterial = (function(orig){
+  return function(p){
+    let html = orig(p);
+    if(!html || html.indexOf('mtTira') < 0) return html;
+    html = html.replace('<span class="mtTira">',
+      `<span class="mtTira" data-mttira="${p.id}">`);
+    return marcarMinis(html, p.id, materiaisDe(p.id).slice(0,4));
+  };
+})(tiraMaterial);
+
+/* a tira DO CARD — a única que o cliente tem */
+modalVer = (function(orig){
+  return function(id){
+    let html = orig(id);
+    if(!html || html.indexOf('vzMats') < 0) return html;
+    html = html.replace('<div class="vzMats">', `<div class="vzMats" data-mttira="${id}">`);
+    return marcarMinis(html, id, materiaisDe(id).slice(0,6));
+  };
+})(modalVer);
+
+/* ---------- 2. tocar nela abre o visualizador ----------------------- */
+/* No `window`: a linha da pauta e o card já param o clique no `document`,
+   e a captura passa pelo window primeiro. */
+addEventListener('click', e => {
+  const mini = e.target.closest('[data-mtmini]');
+  if(!mini || S.lb) return;
+  const tira = mini.closest('[data-mttira]');
+  if(!tira) return;
+  const id = +tira.dataset.mttira;
+  const ms = (S.mat[id] || []).filter(m => m.tipo !== 'link');
+  if(!ms.length) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  S.mtId = id;
+  abrirLB(+mini.dataset.mtmini || 0);
+}, true);
+
+/* ---------- 2b. na tela Material, o ícone morto também abre ---------- */
+/* Lá a prévia só existia com `url`. Sem ele o card virava um ícone de
+   documento sem toque — e é justamente o estado em que a pessoa mais
+   precisa de uma explicação. Agora abre e diz o que houve.
+   De quebra corrige um deslocamento antigo: `data-mtdel` conta os links,
+   o visualizador não. Com um link no meio, o toque abria o arquivo errado. */
+const lbIndiceDe = (id, j) => {
+  const lista = S.mat[id] || [];
+  const m = lista[j];
+  if(!m || m.tipo === 'link') return -1;
+  return lista.filter(x => x.tipo !== 'link').indexOf(m);
+};
+addEventListener('click', e => {
+  const vis = e.target.closest('.mtCard .vis');
+  if(!vis || S.lb || e.target.closest('[data-mtdel]')) return;
+  const del = vis.querySelector('[data-mtdel]');
+  if(!del) return;
+  const k = lbIndiceDe(S.mtId, +del.dataset.mtdel);
+  if(k < 0) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  abrirLB(k);
+}, true);
+
+/* ---------- 3. arquivo que ainda não voltou não vira player vazio ---- */
+/* `<video src="null" controls>` desenha um retângulo preto com controles
+   que não tocam nada — o pior estado possível, porque parece defeito do
+   vídeo. Quando o blob não está aqui, a tela diz isso com todas as
+   letras, e tenta buscar de volta. */
+vLightbox = (function(orig){
+  return function(){
+    let html = orig();
+    if(!html) return html;
+    const ms = lbMateriais();
+    const m = ms[Math.min(S.lb.i, ms.length-1)];
+    if(!m || m.url) return html;
+    const aviso = `<div class="lbFalta">${ic('warn',34)}
+      <b>O arquivo não está neste aparelho</b>
+      <span>${esc(m.nome)} foi enviado de outro navegador — ou a memória
+      daqui foi limpa. Peça para reenviar, ou abra no aparelho de origem.</span></div>`;
+    return html
+      .replace(/<video[^>]*><\/video>/, aviso)
+      .replace(/<img src="(null|undefined)"[^>]*>/, aviso);
+  };
+})(vLightbox);
+
+/* e, ao abrir, tenta trazer o arquivo de volta antes de desistir */
+abrirLB = (function(orig){
+  return function(i){
+    orig(i);
+    if(!S.lb) return;
+    const m = lbMateriais()[S.lb.i];
+    if(m && !m.url && m.chave && typeof rehidratarArquivos === 'function')
+      Promise.resolve(rehidratarArquivos()).then(()=>{ if(S.lb) renderLayer(); }).catch(()=>{});
+  };
+})(abrirLB);
+</script>
+<style>
+/* =====================================================================
+   v65 — o vídeo que mora num link, e a ausência que se anuncia.
+   ================================================================== */
+.mtFalta{ display:flex; gap:9px; align-items:flex-start; margin:12px 0 0;
+  padding:11px 13px; border-radius:12px; line-height:1.55; font-size:12.5px;
+  color:#F0D9A8; background:rgba(200,150,58,.09);
+  border:1px solid rgba(200,150,58,.28) }
+.mtFalta b{ color:var(--brass-300); display:block; margin-bottom:2px }
+.mtMini.ehLinkVideo{ background:linear-gradient(160deg,#1B1F26,#0E1116) }
+.lbEmbed{ width:100%; height:100%; border:0; background:#000; border-radius:12px }
+.lbAbrir{ position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
+  display:inline-flex; align-items:center; gap:7px; padding:10px 16px;
+  border-radius:999px; font-size:13px; font-weight:600; text-decoration:none;
+  color:var(--ink-950); background:var(--brass-500) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v65 — "n tem player".
+
+   Não tinha, e estava certo: naquele card só existe a CAPA. Um .png de
+   2 MB, "1 de 1". O visualizador abriu a imagem, que é o que havia. O
+   erro não é o player — é a tela ter deixado o founder procurar por ele.
+
+   Duas coisas saem daqui:
+
+   1. **A ausência passa a se anunciar.** Um Reels (ou um corte de
+      podcast, ou qualquer card com roteiro) que só tem imagem diz, na
+      tela de Material e no card: falta o vídeo. Silêncio, aqui, lê como
+      defeito do produto.
+
+   2. **Vídeo em link ganha player.** O caminho real do vídeo de um Reels
+      não é o upload — é o Drive, o YouTube. E link era invisível para o
+      visualizador (`lbMateriais` filtra `tipo!=='link'`): mesmo com o
+      vídeo lá, não havia como assistir, nem para a agência nem para o
+      cliente. Agora um link que É vídeo entra como vídeo, e a tela
+      grande toca dentro da plataforma.
+   ================================================================== */
+
+/* ---------- 1. que link é vídeo, e como se toca --------------------- */
+const RE_YT    = /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{6,})/i;
+const RE_VIMEO = /vimeo\.com\/(?:video\/)?(\d+)/i;
+const RE_DRIVE = /drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{10,})/i;
+const RE_ARQ   = /\.(mp4|mov|m4v|webm|ogv)(\?|#|$)/i;
+
+function embedDeVideo(url){
+  let m;
+  if((m = String(url||'').match(RE_YT)))    return `https://www.youtube.com/embed/${m[1]}`;
+  if((m = String(url||'').match(RE_VIMEO))) return `https://player.vimeo.com/video/${m[1]}`;
+  if((m = String(url||'').match(RE_DRIVE))) return `https://drive.google.com/file/d/${m[1]}/preview`;
+  return null;
+}
+const capaDoYT = url => { const m = String(url||'').match(RE_YT);
+  return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : null; };
+const ehLinkDeVideo = u => !!embedDeVideo(u) || RE_ARQ.test(String(u||''));
+
+/* O visualizador lista `tipo!=='link'` — e `lbMateriais` é `const`, não
+   dá para reescrever. Então não se reescreve: o link que é vídeo passa a
+   ser guardado COMO vídeo (`tipo:'video'`, `link:true`), e todo o motor
+   que já existe o enxerga sem saber que veio de um link. A capa do
+   YouTube vira `poster` de graça. */
+function migrarLinksDeVideo(){
+  for(const arr of Object.values(S.mat||{})){
+    for(const m of arr){
+      if(m.tipo !== 'link' || !ehLinkDeVideo(m.url)) continue;
+      m.tipo = 'video'; m.link = true;
+      m.poster = m.poster || capaDoYT(m.url);
+      if(m.nome === m.url) m.nome = dominioDe(m.url) + ' · vídeo';
+    }
+  }
+}
+migrarLinksDeVideo();
+render = (function(orig){
+  return function(){ migrarLinksDeVideo(); orig(); };
+})(render);
+
+/* na tira, o link de vídeo não tem arquivo local para desenhar — dá um
+   fundo em vez do retângulo quebrado do `<video>` sem stream */
+marcarMinis = (function(orig){
+  return function(html, id, lista){
+    let out = orig(html, id, lista);
+    let j = -1;
+    return out.replace(/<span class="mtMini([^"]*)"/g, (todo, cls) => {
+      j++;
+      const m = lista[j];
+      return (m && m.link) ? `<span class="mtMini${cls} ehLinkVideo"` : todo;
+    });
+  };
+})(marcarMinis);
+
+/* ---------- 2. a tela grande toca o embed --------------------------- */
+vLightbox = (function(orig){
+  return function(){
+    let html = orig();
+    if(!html) return html;
+    const ms = lbMateriais();
+    const m = ms[Math.min(S.lb.i, ms.length-1)];
+    if(!m || !m.link) return html;
+    const emb = embedDeVideo(m.url);
+    const dentro = emb
+      ? `<iframe class="lbEmbed" src="${esc(emb)}" allow="autoplay; fullscreen;
+           picture-in-picture" allowfullscreen title="${esc(m.nome)}"></iframe>`
+      : `<video src="${esc(m.url)}" controls playsinline preload="metadata"></video>`;
+    html = html.replace(/<video[^>]*><\/video>/, dentro);
+    /* baixar um link de outro domínio não funciona — o navegador barra.
+       No lugar, o que serve: abrir onde o arquivo mora de verdade. */
+    html = html.replace(/<button class="lbBtn" data-lbbaixa="1"[\s\S]*?<\/button>/,
+      `<a class="lbBtn" href="${esc(m.url)}" target="_blank" rel="noopener noreferrer"
+         aria-label="Abrir no ${esc(dominioDe(m.url))}"
+         title="Abrir no ${esc(dominioDe(m.url))}">${ic('linkic',16)}</a>`);
+    return html;
+  };
+})(vLightbox);
+
+/* ---------- 3. a ausência se anuncia -------------------------------- */
+/* Um Reels sem vídeo não é um estado de erro — é o meio do trabalho. Mas
+   precisa estar ESCRITO, senão a pessoa procura um player que não existe
+   e conclui que o produto quebrou. Foi exatamente o que aconteceu. */
+const PEDE_VIDEO = p => !!p && (/reels|story/i.test(p.fmt||'')
+  || !!(p.corte && (p.corte.ep || (p.corte.tcs||[]).length))
+  || !!(p.roteiro && (p.roteiro.hook || p.roteiro.des || p.roteiro.cta)));
+function faltaVideo(p){
+  if(!PEDE_VIDEO(p)) return false;
+  const ms = materiaisDe(p.id);
+  if(!ms.length) return false;                       // "sem arquivo" já é dito
+  return !ms.some(m => m.tipo === 'video');
+}
+const AVISO_FALTA = `<div class="mtFalta">${ic('warn',15)}
+  <span><b>Falta o vídeo — o que está aqui é a capa.</b>
+  Suba o arquivo, ou cole o link do Drive/YouTube: link de vídeo abre com
+  player aqui dentro, e o cliente assiste sem sair da plataforma.</span></div>`;
+
+modalMaterial = (function(orig){
+  return function(id){
+    /* o botão "Adicionar link" remonta o modal ANTES do próximo render —
+       sem isto o link recém-colado ainda apareceria como link */
+    migrarLinksDeVideo();
+    let html = orig(id);
+    if(!html) return html;
+    const p = S.pauta.find(x => x.id === id);
+    if(!faltaVideo(p)) return html;
+    return html.replace('<div class="modalrow"', AVISO_FALTA + '\n    <div class="modalrow"');
+  };
+})(modalMaterial);
+
+modalVer = (function(orig){
+  return function(id){
+    let html = orig(id);
+    if(!html || html.indexOf('vzMats') < 0) return html;
+    const p = S.pauta.find(x => x.id === id);
+    if(!faltaVideo(p)) return html;
+    return html.replace(/(<button class="b gho sm" style="margin-top:10px" data-mtabrir=)/,
+      AVISO_FALTA + '$1');
+  };
+})(modalVer);
+</script>

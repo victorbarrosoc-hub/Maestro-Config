@@ -1061,6 +1061,36 @@ Medido em 375px: o conteúdo foi de ~47% para **93%** da largura, e os botões d
 520px — o desktop segue como estava. *(A camada veio numerada "v52" da outra sessão;
 renumerada para v64 aqui, para a cronologia do arquivo não mentir.)*
 
+**Quinze camadas chegadas pelo artifact (v53–v65).** A sessão paralela avançou muito
+e o repositório estava defasado; trazido inteiro após leitura e comparação. O que entrou:
+
+> **Som de verdade na abertura (v53)** — o logo sonoro já existia na marca mas quase nunca
+> tocava (navegador não libera áudio antes de um gesto, e a cortina abre no carregamento).
+> Virou o arpejo de Lá maior com cauda de sino, uma oitava abaixo, tocado como UM gesto.
+
+> **Fluxo de alteração fechado (v55)** · **material com player de vídeo (v56, v64, v65)** —
+> a miniatura vira tela, e o vídeo que mora num link também toca · **carimbo de versão
+> (v57)** · **ordem das abas e material a um toque (v58)** — a Pauta passa a ser a
+> primeira aba do cliente (lê-se todo dia; marca e briefing, uma vez por trimestre) e a
+> vista padrão da pauta vira **dia** · **seletor do envio, lote por semana ou mês (v59)**
+> · **o Hoje ganha a agenda atravessando clientes (v59b)** · **UM CARD SÓ (v61, v62)** —
+> a coluna do quadro passa a ser a fase do card, e as categorias viraram cinco:
+> produção, estratégico, comercial, acompanhamento, pessoas.
+
+> **Duas correções sobre o meu trabalho, ambas certas:**
+> (a) `aprovadas()` contava só `APPROVED` — mas assinar o termo agenda o aprovado
+> (SCHEDULED→PUBLISHED), então o lote encolhia no instante da assinatura: "2 publicações,
+> 0 aprovadas" num lote de 8. Agora `APROVADA = [APPROVED, SCHEDULED, PUBLISHED]`.
+> (b) `podeVerTarefa` escondia tudo quando ninguém tinha se identificado — o quadro
+> aparecia vazio sem dizer por quê, parecendo defeito em vez de privacidade. Sem pessoa
+> escolhida, mostra tudo; a regra passa a valer quando alguém entra como alguém.
+
+> ⚠️ **Lição de processo**: eu tinha renumerado a camada "v52 — card deitado no celular"
+> para v64, para a cronologia local não mentir. A sessão paralela desfez. **Não renumerar
+> camadas que vêm de fora** — a numeração é delas e a divergência custa mais que o
+> desconforto. Verificado: as 8 rotas da agência e o lote inteiro do cliente rodam sem
+> erro de console; o lote fecha em 8 de 8 com o termo disponível.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
