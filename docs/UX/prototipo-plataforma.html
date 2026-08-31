@@ -15671,7 +15671,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v75 · 31 ago · guarda tudo';
+const VERSAO_PROTOTIPO = 'v76 · 31 ago · entre aparelhos';
 
 menuSheet = (function(orig){
   return function(){
@@ -17220,6 +17220,35 @@ function guardarTudo(){
   }
 }
 
+/* aplicar um estado guardado — daqui e, na v76, de outro aparelho */
+function aplicarEstado(sv){
+  if(!sv) return 0;
+  let aplicou = 0;
+  for(const [k, v] of Object.entries(sv)){
+    if(PASSAGEIRO.has(k) || v === undefined) continue;
+    try{
+      if(k === 'pecas'){
+        /* devolve o que mudou por cima da arte que veio do código */
+        if(!Array.isArray(v) || !Array.isArray(S.pecas)) continue;
+        const porId = new Map(v.map(p => [p.id, p]));
+        S.pecas = S.pecas.map(p => porId.has(p.id) ? { ...p, ...porId.get(p.id), art: p.art } : p);
+      }
+      else if(k === 'equipe'){
+        /* nunca uma equipe vazia: a conta ficaria sem administrador */
+        if(!Array.isArray(v) || !v.some(m => m && m.n)) continue;
+        S.equipe = v.filter(m => m && m.n);
+      }
+      else if(k === 'plan'){
+        if(typeof PLANOS !== 'object' || !PLANOS[v]) continue;
+        S.plan = v;
+      }
+      else S[k] = v;
+      aplicou++;
+    }catch(e){}
+  }
+  return aplicou;
+}
+
 (function restaurarTudo(){
   let g = null;
   try{ g = JSON.parse(localStorage.getItem(CHAVE_TUDO) || 'null'); }catch(e){}
@@ -17231,26 +17260,7 @@ function guardarTudo(){
     }catch(e){}
   }
   if(!g || !g.s) return;
-
-  for(const [k, v] of Object.entries(g.s)){
-    if(PASSAGEIRO.has(k) || v === undefined) continue;
-    try{
-      if(k === 'pecas'){
-        /* devolve o que mudou por cima da arte que veio do código */
-        if(!Array.isArray(v) || !Array.isArray(S.pecas)) continue;
-        const porId = new Map(v.map(p => [p.id, p]));
-        S.pecas = S.pecas.map(p => porId.has(p.id) ? { ...p, ...porId.get(p.id), art: p.art } : p);
-      }
-      else if(k === 'equipe'){
-        /* nunca uma equipe vazia: a conta ficaria sem administrador */
-        if(Array.isArray(v) && v.some(m => m && m.n)) S.equipe = v.filter(m => m && m.n);
-      }
-      else if(k === 'plan'){
-        if(typeof PLANOS === 'object' && PLANOS[v]) S.plan = v;
-      }
-      else S[k] = v;
-    }catch(e){}
-  }
+  aplicarEstado(g.s);
 })();
 
 const _renderV75 = render;
@@ -17261,4 +17271,179 @@ render = function(){
 };
 
 if(typeof render === 'function') render();
+</script>
+
+<style>
+/* o botão de atualizar: pequeno, fixo, fora do caminho do polegar
+   principal mas alcançável — acima da barra de baixo, à direita */
+#btAtualizar{ position:fixed; right:14px; z-index:610;
+  bottom:calc(84px + env(safe-area-inset-bottom, 0px));
+  width:42px; height:42px; border-radius:999px;
+  display:grid; place-items:center;
+  background:var(--ink-850); border:1px solid var(--ink-700);
+  color:var(--ink-300); box-shadow:0 6px 18px rgba(0,0,0,.45);
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo),
+             transform var(--fast) var(--eo) }
+#btAtualizar:hover{ color:var(--brass-500); border-color:var(--brass-600); transform:translateY(-1px) }
+#btAtualizar:active{ transform:scale(.94) }
+#btAtualizar svg{ width:18px; height:18px; display:block }
+#btAtualizar.girando svg{ animation:girar .9s linear infinite }
+#btAtualizar.ok{ color:var(--encore, #35B87A); border-color:var(--encore, #35B87A) }
+#btAtualizar.so-local{ color:var(--ink-500) }
+#btAtualizar .pt{ position:absolute; top:6px; right:6px; width:6px; height:6px;
+  border-radius:999px; background:var(--brass-500); opacity:0 }
+#btAtualizar.so-local .pt{ opacity:1; background:var(--ink-500) }
+@keyframes girar{ to{ transform:rotate(360deg) } }
+@media (prefers-reduced-motion:reduce){ #btAtualizar.girando svg{ animation:none } }
+/* no desktop a barra de baixo some: o botão desce junto */
+@media(min-width:861px){ #btAtualizar{ bottom:calc(20px + env(safe-area-inset-bottom, 0px)) } }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v76 — O QUE EU FIZER NO CELULAR APARECE NO COMPUTADOR.
+
+   A v75 passou a guardar tudo, mas no navegador — e navegador não viaja.
+   O protótipo já falava com um banco (Supabase), só que o que subia era
+   pouco: a pauta de cada cliente e um punhado de chaves de configuração.
+   Equipe, plano, peças, projeto, preferências — nada disso saía do
+   aparelho.
+
+   Agora o mesmo pacote que a v75 guarda localmente sobe para o banco,
+   numa linha própria, e desce quando você pede. Some com o `pautas`
+   dessa carga de propósito: ela já tem o caminho dela, por cliente, e
+   dois donos do mesmo dado é como divergência nasce.
+
+   A ordem importa: este aparelho só ENVIA depois de ter BUSCADO uma vez.
+   Sem isso, abrir o computador com o estado velho na memória sobrescreve
+   o que acabou de ser feito no celular.
+
+   A política de conflito é a mais simples que é honesta: quem grava por
+   último vence. Não há fusão de edições simultâneas — isso é trabalho da
+   API, com versão por registro (D-080). Aqui é protótipo, e o botão de
+   atualizar existe justamente para você escolher a hora de puxar.
+   ================================================================== */
+const LINHA_ESTADO = '__estado__';
+let _jaBuscou = false;      // trava: não envia antes de ter buscado
+let _enviando = false;
+
+function estadoParaSincronizar(){
+  const e = estadoParaGuardar();
+  e.novos = S.novos;        // cliente criado num aparelho precisa existir no outro
+  return e;
+}
+
+let _espelhoEstado = null;                 // último conteúdo confirmado no banco
+
+async function enviarEstado(){
+  if(!_sbLigado || !_jaBuscou || _enviando) return false;
+  /* o render dispara muito; sem isto seriam dezenas de gravações
+     idênticas. Só sobe o que de fato mudou. */
+  const corpo = JSON.stringify(estadoParaSincronizar());
+  if(corpo === _espelhoEstado) return true;
+  _enviando = true;
+  try{
+    const r = await fetch(`${SB.url}/rest/v1/pauta?on_conflict=cliente`, {
+      method:'POST',
+      headers:{ ...sbCab(), Prefer:'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ cliente: LINHA_ESTADO,
+        dados: { s: estadoParaSincronizar(), quando: Date.now(), versao: 76 },
+        atualizado_em: new Date().toISOString() })
+    });
+    if(r.ok) _espelhoEstado = corpo;
+    return r.ok;
+  }catch(e){ return false; }
+  finally{ _enviando = false; }
+}
+
+async function buscarEstado(){
+  if(!_sbLigado) return false;
+  try{
+    const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.${LINHA_ESTADO}&select=dados`,
+                          { headers: sbCab() });
+    if(!r.ok) return false;
+    const [linha] = await r.json();
+    if(linha && linha.dados && linha.dados.s){
+      aplicarEstado(linha.dados.s);
+      _espelhoEstado = JSON.stringify(estadoParaSincronizar());   // não devolve o que acabou de chegar
+    }
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ---------- o botão ---------- */
+const SETA_ATUALIZAR =
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>`;
+
+function botaoAtualizar(){
+  let b = document.getElementById('btAtualizar');
+  if(!b){
+    b = document.createElement('button');
+    b.id = 'btAtualizar';
+    b.type = 'button';
+    b.innerHTML = SETA_ATUALIZAR + '<span class="pt"></span>';
+    document.body.appendChild(b);
+  }
+  b.classList.toggle('so-local', !_sbLigado);
+  b.setAttribute('aria-label', _sbLigado
+    ? 'Buscar o que mudou nos outros aparelhos'
+    : 'Sem conexão com o banco — as mudanças ficam neste aparelho');
+  b.title = b.getAttribute('aria-label');
+  return b;
+}
+
+async function atualizarAgora(){
+  const b = botaoAtualizar();
+  if(b.classList.contains('girando')) return;
+  b.classList.remove('ok'); b.classList.add('girando');
+
+  if(!_sbLigado){
+    /* tenta reconectar: pode ter sido só falta de rede na abertura */
+    await sbCarregar();
+    _jaBuscou = _sbLigado;
+  }
+  let ok = false;
+  if(_sbLigado){
+    ok = await buscarEstado();          // primeiro o que os outros fizeram
+    _jaBuscou = true;
+    if(ok) await enviarEstado();        // depois o que este aparelho tem de novo
+  }
+  b.classList.remove('girando');
+  render();
+  botaoAtualizar();
+  if(ok){
+    b.classList.add('ok');
+    setTimeout(()=>b.classList.remove('ok'), 1400);
+    toast('Atualizado com os outros aparelhos.');
+  } else {
+    toast(_sbLigado ? 'Não consegui falar com o banco agora.'
+                    : 'Sem banco: o que você muda fica só neste aparelho.');
+  }
+}
+
+addEventListener('click', e => {
+  if(!e.target.closest || !e.target.closest('#btAtualizar')) return;
+  e.stopImmediatePropagation();
+  atualizarAgora();
+}, true);
+
+/* busca uma vez na abertura, depois de o banco responder, e só então
+   libera o envio automático */
+setTimeout(async ()=>{
+  if(_sbLigado){ await buscarEstado(); render(); }
+  _jaBuscou = true;
+  botaoAtualizar();
+}, 2600);
+
+/* envia junto com o salvamento local, sem apressar */
+let _tmEnvio = 0;
+const _renderV76 = render;
+render = function(){
+  _renderV76();
+  botaoAtualizar();
+  clearTimeout(_tmEnvio); _tmEnvio = setTimeout(enviarEstado, 1200);
+};
+botaoAtualizar();
 </script>
