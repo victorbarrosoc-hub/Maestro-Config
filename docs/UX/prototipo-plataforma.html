@@ -15671,7 +15671,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v84 · 31 ago · sem o aviso de som';
+const VERSAO_PROTOTIPO = 'v85 · 31 ago · horário';
 
 menuSheet = (function(orig){
   return function(){
@@ -18612,4 +18612,129 @@ agEquipe = (function(orig){
    Conta → Preferências, e o botão de som segue na barra de cima.
    ================================================================== */
 avisarDosSons = function(){};
+</script>
+
+<style>
+/* os horários recomendados: mesma linguagem dos atalhos de data que já
+   moram dois campos acima — não inventa um padrão novo para o mesmo gesto */
+.hrAtalhos{ display:grid; gap:7px; margin-top:8px }
+.hrLinha{ display:flex; align-items:center; gap:6px; flex-wrap:wrap }
+.hrLinha .grupo{ font-family:var(--mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-500); width:42px; flex:0 0 42px }
+.hrAtalhos button{ font-family:var(--mono); font-size:10.5px; padding:5px 11px;
+  border-radius:999px; border:1px solid var(--ink-700); color:var(--ink-300);
+  background:var(--ink-950); transition:color var(--fast) var(--eo),
+    border-color var(--fast) var(--eo), background var(--fast) var(--eo) }
+.hrAtalhos button:hover{ color:var(--brass-300); border-color:var(--brass-600) }
+.hrAtalhos button.on{ color:var(--ink-950); background:var(--brass-500);
+  border-color:var(--brass-500); font-weight:600 }
+#pt-hora{ color-scheme:dark }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v85 — O HORÁRIO NO CELULAR.
+
+   "O horário da postagem só abre o teclado numérico, não consigo colocar
+   os 2 pontos."
+
+   O campo tinha `inputmode="numeric"`. No iPhone isso abre o teclado de
+   telefone — dez algarismos e mais nada. Sem dois-pontos não dá para
+   escrever 10:00, e o campo aceitava "1000" calado, porque era um texto
+   livre. Ele guardava lixo e não avisava.
+
+   Três consertos, nesta ordem de importância:
+
+   1. O TIPO CERTO. Horário virou `type="time"`: o celular abre o seletor
+      nativo de hora — a roda do iPhone, o relógio do Android — e o
+      teclado sai da história. É o controle que o sistema operacional já
+      tem para isto; manter um campo de texto e ensinar o usuário a
+      contornar era o erro.
+
+   2. OS RECOMENDADOS. Uma fileira de horários logo abaixo, um toque
+      cada, na mesma linguagem dos atalhos de data que já moram dois
+      campos acima ("hoje · amanhã · +1 semana"). Não é lista de todos
+      os horários possíveis: são os que uma agência de fato usa, com o
+      horário atual do card marcado.
+
+   3. O QUE JÁ ESTÁ TORTO. Pauta importada de planilha traz "1000",
+      "10h", "10h30", "10.00". Tudo isso agora vira "10:00" e "10:30" na
+      leitura — senão o `type="time"` mostraria o campo VAZIO para um
+      card que tem horário, o que é pior que mostrar errado.
+   ================================================================== */
+
+/* Nove horários, não vinte e quatro. A lista longa devolve o problema
+   para a pessoa; a curta é a opinião da casa. */
+const HORARIOS_BONS = [
+  ['manhã', ['08:00', '09:00', '10:00', '11:00']],
+  ['tarde', ['12:00', '15:00', '17:00']],
+  ['noite', ['18:30', '19:00', '20:00', '21:00']],
+];
+
+/* "1000" · "10h" · "10h30" · "10.00" · "10:0" → "10:00" */
+function normalizarHora(v){
+  if(!v) return '';
+  const s = String(v).trim();
+  const doisPontos = /^(\d{1,2}):(\d{1,2})$/.exec(s);
+  if(doisPontos){
+    const h = +doisPontos[1], m = +doisPontos[2];
+    /* recusa em vez de aparar: 99:99 não é 23:59, é engano — e um campo
+       vazio faz a pessoa olhar, enquanto um horário inventado não */
+    if(h > 23 || m > 59) return '';
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  }
+  const d = s.replace(/[^\d]/g, '');
+  if(!d) return '';
+  let h, m;
+  if(d.length <= 2){ h = +d; m = 0; }                    // "9" → 09:00
+  else if(d.length === 3){ h = +d.slice(0, 1); m = +d.slice(1); }   // "930" → 09:30
+  else { h = +d.slice(0, 2); m = +d.slice(2, 4); }       // "1000" → 10:00
+  if(h > 23 || m > 59) return '';
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+
+modalPauta = (function(orig){
+  return function(id){
+    let html = orig.apply(this, arguments);
+    if(!html || html.indexOf('id="pt-hora"') < 0) return html;
+
+    /* o valor que estava no card, endireitado antes de entrar no campo */
+    const bruto = (html.match(/id="pt-hora"[^>]*value="([^"]*)"/) || [])[1] || '';
+    const hora = normalizarHora(bruto) || '18:30';
+
+    /* cada faixa do dia na sua linha: com tudo no mesmo `flex-wrap` o
+       rótulo da faixa seguinte ia parar no fim da linha anterior */
+    const chips = HORARIOS_BONS.map(([nome, horas]) =>
+      `<div class="hrLinha"><span class="grupo">${nome}</span>` + horas.map(h =>
+        `<button type="button" class="${h === hora ? 'on' : ''}" data-hrsalto="${h}">${h}</button>`
+      ).join('') + '</div>').join('');
+
+    return html.replace(/<input id="pt-hora"[^>]*>/,
+      `<input id="pt-hora" type="time" step="300" value="${hora}">
+       <div class="hrAtalhos">${chips}</div>`);
+  };
+})(modalPauta);
+
+/* um toque põe o horário no campo — e marca qual está valendo, sem
+   remontar o modal (remontar mataria o que já foi digitado nos outros
+   campos, que é a classe de defeito que a v77 fechou) */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-hrsalto]');
+  if(!t) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const campo = document.getElementById('pt-hora');
+  if(campo){ campo.value = t.dataset.hrsalto;
+    campo.dispatchEvent(new Event('change', { bubbles: true })); }
+  t.closest('.hrAtalhos').querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  t.classList.add('on');
+  if(typeof som === 'function') som('toque');
+}, true);
+
+/* rede de segurança: se algum navegador não aceitar type="time" e cair
+   para texto, o que a pessoa digitar ainda é endireitado */
+addEventListener('change', e => {
+  if(!e.target || e.target.id !== 'pt-hora' || e.target.type === 'time') return;
+  const n = normalizarHora(e.target.value);
+  if(n) e.target.value = n;
+}, true);
 </script>
