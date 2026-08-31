@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-31 14:54 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-08-31 15:59 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -15708,7 +15708,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v80 · 31 ago · apagar squad';
+const VERSAO_PROTOTIPO = 'v82 · 31 ago · chave de acesso';
 
 menuSheet = (function(orig){
   return function(){
@@ -18087,4 +18087,384 @@ desfazer = (function(base){
     return base();
   };
 })(desfazer);
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v81 — POR QUE NADA SALVAVA NA ABA DE CONVERSAS.
+
+   O relato do founder: mensagem e squad não salvam; o outro aparelho
+   recebe a NOTIFICAÇÃO mas não encontra a squad; cliente criado num
+   celular não existe no outro. Três sintomas, três causas diferentes —
+   e todas encontradas rodando dois "aparelhos" contra um banco falso,
+   não lendo código no escuro.
+
+   ── CAUSA 1: três rotas cortam caminho e o resto do render nunca roda.
+
+   O `render()` deste protótipo é uma pilha de dezesseis embrulhos. Três
+   deles (revisão, produção e conversas) desenham a própria tela e dão
+   `return` sem chamar o de baixo:
+
+       if(S.route==='conversas'){ ...desenha...; return; }   // ← nunca chama orig()
+
+   Tudo que mora ABAIXO desse ponto deixa de acontecer enquanto você
+   está naquela tela. E o que mora abaixo é justamente `sbAgendar()` —
+   quem agenda a gravação no banco. Ou seja: na aba de Conversas o
+   produto ficava, por construção, sem salvar nada. Vale também para o
+   Ensaio e para a Revisão — lá a PAUTA parava de ser gravada, e disso
+   ninguém tinha reclamado ainda.
+
+   O conserto não é reescrever os dezesseis embrulhos: é tirar a
+   persistência da carona do render. Salvar não é um efeito colateral de
+   desenhar. Agora existe um PULSO próprio, de um segundo e pouco, que
+   compara uma assinatura do estado e grava quando ela muda. Nenhuma
+   tela consegue mais desligar o salvamento — nem esta, nem a próxima que
+   alguém escrever com um `return` no meio.
+
+   ── CAUSA 2: o chat viajava numa linha separada, e só na ida.
+
+   `S.chat` estava na lista de "passageiro" — fora do pacote que a v76
+   sincroniza — e ia para uma linha própria (`__chat__`), gravada por
+   aquele mesmo caminho que a causa 1 desligava. Pior: o botão de
+   atualizar puxava só o `__estado__`; a linha do chat nunca era relida.
+   Por isso a NOTIFICAÇÃO chegava (ela vive em `S.avisos`, que viaja no
+   `__estado__`) e a SQUAD não: dois donos para o mesmo assunto, e um
+   deles quebrado.
+
+   Agora o chat viaja no mesmo pacote que o resto. Um dono só.
+
+   ── CAUSA 3: o cliente novo subia e era jogado fora na volta.
+
+   `estadoParaSincronizar()` acrescentava `novos` na ida (linha escrita
+   de propósito, com comentário e tudo) — mas `aplicarEstado()` ignora
+   toda chave "passageira" na volta, e `novos` é uma delas. O cliente
+   chegava no banco e o outro aparelho descartava em silêncio. Estava no
+   banco o tempo todo; ninguém lia.
+
+   Além de ler, agora ele UNE em vez de substituir: dois aparelhos que
+   criam clientes diferentes sem atualizar no meio ficam com os dois. Um
+   campo editado pode perder para o último que gravou — um cliente
+   inteiro desaparecer, não.
+
+   ── E o Menu, que não abria no celular.
+
+   Regressão minha, da v77: aquele bloco reescreveu `renderLayer` do
+   zero e levou junto a linha que pendurava a folha do menu. O botão
+   marcava `S.menu = true` e não havia mais quem desenhasse. A folha
+   ganha agora uma casa própria, como os avisos — assim ela não depende
+   de o `layer` ter mudado para reaparecer.
+   ================================================================== */
+
+/* ---------- 1. o Menu volta, numa casa própria ---------- */
+(function(){
+  const casa = document.createElement('div');
+  casa.id = 'menuhost';
+  document.body.appendChild(casa);
+  let ultimoMenu = null;
+  const _renderLayerV81 = renderLayer;
+  renderLayer = function(){
+    _renderLayerV81();
+    const h = (typeof menuSheet === 'function') ? menuSheet() : '';
+    if(h !== ultimoMenu){ casa.innerHTML = h; ultimoMenu = h; }
+  };
+})();
+
+/* Um limite que fica escrito, porque é real: o id de um cliente novo é
+   POSICIONAL (`n0`, `n1`…) e a pauta segue o id. Se dois aparelhos
+   criarem clientes diferentes sem atualizar no meio, a união abaixo
+   guarda os dois — mas a ordem pode ficar diferente nos dois lados, e aí
+   os ids trocam de dono. Não dá para consertar renumerando: mudar o id
+   de quem já existe ORFANARIA a pauta dele (a EJUP tem 70 itens reais em
+   `n0`). Isso é trabalho de id vindo do servidor — API, não protótipo.
+   Criar num aparelho e atualizar no outro antes de criar lá funciona. */
+
+/* ---------- 3. o chat passa a viajar no pacote de todo mundo ------- */
+PASSAGEIRO.delete('chat');
+
+const _aplicarV81 = aplicarEstado;
+aplicarEstado = function(sv){
+  if(!sv) return 0;
+  const chatDeLa = sv.chat, novosDeLa = sv.novos;
+  const n = _aplicarV81(sv);
+
+  /* chat: só entra inteiro e coerente — meio chat é pior que nenhum */
+  if(chatDeLa && Array.isArray(chatDeLa.canais)) S.chat = chatDeLa;
+
+  /* novos: UNE. Perder um campo editado é aceitável; perder um cliente
+     inteiro que alguém cadastrou no celular, não. */
+  if(Array.isArray(novosDeLa)){
+    const chave = c => c.id || c.nome;
+    const tenho = new Map((S.novos || []).map(c => [chave(c), c]));
+    for(const c of novosDeLa){
+      const k = chave(c);
+      if(tenho.has(k)) Object.assign(tenho.get(k), c);   // o de lá é mais novo
+      else { S.novos.push(c); tenho.set(k, c); }
+    }
+  }
+  return n;
+};
+
+/* ---------- 4. o PULSO: salvar deixa de ser efeito colateral ------- */
+/* Um relógio próprio, fora da pilha do render. Compara uma assinatura
+   barata do que importa e só age quando ela muda — então ficar parado
+   não custa requisição nenhuma. */
+let _assinatura = null;
+function assinaturaDoEstado(){
+  try{ return JSON.stringify(estadoParaSincronizar()); }
+  catch(e){ return null; }
+}
+function pulso(){
+  const a = assinaturaDoEstado();
+  if(a === null || a === _assinatura) return;
+  _assinatura = a;
+  try{ guardarTudo(); }catch(e){}      // navegador
+  try{ sbAgendar(); }catch(e){}        // pauta por cliente + __config__
+  try{ enviarEstado(); }catch(e){}     // o pacote inteiro, para os outros aparelhos
+}
+setInterval(pulso, 1200);
+
+/* o botão de atualizar também precisa existir nas telas que cortam
+   caminho — ele é criado no fim do render, que lá não chega */
+setInterval(() => { try{ botaoAtualizar(); }catch(e){} }, 1500);
+</script>
+
+<style>
+/* a chave: cadeado discreto na lista de quem entra, e a tela de pedido */
+.qePessoa .cad{ color:var(--ink-500); display:inline-flex; margin-right:2px }
+#quemEsta .voltar{ font-size:12px; color:var(--ink-400); margin-top:14px;
+  text-decoration:underline; text-underline-offset:3px }
+#quemEsta .kcampo{ width:100%; padding:12px 13px; border-radius:11px; font-size:15px;
+  background:var(--ink-950); border:1px solid var(--ink-700); color:var(--ink-50) }
+#quemEsta .kcampo:focus{ outline:none; border-color:var(--brass-500) }
+#quemEsta .kerro{ font-size:12.5px; color:var(--danger); margin:9px 0 0; min-height:17px }
+#quemEsta .kquem{ display:flex; align-items:center; gap:11px; margin:0 0 16px }
+#quemEsta .kquem .av{ width:38px; height:38px; font-size:12px }
+#quemEsta .krow{ display:flex; gap:9px; margin-top:13px }
+#quemEsta .krow .b{ flex:1 }
+@keyframes kchacoalha{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)}
+  40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(3px)} }
+#quemEsta .caixa.erra{ animation:kchacoalha .38s var(--eo) }
+.mbChave{ display:flex; align-items:center; gap:8px; margin:2px 0 15px;
+  font-size:12.5px; color:var(--ink-400) }
+.mbChave b{ color:var(--ink-100); font-weight:600 }
+.mbChave button{ margin-left:auto; font-size:12px; color:var(--brass-500); font-weight:600;
+  text-decoration:underline; text-underline-offset:3px }
+.kNota{ font-size:11.5px; color:var(--ink-400); line-height:1.55; margin:0 0 14px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v82 — CHAVE DE ACESSO POR PESSOA.
+
+   O pedido: cada membro cadastra uma chave no perfil, e a entrada passa
+   a cobrar essa chave — "assim eu consigo separar quem pode ver as
+   coisas e quem não pode".
+
+   Duas coisas ditas na cara, porque prometer segurança que não existe é
+   pior do que não ter tranca:
+
+   1. ISTO NÃO É SEGURANÇA. É uma tranca de porta de quarto. Tudo o que a
+      plataforma sabe está no navegador de quem abriu o link, e quem
+      souber abrir o console entra como quem quiser. Separação de acesso
+      DE VERDADE é o backend decidindo o que responde para cada pessoa —
+      a API com RBAC, que já existe e está testada, mais as políticas do
+      banco. Enquanto o protótipo falar direto com o Supabase, a tranca é
+      de conveniência: serve para o time não entrar no lugar errado sem
+      querer, não para impedir quem quer entrar.
+
+   2. A chave NÃO viaja em texto. Guarda-se sal + SHA-256, nunca a chave.
+      Isso importa aqui mais do que o normal: a tabela do Supabase ainda
+      está aberta para leitura (a brecha que vou fechar com você a
+      seguir), e uma senha em texto claro numa tabela pública seria um
+      vazamento de verdade — as pessoas repetem senha entre serviços.
+      Hash não conserta a brecha; impede que ela vire um vazamento de
+      senha.
+   ================================================================== */
+
+/* dois ícones que faltavam no traço da casa (1.8, nunca emoji) */
+IC.lock   = '<rect x="4.6" y="10.4" width="14.8" height="9.6" rx="2.2"/>'
+          + '<path d="M8.2 10.4V7.9a3.8 3.8 0 0 1 7.6 0v2.5M12 14v2.4"/>';
+IC.unlock = '<rect x="4.6" y="10.4" width="14.8" height="9.6" rx="2.2"/>'
+          + '<path d="M8.2 10.4V7.9a3.8 3.8 0 0 1 7.3-1.1M12 14v2.4"/>';
+
+const temChave = m => !!(m && m.chave && m.chave.hash);
+
+/* sal por pessoa: sem ele, chaves iguais dariam hashes iguais e a
+   tabela mostraria quem repetiu a chave de quem */
+const _salNovo = () => {
+  const a = new Uint8Array(8);
+  (self.crypto || {}).getRandomValues ? crypto.getRandomValues(a)
+    : a.forEach((_, i) => a[i] = Math.floor(Math.random() * 256));
+  return [...a].map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+async function digerir(txt, sal){
+  const dados = new TextEncoder().encode(sal + '·' + txt);
+  if(self.crypto && crypto.subtle){
+    const bin = await crypto.subtle.digest('SHA-256', dados);
+    return [...new Uint8Array(bin)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  /* sem WebCrypto (contexto não seguro) não há SHA-256 nativo. Em vez de
+     inventar uma criptografia caseira e chamar de segura, guarda-se um
+     resumo fraco e assumido — a tranca continua sendo tranca de quarto. */
+  let h1 = 0x811c9dc5, h2 = 0x1000193;
+  for(const b of dados){ h1 = Math.imul(h1 ^ b, 16777619) >>> 0; h2 = Math.imul(h2 + b, 2654435761) >>> 0; }
+  return 'fraco:' + h1.toString(16) + h2.toString(16);
+}
+
+const conferirChave = async (m, txt) =>
+  temChave(m) && (await digerir(txt, m.chave.sal)) === m.chave.hash;
+
+/* ---------- definir, trocar e tirar a chave ---------- */
+function modalChave(i){
+  const m = membroPorIndice(i); if(!m) return '';
+  const tem = temChave(m);
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>${tem ? 'Trocar a chave' : 'Criar uma chave'} de ${esc(m.n.split(' ')[0])}</h3>
+    <p class="kNota">A chave é pedida toda vez que alguém entra como
+      ${esc(m.n.split(' ')[0])}. Ela não é guardada em texto — fica um resumo,
+      de onde não dá para voltar. Separação de acesso de verdade vem com a API;
+      aqui a chave evita entrar no lugar errado sem querer.</p>
+    <div class="fld"><label for="ch-a">${tem ? 'Nova chave' : 'Chave'}</label>
+      <input id="ch-a" type="password" autocomplete="new-password" placeholder="pelo menos 4 caracteres"></div>
+    <div class="fld"><label for="ch-b">Repetir</label>
+      <input id="ch-b" type="password" autocomplete="new-password"></div>
+    <p class="kerro" id="ch-erro" style="min-height:17px;font-size:12.5px;color:var(--danger);margin:0 0 10px"></p>
+    <div class="modalrow"><button class="b gho" data-modalno="1">Cancelar</button>
+      <button class="b pri" data-chavesalvar="${i}">Salvar chave</button></div>
+    ${tem ? `<div class="sqApagar"><span style="flex:1">Sem chave, entra direto.</span>
+      <button type="button" data-chavetira="${i}">Tirar a chave</button></div>` : ''}
+  </div></div>`;
+}
+
+/* a linha no perfil do membro (o modal de editar), e o atalho na Conta */
+modalMembro = (function(orig){
+  return function(i){
+    let html = orig(i);
+    const m = membroPorIndice(i); if(!m || !html) return html;
+    const linha = `<div class="mbChave">${ic(temChave(m) ? 'lock' : 'unlock', 13)}
+      <span>Chave de acesso: <b>${temChave(m) ? 'definida' : 'não definida'}</b></span>
+      <button type="button" data-chaveabre="${i}">${temChave(m) ? 'Trocar' : 'Criar'}</button></div>`;
+    return html.replace('<div class="modalrow">', linha + '<div class="modalrow">');
+  };
+})(modalMembro);
+
+agConta = (function(orig){
+  return function(){
+    let html = orig();
+    const eu = (S.usuario && S.usuario.tipo === 'agencia') ? S.usuario.id : null;
+    const i = (S.equipe || []).findIndex(m => membroId(m) === eu);
+    if(i < 0) return html;
+    const m = S.equipe[i];
+    const atalho = `<button class="row" data-chaveabre="${i}" style="width:100%">
+      <span class="av">${ic(temChave(m) ? 'lock' : 'unlock', 13)}</span>
+      <span class="t"><b>Minha chave de acesso</b><span>${temChave(m)
+        ? 'definida — é pedida quando você entra' : 'não definida — hoje você entra direto'}</span></span>
+      <span class="chev">${ic('chevr')}</span></button>`;
+    return html.replace('<button class="row" data-r="equipe"', atalho +
+      '<button class="row" data-r="equipe"');
+  };
+})(agConta);
+
+addEventListener('click', async e => {
+  const t = e.target.closest && e.target.closest('[data-chaveabre],[data-chavesalvar],[data-chavetira]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const d = t.dataset;
+
+  if(d.chaveabre !== undefined){
+    S.modal = modalChave(d.chaveabre); renderLayer();
+    setTimeout(() => document.getElementById('ch-a')?.focus(), 60); return; }
+
+  if(d.chavetira !== undefined){
+    const m = membroPorIndice(d.chavetira); if(!m) return;
+    delete m.chave;
+    S.modal = null; som('toque'); render();
+    toast(`${m.n.split(' ')[0]} volta a entrar sem chave.`); return; }
+
+  if(d.chavesalvar !== undefined){
+    const m = membroPorIndice(d.chavesalvar); if(!m) return;
+    const a = (document.getElementById('ch-a')?.value || '');
+    const b = (document.getElementById('ch-b')?.value || '');
+    const erro = document.getElementById('ch-erro');
+    if(a.length < 4){ erro.textContent = 'A chave precisa de pelo menos 4 caracteres.';
+      document.getElementById('ch-a').focus(); return; }
+    if(a !== b){ erro.textContent = 'As duas não são iguais.';
+      document.getElementById('ch-b').focus(); return; }
+    const sal = _salNovo();
+    m.chave = { sal, hash: await digerir(a, sal) };
+    S.modal = null; som('toque'); render();
+    toast(`Chave criada. ${m.n.split(' ')[0]} passa a entrar com ela.`); return; }
+}, true);
+
+/* ---------- a entrada passa a cobrar ---------- */
+/* o cadeado na lista: quem tem chave aparece trancado */
+abrirQuemEsta = (function(orig){
+  return function(){
+    orig.apply(this, arguments);
+    const cx = document.querySelector('#quemEsta .caixa'); if(!cx) return;
+    cx.querySelectorAll('[data-qeag]').forEach(bt => {
+      const m = (S.equipe || []).find(x => membroId(x) === bt.dataset.qeag);
+      if(!temChave(m)) return;
+      const chev = bt.lastElementChild;
+      chev.insertAdjacentHTML('beforebegin', `<span class="cad">${ic('lock', 14)}</span>`);
+    });
+  };
+})(abrirQuemEsta);
+
+/* intercepta ANTES do handler que já entrava direto */
+let _erros = 0;
+addEventListener('click', e => {
+  const bt = e.target.closest && e.target.closest('[data-qeag]');
+  if(!bt) return;
+  const m = (S.equipe || []).find(x => membroId(x) === bt.dataset.qeag);
+  if(!temChave(m)) return;                       // sem chave, segue o caminho de sempre
+  e.stopImmediatePropagation(); e.preventDefault();
+  pedirChave(bt.dataset.qeag);
+}, true);
+
+function pedirChave(id){
+  const m = (S.equipe || []).find(x => membroId(x) === id); if(!m) return;
+  const cx = document.querySelector('#quemEsta .caixa'); if(!cx) return;
+  _erros = 0;
+  cx.innerHTML = `<div class="kquem"><span class="av">${membroIni(m)}</span>
+      <span><b style="display:block;color:var(--ink-50)">${esc(m.n)}</b>
+      <span style="font-size:12px;color:var(--ink-400)">${esc(m.papel)}</span></span></div>
+    <h3 style="font-size:19px;margin:0 0 6px">Chave de acesso</h3>
+    <p class="sub" style="margin:0 0 14px">Só ${esc(m.n.split(' ')[0])} entra aqui.</p>
+    <input class="kcampo" id="qe-chave" type="password" autocomplete="current-password"
+      placeholder="Sua chave" aria-label="Chave de acesso">
+    <p class="kerro" id="qe-erro"></p>
+    <div class="krow"><button class="b gho" id="qe-volta">Voltar</button>
+      <button class="b pri" id="qe-entra">Entrar</button></div>`;
+  const campo = cx.querySelector('#qe-chave');
+  setTimeout(() => campo.focus(), 60);
+
+  const errar = txt => {
+    cx.querySelector('#qe-erro').textContent = txt;
+    cx.classList.add('erra'); setTimeout(() => cx.classList.remove('erra'), 400);
+    campo.select();
+  };
+  const tentar = async () => {
+    const v = campo.value;
+    if(!v) return errar('Digite a chave.');
+    if(await conferirChave(m, v)){
+      S.usuario = { tipo:'agencia', id };
+      try{ localStorage.setItem(CHAVE_USR, JSON.stringify(S.usuario)); }catch(err){}
+      document.getElementById('quemEsta')?.remove();
+      go('agency', 'dash');
+      toast(`Bem-vindo de volta, ${m.n.split(' ')[0]}.`);
+      return; }
+    _erros++;
+    errar(_erros >= 3 ? 'Ainda não confere. Quem criou a chave pode trocá-la em Equipe.'
+                      : 'Chave errada.');
+  };
+  cx.querySelector('#qe-entra').onclick = tentar;
+  campo.onkeydown = ev => { if(ev.key === 'Enter') tentar(); };
+  cx.querySelector('#qe-volta').onclick = () => {
+    document.getElementById('quemEsta')?.remove();
+    abrirQuemEsta();
+  };
+}
 </script>
