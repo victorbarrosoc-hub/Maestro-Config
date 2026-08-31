@@ -1086,6 +1086,53 @@ Medido em 375px: o conteúdo foi de ~47% para **93%** da largura, e os botões d
 520px — o desktop segue como estava. *(A camada veio numerada "v52" da outra sessão;
 renumerada para v64 aqui, para a cronologia do arquivo não mentir.)*
 
+**As camadas v52–v75, registradas em bloco (30–31/08).** Esta rodada foi construída em
+duas frentes ao mesmo tempo — esta sessão e uma paralela, com o artifact e o repositório
+servindo de ponte. O código de todas está no arquivo; o registro tinha ficado para trás
+num merge textual. Fica aqui o mapa, para ninguém reabrir o que já foi resolvido:
+
+> **v52 — o card da pauta deitado no celular.** No desktop o card e os cinco botões lado
+> a lado cabem; em 375px os botões reservavam ~180px fixos e sobrava menos da metade da
+> tela para o conteúdo. O card passa a ocupar a linha inteira e as ações descem para uma
+> faixa própria. Medido: conteúdo de ~47% para 93% da largura; botões de 29px para 38px
+> de altura (o mínimo de alvo de toque). Só abaixo de 520px.
+
+> **v53 — som de verdade na abertura.** O logo sonoro existia na marca e quase nunca
+> tocava: navegador não libera áudio antes de um gesto, e a cortina abre no carregamento.
+> Virou o arpejo de Lá maior com cauda de sino, uma oitava abaixo, como UM gesto sonoro.
+
+> **v55 — o fluxo de alteração, fechado** · **v56, v64, v65 — ver o material**: a
+> miniatura vira tela e o vídeo que mora num link também toca · **v57 — carimbo da
+> versão** · **v58 — a ordem das abas**: a Pauta passa a ser a primeira aba do cliente
+> (lê-se todo dia; marca e briefing, uma vez por trimestre) e a vista padrão vira **dia**
+> · **v59 — o seletor do envio**, lote por semana ou por mês · **v59b — o Hoje ganha a
+> agenda**, atravessando clientes · **v61, v62 — UM CARD SÓ**: a coluna do quadro passa a
+> ser a fase do card, e as categorias viraram cinco (produção, estratégico, comercial,
+> acompanhamento, pessoas).
+
+> **v66, v68, v69, v71 — o símbolo do founder.** O gesto decalcado do desenho dele
+> substitui o símbolo gerado: entra na medalha do termo, na home do site e na saída da
+> cortina.
+
+> **v73, v74, v75 — a equipe e a memória.** Editar e remover na equipe; entrar como
+> agência pergunta quem você é; e o protótipo passa a **guardar tudo o que o founder
+> muda**, em vez de uma lista de exceções — a regra que mais evita perda de trabalho.
+
+> **Duas correções sobre o que esta sessão tinha escrito, ambas certas:** `aprovadas()`
+> contava só `APPROVED`, mas assinar o termo agenda o aprovado (SCHEDULED→PUBLISHED) — o
+> lote encolhia no instante da assinatura ("2 publicações, 0 aprovadas" num lote de 8);
+> agora `APROVADA = [APPROVED, SCHEDULED, PUBLISHED]`. E `podeVerTarefa` escondia tudo
+> enquanto ninguém tinha se identificado, o que parecia defeito em vez de privacidade.
+
+> ⚠️ **Duas lições de processo, pagas em retrabalho:**
+> (a) **Não renumerar camada que vem de fora.** Renumerei a "v52" para v64 para a
+> cronologia local não mentir; a sessão paralela desfez. A numeração é de quem escreveu,
+> e a divergência custa mais que o desconforto.
+> (b) **Antes de reescrever o arquivo inteiro a partir do artifact, conferir o `git
+> fetch`.** O repositório estava 62 commits à frente do que eu tinha; o artifact era uma
+> foto mais velha que o remoto. O caminho certo é comparar as duas fontes — artifact E
+> `origin/main` — antes de decidir qual é a mais nova.
+
 **Pendências do protótipo (próxima sessão):**
 1. Depoimentos reais no lugar dos fictícios (vêm do piloto).
 2. Habilitar criação para além da Loja Norte.
