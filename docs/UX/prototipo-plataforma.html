@@ -15671,7 +15671,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v78 · 31 ago · squad com gente';
+const VERSAO_PROTOTIPO = 'v79 · 31 ago · avisos';
 
 menuSheet = (function(orig){
   return function(){
@@ -17677,6 +17677,8 @@ addEventListener('click', e => {
         nome: /^squad/i.test(bruto) ? bruto : 'Squad ' + bruto,
         tipo: 'squad', membros: escolhidos, msgs: [] });
       S.cvAtivo = S.chat.canais[3].id;
+      if(typeof avisarSquad === 'function')
+        avisarSquad(S.chat.canais[3], [], escolhidos);
       S.modal = null; som('toque'); render();
       toast(`Squad criado com ${escolhidos.length} ${escolhidos.length === 1 ? 'pessoa' : 'pessoas'}.`);
       return; }
@@ -17687,7 +17689,9 @@ addEventListener('click', e => {
       if(bruto.length >= 2) c.nome = /^squad/i.test(bruto) ? bruto : 'Squad ' + bruto;
     }
     const saiuEu = !escolhidos.includes(euAgora());
+    const antes = c.membros || S.equipe.map(membroId);
     c.membros = escolhidos;
+    if(typeof avisarSquad === 'function') avisarSquad(c, antes, escolhidos);
     S.modal = null; som('toque'); render();
     toast(saiuEu && !ehAdmin()
       ? 'Salvo — você saiu deste canal e ele não aparece mais para você.'
@@ -17721,4 +17725,200 @@ telaConversas = (function(orig){
     return html.replace('<div class="cvMsgs"', topo + '<div class="cvMsgs"');
   };
 })(telaConversas);
+</script>
+
+<style>
+/* o sino: mora ao lado do som, na barra de cima */
+.ctxbtn.sino{ position:relative }
+.ctxbtn.sino .cnt{ position:absolute; top:1px; right:1px; min-width:15px; height:15px;
+  padding:0 4px; border-radius:999px; background:var(--brass-500); color:var(--ink-950);
+  font-family:var(--mono); font-size:9px; font-weight:600; line-height:15px; text-align:center }
+.ctxbtn.sino.tem{ color:var(--brass-400) }
+
+.avLista{ display:grid; gap:7px; margin:2px 0 14px; max-height:52vh; overflow:auto }
+.avItem{ display:flex; gap:11px; width:100%; text-align:left; padding:11px 12px;
+  border:1px solid var(--ink-800); border-radius:12px; background:var(--ink-950) }
+.avItem:hover{ border-color:var(--ink-600) }
+.avItem.novo{ border-color:var(--brass-700); background:var(--ink-900) }
+.avItem .pt{ width:7px; height:7px; border-radius:999px; background:var(--brass-500);
+  margin-top:6px; flex:none; opacity:0 }
+.avItem.novo .pt{ opacity:1 }
+.avItem b{ display:block; font-size:13.5px; color:var(--ink-50); font-weight:600 }
+.avItem span{ font-size:11.5px; color:var(--ink-400) }
+.avItem .qd{ font-family:var(--mono); font-size:10px; color:var(--ink-500) }
+.avVazio{ padding:26px 12px; text-align:center; font-size:13px; color:var(--ink-400) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v79 — AS NOTIFICAÇÕES PASSAM A EXISTIR.
+
+   O founder criou um squad e os membros não foram avisados. Não era
+   defeito: NÃO HAVIA sistema de notificação nenhum. O ícone de sino
+   estava no arquivo desde o começo e nunca tinha sido usado, e a palavra
+   "notificação" só aparecia em texto de tela, contando o que ia
+   acontecer. O próprio CLAUDE.md registra: o worker que entrega as
+   notificações não existe.
+
+   O que dá para prometer aqui é o aviso DENTRO do produto. Um protótipo
+   não manda e-mail nem WhatsApp, e fingir que manda seria pior do que
+   não ter.
+
+   A D-030 vale aqui: UMA notificação por assunto, nunca uma por item.
+   Mensagens novas num canal viram um aviso só, que conta — "3 mensagens
+   novas" —, não três avisos.
+
+   As mensagens são percebidas por comparação a cada render, não por um
+   gancho no botão de enviar. Assim o aviso também nasce quando a
+   mensagem chega de OUTRO APARELHO pela sincronização, que é justamente
+   quando avisar importa.
+   ================================================================== */
+S.avisos = S.avisos || [];
+
+const souAgencia = () => !!(S.usuario && S.usuario.tipo !== 'cliente');
+const meusAvisos = () => {
+  const eu = euAgora();
+  return souAgencia() ? S.avisos.filter(a => (a.para || []).includes(eu)) : [];
+};
+const naoLidos = () => meusAvisos().filter(a => !(a.lidoPor || []).includes(euAgora()));
+
+function avisar({ para, txt, montarTxt, sub, canal, chave, autor, conta }){
+  const dele = autor || euAgora();
+  const gente = (para || []).filter(id => id && id !== dele);  // o autor não se avisa
+  if(!gente.length) return;
+  const quantas = conta || 1;
+  /* D-030: mesma chave = mesmo assunto. Agrupa enquanto ALGUM destinatário
+     ainda não leu — se todos já leram, o próximo é assunto novo. */
+  if(chave){
+    const j = S.avisos.find(a => a.chave === chave &&
+      (a.para || []).some(id => !(a.lidoPor || []).includes(id)));
+    if(j){
+      j.n = (j.n || 1) + quantas;
+      j.txt = montarTxt ? montarTxt(j.n) : txt;
+      j.sub = sub; j.quando = Date.now();
+      j.para = [...new Set([...(j.para || []), ...gente])];
+      return; }
+  }
+  S.avisos.unshift({ id: 'av' + Date.now() + Math.random().toString(36).slice(2, 6),
+    para: gente, n: quantas, txt: montarTxt ? montarTxt(quantas) : txt,
+    sub: sub || '', canal: canal || null, chave: chave || null,
+    quando: Date.now(), lidoPor: [] });
+  if(S.avisos.length > 60) S.avisos.length = 60;              // não vira depósito
+}
+
+/* chamada pela v78 quando a lista de membros muda */
+function avisarSquad(canal, antes, depois){
+  const entrou = depois.filter(id => !antes.includes(id));
+  const saiu = antes.filter(id => !depois.includes(id));
+  const quem = membro(euAgora());
+  const porQuem = quem ? quem.nome.split(' ')[0] : 'Alguém';
+  if(entrou.length) avisar({ para: entrou, txt: `Você entrou em ${canal.nome}`,
+    sub: `${porQuem} te adicionou`, canal: canal.id });
+  if(saiu.length) avisar({ para: saiu, txt: `Você saiu de ${canal.nome}`,
+    sub: `${porQuem} tirou você do canal`, canal: null });
+}
+
+/* ---------- mensagens novas viram um aviso por canal ---------- */
+let _contagemMsgs = null;
+function olharMensagens(){
+  if(!S.chat) return;
+  const agora = {};
+  for(const c of S.chat.canais) agora[c.id] = c.msgs.length;
+  if(_contagemMsgs === null){ _contagemMsgs = agora; return; }   // a primeira vez só fotografa
+  for(const c of S.chat.canais){
+    const antes = _contagemMsgs[c.id] || 0, novas = (agora[c.id] || 0) - antes;
+    if(novas <= 0) continue;
+    const ultimas = c.msgs.slice(-novas);
+    const ultima = ultimas[ultimas.length - 1];
+    const destino = c.membros || S.equipe.map(membroId);
+    const quem = membro(ultima.de);
+    const nome = quem ? quem.nome.split(' ')[0] : 'Alguém';
+    avisar({ para: destino, autor: ultima.de, canal: c.id, chave: 'msg:' + c.id,
+      conta: ultimas.length,
+      montarTxt: n => n === 1 ? `${nome} escreveu em ${c.nome}`
+                              : `${n} mensagens novas em ${c.nome}`,
+      sub: ultima.txt.slice(0, 70) });
+  }
+  _contagemMsgs = agora;
+}
+
+/* ---------- o sino ---------- */
+ctxBar = (function(orig){
+  return function(){
+    orig();
+    if(!souAgencia() || S.view === 'site') return;
+    const el = document.getElementById('ctx');
+    const seg = el && el.querySelector('.seg');
+    if(!seg || el.querySelector('.sino')) return;
+    const n = naoLidos().length;
+    const b = document.createElement('button');
+    b.className = 'ctxbtn sino' + (n ? ' tem' : '');
+    b.dataset.avisos = '1';
+    b.setAttribute('aria-label', n ? `${n} avisos não lidos` : 'Avisos');
+    b.title = b.getAttribute('aria-label');
+    b.innerHTML = ic('bell', 15) + (n ? `<span class="cnt">${n > 9 ? '9+' : n}</span>` : '');
+    seg.parentNode.insertBefore(b, seg);
+  };
+})(ctxBar);
+
+function modalAvisos(){
+  const meus = meusAvisos();
+  const qd = t => { const d = new Date(t), h = new Date();
+    const mesmoDia = d.toDateString() === h.toDateString();
+    return mesmoDia ? `${D2(d.getHours())}:${D2(d.getMinutes())}`
+                    : d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' }); };
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>Avisos</h3>
+    ${meus.length ? `<div class="avLista">
+      ${meus.map(a => `<button class="avItem${(a.lidoPor||[]).includes(euAgora()) ? '' : ' novo'}"
+        data-avabrir="${a.id}">
+        <span class="pt"></span>
+        <span style="flex:1"><b>${esc(a.txt)}</b>${a.sub ? `<span>${esc(a.sub)}</span>` : ''}</span>
+        <span class="qd">${qd(a.quando)}</span></button>`).join('')}
+      </div>
+      <div class="modalrow"><button class="b gho" data-avlimpa="1">Marcar todos como lidos</button>
+        <button class="b pri" data-modalno="1">Fechar</button></div>`
+    : `<div class="avVazio">Nada por aqui.<br>Você é avisado quando entra num canal
+        ou quando alguém escreve num que é seu.</div>
+       <div class="modalrow"><button class="b pri" data-modalno="1">Fechar</button></div>`}
+  </div></div>`;
+}
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-avisos],[data-avabrir],[data-avlimpa]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  const eu = euAgora();
+
+  if(t.dataset.avisos !== undefined){ S.modal = modalAvisos(); renderLayer(); return; }
+
+  if(t.dataset.avlimpa !== undefined){
+    meusAvisos().forEach(a => { a.lidoPor = [...new Set([...(a.lidoPor||[]), eu])]; });
+    S.modal = null; render(); return; }
+
+  if(t.dataset.avabrir !== undefined){
+    const a = S.avisos.find(x => x.id === t.dataset.avabrir);
+    if(a){
+      a.lidoPor = [...new Set([...(a.lidoPor||[]), eu])];
+      if(a.canal && canalPorId(a.canal)){ S.cvAtivo = a.canal; S.route = 'conversas'; }
+    }
+    S.modal = null; render(); return; }
+}, true);
+
+/* abrir um canal marca os avisos dele como lidos */
+const _renderV79 = render;
+render = function(){
+  olharMensagens();
+  if(S.view === 'agency' && S.route === 'conversas' && S.cvAtivo){
+    const eu = euAgora();
+    S.avisos.forEach(a => {
+      /* só de quem é destinatário: marcar o aviso alheio como lido
+         quebrava o agrupamento e transformava cada mensagem num aviso */
+      if(a.canal === S.cvAtivo && (a.para || []).includes(eu)
+         && !(a.lidoPor || []).includes(eu))
+        a.lidoPor = [...(a.lidoPor || []), eu];
+    });
+  }
+  _renderV79();
+};
 </script>
