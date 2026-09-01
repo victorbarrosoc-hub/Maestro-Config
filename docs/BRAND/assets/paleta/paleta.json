@@ -1,0 +1,76 @@
+{
+  "marca": {
+    "eerie": {
+      "hex": "#1C1C1C",
+      "papel": "o palco"
+    },
+    "taupe": {
+      "hex": "#474350",
+      "papel": "a coxia"
+    },
+    "mustard": {
+      "hex": "#FFC857",
+      "papel": "a luz"
+    },
+    "smoke": {
+      "hex": "#F4F7F5",
+      "papel": "a partitura"
+    }
+  },
+  "ink": {
+    "ink-50": "#F4F7F5",
+    "ink-100": "#E4E6E6",
+    "ink-200": "#C7C8CB",
+    "ink-300": "#A0A0A6",
+    "ink-400": "#72707A",
+    "ink-500": "#54505C",
+    "ink-600": "#474350",
+    "ink-700": "#35333A",
+    "ink-800": "#29272B",
+    "ink-850": "#212122",
+    "ink-900": "#1C1C1C",
+    "ink-950": "#161616"
+  },
+  "brass": {
+    "brass-50": "#FFF3D8",
+    "brass-100": "#FFEBC1",
+    "brass-200": "#FFE2A9",
+    "brass-300": "#FFDA91",
+    "brass-400": "#FFD176",
+    "brass-500": "#FFC857",
+    "brass-600": "#C99D43",
+    "brass-700": "#96752F",
+    "brass-800": "#664E1D",
+    "brass-900": "#3A2B0C"
+  },
+  "cobalt": {
+    "cobalt-300": "#8FB0F6",
+    "cobalt-400": "#5B8DEF",
+    "cobalt-500": "#3B6FE0",
+    "cobalt-600": "#2B55B8"
+  },
+  "encore": {
+    "encore-300": "#7FD9AE",
+    "encore-400": "#35B87A",
+    "encore-500": "#2A9862",
+    "encore-600": "#1F7449"
+  },
+  "coral": {
+    "coral-300": "#F8A98A",
+    "coral-400": "#F0784C",
+    "coral-500": "#D95E33",
+    "coral-600": "#B04725"
+  },
+  "violet": {
+    "violet-300": "#B3A8F7",
+    "violet-400": "#8B7BF0",
+    "violet-500": "#6D5AD9",
+    "violet-600": "#5544B0"
+  },
+  "danger": {
+    "danger-300": "#F3999C",
+    "danger-400": "#E5484D",
+    "danger-500": "#C62F34",
+    "danger-600": "#9B2427"
+  }
+}

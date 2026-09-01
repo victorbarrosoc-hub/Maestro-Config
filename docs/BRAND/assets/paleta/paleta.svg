@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 1192" width="980" height="1192" role="img" aria-label="Paleta da Maestro">
+  <title>Maestro — paleta</title>
+  <rect width="980" height="1192" fill="#161616"/>
+  <text x="56" y="58" fill="#F4F7F5" font-family="Georgia,serif" font-size="30">Maestro — paleta</text>
+  <text x="56" y="80" fill="#72707A" font-family="ui-monospace,Menlo,monospace" font-size="11" letter-spacing="1.4">GERADA DE packages/tokens/src/tokens.css</text>
+  <text x="56" y="140" fill="#A0A0A6" font-family="ui-monospace,Menlo,monospace" font-size="10.5" letter-spacing="1.8">AS QUATRO CORES DO FOUNDER (D-079)</text>
+  <rect x="56" y="156" width="202" height="110" rx="10" fill="#1C1C1C" stroke="#29272B"/>
+  <text x="67" y="240" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">eerie · o palco</text>
+  <text x="67" y="255" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#1C1C1C</text>
+  <rect x="272" y="156" width="202" height="110" rx="10" fill="#474350" stroke="#29272B"/>
+  <text x="283" y="240" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">taupe · a coxia</text>
+  <text x="283" y="255" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#474350</text>
+  <rect x="488" y="156" width="202" height="110" rx="10" fill="#FFC857" stroke="#29272B"/>
+  <text x="499" y="240" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">mustard · a luz</text>
+  <text x="499" y="255" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#FFC857</text>
+  <rect x="704" y="156" width="202" height="110" rx="10" fill="#F4F7F5" stroke="#29272B"/>
+  <text x="715" y="240" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">smoke · a partitura</text>
+  <text x="715" y="255" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#F4F7F5</text>
+  <text x="56" y="300" fill="#A0A0A6" font-family="ui-monospace,Menlo,monospace" font-size="10.5" letter-spacing="1.8">INK · A ESCURIDÃO DO PALCO</text>
+  <rect x="56" y="316" width="98" height="96" rx="10" fill="#F4F7F5" stroke="#29272B"/>
+  <text x="67" y="386" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ink-50</text>
+  <text x="67" y="401" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#F4F7F5</text>
+  <rect x="164" y="316" width="98" height="96" rx="10" fill="#E4E6E6" stroke="#29272B"/>
+  <text x="175" y="386" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ink-100</text>
+  <text x="175" y="401" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#E4E6E6</text>
+  <rect x="272" y="316" width="98" height="96" rx="10" fill="#C7C8CB" stroke="#29272B"/>
+  <text x="283" y="386" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ink-200</text>
+  <text x="283" y="401" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#C7C8CB</text>
+  <rect x="380" y="316" width="98" height="96" rx="10" fill="#A0A0A6" stroke="#29272B"/>
+  <text x="391" y="386" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ink-300</text>
+  <text x="391" y="401" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#A0A0A6</text>
+  <rect x="488" y="316" width="98" height="96" rx="10" fill="#72707A" stroke="#29272B"/>
+  <text x="499" y="386" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ink-400</text>
+  <text x="499" y="401" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#72707A</text>
+  <rect x="596" y="316" width="98" height="96" rx="10" fill="#54505C" stroke="#29272B"/>
+  <text x="607" y="386" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ink-500</text>
+  <text x="607" y="401" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#54505C</text>
+  <rect x="704" y="316" width="98" height="96" rx="10" fill="#474350" stroke="#29272B"/>
+  <text x="715" y="386" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ink-600</text>
+  <text x="715" y="401" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#474350</text>
+  <rect x="812" y="316" width="98" height="96" rx="10" fill="#35333A" stroke="#29272B"/>
+  <text x="823" y="386" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ink-700</text>
+  <text x="823" y="401" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#35333A</text>
+  <rect x="56" y="422" width="98" height="96" rx="10" fill="#29272B" stroke="#29272B"/>
+  <text x="67" y="492" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ink-800</text>
+  <text x="67" y="507" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#29272B</text>
+  <rect x="164" y="422" width="98" height="96" rx="10" fill="#212122" stroke="#29272B"/>
+  <text x="175" y="492" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ink-850</text>
+  <text x="175" y="507" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#212122</text>
+  <rect x="272" y="422" width="98" height="96" rx="10" fill="#1C1C1C" stroke="#29272B"/>
+  <text x="283" y="492" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ink-900</text>
+  <text x="283" y="507" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#1C1C1C</text>
+  <rect x="380" y="422" width="98" height="96" rx="10" fill="#161616" stroke="#29272B"/>
+  <text x="391" y="492" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ink-950</text>
+  <text x="391" y="507" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#161616</text>
+  <text x="56" y="554" fill="#A0A0A6" font-family="ui-monospace,Menlo,monospace" font-size="10.5" letter-spacing="1.8">BRASS · O ACENTO, E SÓ ONDE ELE DECIDE (D-018)</text>
+  <rect x="56" y="570" width="98" height="96" rx="10" fill="#FFF3D8" stroke="#29272B"/>
+  <text x="67" y="640" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">brass-50</text>
+  <text x="67" y="655" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#FFF3D8</text>
+  <rect x="164" y="570" width="98" height="96" rx="10" fill="#FFEBC1" stroke="#29272B"/>
+  <text x="175" y="640" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">brass-100</text>
+  <text x="175" y="655" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#FFEBC1</text>
+  <rect x="272" y="570" width="98" height="96" rx="10" fill="#FFE2A9" stroke="#29272B"/>
+  <text x="283" y="640" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">brass-200</text>
+  <text x="283" y="655" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#FFE2A9</text>
+  <rect x="380" y="570" width="98" height="96" rx="10" fill="#FFDA91" stroke="#29272B"/>
+  <text x="391" y="640" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">brass-300</text>
+  <text x="391" y="655" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#FFDA91</text>
+  <rect x="488" y="570" width="98" height="96" rx="10" fill="#FFD176" stroke="#29272B"/>
+  <text x="499" y="640" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">brass-400</text>
+  <text x="499" y="655" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#FFD176</text>
+  <rect x="596" y="570" width="98" height="96" rx="10" fill="#FFC857" stroke="#29272B"/>
+  <text x="607" y="640" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">brass-500</text>
+  <text x="607" y="655" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#FFC857</text>
+  <rect x="704" y="570" width="98" height="96" rx="10" fill="#C99D43" stroke="#29272B"/>
+  <text x="715" y="640" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">brass-600</text>
+  <text x="715" y="655" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#C99D43</text>
+  <rect x="812" y="570" width="98" height="96" rx="10" fill="#96752F" stroke="#29272B"/>
+  <text x="823" y="640" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">brass-700</text>
+  <text x="823" y="655" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#96752F</text>
+  <rect x="56" y="676" width="98" height="96" rx="10" fill="#664E1D" stroke="#29272B"/>
+  <text x="67" y="746" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">brass-800</text>
+  <text x="67" y="761" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#664E1D</text>
+  <rect x="164" y="676" width="98" height="96" rx="10" fill="#3A2B0C" stroke="#29272B"/>
+  <text x="175" y="746" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">brass-900</text>
+  <text x="175" y="761" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#3A2B0C</text>
+  <text x="56" y="808" fill="#A0A0A6" font-family="ui-monospace,Menlo,monospace" font-size="10.5" letter-spacing="1.8">APOIO · ESTADO, NUNCA DECORAÇÃO</text>
+  <rect x="56" y="824" width="98" height="96" rx="10" fill="#8FB0F6" stroke="#29272B"/>
+  <text x="67" y="894" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">cobalt-300</text>
+  <text x="67" y="909" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#8FB0F6</text>
+  <rect x="164" y="824" width="98" height="96" rx="10" fill="#5B8DEF" stroke="#29272B"/>
+  <text x="175" y="894" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">cobalt-400</text>
+  <text x="175" y="909" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#5B8DEF</text>
+  <rect x="272" y="824" width="98" height="96" rx="10" fill="#3B6FE0" stroke="#29272B"/>
+  <text x="283" y="894" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">cobalt-500</text>
+  <text x="283" y="909" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#3B6FE0</text>
+  <rect x="380" y="824" width="98" height="96" rx="10" fill="#2B55B8" stroke="#29272B"/>
+  <text x="391" y="894" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">cobalt-600</text>
+  <text x="391" y="909" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#2B55B8</text>
+  <rect x="488" y="824" width="98" height="96" rx="10" fill="#7FD9AE" stroke="#29272B"/>
+  <text x="499" y="894" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">encore-300</text>
+  <text x="499" y="909" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#7FD9AE</text>
+  <rect x="596" y="824" width="98" height="96" rx="10" fill="#35B87A" stroke="#29272B"/>
+  <text x="607" y="894" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">encore-400</text>
+  <text x="607" y="909" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#35B87A</text>
+  <rect x="704" y="824" width="98" height="96" rx="10" fill="#2A9862" stroke="#29272B"/>
+  <text x="715" y="894" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">encore-500</text>
+  <text x="715" y="909" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#2A9862</text>
+  <rect x="812" y="824" width="98" height="96" rx="10" fill="#1F7449" stroke="#29272B"/>
+  <text x="823" y="894" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">encore-600</text>
+  <text x="823" y="909" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#1F7449</text>
+  <rect x="56" y="930" width="98" height="96" rx="10" fill="#F8A98A" stroke="#29272B"/>
+  <text x="67" y="1000" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">coral-300</text>
+  <text x="67" y="1015" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#F8A98A</text>
+  <rect x="164" y="930" width="98" height="96" rx="10" fill="#F0784C" stroke="#29272B"/>
+  <text x="175" y="1000" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">coral-400</text>
+  <text x="175" y="1015" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#F0784C</text>
+  <rect x="272" y="930" width="98" height="96" rx="10" fill="#D95E33" stroke="#29272B"/>
+  <text x="283" y="1000" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">coral-500</text>
+  <text x="283" y="1015" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#D95E33</text>
+  <rect x="380" y="930" width="98" height="96" rx="10" fill="#B04725" stroke="#29272B"/>
+  <text x="391" y="1000" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">coral-600</text>
+  <text x="391" y="1015" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#B04725</text>
+  <rect x="488" y="930" width="98" height="96" rx="10" fill="#B3A8F7" stroke="#29272B"/>
+  <text x="499" y="1000" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">violet-300</text>
+  <text x="499" y="1015" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#B3A8F7</text>
+  <rect x="596" y="930" width="98" height="96" rx="10" fill="#8B7BF0" stroke="#29272B"/>
+  <text x="607" y="1000" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">violet-400</text>
+  <text x="607" y="1015" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#8B7BF0</text>
+  <rect x="704" y="930" width="98" height="96" rx="10" fill="#6D5AD9" stroke="#29272B"/>
+  <text x="715" y="1000" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">violet-500</text>
+  <text x="715" y="1015" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#6D5AD9</text>
+  <rect x="812" y="930" width="98" height="96" rx="10" fill="#5544B0" stroke="#29272B"/>
+  <text x="823" y="1000" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">violet-600</text>
+  <text x="823" y="1015" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#5544B0</text>
+  <rect x="56" y="1036" width="98" height="96" rx="10" fill="#F3999C" stroke="#29272B"/>
+  <text x="67" y="1106" fill="#161616" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">danger-300</text>
+  <text x="67" y="1121" fill="#161616" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#F3999C</text>
+  <rect x="164" y="1036" width="98" height="96" rx="10" fill="#E5484D" stroke="#29272B"/>
+  <text x="175" y="1106" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">danger-400</text>
+  <text x="175" y="1121" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#E5484D</text>
+  <rect x="272" y="1036" width="98" height="96" rx="10" fill="#C62F34" stroke="#29272B"/>
+  <text x="283" y="1106" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">danger-500</text>
+  <text x="283" y="1121" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#C62F34</text>
+  <rect x="380" y="1036" width="98" height="96" rx="10" fill="#9B2427" stroke="#29272B"/>
+  <text x="391" y="1106" fill="#F4F7F5" opacity=".8" font-family="ui-monospace,Menlo,monospace" font-size="9.5">danger-600</text>
+  <text x="391" y="1121" fill="#F4F7F5" font-family="ui-monospace,Menlo,monospace" font-size="11.5" font-weight="600">#9B2427</text>
+</svg>
