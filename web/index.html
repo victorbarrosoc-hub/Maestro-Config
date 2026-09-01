@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-01 02:47 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-01 11:17 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15765,7 +15765,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v87 · 1 set · foto e conversa direta';
+const VERSAO_PROTOTIPO = 'v88 · 1 set · a equipe deixa de ser apagável';
 
 menuSheet = (function(orig){
   return function(){
@@ -19343,4 +19343,175 @@ telaConversas = (function(orig){
       </div><div class="cvMsgs"`);
   };
 })(telaConversas);
+</script>
+
+<script>
+/* =====================================================================
+   v88 — a equipe deixa de ser apagável por outro aparelho
+
+   O QUE ACONTECEU, 1 de setembro, 11:04. Uma aba deste protótipo ficou
+   aberta com uma cópia do estado tirada minutos antes. O relógio de
+   salvamento (`pulso`, a cada 1,2 s) continuou mandando essa cópia velha
+   para o banco, e a política "quem grava por último vence" fez o resto:
+   as doze linhas do banco foram reescritas em 37 segundos e a equipe
+   real — Victor Barroso, Anna Clara, Gabriela, Roberto, Leonardo —
+   virou a equipe de demonstração. A foto do membro mora em
+   `equipe[].foto`; foi junto, pela mesma gravação.
+
+   Eram três buracos. Os três fecham aqui.
+
+   1. `equipe` era SUBSTITUÍDA inteira por quem gravasse por último.
+      `novos` (clientes) já se unia desde a v81 exatamente por isso — a
+      equipe ficou de fora daquele cuidado. Agora une também. Um campo
+      que só existe de um lado (a foto!) sobrevive à união.
+
+   2. `_jaBuscou = true` rodava mesmo quando a leitura FALHAVA — o
+      resultado de `buscarEstado()` era ignorado. Um aparelho que nunca
+      conseguiu ler o banco começava a escrever nele mesmo assim. Agora
+      escrever exige uma leitura que deu certo. Sem leitura, não grava.
+
+   3. Nada distinguia uma aba viva de uma aba esquecida. Agora, se a
+      última leitura tem mais de dez minutos — ou se a aba passou um
+      tempo escondida —, ela relê antes de gravar. Aba velha deixa de
+      poder sobrescrever quem trabalhou depois dela.
+
+   O que isto NÃO resolve: sair da equipe precisa continuar valendo, e
+   união pura ressuscitaria quem foi removido. Por isso a lista de
+   removidos guarda a HORA, e cada pessoa guarda desde quando está. Só
+   apaga quem entrou antes da remoção — reconvidar alguém funciona.
+   ================================================================== */
+(function(){
+
+  const chaveM = m => {
+    const mail = ((m && m.mail) || '').trim().toLowerCase();
+    return mail || 'nome:' + (((m && m.n) || '').trim().toLowerCase());
+  };
+
+  /* {chave: quando}. Versões antigas gravaram array; normaliza sem perder. */
+  function normalizarFora(v){
+    if(!v) return {};
+    if(Array.isArray(v)){ const o = {}; for(const k of v) o[k] = 1; return o; }
+    return (typeof v === 'object') ? v : {};
+  }
+  S.equipeFora = normalizarFora(S.equipeFora);
+
+  const entrouEm = m => (m && +m.emDesde) || 0;
+
+  /* ---------- 1. a união, na chegada ---------- */
+  const _aplicarV88 = aplicarEstado;
+  aplicarEstado = function(sv){
+    if(!sv) return 0;
+
+    const deLa    = Array.isArray(sv.equipe) ? sv.equipe.filter(m => m && m.n) : null;
+    const foraLa  = normalizarFora(sv.equipeFora);
+    const minha   = (S.equipe || []).slice();   /* antes que o original troque */
+
+    const n = _aplicarV88(sv);
+
+    if(!deLa || !deLa.length){ S.equipe = minha; return n; }
+
+    /* removidos: a hora mais recente vence */
+    const fora = Object.assign({}, normalizarFora(S.equipeFora));
+    for(const k in foraLa) if(!(k in fora) || foraLa[k] > fora[k]) fora[k] = foraLa[k];
+
+    const juntos = new Map();
+    for(const m of minha) juntos.set(chaveM(m), m);
+    for(const m of deLa){
+      const k = chaveM(m);
+      /* Object.assign: o de lá por cima, campo a campo. Uma chave que só
+         existe aqui — a foto — não é apagada por quem não a tem. */
+      if(juntos.has(k)) Object.assign(juntos.get(k), m);
+      else juntos.set(k, m);
+    }
+
+    const viva = [...juntos.values()]
+      .filter(m => { const q = fora[chaveM(m)]; return !q || entrouEm(m) > q; });
+
+    /* a conta nunca pode ficar sem ninguém, nem sem dono */
+    S.equipe = (viva.length && viva.some(m => m.dono)) ? viva
+             : (viva.length ? viva : minha);
+    S.equipeFora = fora;
+    return n;
+  };
+
+  /* ---------- 2. sair da equipe continua valendo ---------- */
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-dormembro]');
+    if(!t) return;
+    const m = (typeof membroPorIndice === 'function')
+      ? membroPorIndice(+t.dataset.dormembro) : null;
+    if(!m) return;
+    const k = chaveM(m);
+    setTimeout(() => {                       /* depois de o original tirar */
+      if((S.equipe || []).some(x => chaveM(x) === k)) return;   /* não saiu */
+      S.equipeFora = normalizarFora(S.equipeFora);
+      S.equipeFora[k] = Date.now();
+    }, 0);
+  }, true);
+
+  /* ---------- 3. reconvidar tem de funcionar ---------- */
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-doinvite]');
+    if(!t) return;
+    setTimeout(() => {                       /* depois de o original empurrar */
+      const novo = (S.equipe || [])[S.equipe.length - 1];
+      if(novo && !novo.emDesde) novo.emDesde = Date.now();
+    }, 0);
+  }, true);
+
+  /* quem já estava antes desta versão não tem data: dá a de agora, uma
+     vez só, para não nascer velho e ser apagado por remoção antiga */
+  for(const m of (S.equipe || [])) if(!m.emDesde) m.emDesde = Date.now();
+
+  /* ---------- 4. não grava quem não leu ---------- */
+  let _leituraOk    = false;
+  let _ultimaLeitura = 0;
+  let _precisaReler  = false;
+  const JANELA = 10 * 60 * 1000;
+
+  const _buscarV88 = buscarEstado;
+  buscarEstado = async function(){
+    const ok = await _buscarV88.apply(this, arguments);
+    if(ok){ _leituraOk = true; _ultimaLeitura = Date.now(); _precisaReler = false; }
+    return ok;
+  };
+
+  /* uma aba que ficou escondida volta desconfiando do que tem */
+  addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'hidden') _precisaReler = true;
+  });
+
+  /* A trava, num lugar só. `velha` cobre os dois jeitos de uma aba
+     ficar perigosa: nunca ter lido, ou ter lido há muito tempo. */
+  async function podeGravar(){
+    if(typeof _sbLigado !== 'undefined' && !_sbLigado) return false;
+    const velha = !_leituraOk || _precisaReler || (Date.now() - _ultimaLeitura > JANELA);
+    if(!velha) return true;
+    return await buscarEstado();     /* não consegui ler: não escrevo. Ponto. */
+  }
+
+  /* A trava fica na REDE, e não em cada função que grava.
+
+     Tentei primeiro envolver `enviarEstado`, `sbGravar` e
+     `sbGravarConfig`. Um teste com a leitura quebrada mostrou dois POSTs
+     escapando mesmo assim: camadas anteriores (v-13298, v-14014) guardam
+     uma referência à função ORIGINAL no momento em que a envolvem, e
+     passam a chamar essa referência — o invólucro novo, posto por cima
+     do nome global, nunca entra no caminho.
+
+     A rede ninguém guarda de lado. Aqui passa tudo, venha de onde vier.
+
+     Só a gravação da pauta é travada. O envio de arquivo (`/storage/`)
+     continua livre: subir uma foto ACRESCENTA, não sobrescreve o
+     trabalho de ninguém — e travá-lo só faria a foto sumir de novo. */
+  const _fetchV88 = window.fetch.bind(window);
+  window.fetch = async function(u, o){
+    const url = String((u && u.url) || u || '');
+    const met = String((o && o.method) || (u && u.method) || 'GET').toUpperCase();
+    if(met !== 'GET' && /\/rest\/v1\/pauta\b/.test(url) && !(await podeGravar()))
+      return new Response('', { status: 409, statusText: 'v88: gravação sem leitura recente' });
+    return _fetchV88(u, o);
+  };
+
+})();
 </script>
