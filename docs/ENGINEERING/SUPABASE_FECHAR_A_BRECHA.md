@@ -120,6 +120,50 @@ create policy "pauta_update_autenticado" on public.pauta
 Confira depois em `Database → Policies → pauta`: devem sobrar exatamente três políticas,
 todas com o papel `authenticated`, e nenhuma com `anon` ou `public`.
 
+> ### ⚠️ Este SQL não bastou — 1 de setembro
+>
+> O founder rodou o bloco acima e a brecha **continuou aberta**: leitura e escrita
+> anônimas seguiram respondendo `HTTP 200`. O motivo é que `drop policy if exists`
+> apaga pelo NOME, e os nomes acima são chutes. As políticas criadas pelos botões do
+> painel nascem com nomes como *"Enable read access for all users"*. O `if exists`
+> então não encontra nada, não reclama, e as políticas velhas continuam vivas ao lado
+> das novas. Em Postgres as políticas se SOMAM: basta uma dizer "pode" para poder.
+>
+> Use este bloco no lugar. Ele apaga **todas** as políticas da tabela, seja qual for o
+> nome, antes de criar as três certas:
+>
+> ```sql
+> do $$
+> declare p record;
+> begin
+>   for p in select policyname from pg_policies
+>            where schemaname = 'public' and tablename = 'pauta'
+>   loop
+>     execute format('drop policy %I on public.pauta', p.policyname);
+>   end loop;
+> end $$;
+>
+> alter table public.pauta enable row level security;
+>
+> create policy "pauta_select_autenticado" on public.pauta
+>   for select to authenticated using (true);
+> create policy "pauta_insert_autenticado" on public.pauta
+>   for insert to authenticated with check (true);
+> create policy "pauta_update_autenticado" on public.pauta
+>   for update to authenticated using (true) with check (true);
+> ```
+>
+> E confira com SQL, não com o olho — esta consulta tem de devolver exatamente três
+> linhas, todas com `{authenticated}`:
+>
+> ```sql
+> select policyname, roles, cmd from pg_policies
+> where schemaname = 'public' and tablename = 'pauta';
+> ```
+>
+> **Não rode isto antes da parte 2 estar no ar.** No minuto em que fechar, o protótipo
+> para de salvar em todos os aparelhos — ele ainda não sabe entrar.
+
 ### Passo 4 · Conferir que fechou
 
 No terminal, ou em qualquer lugar que faça uma requisição:
@@ -141,7 +185,29 @@ ele ainda não sabe entrar. É esperado, e é a parte 2.
 
 ---
 
-## 5. Parte 2 — o que eu faço no código (mesma rodada, depois do seu aviso)
+## 5. Parte 2 — FEITA (v89, 1 de setembro)
+
+> A porta está no ar. O que mudou em relação ao plano abaixo, e por quê:
+>
+> - **Entrar é oferecido, nunca exigido.** Obrigar login numa porta ainda destrancada
+>   só atrapalharia. Enquanto a brecha estiver aberta, quem não entra usa tudo como
+>   antes. No instante em que o banco recusar quem não entrou (401/403), a tela de
+>   entrada aparece **sozinha** — em vez de o protótipo cair no silêncio do "só neste
+>   aparelho" e a pessoa achar que quebrou. É essa a passagem, e ela dispensa
+>   coordenação: pode rodar o SQL a qualquer hora.
+> - **A chave da v82 continua existindo.** O plano dizia para removê-la. Ela tranca a
+>   troca de perfil DENTRO do aparelho, que é outro assunto do login no banco — tirar
+>   as duas de uma vez trocaria um problema por outro.
+> - **O token viaja pela rede, não trocando `SB.key`.** `sbCab()` é `const` e há
+>   chamadas que montam o cabeçalho na mão. Foi a lição que a v88 pagou caro.
+>
+> Verificado com o banco simulado, sem tocar em senha de ninguém: a porta aparece
+> sozinha no 401; senha errada dá recado claro; ao entrar, leituras e gravações passam
+> a levar o token; recarregar não pede senha de novo e não pergunta "quem está aí" —
+> o e-mail autenticado já diz quem é; sair apaga a sessão e devolve a porta.
+
+### O plano original, para registro
+
 
 1. A tela "Quem está aí?" passa a pedir **e-mail e senha de verdade** — a mesma da conta
    do Supabase — em vez da chave local da v82. A chave da v82 deixa de existir: ela era o
