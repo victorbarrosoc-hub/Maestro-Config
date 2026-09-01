@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-01 02:28 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-01 02:47 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -11968,6 +11968,20 @@ if(typeof render === 'function') render();
    essa lista por um id derivado do e-mail (estável e legível). */
 const membroId = m => (m.mail || m.n || '').split('@')[0].toLowerCase().replace(/\s+/g,'.');
 const membroIni = m => (m.n||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+/* O avatar de uma PESSOA: a foto quando existe, as iniciais quando não.
+   Fica aqui, junto de membroIni, porque é daqui para baixo que as telas que
+   desenham gente chamam. Um lugar só — a mesma razão do avCliente: se cada
+   tela desenhasse o seu, a próxima nasceria sem foto. */
+function avMembro(m, cls, estilo){
+  const classe = cls || 'av';
+  const st = estilo ? ` style="${estilo}"` : '';
+  return (m && m.foto)
+    ? `<span class="${classe} comFoto"${st}><img src="${m.foto}" alt="" aria-hidden="true"></span>`
+    : `<span class="${classe}"${st}>${m ? membroIni(m) : '?'}</span>`;
+}
+/* `membro(id)` devolve um resumo, não o registro — e para desenhar a foto é
+   o registro inteiro que se precisa. */
+const membroCru = id => (S.equipe || []).find(x => membroId(x) === id) || null;
 const membro = id => {
   const m = (S.equipe||[]).find(x=>membroId(x)===id);
   return m ? { id, nome:m.n, ini:membroIni(m), papel:m.papel } : null;
@@ -12929,7 +12943,7 @@ function abrirQuemEsta(){
     <p class="sub">Cada pessoa entra como ela mesma — o que você faz fica no seu nome.</p>
     <div class="grp">Equipe da agência</div>
     ${(S.equipe||[]).map(m=>`<button class="qePessoa" data-qeag="${membroId(m)}">
-      <span class="av">${membroIni(m)}</span>
+      ${avMembro(m)}
       <span style="flex:1"><b>${esc(m.n)}</b><span>${esc(m.papel)}${m.dono?' · dono da conta':''}</span></span>
       ${ic('chevr',14)}</button>`).join('')}
     <div class="grp">Sou cliente</div>
@@ -13595,7 +13609,7 @@ function modalRanking(){
     <p>Tarefa concluída vale 10 pontos; no prazo, +5; atrasada, −3. A agência
       bonifica o pódio no fim do mês.</p>
     <div class="podio">${ordemPodio.map((e,i)=>`<div class="lugar">
-      <span class="av" style="width:38px;height:38px">${membroIni(e.m)}</span>
+      ${avMembro(e.m, 'av', 'width:38px;height:38px')}
       <b>${esc(e.m.n.split(' ')[0])}</b><span>${e.pts} pts · ${e.feitas} feitas</span>
       <div class="bloco">${[2,1,3][i]||''}</div></div>`).join('')}</div>
     ${placar.slice(3).map((e,i)=>`<div class="rfItem" style="margin-top:6px">
@@ -13985,7 +13999,7 @@ function telaConversas(shell){
     ? (CLIS().find(c=>c.id===de.slice(8))?.aprovador?.nome || CLIS().find(c=>c.id===de.slice(8))?.nome || 'Cliente')
     : (membro(de)?.nome || de);
   const corpo = `
-  <div class="mtop"><div><h1>Conversas</h1><p>squads da equipe — e o canal direto de cada cliente</p></div>
+  <div class="mtop"><div><h1>Conversas</h1><p>o Geral, os squads, a conversa direta com cada pessoa — e o canal de cada cliente</p></div>
     ${S.usuario&&S.usuario.tipo!=='cliente'?`<button class="b gho sm" data-cvnovo="1">${ic('users',13)} Novo squad</button>`:''}</div>
   <div class="cvLayout">
     <div class="cvCanais">${canais.map(c=>`<button class="cvCanal ${c.id===S.cvAtivo?'on':''}"
@@ -15751,7 +15765,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v86 · 31 ago · logo do cliente';
+const VERSAO_PROTOTIPO = 'v87 · 1 set · foto e conversa direta';
 
 menuSheet = (function(orig){
   return function(){
@@ -17093,7 +17107,7 @@ agEquipe = function(){
     <button class="b pri sm" data-invite="1">${ic('users')} Convidar</button></div>
   ${S.equipe.map((m, i) => `<div class="card" style="margin-bottom:10px">
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <span class="av">${m.n.split(' ').map(w => w[0]).slice(0, 2).join('')}</span>
+      ${avMembro(m)}
       <span style="flex:1;min-width:150px"><b style="color:var(--ink-50);font-size:13.5px">${esc(m.n)}</b>
         <span style="display:block;font-size:11.5px;color:var(--ink-400)">${esc(m.mail)}${m.dono ? ' · dono da conta' : ''}</span></span>
       ${m.dono ? `<span class="pill p-APPROVED">Administrador</span>`
@@ -17202,7 +17216,7 @@ function abrirQuemAgencia(){
     ${(S.equipe || []).map(m => {
       const eu = membroId(m) === atual;
       return `<button class="qePessoa${eu ? ' euAgora' : ''}" data-qeag="${membroId(m)}">
-        <span class="av">${membroIni(m)}</span>
+        ${avMembro(m)}
         <span style="flex:1"><b>${esc(m.n)}</b><span>${esc(m.papel)}${m.dono ? ' · dono da conta' : ''}</span></span>
         ${eu ? '<span class="euTag">você</span>' : ic('chevr', 14)}</button>`;
     }).join('')}
@@ -17706,7 +17720,7 @@ function modalSquad(canalId){
         return `<button type="button" class="sqPessoa${tem ? ' dentro' : ''}${souEu ? ' euMesmo' : ''}"
           data-sqalterna="${id}" aria-pressed="${tem}">
           <span class="marca">✓</span>
-          <span class="av">${membroIni(m)}</span>
+          ${avMembro(m)}
           <span style="flex:1"><b>${esc(m.n)}</b><span>${esc(m.papel)}${souEu ? ' · você' : ''}</span></span>
         </button>`;
       }).join('')}
@@ -17788,8 +17802,7 @@ telaConversas = (function(orig){
 
     const ids = c.membros || S.equipe.map(membroId);
     const caras = ids.slice(0, 4).map(id => {
-      const m = membro(id);
-      return `<span class="av">${m ? m.ini : '?'}</span>`;
+      return avMembro(membroCru(id));
     }).join('');
     const quem = c.id === 'geral' ? 'toda a agência'
       : c.tipo === 'cliente' ? `${ids.length} da agência neste canal`
@@ -18471,7 +18484,7 @@ function pedirChave(id){
   const m = (S.equipe || []).find(x => membroId(x) === id); if(!m) return;
   const cx = document.querySelector('#quemEsta .caixa'); if(!cx) return;
   _erros = 0;
-  cx.innerHTML = `<div class="kquem"><span class="av">${membroIni(m)}</span>
+  cx.innerHTML = `<div class="kquem">${avMembro(m)}
       <span><b style="display:block;color:var(--ink-50)">${esc(m.n)}</b>
       <span style="font-size:12px;color:var(--ink-400)">${esc(m.papel)}</span></span></div>
     <h3 style="font-size:19px;margin:0 0 6px">Chave de acesso</h3>
@@ -18579,7 +18592,7 @@ function consertarDentro(v, fundo){
     return v;
   }
   for(const k of Object.keys(v)){
-    if(k === 'art' || k === 'url' || k === 'chave' || k === 'logo') continue;  // não é texto de gente
+    if(['art','url','chave','logo','foto'].includes(k)) continue;   // não é texto de gente
     v[k] = consertarDentro(v[k], fundo + 1);
   }
   return v;
@@ -18986,4 +18999,348 @@ addEventListener('change', async e => {
   }catch(err){ toast(err.message || 'Não consegui abrir essa imagem.'); }
   e.target.value = '';                                  // permite reescolher o mesmo arquivo
 }, true);
+</script>
+
+<style>
+/* a foto de uma pessoa preenche o círculo; a logo de uma marca cabe dentro.
+   São regras opostas de propósito — cortar um rosto é normal, cortar uma
+   logo come o nome da marca */
+.av.comFoto, .cav.comFoto{ padding:0; overflow:hidden; background:var(--ink-800) }
+.av.comFoto img, .cav.comFoto img{ width:100%; height:100%; object-fit:cover;
+  display:block; border-radius:inherit }
+
+.mbFoto{ display:flex; align-items:center; gap:14px; margin:2px 0 16px }
+.mbFoto .previa{ width:64px; height:64px; border-radius:999px; flex:none;
+  display:grid; place-items:center; overflow:hidden;
+  background:var(--ink-950); border:1px solid var(--ink-700);
+  font-family:var(--mono); font-size:17px; color:var(--ink-400) }
+.mbFoto .previa img{ width:100%; height:100%; object-fit:cover; display:block }
+.mbFoto .lado{ flex:1; min-width:0 }
+.mbFoto .acoes{ display:flex; gap:7px; flex-wrap:wrap }
+.mbFoto .acoes button{ font-size:12px; padding:6px 12px; border-radius:999px;
+  border:1px solid var(--ink-700); color:var(--ink-200); background:var(--ink-950) }
+.mbFoto .acoes button:hover{ border-color:var(--brass-600); color:var(--brass-300) }
+.mbFoto .acoes button.tirar{ color:var(--danger); border-color:rgba(229,72,77,.35) }
+.mbFoto .dica{ font-size:11.5px; color:var(--ink-400); line-height:1.5; margin:7px 0 0 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v87a — A FOTO DE PERFIL DO MEMBRO.
+
+   Mesma mecânica da logo do cliente (v86) com UMA diferença que importa:
+   o recorte. Logo de marca CABE inteira dentro do quadro; foto de pessoa
+   PREENCHE. Cortar um rosto nas bordas é o normal de todo avatar do
+   mundo; cortar uma logo come o nome da marca. Por isso a função de
+   encolher passa a receber o modo, em vez de eu escolher um dos dois e
+   deixar o outro errado.
+
+   Pessoa continua em círculo e marca em quadrado arredondado (v86) —
+   a distinção diz o que a coisa é antes de alguém ler o nome.
+   ================================================================== */
+
+/* a v86 encolhia sempre "cabendo"; agora escolhe */
+encolherImagem = (function(orig){
+  return function(arquivo, modo){
+    if(modo !== 'cover') return orig.call(this, arquivo);
+    return new Promise((ok, falha) => {
+      const leitor = new FileReader();
+      leitor.onerror = () => falha(new Error('Não consegui ler o arquivo.'));
+      leitor.onload = () => {
+        const img = new Image();
+        img.onerror = () => falha(new Error('Esse arquivo não é uma imagem que eu saiba abrir.'));
+        img.onload = () => {
+          const L = LOGO_LADO;
+          const tela = document.createElement('canvas');
+          tela.width = tela.height = L;
+          const p = tela.getContext('2d');
+          /* preenche e centra: pega o maior fator, não o menor */
+          const escala = Math.max(L / img.width, L / img.height);
+          const l = img.width * escala, a = img.height * escala;
+          p.imageSmoothingQuality = 'high';
+          p.drawImage(img, (L - l) / 2, (L - a) / 2, l, a);
+          let saida = tela.toDataURL('image/webp', 0.86);
+          if(saida.indexOf('data:image/webp') !== 0) saida = tela.toDataURL('image/jpeg', 0.86);
+          ok(saida);
+        };
+        img.src = leitor.result;
+      };
+      leitor.readAsDataURL(arquivo);
+    });
+  };
+})(encolherImagem);
+
+/* rascunho enquanto o modal está aberto: undefined = não mexi,
+   null = tirei, string = troquei */
+let _fotoRascunho;
+
+modalMembro = (function(orig){
+  return function(i){
+    let html = orig(i);
+    const m = membroPorIndice(i);
+    if(!m || !html) return html;
+    _fotoRascunho = undefined;
+    const tem = !!m.foto;
+    const campo = `<div class="fld"><label>Foto do perfil</label>
+      <div class="mbFoto">
+        <div class="previa" id="mb-previa">${m.foto
+          ? `<img src="${m.foto}" alt="">` : esc(membroIni(m))}</div>
+        <div class="lado">
+          <div class="acoes">
+            <button type="button" data-fotoescolher="1">${tem ? 'Trocar foto' : 'Escolher foto'}</button>
+            <button type="button" class="tirar" data-fototirar="1" ${tem ? '' : 'hidden'}>Tirar</button>
+          </div>
+          <p class="dica">Aparece no lugar das iniciais em toda a plataforma.
+            Vai junto para os outros aparelhos.</p>
+        </div>
+      </div>
+      <input type="file" id="mb-arquivo" accept="image/*" hidden></div>`;
+    /* antes do primeiro campo, para a pessoa se ver logo ao abrir */
+    return html.replace('<div class="fld"><label for="mb-n">', campo +
+      '<div class="fld"><label for="mb-n">');
+  };
+})(modalMembro);
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-fotoescolher],[data-fototirar]');
+  if(!t) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  if(t.dataset.fotoescolher !== undefined){
+    document.getElementById('mb-arquivo')?.click(); return; }
+  _fotoRascunho = null;
+  const previa = document.getElementById('mb-previa');
+  const nome = document.getElementById('mb-n')?.value || '';
+  if(previa) previa.textContent =
+    (nome.split(' ').map(w => w[0]).slice(0, 2).join('') || '?').toUpperCase();
+  t.hidden = true;
+  const esc2 = document.querySelector('[data-fotoescolher]');
+  if(esc2) esc2.textContent = 'Escolher foto';
+}, true);
+
+addEventListener('change', async e => {
+  if(!e.target || e.target.id !== 'mb-arquivo') return;
+  const arquivo = e.target.files && e.target.files[0];
+  if(!arquivo) return;
+  if(!/^image\//.test(arquivo.type)){ toast('Escolha uma imagem — PNG, JPG ou WEBP.'); return; }
+  try{
+    _fotoRascunho = await encolherImagem(arquivo, 'cover');
+    const previa = document.getElementById('mb-previa');
+    if(previa) previa.innerHTML = `<img src="${_fotoRascunho}" alt="">`;
+    const tirar = document.querySelector('[data-fototirar]');
+    if(tirar) tirar.hidden = false;
+    const escolher = document.querySelector('[data-fotoescolher]');
+    if(escolher) escolher.textContent = 'Trocar foto';
+    if(typeof som === 'function') som('toque');
+  }catch(err){ toast(err.message || 'Não consegui abrir essa imagem.'); }
+  e.target.value = '';
+}, true);
+
+/* O Salvar do membro mexe no registro existente (não o reescreve), então
+   basta acrescentar a foto ao que ele já faz.
+
+   Mas só DEPOIS de dar certo: aquele handler valida nome e e-mail e pode
+   desistir com o modal aberto. Aplicando na hora do clique, uma foto
+   entraria mesmo num salvamento recusado — e ficaria lá se a pessoa
+   fechasse no Cancelar. O adiamento espera o handler original rodar; o
+   modal ter fechado é o sinal de que ele aceitou. */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-savemembro]');
+  if(!t || _fotoRascunho === undefined) return;
+  const i = t.dataset.savemembro;
+  setTimeout(() => {
+    if(S.modal !== null) return;              // recusado: a foto continua rascunho
+    const m = membroPorIndice(i);
+    if(!m) return;
+    if(_fotoRascunho === null) delete m.foto; else m.foto = _fotoRascunho;
+    _fotoRascunho = undefined;
+    render();
+  }, 0);
+}, true);
+</script>
+
+<style>
+/* A lista de canais deixa de ser uma pilha só e ganha grupos.
+
+   No CELULAR ela não é pilha: é uma TIRA horizontal que rola (a regra de
+   760px logo acima). Rótulo de grupo ali vira mais um item da fila —
+   "EQUIPE" ocupando o lugar de um canal, e "direto" e "clientes" jogados
+   para fora da tela. Foi o que aconteceu na primeira tentativa.
+
+   Então o agrupamento é do DESKTOP, onde a lista é uma coluna e cabe.
+   No celular os rótulos somem e ficam a ordem e as caras — que já
+   distinguem pessoa de squad de cliente sem precisar de legenda. */
+.cvGrupo{ font-family:var(--mono); font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-500); padding:14px 4px 7px;
+  display:flex; align-items:center; gap:8px }
+.cvGrupo:first-child{ padding-top:2px }
+.cvGrupo i{ flex:1; height:1px; background:var(--ink-800) }
+@media(max-width:760px){
+  .cvGrupo{ display:none }
+  .cvNova{ width:auto; margin-top:0; white-space:nowrap; flex:none }
+}
+.cvCanal.comAv{ display:flex; align-items:center; gap:9px }
+.cvCanal .av{ width:22px; height:22px; font-size:8.5px; flex:none }
+.cvCanal .txt{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.cvNova{ width:100%; margin-top:8px; padding:9px 11px; border-radius:11px;
+  border:1px dashed var(--ink-700); color:var(--ink-300); font-size:12px;
+  display:flex; align-items:center; gap:8px; background:none }
+.cvNova:hover{ border-color:var(--brass-600); color:var(--brass-300) }
+.dmLista{ display:grid; gap:6px; margin:4px 0 14px; max-height:46vh; overflow:auto }
+.dmPessoa{ display:flex; align-items:center; gap:11px; width:100%; text-align:left;
+  padding:10px 12px; border:1px solid var(--ink-800); border-radius:12px;
+  background:var(--ink-950) }
+.dmPessoa:hover{ border-color:var(--brass-600) }
+.dmPessoa b{ display:block; font-size:13.5px; color:var(--ink-50) }
+.dmPessoa span{ font-size:11px; color:var(--ink-400) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v87b — CONVERSA DIRETA, DE UMA PESSOA PARA OUTRA.
+
+   "Assim os membros podem conversar um com o outro sem precisar ir pra o
+   WhatsApp e desfocar do que é trabalho." — é o princípio 8 do produto
+   ("nada depende de WhatsApp") aplicado à conversa que faltava. Já havia
+   o canal de todo mundo (Geral), o canal por assunto (squad) e o canal
+   do cliente. Faltava o de duas pessoas, que é justamente o que empurrava
+   a equipe para fora.
+
+   TRÊS DECISÕES.
+
+   1. O ID É DERIVADO DOS DOIS NOMES, ordenado: `dm_marina__victor`. Não
+      é enfeite — é o que faz os dois aparelhos chegarem ao MESMO canal
+      sem combinar nada. Se o id fosse sorteado, Victor abrindo do
+      computador e Marina abrindo do celular criariam duas conversas
+      paralelas, cada um falando sozinho.
+
+   2. O ADMINISTRADOR NÃO LÊ CONVERSA ALHEIA. A regra que já existia dava
+      ao admin acesso a todo canal — o que é razoável para squad e para
+      canal de cliente, e é VIOLAÇÃO em conversa de duas pessoas. Aqui a
+      exceção do admin não vale: direto é só dos dois, e ponto. Foi a
+      única linha desta versão que eu escrevi de trás para frente, a
+      partir do que não podia acontecer.
+
+   3. O NOME DO CANAL É CALCULADO, não guardado. Uma conversa entre
+      Marina e Victor se chama "Victor Cardoso" para ela e "Marina Reis"
+      para ele. Guardar um nome fixo daria a um dos dois o nome errado.
+   ================================================================== */
+
+const ehDireto = c => !!c && c.tipo === 'direto';
+const dmId = (a, b) => 'dm_' + [a, b].sort().join('__');
+const outroNoDireto = (c, eu) => (c.membros || []).find(id => id !== eu)
+  || (c.membros || [])[0];
+
+/* como o canal se chama PARA QUEM ESTÁ OLHANDO */
+function nomeDoCanal(c, eu){
+  if(!ehDireto(c)) return c.nome;
+  const m = membroCru(outroNoDireto(c, eu));
+  return m ? m.n : 'Conversa';
+}
+
+/* a exceção do administrador vale para squad e cliente — nunca para direto */
+canaisVisiveis = (function(orig){
+  return function(){
+    const eu = S.usuario && S.usuario.id;
+    return orig().filter(c => !ehDireto(c) || (c.membros || []).includes(eu));
+  };
+})(canaisVisiveis);
+
+/* Aqui eu tentei embrulhar `podeMexerNosMembros` para tirar o botão
+   "Membros" da conversa direta, e o bloco INTEIRO morreu na primeira
+   linha: aquilo é `const`, e reatribuir um const lança. O erro aparece
+   uma vez no console e tudo que vem depois no mesmo <script> some em
+   silêncio — foi o que fez a lista de canais não ganhar os grupos.
+   Não precisava: o cabeçalho da conversa direta é substituído inteiro
+   mais abaixo, e a versão nova simplesmente não tem esse botão. */
+
+function abrirDireto(outro){
+  const eu = euAgora();
+  if(!outro || outro === eu) return;
+  if(!S.chat) S.chat = chatSemente();
+  const id = dmId(eu, outro);
+  let c = canalPorId(id);
+  if(!c){
+    c = { id, tipo: 'direto', membros: [eu, outro].sort(), msgs: [] };
+    S.chat.canais.push(c);
+  }
+  S.cvAtivo = id;
+  S.route = 'conversas';
+  S.modal = null;
+  som('toque'); render();
+}
+
+function modalNovoDireto(){
+  const eu = euAgora();
+  const gente = (S.equipe || []).filter(m => membroId(m) !== eu);
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>Conversar com quem?</h3>
+    <p>Fica entre vocês dois. Nem o administrador entra numa conversa
+      direta — para isso existem os squads e o Geral.</p>
+    <div class="dmLista">${gente.length ? gente.map(m => `
+      <button type="button" class="dmPessoa" data-dmabrir="${membroId(m)}">
+        ${avMembro(m)}
+        <span style="flex:1"><b>${esc(m.n)}</b><span>${esc(m.papel)}</span></span>
+        ${ic('chevr', 14)}</button>`).join('')
+      : '<div class="hjVazio">Você é a única pessoa na equipe por enquanto.</div>'}</div>
+    <div class="modalrow"><button class="b gho" data-modalno="1">Fechar</button></div>
+  </div></div>`;
+}
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-dmnovo],[data-dmabrir]');
+  if(!t) return;
+  e.stopImmediatePropagation();
+  if(t.dataset.dmnovo !== undefined){ S.modal = modalNovoDireto(); renderLayer(); return; }
+  abrirDireto(t.dataset.dmabrir);
+}, true);
+
+/* ---------- a lista de canais, agora em grupos ---------- */
+telaConversas = (function(orig){
+  return function(shell){
+    let html = orig(shell);
+    const eu = euAgora();
+    const canais = canaisVisiveis();
+    if(!canais.length) return html;
+
+    const grupos = [
+      ['equipe',  canais.filter(c => c.tipo === 'squad')],
+      ['direto',  canais.filter(ehDireto)],
+      ['clientes', canais.filter(c => c.tipo === 'cliente')],
+    ];
+    const botao = c => {
+      const nome = nomeDoCanal(c, eu);
+      const cara = ehDireto(c) ? avMembro(membroCru(outroNoDireto(c, eu)))
+        : c.tipo === 'cliente' ? avCliente(CLIS().find(x => x.id === c.cli)) : '';
+      return `<button class="cvCanal ${c.id === S.cvAtivo ? 'on' : ''}${cara ? ' comAv' : ''}"
+        data-cvcanal="${c.id}">${cara}<b class="txt">${esc(nome)}</b>
+        <small>${c.msgs.length || ''}</small></button>`;
+    };
+    const lista = grupos.map(([rot, cs]) =>
+      (cs.length || rot === 'direto')
+        ? `<div class="cvGrupo">${rot}<i></i></div>${cs.map(botao).join('')}` +
+          (rot === 'direto' && S.usuario && S.usuario.tipo !== 'cliente'
+            ? `<button class="cvNova" data-dmnovo="1">${ic('users', 13)} Nova conversa</button>` : '')
+        : '').join('');
+
+    return html.replace(/<div class="cvCanais">[\s\S]*?<\/div>/,
+      `<div class="cvCanais">${lista}</div>`);
+  };
+})(telaConversas);
+
+/* o cabeçalho do canal também precisa do nome certo e da cara certa */
+telaConversas = (function(orig){
+  return function(shell){
+    let html = orig(shell);
+    const c = canalPorId(S.cvAtivo);
+    if(!ehDireto(c)) return html;
+    const eu = euAgora();
+    const outro = membroCru(outroNoDireto(c, eu));
+    return html.replace(/<div class="cvTopo">[\s\S]*?<\/div>\s*<div class="cvMsgs"/,
+      `<div class="cvTopo">${avMembro(outro)}
+        <span><b>${esc(outro ? outro.n : 'Conversa')}</b>
+        <span class="quem" style="display:block">${esc(outro ? outro.papel : '')} ·
+          conversa direta, só entre vocês dois</span></span>
+      </div><div class="cvMsgs"`);
+  };
+})(telaConversas);
 </script>
