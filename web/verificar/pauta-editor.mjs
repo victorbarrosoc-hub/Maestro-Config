@@ -112,14 +112,44 @@ checa('o texto de cada plataforma entra no card',
 checa('so o texto das plataformas que ficaram e guardado',
       salvo && salvo.porPlat && !salvo.porPlat.tt);
 
-// ---------- 3b. a ordem dos campos de texto ----------
+// ---------- 3b. o que saiu da tela, e o que subiu ----------
 await abrirNovo();
-const ordem = await pag.evaluate(() => [...document.querySelectorAll('#layer .modalbox label')]
-  .map(l => l.getAttribute('for')).filter(f => ['pt-texto','pt-cta','pt-legenda'].includes(f)));
-checa('o CTA fica entre o conteudo e a descricao do post',
-      JSON.stringify(ordem) === JSON.stringify(['pt-texto','pt-cta','pt-legenda']));
+checa('a caixa CTA nao existe mais', await pag.locator('#pt-cta').count() === 0);
+checa('a caixa "peca que preenche esta pauta" nao existe mais',
+      await pag.locator('#pt-peca').count() === 0);
+checa('o chip do formato livre diz so "Livre"',
+      (await pag.locator('[data-fmt98="Livre"]').textContent()).trim() === 'Livre');
 checa('o rotulo do conteudo nao promete mais a legenda (ela e campo proprio)',
       !/pauta — a legenda/.test(await pag.evaluate(() => document.body.innerText)));
+
+/* "Tipo de conteudo" decide QUAIS campos existem: tem de vir antes deles */
+const posicoes = await pag.evaluate(() => {
+  const cx = document.querySelector('#layer .modalbox');
+  const todos = [...cx.querySelectorAll('*')];
+  const tc = cx.querySelector('.tcSecao');
+  return { tipo: todos.indexOf(tc),
+           plataformas: todos.indexOf(cx.querySelector('[data-plat98]')),
+           conteudo: todos.indexOf(cx.querySelector('#pt-texto')) };
+});
+checa('"Tipo de conteudo" subiu para antes das plataformas e do conteudo',
+      posicoes.tipo > 0 && posicoes.tipo < posicoes.plataformas &&
+      posicoes.tipo < posicoes.conteudo);
+
+/* tirar o campo da tela nao pode apagar o que ja estava gravado */
+await pag.evaluate(() => { S.modal = null; renderLayer();
+  S.pauta[0].cta = 'Chamada antiga que nao pode sumir';
+  S.pauta[0].pecaId = 3; render(); });
+/* abre o editor daquele card direto: aqui o que esta em teste e o
+   GRAVAR, e o botao de editar muda de lugar conforme a visao */
+await pag.evaluate(() => { S.ptSemear = true; S.modal = modalPauta(S.pauta[0].id); renderLayer(); });
+await pag.waitForTimeout(350);
+await pag.fill('#pt-t', 'Titulo editado');
+await pag.click('[data-ptok]'); await pag.waitForTimeout(450);
+const preservado = await pag.evaluate(() => S.pauta.find(x => x.t === 'Titulo editado'));
+checa('editar um card antigo NAO apaga o CTA que ja estava gravado',
+      preservado && preservado.cta === 'Chamada antiga que nao pode sumir');
+checa('editar um card antigo NAO apaga o vinculo com a peca',
+      preservado && preservado.pecaId === 3);
 
 // ---------- 4. formato Livre ----------
 await abrirNovo();
@@ -128,7 +158,6 @@ checa('Livre existe como formato',
       await pag.locator('[data-fmt98="Livre"].on').count() > 0);
 const visivel = s => pag.locator(s).first().isVisible().catch(() => false);
 checa('no Livre as plataformas somem', !(await visivel('[data-plat98="ig"]')));
-checa('no Livre o CTA some',           !(await visivel('#pt-cta')));
 checa('no Livre a legenda some',       !(await visivel('#pt-legenda')));
 checa('no Livre sobra descricao, dia, horario e responsavel',
       await visivel('#pt-texto') && await visivel('#pt-data') &&

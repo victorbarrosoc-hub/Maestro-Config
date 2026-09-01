@@ -15757,7 +15757,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v100 · 1 set · o CTA sobe para o meio do texto';
+const VERSAO_PROTOTIPO = 'v101 · 1 set · editor da pauta mais enxuto';
 
 menuSheet = (function(orig){
   return function(){
@@ -20316,6 +20316,10 @@ telaConversas = (function(orig){
 .platCampos textarea{ min-height:56px }
 .platVazio{ font-size:12.5px; color:var(--ink-400); margin:9px 0 0 }
 .ptLivre .soPost{ display:none !important }
+/* o Tipo de conteúdo subiu para o meio do formulário: no fim ele encostava
+   no botão, aqui encostaria no rótulo seguinte. A linha de cima já separa;
+   faltava a de baixo. */
+.tcSecao{ border-bottom:1px solid var(--ink-800); padding-bottom:15px; margin-bottom:15px }
 .fmtLivre{ position:relative }
 .ptChips button.fmtLivre.on{ background:#5B8DEF; border-color:#5B8DEF; color:#08090B }
 .livreAviso{ display:flex; gap:9px; align-items:flex-start; margin:2px 0 12px;
@@ -20476,7 +20480,7 @@ modalPauta = (function(orig){
       const marcado = f === 'Livre' ? livre : (!livre && S.ptFmts.has(f));
       return `<button type="button" data-fmt98="${esc(f)}"
         class="${marcado ? 'on' : ''}${f === 'Livre' ? ' fmtLivre' : ''}"
-        >${f === 'Livre' ? 'Livre · demanda interna' : esc(f)}</button>`;
+        >${esc(f)}</button>`;
     }).join('');
     html = html.replace(/<div class="fld"><label>Formato<\/label>[\s\S]*?<\/div><\/div>/,
       `<div class="fld"><label>Formato</label><div class="ptChips">${fmtChips}</div></div>`);
@@ -20509,15 +20513,32 @@ modalPauta = (function(orig){
       .replace(/<label style="display:flex;gap:9px;align-items:center;margin:4px 0 2px;/,
                '<label class="soPost" style="display:flex;gap:9px;align-items:center;margin:4px 0 2px;');
 
-    /* --- o CTA sobe: fica ENTRE o conteúdo e a descrição do post ---
-       Ele é a virada do texto, não um rodapé. Quem está escrevendo a
-       descrição já quer a chamada à vista; lá embaixo, depois da
-       descrição, ela era lembrada tarde demais. */
-    const caixaCta = html.match(/<div class="fld soPost"><label for="pt-cta">[\s\S]*?<\/div>/);
-    if(caixaCta){
-      html = html.replace(caixaCta[0], '')
-                 .replace(/<div class="fld soPost"><label for="pt-legenda">/,
-                          () => caixaCta[0] + '\n    <div class="fld soPost"><label for="pt-legenda">');
+    /* --- três caixas saem da frente ---------------------------------
+       CTA: o founder tirou. A chamada mora dentro do conteúdo e da
+       descrição, onde ela é escrita de qualquer jeito — um campo à parte
+       só pedia a mesma frase duas vezes. O que já estava gravado NÃO é
+       apagado (ver o guardião do `cta` mais abaixo): sumir da tela é uma
+       coisa, apagar o que a pessoa escreveu é outra.
+
+       Peça: o vínculo com o documento da peça final. Fora da tela pelo
+       mesmo motivo — e o `pecaId` gravado também sobrevive. */
+    html = html
+      .replace(/<div class="fld soPost"><label for="pt-cta">[\s\S]*?<\/div>/, '')
+      .replace(/<div class="fld soPost"><label for="pt-peca">[\s\S]*?<\/select><\/div>/, '')
+      /* a linha do título dividia espaço com a peça: sem ela, ocupa tudo */
+      .replace(/<div class="frow">(\s*<div class="fld"><label for="pt-t">)/, '<div>$1');
+
+    /* --- "Tipo de conteúdo" sobe para junto do Formato ---------------
+       Ele decide QUAIS campos existem (roteiro, timecodes). Ficando no
+       fim, a pessoa escrevia o conteúdo e só depois descobria que havia
+       uma estrutura para preencher. Ao lado do Formato ele é o que é:
+       a segunda metade da pergunta "que peça é esta?". */
+    const tipoConteudo = html.match(
+      /<div class="tcSecao soPost">[\s\S]*?(?=<div class="modalrow")/);
+    if(tipoConteudo){
+      html = html.replace(tipoConteudo[0], '')
+                 .replace('<div class="fld soPost"><label>Plataformas',
+                          () => tipoConteudo[0] + '\n    <div class="fld soPost"><label>Plataformas');
     }
 
     if(!livre) { S.ptSemear = false; return html; }
@@ -20580,6 +20601,10 @@ document.addEventListener('click', e => {
   if(!t || !document.getElementById('pt-obs')){ S.ptPorPlatSalvar = null; return; }
   ptGuardarPorPlat();
   S.ptPorPlatSalvar = { ...(S.ptPorPlat || {}) };
+  /* o CTA e a peça saíram da tela, e o salvar original lê os campos que
+     não existem mais — zeraria os dois. Guarda o que o card já tinha. */
+  const antes = +t.dataset.ptok ? S.pauta.find(x => x.id === +t.dataset.ptok) : null;
+  S.ptHerdado = { cta: (antes && antes.cta) || '', pecaId: (antes && antes.pecaId) || null };
 }, true);
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-ptok]');
@@ -20592,6 +20617,12 @@ document.addEventListener('click', e => {
   const fica = {};                    /* só das plataformas que ficaram */
   (alvo.plats || []).forEach(k => { if((escrito[k] || '').trim()) fica[k] = escrito[k].trim(); });
   alvo.porPlat = fica;
+  /* devolve o que o salvar original zerou por ler campos que já não existem */
+  const herdado = S.ptHerdado; S.ptHerdado = null;
+  if(herdado){
+    if(herdado.cta)    alvo.cta    = herdado.cta;
+    if(herdado.pecaId) alvo.pecaId = herdado.pecaId;
+  }
   render();
 });
 
