@@ -112,6 +112,15 @@ checa('o texto de cada plataforma entra no card',
 checa('so o texto das plataformas que ficaram e guardado',
       salvo && salvo.porPlat && !salvo.porPlat.tt);
 
+// ---------- 3b. a ordem dos campos de texto ----------
+await abrirNovo();
+const ordem = await pag.evaluate(() => [...document.querySelectorAll('#layer .modalbox label')]
+  .map(l => l.getAttribute('for')).filter(f => ['pt-texto','pt-cta','pt-legenda'].includes(f)));
+checa('o CTA fica entre o conteudo e a descricao do post',
+      JSON.stringify(ordem) === JSON.stringify(['pt-texto','pt-cta','pt-legenda']));
+checa('o rotulo do conteudo nao promete mais a legenda (ela e campo proprio)',
+      !/pauta — a legenda/.test(await pag.evaluate(() => document.body.innerText)));
+
 // ---------- 4. formato Livre ----------
 await abrirNovo();
 await pag.click('[data-fmt98="Livre"]'); await pag.waitForTimeout(300);

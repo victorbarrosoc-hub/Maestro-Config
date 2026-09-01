@@ -6357,7 +6357,7 @@ function modalPauta(id){
       <div class="fld"><label for="pt-hora">Horário</label>
         <input id="pt-hora" value="${p?p.hora:'18:30'}" inputmode="numeric"></div>
     </div>
-    <div class="fld"><label for="pt-texto">Conteúdo &amp; pauta — a legenda e o direcionamento</label>
+    <div class="fld"><label for="pt-texto">Conteúdo &amp; pauta — o que produzir e por quê</label>
       <textarea id="pt-texto" placeholder="O que é a postagem, o que ela diz e por quê.">${p?esc(p.texto):''}</textarea></div>
     <div class="fld"><label for="pt-cta">CTA / ação</label>
       <input id="pt-cta" value="${p?esc(p.cta||''):''}" placeholder="Ex.: link na bio, salve este post…"></div>
@@ -15757,7 +15757,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v99 · 1 set · pauta: campo por rede e formato Livre';
+const VERSAO_PROTOTIPO = 'v100 · 1 set · o CTA sobe para o meio do texto';
 
 menuSheet = (function(orig){
   return function(){
@@ -20509,6 +20509,17 @@ modalPauta = (function(orig){
       .replace(/<label style="display:flex;gap:9px;align-items:center;margin:4px 0 2px;/,
                '<label class="soPost" style="display:flex;gap:9px;align-items:center;margin:4px 0 2px;');
 
+    /* --- o CTA sobe: fica ENTRE o conteúdo e a descrição do post ---
+       Ele é a virada do texto, não um rodapé. Quem está escrevendo a
+       descrição já quer a chamada à vista; lá embaixo, depois da
+       descrição, ela era lembrada tarde demais. */
+    const caixaCta = html.match(/<div class="fld soPost"><label for="pt-cta">[\s\S]*?<\/div>/);
+    if(caixaCta){
+      html = html.replace(caixaCta[0], '')
+                 .replace(/<div class="fld soPost"><label for="pt-legenda">/,
+                          () => caixaCta[0] + '\n    <div class="fld soPost"><label for="pt-legenda">');
+    }
+
     if(!livre) { S.ptSemear = false; return html; }
 
     /* --- no Livre, a pauta vira lista de demanda interna --- */
@@ -20525,7 +20536,7 @@ modalPauta = (function(orig){
       .replace('placeholder="Ex.: Corte do vídeo · parte 2"',
                'placeholder="Ex.: fechar o financeiro de agosto"')
       .replace('>Data da postagem<', '>Data<')
-      .replace(/>Conteúdo &amp; pauta — a legenda e o direcionamento</,
+      .replace(/>Conteúdo &amp; pauta — o que produzir e por quê</,
                '>Descrição — o que precisa ser feito<')
       .replace(/<button class="b pri" data-ptok="(\d+)" data-agendar="1">[\s\S]*?<\/button>/,
         '<button class="b pri" data-ptok="$1" data-livreok="1">Salvar demanda</button>');
