@@ -24,7 +24,7 @@ SITE = os.environ.get('MAESTRO_URL', 'https://maestroapptest.vercel.app').rstrip
 
 # O nome carrega versão porque o WhatsApp guarda a imagem POR URL e não
 # volta a buscar: para trocar a arte, troca-se o nome do arquivo.
-OG_IMG = 'icones/maestro-og-v1.png'
+OG_IMG = 'icones/maestro-og-v2.png'
 
 DESCRICAO = ('O sistema operacional para agências e equipes criativas. '
              'Briefing, estratégia, aprovação e publicação num lugar só — '
@@ -72,7 +72,7 @@ __LANCAMENTO__
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Maestro — o gesto da regência sobre fundo escuro">
+<meta property="og:image:alt" content="Maestro — 'Não é problema de tarefa. É de alinhamento.' ao lado de seis cards atravessando as fases de aprovação">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Maestro — o sistema operacional para agências criativas">
 <meta name="twitter:description" content="__CHAMADA__">
