@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-01 22:22 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-01 23:34 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -6388,8 +6388,15 @@ function agPauta(){
 /* ---------- o formulário ---------------------------------------------- */
 function modalPauta(id){
   const p = id ? S.pauta.find(x=>x.id===id) : null;
-  S.ptFmt   = p ? p.fmt : 'Reels';
-  S.ptPlats = new Set(p ? p.plats : ['ig']);
+  /* v98: semeia do registro só ao ABRIR. Redesenhar tem de preservar o que
+     a pessoa marcou — antes, qualquer renderLayer (um toast bastava)
+     reinseria o modal com os chips do registro, e a partir dali o DOM e o
+     estado discordavam: clicar num chip "apagado" o desligava. Era o
+     "marca e desmarca" que travava. */
+  if(S.ptSemear !== false){
+    S.ptFmt   = p ? p.fmt : 'Reels';
+    S.ptPlats = new Set(p ? (p.plats || []) : ['ig']);
+  }
   const finais = S.pecas.filter(x=>x.fase!=='TEXTO' && x.st!=='CANCELLED');
   return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
     <h3>${p?'Editar postagem':'Nova postagem'}</h3>
@@ -10682,7 +10689,7 @@ modalPauta = (function(orig){
     const p = id ? S.pauta.find(x=>x.id===id) : null;
     if(!p || !p.story) return html;
 
-    S.ptPilar = p.pilar || 'Autoridade';
+    if(S.ptSemear !== false) S.ptPilar = p.pilar || 'Autoridade';   /* v98 */
     const campos = `
     <div class="stCampos"><b>Story diário</b>
       <div class="fld"><label>Pilar</label>
@@ -12346,8 +12353,10 @@ modalPauta = (function(orig){
   return function(id){
     let html = orig(id);
     const p = id ? S.pauta.find(x=>x.id===id) : null;
-    S.ptResp = p ? (p.resp||null) : null;
-    S.ptFmts = new Set(p ? (p.fmts && p.fmts.length ? p.fmts : [p.fmt]) : ['Reels']);
+    if(S.ptSemear !== false){          /* v98: ver a nota no modalPauta base */
+      S.ptResp = p ? (p.resp||null) : null;
+      S.ptFmts = new Set(p ? (p.fmts && p.fmts.length ? p.fmts : [p.fmt]) : ['Reels']);
+    }
     const tipoC = p && p.corte ? 'corte' : p && p.roteiro ? 'roteiro' : 'estatico';
 
     /* legenda separada do conteúdo: o conteúdo é o QUE produzir; a
@@ -15813,7 +15822,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v97 · 1 set · esvaziar a lixeira';
+const VERSAO_PROTOTIPO = 'v99 · 1 set · pauta: campo por rede e formato Livre';
 
 menuSheet = (function(orig){
   return function(){
@@ -20362,4 +20371,319 @@ telaConversas = (function(orig){
   });
 
 })();
+</script>
+<style>
+/* v98 — campo por plataforma e o formato Livre */
+.platCampos{ display:flex; flex-direction:column; gap:9px; margin-top:9px }
+.platCampos .fld{ margin:0 }
+.platCampos label{ display:flex; align-items:center; gap:7px }
+.platCampos label i{ width:9px; height:9px; border-radius:3px; flex:0 0 auto }
+.platCampos textarea{ min-height:56px }
+.platVazio{ font-size:12.5px; color:var(--ink-400); margin:9px 0 0 }
+.ptLivre .soPost{ display:none !important }
+.fmtLivre{ position:relative }
+.ptChips button.fmtLivre.on{ background:#5B8DEF; border-color:#5B8DEF; color:#08090B }
+.livreAviso{ display:flex; gap:9px; align-items:flex-start; margin:2px 0 12px;
+  padding:10px 12px; border-radius:10px; background:rgba(91,141,239,.09);
+  border:1px solid rgba(91,141,239,.28); font-size:12.5px; color:var(--ink-200) }
+.livreAviso b{ color:#8FB4F5 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v98 — o editor da pauta para de brigar consigo mesmo; cada plataforma
+   ganha o seu campo; e o formato Livre abre a pauta para o que NÃO vai
+   ao ar (administrativo, financeiro, reunião).
+
+   O TRAVAMENTO, que é a origem de tudo aqui: `S.modal` guarda uma STRING
+   pronta, e `renderLayer()` a reinsere inteira. Os chips, porém, eram
+   marcados mexendo no DOM direto (classList.toggle). Bastava um toast —
+   o selo do banco solta um sozinho — para a string antiga voltar: os
+   chips visualmente rebobinavam, o estado em `S.ptPlats`/`S.ptFmts` não,
+   e a partir dali clicar num chip "apagado" o DESLIGAVA. Marca, desmarca,
+   trava. Digitar também se perdia.
+
+   O conserto é o modal virar redesenhável: `renderLayer` colhe o que está
+   digitado, remonta o modal a partir do ESTADO, repõe os valores e devolve
+   o foco com o cursor onde estava. Aí chip pode redesenhar sem medo — que
+   é justamente o que o campo por plataforma precisa.
+   ================================================================== */
+
+/* ---------- 1. Stories sai das plataformas -------------------------
+   Story é FORMATO (está em FORMATOS), não lugar onde a postagem vai ao
+   ar. Ter os dois convidava a marcar Instagram + Stories como se fossem
+   duas redes. Sai do seletor; o que já estava gravado é limpo, para
+   nenhuma tela procurar PLATS.str e achar nada. */
+delete PLATS.str;
+function limparPlatsSumidas(){
+  let mexeu = 0;
+  Object.values(S.pautas || {}).forEach(lista => (lista || []).forEach(p => {
+    if(!Array.isArray(p.plats)) return;
+    const limpo = p.plats.filter(k => PLATS[k]);
+    if(limpo.length !== p.plats.length){ p.plats = limpo; mexeu++; }
+  }));
+  return mexeu;
+}
+limparPlatsSumidas();
+if(typeof sbAplicar === 'function'){
+  sbAplicar = (function(orig){                  /* o que vier do banco também */
+    return function(){ const r = orig.apply(this, arguments); limparPlatsSumidas(); return r; };
+  })(sbAplicar);
+}
+
+/* ---------- 2. o modal da pauta passa a ser redesenhável ------------ */
+const ptEditorAberto = () =>
+  typeof S.modal === 'string' && S.modal.indexOf('id="pt-obs"') >= 0;
+
+/* o id sai do próprio HTML: não há um segundo lugar para desencontrar */
+function ptIdAberto(){
+  const m = String(S.modal || '').match(/data-ptok="(\d+)"/);
+  return (m && +m[1]) || null;
+}
+
+const CAMPO = 'INPUT,TEXTAREA,SELECT';
+function ptColher(){
+  const cx = document.querySelector('#layer .modalbox');
+  if(!cx) return null;
+  const guardado = {};
+  cx.querySelectorAll(CAMPO).forEach(el => {
+    const chave = el.id || (el.dataset.plattxt ? 'plat:' + el.dataset.plattxt : null);
+    if(!chave) return;
+    guardado[chave] = (el.type === 'checkbox') ? el.checked : el.value;
+  });
+  /* os timecodes não têm id: vão pela ordem em que estão na tela */
+  guardado.__tcs = [...cx.querySelectorAll('#ct-tcs .tcLinha')].map(l => ({
+    de: l.querySelector('.tc-de')?.value || '', ate: l.querySelector('.tc-ate')?.value || '',
+    ordem: l.querySelector('.tc-ord')?.value || '' }));
+  return guardado;
+}
+function ptRepor(guardado){
+  if(!guardado) return;
+  const cx = document.querySelector('#layer .modalbox');
+  if(!cx) return;
+  Object.entries(guardado).forEach(([chave, valor]) => {
+    if(chave === '__tcs') return;
+    const el = chave.startsWith('plat:')
+      ? cx.querySelector(`[data-plattxt="${chave.slice(5)}"]`)
+      : cx.querySelector('#' + CSS.escape(chave));
+    if(!el) return;
+    if(el.type === 'checkbox') el.checked = valor; else el.value = valor;
+  });
+  const linhas = [...cx.querySelectorAll('#ct-tcs .tcLinha')];
+  (guardado.__tcs || []).forEach((tc, i) => {
+    const l = linhas[i]; if(!l) return;
+    if(l.querySelector('.tc-de'))  l.querySelector('.tc-de').value  = tc.de;
+    if(l.querySelector('.tc-ate')) l.querySelector('.tc-ate').value = tc.ate;
+    if(l.querySelector('.tc-ord')) l.querySelector('.tc-ord').value = tc.ordem;
+  });
+}
+
+/* quem estava sendo digitado volta a ser, com o cursor onde parou */
+function ptFoco(){
+  const a = document.activeElement;
+  if(!a || !a.closest || !a.closest('#layer .modalbox')) return null;
+  const chave = a.id || (a.dataset && a.dataset.plattxt ? 'plat:' + a.dataset.plattxt : null);
+  if(!chave) return null;
+  let ini = null, fim = null;
+  try{ ini = a.selectionStart; fim = a.selectionEnd; }catch(e){}
+  return { chave, ini, fim };
+}
+function ptDevolverFoco(f){
+  if(!f) return;
+  const cx = document.querySelector('#layer .modalbox');
+  if(!cx) return;
+  const el = f.chave.startsWith('plat:')
+    ? cx.querySelector(`[data-plattxt="${f.chave.slice(5)}"]`)
+    : cx.querySelector('#' + CSS.escape(f.chave));
+  if(!el) return;
+  el.focus();
+  if(f.ini != null){ try{ el.setSelectionRange(f.ini, f.fim); }catch(e){} }
+}
+
+/* remonta o modal a partir do estado antes de pintar, e devolve o que
+   estava digitado depois. É isto que faz o toast deixar de atrapalhar. */
+renderLayer = (function(orig){
+  return function(){
+    if(!ptEditorAberto()) return orig.apply(this, arguments);
+    const guardado = ptColher();
+    const foco = ptFoco();
+    S.modal = modalPauta(ptIdAberto());     /* do ESTADO, não da string velha */
+    const r = orig.apply(this, arguments);
+    ptRepor(guardado);
+    ptDevolverFoco(foco);
+    return r;
+  };
+})(renderLayer);
+
+/* ao ABRIR, semeia do registro; a partir daí, não. */
+addEventListener('click', e => {
+  if(e.target.closest && e.target.closest('[data-ptnew],[data-ptedit],[data-abreedit]'))
+    S.ptSemear = true;
+}, true);
+
+const ehLivre = () => S.ptFmt === 'Livre';
+
+/* ---------- 3. o editor: formato, plataformas com campo, e o Livre --- */
+modalPauta = (function(orig){
+  return function(id){
+    let html = orig.apply(this, arguments);
+    if(!html || html.indexOf('id="pt-obs"') < 0){ S.ptSemear = false; return html; }
+    const p = id ? S.pauta.find(x => x.id === id) : null;
+
+    /* o texto de cada plataforma segue a mesma regra dos chips: semeia do
+       registro ao abrir, e daí em diante quem manda é o que está na tela */
+    if(S.ptSemear !== false) S.ptPorPlat = { ...((p && p.porPlat) || {}) };
+    const porPlat = S.ptPorPlat || {};
+    const livre = ehLivre();
+
+    /* --- formato: as opções de sempre, mais o Livre --- */
+    const fmtChips = [...FORMATOS, 'Livre'].map(f => {
+      const marcado = f === 'Livre' ? livre : (!livre && S.ptFmts.has(f));
+      return `<button type="button" data-fmt98="${esc(f)}"
+        class="${marcado ? 'on' : ''}${f === 'Livre' ? ' fmtLivre' : ''}"
+        >${f === 'Livre' ? 'Livre · demanda interna' : esc(f)}</button>`;
+    }).join('');
+    html = html.replace(/<div class="fld"><label>Formato<\/label>[\s\S]*?<\/div><\/div>/,
+      `<div class="fld"><label>Formato</label><div class="ptChips">${fmtChips}</div></div>`);
+
+    /* --- plataformas: uma caixa de texto para cada uma que for marcada --- */
+    const platChips = Object.entries(PLATS).map(([k, v]) =>
+      `<button type="button" data-plat98="${k}" class="${S.ptPlats.has(k) ? 'on' : ''}"
+        ><i style="background:${v.c}"></i>${esc(v.n)}</button>`).join('');
+    const platCampos = [...S.ptPlats].filter(k => PLATS[k]).map(k => `
+      <div class="fld"><label for="ptp-${k}"><i style="background:${PLATS[k].c}"></i>
+        ${esc(PLATS[k].n)} — o que muda aqui</label>
+        <textarea id="ptp-${k}" data-plattxt="${k}" rows="2"
+          placeholder="O que este post tem de diferente no ${esc(PLATS[k].n)} — corte, legenda, formato, chamada."
+          >${esc(porPlat[k] || '')}</textarea></div>`).join('');
+    html = html.replace(/<div class="fld"><label>Plataformas[\s\S]*?<\/div><\/div>/,
+      `<div class="fld soPost"><label>Plataformas — onde esta postagem vai ao ar</label>
+        <div class="ptChips">${platChips}</div>
+        ${S.ptPlats.size
+          ? `<div class="platCampos">${platCampos}</div>`
+          : `<p class="platVazio">Escolha ao menos uma. Cada uma ganha um campo próprio aqui embaixo.</p>`}
+      </div>`);
+
+    /* --- o que só existe quando a postagem vai ao ar --- */
+    html = html
+      .replace('<div class="fld"><label for="pt-peca">',    '<div class="fld soPost"><label for="pt-peca">')
+      .replace('<div class="fld"><label for="pt-legenda">', '<div class="fld soPost"><label for="pt-legenda">')
+      .replace('<div class="fld"><label for="pt-cta">',     '<div class="fld soPost"><label for="pt-cta">')
+      .replace('<div class="tcSecao">',  '<div class="tcSecao soPost">')
+      .replace('<div class="stCampos">', '<div class="stCampos soPost">')
+      .replace(/<label style="display:flex;gap:9px;align-items:center;margin:4px 0 2px;/,
+               '<label class="soPost" style="display:flex;gap:9px;align-items:center;margin:4px 0 2px;');
+
+    if(!livre) { S.ptSemear = false; return html; }
+
+    /* --- no Livre, a pauta vira lista de demanda interna --- */
+    return html
+      .replace('<div class="modalbox wide"', '<div class="modalbox wide ptLivre"')
+      .replace('<p>Uma linha da pauta: o que vai ao ar, onde, quando e com qual direcionamento.</p>',
+        `<p>Uma demanda interna: o que precisa ser feito, quando e por quem.</p>
+         <div class="livreAviso">${ic('warn', 14)}<span><b>Não vai ao ar.</b> Entra na coluna
+           Interno da agenda e não pede plataforma, legenda nem aprovação do cliente —
+           serve para administrativo, financeiro, reunião, contrato.</span></div>`)
+      .replace('<h3>Nova postagem</h3>',   '<h3>Nova demanda interna</h3>')
+      .replace('<h3>Editar postagem</h3>', '<h3>Editar demanda interna</h3>')
+      .replace('>Título da pauta<', '>Título da demanda<')
+      .replace('placeholder="Ex.: Corte do vídeo · parte 2"',
+               'placeholder="Ex.: fechar o financeiro de agosto"')
+      .replace('>Data da postagem<', '>Data<')
+      .replace(/>Conteúdo &amp; pauta — a legenda e o direcionamento</,
+               '>Descrição — o que precisa ser feito<')
+      .replace(/<button class="b pri" data-ptok="(\d+)" data-agendar="1">[\s\S]*?<\/button>/,
+        '<button class="b pri" data-ptok="$1" data-livreok="1">Salvar demanda</button>');
+  };
+})(modalPauta);
+
+/* ---------- 4. os cliques: agora redesenham, em vez de mexer no DOM --- */
+function ptGuardarPorPlat(){
+  S.ptPorPlat = S.ptPorPlat || {};
+  document.querySelectorAll('#layer [data-plattxt]').forEach(el => {
+    S.ptPorPlat[el.dataset.plattxt] = el.value; });
+}
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-fmt98],[data-plat98]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault();
+  ptGuardarPorPlat();                 /* o que já foi escrito não se perde */
+
+  if(t.dataset.fmt98 !== undefined){
+    const f = t.dataset.fmt98;
+    if(f === 'Livre'){                /* o Livre é sozinho: ou é post, ou é demanda */
+      S.ptFmt = 'Livre'; S.ptFmts = new Set(['Livre']);
+    } else {
+      if(ehLivre()) S.ptFmts = new Set();          /* saindo do Livre */
+      if(S.ptFmts.has(f) && S.ptFmts.size > 1) S.ptFmts.delete(f); else S.ptFmts.add(f);
+      S.ptFmt = [...S.ptFmts][0] || f;
+    }
+  } else {
+    const k = t.dataset.plat98;
+    S.ptPlats.has(k) ? S.ptPlats.delete(k) : S.ptPlats.add(k);
+  }
+  renderLayer();                      /* remonta do estado — sem discordância */
+}, true);
+
+/* ---------- 5. gravar ------------------------------------------------ */
+/* o texto por plataforma entra no card depois que o salvar original criou
+   ou atualizou a linha (mesmo desenho em duas etapas da v42/v51c) */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptok]');
+  if(!t || !document.getElementById('pt-obs')){ S.ptPorPlatSalvar = null; return; }
+  ptGuardarPorPlat();
+  S.ptPorPlatSalvar = { ...(S.ptPorPlat || {}) };
+}, true);
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ptok]');
+  if(!t || !S.ptPorPlatSalvar) return;
+  const escrito = S.ptPorPlatSalvar; S.ptPorPlatSalvar = null;
+  const alvo = +t.dataset.ptok
+    ? S.pauta.find(x => x.id === +t.dataset.ptok)
+    : S.pauta[S.pauta.length - 1];
+  if(!alvo) return;
+  const fica = {};                    /* só das plataformas que ficaram */
+  (alvo.plats || []).forEach(k => { if((escrito[k] || '').trim()) fica[k] = escrito[k].trim(); });
+  alvo.porPlat = fica;
+  render();
+});
+
+/* o Livre grava por fora: não tem plataforma, e o salvar original exige
+   uma. Intercepta na janela (antes de todo o resto) e resolve inteiro. */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-livreok]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault();
+  const v = i => document.getElementById(i)?.value.trim() || '';
+  if(v('pt-t').length < 2){
+    const el = document.getElementById('pt-t');
+    if(el){ el.style.borderColor = 'var(--danger)'; el.focus(); }
+    return;
+  }
+  /* a data é real desde a v29 (#pt-data) — o dia da semana sai dela */
+  const iso = v('pt-data') || hojeISO();
+  const dados = {
+    t: v('pt-t'), fmt: 'Livre', fmts: ['Livre'],
+    tarefa: true, plats: [], porPlat: {},          /* não vai ao ar */
+    data: iso, dia: diaDaSemana(iso),
+    hora: v('pt-hora') || '09:00',
+    texto: v('pt-texto'), obs: v('pt-obs'),
+    resp: S.ptResp || null,
+    cta: '', legenda: '', pecaId: null, st: 'DRAFT'
+  };
+  const id = +t.dataset.ptok || 0;
+  const alvo = id ? S.pauta.find(x => x.id === id) : null;
+  if(alvo){
+    Object.assign(alvo, dados);
+    delete alvo.roteiro; delete alvo.corte; delete alvo.story;
+  } else {
+    S.pauta.push({ id: Math.max(0, ...S.pauta.map(x => x.id)) + 1,
+                   feito: false, pend: '', ...dados });
+  }
+  S.modal = null; S.ptPorPlatSalvar = null;
+  if(typeof som === 'function') som('toque');
+  render();
+  toast(`"${dados.t}" entrou como demanda interna.`);
+}, true);
 </script>
