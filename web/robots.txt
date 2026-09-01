@@ -1,11 +1,21 @@
-# O protótipo da Maestro não é para ser encontrado no Google.
+# Não aparecer no Google, mas APARECER no WhatsApp.
 #
-# Ele fala com um banco usando uma chave que, por natureza, viaja no HTML —
-# então quem tem o link tem os dados. Isso está registrado como dívida em
-# docs/ENGINEERING/SUPABASE_FECHAR_A_BRECHA.md e o conserto de verdade é login
-# de verdade. Enquanto isso não acontece, o mínimo é não entregar o endereço
-# de graça para quem não foi convidado.
+# São duas coisas diferentes e é fácil confundir — eu confundi, na versão
+# anterior deste arquivo, que trazia `Disallow: /`:
 #
-# Isto NÃO é proteção — é reduzir quem tropeça. Buscador respeita; gente não.
+#   · `Disallow` impede o robô de LER a página;
+#   · `noindex` deixa ler e proíbe INDEXAR.
+#
+# Bloquear a leitura derruba junto o preview do link, porque o robô do
+# WhatsApp precisa ler as tags og: para montar o cartão. E é pior que
+# inútil para o buscador: sem poder ler, ele nunca vê o `noindex` — e pode
+# listar o endereço mesmo assim, se alguém apontar um link para cá.
+#
+# Então: leitura liberada, e o `X-Robots-Tag: noindex, nofollow` do
+# vercel.json é quem mantém a plataforma fora da busca.
+#
+# Isto não protege dado nenhum. A brecha de verdade — a tabela do Supabase
+# aberta para quem tem o link — está em
+# docs/ENGINEERING/SUPABASE_FECHAR_A_BRECHA.md e só fecha com login.
 User-agent: *
-Disallow: /
+Allow: /

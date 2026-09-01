@@ -15,12 +15,41 @@ s = io.open(origem, encoding='utf-8').read()
 tags = os.path.join(raiz, 'web', 'icones', 'lancamento.html')
 LANCAMENTO = io.open(tags, encoding='utf-8').read().strip() if os.path.exists(tags) else ''
 
+# O endereço que o Vercel publica.
+#
+# Isto NÃO é decoração: o WhatsApp exige URL ABSOLUTA na imagem do preview.
+# Com caminho relativo ele não busca a imagem, e o link chega como texto seco.
+# Trocou de domínio? troque aqui (ou exporte MAESTRO_URL antes de montar).
+SITE = os.environ.get('MAESTRO_URL', 'https://maestroapptest.vercel.app').rstrip('/')
+
+# O nome carrega versão porque o WhatsApp guarda a imagem POR URL e não
+# volta a buscar: para trocar a arte, troca-se o nome do arquivo.
+OG_IMG = 'icones/maestro-og-v1.png'
+
+DESCRICAO = ('O sistema operacional para agências e equipes criativas. '
+             'Briefing, estratégia, aprovação e publicação num lugar só — '
+             'com o cliente dentro.')
+CHAMADA = ('Briefing, calendário, aprovação e publicação num lugar só — '
+           'com o cliente dentro.')
+
 CABECA = '''<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Maestro</title>
+<title>Maestro — o sistema operacional para agências criativas</title>
+<link rel="canonical" href="__SITE__/">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1C1C1C">
-<meta name="description" content="O sistema operacional para agências e equipes criativas. Briefing, estratégia, aprovação e publicação num lugar só — com o cliente dentro.">
+<meta name="description" content="__DESCRICAO__">
+
+<!-- Favicon. O SVG vem primeiro porque é o que o navegador prefere e o que
+     não tem tamanho; os PNG atendem quem não lê SVG. O ícone do APP continua
+     sendo outro arquivo, de propósito: ele é desenhado para 180px numa tela
+     inicial, e a aba do navegador desenha 16 — onde o traço fino do gesto
+     sumia. Ver web/icones/gerar-marca-web.py. -->
+<link rel="icon" type="image/svg+xml" href="icones/maestro-fav-v2.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icones/maestro-fav-v2-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="icones/maestro-fav-v2-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icones/maestro-fav-v2-192.png">
+
 <!-- tela de início do iPhone -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -28,11 +57,29 @@ CABECA = '''<meta charset="utf-8">
 <meta name="apple-mobile-web-app-title" content="Maestro">
 <link rel="apple-touch-icon" href="icones/maestro-gesto-180.png">
 __LANCAMENTO__
-<link rel="icon" type="image/png" sizes="192x192" href="icones/maestro-gesto-192.png">
-<meta property="og:title" content="Maestro">
-<meta property="og:description" content="O sistema operacional para agências e equipes criativas.">
+
+<!-- O cartão do link (WhatsApp, iMessage, Slack, LinkedIn). Tudo absoluto:
+     é a única forma que o robô do WhatsApp aceita. E fica no topo do arquivo
+     porque esse robô lê só o começo do documento — e este documento tem 2 MB. -->
+<meta property="og:site_name" content="Maestro">
+<meta property="og:locale" content="pt_BR">
 <meta property="og:type" content="website">
-'''.replace('__LANCAMENTO__', LANCAMENTO)
+<meta property="og:url" content="__SITE__/">
+<meta property="og:title" content="Maestro — o sistema operacional para agências criativas">
+<meta property="og:description" content="__CHAMADA__">
+<meta property="og:image" content="__SITE__/__OG_IMG__">
+<meta property="og:image:secure_url" content="__SITE__/__OG_IMG__">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Maestro — o gesto da regência sobre fundo escuro">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Maestro — o sistema operacional para agências criativas">
+<meta name="twitter:description" content="__CHAMADA__">
+<meta name="twitter:image" content="__SITE__/__OG_IMG__">
+'''.replace('__LANCAMENTO__', LANCAMENTO).replace('__SITE__', SITE) \
+    .replace('__OG_IMG__', OG_IMG).replace('__DESCRICAO__', DESCRICAO) \
+    .replace('__CHAMADA__', CHAMADA)
 
 # troca o cabecalho antigo (charset + viewport + title) pelo novo
 antigo = re.compile(

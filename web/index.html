@@ -1,11 +1,23 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-01 00:09 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-01 02:17 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Maestro</title>
+<title>Maestro — o sistema operacional para agências criativas</title>
+<link rel="canonical" href="https://maestroapptest.vercel.app/">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1C1C1C">
 <meta name="description" content="O sistema operacional para agências e equipes criativas. Briefing, estratégia, aprovação e publicação num lugar só — com o cliente dentro.">
+
+<!-- Favicon. O SVG vem primeiro porque é o que o navegador prefere e o que
+     não tem tamanho; os PNG atendem quem não lê SVG. O ícone do APP continua
+     sendo outro arquivo, de propósito: ele é desenhado para 180px numa tela
+     inicial, e a aba do navegador desenha 16 — onde o traço fino do gesto
+     sumia. Ver web/icones/gerar-marca-web.py. -->
+<link rel="icon" type="image/svg+xml" href="icones/maestro-fav-v2.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icones/maestro-fav-v2-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="icones/maestro-fav-v2-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icones/maestro-fav-v2-192.png">
+
 <!-- tela de início do iPhone -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -34,10 +46,26 @@
       media="(device-width:414px) and (device-height:736px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
 <link rel="apple-touch-startup-image" href="icones/lancamento-375x667@2x.png"
       media="(device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)">
-<link rel="icon" type="image/png" sizes="192x192" href="icones/maestro-gesto-192.png">
-<meta property="og:title" content="Maestro">
-<meta property="og:description" content="O sistema operacional para agências e equipes criativas.">
+
+<!-- O cartão do link (WhatsApp, iMessage, Slack, LinkedIn). Tudo absoluto:
+     é a única forma que o robô do WhatsApp aceita. E fica no topo do arquivo
+     porque esse robô lê só o começo do documento — e este documento tem 2 MB. -->
+<meta property="og:site_name" content="Maestro">
+<meta property="og:locale" content="pt_BR">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://maestroapptest.vercel.app/">
+<meta property="og:title" content="Maestro — o sistema operacional para agências criativas">
+<meta property="og:description" content="Briefing, calendário, aprovação e publicação num lugar só — com o cliente dentro.">
+<meta property="og:image" content="https://maestroapptest.vercel.app/icones/maestro-og-v1.png">
+<meta property="og:image:secure_url" content="https://maestroapptest.vercel.app/icones/maestro-og-v1.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Maestro — o gesto da regência sobre fundo escuro">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Maestro — o sistema operacional para agências criativas">
+<meta name="twitter:description" content="Briefing, calendário, aprovação e publicação num lugar só — com o cliente dentro.">
+<meta name="twitter:image" content="https://maestroapptest.vercel.app/icones/maestro-og-v1.png">
 <style>
 /* =====================================================================
    Maestro — protótipo navegável v2
