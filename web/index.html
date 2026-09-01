@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-01 11:56 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-01 12:45 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15788,7 +15788,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v93 · 1 set · dois administradores';
+const VERSAO_PROTOTIPO = 'v94 · 1 set · filtrar a pauta por tipo';
 
 menuSheet = (function(orig){
   return function(){
@@ -20142,6 +20142,178 @@ telaConversas = (function(orig){
       return html.slice(0, abre) + '<select id="mb-p">' + opcoes + html.slice(fecha);
     };
   })(modalMembro);
+
+})();
+</script>
+
+<style>
+/* o filtro por tipo, ao lado do selo e do atualizar */
+.ptTipo{ position:relative; margin-left:9px }
+.ptTipo>button{ display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
+  padding:5px 9px; border-radius:8px; border:1px solid var(--ink-700);
+  color:var(--ink-300); background:var(--ink-900); white-space:nowrap;
+  transition:border-color var(--fast) var(--eo), color var(--fast) var(--eo) }
+.ptTipo>button:hover{ border-color:var(--ink-600); color:var(--ink-100) }
+.ptTipo>button.on{ color:var(--brass-300); border-color:var(--brass-600);
+  background:rgba(255,200,87,.09) }
+.ptTipo>button svg{ width:12px; height:12px }
+.ptTipo>button b{ color:var(--ink-100); font-weight:700 }
+.ptTipo>button.on b{ color:var(--brass-300) }
+.ptTipoPainel{ position:absolute; top:calc(100% + 7px); right:0; z-index:60;
+  width:212px; max-width:74vw; padding:7px; border-radius:13px;
+  background:var(--ink-850); border:1px solid var(--ink-700);
+  box-shadow:0 18px 44px rgba(0,0,0,.55);
+  animation:ptTipoAbre .18s var(--eo) both }
+@keyframes ptTipoAbre{ from{opacity:0;transform:translateY(-5px) scale(.98)} }
+.ptTipoPainel .hd{ font-family:var(--mono); font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-400); padding:6px 8px 7px }
+.ptTipoPainel button{ display:flex; align-items:center; gap:9px; width:100%;
+  text-align:left; padding:8px 9px; border-radius:9px; font-size:13.5px;
+  color:var(--ink-200); transition:background var(--fast) var(--eo) }
+.ptTipoPainel button:hover{ background:var(--ink-800); color:var(--ink-50) }
+.ptTipoPainel button .cx{ width:15px; height:15px; border-radius:5px; flex:0 0 auto;
+  border:1.5px solid var(--ink-600); display:inline-flex; align-items:center;
+  justify-content:center; color:var(--ink-950) }
+.ptTipoPainel button.on .cx{ background:var(--brass-500); border-color:var(--brass-500) }
+.ptTipoPainel button .cx svg{ width:10px; height:10px; stroke-width:3 }
+.ptTipoPainel button .qt{ margin-left:auto; font-family:var(--mono); font-size:10px;
+  color:var(--ink-400) }
+.ptTipoPainel .risca{ height:1px; background:var(--ink-700); margin:6px 4px }
+.ptTipoPainel .nada{ padding:10px 9px 12px; font-size:12.5px; color:var(--ink-400);
+  line-height:1.5 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v94 — FILTRAR A PAUTA POR TIPO DE POSTAGEM
+
+   O pedido: uma abinha ao lado do atualizar, que abre e deixa escolher o
+   tipo. Três decisões que não estavam no pedido e mudam o resultado:
+
+   1. A LISTA VEM DOS DADOS, não da constante `FORMATOS`. A pauta da EJUP
+      veio de planilha, e planilha traz tipo que ninguém previu ("Corte do
+      podcast", "Tela 1"). Uma lista fixa esconderia justamente o que
+      existe. Cada tipo aparece com quantos tem — e some da lista quando
+      não há nenhum, em vez de virar um filtro que devolve tela vazia.
+
+   2. DÁ PARA MARCAR MAIS DE UM. O pedido fala em "qual o tipo", no
+      singular, e marcar um só continua sendo um toque. Mas "Reels e
+      Carrossel" é uma pergunta que se faz o tempo todo numa pauta, e
+      seria um segundo pedido daqui a pouco.
+
+   3. O FILTRO NÃO VIAJA ENTRE APARELHOS. Entra em PASSAGEIRO junto com o
+      painel aberto. Filtro é jeito de olhar, não é dado — e depois do
+      que aconteceu hoje de manhã, cada coisa que mexe no estado
+      compartilhado é uma gravação a mais podendo passar por cima de
+      alguém. Escolher um filtro no celular não pode reescrever nada.
+
+   O miolo não sabe que existe filtro: troca-se o subconjunto embaixo
+   dele e devolve-se depois, que é o mesmo caminho que os filtros
+   "agendadas" e "o que falta" já usavam.
+   ================================================================== */
+(function(){
+
+  if(typeof corpoPauta !== 'function') return;
+
+  try{ PASSAGEIRO.add('ptTipos'); PASSAGEIRO.add('ptTipoAberto'); }catch(e){}
+  if(!Array.isArray(S.ptTipos)) S.ptTipos = [];
+  S.ptTipoAberto = false;
+
+  const SEM = '— sem tipo —';
+  const tipoDe = p => (p && p.fmt ? String(p.fmt).trim() : '') || SEM;
+
+  if(typeof IC === 'object' && IC && !IC.funil)
+    IC.funil = '<path d="M4 5h16l-6.2 7.3v5.5l-3.6 2v-7.5z"/>';
+
+  const check = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'
+              + '<path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+
+  /* ---------- a abinha ---------- */
+  function painel(lista){
+    const conta = new Map();
+    for(const p of lista){ const t = tipoDe(p); conta.set(t, (conta.get(t) || 0) + 1); }
+    const tipos = [...conta.keys()].sort((a, b) =>
+      a === SEM ? 1 : b === SEM ? -1 : a.localeCompare(b, 'pt'));
+    const sel = new Set(S.ptTipos);
+
+    if(!tipos.length)
+      return `<div class="ptTipoPainel"><p class="nada">Não há postagem nenhuma
+        para separar por tipo ainda.</p></div>`;
+
+    return `<div class="ptTipoPainel" role="group" aria-label="Filtrar por tipo">
+      <div class="hd">Tipo de postagem</div>
+      <button data-pttipotodos="1" class="${sel.size ? '' : 'on'}">
+        <span class="cx">${sel.size ? '' : check}</span>Todos os tipos
+        <span class="qt">${lista.length}</span></button>
+      <div class="risca"></div>
+      ${tipos.map(t => `<button data-pttipo="${esc(t)}" class="${sel.has(t) ? 'on' : ''}">
+        <span class="cx">${sel.has(t) ? check : ''}</span>${esc(t)}
+        <span class="qt">${conta.get(t)}</span></button>`).join('')}
+    </div>`;
+  }
+
+  function abinha(lista){
+    const sel = S.ptTipos.filter(t => lista.some(p => tipoDe(p) === t));
+    const rotulo = !sel.length ? 'Tipo'
+      : sel.length === 1 ? esc(sel[0])
+      : `Tipo <b>${sel.length}</b>`;
+    return `<div class="ptTipo">
+      <button type="button" data-pttipoabre="1" class="${sel.length ? 'on' : ''}"
+        aria-expanded="${S.ptTipoAberto ? 'true' : 'false'}"
+        aria-label="Filtrar por tipo de postagem">${ic('funil')}${rotulo}</button>
+      ${S.ptTipoAberto ? painel(lista) : ''}</div>`;
+  }
+
+  /* ---------- o filtro, pelo caminho que os outros já usavam ---------- */
+  corpoPauta = (function(orig){
+    return function(){
+      const inteira = S.pauta || [];
+      const sel = new Set(S.ptTipos.filter(t => inteira.some(p => tipoDe(p) === t)));
+
+      let html;
+      if(!sel.size){ html = orig.apply(this, arguments); }
+      else {
+        const cli = cliAtual().id, guardado = S.pautas[cli];
+        S.pautas[cli] = inteira.filter(p => sel.has(tipoDe(p)));
+        try{ html = orig.apply(this, arguments); }
+        finally{ S.pautas[cli] = guardado; }
+      }
+      if(!html || !html.includes('data-ptvista=')) return html;
+
+      /* entra DENTRO da caixinha do selo, encostado no atualizar */
+      return html.replace(/(<div style="display:flex;align-items:center">[\s\S]*?)(<\/div>\s*<div class="ptFiltros")/,
+        (_, antes, depois) => antes + abinha(inteira) + depois);
+    };
+  })(corpoPauta);
+
+  /* ---------- os toques ---------- */
+  addEventListener('click', e => {
+    if(!e.target.closest) return;
+
+    const abre = e.target.closest('[data-pttipoabre]');
+    if(abre){ e.stopImmediatePropagation();
+      S.ptTipoAberto = !S.ptTipoAberto; render(); return; }
+
+    const todos = e.target.closest('[data-pttipotodos]');
+    if(todos){ e.stopImmediatePropagation();
+      S.ptTipos = []; if(typeof som === 'function') som('toque'); render(); return; }
+
+    const um = e.target.closest('[data-pttipo]');
+    if(um){ e.stopImmediatePropagation();
+      const t = um.dataset.pttipo, i = S.ptTipos.indexOf(t);
+      if(i < 0) S.ptTipos.push(t); else S.ptTipos.splice(i, 1);
+      if(typeof som === 'function') som('toque');
+      render(); return; }
+
+    /* tocar fora fecha — mas só quando está aberta, para não pedir um
+       render a cada clique da tela inteira */
+    if(S.ptTipoAberto && !e.target.closest('.ptTipo')){ S.ptTipoAberto = false; render(); }
+  }, true);
+
+  addEventListener('keydown', e => {
+    if(e.key === 'Escape' && S.ptTipoAberto){ S.ptTipoAberto = false; render(); }
+  });
 
 })();
 </script>
