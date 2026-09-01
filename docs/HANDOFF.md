@@ -1233,3 +1233,36 @@ classes 9 e 42, e adotar `usemaestro.com` ou `maestro.studio`.
 > Estou continuando a construção da Maestro. Leia `docs/HANDOFF.md` e
 > `docs/TASKS.md` para se situar, e `docs/DECISIONS.md` antes de propor
 > qualquer mudança. [Aqui o que você quer fazer.]
+
+---
+
+## Incidente de 1 de setembro — a equipe substituída (v88)
+
+**O que se perdeu:** a equipe real da agência (Victor Barroso, Anna Clara, Gabriela,
+Roberto, Leonardo) e as fotos dos membros. Substituídas pela equipe de demonstração.
+
+**Como:** às 11:04 as doze linhas do banco foram reescritas em 37 segundos. Uma aba do
+protótipo estava aberta com uma cópia do estado tirada minutos antes; o `pulso` (a cada
+1,2 s) continuou mandando essa cópia velha, e "quem grava por último vence" fez o resto.
+
+**Por que passou desapercebido tanto tempo:** `novos` (clientes) já se unia desde a v81 —
+por isso os clientes cadastrados no celular sobreviveram e ninguém notou que `equipe` não
+tinha o mesmo cuidado. O sintoma "a foto sumiu" e o sintoma "a equipe sumiu" pareciam dois
+problemas; eram a mesma gravação, porque a foto mora em `equipe[].foto`.
+
+**Três lições que valem além deste caso:**
+
+1. **Toda lista que uma pessoa preenche precisa UNIR, não substituir.** Vale para
+   `equipe`, valia para `novos`. Se aparecer uma terceira, ela nasce com o mesmo risco.
+2. **Nunca marcar "já li" sem checar se a leitura deu certo.** `_jaBuscou = true` rodava
+   mesmo com `buscarEstado()` devolvendo `false`. Um aparelho que nunca leu o banco
+   escrevia nele.
+3. **Trava de gravação vai na REDE, não na função.** Envolver `enviarEstado`, `sbGravar`
+   e `sbGravarConfig` NÃO funcionou: camadas anteriores guardam a referência à função
+   original no instante em que a envolvem, e chamam essa referência — o invólucro novo,
+   posto sobre o nome global, nunca entra no caminho. Só um teste com a leitura quebrada
+   revelou isso; sem ele o conserto teria ido para o ar parecendo pronto.
+
+**Como se recupera uma equipe perdida:** com a v88 no ar, basta abrir o protótipo num
+aparelho que ainda tenha a equipe guardada no navegador. A união soma o que está lá com o
+que está no banco, e a foto — campo que só existe de um lado — sobrevive.

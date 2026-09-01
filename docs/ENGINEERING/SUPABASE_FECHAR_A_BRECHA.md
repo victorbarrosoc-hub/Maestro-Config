@@ -120,6 +120,50 @@ create policy "pauta_update_autenticado" on public.pauta
 Confira depois em `Database → Policies → pauta`: devem sobrar exatamente três políticas,
 todas com o papel `authenticated`, e nenhuma com `anon` ou `public`.
 
+> ### ⚠️ Este SQL não bastou — 1 de setembro
+>
+> O founder rodou o bloco acima e a brecha **continuou aberta**: leitura e escrita
+> anônimas seguiram respondendo `HTTP 200`. O motivo é que `drop policy if exists`
+> apaga pelo NOME, e os nomes acima são chutes. As políticas criadas pelos botões do
+> painel nascem com nomes como *"Enable read access for all users"*. O `if exists`
+> então não encontra nada, não reclama, e as políticas velhas continuam vivas ao lado
+> das novas. Em Postgres as políticas se SOMAM: basta uma dizer "pode" para poder.
+>
+> Use este bloco no lugar. Ele apaga **todas** as políticas da tabela, seja qual for o
+> nome, antes de criar as três certas:
+>
+> ```sql
+> do $$
+> declare p record;
+> begin
+>   for p in select policyname from pg_policies
+>            where schemaname = 'public' and tablename = 'pauta'
+>   loop
+>     execute format('drop policy %I on public.pauta', p.policyname);
+>   end loop;
+> end $$;
+>
+> alter table public.pauta enable row level security;
+>
+> create policy "pauta_select_autenticado" on public.pauta
+>   for select to authenticated using (true);
+> create policy "pauta_insert_autenticado" on public.pauta
+>   for insert to authenticated with check (true);
+> create policy "pauta_update_autenticado" on public.pauta
+>   for update to authenticated using (true) with check (true);
+> ```
+>
+> E confira com SQL, não com o olho — esta consulta tem de devolver exatamente três
+> linhas, todas com `{authenticated}`:
+>
+> ```sql
+> select policyname, roles, cmd from pg_policies
+> where schemaname = 'public' and tablename = 'pauta';
+> ```
+>
+> **Não rode isto antes da parte 2 estar no ar.** No minuto em que fechar, o protótipo
+> para de salvar em todos os aparelhos — ele ainda não sabe entrar.
+
 ### Passo 4 · Conferir que fechou
 
 No terminal, ou em qualquer lugar que faça uma requisição:
