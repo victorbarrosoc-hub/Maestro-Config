@@ -15723,7 +15723,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v92 · 1 set · a equipe real, de verdade';
+const VERSAO_PROTOTIPO = 'v93 · 1 set · dois administradores';
 
 menuSheet = (function(orig){
   return function(){
@@ -19949,6 +19949,22 @@ telaConversas = (function(orig){
     if(!Array.isArray(S.equipe)) return;
     const fora = foraDe();
 
+    /* 0. o dono é UM, e é o da semente.
+
+       O banco ainda tem a equipe de demonstração, e lá o dono é o "Victor
+       Cardoso". Enquanto alguém carregar essa marca, a tela esconde o
+       botão Remover dele — "o dono da conta não pode ser removido" — e a
+       pessoa fica sem NENHUM jeito de tirá-lo pela mão. A lápide do passo
+       3 já resolve; isto é a rede embaixo dela, para o caso de a lápide
+       falhar. Quem não é o dono da semente perde a marca e vira removível. */
+    const donoReal = (typeof EQUIPE_SEMENTE !== 'undefined'
+      ? (EQUIPE_SEMENTE.find(x => x.dono) || {}) : {});
+    const chaveDono = chaveM(donoReal);
+    for(const m of S.equipe){
+      if(chaveM(m) === chaveDono) m.dono = true;
+      else if(m.dono) delete m.dono;
+    }
+
     /* 1. data inventada por carimbo volta a ser data de veterano */
     for(const m of S.equipe) if(!m.viaConvite) m.emDesde = LEGADO;
 
@@ -19993,6 +20009,74 @@ telaConversas = (function(orig){
       };
     })(aplicarEstado);
   }
+
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v93 — DOIS ADMINISTRADORES, E O REBAIXAMENTO SILENCIOSO
+
+   O pedido: "eu e o Roberto somos administradores, quero 2".
+
+   Ele já é, no cadastro. Mas a tela não sabia disso, e isso não era só
+   uma ausência — era uma armadilha:
+
+       const papeis = Object.keys(PERMS).filter(r => r !== 'Administrador');
+
+   A lista de papéis do "Editar" tirava Administrador de propósito, para
+   que ninguém se promovesse. Só que o `<select>` continua tendo de
+   mostrar ALGUMA coisa: como nenhuma opção casava com "Administrador",
+   nenhuma vinha marcada, e o navegador escolhe a primeira — "Gestor".
+   Abrir o card do Roberto e clicar em Salvar o rebaixaria, calado, sem
+   ninguém ter pedido nada. Uma tela que perde informação por ser aberta.
+
+   Duas correções, e a ordem importa: primeiro parar de perder, depois
+   permitir promover.
+
+   1. Administrador entra na lista. Numa agência, quem manda na conta
+      precisa poder dizer que outra pessoa também manda — sem isso o
+      papel existe no código e não na vida.
+   2. Só quem já é administrador vê a opção. Um Designer que abrisse o
+      próprio card não pode se promover; para ele a lista continua sem
+      ela, e o papel que está gravado é preservado do mesmo jeito.
+
+   O DONO continua sendo um só, e é outra coisa: administrador manda na
+   operação, dono responde pela conta. Trocar de dono é assunto de
+   contrato, não de menu — fica fora daqui de propósito.
+   ================================================================== */
+(function(){
+
+  if(typeof modalMembro !== 'function') return;
+
+  modalMembro = (function(orig){
+    return function(i){
+      let html = orig.apply(this, arguments);
+      if(!html || typeof html !== 'string') return html;
+
+      const m = (typeof membroPorIndice === 'function') ? membroPorIndice(i) : null;
+      if(!m || m.dono) return html;                  /* o dono não tem esse select */
+
+      const abre = html.indexOf('<select id="mb-p">');
+      if(abre < 0) return html;
+      const fecha = html.indexOf('</select>', abre);
+      if(fecha < 0) return html;
+
+      /* quem NÃO é administrador não pode criar administrador — mas o
+         papel de quem está sendo editado nunca some da lista, senão a
+         armadilha volta pelo outro lado */
+      const souAdmin = (typeof ehAdmin === 'function') ? ehAdmin() : true;
+      const todos = Object.keys(PERMS);
+      const papeis = todos.filter(r =>
+        r !== 'Administrador' || souAdmin || m.papel === 'Administrador');
+
+      const opcoes = papeis.map(r =>
+        `<option${m.papel === r ? ' selected' : ''}>${r}</option>`).join('');
+
+      return html.slice(0, abre) + '<select id="mb-p">' + opcoes + html.slice(fecha);
+    };
+  })(modalMembro);
 
 })();
 </script>
