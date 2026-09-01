@@ -185,7 +185,29 @@ ele ainda não sabe entrar. É esperado, e é a parte 2.
 
 ---
 
-## 5. Parte 2 — o que eu faço no código (mesma rodada, depois do seu aviso)
+## 5. Parte 2 — FEITA (v89, 1 de setembro)
+
+> A porta está no ar. O que mudou em relação ao plano abaixo, e por quê:
+>
+> - **Entrar é oferecido, nunca exigido.** Obrigar login numa porta ainda destrancada
+>   só atrapalharia. Enquanto a brecha estiver aberta, quem não entra usa tudo como
+>   antes. No instante em que o banco recusar quem não entrou (401/403), a tela de
+>   entrada aparece **sozinha** — em vez de o protótipo cair no silêncio do "só neste
+>   aparelho" e a pessoa achar que quebrou. É essa a passagem, e ela dispensa
+>   coordenação: pode rodar o SQL a qualquer hora.
+> - **A chave da v82 continua existindo.** O plano dizia para removê-la. Ela tranca a
+>   troca de perfil DENTRO do aparelho, que é outro assunto do login no banco — tirar
+>   as duas de uma vez trocaria um problema por outro.
+> - **O token viaja pela rede, não trocando `SB.key`.** `sbCab()` é `const` e há
+>   chamadas que montam o cabeçalho na mão. Foi a lição que a v88 pagou caro.
+>
+> Verificado com o banco simulado, sem tocar em senha de ninguém: a porta aparece
+> sozinha no 401; senha errada dá recado claro; ao entrar, leituras e gravações passam
+> a levar o token; recarregar não pede senha de novo e não pergunta "quem está aí" —
+> o e-mail autenticado já diz quem é; sair apaga a sessão e devolve a porta.
+
+### O plano original, para registro
+
 
 1. A tela "Quem está aí?" passa a pedir **e-mail e senha de verdade** — a mesma da conta
    do Supabase — em vez da chave local da v82. A chave da v82 deixa de existir: ela era o

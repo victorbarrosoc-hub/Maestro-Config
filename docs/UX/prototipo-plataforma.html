@@ -15700,7 +15700,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v88 · 1 set · a equipe deixa de ser apagável';
+const VERSAO_PROTOTIPO = 'v89 · 1 set · entrar de verdade';
 
 menuSheet = (function(orig){
   return function(){
@@ -19447,6 +19447,302 @@ telaConversas = (function(orig){
       return new Response('', { status: 409, statusText: 'v88: gravação sem leitura recente' });
     return _fetchV88(u, o);
   };
+
+})();
+</script>
+
+<style>
+/* a porta da Maestro: mesma casa da "Quem está aí?", um degrau acima */
+#entrarMaestro{ position:fixed; inset:0; z-index:940; background:rgba(8,9,11,.94);
+  display:flex; align-items:center; justify-content:center; padding:22px;
+  animation:qeEntra .34s var(--eo) both }
+#entrarMaestro .caixa{ width:min(400px,94vw); background:var(--ink-900);
+  border:1px solid var(--ink-700); border-radius:18px; padding:26px 24px 22px }
+#entrarMaestro .marca{ display:flex; justify-content:center; margin:0 0 18px }
+#entrarMaestro h3{ font-family:var(--serif); font-weight:400; font-size:22px;
+  margin:0 0 6px; color:var(--ink-50); text-align:center }
+#entrarMaestro .sub{ font-size:13px; color:var(--ink-300); margin:0 0 20px;
+  text-align:center; line-height:1.5 }
+#entrarMaestro label{ display:block; font-family:var(--mono); font-size:9.5px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--ink-400); margin:0 0 6px }
+#entrarMaestro .campo{ width:100%; padding:12px 13px; border-radius:11px; font-size:15px;
+  background:var(--ink-950); border:1px solid var(--ink-700); color:var(--ink-50);
+  margin:0 0 14px }
+#entrarMaestro .campo:focus{ outline:none; border-color:var(--brass-500) }
+#entrarMaestro .erro{ font-size:12.5px; color:var(--danger); margin:0 0 12px; min-height:17px }
+#entrarMaestro .b.pri{ width:100%; justify-content:center }
+#entrarMaestro .fora{ display:block; width:100%; margin-top:14px; font-size:12px;
+  color:var(--ink-400); text-decoration:underline; text-underline-offset:3px; text-align:center }
+#entrarMaestro .caixa.erra{ animation:tremer .4s }
+@keyframes tremer{ 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)}
+  75%{transform:translateX(7px)} }
+.cnSessao{ font-size:11.5px; color:var(--ink-400); margin-left:auto }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v89 — A PORTA DE VERDADE (parte 2 do fechamento da brecha)
+
+   Até aqui o protótipo falava com o Supabase usando a chave pública, que
+   está escrita no HTML. Isso funciona porque as políticas do banco dizem
+   "todo mundo pode tudo" — a brecha. Fechá-la sem isto aqui deixaria a
+   Maestro sem salvar em todos os aparelhos ao mesmo tempo.
+
+   O DESENHO, e a razão dele: entrar é OFERECIDO, nunca exigido.
+
+   Enquanto a brecha estiver aberta, quem não entra continua usando tudo
+   como antes — não adianta obrigar a fazer login numa porta que ainda
+   está destrancada, só atrapalha. No instante em que o banco passar a
+   recusar quem não entrou (401/403), a tela de entrada aparece sozinha,
+   em vez de o protótipo cair no silêncio do "só neste aparelho" e a
+   pessoa achar que quebrou. É o mesmo minuto em que o SQL roda; a
+   passagem é essa, e ela não precisa de coordenação.
+
+   A chave da v82 continua onde está: ela tranca a TROCA DE PERFIL dentro
+   do aparelho, que é outro assunto. Quem entra pela porta de verdade não
+   é mais perguntado quem é — o e-mail autenticado já diz.
+
+   O token vai no cabeçalho pela REDE, e não trocando `SB.key`: `sbCab()`
+   é `const` e há chamadas espalhadas que montam o cabeçalho na mão. Pela
+   rede passa tudo — foi a lição que a v88 pagou caro para aprender.
+   ================================================================== */
+(function(){
+
+  const GUARDA = 'maestro.sessao.v1';
+  let sessao = null;              // {access, refresh, expira, email}
+  let renovando = null;
+  let pedindo = false;            // a tela já está aberta?
+
+  /* ---------- guardar por aparelho ---------- */
+  function ler(){
+    try{ const c = localStorage.getItem(GUARDA); return c ? JSON.parse(c) : null; }
+    catch(e){ return null; }
+  }
+  function gravar(s){
+    sessao = s;
+    try{ s ? localStorage.setItem(GUARDA, JSON.stringify(s))
+           : localStorage.removeItem(GUARDA); }catch(e){}
+  }
+
+  const cabAuth = () => ({ apikey: SB.key, 'Content-Type': 'application/json' });
+
+  function guardarResposta(j){
+    if(!j || !j.access_token) return null;
+    const s = { access: j.access_token, refresh: j.refresh_token,
+                expira: Date.now() + ((+j.expires_in || 3600) * 1000),
+                email: ((j.user && j.user.email) || (sessao && sessao.email) || '') };
+    gravar(s); return s;
+  }
+
+  /* ---------- entrar, renovar, sair ---------- */
+  async function entrar(email, senha){
+    const r = await fetch(`${SB.url}/auth/v1/token?grant_type=password`, {
+      method:'POST', headers: cabAuth(),
+      body: JSON.stringify({ email, password: senha }) });
+    const j = await r.json().catch(() => null);
+    if(!r.ok || !j || !j.access_token){
+      const e = new Error((j && (j.error_description || j.msg || j.message)) || 'não deu');
+      e.status = r.status; throw e;
+    }
+    return guardarResposta(j);
+  }
+
+  async function renovar(){
+    if(!sessao || !sessao.refresh) return null;
+    if(renovando) return renovando;               /* uma de cada vez */
+    renovando = (async () => {
+      try{
+        const r = await fetch(`${SB.url}/auth/v1/token?grant_type=refresh_token`, {
+          method:'POST', headers: cabAuth(),
+          body: JSON.stringify({ refresh_token: sessao.refresh }) });
+        const j = await r.json().catch(() => null);
+        if(!r.ok || !j || !j.access_token){ gravar(null); return null; }
+        return guardarResposta(j);
+      }catch(e){ return null; }                   /* sem rede: guarda a sessão */
+      finally{ renovando = null; }
+    })();
+    return renovando;
+  }
+
+  /* devolve um token válido, renovando um minuto antes de vencer */
+  async function token(){
+    if(!sessao) return null;
+    if(Date.now() < sessao.expira - 60000) return sessao.access;
+    const s = await renovar();
+    return s ? s.access : null;
+  }
+
+  function sair(){
+    gravar(null);
+    try{ localStorage.removeItem(CHAVE_USR); }catch(e){}
+    S.usuario = null;
+    render();
+    toast('Você saiu. O que está neste aparelho continua aqui.');
+    pedir();
+  }
+
+  /* ---------- quem entrou É o membro daquele e-mail ---------- */
+  function assumirPessoa(){
+    if(!sessao || !sessao.email) return;
+    const alvo = sessao.email.trim().toLowerCase();
+    const m = (S.equipe || []).find(x => ((x.mail || '').trim().toLowerCase()) === alvo);
+    if(!m) return;                    /* entrou, mas não está na Equipe: não inventa */
+    S.usuario = { tipo:'agencia', id: membroId(m) };
+    try{ localStorage.setItem(CHAVE_USR, JSON.stringify(S.usuario)); }catch(e){}
+  }
+
+  /* ---------- o token viaja pela rede, em toda chamada ao banco ------ */
+  const _fetchV89 = window.fetch.bind(window);
+  window.fetch = async function(u, o){
+    const url = String((u && u.url) || u || '');
+    /* a própria porta não leva token: mandar um vencido quebraria o login */
+    if(!sessao || !url.startsWith(SB.url) || url.includes('/auth/v1/'))
+      return _fetchV89(u, o);
+
+    const t = await token();
+    if(!t) return _fetchV89(u, o);
+
+    const op = Object.assign({}, o);
+    const h = op.headers;
+    if(h instanceof Headers){
+      const c = new Headers(h); c.set('Authorization', 'Bearer ' + t); op.headers = c;
+    } else {
+      op.headers = Object.assign({}, h || {}, { Authorization: 'Bearer ' + t });
+    }
+    const r = await _fetchV89(u, op);
+    /* o banco fechou e este aparelho não tem direito: pede a porta */
+    if((r.status === 401 || r.status === 403) && !pedindo) pedir();
+    return r;
+  };
+
+  /* Mesmo SEM sessão: se o banco recusar, é sinal de que a brecha
+     fechou. Em vez de virar "só neste aparelho" em silêncio, abre a
+     porta. Esta é a passagem, e ela acontece sozinha. */
+  const _fetchV89b = window.fetch;
+  window.fetch = async function(u, o){
+    const r = await _fetchV89b(u, o);
+    const url = String((u && u.url) || u || '');
+    if(!sessao && url.startsWith(SB.url) && !url.includes('/auth/v1/')
+       && (r.status === 401 || r.status === 403) && !pedindo) pedir();
+    return r;
+  };
+
+  /* ---------- a tela ---------- */
+  function pedir(){
+    if(pedindo || document.getElementById('entrarMaestro')) return;
+    pedindo = true;
+    const el = document.createElement('div');
+    el.id = 'entrarMaestro';
+    el.innerHTML = `<div class="caixa" role="dialog" aria-modal="true" aria-label="Entrar na Maestro">
+      <div class="marca">${typeof LOGO === 'function' ? LOGO('', 30) : ''}</div>
+      <h3>Entrar na Maestro</h3>
+      <p class="sub">Seu e-mail e sua senha da equipe. É por eles que o
+        banco sabe que a pauta é sua.</p>
+      <label for="em-mail">E-mail</label>
+      <input class="campo" id="em-mail" type="email" autocomplete="username"
+        inputmode="email" placeholder="voce@suaagencia.com.br">
+      <label for="em-senha">Senha</label>
+      <input class="campo" id="em-senha" type="password" autocomplete="current-password"
+        placeholder="Sua senha">
+      <p class="erro" id="em-erro"></p>
+      <button class="b pri" id="em-entra">Entrar</button>
+      <button type="button" class="fora" id="em-fora">Continuar sem entrar — só neste aparelho</button>
+    </div>`;
+    document.body.appendChild(el);
+    const caixa = el.querySelector('.caixa');
+    const mail  = el.querySelector('#em-mail');
+    const senha = el.querySelector('#em-senha');
+    const erro  = el.querySelector('#em-erro');
+    const bt    = el.querySelector('#em-entra');
+    if(sessao && sessao.email) mail.value = sessao.email;
+    setTimeout(() => (mail.value ? senha : mail).focus(), 80);
+
+    const errar = txt => {
+      erro.textContent = txt;
+      caixa.classList.add('erra'); setTimeout(() => caixa.classList.remove('erra'), 420);
+    };
+
+    const tentar = async () => {
+      const e = mail.value.trim(), s = senha.value;
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return errar('Confira o e-mail.');
+      if(!s) return errar('Digite a senha.');
+      bt.disabled = true; bt.textContent = 'Entrando…'; erro.textContent = '';
+      try{
+        await entrar(e, s);
+        assumirPessoa();
+        el.remove(); pedindo = false;
+        document.getElementById('quemEsta')?.remove();
+        if(typeof som === 'function') som('toque');
+        /* agora com direito: lê o banco de novo, como esta pessoa */
+        if(typeof sbCarregar === 'function') await sbCarregar();
+        if(typeof buscarEstado === 'function') await buscarEstado();
+        render();
+        const m = (S.equipe || []).find(x => membroId(x) === (S.usuario || {}).id);
+        toast(m ? `Bem-vindo de volta, ${m.n.split(' ')[0]}.` : 'Você entrou.');
+      }catch(err){
+        bt.disabled = false; bt.textContent = 'Entrar';
+        errar(err.status === 400
+          ? 'E-mail ou senha não conferem.'
+          : (err.status ? `O banco respondeu ${err.status}.`
+                        : 'Não consegui falar com o banco agora.'));
+      }
+    };
+    bt.onclick = tentar;
+    senha.onkeydown = ev => { if(ev.key === 'Enter') tentar(); };
+    mail.onkeydown   = ev => { if(ev.key === 'Enter') senha.focus(); };
+    el.querySelector('#em-fora').onclick = () => {
+      el.remove(); pedindo = false;
+      toast('Sem entrar, o que você mudar fica só neste aparelho.');
+      if(!S.usuario && typeof abrirQuemEsta === 'function') abrirQuemEsta();
+    };
+  }
+
+  /* ---------- a linha na Conta: entrar, ou sair ---------- */
+  if(typeof agConta === 'function'){
+    agConta = (function(orig){
+      return function(){
+        let html = orig();
+        const linha = sessao
+          ? `<button class="row" data-sairmaestro="1" style="width:100%">
+               <span class="av">${ic('lock', 13)}</span>
+               <span class="t"><b>Sua conta da Maestro</b><span>entrou como
+                 ${esc(sessao.email)}</span></span>
+               <span class="cnSessao">Sair</span></button>`
+          : `<button class="row" data-entrarmaestro="1" style="width:100%">
+               <span class="av">${ic('unlock', 13)}</span>
+               <span class="t"><b>Entrar na Maestro</b><span>hoje este aparelho fala com o
+                 banco sem se identificar</span></span>
+               <span class="chev">${ic('chevr')}</span></button>`;
+        return html.replace('<button class="row" data-r="equipe"',
+                            linha + '<button class="row" data-r="equipe"');
+      };
+    })(agConta);
+  }
+
+  addEventListener('click', e => {
+    if(!e.target.closest) return;
+    if(e.target.closest('[data-entrarmaestro]')){ e.stopImmediatePropagation(); pedir(); return; }
+    if(e.target.closest('[data-sairmaestro]')){ e.stopImmediatePropagation(); sair(); return; }
+  }, true);
+
+  /* ---------- na abertura ---------- */
+  sessao = ler();
+  if(sessao){
+    /* renova antes de qualquer coisa e assume a pessoa do e-mail: quem
+       já entrou não é perguntado de novo quem é */
+    (async () => {
+      if(Date.now() >= sessao.expira - 60000) await renovar();
+      if(!sessao) return;
+      assumirPessoa();
+      if(typeof sbCarregar === 'function') await sbCarregar();
+      if(typeof buscarEstado === 'function') await buscarEstado();
+      document.getElementById('quemEsta')?.remove();
+      render();
+    })();
+  }
+
+  /* deixa a porta alcançável de fora, para o Menu e para teste */
+  window.MaestroPorta = { pedir, sair, entrar, token, quem: () => sessao };
 
 })();
 </script>
