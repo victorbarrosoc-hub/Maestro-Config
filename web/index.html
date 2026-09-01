@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-01 12:45 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-01 21:44 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -10423,10 +10423,110 @@ const SB = {
   url: 'https://tgrbmdsootnewjqpmeii.supabase.co',
   key: 'sb_publishable_unX8xCpACxgtDDnm0RLrBw_qkvScvZR'
 };
+
+// Token stored per device; refreshes automatically
+let _sbToken = null;
+let _sbRefreshToken = null;
+let _sbTokenExpiresAt = 0;
+let _sbRefreshTimer = null;
+
 const sbCab = () => ({
-  apikey: SB.key, Authorization: 'Bearer ' + SB.key,
+  Authorization: 'Bearer ' + (_sbToken || SB.key),
   'Content-Type': 'application/json'
 });
+
+// Try to restore token from localStorage on page load
+function sbRestoreToken(){
+  try{
+    const stored = localStorage.getItem('sb_auth');
+    if(stored){
+      const auth = JSON.parse(stored);
+      if(auth.token && auth.refreshToken && auth.expiresAt > Date.now()){
+        _sbToken = auth.token;
+        _sbRefreshToken = auth.refreshToken;
+        _sbTokenExpiresAt = auth.expiresAt;
+        sbScheduleRefresh();
+        return true;
+      }
+    }
+  }catch(e){}
+  return false;
+}
+
+function sbStoreToken(token, refreshToken, expiresIn){
+  _sbToken = token;
+  _sbRefreshToken = refreshToken;
+  _sbTokenExpiresAt = Date.now() + (expiresIn * 1000);
+  try{
+    localStorage.setItem('sb_auth', JSON.stringify({
+      token, refreshToken, expiresAt: _sbTokenExpiresAt
+    }));
+  }catch(e){}
+  sbScheduleRefresh();
+}
+
+function sbClearAuth(){
+  _sbToken = null;
+  _sbRefreshToken = null;
+  _sbTokenExpiresAt = 0;
+  if(_sbRefreshTimer) clearTimeout(_sbRefreshTimer);
+  try{
+    localStorage.removeItem('sb_auth');
+  }catch(e){}
+}
+
+async function sbRefreshToken(){
+  if(!_sbRefreshToken) return false;
+  try{
+    const r = await fetch(`${SB.url}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: _sbRefreshToken })
+    });
+    if(!r.ok) throw new Error('refresh failed');
+    const data = await r.json();
+    sbStoreToken(data.access_token, data.refresh_token || _sbRefreshToken, data.expires_in);
+    return true;
+  }catch(e){
+    sbClearAuth();
+    return false;
+  }
+}
+
+function sbScheduleRefresh(){
+  if(_sbRefreshTimer) clearTimeout(_sbRefreshTimer);
+  const now = Date.now();
+  const expiresIn = _sbTokenExpiresAt - now;
+  if(expiresIn <= 0) return;
+  // Refresh 1 minute before token expires
+  const refreshIn = Math.max(1000, expiresIn - 60000);
+  _sbRefreshTimer = setTimeout(sbRefreshToken, refreshIn);
+}
+
+// Login with email and password
+async function sbLoginWithPassword(email, password){
+  try{
+    const r = await fetch(`${SB.url}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    if(!r.ok){
+      const err = await r.json();
+      throw new Error(err.error_description || 'Login falhou');
+    }
+    const data = await r.json();
+    sbStoreToken(data.access_token, data.refresh_token, data.expires_in);
+    return { success: true, email: data.user.email };
+  }catch(e){
+    return { success: false, error: e.message };
+  }
+}
+
+// Logout
+function sbLogout(){
+  sbClearAuth();
+}
 
 S.sb = { estado:'parado', quando:null, erro:null };   // parado|carregando|salvando|salvo|erro|local
 let sbEspelho = {};        // ultimo conteudo confirmado no banco, por cliente
@@ -12964,40 +13064,87 @@ function abrirQuemEsta(){
   el.innerHTML = `<div class="caixa">
     <h3>Quem está aí?</h3>
     <p class="sub">Cada pessoa entra como ela mesma — o que você faz fica no seu nome.</p>
-    <div class="grp">Equipe da agência</div>
-    ${(S.equipe||[]).map(m=>`<button class="qePessoa" data-qeag="${membroId(m)}">
-      ${avMembro(m)}
-      <span style="flex:1"><b>${esc(m.n)}</b><span>${esc(m.papel)}${m.dono?' · dono da conta':''}</span></span>
-      ${ic('chevr',14)}</button>`).join('')}
-    <div class="grp">Sou cliente</div>
-    ${CLIS().map(c=>`<button class="qePessoa" data-qecl="${c.id}">
-      ${avCliente(c)}
-      <span style="flex:1"><b>${esc(c.nome)}</b><span>vê só o que é seu: pauta, aprovações, resultados</span></span>
-      ${ic('chevr',14)}</button>`).join('')}
+    <form id="qeForm" style="display:flex;flex-direction:column;gap:14px">
+      <div class="fld"><label for="qe-email">E-mail</label>
+        <input id="qe-email" type="email" autocomplete="email" placeholder="seu@email.com" required></div>
+      <div class="fld"><label for="qe-senha">Senha</label>
+        <input id="qe-senha" type="password" autocomplete="current-password" placeholder="Sua senha" required></div>
+      <p id="qe-erro" style="color:var(--danger);font-size:13px;min-height:18px;margin:0"></p>
+      <button type="submit" class="b pri" style="width:100%">Entrar</button>
+    </form>
   </div>`;
   document.body.appendChild(el);
+
+  const form = document.getElementById('qeForm');
+  const erroEl = document.getElementById('qe-erro');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('qe-email').value.trim();
+    const senha = document.getElementById('qe-senha').value;
+
+    if(!email || !senha){ erroEl.textContent = 'E-mail e senha são obrigatórios'; return; }
+
+    erroEl.textContent = 'Entrando…';
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+
+    const result = await sbLoginWithPassword(email, senha);
+
+    if(!result.success){
+      erroEl.textContent = result.error || 'Erro ao entrar';
+      btn.disabled = false;
+      return;
+    }
+
+    // Find member by email
+    const membro = (S.equipe || []).find(m => m.mail === email);
+    if(!membro){
+      // Could be client access, but not for now
+      erroEl.textContent = 'E-mail não encontrado na equipe';
+      btn.disabled = false;
+      return;
+    }
+
+    S.usuario = { tipo: 'agencia', id: membroId(membro), email };
+    S.view = 'agency';
+    S.route = 'dash';
+    try{ localStorage.setItem(CHAVE_USR, JSON.stringify(S.usuario)); }catch(err){}
+    document.getElementById('quemEsta')?.remove();
+    const m = usuarioAtual();
+    render();
+    toast(m ? `Bem-vindo de volta, ${m.nome.split(' ')[0]}.` : 'Entrando como agência.');
+  });
 }
-document.addEventListener('click', e => {
-  const ag = e.target.closest('[data-qeag]');
-  const cl = e.target.closest('[data-qecl]');
-  if(!ag && !cl) return;
-  e.stopImmediatePropagation();
-  if(ag){ S.usuario = {tipo:'agencia', id:ag.dataset.qeag}; S.view='agency'; S.route='dash'; }
-  else { S.usuario = {tipo:'cliente', id:cl.dataset.qecl}; S.view='client'; S.cli=cl.dataset.qecl; S.route='inicio'; }
-  try{ localStorage.setItem(CHAVE_USR, JSON.stringify(S.usuario)); }catch(err){}
-  document.getElementById('quemEsta')?.remove();
-  const m = usuarioAtual();
-  render();
-  toast(m ? `Bem-vindo de volta, ${m.nome.split(' ')[0]}.` : 'Entrando como cliente.');
-}, true);
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-trocausr]');
   if(!t) return;
   e.stopImmediatePropagation();
+  sbLogout();
+  S.usuario = null;
+  render();
   abrirQuemEsta();
 }, true);
-/* pede a identificação uma vez, depois da abertura */
-setTimeout(()=>{ if(!S.usuario && !document.getElementById('quemEsta')) abrirQuemEsta(); }, 3400);
+
+/* On page load, try to restore token and user */
+window.addEventListener('load', () => {
+  if(!S.usuario){
+    if(sbRestoreToken()){
+      // Token restored, try to get user from localStorage
+      try{
+        const stored = localStorage.getItem(CHAVE_USR);
+        if(stored){
+          const user = JSON.parse(stored);
+          S.usuario = user;
+          render();
+          return;
+        }
+      }catch(e){}
+    }
+    // No valid session, show login form
+    setTimeout(()=>{ if(!S.usuario && !document.getElementById('quemEsta')) abrirQuemEsta(); }, 400);
+  }
+});
 
 /* o crachá de quem está logado entra no topo da agência */
 agShell = (function(orig){
