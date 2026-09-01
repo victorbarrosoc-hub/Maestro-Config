@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-01 22:02 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-01 22:22 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -12092,15 +12092,40 @@ function modalLixeira(){
       </div>`).join('')}</div>`
     : `<p class="mtAviso">A lixeira está vazia.</p>`}
     <div class="modalrow" style="margin-top:14px">
-      <button class="b gho" data-modalno="1">Fechar</button></div></div></div>`;
+      <button class="b gho" data-modalno="1">Fechar</button>
+      ${lx.length ? `<button class="b gho sm" data-lxesvaziar="1"
+        style="flex:0 0 auto;min-width:0;white-space:nowrap;color:var(--danger);
+        border-color:rgba(229,72,77,.28)">${ic('x',12)} Esvaziar a lixeira</button>` : ''}
+      </div></div></div>`;
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-ptlixeira],[data-lxvolta],[data-lxfim]');
+  const t = e.target.closest('[data-ptlixeira],[data-lxvolta],[data-lxfim],'
+                           + '[data-lxesvaziar],[data-lxesvaziarok]');
   if(!t) return;
   e.stopImmediatePropagation();
   const d = t.dataset;
   const c = cliAtual(), lx = lixeiraDe(c.id);
   if(d.ptlixeira){ S.modal = modalLixeira(); renderLayer(); return; }
+  /* esvaziar é o único caminho sem volta daqui, então pergunta — e o
+     "Voltar" devolve à lixeira, não fecha tudo: quem se assustou não
+     perde o lugar onde estava. */
+  if(d.lxesvaziar){
+    const n = lx.length;
+    S.modal = `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+      <h3>Esvaziar a lixeira de ${esc(c.nome)}?</h3>
+      <p>São ${n} ${n===1?'item':'itens'}. Depois de confirmar não dá para resgatar
+        — se for engano, volte agora.</p>
+      <div class="modalrow"><button class="b gho" data-ptlixeira="1">Voltar</button>
+        <button class="b pri" style="background:var(--danger);color:#fff"
+          data-lxesvaziarok="1">Esvaziar</button></div></div></div>`;
+    renderLayer(); return; }
+  if(d.lxesvaziarok){
+    const n = lx.length;
+    S.lixeira[c.id] = [];
+    if(ultimoPtDel && ultimoPtDel.daLixeira) ultimoPtDel = null;  /* nada a resgatar */
+    S.modal = null; render();
+    toast(`Lixeira de ${esc(c.nome)} esvaziada — ${n} ${n===1?'item':'itens'}.`);
+    return; }
   if(d.lxvolta !== undefined){
     const [e2] = lx.splice(+d.lxvolta,1);
     if(e2){ (S.pautas[c.id]=S.pautas[c.id]||[]).splice(Math.min(e2.idx??0, S.pautas[c.id].length),0,e2.item); }
@@ -15788,7 +15813,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v96 · 1 set · o login para de voltar';
+const VERSAO_PROTOTIPO = 'v97 · 1 set · esvaziar a lixeira';
 
 menuSheet = (function(orig){
   return function(){
