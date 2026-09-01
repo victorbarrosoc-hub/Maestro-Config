@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-08-31 22:08 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-01 00:09 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro</title>
@@ -772,6 +772,18 @@ const CC = { AWAITING_APPROVAL:'Esperando você', APPROVED:'Aprovado',
   PUBLISHED:'No ar', SCHEDULED:'Vai ao ar', DRAFT:'Rascunho', CANCELLED:'Cancelada' };
 
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* O avatar do cliente: a logo quando existe, as iniciais quando não.
+   Mora aqui, cedo, porque render() roda algumas vezes durante a carga —
+   e mora num lugar só para que a logo apareça em toda tela de uma vez,
+   em vez de ser lembrada em cada uma. */
+function avCliente(c, cls){
+  const classe = cls || 'av';
+  if(c && c.logo)
+    return `<span class="${classe} comLogo"><img src="${c.logo}" alt="" aria-hidden="true"></span>`;
+  const cor = c && c.cor
+    ? ` style="background:linear-gradient(150deg,${c.cor},#111);color:#fff"` : '';
+  return `<span class="${classe}"${cor}>${esc((c && c.ini) || '?')}</span>`;
+}
 const ativos    = () => S.pecas.filter(p=>p.st!=='CANCELLED');
 const finAtivos = () => ativos().filter(p=>p.fase!=='TEXTO');
 /**
@@ -2644,7 +2656,7 @@ const txDecid = () => txAll().filter(t=>['APPROVED','CHANGES_REQUESTED'].include
 
 function chips(){
   return `<div class="cchips">${CLIS().map(c=>`<button class="cchip ${S.cli===c.id?'on':''}" data-cli="${c.id}">
-    <span class="cav" ${c.cor?`style="background:linear-gradient(150deg,${c.cor},#111);color:#fff"`:''}>${c.ini}</span>${esc(c.nome)}</button>`).join('')}</div>`;
+    ${avCliente(c,'cav')}${esc(c.nome)}</button>`).join('')}</div>`;
 }
 function vazio(titulo,corpo,extra){
   return `<div class="empty fu"><div class="eic">${ic('folder')}</div><b>${titulo}</b><p>${corpo}</p>${extra||''}</div>`;
@@ -11208,7 +11220,7 @@ agClientes = function(){
     return `<div class="cliLinha fu" style="animation-delay:${Math.min(i*50,300)}ms">
       <button data-clidet="${c.id}" style="display:block;width:100%">
         <span class="row" style="margin:0">
-          <span class="av" ${c.cor?`style="background:linear-gradient(150deg,${c.cor},#111);color:#fff"`:''}>${esc(c.ini)}</span>
+          ${avCliente(c)}
           <span class="t"><b>${esc(c.nome)}</b><span>${sub}</span></span>
           <span class="pill ${pcls}">${pill}</span><span class="chev">${ic('chevr')}</span></span></button>
       <span class="cliAcoes">
@@ -11288,6 +11300,9 @@ document.addEventListener('click', e => {
     if(nome.length < 2){ const el = document.getElementById('cl-nome');
       el.style.borderColor = 'var(--danger)'; el.focus(); return; }
     S.cliEdit[d.cliok] = {
+      /* o registro é reescrito inteiro: sem isto a logo sumiria a cada
+         "Salvar", e o founder culparia o upload */
+      logo: S.cliLogo !== undefined ? S.cliLogo : (S.cliEdit[d.cliok] || {}).logo,
       nome, ini: (v('cl-ini') || nome.slice(0,2)).toUpperCase(),
       seg: v('cl-seg') || '—', cor: S.cliCor || null,
       brief: v('cl-brief') || '—',
@@ -12891,7 +12906,7 @@ function abrirQuemEsta(){
       ${ic('chevr',14)}</button>`).join('')}
     <div class="grp">Sou cliente</div>
     ${CLIS().map(c=>`<button class="qePessoa" data-qecl="${c.id}">
-      <span class="av" ${c.cor?`style="background:linear-gradient(150deg,${c.cor},#111);color:#fff"`:''}>${esc(c.ini)}</span>
+      ${avCliente(c)}
       <span style="flex:1"><b>${esc(c.nome)}</b><span>vê só o que é seu: pauta, aprovações, resultados</span></span>
       ${ic('chevr',14)}</button>`).join('')}
   </div>`;
@@ -15708,7 +15723,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v85 · 31 ago · horário';
+const VERSAO_PROTOTIPO = 'v86 · 31 ago · logo do cliente';
 
 menuSheet = (function(orig){
   return function(){
@@ -18536,7 +18551,7 @@ function consertarDentro(v, fundo){
     return v;
   }
   for(const k of Object.keys(v)){
-    if(k === 'art' || k === 'url' || k === 'chave') continue;   // não são texto de gente
+    if(k === 'art' || k === 'url' || k === 'chave' || k === 'logo') continue;  // não é texto de gente
     v[k] = consertarDentro(v[k], fundo + 1);
   }
   return v;
@@ -18773,5 +18788,174 @@ addEventListener('change', e => {
   if(!e.target || e.target.id !== 'pt-hora' || e.target.type === 'time') return;
   const n = normalizarHora(e.target.value);
   if(n) e.target.value = n;
+}, true);
+</script>
+
+<style>
+/* A logo cabe inteira e ganha moldura QUADRADA arredondada, não redonda.
+   Não é capricho: logo é larga quase sempre, e círculo come as laterais
+   ou deixa a marca boiando num vazio. É também a convenção que o olho já
+   conhece — pessoa é círculo, marca é quadrado —, então a distinção
+   passa a informar em vez de só decorar. */
+.av.comLogo, .cav.comLogo{ padding:0; overflow:hidden; border-radius:26%;
+  background:var(--ink-950); border:1px solid var(--ink-800) }
+.av.comLogo img, .cav.comLogo img{ width:100%; height:100%; object-fit:contain;
+  display:block; border-radius:0 }
+
+/* o campo de logo dentro do Editar cliente */
+.clLogo{ display:flex; align-items:center; gap:14px; margin:2px 0 16px }
+.clLogo .previa{ width:64px; height:64px; border-radius:16px; flex:none;
+  display:grid; place-items:center; overflow:hidden;
+  background:var(--ink-950); border:1px solid var(--ink-700);
+  font-family:var(--mono); font-size:17px; color:var(--ink-400) }
+.clLogo .previa img{ width:100%; height:100%; object-fit:contain; display:block }
+.clLogo .lado{ flex:1; min-width:0 }
+.clLogo .acoes{ display:flex; gap:7px; flex-wrap:wrap }
+.clLogo .acoes button{ font-size:12px; padding:6px 12px; border-radius:999px;
+  border:1px solid var(--ink-700); color:var(--ink-200); background:var(--ink-950) }
+.clLogo .acoes button:hover{ border-color:var(--brass-600); color:var(--brass-300) }
+.clLogo .acoes button.tirar{ color:var(--danger); border-color:rgba(229,72,77,.35) }
+.clLogo .dica{ font-size:11.5px; color:var(--ink-400); margin:7px 0 0; line-height:1.5 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v86 — A LOGO DO CLIENTE.
+
+   Hoje o cliente aparece pelas iniciais num círculo colorido. Funciona,
+   mas a agência reconhece cliente pela marca, não por duas letras — e
+   quando o cliente entra na plataforma dele, ver a própria logo é a
+   diferença entre "um sistema" e "o meu lugar".
+
+   TRÊS DECISÕES QUE VALEM MAIS QUE O CÓDIGO:
+
+   1. A imagem vira data: URI dentro do registro do cliente, não arquivo
+      no Storage. Parece atalho e não é: um avatar é pequeno. Reduzido a
+      160px ele fica em ~10 KB, cabe no mesmo pacote que já viaja entre
+      os aparelhos, e atravessa sem depender de bucket, de política de
+      upload nem de URL que pode expirar. Foto e vídeo de material são
+      outra história — esses continuam no Storage (v48), porque são
+      grandes de verdade.
+
+      O que a v46 ensinou: `blob:` morre com a aba. Um avatar guardado
+      como blob sumiria ao fechar o app. data: não some.
+
+   2. A logo CABE, não é cortada (`object-fit: contain`). Logo é
+      horizontal quase sempre; cortar para preencher um círculo comeria
+      o nome da marca. Foto de pessoa fica com um respiro nas bordas —
+      é o preço certo a pagar, porque estragar uma logo é pior.
+
+   3. Um lugar só desenha o avatar. Antes eram três trechos iguais
+      copiados; se eu tivesse acrescentado a logo em cada um, o quarto
+      lugar que alguém escrevesse nasceria sem ela. Agora é `avCliente()`,
+      e quem já usa ganhou a logo de graça.
+   ================================================================== */
+
+const LOGO_LADO = 160;          // o avatar maior na tela tem 64px; 160 cobre retina
+
+/* redesenha a imagem escolhida num quadrado pequeno. Fundo transparente:
+   uma logo PNG continua recortada, sem ganhar caixa branca. */
+function encolherImagem(arquivo){
+  return new Promise((ok, falha) => {
+    const leitor = new FileReader();
+    leitor.onerror = () => falha(new Error('Não consegui ler o arquivo.'));
+    leitor.onload = () => {
+      const img = new Image();
+      img.onerror = () => falha(new Error('Esse arquivo não é uma imagem que eu saiba abrir.'));
+      img.onload = () => {
+        const tela = document.createElement('canvas');
+        tela.width = tela.height = LOGO_LADO;
+        const p = tela.getContext('2d');
+        const escala = Math.min(LOGO_LADO / img.width, LOGO_LADO / img.height);
+        const l = Math.round(img.width * escala), a = Math.round(img.height * escala);
+        p.imageSmoothingQuality = 'high';
+        p.drawImage(img, (LOGO_LADO - l) / 2, (LOGO_LADO - a) / 2, l, a);
+        /* webp guarda transparência e pesa menos; onde não houver, o
+           próprio canvas devolve png — dá para saber pelo prefixo */
+        let saida = tela.toDataURL('image/webp', 0.9);
+        if(saida.indexOf('data:image/webp') !== 0) saida = tela.toDataURL('image/png');
+        ok(saida);
+      };
+      img.src = leitor.result;
+    };
+    leitor.readAsDataURL(arquivo);
+  });
+}
+
+/* S.cliLogo é o rascunho enquanto o modal está aberto: `undefined` quer
+   dizer "não mexi", `null` quer dizer "tirei", string quer dizer "troquei" */
+S.cliLogo = undefined;
+
+function previaLogo(c){
+  const atual = (S.cliLogo !== undefined) ? S.cliLogo : (c.logo || null);
+  return atual
+    ? `<img src="${atual}" alt="">`
+    : esc(c.ini || '?');
+}
+
+modalCliente = (function(orig){
+  return function(id){
+    let html = orig.apply(this, arguments);
+    const c = CLIS().find(x => x.id === id);
+    if(!c || !html) return html;
+    S.cliLogo = undefined;                              // abre limpo
+
+    const tem = !!c.logo;
+    const campo = `<div class="fld"><label>Logo ou foto</label>
+      <div class="clLogo">
+        <div class="previa" id="cl-previa">${previaLogo(c)}</div>
+        <div class="lado">
+          <div class="acoes">
+            <button type="button" data-logoescolher="1">${tem ? 'Trocar imagem' : 'Escolher imagem'}</button>
+            <button type="button" class="tirar" data-logotirar="1"
+              ${tem ? '' : 'hidden'}>Tirar</button>
+          </div>
+          <p class="dica">Cabe inteira, sem cortar — PNG com fundo transparente
+            fica melhor. Vai junto para os outros aparelhos.</p>
+        </div>
+      </div>
+      <input type="file" id="cl-arquivo" accept="image/*" hidden></div>`;
+
+    return html.replace('<div class="fld"><label>Cor</label>', campo + '<div class="fld"><label>Cor</label>');
+  };
+})(modalCliente);
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-logoescolher],[data-logotirar]');
+  if(!t) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+
+  if(t.dataset.logoescolher !== undefined){
+    document.getElementById('cl-arquivo')?.click();
+    return; }
+
+  S.cliLogo = null;                                     // tirou
+  const previa = document.getElementById('cl-previa');
+  const nome = document.getElementById('cl-nome')?.value || '';
+  if(previa) previa.textContent = (nome.slice(0, 2) || '?').toUpperCase();
+  t.hidden = true;
+  const escolher = document.querySelector('[data-logoescolher]');
+  if(escolher) escolher.textContent = 'Escolher imagem';
+}, true);
+
+addEventListener('change', async e => {
+  if(!e.target || e.target.id !== 'cl-arquivo') return;
+  const arquivo = e.target.files && e.target.files[0];
+  if(!arquivo) return;
+  if(!/^image\//.test(arquivo.type)){
+    toast('Escolha uma imagem — PNG, JPG ou WEBP.'); return; }
+  try{
+    /* mexe no DOM, não remonta o modal: remontar apagaria o que já foi
+       escrito no briefing e nos links (a classe de defeito da v77) */
+    S.cliLogo = await encolherImagem(arquivo);
+    const previa = document.getElementById('cl-previa');
+    if(previa) previa.innerHTML = `<img src="${S.cliLogo}" alt="">`;
+    const tirar = document.querySelector('[data-logotirar]');
+    if(tirar) tirar.hidden = false;
+    const escolher = document.querySelector('[data-logoescolher]');
+    if(escolher) escolher.textContent = 'Trocar imagem';
+    if(typeof som === 'function') som('toque');
+  }catch(err){ toast(err.message || 'Não consegui abrir essa imagem.'); }
+  e.target.value = '';                                  // permite reescolher o mesmo arquivo
 }, true);
 </script>
