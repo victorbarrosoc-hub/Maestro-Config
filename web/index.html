@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-01 21:59 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-01 22:02 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15788,7 +15788,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v95 · 1 set · o login volta a funcionar';
+const VERSAO_PROTOTIPO = 'v96 · 1 set · o login para de voltar';
 
 menuSheet = (function(orig){
   return function(){
@@ -19702,16 +19702,37 @@ telaConversas = (function(orig){
     const t = await token();
     if(!t) return _fetchV89(u, o);
 
-    const op = Object.assign({}, o);
-    const h = op.headers;
-    if(h instanceof Headers){
-      const c = new Headers(h); c.set('Authorization', 'Bearer ' + t); op.headers = c;
-    } else {
-      op.headers = Object.assign({}, h || {}, { Authorization: 'Bearer ' + t });
+    const comToken = (opcoes, tk) => {
+      const op = Object.assign({}, opcoes);
+      const h = op.headers;
+      if(h instanceof Headers){
+        const c = new Headers(h); c.set('Authorization', 'Bearer ' + tk); op.headers = c;
+      } else {
+        op.headers = Object.assign({}, h || {}, { Authorization: 'Bearer ' + tk });
+      }
+      return op;
+    };
+    const r = await _fetchV89(u, comToken(o, t));
+
+    /* 401 COM sessão: o token não serve mais. Pode ser só idade — renova
+       uma vez e repete antes de incomodar ninguém. Se ainda assim recusar,
+       aí sim a sessão morreu e a porta faz sentido. */
+    if(r.status === 401){
+      const s = await renovar();
+      if(s && s.access){
+        const r2 = await _fetchV89(u, comToken(o, s.access));
+        if(r2.status !== 401) return r2;
+      }
+      if(!pedindo) pedir();
+      return r;
     }
-    const r = await _fetchV89(u, op);
-    /* o banco fechou e este aparelho não tem direito: pede a porta */
-    if((r.status === 401 || r.status === 403) && !pedindo) pedir();
+
+    /* 403: o banco SABE quem você é e recusou assim mesmo. Isso é permissão
+       (política da tabela), não login — pedir a senha de novo não conserta e
+       ainda fecha a porta na cara de quem acabou de entrar. Fica o selo,
+       dizendo o que é, que é o mesmo que fazemos quando o banco não responde. */
+    if(r.status === 403 && typeof sbSelo === 'function')
+      sbSelo('erro', 'o banco recusou (403): você entrou, mas a política da tabela não deixa gravar');
     return r;
   };
 
