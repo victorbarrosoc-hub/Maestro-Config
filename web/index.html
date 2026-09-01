@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-01 11:27 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-01 11:38 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -2625,10 +2625,26 @@ Object.assign(S,{cli:'ln', plan:'TRIAL', kb:{}, txsel:null, txnote:false,
      ch:'"As nove combinações estão no site. Qual é a sua?"'},
     {id:5,t:'Bastidor da escolha',i:'Mostrar o critério, não o produto.',f:'Legenda',st:'AWAITING_APPROVAL',edited:false,note:'',
      c:'De 40 tecidos, escolhemos 3.\n\nO critério: sobreviver a 200 lavagens e continuar bonito amassado. Os outros 37 não passaram.'}],
+  /* A equipe REAL da agencia. Ate 1/9 aqui morava a de demonstracao
+     (Victor Cardoso, Marina Reis, Paulo Duarte); ela sobrescreveu a real
+     no incidente daquele dia e virou o que estava no banco. Os e-mails
+     sao os mesmos das contas do Supabase — e por eles que a pessoa e
+     reconhecida ao entrar (v89). Trocar um aqui sem trocar la desliga o
+     reconhecimento. */
   equipe:[
-    {n:'Victor Cardoso',mail:'victor@agencianova.com.br',papel:'Administrador',dono:true},
-    {n:'Marina Reis',mail:'marina@agencianova.com.br',papel:'Atendimento',dono:false},
-    {n:'Paulo Duarte',mail:'paulo@agencianova.com.br',papel:'Designer',dono:false}]
+    {n:'Victor Barroso',mail:'victorbarrosoc@gmail.com',papel:'Administrador',dono:true},
+    {n:'Anna Clara',mail:'aclaramouran@gmail.com',papel:'Social Media',dono:false},
+    {n:'Roberto Pivotto',mail:'roberto.ejup@gmail.com',papel:'Administrador',dono:false}],
+  /* A de demonstracao ainda esta gravada no banco. Sem estas lapides ela
+     voltaria pela uniao da v88 e a Equipe teria seis pessoas, tres delas
+     inexistentes. A data e fixa de proposito: precisa ser MAIOR que o
+     `emDesde` de quem vem do banco (que nao tem nenhum, logo zero) e
+     MENOR que o de quem for cadastrado daqui para frente — assim
+     reconvidar alguem continua funcionando. */
+  equipeFora:{
+    'victor@agencianova.com.br': 1788273000000,
+    'marina@agencianova.com.br': 1788273000000,
+    'paulo@agencianova.com.br':  1788273000000}
 });
 
 const PLANOS = {
@@ -15765,7 +15781,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v89 · 1 set · entrar de verdade';
+const VERSAO_PROTOTIPO = 'v91 · 1 set · a equipe real, e a porta fechada';
 
 menuSheet = (function(orig){
   return function(){
@@ -19509,7 +19525,10 @@ telaConversas = (function(orig){
     const url = String((u && u.url) || u || '');
     const met = String((o && o.method) || (u && u.method) || 'GET').toUpperCase();
     if(met !== 'GET' && /\/rest\/v1\/pauta\b/.test(url) && !(await podeGravar()))
-      return new Response('', { status: 409, statusText: 'v88: gravação sem leitura recente' });
+      /* statusText so aceita ISO-8859-1: um acento aqui faz o construtor
+         LANCAR, e a trava passa a funcionar por acidente (a excecao
+         tambem impede a gravacao) em vez de por desenho. Sem acento. */
+      return new Response('', { status: 409, statusText: 'v88 gravacao sem leitura recente' });
     return _fetchV88(u, o);
   };
 
@@ -19808,6 +19827,128 @@ telaConversas = (function(orig){
 
   /* deixa a porta alcançável de fora, para o Menu e para teste */
   window.MaestroPorta = { pedir, sair, entrar, token, quem: () => sessao };
+
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v90 — SOCIAL MEDIA VIRA PAPEL, E NINGUÉM FICA PRESO A UM CRACHÁ VELHO
+
+   1. A equipe real da agência tem uma Social Media, e a lista de papéis
+      não tinha esse. Encaixar no mais parecido seria escolher errado por
+      ela: Atendimento fala com o cliente, Copywriter escreve, e quem toca
+      social faz as duas metades e mais o calendário. Vira papel próprio.
+
+      Ela ENVIA LOTES. Numa agência de três pessoas, se só os dois
+      administradores pudessem mandar para aprovação, a pauta pararia
+      neles toda semana — a permissão existiria no papel e não na prática.
+
+   2. Cada aparelho guarda quem entrou (`CHAVE_USR`) pelo id do e-mail. Ao
+      trocar a equipe de demonstração pela real, esses ids deixam de
+      existir, e o aparelho ficaria dizendo "sou o victor@agencianova"
+      para uma equipe onde esse alguém não está: `ehAdmin()` passa a dar
+      falso e a pessoa perde metade da tela, sem entender por quê — e a
+      tela "Quem está aí?" não abre, porque ela só abre quando NINGUÉM
+      está identificado. Some com o crachá órfão; aí a porta abre sozinha.
+   ================================================================== */
+(function(){
+
+  if(typeof PERMS === 'object' && PERMS && !PERMS['Social Media']){
+    PERMS['Social Media'] = {
+      sim:['calendário e pauta','copys e legendas','enviar lotes','comentários','agendar publicação'],
+      nao:['equipe','faturamento','aprovar conteúdo do cliente']
+    };
+  }
+
+  /* o crachá órfão: identificado como alguém que não está mais na equipe */
+  function limparCrachaOrfao(){
+    const u = S.usuario;
+    if(!u || u.tipo !== 'agencia') return;
+    const existe = (S.equipe || []).some(m => membroId(m) === u.id);
+    if(existe) return;
+    S.usuario = null;
+    try{ localStorage.removeItem(CHAVE_USR); }catch(e){}
+  }
+
+  limparCrachaOrfao();
+
+  /* a equipe também chega pelo banco, depois desta linha rodar */
+  if(typeof aplicarEstado === 'function'){
+    aplicarEstado = (function(orig){
+      return function(sv){
+        const n = orig.apply(this, arguments);
+        limparCrachaOrfao();
+        return n;
+      };
+    })(aplicarEstado);
+  }
+
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v91 — LISTA VAZIA NÃO É BANCO VAZIO
+
+   Com a brecha fechada (1/9, políticas em `to authenticated`), quem não
+   entrou não recebe erro: recebe `[]` com HTTP 200. É assim que o
+   Postgres esconde linha — ele não diz "você não pode ver", ele diz "não
+   há nada para você". As duas frases chegam idênticas ao protótipo.
+
+   E havia uma linha esperando por isso, no `sbCarregar`:
+
+       if(!aplicou){ for(const c of CLIS()) await sbGravar(c.id, true); }
+       // "banco vazio: a primeira carga sobe o que já existe aqui"
+
+   Ou seja: leu vazio, então empurra o que tem no aparelho. Era certo
+   quando `[]` só podia significar banco novo. Agora `[]` significa quase
+   sempre "você não entrou" — e a linha vira o gatilho para um aparelho
+   qualquer, com a equipe de demonstração na memória, sobrescrever a
+   pauta real assim que alguém fizer login nele. É o incidente de hoje de
+   novo, pela porta da frente.
+
+   Enquanto ninguém entrou, `[]` passa a ser tratado como NÃO CONSEGUI
+   LER. Efeitos, todos desejados: `sbCarregar` cai no modo "só neste
+   aparelho" em vez de subir nada; a trava da v88 bloqueia gravação por
+   falta de leitura; e a porta da v89 abre sozinha.
+
+   Depois de entrar, `[]` volta a ser o que diz — aí é banco vazio mesmo.
+
+   Fica na rede, e não no `sbCarregar`: outras camadas guardam referência
+   à função original. Terceira vez que essa lição aparece neste arquivo.
+   ================================================================== */
+(function(){
+
+  const entrou = () => {
+    try{ return !!(window.MaestroPorta && window.MaestroPorta.quem()); }
+    catch(e){ return false; }
+  };
+
+  const _fetchV91 = window.fetch.bind(window);
+  window.fetch = async function(u, o){
+    const r = await _fetchV91(u, o);
+    try{
+      const url = String((u && u.url) || u || '');
+      const met = String((o && o.method) || (u && u.method) || 'GET').toUpperCase();
+      if(met !== 'GET' || !r.ok || entrou()) return r;
+      if(!/\/rest\/v1\/pauta\b/.test(url)) return r;
+
+      const txt = await r.clone().text();
+      if(txt.replace(/\s/g, '') !== '[]') return r;
+
+      /* vazio e ninguém entrou: é a porta fechada, não um banco novo.
+
+         E a porta tem de ser CHAMADA daqui. A v89 abre no 401, mas ela
+         está DENTRO desta camada: quando a resposta chega lá, ainda é o
+         200 do servidor. Quem inventa o 401 é quem precisa avisar. */
+      try{ window.MaestroPorta && window.MaestroPorta.pedir(); }catch(e){}
+      return new Response(txt, { status: 401,
+        statusText: 'v91 lista vazia sem sessao' });
+    }catch(e){ return r; }
+  };
 
 })();
 </script>
