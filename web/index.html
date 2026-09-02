@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-02 00:27 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-02 00:34 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15826,7 +15826,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v104 · 2 set · a caixinha vai para dentro do Story';
+const VERSAO_PROTOTIPO = 'v105 · 2 set · Ensaio filtra por responsável';
 
 menuSheet = (function(orig){
   return function(){
@@ -16520,9 +16520,13 @@ agEnsaio = function(){
   if(!cats.some(c=>c.id===S.enCat)) S.enCat = 'producao';
   const catAtiva = CATS_ENSAIO.find(c=>c.id===S.enCat);
   const producao = S.enCat === 'producao';
-  const minhas = S.enSoMinhas && S.usuario ? S.usuario.id : null;
+  /* v105: o filtro é por PESSOA. `S.enSoMinhas` continua valendo como o
+     atalho antigo (é o mesmo que escolher a si mesmo), mas quem manda,
+     quando existe, é a escolha explícita. '__sem' é a fatia que mais
+     importa num quadro: o que não tem dono. */
+  const filtroResp = S.enResp2 || (S.enSoMinhas && S.usuario ? S.usuario.id : null);
   const doQuadro = t => catIdDe(t)===S.enCat && podeVerTarefa(t)
-    && (!minhas || t.resp===minhas);
+    && (!filtroResp || (filtroResp === '__sem' ? !t.resp : t.resp === filtroResp));
 
   const cartao = t => {
     const c = CLIS().find(x=>x.id===t.cli);
@@ -16586,16 +16590,40 @@ agEnsaio = function(){
     return `<button class="enCat ${c.id===S.enCat?'on':''}" data-encat="${c.id}"
       style="--catCor:${c.cor}"><i style="background:${c.cor}"></i>${c.nome}<b>${n||''}</b></button>`;
   }).join('');
+  /* --- filtro por responsável ---------------------------------------
+     Uma fila de pessoas, com quantos cards cada uma tem NESTA frente. O
+     "Só as minhas" que existia era este mesmo filtro com uma pessoa só;
+     virou o chip com o seu nome, para não ficarem dois controles dizendo
+     a mesma coisa e podendo se contradizer. */
+  const noQuadro = S.ensaio.tarefas.filter(t => catIdDe(t)===S.enCat && podeVerTarefa(t));
+  const eu = (S.usuario && S.usuario.tipo === 'agencia') ? S.usuario.id : null;
+  const contaResp = id => noQuadro.filter(t =>
+    id === '__sem' ? !t.resp : t.resp === id).length;
+  const chipResp = (id, rotulo, titulo) => {
+    const n = contaResp(id);
+    return `<button class="enResp ${filtroResp===id?'on':''}" data-enresp2="${id}"
+      title="${esc(titulo||rotulo)}">${esc(rotulo)}<b>${n||''}</b></button>`;
+  };
+  const pessoas = (S.equipe || []).slice().sort((a, b) =>
+    (membroId(b) === eu) - (membroId(a) === eu));        /* eu primeiro */
+  /* "Sem dono" vem logo depois de "Todos", antes das pessoas: é a fatia
+     que revela problema, e no fim da fila ela ficava cortada no celular. */
+  const respChips =
+    `<button class="enResp ${!filtroResp?'on':''}" data-enresp2=""
+       title="Todo mundo">Todos<b>${noQuadro.length||''}</b></button>`
+    + chipResp('__sem', 'Sem dono', 'Cards que ainda não têm responsável')
+    + pessoas.map(m => chipResp(membroId(m),
+        m.n.split(' ')[0] + (membroId(m) === eu ? ' (você)' : ''),
+        m.n + ' · ' + m.papel)).join('');
+
   const feitasMes = S.ensaio.feitas.length;
   return agShell(`
   <div class="mtop"><div><h1>Ensaio</h1><p>${esc(catAtiva.dica)}</p></div>
     <div style="display:flex;gap:9px;flex-wrap:wrap">
-      <button class="b gho sm" data-enminhas="1"
-        style="${S.enSoMinhas?'border-color:var(--brass-500);color:var(--brass-300)':''}">
-        ${ic('person',13)} ${S.enSoMinhas?'Só as minhas':'Todas'}</button>
       <button class="b gho sm" data-enranking="1">${ic('chart',13)} Ranking${feitasMes?` (${feitasMes})`:''}</button>
       <button class="b pri sm" data-ennova="1">${ic('pencil',13)} Nova tarefa</button></div></div>
   <div class="enCats">${chips}</div>
+  <div class="enResps">${respChips}</div>
   <div class="enRolo">${cols}</div>
   ${producao ? `<p class="enLegenda"><b>Um card só, duas voltas.</b> O calendário da
     semana é o Plan — o card entra aqui quando alguém começa. Na <b>1ª volta</b> vai o
@@ -20799,5 +20827,46 @@ addEventListener('click', e => {
   if(typeof som === 'function') som('toque');
   render();
   toast(`"${dados.t}" entrou como demanda interna.`);
+}, true);
+</script>
+<style>
+/* v105 — filtro por responsável no Ensaio. Mesma família dos chips de
+   frente (.enCat), meio tom abaixo: a frente é a decisão maior. */
+.enResps{ display:flex; gap:7px; overflow-x:auto; padding:2px 2px 10px;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none }
+.enResps::-webkit-scrollbar{ display:none }
+.enResp{ display:inline-flex; align-items:center; gap:6px; flex:0 0 auto;
+  padding:6px 12px; border-radius:999px; font-size:12.5px;
+  border:1px solid var(--ink-700); background:var(--ink-900); color:var(--ink-300);
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo),
+    background var(--fast) var(--eo) }
+.enResp:hover{ color:var(--ink-50); border-color:var(--ink-600) }
+.enResp.on{ color:var(--brass-300); border-color:var(--brass-600);
+  background:rgba(200,150,58,.10) }
+.enResp b{ font-family:var(--mono); font-size:10px; color:var(--ink-500) }
+.enResp.on b{ color:var(--brass-400) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v105 — filtro por responsável no Ensaio.
+
+   O quadro já filtrava por FRENTE (marketing, financeiro…) e tinha um
+   "Só as minhas". Faltava a pergunta que a direção faz toda semana:
+   "o que está na mão da Marina?" — e a que o quadro responde melhor que
+   qualquer relatório: "o que não tem dono?".
+
+   O antigo "Só as minhas" não sumiu: ele É o chip com o seu nome. Manter
+   os dois seria ter dois controles capazes de se contradizer (só as
+   minhas + filtrar por outra pessoa = quadro vazio sem explicar por quê).
+   ================================================================== */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-enresp2]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const id = t.dataset.enresp2 || null;
+  S.enResp2 = (S.enResp2 === id) ? null : id;   /* tocar de novo volta a Todos */
+  S.enSoMinhas = false;                          /* o atalho antigo cede a vez */
+  render();
 }, true);
 </script>
