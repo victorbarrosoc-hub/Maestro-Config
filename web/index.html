@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-02 01:16 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-02 02:40 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15832,7 +15832,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v110 · 2 set · o cliente com a marca e o nome';
+const VERSAO_PROTOTIPO = 'v111 · 2 set · o painel do cliente, escuro e com compasso';
 
 menuSheet = (function(orig){
   return function(){
@@ -21667,4 +21667,706 @@ renderLayer = (function(orig){
   return function(){ const r = orig.apply(this, arguments); pintarClientes(); return r; };
 })(renderLayer);
 pintarClientes();
+</script>
+<style>
+/* =====================================================================
+   v111 — o painel do cliente, escuro, no padrão da casa.
+   As variáveis do .cl são trocadas na raiz: tudo que já lia --bg, --line,
+   --tx, --mut, --acc, --soft (agenda, calendário, feed, card) escurece
+   junto, sem reescrever tela por tela.
+   ================================================================== */
+.cl{ --bg:var(--ink-900); --paper:var(--ink-950); --soft:var(--ink-850); --line:var(--ink-800);
+  --tx:var(--ink-50); --mut:var(--ink-300); --acc:var(--brass-300); background:var(--paper) }
+.clframe{ background:var(--bg); box-shadow:0 0 0 1px var(--line); color:var(--tx) }
+.clbar{ background:rgba(28,28,28,.88); border-bottom-color:var(--line) }
+.clbar .who{ color:var(--mut) } .clbar .who b{ color:var(--tx) }
+.cl .kick{ color:var(--brass-400) }
+.clfoot{ background:var(--bg); border-top-color:var(--line) }
+.clbtn.sec{ background:var(--ink-850); color:var(--tx); border-color:var(--ink-700) }
+.clbtn.sec:hover{ background:var(--ink-800) }
+.clrow{ background:var(--ink-850); border-color:var(--ink-800) }
+.clrow:hover{ border-color:var(--brass-600); box-shadow:0 10px 24px -16px rgba(0,0,0,.6) }
+.clrow .t b{ color:var(--tx) } .clrow .t span{ color:var(--mut) }
+.clrow[style*="#FEFBF4"]{ background:rgba(200,150,58,.08) !important; border-color:var(--brass-600) !important }
+.clcap, .clstep{ background:var(--ink-850); color:var(--tx) }
+.clstep .num{ background:var(--ink-900); border-color:var(--ink-700); color:var(--brass-300) }
+.clstep b{ color:var(--tx) } .clstep span{ color:var(--mut) }
+.cltag{ background:var(--ink-850); color:var(--mut) }
+.clleitura{ color:var(--ink-100) }
+.clhead b{ color:var(--tx) }
+.notelist{ background:rgba(240,120,76,.10); border-color:rgba(240,120,76,.35) }
+.termo{ background:var(--ink-850); border-color:var(--ink-800) }
+.termo dt{ color:var(--mut) } .termo dd{ color:var(--tx) }
+.sigfield{ background:var(--ink-950); border-color:var(--ink-700); color:var(--tx) }
+.ring .bgc{ stroke:var(--ink-700) }
+.clprog .bar{ background:var(--ink-800) }
+.cl .calgrid .wd{ color:var(--ink-500) }
+.cl .cald{ color:var(--ink-100) }
+.cl .cald.tem{ background:var(--ink-850) }
+.cl .cald.sel{ background:var(--brass-500); color:var(--ink-950) }
+.cl .agitem .cap.aberta{ color:var(--ink-100) }
+/* as pílulas de estado: mesmas cores, fundo escuro */
+.cl .q-AWAITING_APPROVAL{ color:var(--brass-300); background:rgba(200,150,58,.16) }
+.cl .q-APPROVED{ color:var(--encore); background:rgba(53,184,122,.14) }
+.cl .q-CHANGES_REQUESTED{ color:#F7A585; background:rgba(240,120,76,.16) }
+.cl .q-PUBLISHED, .cl .q-SCHEDULED{ color:#B7ACF8; background:rgba(139,123,240,.16) }
+.cl .q-IN_PRODUCTION{ color:#9DB9F5; background:rgba(91,141,239,.16) }
+.cl .q-DRAFT{ color:var(--ink-300); background:var(--ink-800) }
+/* barra de baixo */
+.cltab{ background:rgba(22,22,22,.94); border-top-color:var(--ink-800) }
+.cltab button{ color:var(--ink-400) } .cltab button.on{ color:var(--brass-400) }
+nav.cltab.mnFixa{ background:rgba(10,11,14,.92) !important; border-top:1px solid var(--ink-800) !important }
+nav.cltab.mnFixa .mnAbas button{ color:var(--ink-400) } nav.cltab.mnFixa .mnAbas button.on{ color:var(--brass-400) }
+/* o menu (folha) do cliente deixa de ser claro */
+.msheet.lt{ background:rgba(4,5,7,.6) }
+.msheet.lt .msbox{ background:var(--ink-900); border-color:var(--ink-800); color:var(--ink-50) }
+.msheet.lt .msgrab{ background:var(--ink-700) }
+.msheet.lt .mshd b{ color:var(--ink-50) } .msheet.lt .mshd span{ color:var(--ink-400) }
+.msheet.lt .msx{ border-color:var(--ink-700); color:var(--ink-300) }
+.msheet.lt .msx:hover{ background:var(--ink-850); color:var(--ink-50) }
+.msheet.lt .msgrp{ color:var(--ink-500) } .msheet.lt .msgrp i{ background:var(--ink-800) }
+.msheet.lt .msit{ border-color:var(--ink-800); background:var(--ink-850); color:var(--ink-50) }
+.msheet.lt .msit:hover{ border-color:var(--brass-600); background:var(--ink-800) }
+.msheet.lt .msit svg.i{ color:var(--ink-400) }
+.msheet.lt .msit.on{ border-color:var(--brass-600); background:rgba(200,150,58,.12); color:var(--brass-300) }
+.msheet.lt .msit.on svg.i, .msheet.lt .msit .aqui{ color:var(--brass-300) }
+.msheet.lt .msfoot{ border-top-color:var(--ink-800) }
+.msheet.lt .msfoot .b.gho{ border-color:var(--ink-700); color:var(--ink-50) }
+.msheet.lt .msfoot .b.gho:hover{ background:var(--ink-850); border-color:var(--brass-600) }
+.msheet.lt .msVersao{ color:var(--ink-500) }
+
+/* ---------- a moldura: celular por padrão, dois painéis no desktop ---- */
+.clframe{ display:grid; grid-template-columns:1fr; grid-template-areas:"main" }
+.clrail{ display:none }
+.clmain{ grid-area:main; display:flex; flex-direction:column; min-width:0 }
+@media(min-width:861px){
+  .cl{ padding:26px 24px 40px; align-items:flex-start }
+  .clframe{ max-width:1120px; min-height:auto; border-radius:22px; overflow:hidden;
+    grid-template-columns:248px 1fr; grid-template-areas:"rail main"; padding-bottom:0;
+    box-shadow:0 0 0 1px var(--line), 0 40px 100px -50px rgba(0,0,0,.8) }
+  .clrail{ grid-area:rail; display:flex; flex-direction:column; gap:6px; padding:22px 16px 18px;
+    background:var(--ink-950); border-right:1px solid var(--ink-800); position:sticky; top:42px;
+    align-self:start; max-height:calc(100vh - 42px - 52px); overflow:auto }
+  .clbar{ position:static; background:transparent; padding:18px 30px 6px; border-bottom:0 }
+  .clbody{ padding:8px 30px 34px; max-width:840px }
+  .clbody.fix{ height:auto; overflow:visible }
+  .clfoot{ position:static; padding:14px 30px 26px; max-width:840px; border-top:0 }
+  .cltab, nav.cltab.mn.mnFixa{ display:none !important }
+  .cl .clgrid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
+  .cl .clgrid2 > *{ margin:0 }
+}
+.clrail .marca{ display:flex; align-items:center; gap:10px; padding:0 8px 14px; color:var(--ink-50);
+  font-family:var(--serif); font-size:19px }
+.clrail .eu{ display:flex; align-items:center; gap:10px; padding:10px 8px; border-radius:12px;
+  background:var(--ink-900); border:1px solid var(--ink-800); margin-bottom:10px }
+.clrail .eu .t b{ display:block; font-size:13px; color:var(--ink-50) }
+.clrail .eu .t span{ display:block; font-size:11px; color:var(--ink-400) }
+.clrail .nav{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:11px;
+  font-size:13.5px; color:var(--ink-300); width:100%; text-align:left; position:relative;
+  transition:background var(--fast) var(--eo), color var(--fast) var(--eo) }
+.clrail .nav:hover{ background:var(--ink-900); color:var(--ink-50) }
+.clrail .nav.on{ background:rgba(200,150,58,.10); color:var(--brass-300) }
+.clrail .nav svg.i{ font-size:17px; flex:0 0 auto }
+.clrail .nav .bd{ margin-left:auto; background:var(--brass-500); color:var(--ink-950); font-family:var(--mono);
+  font-size:10px; font-weight:700; border-radius:8px; padding:0 6px; min-width:18px; text-align:center }
+.clrail .grp{ font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-500); padding:14px 12px 4px }
+.clrail .batida{ margin-top:auto; padding:12px; border-radius:12px; background:var(--ink-900);
+  border:1px solid var(--ink-800); font-size:12px; color:var(--ink-300) }
+.clrail .batida b{ display:block; color:var(--ink-50); font-size:13px; margin-bottom:2px }
+
+/* ---------- o herói de Início: sua batida ---------------------------- */
+.batidaCard{ position:relative; overflow:hidden; border-radius:16px; padding:18px 18px 16px;
+  background:linear-gradient(160deg, rgba(200,150,58,.16), rgba(200,150,58,.04) 55%, transparent);
+  border:1px solid var(--brass-700); margin-bottom:14px }
+.batidaCard.calma{ background:linear-gradient(160deg, rgba(53,184,122,.12), transparent 60%);
+  border-color:rgba(53,184,122,.35) }
+.batidaCard .n{ font-family:var(--serif); font-size:44px; line-height:1; color:var(--ink-50);
+  letter-spacing:-.02em }
+.batidaCard .n small{ font-family:var(--sans); font-size:14px; color:var(--mut); margin-left:6px }
+.batidaCard .l{ font-size:13.5px; color:var(--ink-200); margin:6px 0 14px; line-height:1.5 }
+.batidaCard .anelGrande{ position:absolute; right:14px; top:14px }
+.batidaCard .anelGrande svg{ width:64px; height:64px }
+.batidaCard .anelGrande circle{ stroke-width:2.6 }
+.batidaCard .anelTxt{ position:absolute; right:14px; top:14px; width:64px; height:64px;
+  display:grid; place-items:center; font-family:var(--mono); font-size:11px; color:var(--ink-100) }
+
+/* ---------- o compasso: quatro batidas ------------------------------- */
+.compasso{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:6px 0 4px }
+.compasso .bt{ position:relative; padding:12px 10px 10px; border-radius:12px; background:var(--ink-850);
+  border:1px solid var(--ink-800); text-align:left }
+.compasso .bt b{ display:block; font-family:var(--serif); font-size:22px; color:var(--ink-50); line-height:1 }
+.compasso .bt span{ display:block; font-size:10.5px; color:var(--mut); margin-top:5px; line-height:1.3 }
+.compasso .bt i{ position:absolute; left:10px; top:-1px; width:22px; height:3px; border-radius:0 0 3px 3px;
+  background:var(--ink-600) }
+.compasso .bt.sua{ border-color:var(--brass-600); background:rgba(200,150,58,.10) }
+.compasso .bt.sua i{ background:var(--brass-500) }
+.compasso .bt.sua b{ color:var(--brass-300) }
+.compasso .bt.noar i{ background:var(--encore) }
+.compassoLeg{ font-size:11.5px; color:var(--ink-400); margin:8px 0 0; line-height:1.5 }
+.compassoLeg b{ color:var(--brass-300); font-weight:600 }
+
+/* ---------- onde estamos: o ato ---------------------------------------- */
+.atoCard{ border-radius:14px; padding:16px; background:var(--ink-850); border:1px solid var(--ink-800) }
+.atoCard .kick{ margin-bottom:6px }
+.atoCard .pergunta{ font-family:var(--serif); font-size:20px; line-height:1.25; color:var(--ink-50);
+  margin:0 0 12px; letter-spacing:-.01em }
+.atoTrilha{ display:flex; gap:4px; margin:4px 0 8px }
+.atoTrilha i{ flex:1; height:6px; border-radius:3px; background:var(--ink-700) }
+.atoTrilha i.feito{ background:var(--brass-600) }
+.atoTrilha i.agora{ background:var(--brass-400); box-shadow:0 0 0 3px rgba(255,209,118,.18) }
+.atoMeta{ display:flex; justify-content:space-between; gap:10px; font-size:12px; color:var(--mut) }
+.atoMeta b{ color:var(--ink-100); font-weight:600 }
+.atoDias{ margin-top:12px; padding-top:12px; border-top:1px solid var(--ink-800); font-size:12.5px;
+  color:var(--ink-200); display:flex; align-items:center; gap:10px }
+.atoDias .num{ font-family:var(--serif); font-size:26px; color:var(--brass-300); line-height:1 }
+
+/* ---------- os atos no Projeto -------------------------------------- */
+.atoLista{ display:flex; flex-direction:column; gap:8px; margin:8px 0 14px }
+.ato{ display:grid; grid-template-columns:36px 1fr auto; gap:12px; align-items:center; padding:12px 14px;
+  border-radius:12px; background:var(--ink-850); border:1px solid var(--ink-800) }
+.ato .num{ width:36px; height:36px; border-radius:50%; display:grid; place-items:center;
+  font-family:var(--mono); font-size:12px; color:var(--ink-300); background:var(--ink-900);
+  border:1px solid var(--ink-700) }
+.ato.feito .num{ background:rgba(53,184,122,.14); color:var(--encore); border-color:rgba(53,184,122,.35) }
+.ato.agora{ border-color:var(--brass-600); background:rgba(200,150,58,.08) }
+.ato.agora .num{ background:var(--brass-500); color:var(--ink-950); border-color:var(--brass-500) }
+.ato .t b{ display:block; font-size:13.5px; color:var(--ink-50) }
+.ato .t span{ display:block; font-size:11.5px; color:var(--mut); margin-top:2px }
+.ato .t em{ display:block; font-size:12px; color:var(--ink-200); margin-top:5px; font-style:italic }
+.ato .dias{ font-family:var(--mono); font-size:11px; color:var(--ink-300); text-align:right; white-space:nowrap }
+.ato .dias b{ display:block; font-family:var(--serif); font-size:18px; color:var(--ink-50) }
+.ato.agora .dias b{ color:var(--brass-300) }
+
+/* ---------- metas do ciclo: realizado / previsto ---------------------- */
+.metas{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:8px 0 6px }
+.meta{ padding:12px; border-radius:12px; background:var(--ink-850); border:1px solid var(--ink-800) }
+.meta b{ display:block; font-family:var(--serif); font-size:22px; color:var(--ink-50); line-height:1 }
+.meta b small{ font-family:var(--mono); font-size:11px; color:var(--mut); margin-left:3px }
+.meta span{ display:block; font-size:11px; color:var(--mut); margin-top:5px }
+.meta .barra{ height:4px; background:var(--ink-700); border-radius:2px; margin-top:8px; overflow:hidden }
+.meta .barra i{ display:block; height:100%; background:var(--brass-500); border-radius:2px }
+
+/* ---------- conquistas ------------------------------------------------- */
+.conquistas{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:8px 0 4px }
+@media(min-width:861px){ .conquistas{ grid-template-columns:repeat(6,1fr) } }
+.cq{ position:relative; padding:12px 10px 10px; border-radius:12px; background:var(--ink-850);
+  border:1px solid var(--ink-800); text-align:center; min-height:104px; display:flex;
+  flex-direction:column; align-items:center; justify-content:flex-start; gap:6px }
+.cq .ic{ width:38px; height:38px; border-radius:50%; display:grid; place-items:center;
+  background:var(--ink-900); border:1px solid var(--ink-700); color:var(--ink-500) }
+.cq .ic svg{ font-size:17px }
+.cq b{ font-size:11.5px; color:var(--ink-300); line-height:1.2 }
+.cq span{ font-size:10px; color:var(--ink-500); line-height:1.3 }
+.cq.tem{ border-color:var(--brass-700); background:rgba(200,150,58,.08) }
+.cq.tem .ic{ background:var(--brass-500); border-color:var(--brass-500); color:var(--ink-950);
+  box-shadow:0 0 0 4px rgba(200,150,58,.15) }
+.cq.tem b{ color:var(--brass-300) } .cq.tem span{ color:var(--ink-300) }
+.cq.nova{ animation:popIn .45s var(--spring) both }
+.cqNova{ border-radius:14px; padding:14px 16px; margin-bottom:14px; display:flex; gap:12px; align-items:center;
+  background:linear-gradient(135deg, rgba(200,150,58,.22), rgba(200,150,58,.06));
+  border:1px solid var(--brass-600); animation:stampIn .5s var(--spring) both }
+.cqNova .ic{ width:44px; height:44px; border-radius:50%; background:var(--brass-500); color:var(--ink-950);
+  display:grid; place-items:center; flex:0 0 auto }
+.cqNova .t b{ display:block; color:var(--ink-50); font-size:14px }
+.cqNova .t span{ display:block; color:var(--ink-200); font-size:12px; margin-top:2px }
+.cqNova .kick{ margin-bottom:2px }
+
+/* ---------- próximas no ar ----------------------------------------- */
+.proxima{ display:grid; grid-template-columns:44px 1fr auto; gap:12px; align-items:center; padding:11px 12px;
+  border-radius:12px; background:var(--ink-850); border:1px solid var(--ink-800); margin-bottom:8px }
+.proxima .data{ text-align:center; font-family:var(--mono); font-size:10px; color:var(--mut);
+  text-transform:uppercase; line-height:1.15 }
+.proxima .data b{ display:block; font-family:var(--serif); font-size:20px; color:var(--ink-50) }
+.proxima .t b{ display:block; font-size:13px; color:var(--ink-50) }
+.proxima .t span{ display:block; font-size:11.5px; color:var(--mut) }
+
+/* ---------- resultados escuros ---------------------------------------- */
+.cl .tileCl{ background:var(--ink-850); border:1px solid var(--ink-800); border-radius:12px; padding:13px }
+.cl .tileCl b{ font-family:var(--serif); font-size:23px; font-weight:400; color:var(--ink-50) }
+.cl .tileCl div{ font-size:11.5px; color:var(--mut); margin-top:3px }
+.cl .caixa{ border:1px solid var(--ink-800); border-radius:12px; padding:14px 12px 8px; background:var(--ink-850) }
+.cl .conta{ background:var(--ink-850); border-radius:11px; padding:15px; margin-top:14px; color:var(--ink-200) }
+.cl .conta b{ color:var(--ink-50) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v111 — o painel do cliente, remodelado.
+
+   A tese, tirada do USER_FLOW_CLIENT: o cliente não quer usar a Maestro.
+   Ele quer saber três coisas em dez segundos e ir embora —
+     1. o que espera por mim,
+     2. onde estamos,
+     3. quanto do meu tempo isso ainda vai custar (D-037).
+   O Início responde às três, nessa ordem. O resto é atrás de um toque.
+
+   O MÉTODO na tela dele. O Ensaio roda PDCA (Plan · Do · Check · Act).
+   Para o cliente isso vira um COMPASSO de quatro batidas — Texto ·
+   Publicação pronta · Agendado · No ar — em que a batida dele é o Check:
+   "esperando você". As fases do cronograma viram ATOS, com a pergunta-guia
+   grande (o PRD chama essa tela de "a melhor tela de retenção do produto").
+
+   A GAMIFICAÇÃO é factual e sobre a execução DELE, nunca sobre resultado
+   de negócio (D-046). Conquistas com nome da casa — Primeiro acorde,
+   Afinado, Em compasso, Sem repetir a nota, Ato fechado, Regência — cada
+   uma com a regra dita na cara, trancada até ser ganha. Nada de "você
+   está mais perto do seu objetivo": medimos o que ele fez, não o que o
+   mercado fez.
+
+   O "BACKEND SEM API": uma camada de estado de verdade.
+     · painelDe(cliente) — visitas, decisões (com tempo de resposta),
+       conquistas com data, dias de agenda usados. Persistido na MESMA
+       linha do banco que a pauta do cliente (sbEmpacotar/sbAplicar), então
+       viaja entre aparelhos como tudo o mais.
+     · funções puras calculando compasso, ato atual e metas a partir do
+       dado real da pauta (Regra #3: nunca digitado à mão).
+     · decidirCard envolvido: cada decisão vira registro, e as conquistas
+       são reavaliadas ali — não num timer, não na tela.
+   Quando a API entrar, painelDe() vira um GET e os cálculos sobem para o
+   servidor sem mudar uma tela.
+
+   Vocabulário: publicação, texto, imagem. Nunca "peça", "copy", "card",
+   "reprovar" — o cliente não é da agência (USER_FLOW §11).
+   ================================================================== */
+
+/* ---------- 0. quem é quem -------------------------------------------- */
+const clCliente = () => cliAtual();
+const clPessoa  = () => {
+  const ap = (clCliente() || {}).aprovador || {};
+  return { nome: ap.nome || 'você', mail: ap.mail || '' };
+};
+const clPrimeiroNome = () => {
+  const ap = (clCliente() || {}).aprovador || {};
+  if(ap.nome) return ap.nome.split(' ')[0];          // a pessoa, quando cadastrada
+  return (clCliente() || {}).nome || 'você';          // senão, a marca — nunca "Olá, você"
+};
+const clAgencia = () => (S.agencia && S.agencia.nome) || 'A agência';
+
+/* ---------- 1. o estado do painel, por cliente ----------------------- */
+S.painel = S.painel || {};
+function painelDe(cliId){
+  const id = cliId || clCliente().id;
+  return S.painel[id] = S.painel[id] || {
+    visitas:0, ultimaVisita:null,
+    decisoes:[],          /* {id, quando, tipo:'aprovou'|'ajuste', fase:'texto'|'pronta', ms} */
+    conquistas:{},        /* {chave: quando} */
+    agendaUsada:[]        /* {ato, dia, motivo} — dias seus que a agência já consumiu */
+  };
+}
+/* viaja com a pauta do cliente: mesma linha, mesmo selo de salvo */
+sbEmpacotar = (function(orig){
+  return function(cliId){ return { ...orig(cliId), painel: painelDe(cliId) }; };
+})(sbEmpacotar);
+sbAplicar = (function(orig){
+  return function(cliId, dados){
+    const ok = orig(cliId, dados);
+    if(ok && dados && dados.painel && typeof dados.painel === 'object'){
+      const local = S.painel[cliId];
+      /* o que veio do banco manda, mas conquista ganhada aqui não se perde */
+      S.painel[cliId] = { ...painelDe(cliId), ...dados.painel,
+        conquistas: { ...((dados.painel.conquistas)||{}), ...((local && local.conquistas)||{}) } };
+    }
+    return ok;
+  };
+})(sbAplicar);
+
+/* ---------- 2. o método, lido para o cliente ------------------------ */
+const MESES3 = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function metodoDe(c){
+  const pj = S.proj && S.proj[c.id];
+  if(pj && pj.fases && pj.fases.length) return pj;
+  /* "Social sempre ativo": ciclos mensais, 1 dia de agenda por mês */
+  const m0 = new Date().getMonth();
+  const nomes = ['Presença','Ritmo','Território','Prova'];
+  const perguntas = ['A marca aparece com padrão toda semana?', 'O perfil tem um ritmo que dá para prever?',
+    'A marca virou dona de um assunto?', 'O que a gente publica tem prova, não só opinião?'];
+  return { nome:'Sempre ativo', per:'ciclos mensais', continuo:true,
+    fases: nomes.map((n, i) => ({ n, m: MESES3[(m0 + i) % 12], dias:30, ag:1, q: perguntas[i] })) };
+}
+function atoAtual(c){
+  const pj = metodoDe(c), hoje = MESES3[new Date().getMonth()];
+  let i = pj.fases.findIndex(f => f.m === hoje);
+  if(i < 0) i = 0;
+  return { i, total: pj.fases.length, fase: pj.fases[i], pj };
+}
+const diasAgendaPrevistos = pj => pj.fases.reduce((s, f) => s + (+f.ag || 0), 0);
+
+/* ---------- 3. o compasso: quatro batidas do dado real -------------- */
+const BATIDA_DE = {
+  rascunho:'texto', criado:'texto', revisao:'texto', texto_cli:'texto',
+  texto_ok:'pronta', producao:'pronta', revisao2:'pronta', post_cli:'pronta',
+  aprovado:'agendado', agendado:'agendado', postado:'noar'
+};
+function compassoDe(){
+  const pubs = (S.pauta || []).filter(p => !p.tarefa);
+  const b = { texto:0, pronta:0, agendado:0, noar:0, suaTexto:0, suaPronta:0, total: pubs.length };
+  pubs.forEach(p => {
+    const f = faseDe(p), k = BATIDA_DE[f] || 'texto';
+    b[k]++;
+    if(f === 'texto_cli') b.suaTexto++;
+    if(f === 'post_cli')  b.suaPronta++;
+  });
+  return b;
+}
+const esperamVoce = () => cardsComCliente().length;
+const minutosParaDecidir = n => Math.max(2, Math.round(n * 1.5));
+
+/* o que já foi ao ar, do total previsto para o ciclo */
+function metasDe(){
+  const pubs = (S.pauta || []).filter(p => !p.tarefa);
+  const noAr = pubs.filter(p => faseDe(p) === 'postado').length;
+  const decididas = pubs.filter(p => JA_DECIDIU.includes(faseDe(p))).length;
+  const porFmt = fmt => pubs.filter(p => (p.fmt || '').toLowerCase() === fmt);
+  const reels = porFmt('reels'), carr = porFmt('carrossel');
+  return { total: pubs.length, noAr, decididas,
+    reels:{ p: reels.length, r: reels.filter(p => faseDe(p) === 'postado').length },
+    carr: { p: carr.length,  r: carr.filter(p => faseDe(p) === 'postado').length } };
+}
+
+/* ---------- 4. as conquistas: regra dita, sempre factual ------------ */
+const CONQUISTAS = [
+  ['primeiro-acorde', 'Primeiro acorde', 'spark',
+    'Decidir a primeira publicação.',
+    P => P.decisoes.length >= 1],
+  ['afinado', 'Afinado', 'clock',
+    'Decidir uma publicação em menos de 24 horas depois de ela chegar.',
+    P => P.decisoes.some(d => d.ms != null && d.ms < 24 * 3600 * 1000)],
+  ['em-compasso', 'Em compasso', 'checkc',
+    'Zerar a fila: nada esperando você.',
+    P => P.decisoes.length >= 1 && esperamVoce() === 0],
+  ['sem-repetir', 'Sem repetir a nota', 'sealic',
+    'Aprovar cinco publicações de primeira, sem pedir ajuste.',
+    P => P.decisoes.filter(d => d.tipo === 'aprovou' && !d.aposAjuste).length >= 5],
+  ['ato-fechado', 'Ato fechado', 'stack',
+    'Ver um mês inteiro no ar — cada publicação prevista, publicada.',
+    () => { const m = metasDe(); return m.total >= 4 && m.noAr === m.total; }],
+  ['regencia', 'Regência', 'zap',
+    'Três meses seguidos decidindo antes da data de cada publicação.',
+    P => (P.mesesEmDia || 0) >= 3],
+];
+function avaliarConquistas(cliId){
+  const P = painelDe(cliId);
+  const novas = [];
+  CONQUISTAS.forEach(([k, nome, , , regra]) => {
+    if(P.conquistas[k]) return;
+    let ok = false; try{ ok = !!regra(P); }catch(e){}
+    if(ok){ P.conquistas[k] = Date.now(); novas.push({ k, nome }); }
+  });
+  return novas;
+}
+
+/* ---------- 5. a decisão vira registro (e a conquista, ali) --------- */
+decidirCard = (function(orig){
+  return function(id, decisao, nota){
+    const p = (S.pauta || []).find(x => x.id === id);
+    const antes = p ? { fase: faseDe(p), enviadoEm: p.enviadoEm || null,
+                        aposAjuste: (p.alteracoes || []).length > 0 } : null;
+    const r = orig.apply(this, arguments);
+    if(!p || !antes) return r;
+    const P = painelDe(clCliente().id);
+    P.decisoes.push({
+      id, quando: Date.now(),
+      tipo: decisao === 'APROVADO' ? 'aprovou' : 'ajuste',
+      fase: antes.fase === 'texto_cli' ? 'texto' : 'pronta',
+      ms: antes.enviadoEm ? Date.now() - antes.enviadoEm : null,
+      aposAjuste: antes.aposAjuste
+    });
+    if(P.decisoes.length > 500) P.decisoes = P.decisoes.slice(-500);
+    const novas = avaliarConquistas(clCliente().id);
+    if(novas.length){
+      S.cqNova = novas[0];
+      setTimeout(() => { if(typeof som === 'function') som('conclusao'); }, 420);
+      setTimeout(() => toast(`Conquista: ${novas[0].nome}.`), 900);
+    }
+    return r;
+  };
+})(decidirCard);
+
+/* ---------- 6. a casca: barra, trilho no desktop, abas ------------- */
+const CL_ABAS = [
+  { r:'inicio',  n:'Início',       icn:'home' },
+  { r:'clpauta', n:'Publicações',  icn:'grid', bd: () => esperamVoce() },
+  { r:'projeto', n:'Projeto',      icn:'folder' },
+  { r:'conta',   n:'Conta',        icn:'person' },
+];
+const CL_MAIS = [
+  { r:'agenda',     n:'Quando vai ao ar', icn:'cal' },
+  { r:'feed',       n:'Seu feed',         icn:'img' },
+  { r:'resultados', n:'Como está indo',   icn:'chart' },
+];
+const clAbaAtiva = r => {
+  if(r === 'clcard' || r === 'lote' || r === 'clpauta') return 'clpauta';
+  if(['capa','peca','termo','lotetexto','pecatexto','termotexto'].includes(r)) return 'clpauta';
+  return r;
+};
+clShell = function(inner){
+  const c = clCliente(), eu = clPessoa(), ativa = clAbaAtiva(S.route);
+  const esp = esperamVoce();
+  const tabs = CL_ABAS.map(x => `<button class="${ativa === x.r ? 'on' : ''}" data-r="${x.r}">
+    ${ic(x.icn)}${x.n}${x.bd && x.bd() > 0 ? `<span class="bd">${x.bd()}</span>` : ''}</button>`).join('');
+  const nav = (lista) => lista.map(x => `<button class="nav ${ativa === x.r ? 'on' : ''}" data-r="${x.r}">
+    ${ic(x.icn)}${x.n}${x.bd && x.bd() > 0 ? `<span class="bd">${x.bd()}</span>` : ''}</button>`).join('');
+  const { i, total, fase } = atoAtual(c);
+  return `<div class="cl"><div class="clframe">
+    <aside class="clrail">
+      <div class="marca">${LOGO('var(--brass-400)', 22)} Maestro</div>
+      <div class="eu">${avCliente(c, 'av')}<span class="t"><b>${esc(c.nome)}</b>
+        <span>${esc(eu.nome)}</span></span></div>
+      ${nav(CL_ABAS)}
+      <div class="grp">Acompanhar</div>
+      ${nav(CL_MAIS)}
+      <div class="batida"><b>${esp ? `${esp} esperando você` : 'Nada esperando você'}</b>
+        Ato ${i + 1} de ${total} · ${esc(fase.n)}</div>
+    </aside>
+    <div class="clmain">
+      <div class="clbar">${LOGO('var(--brass-700)', 17)}
+        <div class="who"><b>${esc(clAgencia())}</b> usa a Maestro</div>
+        <span style="font-size:11px;color:var(--ink-400)">${esc(clPrimeiroNome())}</span></div>
+      ${inner}
+    </div>
+  </div></div><nav class="cltab">${tabs}${itemBarra(true)}</nav>`;
+};
+
+/* ---------- 7. Início: três perguntas, nessa ordem ------------------- */
+function clInicioV111(){
+  const c = clCliente(), P = painelDe(c.id);
+  if(!S.clVisitou){ S.clVisitou = true; P.visitas++; P.ultimaVisita = Date.now(); }
+  const esp = esperamVoce();
+  const comp = compassoDe();
+  const { i, total, fase, pj } = atoAtual(c);
+  const decid = comp.total - esp;
+  const frac = comp.total ? decid / comp.total : 1;
+  const proximas = (S.pauta || []).filter(p => !p.tarefa && ['aprovado','agendado'].includes(faseDe(p)))
+    .sort((a, b) => (a.data || '') < (b.data || '') ? -1 : 1).slice(0, 3);
+  const nova = S.cqNova; S.cqNova = null;
+  const cqDef = nova ? CONQUISTAS.find(x => x[0] === nova.k) : null;
+
+  return clShell(`<div class="clbody venter">
+    <div class="kick">${esc(c.nome)}</div>
+    <h2>Olá, ${esc(clPrimeiroNome())}</h2>
+
+    ${cqDef ? `<div class="cqNova"><span class="ic">${ic(cqDef[2], 20)}</span>
+      <span class="t"><span class="kick">Conquista</span><b>${esc(cqDef[1])}</b>
+        <span>${esc(cqDef[3])}</span></span></div>` : ''}
+
+    <div class="batidaCard ${esp ? '' : 'calma'}">
+      <span class="anelGrande">${anel(frac)}</span>
+      <span class="anelTxt">${decid}/${comp.total || 0}</span>
+      <div class="n">${esp}<small>${esp === 1 ? 'publicação espera você' : 'publicações esperam você'}</small></div>
+      <div class="l">${esp
+        ? `Leva uns ${minutosParaDecidir(esp)} minutos. Aprovar e pedir ajuste são igualmente normais — os dois ajudam.`
+        : 'Você está em dia. Quando a agência mandar algo novo, aparece aqui primeiro.'}</div>
+      ${esp ? `<button class="clbtn" data-r="clpauta">Decidir agora</button>`
+            : `<button class="clbtn sec" data-r="clpauta">Rever o que você já decidiu</button>`}
+    </div>
+
+    <h3>O compasso deste mês</h3>
+    <div class="compasso">
+      <div class="bt ${comp.suaTexto ? 'sua' : ''}"><i></i><b>${comp.texto}</b>
+        <span>Texto${comp.suaTexto ? ` · ${comp.suaTexto} com você` : ''}</span></div>
+      <div class="bt ${comp.suaPronta ? 'sua' : ''}"><i></i><b>${comp.pronta}</b>
+        <span>Publicação pronta${comp.suaPronta ? ` · ${comp.suaPronta} com você` : ''}</span></div>
+      <div class="bt"><i></i><b>${comp.agendado}</b><span>Agendado</span></div>
+      <div class="bt noar"><i></i><b>${comp.noar}</b><span>No ar</span></div>
+    </div>
+    <p class="compassoLeg">Cada publicação passa pelas quatro batidas. <b>A sua é a decisão</b> —
+      o texto primeiro, a publicação pronta depois. Mudar palavra é barato; refazer imagem não.</p>
+
+    <h3>Onde estamos</h3>
+    <div class="atoCard">
+      <div class="kick">Ato ${i + 1} de ${total} · ${esc(fase.n)}${pj.continuo ? '' : ` · ${esc(pj.nome)}`}</div>
+      <p class="pergunta">${esc(fase.q)}</p>
+      <div class="atoTrilha">${pj.fases.map((_, k) =>
+        `<i class="${k < i ? 'feito' : k === i ? 'agora' : ''}"></i>`).join('')}</div>
+      <div class="atoMeta"><span><b>${i}</b> de ${total} ${total === 1 ? 'ato concluído' : 'atos concluídos'}</span>
+        <span>${esc(fase.m)}</span></div>
+      <div class="atoDias"><span class="num">${fase.ag || 0}</span>
+        <span>${fase.ag ? `${fase.ag === 1 ? 'dia seu' : 'dias seus'} neste ato — a agência combina a data com você.`
+                        : 'Este ato não pede nenhum dia da sua agenda.'}</span></div>
+    </div>
+
+    <h3>Suas conquistas</h3>
+    ${clConquistasHtml(P, nova)}
+
+    <h3>Próximas no ar</h3>
+    ${proximas.length ? proximas.map(p => clProximaHtml(p)).join('')
+      : `<p style="font-size:13px">Nada agendado ainda. O que você aprovar entra aqui com a data.</p>`}
+  </div>`);
+}
+function clProximaHtml(p){
+  const d = p.data ? new Date(p.data + 'T12:00:00') : null;
+  return `<div class="proxima">
+    <span class="data">${d ? `<b>${D2(d.getDate())}</b>${MESES3[d.getMonth()]}` : '<b>—</b>'}</span>
+    <span class="t"><b>${esc(p.t)}</b><span>${esc(p.fmt || '')} · ${esc(p.hora || '')}</span></span>
+    <span class="clpill q-SCHEDULED">${faseDe(p) === 'agendado' ? 'Agendado' : 'Aprovado'}</span></div>`;
+}
+function clConquistasHtml(P, nova){
+  return `<div class="conquistas">${CONQUISTAS.map(([k, nome, icn, regra]) => {
+    const tem = !!P.conquistas[k];
+    return `<div class="cq ${tem ? 'tem' : ''} ${nova && nova.k === k ? 'nova' : ''}" title="${esc(regra)}">
+      <span class="ic">${ic(tem ? icn : 'lock', 17)}</span><b>${esc(nome)}</b>
+      <span>${tem ? 'ganha' : esc(regra)}</span></div>`;
+  }).join('')}</div>`;
+}
+
+/* ---------- 8. Projeto: os atos, a agenda dele, as metas ------------- */
+function clProjetoV111(){
+  const c = clCliente(), P = painelDe(c.id);
+  const { i, total, pj } = atoAtual(c);
+  const prev = diasAgendaPrevistos(pj), usados = P.agendaUsada.length;
+  const m = metasDe();
+  const barra = (r, p) => `<div class="barra"><i style="width:${p ? Math.min(100, Math.round(r / p * 100)) : 0}%"></i></div>`;
+  return clShell(`<div class="clbody venter">
+    <div class="kick">${esc(c.nome)} · projeto</div>
+    <h2>${esc(pj.nome)}</h2>
+    <p>${pj.continuo
+      ? 'Ciclos mensais: cada mês responde uma pergunta, e a próxima só faz sentido depois dela.'
+      : `${esc(pj.per)}. Cada ato responde uma pergunta — e diz quantos dias seus vai pedir.`}</p>
+
+    <div class="clgrid2">
+      <div class="atoCard"><div class="kick">Sua agenda</div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span style="font-family:var(--serif);font-size:38px;color:var(--ink-50);line-height:1">${prev}</span>
+          <span style="color:var(--mut);font-size:13px">${prev === 1 ? 'dia seu' : 'dias seus'} no projeto inteiro</span></div>
+        <div class="clprog" style="margin-top:10px"><div class="bar"><i style="width:${prev ? Math.round(usados / prev * 100) : 0}%"></i></div>
+          <span>${usados} de ${prev} usados</span></div>
+        <p style="font-size:12px;margin:10px 0 0">${pj.fases.some(f => !f.ag)
+          ? `${pj.fases.filter(f => !f.ag).map(f => esc(f.m)).join(', ')} não ${pj.fases.filter(f => !f.ag).length === 1 ? 'custa' : 'custam'} nenhum dia seu.`
+          : 'Todo ato pede um pouco da sua agenda — e a agência combina cada data antes.'}</p></div>
+      <div class="atoCard"><div class="kick">Metas do ciclo</div>
+        <div class="metas" style="grid-template-columns:1fr;gap:6px;margin:0">
+          <div class="meta"><b>${m.noAr}<small>/ ${m.total}</small></b><span>publicações no ar</span>${barra(m.noAr, m.total)}</div>
+          ${m.reels.p ? `<div class="meta"><b>${m.reels.r}<small>/ ${m.reels.p}</small></b><span>reels</span>${barra(m.reels.r, m.reels.p)}</div>` : ''}
+          ${m.carr.p ? `<div class="meta"><b>${m.carr.r}<small>/ ${m.carr.p}</small></b><span>carrosséis</span>${barra(m.carr.r, m.carr.p)}</div>` : ''}
+        </div>
+        <p style="font-size:11.5px;margin:10px 0 0">Contado do que foi ao ar de verdade — nunca digitado.</p></div>
+    </div>
+
+    <h3>Os atos</h3>
+    <div class="atoLista">${pj.fases.map((f, k) => `<div class="ato ${k < i ? 'feito' : k === i ? 'agora' : ''}">
+      <span class="num">${k < i ? ic('checkc', 15) : k + 1}</span>
+      <span class="t"><b>${esc(f.n)}</b><span>${esc(f.m)}${k === i ? ' · agora' : k < i ? ' · concluído' : ''}</span>
+        <em>${esc(f.q)}</em></span>
+      <span class="dias"><b>${f.ag || 0}</b>${f.ag === 1 ? 'dia seu' : 'dias seus'}</span></div>`).join('')}</div>
+
+    <div class="clgrid2">
+      <button class="clbtn sec" data-r="agenda" style="margin-top:0">Quando vai ao ar</button>
+      <button class="clbtn sec" data-r="resultados" style="margin-top:0">Como está indo</button>
+    </div>
+  </div>`);
+}
+
+/* ---------- 9. Resultados: execução, com número; resultado, quando houver */
+function clResultadosV111(){
+  const c = clCliente(), { i, total, fase } = atoAtual(c);
+  const m = metasDe(), P = painelDe(c.id);
+  const primeira = P.decisoes.filter(d => d.tipo === 'aprovou' && !d.aposAjuste).length;
+  const pct = P.decisoes.length ? Math.round(primeira / P.decisoes.length * 100) : null;
+  const rapido = P.decisoes.filter(d => d.ms != null);
+  const medH = rapido.length ? Math.round(rapido.reduce((s, d) => s + d.ms, 0) / rapido.length / 3600000) : null;
+  return clShell(`<div class="clbody venter">
+    <div class="kick">${esc(c.nome)} · Ato ${i + 1} de ${total}</div>
+    <h2>Como está indo</h2>
+    <p>Neste ato — <b style="color:var(--ink-50)">${esc(fase.n)}</b> — a pergunta é
+      <em>"${esc(fase.q)}"</em>. O que a Maestro mede sozinha é execução: o que foi ao ar,
+      quando, e se saiu igual ao aprovado.</p>
+    <div class="clgrid2" style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:16px 0">
+      <div class="tileCl fu"><b>${m.noAr}<small style="font-size:13px;color:var(--mut)">/${m.total}</small></b><div>publicações no ar</div></div>
+      <div class="tileCl fu" style="animation-delay:60ms"><b>${m.decididas}</b><div>decididas por você</div></div>
+      <div class="tileCl fu" style="animation-delay:120ms"><b>${pct == null ? '—' : pct + '%'}</b><div>aprovadas de primeira</div></div>
+      <div class="tileCl fu" style="animation-delay:180ms"><b>${medH == null ? '—' : (medH < 1 ? '<1h' : medH + 'h')}</b><div>seu tempo médio de decisão</div></div>
+    </div>
+    <h3>Previsto × no ar</h3>
+    <div class="caixa">${svgBars([[esc(fase.m), m.total, m.noAr]], { c1:'#35333A', c2:'#D9AC4C', txt:'#A0A0A6' })}
+      <div class="flegend" style="color:var(--mut);margin:2px 0 8px">
+        <i><b style="background:#35333A"></b> previsto</i><i><b style="background:#D9AC4C"></b> no ar</i></div></div>
+    <h3>Dias da sua agenda</h3>
+    <div class="caixa" style="padding:14px">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:8px">
+        <span style="color:var(--mut)">usados neste ato</span><b style="color:var(--ink-50)">${P.agendaUsada.filter(a => a.ato === i).length} de ${fase.ag || 0}</b></div>
+      <div class="clprog"><div class="bar"><i style="width:${fase.ag ? Math.min(100, Math.round(P.agendaUsada.filter(a => a.ato === i).length / fase.ag * 100)) : 0}%"></i></div></div></div>
+    <p style="font-size:11.5px;margin-top:14px">Alcance, seguidores e cliques entram aqui quando a conta
+      do Instagram estiver ligada — com número, não com adjetivo.</p>
+  </div>`);
+}
+
+/* ---------- 10. Agenda, Feed e Conta, escuros ------------------------ */
+function clAgendaV111(){
+  const dias = diasComPost(), sel = S.agDia ?? dias[0], doDia = pecasDoDia(sel);
+  const c = clCliente();
+  return clShell(`<div class="clbody venter">
+    <div class="kick">${esc(c.nome)} · ${nomeMes(S.mesAg)}</div>
+    <h2>Quando vai ao ar</h2>
+    <p>Data e horário que você aprovou. O que ainda está em ajuste espera a publicação — a data não corre na frente dela.</p>
+    ${mesSwitch(false)}<div class="dark">${calAgosto(true)}</div>
+    <h3 style="margin-top:4px">Dia ${sel} de ${nomeMes(S.mesAg)}</h3>
+    ${doDia.length ? doDia.map(p => itemAgenda(p, false)).join('') : '<p style="font-size:13px">Nada neste dia.</p>'}
+  </div>`);
+}
+function clFeedV111(){
+  const c = clCliente();
+  return clShell(`<div class="clbody venter">
+    <div class="kick">${esc(c.nome)} · Instagram</div>
+    <h2>Seu feed</h2>
+    <p>Como o perfil fica quando as publicações aprovadas forem ao ar.</p>
+    ${segFeed(false)}${feedGrid(S.feedview)}${legendaFeed('var(--ink-300)')}
+    <p style="font-size:12px;margin-top:14px">É uma prévia — a ordem final segue as datas. O que ainda não foi decidido aparece tracejado.</p>
+  </div>`);
+}
+function clContaV111(){
+  const eu = clPessoa(), c = clCliente(), P = painelDe(c.id);
+  return clShell(`<div class="clbody venter">
+    <div class="kick">Sua conta</div>
+    <h2>${esc(eu.nome)}</h2>
+    <p>${esc(eu.mail || 'entra por link, sem senha')}</p>
+    <h3>Acesso</h3>
+    <div class="clrow"><span class="t"><b>Entrada por link</b>
+      <span>Você não tem senha para lembrar. A gente manda um link a cada vez.</span></span></div>
+    <h3>Avisos</h3>
+    <div class="clrow"><span class="t"><b>E-mail</b><span>quando chegar algo novo para você</span></span>
+      <span class="clpill q-APPROVED">Ligado</span></div>
+    <div class="clrow"><span class="t"><b>WhatsApp</b><span>quando chegar algo novo para você</span></span>
+      <span class="clpill q-APPROVED">Ligado</span></div>
+    <h3>Sons</h3>
+    <button class="clrow" data-sndtoggle="1"><span class="t"><b>Sons da Maestro</b>
+      <span>só em aprovar, pedir ajuste e conquista — nunca em navegação</span></span>
+      <span class="clpill ${S.sound ? 'q-APPROVED' : 'q-DRAFT'}">${S.sound ? 'Ligado' : 'Desligado'}</span></button>
+    <h3>Seu histórico aqui</h3>
+    <div class="clrow"><span class="t"><b>${P.decisoes.length} ${P.decisoes.length === 1 ? 'decisão' : 'decisões'}</b>
+      <span>${Object.keys(P.conquistas).length} de ${CONQUISTAS.length} conquistas · ${P.visitas} ${P.visitas === 1 ? 'visita' : 'visitas'}</span></span></div>
+    <div class="conta"><b>Tudo liberado, sempre</b>
+      <p style="margin:5px 0 0;font-size:13px">Seu acesso é gratuito e completo, em qualquer plano que a agência tenha.</p></div>
+    <button class="clbtn sec" data-trocausr="1" style="margin-top:14px">Trocar de pessoa</button>
+  </div>`);
+}
+
+/* ---------- 11. as rotas: o miolo entra por cima, no fim da cadeia ---- */
+const ROTAS_CL_V111 = {
+  inicio: clInicioV111, projeto: clProjetoV111, resultados: clResultadosV111,
+  agenda: clAgendaV111, feed: clFeedV111, conta: clContaV111,
+  lote: () => clPauta()            /* "Publicações" É a pauta: uma porta só */
+};
+render = (function(orig){
+  return function(){
+    if(S.view === 'client' && S.route === 'lote') S.route = 'clpauta';
+    orig.apply(this, arguments);
+    if(S.view === 'client' && ROTAS_CL_V111[S.route] && !S.skel){
+      document.getElementById('root').innerHTML = ROTAS_CL_V111[S.route]();
+      renderLayer(); ctxBar();
+      if(typeof posRender === 'function') posRender();
+    }
+  };
+})(render);
+/* o painel confere as conquistas toda vez que o cliente entra — o "em
+   compasso" e o "ato fechado" nascem de coisas que a agência faz, não ele */
+render = (function(orig){
+  return function(){
+    if(S.view === 'client' && S.usuario && S.usuario.tipo === 'cliente' && S.pauta){
+      const novas = avaliarConquistas(clCliente().id);
+      if(novas.length && !S.cqNova) S.cqNova = novas[0];
+    }
+    return orig.apply(this, arguments);
+  };
+})(render);
 </script>
