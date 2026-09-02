@@ -15767,7 +15767,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v109 · 2 set · o responsável com rosto e nome';
+const VERSAO_PROTOTIPO = 'v110 · 2 set · o cliente com a marca e o nome';
 
 menuSheet = (function(orig){
   return function(){
@@ -21525,4 +21525,81 @@ renderLayer = (function(orig){
   return function(){ const r = orig.apply(this, arguments); pintarResponsaveis(); return r; };
 })(renderLayer);
 pintarResponsaveis();
+</script>
+<style>
+/* v110 — o cliente com a marca e o nome, como a equipe ganhou na v109 */
+.enCard .cli{ display:inline-flex !important; align-items:center; gap:6px;
+  padding:2px 9px 2px 2px !important; border-radius:999px !important;
+  font-family:var(--sans) !important; font-size:11.5px !important; letter-spacing:0 !important;
+  border:1px solid var(--ink-700); max-width:100%; overflow:hidden }
+.cliFoto{ width:18px; height:18px; border-radius:5px; flex:0 0 auto;
+  display:inline-grid; place-items:center; background:var(--ink-600);
+  font-family:var(--mono); font-size:8px; font-weight:700; color:var(--ink-100) }
+.cliFoto.comLogo{ padding:0; overflow:hidden; background:var(--ink-700) }
+.cliFoto.comLogo img{ width:100%; height:100%; object-fit:cover; display:block;
+  border-radius:inherit }
+.enCard .cli b{ font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+/* no seletor de cliente, a marca vem antes do nome */
+.ptChips button .cliFoto{ width:19px; height:19px }
+.ptChips button.temMarca{ padding-left:5px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v110 — o cliente ganha a mesma dignidade que a equipe ganhou na v109.
+
+   A logo do cliente existe desde a v86 e já aparecia na lista de Clientes
+   e nos chips do topo. No card do Ensaio, não: ali o cliente era duas
+   letras num pílula cinza — "EJ" —, que é justamente onde a pessoa está
+   com pressa e precisa saber de quem é aquilo sem ler.
+
+   Uma diferença de propósito em relação à v109: a pessoa é encontrada
+   pelo NOME que o selo já carregava; o cliente é encontrado pelo CARD.
+   Cada `.enCard` traz o id da tarefa, a tarefa traz o cliente — exato,
+   sem adivinhar por iniciais. Duas letras podem ser de dois clientes;
+   um id, não.
+
+   E a forma acompanha o que a marca é: pessoa é círculo, marca é quadrado
+   de canto arredondado. Foi a decisão de quando a logo entrou, e ela vale
+   aqui também.
+   ================================================================== */
+
+function rostoCli(c){
+  return (c && c.logo)
+    ? `<span class="cliFoto comLogo"><img src="${c.logo}" alt="" aria-hidden="true"></span>`
+    : `<span class="cliFoto"${c && c.cor
+        ? ` style="background:linear-gradient(150deg,${c.cor},#111);color:#fff"` : ''
+      }>${esc((c && c.ini) || '?')}</span>`;
+}
+
+function pintarClientes(){
+  /* 1. o selo no card do quadro — o cliente vem do CARD, não das letras */
+  document.querySelectorAll('.enCard .cli:not(.pintado)').forEach(el => {
+    el.classList.add('pintado');
+    const card = el.closest('.enCard[data-entar]');
+    if(!card || !S.ensaio) return;
+    const t = (S.ensaio.tarefas || []).find(x => x.id === +card.dataset.entar);
+    const c = t && CLIS().find(x => x.id === t.cli);
+    if(!c) return;
+    el.setAttribute('title', c.nome + (c.seg ? ' · ' + c.seg : ''));
+    el.innerHTML = rostoCli(c) + `<b>${esc(c.nome)}</b>`;
+  });
+
+  /* 2. o seletor de cliente, dentro do card */
+  document.querySelectorAll('[data-enclipick]:not(.pintado)').forEach(b => {
+    b.classList.add('pintado');
+    const c = CLIS().find(x => x.id === b.dataset.enclipick);
+    if(!c) return;
+    b.insertAdjacentHTML('afterbegin', rostoCli(c));
+    b.classList.add('temMarca');
+  });
+}
+
+render = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); pintarClientes(); return r; };
+})(render);
+renderLayer = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); pintarClientes(); return r; };
+})(renderLayer);
+pintarClientes();
 </script>
