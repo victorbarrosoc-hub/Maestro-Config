@@ -15767,7 +15767,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v117 · 2 set · o passo e a arte, para quem aprova';
+const VERSAO_PROTOTIPO = 'v118 · 2 set · todo tipo de material chega ao cliente';
 
 menuSheet = (function(orig){
   return function(){
@@ -23702,4 +23702,132 @@ if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clpauta = () => clPauta
     return function(){ const r = orig.apply(this, arguments); naEntrada(); return r; };
   })(render);
 })();
+</script>
+<style>
+/* =====================================================================
+   v118 — todo tipo de material chega a quem aprova.
+
+   A v117 levou imagem e vídeo. PDF, documento e áudio ficavam pelo
+   caminho: o protótipo só cria endereço de arquivo (`URL.createObjectURL`)
+   para imagem e vídeo — os outros vivem só no banco do navegador, pela
+   chave. Sem endereço, o filtro os descartava e o cliente aprovava sem
+   ver o roteiro em PDF que a agência tinha anexado.
+   ================================================================== */
+.clAnexos{ display:grid; gap:7px; margin:0 0 14px }
+.clAnexo{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px;
+  background:var(--soft); border:1px solid var(--line); min-width:0 }
+.clAnexo .ic{ width:32px; height:32px; border-radius:9px; flex:0 0 auto; display:grid;
+  place-items:center; background:var(--paper); border:1px solid var(--line); color:var(--acc) }
+.clAnexo .txt{ flex:1; min-width:0 }
+.clAnexo b{ display:block; font-size:12.5px; color:var(--tx); font-weight:600;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.clAnexo span{ display:block; font-size:11px; color:var(--mut); margin-top:1px }
+.clAnexo .bt{ flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; padding:6px 11px;
+  border-radius:9px; border:1px solid var(--line); color:var(--acc); font-size:11.5px;
+  font-weight:600; background:transparent; text-decoration:none }
+.clAnexo .bt:hover{ border-color:var(--acc) }
+.clAnexo audio{ width:100%; margin-top:7px; height:34px }
+.clAnexo.som{ display:block }
+.clAnexo.som .topo{ display:flex; align-items:center; gap:10px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v118 — todo tipo de material chega a quem aprova.
+
+   Quatro naturezas de arquivo no produto: imagem, vídeo, áudio e
+   documento — mais o link colado. As duas primeiras já apareciam. Aqui
+   entram as outras duas, na única forma que faz sentido para elas:
+   nomeadas, com o peso, e com um baixar que vai buscar o arquivo no
+   banco do navegador pela chave (`baixarMaterial`, que a agência já
+   usava no visualizador).
+
+   O áudio ganha o tocador na própria tela: locução se ouve, não se
+   baixa. Para isso ele precisa de endereço, e é criado aqui, sob
+   demanda — um por vez, quando o card abre.
+   ================================================================== */
+
+const CL_NOME_TIPO = { doc:'documento', audio:'áudio', video:'vídeo', imagem:'imagem' };
+
+/* o que não é imagem nem vídeo, e não é link: documento e áudio */
+const clAnexosDe = p => (typeof materiaisDe === 'function' ? materiaisDe(p.id) : [])
+  .map((m, i) => ({ m, i }))
+  .filter(({ m }) => m.tipo === 'audio' || m.tipo === 'doc');
+const clLinksDe = p => (typeof materiaisDe === 'function' ? materiaisDe(p.id) : [])
+  .filter(m => m.tipo === 'link');
+
+/* o áudio precisa de endereço para tocar; o documento não — ele é
+   baixado direto do banco do navegador, sem ocupar memória à toa */
+async function clSomParaOuvir(p){
+  if(typeof idbLer !== 'function') return;
+  const sons = clAnexosDe(p).map(x => x.m).filter(m => m.tipo === 'audio' && !m.url && m.chave);
+  if(!sons.length) return;
+  let algum = false;
+  for(const m of sons){
+    try{ const blob = await idbLer(m.chave);
+      if(blob){ m.url = URL.createObjectURL(blob); algum = true; } }catch(e){}
+  }
+  if(algum) render();
+}
+
+function clAnexosHtml(p){
+  const anexos = clAnexosDe(p);
+  const links = clLinksDe(p);
+  if(!anexos.length && !links.length) return '';
+  const linha = ({ m, i }) => {
+    const som = m.tipo === 'audio';
+    const peso = m.peso ? pesoLegivel(m.peso) : '';
+    const corpo = `<span class="ic">${ic(ICONE_TIPO[m.tipo] || 'doc', 15)}</span>
+      <span class="txt"><b>${esc(m.nome || CL_NOME_TIPO[m.tipo] || 'arquivo')}</b>
+        <span>${esc(CL_NOME_TIPO[m.tipo] || 'arquivo')}${peso ? ' · ' + peso : ''}</span></span>
+      <button class="bt" data-clbaixa="${p.id}|${i}">${ic('baixar', 12)} Baixar</button>`;
+    return som
+      ? `<div class="clAnexo som"><div class="topo">${corpo}</div>
+          ${m.url ? `<audio src="${m.url}" controls preload="metadata"></audio>` : ''}</div>`
+      : `<div class="clAnexo">${corpo}</div>`;
+  };
+  const linkLinha = m => `<div class="clAnexo"><span class="ic">${ic('linkic', 15)}</span>
+    <span class="txt"><b>${esc(m.nome || m.url)}</b><span>link</span></span>
+    <a class="bt" href="${esc(m.url)}" target="_blank" rel="noopener noreferrer">Abrir</a></div>`;
+  return `<div class="clAnexos">${anexos.map(linha).join('')}${links.map(linkLinha).join('')}</div>`;
+}
+
+/* baixar um anexo: o mesmo caminho do visualizador da agência, que sabe
+   ir buscar o arquivo no banco do navegador quando não há endereço */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-clbaixa]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const [id, i] = t.dataset.clbaixa.split('|');
+  const m = (S.mat[+id] || [])[+i];
+  if(!m){ toast('Não achei o arquivo.'); return; }
+  if(typeof baixarMaterial === 'function') baixarMaterial(m);
+}, true);
+
+/* entra logo abaixo da arte — e existe mesmo quando não há arte nenhuma,
+   porque no passo do texto o roteiro em PDF é justo o que se lê */
+clCard = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    const p = S.pauta.find(x => x.id === S.pcSel);
+    if(!p || !html) return html;
+    const anexos = clAnexosHtml(p);
+    if(!anexos) return html;
+    clSomParaOuvir(p);
+    const marca = '<div class="clcap leitura"><div class="caplbl">Texto da publicação</div>';
+    return html.indexOf(marca) >= 0 ? html.replace(marca, anexos + '\n    ' + marca) : html + anexos;
+  };
+})(clCard);
+if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clcard = () => clCard();
+
+/* a v117 mandava os links por uma segunda porta, ao pé da arte. Com a
+   lista de anexos eles passam a morar num lugar só — e `clArquivos` é
+   `const`, então quem sai do caminho é a saída dela, não ela. */
+clArteHtml = (function(orig){
+  return function(p){
+    const html = orig.apply(this, arguments);
+    return typeof html === 'string'
+      ? html.replace(/<div class="clArqs">[\s\S]*?<\/div>/, '') : html;
+  };
+})(clArteHtml);
 </script>
