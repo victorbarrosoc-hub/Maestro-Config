@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-02 20:03 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-02 20:14 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15832,7 +15832,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v121 · 2 set · o Ensaio organizado, nos dois tamanhos';
+const VERSAO_PROTOTIPO = 'v122 · 2 set · o ciclo desenhado e o link no card do cliente';
 
 menuSheet = (function(orig){
   return function(){
@@ -24499,4 +24499,267 @@ renderLayer = (function(orig){
 addEventListener('resize', enAltura);
 addEventListener('orientationchange', () => setTimeout(enAltura, 200));
 enOrganizar();
+</script>
+<style>
+/* =====================================================================
+   v122 — o ciclo desenhado, o link no card do cliente, e duas
+   arrumações de nome e de menu.
+   ================================================================== */
+.pdcaCaixa{ margin:10px 0 4px; border:1px solid var(--ink-800); border-radius:14px;
+  background:var(--ink-950); padding:12px 12px 6px; overflow-x:auto;
+  -webkit-overflow-scrolling:touch }
+.pdcaCaixa svg{ display:block; width:1280px; max-width:100% }
+@media(max-width:860px){ .pdcaCaixa svg{ width:1060px; max-width:none } }
+.pdcaBt{ display:inline-flex; align-items:center; gap:7px; margin:8px 0 2px;
+  padding:7px 13px; border-radius:9px; border:1px solid var(--ink-700);
+  color:var(--brass-300); font-size:12.5px; font-weight:600; background:var(--ink-950) }
+.pdcaBt:hover{ border-color:var(--brass-600); background:rgba(200,150,58,.08) }
+.pdcaFull{ position:fixed; inset:0; z-index:1250; background:rgba(6,7,9,.97);
+  display:flex; flex-direction:column; padding:14px }
+.pdcaFull .topo{ display:flex; align-items:center; gap:10px; margin-bottom:10px }
+.pdcaFull .topo b{ font-family:var(--serif); font-weight:400; font-size:19px; color:var(--ink-50) }
+.pdcaFull .topo .sp{ flex:1 }
+.pdcaFull .palco{ flex:1; overflow:auto; display:grid; place-items:center }
+.pdcaFull svg{ width:min(1280px, 96vw); max-width:none }
+@media(max-width:860px){ .pdcaFull svg{ width:1180px } }
+
+/* o link de aprovação no cabeçalho da ficha e na lista de clientes */
+.cliLink{ display:inline-flex; align-items:center; gap:7px }
+.cliAcoes .lk:hover{ color:var(--brass-300) !important }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v122 — quatro coisas que o fundador pediu depois de rodar a v121.
+
+   1. O CICLO DESENHADO. O texto explicava; um desenho mostra. E são
+      DOIS ciclos, não um: a Produção passa duas vezes pelo cliente
+      (texto, depois peça), e as outras quatro frentes correm o PDCA da
+      casa, sem ninguém de fora. Ver os dois lado a lado é o que faz a
+      diferença ficar óbvia.
+   2. O LINK DE APROVAÇÃO no card do cliente — ele existia só dentro da
+      aba "Quem aprova". Agora está no cabeçalho da ficha (em qualquer
+      aba) e na linha da lista de clientes.
+   3. "Pauta" vira "Cronograma de conteúdos" na ficha do cliente.
+   4. A Revisão sai do menu: o Check do Ensaio faz esse trabalho desde
+      a v112, e duas portas para a mesma fila é como se perde card.
+   ================================================================== */
+
+/* ---------- 1. o organograma ---------------------------------------- */
+const PD = {
+  brass:'#C8963A', brass2:'#FFD176', cobalt:'#5B8DEF', encore:'#35B87A',
+  amarelo:'#E5C54D', laranja:'#E5854D', tinta:'#F4F7F5', mudo:'#A0A0A6',
+  linha:'#35333A', fundo:'#161616'
+};
+/* uma caixa do fluxo: título, uma linha de explicação e a cor da borda */
+function pdCaixa(x, y, w, h, cor, titulo, sub, forte){
+  return `<g>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12"
+      fill="${forte ? cor + '1F' : '#1C1C1C'}" stroke="${cor}" stroke-width="${forte ? 1.6 : 1.1}"/>
+    <text x="${x + 14}" y="${y + 26}" fill="${PD.tinta}" font-size="14.5"
+      font-family="system-ui,sans-serif" font-weight="600">${titulo}</text>
+    ${sub ? `<text x="${x + 14}" y="${y + 47}" fill="${PD.mudo}" font-size="11.5"
+      font-family="system-ui,sans-serif">${sub}</text>` : ''}
+    ${sub && sub.length > 34 ? '' : ''}
+  </g>`;
+}
+const pdSeta = (x1, y1, x2, y2, cor, tracejada) =>
+  `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${cor}" stroke-width="1.6" fill="none"
+    marker-end="url(#pdPonta${cor === PD.amarelo ? 'A' : cor === PD.cobalt ? 'C' : 'B'})"
+    ${tracejada ? 'stroke-dasharray="5 4"' : ''}/>`;
+const pdCurva = (d, cor, tracejada) =>
+  `<path d="${d}" stroke="${cor}" stroke-width="1.6" fill="none"
+    marker-end="url(#pdPonta${cor === PD.amarelo ? 'A' : cor === PD.cobalt ? 'C' : 'B'})"
+    ${tracejada ? 'stroke-dasharray="5 4"' : ''}/>`;
+const pdRotulo = (x, y, txt, cor, ancora) =>
+  `<text x="${x}" y="${y}" fill="${cor}" font-size="11" font-family="ui-monospace,monospace"
+    letter-spacing="0.06em" text-anchor="${ancora || 'middle'}">${txt}</text>`;
+
+function svgCicloMaestro(){
+  const P = 208, L = 190, H = 84;          /* passo, largura e altura da caixa */
+  const cx = i => 24 + i * P;
+  const y1 = 176, y2 = 366, y3 = 640;      /* três faixas: 1ª volta, 2ª volta, frentes */
+  const ponta = (id, cor) => `<marker id="pdPonta${id}" viewBox="0 0 10 10" refX="9" refY="5"
+      markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="${cor}"/></marker>`;
+
+  return `<svg viewBox="0 0 1280 790" role="img"
+    aria-label="O ciclo da Maestro: a Produção com duas voltas pelo cliente, e as outras frentes com o PDCA da casa">
+  <defs>${ponta('B', PD.brass)}${ponta('A', PD.amarelo)}${ponta('C', PD.cobalt)}</defs>
+  <rect width="1280" height="790" fill="${PD.fundo}"/>
+
+  <!-- ================= PRODUÇÃO ================= -->
+  <text x="24" y="40" fill="${PD.brass2}" font-size="12" font-family="ui-monospace,monospace"
+    letter-spacing="0.18em">PRODUÇÃO · O CONTEÚDO DOS CLIENTES</text>
+  <text x="24" y="66" fill="${PD.tinta}" font-size="17" font-family="Georgia,serif">
+    Um card só, duas voltas — o mesmo card passa duas vezes por quem aprova.</text>
+  <text x="24" y="88" fill="${PD.mudo}" font-size="12" font-family="system-ui,sans-serif">
+    Primeiro o texto, quando mudar é barato. Depois a publicação pronta, quando refazer custa caro.</text>
+
+  <!-- 1ª volta -->
+  ${pdRotulo(24, y1 - 12, '1ª VOLTA · O TEXTO', PD.brass, 'start')}
+  ${pdCaixa(cx(0), y1, L, H, PD.mudo, 'Inbox', 'a ideia entra, sem estrutura')}
+  ${pdCaixa(cx(1), y1, L, H, PD.cobalt, 'Plan', 'quem cuida estrutura a pauta')}
+  ${pdCaixa(cx(2), y1, L, H, PD.laranja, 'Check', 'só o revisor libera')}
+  ${pdCaixa(cx(3), y1, L, H, PD.brass, 'No lote', 'espera o conjunto')}
+  ${pdCaixa(cx(4), y1, L, H, PD.brass, 'Com o cliente', 'ele decide o texto', true)}
+  ${pdCaixa(cx(5), y1, L, H, PD.encore, 'Texto aprovado', 'o texto fica congelado')}
+  ${[0,1,2,3,4].map(i => pdSeta(cx(i) + L, y1 + H/2, cx(i+1) - 6, y1 + H/2, PD.brass)).join('')}
+
+  <!-- alteração volta ao Plan, em amarelo -->
+  ${pdCurva(`M${cx(4) + L/2} ${y1} C ${cx(4) + L/2} ${y1 - 38}, ${cx(1) + L/2} ${y1 - 38}, ${cx(1) + L/2} ${y1 - 8}`, PD.amarelo)}
+  ${pdRotulo((cx(1) + cx(4) + L) / 2, y1 - 46, 'PEDIU ALTERAÇÃO → VOLTA AO PLAN, EM AMARELO', PD.amarelo)}
+
+  <!-- retorno de carro: começa a 2ª volta -->
+  ${pdCurva(`M${cx(5) + L/2} ${y1 + H} L ${cx(5) + L/2} ${y1 + H + 52}
+      L ${cx(0) + L/2} ${y1 + H + 52} L ${cx(0) + L/2} ${y2 - 8}`, PD.cobalt)}
+  ${pdRotulo((cx(0) + cx(5) + L) / 2, y1 + H + 38, 'APROVADO O TEXTO — COMEÇA A 2ª VOLTA', PD.cobalt)}
+
+  <!-- 2ª volta -->
+  ${pdRotulo(24, y2 - 12, '2ª VOLTA · A PUBLICAÇÃO PRONTA', PD.brass, 'start')}
+  ${pdCaixa(cx(0), y2, L, H, PD.cobalt, 'Plan · em azul', 'quem executa a peça?', true)}
+  ${pdCaixa(cx(1), y2, L, H, PD.amarelo, 'Do', 'a peça é feita e sobe')}
+  ${pdCaixa(cx(2), y2, L, H, PD.laranja, 'Check', 'só o revisor libera')}
+  ${pdCaixa(cx(3), y2, L, H, PD.brass, 'No lote', 'espera o conjunto')}
+  ${pdCaixa(cx(4), y2, L, H, PD.brass, 'Com o cliente', 'ele decide a publicação', true)}
+  ${pdCaixa(cx(5), y2, L, H, PD.encore, 'Act', 'agendado e no ar')}
+  ${[0,1,2,3,4].map(i => pdSeta(cx(i) + L, y2 + H/2, cx(i+1) - 6, y2 + H/2, PD.brass)).join('')}
+  ${pdCurva(`M${cx(4) + L/2} ${y2 + H} C ${cx(4) + L/2} ${y2 + H + 44}, ${cx(0) + L/2} ${y2 + H + 44}, ${cx(0) + L/2} ${y2 + H + 8}`, PD.amarelo)}
+  ${pdRotulo((cx(0) + cx(4) + L) / 2, y2 + H + 62, 'PEDIU ALTERAÇÃO → VOLTA AO PLAN DA PEÇA', PD.amarelo)}
+
+  <text x="24" y="${y2 + H + 100}" fill="${PD.mudo}" font-size="11.5" font-family="system-ui,sans-serif">
+    Subir a peça em Do manda o card ao Check sozinho. Em "Com o cliente" ninguém da agência mexe — a decisão dele é que move.</text>
+
+  <line x1="24" y1="${y3 - 78}" x2="1256" y2="${y3 - 78}" stroke="${PD.linha}"/>
+
+  <!-- ================= AS OUTRAS FRENTES ================= -->
+  <text x="24" y="${y3 - 44}" fill="${PD.brass2}" font-size="12" font-family="ui-monospace,monospace"
+    letter-spacing="0.18em">AS OUTRAS QUATRO FRENTES · A CASA</text>
+  <text x="24" y="${y3 - 18}" fill="${PD.tinta}" font-size="17" font-family="Georgia,serif">
+    O mesmo PDCA, uma volta só — e sem ninguém de fora.</text>
+  ${pdCaixa(cx(0), y3, L, H, PD.mudo, 'Inbox', 'a ideia entra')}
+  ${pdCaixa(cx(1), y3, L, H, PD.cobalt, 'Plan', 'o que, quem, até quando')}
+  ${pdCaixa(cx(2), y3, L, H, PD.amarelo, 'Do', 'fazendo agora')}
+  ${pdCaixa(cx(3), y3, L, H, PD.laranja, 'Check', 'conferir antes de valer')}
+  ${pdCaixa(cx(4), y3, L, H, PD.encore, 'Act', 'ajustar e concluir')}
+  ${[0,1,2,3].map(i => pdSeta(cx(i) + L, y3 + H/2, cx(i+1) - 6, y3 + H/2, PD.brass)).join('')}
+  <g>
+    <rect x="${cx(5)}" y="${y3}" width="${L}" height="${H}" rx="12" fill="#1C1C1C"
+      stroke="${PD.linha}" stroke-dasharray="5 4"/>
+    <text x="${cx(5) + 14}" y="${y3 + 24}" fill="${PD.mudo}" font-size="11.5"
+      font-family="system-ui,sans-serif">Estratégico · Comercial</text>
+    <text x="${cx(5) + 14}" y="${y3 + 42}" fill="${PD.mudo}" font-size="11.5"
+      font-family="system-ui,sans-serif">Acompanhamento</text>
+    <text x="${cx(5) + 14}" y="${y3 + 60}" fill="${PD.mudo}" font-size="11.5"
+      font-family="system-ui,sans-serif">Pessoas e Conhecimento</text>
+  </g>
+  <text x="24" y="${y3 + H + 30}" fill="${PD.mudo}" font-size="11.5" font-family="system-ui,sans-serif">
+    Sem a coluna "Com o cliente": assunto da casa não vai para fora. Frente restrita só aparece para o responsável, para quem for marcado e para os sócios.</text>
+</svg>`;
+}
+
+/* o desenho entra no "como este quadro funciona", e abre em tela cheia */
+enRecolherLegenda = (function(orig){
+  return function(){
+    orig.apply(this, arguments);
+    const corpo = document.querySelector('.enComoCorpo');
+    if(!corpo || corpo.querySelector('.pdcaCaixa')) return;
+    corpo.insertAdjacentHTML('afterbegin',
+      `<div class="pdcaCaixa">${svgCicloMaestro()}</div>
+       <button type="button" class="pdcaBt" data-pdcafull="1">${ic('search', 13)} Ver em tela cheia</button>`);
+  };
+})(enRecolherLegenda);
+
+addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-pdcafull],[data-pdcafecha]');
+  if(!b) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const velho = document.getElementById('pdcaFull');
+  if(velho){ velho.remove(); return; }
+  if(b.dataset.pdcafecha !== undefined) return;
+  const el = document.createElement('div');
+  el.id = 'pdcaFull'; el.className = 'pdcaFull';
+  el.innerHTML = `<div class="topo"><b>O ciclo da Maestro</b><span class="sp"></span>
+      <button class="b gho sm" data-pdcafecha="1">Fechar</button></div>
+    <div class="palco">${svgCicloMaestro()}</div>`;
+  document.body.appendChild(el);
+}, true);
+addEventListener('keydown', e => {
+  if(e.key === 'Escape') document.getElementById('pdcaFull')?.remove();
+});
+
+/* ---------- 2. o link de aprovação no card do cliente --------------- */
+/* no cabeçalho da ficha, em qualquer aba */
+agClienteDet = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    const c = cliAtual();
+    if(!c || !html || html.indexOf('data-cliapr') >= 0) return html;
+    const bt = `<button class="b gho sm cliLink" data-cliapr="${c.id}"
+      title="Copiar o link de aprovação de ${esc(c.nome)}">${ic('linkic', 13)} Link de aprovação</button>`;
+    /* entra ao lado do "Clientes" do topo, que existe em todas as abas */
+    return html.replace(/(<button class="b gho sm" data-r="clientes"[^>]*>[\s\S]*?<\/button>)/,
+      `$1 ${bt}`);
+  };
+})(agClienteDet);
+
+/* e na linha da lista de clientes, junto de editar e excluir */
+agClientes = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    if(!html || html.indexOf('data-cliedit') < 0) return html;
+    return html.replace(/<button data-cliedit="([^"]+)"/g, (m, id) => {
+      const c = CLIS().find(x => x.id === id);
+      const nome = c ? esc(c.nome) : 'cliente';
+      return `<button class="lk" data-cliapr="${id}" title="Copiar o link de aprovação de ${nome}"
+        aria-label="Copiar o link de aprovação de ${nome}">${ic('linkic', 15)}</button>${m}`;
+    });
+  };
+})(agClientes);
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-cliapr]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const id = t.dataset.cliapr;
+  const c = CLIS().find(x => x.id === id);
+  const link = linkDeAprovacao(id);
+  copiarTexto(link).then(ok => toast(ok
+    ? `Link de ${c ? c.nome : 'aprovação'} copiado. Quem aprova entra por ele, sem senha.`
+    : 'Não deu para copiar — abra "Quem aprova" e copie de lá.'));
+}, true);
+
+/* ---------- 3. "Pauta" vira "Cronograma de conteúdos" --------------- */
+abasCliente = (function(orig){
+  return function(atual){
+    return orig.apply(this, arguments)
+      .replace(/(<button data-tab="pauta"[^>]*>)Pauta(<\/button>)/, '$1Cronograma de conteúdos$2');
+  };
+})(abasCliente);
+(function(){
+  /* no menu lateral o item que abre a mesma aba fala a mesma língua */
+  MENU_AG.forEach(g => (g.it || []).forEach(it => {
+    if(it[0] === 'pauta') it[1] = 'Cronograma de conteúdos';
+  }));
+  const n = AGNAV.find(x => x.r === 'pauta');
+  if(n) n.n = 'Cronograma';
+})();
+
+/* ---------- 4. a Revisão sai do menu -------------------------------- */
+/* O Check do Ensaio é a fila do revisor desde a v112, com o card
+   inteiro à mão. Duas portas para a mesma fila é como se perde card. */
+(function(){
+  const i = AGNAV.findIndex(x => x.r === 'revisao');
+  if(i >= 0) AGNAV.splice(i, 1);
+  MENU_AG.forEach(g => { if(g.it) g.it = g.it.filter(([r]) => r !== 'revisao'); });
+})();
+/* quem chegar pela rota antiga cai no Check, onde o trabalho está */
+render = (function(orig){
+  return function(){
+    if(S.view === 'agency' && S.route === 'revisao'){
+      S.route = 'producao'; S.enCat = 'producao';
+    }
+    return orig.apply(this, arguments);
+  };
+})(render);
 </script>
