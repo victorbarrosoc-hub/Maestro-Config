@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-02 18:51 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-02 19:00 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15832,7 +15832,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v118 · 2 set · todo tipo de material chega ao cliente';
+const VERSAO_PROTOTIPO = 'v119 · 2 set · documento na tarefa, em qualquer frente';
 
 menuSheet = (function(orig){
   return function(){
@@ -23895,4 +23895,254 @@ clArteHtml = (function(orig){
       ? html.replace(/<div class="clArqs">[\s\S]*?<\/div>/, '') : html;
   };
 })(clArteHtml);
+</script>
+<style>
+/* =====================================================================
+   v119 — documento na tarefa, em qualquer frente.
+
+   Quem joga a ideia no Inbox costuma ter algo na mão: o briefing que o
+   cliente mandou, a planilha que o financeiro fechou, o print da
+   reclamação. Isso ia por fora — e o que vai por fora não chega em
+   quem executa.
+
+   Material só existia preso a um card da pauta (`S.mat[idDoCard]`), o
+   que deixava de fora justamente as outras quatro frentes.
+   ================================================================== */
+.enAnexBloco{ margin:2px 0 4px }
+.enAnexBloco .mtSolta{ margin-top:8px }
+.enAnexLista{ display:grid; gap:6px; margin-top:9px }
+.enAnexIt{ display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:10px;
+  background:var(--ink-950); border:1px solid var(--ink-800); min-width:0 }
+.enAnexIt .mini{ width:34px; height:34px; border-radius:8px; flex:0 0 auto; overflow:hidden;
+  display:grid; place-items:center; background:var(--ink-900); border:1px solid var(--ink-800);
+  color:var(--brass-400) }
+.enAnexIt .mini img, .enAnexIt .mini video{ width:100%; height:100%; object-fit:cover; display:block }
+.enAnexIt .txt{ flex:1; min-width:0 }
+.enAnexIt b{ display:block; font-size:12.5px; color:var(--ink-50); font-weight:600;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.enAnexIt small{ display:block; font-size:10.5px; color:var(--ink-400); margin-top:1px }
+.enAnexIt .bt{ flex:0 0 auto; width:28px; height:28px; border-radius:8px; display:grid;
+  place-items:center; border:1px solid var(--ink-700); color:var(--ink-300); background:transparent }
+.enAnexIt .bt:hover{ color:var(--brass-300); border-color:var(--brass-600) }
+.enAnexIt .bt.rm:hover{ color:var(--danger); border-color:rgba(229,72,77,.45) }
+.enAnexIt .nuvem{ font-family:var(--mono); font-size:9px; color:var(--encore) }
+.enAnexIt .aqui{ font-family:var(--mono); font-size:9px; color:var(--ink-500) }
+.enAnexVazio{ font-size:11.5px; color:var(--ink-500); margin:9px 0 0 }
+/* no cartão do quadro, um clipe discreto com a conta */
+.enClipe{ display:inline-flex; align-items:center; gap:4px; font-family:var(--mono); font-size:9.5px;
+  color:var(--ink-300); padding:2px 7px; border-radius:999px; border:1px solid var(--ink-700) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v119 — documento na tarefa, em qualquer frente.
+
+   O anexo mora na PRÓPRIA tarefa (`t.anexos`), não num card da pauta.
+   Assim ele viaja junto do quadro, que já é salvo inteiro, e vale para
+   as cinco frentes — a planilha do Comercial, o contrato do Estratégico,
+   o briefing que chega no Inbox da Produção.
+
+   O arquivo em si vai para o banco do navegador (pela chave) e, quando
+   há banco de verdade ligado, sobe para a nuvem e ganha um endereço que
+   sobrevive à viagem. O endereço temporário do navegador NÃO é
+   guardado: ele morre ao recarregar, e guardá-lo faria a tela mostrar
+   um retrato quebrado amanhã. Fica num mapa de memória, à parte.
+   ================================================================== */
+
+IC.clipe = '<path d="M20.5 11.5 12 20a5 5 0 0 1-7-7l8.8-8.8a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.6 1.6 0 0 1-2.3-2.3l7.9-7.9"/>';
+
+const EN_URL = {};                       /* chave → endereço vivo, só em memória */
+const enUrlDe = m => (m && m.nuvem && m.url) ? m.url : (m && EN_URL[m.chave]) || null;
+const enAnexosDe = t => (t && t.anexos) || [];
+
+/* traz de volta o que só existe no banco do navegador deste aparelho */
+async function enReidratar(t){
+  if(typeof idbLer !== 'function') return;
+  const faltam = enAnexosDe(t).filter(m => m.chave && !enUrlDe(m)
+    && (m.tipo === 'imagem' || m.tipo === 'video'));
+  if(!faltam.length) return;
+  let algum = false;
+  for(const m of faltam){
+    try{ const blob = await idbLer(m.chave);
+      if(blob){ EN_URL[m.chave] = URL.createObjectURL(blob); algum = true; } }catch(e){}
+  }
+  if(algum && S.modal) { S.modal = modalTarefa(S.enAnexAlvo || null); renderLayer(); }
+}
+
+/* guarda os arquivos: no banco do navegador sempre, na nuvem se houver */
+function enGuardarAnexos(lista, arquivos){
+  let n = 0;
+  [...arquivos].forEach(f => {
+    if(f.size > 50 * 1024 * 1024){ toast(`"${f.name}" passa de 50MB — use um link.`); return; }
+    const tipo = tipoDoArquivo(f);
+    const chave = novaChave('en');
+    const item = { tipo, nome: f.name, peso: f.size, chave };
+    if(tipo === 'imagem' || tipo === 'video') EN_URL[chave] = URL.createObjectURL(f);
+    lista.push(item);
+    if(typeof idbSalvar === 'function') idbSalvar(chave, f).catch(() => {});
+    if(typeof subirDepois === 'function') subirDepois(item, 'ensaio', f);
+    n++;
+  });
+  return n;
+}
+
+/* a lista dentro do modal — desenhada à parte para poder ser trocada
+   sozinha, sem refazer o modal e perder o que a pessoa já digitou */
+function enAnexListaHtml(lista){
+  if(!lista.length) return '<p class="enAnexVazio">Nenhum documento ainda.</p>';
+  return `<div class="enAnexLista">${lista.map((m, i) => {
+    const url = enUrlDe(m);
+    const capa = url && m.tipo === 'imagem' ? `<img src="${url}" alt="">`
+      : url && m.tipo === 'video' ? `<video src="${url}" muted playsinline preload="metadata"></video>`
+      : ic(ICONE_TIPO[m.tipo] || 'doc', 15);
+    return `<div class="enAnexIt">
+      <span class="mini">${capa}</span>
+      <span class="txt"><b>${esc(m.nome)}</b>
+        <small>${esc(CL_NOME_TIPO[m.tipo] || 'arquivo')} · ${pesoLegivel(m.peso || 0)}
+          ${m.nuvem ? '<span class="nuvem">na nuvem</span>' : '<span class="aqui">só neste aparelho</span>'}</small></span>
+      <button type="button" class="bt" data-enanexbx="${i}" title="Baixar" aria-label="Baixar">${ic('baixar', 13)}</button>
+      <button type="button" class="bt rm" data-enanexrm="${i}" title="Remover" aria-label="Remover">${ic('x', 12)}</button>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* onde os arquivos ficam antes de a tarefa existir */
+S.enNovos = [];
+const enListaAtiva = () => {
+  const t = S.enAnexAlvo ? S.ensaio.tarefas.find(x => x.id === S.enAnexAlvo) : null;
+  if(t) return (t.anexos = t.anexos || []);
+  return S.enNovos;
+};
+
+modalTarefa = (function(orig){
+  return function(id){
+    let html = orig.apply(this, arguments);
+    if(!html) return html;
+    S.enAnexAlvo = id || null;
+    const t = id ? S.ensaio.tarefas.find(x => x.id === id) : null;
+    if(!id) S.enNovos = [];                       /* tarefa nova começa limpa */
+    const lista = t ? (t.anexos = t.anexos || []) : S.enNovos;
+    if(t) enReidratar(t);
+    const bloco = `<div class="fld enAnexBloco"><label>Documentos e referências</label>
+      <p class="fhint" style="margin:0">O briefing que chegou, a planilha fechada, o print da
+        conversa. Vale para qualquer frente — e chega junto com a tarefa em quem for executar.</p>
+      <label class="mtSolta" id="en-solta" for="en-file">
+        <div class="ic">${ic('doc', 22)}</div>
+        <b>Subir documento</b>
+        <span>Ou arraste aqui. PDF, planilha, imagem, áudio — até 50MB.</span>
+      </label>
+      <input type="file" id="en-file" multiple style="display:none">
+      <div id="en-anexos">${enAnexListaHtml(lista)}</div></div>`;
+    return html.replace(/<div class="modalrow" style="margin-top:14px">/,
+      bloco + '\n    <div class="modalrow" style="margin-top:14px">');
+  };
+})(modalTarefa);
+
+/* trocar só a lista mantém o que já foi digitado no modal */
+function enPintarLista(){
+  const alvo = document.getElementById('en-anexos');
+  if(alvo) alvo.innerHTML = enAnexListaHtml(enListaAtiva());
+}
+
+document.addEventListener('change', e => {
+  if(!e.target || e.target.id !== 'en-file') return;
+  const n = enGuardarAnexos(enListaAtiva(), e.target.files);
+  e.target.value = '';
+  if(!n) return;
+  if(typeof somMaterial === 'function') somMaterial();
+  enPintarLista();
+  toast(n > 1 ? `${n} documentos anexados.` : 'Documento anexado.');
+}, true);
+
+/* arrastar e soltar na mesma área */
+document.addEventListener('dragover', e => {
+  const z = e.target.closest && e.target.closest('#en-solta');
+  if(!z) return;
+  e.preventDefault(); z.classList.add('sobre');
+}, true);
+document.addEventListener('dragleave', e => {
+  const z = e.target.closest && e.target.closest('#en-solta');
+  if(z) z.classList.remove('sobre');
+}, true);
+document.addEventListener('drop', e => {
+  const z = e.target.closest && e.target.closest('#en-solta');
+  if(!z) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  z.classList.remove('sobre');
+  const n = enGuardarAnexos(enListaAtiva(), (e.dataTransfer && e.dataTransfer.files) || []);
+  if(!n) return;
+  if(typeof somMaterial === 'function') somMaterial();
+  enPintarLista();
+  toast(n > 1 ? `${n} documentos anexados.` : 'Documento anexado.');
+}, true);
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-enanexrm],[data-enanexbx]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault();
+  const lista = enListaAtiva();
+  if(t.dataset.enanexbx !== undefined){
+    const m = lista[+t.dataset.enanexbx];
+    if(m && typeof baixarMaterial === 'function') baixarMaterial({ ...m, url: enUrlDe(m) });
+    return;
+  }
+  const i = +t.dataset.enanexrm;
+  const [m] = lista.splice(i, 1);
+  if(m){
+    if(m.chave && typeof idbApagar === 'function') idbApagar(m.chave).catch(() => {});
+    if(m.chave && EN_URL[m.chave]){ try{ URL.revokeObjectURL(EN_URL[m.chave]); }catch(err){} delete EN_URL[m.chave]; }
+  }
+  enPintarLista(); render();
+  if(m) toast(`"${m.nome}" removido.`);
+}, true);
+
+/* ao salvar, o que estava na bandeja passa a ser da tarefa. O salvar da
+   v54 roda em captura de DOCUMENTO e corta a propagação; a JANELA vem
+   antes, e o `setTimeout` cai depois que a tarefa já nasceu. */
+window.addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-enok]');
+  if(!t || !document.getElementById('en-anexos')) return;
+  const idTarefa = +t.dataset.enok;
+  const bandeja = S.enNovos.slice();
+  setTimeout(() => {
+    if(!idTarefa && S.modal) return;                /* o salvar recusou */
+    const tr = idTarefa ? S.ensaio.tarefas.find(x => x.id === idTarefa)
+                        : S.ensaio.tarefas[S.ensaio.tarefas.length - 1];
+    if(!tr) return;
+    if(!idTarefa && bandeja.length){ tr.anexos = [...(tr.anexos || []), ...bandeja]; S.enNovos = []; }
+    S.enAnexAlvo = null;
+    render();
+  }, 3);
+}, true);
+
+/* ---------- no cartão do quadro: um clipe com a conta -------------- */
+function pintarAnexosNoEnsaio(){
+  if(!S.ensaio || S.view !== 'agency') return;
+  document.querySelectorAll('.enCard[data-entar]').forEach(card => {
+    const meta = card.querySelector('.meta');
+    if(!meta || meta.querySelector('.enClipe')) return;
+    const t = S.ensaio.tarefas.find(x => x.id === +card.dataset.entar);
+    const n = enAnexosDe(t).length;
+    if(!n) return;
+    meta.insertAdjacentHTML('beforeend',
+      `<span class="enClipe" title="${n} documento${n > 1 ? 's anexados' : ' anexado'}">${ic('clipe', 11)}${n}</span>`);
+  });
+}
+render = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); pintarAnexosNoEnsaio(); return r; };
+})(render);
+renderLayer = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); pintarAnexosNoEnsaio(); return r; };
+})(renderLayer);
+
+/* o histórico do card aprende a contar anexo */
+if(typeof HX_CAMPOS !== 'undefined' && !HX_CAMPOS.some(([k]) => k === 'nAnexos'))
+  HX_CAMPOS.push(['nAnexos', 'os documentos']);
+if(typeof hxFoto === 'function'){
+  hxFoto = (function(orig){
+    return function(t){ const f = orig.apply(this, arguments);
+      if(f && typeof f === 'object') f.nAnexos = enAnexosDe(t).length;
+      return f; };
+  })(hxFoto);
+}
 </script>
