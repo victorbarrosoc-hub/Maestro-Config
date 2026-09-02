@@ -15767,7 +15767,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v111 · 2 set · o painel do cliente, escuro e com compasso';
+const VERSAO_PROTOTIPO = 'v112 · 2 set · o ciclo de produção e o link de quem aprova';
 
 menuSheet = (function(orig){
   return function(){
@@ -22304,4 +22304,744 @@ render = (function(orig){
     return orig.apply(this, arguments);
   };
 })(render);
+</script>
+<style>
+/* =====================================================================
+   v112 — o ciclo de produção, ponta a ponta, e o link de quem aprova.
+
+   Inbox (a ideia) → Plan (a pauta inteira) → Check (só o revisor libera)
+   → o lote (espera o conjunto) → o cliente decide → Plan de novo:
+   amarelo se pediu alteração, azul se aprovou o texto e falta dizer quem
+   executa → Do (a peça sobe e vai sozinha ao Check) → Check → lote →
+   cliente → Act (agendar). Um card, duas voltas. Nenhuma coluna nova:
+   duas FASES novas (no lote), um poder novo (revisar) e as cores.
+   ================================================================== */
+
+/* o nome do cliente no selo herdava 22px de uma regra do card */
+.enCard .cli b{ font-size:inherit !important; line-height:1.25 }
+/* modal mais alto que a tela (o perfil da pessoa, com as permissões)
+   rola por dentro — antes o botão de baixo ficava fora do alcance */
+.modalbox{ max-height:calc(100vh - 32px); max-height:calc(100dvh - 32px); overflow-y:auto }
+
+/* amarelo: alguém pediu alteração — o card volta ao Plan inteiro amarelo */
+.enCard.pedido{ border-color:rgba(229,197,77,.55) !important;
+  box-shadow:inset 3px 0 0 #E5C54D !important;
+  background:linear-gradient(180deg,rgba(229,197,77,.14),rgba(229,197,77,.05)) !important }
+.enCard.pedido .enPedido{ color:#F1DC8C; background:rgba(229,197,77,.10) }
+.enCard.pedido .enPedido b{ color:#FFE58A }
+/* azul: o cliente aprovou o texto; falta dizer quem executa a peça */
+.enCard.azul{ border-color:rgba(91,141,239,.55);
+  box-shadow:inset 3px 0 0 var(--cobalt);
+  background:linear-gradient(180deg,rgba(91,141,239,.15),rgba(91,141,239,.05)) }
+/* no lote: liberado pelo revisor, esperando o comando de enviar */
+.enCard.lote{ border-style:dashed; border-color:rgba(200,150,58,.5) }
+
+.cyEtapa{ display:flex; align-items:center; gap:6px; margin-top:8px; font-size:11px;
+  line-height:1.4; color:var(--ink-300) }
+.cyEtapa b{ color:var(--ink-100); font-weight:600 }
+.cyEtapa.lote b{ color:var(--brass-300) }
+.cyExec{ margin-top:8px; padding:8px 9px; border-radius:9px;
+  background:rgba(91,141,239,.10); border:1px solid rgba(91,141,239,.3) }
+.cyExec .lbl{ font-family:var(--mono); font-size:9.5px; letter-spacing:.06em;
+  text-transform:uppercase; color:#9DBCF5; margin-bottom:6px }
+.cyExec .ptChips button{ font-size:11px; padding:4px 9px }
+.cyBtn{ width:auto !important; padding:0 10px !important; font-family:var(--mono);
+  font-size:9.5px; letter-spacing:.06em; white-space:nowrap }
+.cyBtn.ok{ color:var(--encore) !important; border-color:rgba(53,184,122,.4) !important }
+.cyBtn.rev{ color:#F1DC8C !important; border-color:rgba(229,197,77,.4) !important }
+.cyBtn.pri{ color:var(--brass-300) !important; border-color:var(--brass-700) !important }
+.cySo{ font-size:10.5px; color:var(--ink-500); margin-left:2px; display:inline-flex;
+  align-items:center; gap:4px }
+.cyEnvia{ display:flex; flex-direction:column; gap:6px; margin:0 0 10px }
+.cyEnvia button{ display:flex; align-items:center; gap:7px; justify-content:center; width:100%;
+  padding:8px 10px; border-radius:10px; border:1px solid var(--brass-600);
+  background:rgba(200,150,58,.12); color:var(--brass-300); font-size:12px; font-weight:600 }
+.cyEnvia button:hover{ background:rgba(200,150,58,.2) }
+.cyAgenda{ margin-top:8px; padding:8px 9px; border-radius:9px; background:rgba(53,184,122,.08);
+  border:1px solid rgba(53,184,122,.3); font-size:11.5px; color:var(--ink-200); line-height:1.5 }
+.cyAgenda b{ color:var(--ink-50) }
+.cyAgenda .plats{ display:flex; gap:5px; flex-wrap:wrap; margin-top:5px }
+.cyAgenda .plats span{ font-family:var(--mono); font-size:9.5px; padding:2px 7px;
+  border-radius:999px; border:1px solid var(--ink-700); color:var(--ink-200) }
+.cyAuto{ display:flex; align-items:flex-start; gap:10px; margin:12px 2px 0; padding:11px 13px;
+  border-radius:11px; border:1px solid var(--ink-800); background:var(--ink-950);
+  font-size:12.5px; color:var(--ink-200); line-height:1.5; cursor:pointer }
+.cyAuto input{ margin-top:3px; accent-color:var(--brass-500); flex:0 0 auto }
+.cyAuto b{ color:var(--ink-50) }
+.cyAuto span{ display:block; color:var(--ink-400); font-size:11.5px; margin-top:2px }
+
+/* o link de aprovação, na ficha do cliente */
+.cyLink .url{ display:flex; gap:8px; align-items:center; margin:10px 0 }
+.cyLink .url input{ flex:1; min-width:0; padding:10px 12px; border-radius:10px;
+  border:1px solid var(--ink-700); background:var(--ink-950); color:var(--ink-100);
+  font-family:var(--mono); font-size:11.5px }
+.cyLink .como{ display:grid; gap:6px; margin-top:12px; font-size:12.5px;
+  color:var(--ink-300); line-height:1.5 }
+.cyLink .como b{ color:var(--brass-300); font-family:var(--mono); font-size:11px; margin-right:4px }
+/* quem entra pelo link não vê o interruptor do protótipo */
+body.viaLink [data-seg], body.viaLink [data-go="site"]{ display:none !important }
+
+/* a ficha da publicação, no card do cliente */
+.clficha{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 0 12px }
+.clficha > div{ background:var(--soft); border:1px solid var(--line); border-radius:11px;
+  padding:9px 11px; min-width:0 }
+.clficha .lbl{ font-family:var(--mono); font-size:9.5px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--mut); margin-bottom:3px }
+.clficha b{ font-size:13px; color:var(--tx); font-weight:600; line-height:1.35; display:block }
+.clficha .larga{ grid-column:1 / -1 }
+.clficha .plats{ display:flex; gap:5px; flex-wrap:wrap; margin-top:3px }
+.clficha .plats span{ font-size:11px; padding:2px 8px; border-radius:999px;
+  border:1px solid var(--line); color:var(--tx) }
+@media(max-width:400px){ .clficha{ grid-template-columns:1fr } }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v112 — o ciclo de produção, ponta a ponta.
+   ================================================================== */
+
+/* ---------- 0. duas fases novas: no lote, a enviar ------------------
+   O revisor libera do Check, mas o card NÃO vai sozinho ao cliente: ele
+   espera no lote até alguém mandar o conjunto. Receber de um em um é
+   ruim para quem aprova (D-030: uma notificação por lote). */
+(function(){
+  const ins = (depois, k, n) => {
+    if(FASES.some(([x]) => x === k)) return;
+    const i = FASES.findIndex(([x]) => x === depois);
+    FASES.splice(i + 1, 0, [k, n]);
+  };
+  ins('revisao',  'lote_texto', 'No lote · a enviar');
+  ins('revisao2', 'lote_post',  'No lote · a enviar');
+  FASE_COL.lote_texto = 'cliente';
+  FASE_COL.lote_post  = 'cliente';
+  /* texto aprovado volta ao PLAN (azul), não ao Act: a 2ª volta se
+     planeja — quem executa? — antes de se executar */
+  FASE_COL.texto_ok   = 'plan';
+  if(!VOLTA_1.includes('lote_texto')) VOLTA_1.push('lote_texto');
+})();
+const FASES_LOTE = ['lote_texto', 'lote_post'];
+const EM_CHECK = ['revisao', 'revisao2'];
+const noLote   = p => FASES_LOTE.includes(faseDe(p));
+const cliDoCard = p => Object.keys(S.pautas).find(k => (S.pautas[k] || []).includes(p)) || null;
+
+/* ---------- 1. o poder de Revisor ----------------------------------- */
+if(!CAPACIDADES.some(([k]) => k === 'revisar')){
+  CAPACIDADES.push(['revisar', 'Aprovação interna (Check)',
+    'liberar o card do Check para o lote do cliente']);
+  CHAVES_CAP.push('revisar');                       /* o Administrador lê daqui */
+  ['Gestor', 'Revisor'].forEach(p => {
+    if(PADRAO_PAPEL[p] && !PADRAO_PAPEL[p].includes('revisar')) PADRAO_PAPEL[p].push('revisar');
+  });
+}
+const ehRevisor = () => pode('revisar');
+function recusaRevisor(){
+  if(ehRevisor()) return false;
+  toast('Aprovação interna: só quem tem o poder de Revisor libera o Check. Quem dá o poder é o administrador, na Equipe.');
+  return true;
+}
+
+/* o histórico do card acompanha as ações novas */
+function comHistorico(fn){
+  const mapa = (S.ensaio && typeof hxFoto === 'function')
+    ? new Map(hxTodas().map(t => [t.id, hxFoto(t)])) : null;
+  const r = fn();
+  if(mapa) setTimeout(() => hxComparar(mapa), 0);
+  return r;
+}
+if(typeof HX_CAMPOS !== 'undefined' && !HX_CAMPOS.some(([k]) => k === 'projeto'))
+  HX_CAMPOS.push(['projeto', 'o projeto']);
+
+/* ---------- 2. o revisor libera: do Check para o lote --------------- */
+function revisarCard(cli, id, ok, nota){
+  const p = (S.pautas[cli] || []).find(x => x.id === +id); if(!p) return false;
+  const f = faseDe(p);
+  if(!EM_CHECK.includes(f)){ toast('Este card não está no Check.'); return false; }
+  if(recusaRevisor()) return false;
+  if(ok){
+    porFase(p, f === 'revisao' ? 'lote_texto' : 'lote_post');
+    p.revisadoPor = hxQuem(); p.revisadoEm = Date.now();
+    p.ajusteInterno = false;
+    som('aprovar');
+    toast(`"${p.t}" liberado. Está no lote — sai para o cliente com o conjunto, quando você mandar.`);
+  } else {
+    if(!nota) return false;
+    /* o pedido do revisor fica no card e NÃO em `alteracoes`: aquela
+       lista é o que o cliente pediu, e o cliente a lê */
+    p.revisao = { nota, por: hxQuem(), quando: rotuloData(hojeISO()) };
+    p.ajusteInterno = true;
+    porFase(p, f === 'revisao' ? 'rascunho' : 'producao');
+    som('ajuste');
+    toast(`"${p.t}" voltou para ${f === 'revisao' ? 'o Plan' : 'a produção'} com o pedido do revisor.`);
+  }
+  render();
+  return true;
+}
+/* a fila do revisor (v53b) e os botões do quadro passam por aqui. Na
+   JANELA, em captura: o ouvinte antigo é do documento e cortava tudo. */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-rvok],[data-rvsugere],[data-cyok],[data-cyajuste]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const d = t.dataset;
+  const [cli, id] = (d.rvok || d.cyok || d.rvsugere || d.cyajuste).split(':');
+  if(d.rvok || d.cyok){ revisarCard(cli, id, true); return; }
+  if(recusaRevisor()) return;
+  const nota = prompt('O que precisa mudar antes de ir ao cliente?');
+  if(!nota || !nota.trim()) return;
+  revisarCard(cli, id, false, nota.trim());
+}, true);
+
+/* ---------- 3. "Com o cliente" só se chega pelo Check ---------------- */
+moverJob = (function(orig){
+  return function(p, col){
+    const f = faseDe(p);
+    if(col === 'cliente'){
+      if(noLote(p)){ toast('Já está no lote. Sai pelo botão "Enviar", com o conjunto.'); return; }
+      if(NO_CLIENTE.includes(f)){ toast('Está com o cliente. Daqui quem move é ele.'); return; }
+      if(EM_CHECK.includes(f)){ revisarCard(cliDoCard(p), p.id, true); return; }
+      toast('Antes do cliente vem o Check: só o revisor libera. Mande para o Check primeiro.');
+      return;
+    }
+    if(col === 'check'){
+      if(!(p.texto || '').trim()){ toast('Falta o texto. O Check precisa de algo para ler.'); return; }
+      p.ajusteInterno = false;
+    }
+    return orig.apply(this, arguments);
+  };
+})(moverJob);
+
+/* ---------- 4. enviar é mandar o LOTE ------------------------------- */
+podeEnviar = function(p){
+  if(p.tarefa) return false;
+  return noLote(p) && (p.texto || '').trim().length > 0;
+};
+const porqueNaoVai = p => {
+  const f = faseDe(p);
+  if(EM_CHECK.includes(f)) return 'Está no Check: o revisor libera para o lote, e daí vai.';
+  if(NO_CLIENTE.includes(f)) return 'Já está com o cliente.';
+  if(!(p.texto || '').trim()) return 'Falta o texto.';
+  if(f === 'aprovado' || f === 'agendado' || f === 'postado') return 'O cliente já aprovou este.';
+  return 'Passa pelo Check antes: mande para a aprovação interna.';
+};
+enviarCards = (function(orig){
+  return function(ids){
+    const alvo = ids ? S.pauta.filter(p => ids.includes(p.id)) : cardsProntos();
+    if(alvo.length && alvo.every(p => !podeEnviar(p))){ toast(porqueNaoVai(alvo[0])); return; }
+    return orig.apply(this, arguments);
+  };
+})(enviarCards);
+confirmarEnvio = (function(orig){
+  return function(){
+    if(!cardsProntos().length){
+      toast('Nada no lote ainda. O revisor libera os cards no Check — e daqui eles saem juntos.');
+      return;
+    }
+    return orig.apply(this, arguments);
+  };
+})(confirmarEnvio);
+
+/* ---------- 5. a decisão do cliente volta para o PLAN ---------------- */
+decidirCard = (function(orig){
+  return function(id, decisao, nota){
+    const p = S.pauta.find(x => x.id === id);
+    if(!p) return orig.apply(this, arguments);
+    const eraTexto = faseDe(p) === 'texto_cli';
+    const r = orig.apply(this, arguments);
+    if(decisao === 'APROVADO'){
+      /* a peça aprovada pode ir direto para o agendamento — opção da
+         agência, desligada por padrão (D-045) */
+      if(!eraTexto && S.agencia && S.agencia.autoAgendar && faseDe(p) === 'aprovado'){
+        porFase(p, 'agendado'); p.agendadoEm = Date.now(); p.agendadoAuto = true;
+        render();
+      }
+    } else {
+      /* Plan, não Do: a alteração se planeja antes de se executar.
+         1ª volta volta ao rascunho; 2ª, ao Plan da peça (texto_ok). */
+      porFase(p, eraTexto ? 'rascunho' : 'texto_ok');
+      render();
+    }
+    return r;
+  };
+})(decidirCard);
+
+/* ---------- 6. o azul: quem executa a peça -------------------------- */
+function definirExecutor(tid, mid){
+  const t = S.ensaio.tarefas.find(x => x.id === +tid); if(!t) return;
+  const p = cardDaTarefa(t); if(!p) return;
+  const m = membro(mid);
+  if(!m){ toast('Escolha alguém da equipe.'); return; }
+  comHistorico(() => {
+    t.resp = mid; p.resp = mid;
+    porFase(p, 'producao');
+  });
+  som('toque'); render();
+  toast(`${m.nome} executa "${p.t}". Começa a 2ª volta: a peça.`);
+}
+
+/* ---------- 7. Do: subir a peça manda para o Check ------------------ */
+function subiuMaterial(id, n){
+  if(!n) return;
+  const p = S.pauta.find(x => x.id === id); if(!p) return;
+  if(faseDe(p) !== 'producao') return;
+  porFase(p, 'revisao2'); p.ajusteInterno = false;
+  setTimeout(() => { render();
+    toast(`"${p.t}" subiu — foi para o Check: aprovação interna da peça.`); }, 0);
+}
+guardarArquivos = (function(orig){
+  return function(id, lista){
+    const n = orig.apply(this, arguments);
+    subiuMaterial(id, n);
+    return n;
+  };
+})(guardarArquivos);
+addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-mtlink]');
+  if(!b) return;
+  const id = +b.dataset.mtlink;
+  const antes = (S.mat[id] || []).length;
+  setTimeout(() => { if((S.mat[id] || []).length > antes) subiuMaterial(id, 1); }, 0);
+}, true);
+
+/* ---------- 8. estruturar: a tarefa vira o card da pauta ------------ */
+function projetosDoCliente(cli){
+  const nomes = [];
+  const pj = S.proj && S.proj[cli];
+  if(pj && pj.nome) nomes.push(pj.nome);
+  (typeof projetosDe === 'function' ? projetosDe(cli) : []).forEach(x => {
+    if(x && x.nome && !nomes.includes(x.nome)) nomes.push(x.nome); });
+  if(!nomes.length) nomes.push('Sempre ativo');
+  return nomes;
+}
+const projetoDoCard = p => p.projeto || projetosDoCliente(cliAtual().id)[0];
+
+function abrirPautaDaTarefa(t){
+  S.cli = t.cli; S.ptSemear = true;
+  S.modal = modalPauta(t.cardId); renderLayer();
+}
+function estruturarTarefa(tid){
+  const t = S.ensaio.tarefas.find(x => x.id === +tid); if(!t) return;
+  if(t.cardId){ abrirPautaDaTarefa(t); return; }
+  if(!t.cli){ toast('Escolha o cliente da tarefa primeiro.'); return; }
+  S.cli = t.cli;
+  const lista = S.pautas[t.cli] = S.pautas[t.cli] || [];
+  const id = Math.max(0, ...lista.map(x => x.id)) + 1;
+  const dia = t.prazo ? (new Date(t.prazo + 'T12:00:00').getDay() + 6) % 7 : 0;
+  const p = { id, t: t.titulo, fmt: 'Post', plats: ['ig'], dia, hora: '18:30', texto: '', cta: '',
+    data: t.prazo || null, resp: t.resp || null, projeto: t.projeto || null,
+    objetivo: t.desc || '', st: 'DRAFT', fase: 'rascunho', doEnsaio: true };
+  lista.push(p);
+  comHistorico(() => { t.cardId = id; t.job = true; t.cat = 'producao'; ligarTarefaAoCard(t); });
+  som('toque');
+  abrirPautaDaTarefa(t);
+}
+function mandarParaCheck(tid){
+  const t = S.ensaio.tarefas.find(x => x.id === +tid); if(!t) return;
+  const p = cardDaTarefa(t);
+  if(!p){ toast('Estruture a pauta primeiro.'); return; }
+  if(!(p.texto || '').trim()){ toast('Falta o texto. O Check precisa de algo para ler.'); return; }
+  const v = voltaDe(faseDe(p));
+  comHistorico(() => { porFase(p, v === 1 ? 'revisao' : 'revisao2'); p.ajusteInterno = false; });
+  som('toque'); render();
+  toast(`"${p.t}" no Check — aprovação interna ${v === 1 ? 'do texto' : 'da peça'}.`);
+}
+function subirPeca(tid){
+  const t = S.ensaio.tarefas.find(x => x.id === +tid); if(!t) return;
+  const p = cardDaTarefa(t); if(!p) return;
+  S.cli = t.cli; S.mtId = p.id;
+  S.modal = modalMaterial(p.id); renderLayer();
+  if(typeof ligarSolta === 'function') setTimeout(ligarSolta, 0);
+}
+
+/* ---------- 9. o quadro fala o ciclo ---------------------------------
+   O cartão é uma closure dentro de agEnsaio. Como na v109/v110, a
+   decoração é feita no DOM depois do desenho, pelo id que já vem no
+   cartão — nada é reescrito. */
+function pintarCiclo(){
+  if(!S.ensaio || S.view !== 'agency') return;
+  document.querySelectorAll('.enCard[data-entar]:not(.cyPintado)').forEach(card => {
+    card.classList.add('cyPintado');
+    const t = S.ensaio.tarefas.find(x => x.id === +card.dataset.entar); if(!t) return;
+    if(catIdDe(t) !== 'producao') return;
+    const acoes = card.querySelector('.acoes'); if(!acoes) return;
+    const p = cardDaTarefa(t);
+    const add   = html => acoes.insertAdjacentHTML('beforeend', html);
+    const antes = html => acoes.insertAdjacentHTML('beforebegin', html);
+    const etapa = (cls, html) => antes(`<div class="cyEtapa ${cls}">${html}</div>`);
+
+    if(!p){
+      if(t.col === 'inbox')
+        etapa('', `${ic('stack',11)} <span>Ideia lançada. <b>Falta o responsável</b> — ele estrutura no Plan.</span>`);
+      else if(t.col === 'plan' || t.col === 'do')
+        add(`<button class="cyBtn pri" data-cyestrutura="${t.id}">estruturar a pauta →</button>`);
+      return;
+    }
+
+    /* o nome de quem pediu, em vez de "Helena" fixo */
+    const c = CLIS().find(x => x.id === t.cli);
+    const quem = c ? ((c.aprovador && c.aprovador.nome) || c.nome) : 'O cliente';
+    card.querySelectorAll('.enPedido b').forEach(b => {
+      if(/Helena pediu/.test(b.textContent)) b.textContent = `${quem.split(' ')[0]} pediu:`; });
+
+    const f = faseDe(p), v = voltaDe(f);
+    const temTexto = !!(p.texto || '').trim();
+    if(p.ajusteInterno && p.revisao){
+      card.classList.add('pedido');
+      antes(`<div class="enPedido">${ic('warn',12)} <span><b>Revisor pediu:</b> ${esc(p.revisao.nota)}</span></div>`);
+    }
+    if(f === 'rascunho' || f === 'criado'){
+      add(`<button class="cyBtn" data-cyabre="${t.id}">${temTexto ? 'editar a pauta' : 'estruturar a pauta →'}</button>`);
+      if(temTexto) add(`<button class="cyBtn pri" data-cycheck="${t.id}">para o Check →</button>`);
+    }
+    else if(EM_CHECK.includes(f)){
+      if(ehRevisor())
+        add(`<button class="cyBtn ok" data-cyok="${t.cli}:${p.id}">liberar ✓</button>
+             <button class="cyBtn rev" data-cyajuste="${t.cli}:${p.id}">pedir ajuste</button>`);
+      else add(`<span class="cySo">${ic('lock',11)} só o revisor libera</span>`);
+    }
+    else if(noLote(p)){
+      card.classList.add('lote');
+      etapa('lote', `${ic('stack',11)} <span><b>No lote</b> · liberado${p.revisadoPor ? ' por ' + esc(p.revisadoPor) : ''}. Sai com o conjunto.</span>`);
+    }
+    else if(f === 'texto_ok' && !p.ajustePendente){
+      card.classList.add('azul');
+      const velho = acoes.querySelector('[data-jbpasso]'); if(velho) velho.remove();
+      const chips = (S.equipe || []).map(m => `<button data-cyexec="${t.id}|${membroId(m)}"
+        class="${t.resp === membroId(m) ? 'on' : ''}">${esc(m.n.split(' ')[0])}</button>`).join('');
+      antes(`<div class="cyExec"><div class="lbl">${esc(quem.split(' ')[0])} aprovou o texto · quem executa a peça?</div>
+        <div class="ptChips">${chips || '<span class="cySo">convide alguém na Equipe</span>'}</div></div>`);
+    }
+    else if(f === 'producao'){
+      add(`<button class="cyBtn pri" data-cysobe="${t.id}">subir a peça ↑</button>`);
+    }
+    else if(f === 'aprovado'){
+      antes(`<div class="cyAgenda"><b>${esc(quem.split(' ')[0])} aprovou a peça.</b> Vai ao ar
+        ${p.data ? esc(rotuloData(p.data)) : 'em data a marcar'}${p.hora ? ' às ' + esc(p.hora) : ''}.
+        <div class="plats">${(p.plats || []).map(k => `<span>${esc((PLATS[k] || {}).n || k)}</span>`).join('')}</div></div>`);
+    }
+    else if(f === 'agendado'){
+      etapa('', `${ic('cal',11)} <span><b>Agendado</b>${p.agendadoAuto ? ' sozinho, na aprovação' : ''}
+        · ${p.data ? esc(rotuloData(p.data)) : ''} ${esc(p.hora || '')}</span>`);
+    }
+  });
+
+  /* o botão de enviar, por cliente, no topo da coluna do cliente */
+  const col = document.querySelector('.enCol[data-encol="cliente"]');
+  if(col && !col.querySelector('.cyEnvia')){
+    const grupos = {};
+    col.querySelectorAll('.enCard[data-entar]').forEach(card => {
+      const t = S.ensaio.tarefas.find(x => x.id === +card.dataset.entar);
+      const p = t && cardDaTarefa(t);
+      if(p && noLote(p)) grupos[t.cli] = (grupos[t.cli] || 0) + 1;
+    });
+    const html = Object.entries(grupos).map(([cli, n]) => {
+      const c = CLIS().find(x => x.id === cli);
+      return `<button data-cyenvia="${cli}">${ic('enviar',13)} Enviar ${n} para ${esc(c ? c.nome : 'o cliente')}</button>`;
+    }).join('');
+    const hd = col.querySelector('.enColHd');
+    if(html && hd) hd.insertAdjacentHTML('afterend', `<div class="cyEnvia">${html}</div>`);
+  }
+}
+render = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); pintarCiclo(); return r; };
+})(render);
+renderLayer = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); pintarCiclo(); return r; };
+})(renderLayer);
+
+/* as permissões de sempre valem para os botões novos */
+if(typeof GUARDAS !== 'undefined'){
+  GUARDAS.push(['ensaio', '[data-cyestrutura],[data-cyabre],[data-cycheck],[data-cyexec],[data-cysobe]']);
+  GUARDAS.push(['enviar', '[data-cyenvia]']);
+}
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest(
+    '[data-cyestrutura],[data-cyabre],[data-cycheck],[data-cyexec],[data-cysobe],[data-cyenvia]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const d = t.dataset;
+  if(d.cyestrutura){ estruturarTarefa(d.cyestrutura); return; }
+  if(d.cyabre){ const tr = S.ensaio.tarefas.find(x => x.id === +d.cyabre); if(tr) abrirPautaDaTarefa(tr); return; }
+  if(d.cycheck){ mandarParaCheck(d.cycheck); return; }
+  if(d.cyexec){ const [tid, mid] = d.cyexec.split('|'); definirExecutor(tid, mid); return; }
+  if(d.cysobe){ subirPeca(d.cysobe); return; }
+  if(d.cyenvia){ S.cli = d.cyenvia; confirmarEnvio(); return; }
+}, true);
+
+/* a legenda do quadro conta o ciclo como ele é agora, e o interruptor
+   do agendamento automático mora ao lado dela */
+const cyAutoHtml = () => `<label class="cyAuto"><input type="checkbox" data-cyauto="1"
+    ${S.agencia && S.agencia.autoAgendar ? 'checked' : ''}>
+  <div><b>Agendar sozinho quando o cliente aprovar a peça</b>
+    <span>Hoje: o card vai para o Act já agendado, na data e hora da pauta. Em breve: a
+    publicação sai direto pela conta conectada (Meta, LinkedIn, TikTok). Desligado por
+    padrão — a agência confere antes, D-045.</span></div></label>`;
+agEnsaio = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    if(!html) return html;
+    html = html.replace(/Pedido de alteração devolve <i>este<\/i> card para Do,\s*em vermelho, com as palavras dele\. Nenhum card novo é criado em lugar nenhum\./,
+      'Do <b>Check</b> só o <b>revisor</b> libera — e o card espera no <b>lote</b> até o envio, ' +
+      'para o cliente receber um conjunto, não um pingado. Pedido de alteração devolve <i>este</i> ' +
+      'card para o <b>Plan, em amarelo</b>, com as palavras dele. Texto aprovado volta ao Plan ' +
+      '<b>em azul</b>: falta dizer quem executa a peça. A peça sobe em Do e vai sozinha ao Check. ' +
+      'Nenhum card novo é criado em lugar nenhum.');
+    if(S.enCat === 'producao' || S.enCat === '__todas')
+      html = html.replace(/(<p class="enLegenda">[\s\S]*?<\/p>)/, m => m + cyAutoHtml());
+    return html;
+  };
+})(agEnsaio);
+addEventListener('change', e => {
+  const t = e.target && e.target.closest && e.target.closest('[data-cyauto]');
+  if(!t) return;
+  S.agencia = S.agencia || {};
+  S.agencia.autoAgendar = !!t.checked;
+  if(typeof sbGravarConfig === 'function') sbGravarConfig();
+  som('toque');
+  toast(S.agencia.autoAgendar
+    ? 'Ligado: a peça aprovada pelo cliente já entra agendada.'
+    : 'Desligado: a peça aprovada espera você agendar no Act.');
+}, true);
+
+/* ---------- 10. a tarefa nasce com o projeto ------------------------- */
+function cyProjChips(cli){
+  const ns = projetosDoCliente(cli);
+  if(S.enProj && !ns.includes(S.enProj)) ns.push(S.enProj);
+  const on = S.enProj || ns[0];
+  return `<div class="fld" id="cyProjFld"><label>Projeto — de qual contrato é esta pauta</label>
+    <div class="ptChips">${ns.map(n => `<button data-cyproj="${esc(n)}"
+      class="${on === n ? 'on' : ''}">${esc(n)}</button>`).join('')}</div></div>`;
+}
+modalTarefa = (function(orig){
+  return function(id){
+    let html = orig.apply(this, arguments);
+    if(!html) return html;
+    const t = id ? S.ensaio.tarefas.find(x => x.id === id) : null;
+    S.enProj = (t && t.projeto) || null;
+    html = html
+      .replace('<p>Um job do Ensaio. A categoria decide as funções — e quem pode ver.</p>',
+        '<p>Jogue a ideia: o que precisa existir, para quem, até quando e quem cuida. Quem estrutura é o responsável, no Plan — com a pauta inteira.</p>')
+      .replace('<label for="en-t">O que precisa ser feito</label>',
+        '<label for="en-t">A ideia — o que precisa existir</label>')
+      .replace('<label for="en-desc">Detalhes</label>',
+        '<label for="en-desc">O pedido, com suas palavras — vira o objetivo da pauta</label>')
+      .replace('<div class="fld"><label for="en-card">', cyProjChips(S.enCli) + '<div class="fld"><label for="en-card">');
+    return html;
+  };
+})(modalTarefa);
+addEventListener('click', e => {
+  const pj = e.target.closest && e.target.closest('[data-cyproj]');
+  if(pj){
+    e.stopImmediatePropagation(); e.stopPropagation();
+    S.enProj = pj.dataset.cyproj;
+    document.querySelectorAll('[data-cyproj]').forEach(b => b.classList.toggle('on', b.dataset.cyproj === S.enProj));
+    return;
+  }
+  /* trocou o cliente: a lista de projetos acompanha */
+  const cp = e.target.closest && e.target.closest('[data-enclipick]');
+  if(cp){
+    setTimeout(() => {
+      const fld = document.getElementById('cyProjFld'); if(!fld) return;
+      S.enProj = null;
+      fld.outerHTML = cyProjChips(S.enCli);
+    }, 0);
+    return;
+  }
+  const ok = e.target.closest && e.target.closest('[data-enok]');
+  if(ok && document.getElementById('cyProjFld')){
+    const idTarefa = +ok.dataset.enok;
+    const proj = S.enProj || (document.querySelector('[data-cyproj].on') || {}).dataset?.cyproj || null;
+    setTimeout(() => {
+      if(!idTarefa && S.modal) return;          /* o salvar recusou: nada nasceu */
+      const tr = idTarefa ? S.ensaio.tarefas.find(x => x.id === idTarefa)
+                          : S.ensaio.tarefas[S.ensaio.tarefas.length - 1];
+      if(!tr) return;
+      tr.projeto = proj;
+      const p = cardDaTarefa(tr); if(p && !p.projeto) p.projeto = proj;
+    }, 2);
+  }
+}, true);
+
+/* o objetivo entra na pauta de toda publicação (o story já tinha o dele) */
+modalPauta = (function(orig){
+  return function(id){
+    let html = orig.apply(this, arguments);
+    if(!html || html.indexOf('id="pt-obj"') >= 0 || html.indexOf('id="pt-texto"') < 0) return html;
+    const p = id ? S.pauta.find(x => x.id === id) : null;
+    const fld = `<div class="fld"><label for="pt-objetivo">Objetivo — o que esta publicação precisa conseguir</label>
+      <input id="pt-objetivo" value="${esc((p && p.objetivo) || '')}"
+        placeholder="Ex.: mostrar o bastidor e puxar conversa nos comentários"></div>`;
+    return html.replace(/(<div class="fld">\s*<label for="pt-texto">)/, fld + '$1');
+  };
+})(modalPauta);
+addEventListener('click', e => {
+  const ok = e.target.closest && e.target.closest('[data-ptok]');
+  if(!ok) return;
+  const campo = document.getElementById('pt-objetivo'); if(!campo) return;
+  const objetivo = campo.value.trim();
+  const id = +ok.dataset.ptok;
+  setTimeout(() => {
+    if(!id && S.modal) return;
+    const p = id ? S.pauta.find(x => x.id === id) : S.pauta[S.pauta.length - 1];
+    if(p) p.objetivo = objetivo;
+  }, 1);
+}, true);
+
+/* ---------- 11. o cliente recebe tudo o que precisa saber ------------ */
+clCard = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    const p = S.pauta.find(x => x.id === S.pcSel);
+    if(!p || !html) return html;
+    const plats = (p.plats || []).map(k => `<span>${esc((PLATS[k] || {}).n || k)}</span>`).join('');
+    const ficha = `<div class="clficha">
+      <div class="larga"><div class="lbl">Objetivo</div><b>${esc(p.objetivo || 'Fazer parte do calendário do mês')}</b></div>
+      <div><div class="lbl">Quando</div><b>${p.data ? esc(rotuloData(p.data)) : 'sem data'}${p.hora ? ' · ' + esc(p.hora) : ''}</b></div>
+      <div><div class="lbl">Projeto</div><b>${esc(projetoDoCard(p))}</b></div>
+      <div class="larga"><div class="lbl">Onde vai ao ar</div>
+        <div class="plats">${plats || '<span>a definir</span>'}</div></div>
+    </div>`;
+    const marca = '<div class="clcap leitura"><div class="caplbl">Texto da publicação</div>';
+    return html.indexOf(marca) >= 0 ? html.replace(marca, ficha + marca) : html;
+  };
+})(clCard);
+if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clcard = () => clCard();
+
+/* ---------- 12. o link de quem aprova --------------------------------
+   O aprovador não cria conta nem senha: entra pelo link. O link carrega
+   a chave do cliente; a chave vive no `cliEdit`, que já viaja no
+   __config__. Trocou de mãos, gera outra — e a antiga morre. */
+function chaveDoCliente(id){
+  S.cliEdit[id] = S.cliEdit[id] || {};
+  if(!S.cliEdit[id].chave){
+    S.cliEdit[id].chave = Math.random().toString(36).slice(2, 10);
+    if(typeof sbGravarConfig === 'function') sbGravarConfig();
+  }
+  return S.cliEdit[id].chave;
+}
+const baseDoLink = () =>
+  (/^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname))
+    ? location.origin + location.pathname : 'https://maestroapptest.vercel.app/';
+const linkDeAprovacao = id => `${baseDoLink()}?aprovar=${id}.${chaveDoCliente(id)}`;
+
+/* o salvar do cliente troca o objeto inteiro: a chave sobrevive */
+window.addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-cliok]');
+  if(!t) return;
+  const id = t.dataset.cliok;
+  const chave = (S.cliEdit[id] || {}).chave;
+  if(!chave) return;
+  setTimeout(() => { if(S.cliEdit[id] && !S.cliEdit[id].chave) S.cliEdit[id].chave = chave; }, 1);
+}, true);
+
+agClienteDet = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    if((S.tab || 'pauta') !== 'equipe' || !html) return html;
+    const c = cliAtual(); if(!c) return html;
+    const ap = c.aprovador || {};
+    const quem = ap.nome ? esc(ap.nome) : 'quem aprova';
+    const link = linkDeAprovacao(c.id);
+    const bloco = `<div class="card cyLink" style="margin-top:12px"><h4>Link de aprovação</h4>
+      <p>${quem.charAt(0).toUpperCase() + quem.slice(1)} <b style="color:var(--ink-50)">entra por este
+      link</b> — sem criar conta, sem senha. O link é a chave de ${esc(c.nome)}: quem o tem,
+      aprova por ela. Se trocar de mãos, gere outro; o antigo deixa de valer.</p>
+      <div class="url"><input readonly id="cyLinkUrl" value="${esc(link)}" aria-label="Link de aprovação">
+        <button class="b pri sm" data-cycopia="${c.id}">${ic('linkic',12)} Copiar</button></div>
+      <div class="modalrow" style="justify-content:flex-start;margin-top:0">
+        <button class="b gho sm" data-cycompart="${c.id}">${ic('enviar',12)} Compartilhar</button>
+        <button class="b gho sm" data-cynovolink="${c.id}">${ic('refresh',12)} Gerar outro link</button></div>
+      <div class="como">
+        <span><b>1</b> A agência manda o link uma vez, por onde preferir.</span>
+        <span><b>2</b> ${quem.charAt(0).toUpperCase() + quem.slice(1)} abre e cai no painel: Início, Publicações, Projeto.</span>
+        <span><b>3</b> Cada lote enviado avisa por e-mail, e o aviso leva de volta ao mesmo link. Nada se decide fora daqui.</span>
+      </div></div>`;
+    return html + bloco;
+  };
+})(agClienteDet);
+async function copiarTexto(txt){
+  try{ await navigator.clipboard.writeText(txt); return true; }
+  catch(e){
+    const el = document.getElementById('cyLinkUrl');
+    if(el){ el.select(); try{ document.execCommand('copy'); return true; }catch(e2){} }
+    return false;
+  }
+}
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-cycopia],[data-cycompart],[data-cynovolink]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const d = t.dataset;
+  const id = d.cycopia || d.cycompart || d.cynovolink;
+  if(d.cynovolink){
+    S.cliEdit[id] = S.cliEdit[id] || {};
+    S.cliEdit[id].chave = null;
+    chaveDoCliente(id);
+    som('toque'); render();
+    toast('Link novo. O anterior deixou de valer.');
+    return;
+  }
+  const link = linkDeAprovacao(id);
+  if(d.cycompart && navigator.share){
+    const c = CLIS().find(x => x.id === id);
+    navigator.share({ title: `Aprovação · ${c ? c.nome : 'Maestro'}`, url: link }).catch(() => {});
+    return;
+  }
+  copiarTexto(link).then(ok => toast(ok ? 'Link copiado. Mande para quem aprova.' : 'Não deu para copiar — selecione o link e copie.'));
+}, true);
+
+/* ---------- 13. entrar pelo link ------------------------------------ */
+(function(){
+  const m = /[?&]aprovar=([^&.]+)\.([^&]+)/.exec(location.search);
+  if(!m) return;
+  const id = decodeURIComponent(m[1]), chave = decodeURIComponent(m[2]);
+  S.viaLink = true;                          /* quem vem pelo link não é da equipe */
+  document.body.classList.add('viaLink');
+  let feito = false;
+  const trancar = () => {
+    if(!window.MaestroPorta || window.MaestroPorta._viaLink) return;
+    const o = window.MaestroPorta.pedir;
+    window.MaestroPorta.pedir = function(){ if(S.viaLink) return; return o.apply(this, arguments); };
+    window.MaestroPorta._viaLink = true;
+  };
+  function tentar(){
+    if(feito) return true;
+    const c = CLIS().find(x => x.id === id); if(!c) return false;
+    const ed = S.cliEdit[id] || {};
+    if(!ed.chave) return false;              /* o __config__ ainda não chegou */
+    feito = true;
+    if(ed.chave !== chave){
+      toast('Este link de aprovação não vale mais. Peça outro à agência.');
+      return true;
+    }
+    const porta = document.getElementById('entrarMaestro'); if(porta) porta.remove();
+    const quemEsta = document.getElementById('quemEsta'); if(quemEsta) quemEsta.remove();
+    S.usuario = { tipo: 'cliente', id }; S.cli = id;
+    if(S.seen) S.seen.client = true;       /* sem o esqueleto de "primeira vez" */
+    go('client', 'inicio');
+    S.skel = false; render();
+    return true;
+  }
+  /* o "quem está aí?" é pergunta para a equipe; quem veio pelo link já disse */
+  if(typeof abrirQuemEsta === 'function'){
+    const o = abrirQuemEsta;
+    abrirQuemEsta = function(){ if(S.viaLink) return; return o.apply(this, arguments); };
+  }
+  trancar();
+  sbCarregar = (function(orig){
+    return function(){
+      const p = orig.apply(this, arguments);
+      return Promise.resolve(p).then(ok => { tentar(); return ok; });
+    };
+  })(sbCarregar);
+  tentar();
+  /* sem sessão de equipe, ninguém chama o banco na abertura — o link chama:
+     é dele que vem a chave que confirma quem aprova */
+  /* a abertura chama a carga BASE por referência antiga, sem o __config__;
+     por isso chamo a cadeia inteira eu mesmo, e insisto uma vez */
+  const carregar = () => { try{ if(!feito && typeof sbCarregar === 'function') sbCarregar(); }catch(e){} };
+  setTimeout(carregar, 300);
+  setTimeout(carregar, 2500);
+  let n = 0;
+  const iv = setInterval(() => { trancar(); if(tentar() || ++n > 60) clearInterval(iv); }, 500);
+})();
 </script>
