@@ -15767,7 +15767,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v116 · 2 set · excluir card no Ensaio';
+const VERSAO_PROTOTIPO = 'v117 · 2 set · o passo e a arte, para quem aprova';
 
 menuSheet = (function(orig){
   return function(){
@@ -23475,4 +23475,231 @@ addEventListener('click', e => {
   }
   S.modal = modalExcluirTarefa(tr.id); renderLayer();
 }, true);
+</script>
+<style>
+/* =====================================================================
+   v117 — o cliente vê qual volta está aprovando, e vê a arte.
+
+   Faltavam as duas metades da mesma pergunta: "o que exatamente eu estou
+   aprovando agora?". O ciclo de dois lotes (D-042) só funciona se quem
+   decide souber em qual dos dois está — e, no segundo, se a imagem
+   estiver na tela.
+   ================================================================== */
+.clPasso{ display:flex; align-items:center; gap:10px; margin:0 0 14px;
+  padding:11px 13px; border-radius:13px; background:var(--soft);
+  border:1px solid var(--line) }
+.clPasso .num{ width:30px; height:30px; border-radius:50%; flex:0 0 auto;
+  display:grid; place-items:center; font-family:var(--mono); font-size:11px; font-weight:700;
+  background:var(--acc); color:var(--paper) }
+.clPasso .txt{ min-width:0; flex:1 }
+.clPasso b{ display:block; font-size:13px; color:var(--tx); line-height:1.3 }
+.clPasso span{ display:block; font-size:11.5px; color:var(--mut); margin-top:2px; line-height:1.45 }
+.clPasso .bolas{ display:flex; gap:5px; flex:0 0 auto }
+.clPasso .bolas i{ width:7px; height:7px; border-radius:50%; background:var(--line) }
+.clPasso .bolas i.feita{ background:var(--acc); opacity:.5 }
+.clPasso .bolas i.agora{ background:var(--acc) }
+
+.clArte{ display:grid; gap:8px; margin:0 0 14px;
+  grid-template-columns:repeat(auto-fill,minmax(46%,1fr)) }
+.clArte.uma{ grid-template-columns:1fr }
+.clArte .mtMini{ width:100% !important; height:auto !important; aspect-ratio:4/5;
+  border-radius:12px; border:1px solid var(--line); background:var(--soft); cursor:zoom-in }
+.clArte.uma .mtMini{ aspect-ratio:auto; min-height:180px; max-height:60vh }
+.clArte.uma .mtMini img, .clArte.uma .mtMini video{ object-fit:contain; height:100%;
+  background:#0A0B0E }
+.clArte .mtMini .ord{ background:rgba(8,9,11,.72); color:#fff; padding:1px 5px; border-radius:6px }
+.clArteHd{ display:flex; align-items:baseline; gap:8px; margin:0 0 7px }
+.clArteHd b{ font-family:var(--mono); font-size:9.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--mut) }
+.clArteHd span{ font-size:11.5px; color:var(--mut) }
+.clArteVazia{ padding:16px; border:1px dashed var(--line); border-radius:12px;
+  text-align:center; font-size:12.5px; color:var(--mut); margin-bottom:14px }
+.clArqs{ display:flex; flex-wrap:wrap; gap:6px; margin:-6px 0 14px }
+.clArqs a{ display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px;
+  border:1px solid var(--line); font-size:11.5px; color:var(--acc); text-decoration:none }
+/* a miniatura na lista de publicações */
+.clrow .clThumb{ width:34px; height:42px; border-radius:8px; overflow:hidden; flex:0 0 auto;
+  background:var(--soft); border:1px solid var(--line); display:grid; place-items:center }
+.clrow .clThumb img, .clrow .clThumb video{ width:100%; height:100%; object-fit:cover; display:block }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v117 — o cliente vê qual volta está aprovando, e vê a arte.
+
+   1. O PASSO. O mesmo card passa duas vezes por quem aprova: primeiro o
+      texto, depois a publicação pronta. Quem decide via a mesma tela nas
+      duas, sem nada dizendo qual era qual. Agora abre com "Passo 1 de 2 ·
+      o texto" ou "Passo 2 de 2 · a publicação pronta", com duas bolinhas
+      e uma frase do que vem depois. O botão fala a mesma língua.
+
+   2. A ARTE. A agência sobe a imagem no card e ela não chegava à tela de
+      quem aprova. Aqui ela aparece — e abre no mesmo visualizador que a
+      agência já usa (tela cheia, carrossel lado a lado, baixar), porque
+      a miniatura carrega o `data-mttira` que aquele motor escuta.
+
+   No passo 1 a arte NÃO aparece, e isso é de propósito: o lote de texto
+   existe para o cliente ler o argumento sem a imagem decidir por ele
+   (D-042). Se houver arquivo anexado, ele fica como material de apoio,
+   nomeado, e não como "a peça a aprovar".
+   ================================================================== */
+
+const clVolta = p => voltaDe(faseDe(p));
+/* o que está em jogo em cada passo, na língua do cliente (nunca "peça") */
+const CL_PASSOS = [
+  { n: 1, nome: 'o texto',
+    diz: 'Você lê e decide o texto antes de a imagem existir. Mudar palavra é barato; refazer imagem, não.',
+    depois: 'Aprovado o texto, a agência produz a imagem e ela volta para você no passo 2.' },
+  { n: 2, nome: 'a publicação pronta',
+    diz: 'O texto você já aprovou. Agora é a publicação como vai ao ar.',
+    depois: 'Aprovada, ela entra no calendário para ser publicada na data combinada.' }
+];
+const clPassoDe = p => CL_PASSOS[clVolta(p) - 1] || CL_PASSOS[0];
+
+/* só imagem e vídeo são "a arte"; o resto é material de apoio */
+const clVisuais = p => (typeof materiaisDe === 'function' ? materiaisDe(p.id) : [])
+  .filter(m => m.tipo === 'imagem' || m.tipo === 'video');
+const clArquivos = p => (typeof materiaisDe === 'function' ? materiaisDe(p.id) : [])
+  .filter(m => m.tipo !== 'imagem' && m.tipo !== 'video');
+/* no passo 1 a imagem não entra: o lote de texto é texto (D-042) */
+const clMostraArte = p => faseDe(p) !== 'texto_cli' && clVisuais(p).length > 0;
+
+/* o blob morre ao recarregar a página; quem o traz de volta do banco do
+   navegador é esta rotina, que já existe — só não era chamada de cá */
+function clPedirArquivos(p){
+  if(typeof rehidratarArquivos !== 'function') return;
+  if(clVisuais(p).some(m => !m.url && m.chave)) rehidratarArquivos();
+}
+
+function clArteHtml(p){
+  const vis = clVisuais(p);
+  const arqs = clArquivos(p).filter(m => m.tipo === 'link' || m.url);
+  if(!vis.length && !arqs.length) return '';
+  const uma = vis.length === 1;
+  const midia = (m, i) => `<span class="mtMini ${m.url ? 'temArte' : ''} ${m.tipo === 'video' ? 'ehVideo' : ''}"
+      data-mtmini="${i}">
+      ${vis.length > 1 ? `<span class="ord">${i + 1}</span>` : ''}
+      ${m.url && m.tipo === 'imagem' ? `<img src="${m.url}" alt="${esc(m.nome || 'imagem da publicação')}">`
+        : (m.url || m.poster) && m.tipo === 'video'
+          ? `<video ${m.url ? `src="${m.url}"` : ''} ${m.poster ? `poster="${m.poster}"` : ''}
+               muted playsinline preload="metadata"></video>`
+          : `<span class="tipo">${ic('img', 18)}</span>`}
+    </span>`;
+  return `${vis.length ? `<div class="clArteHd"><b>${vis.length > 1 ? 'A publicação' : 'A publicação'}</b>
+      <span>${vis.length > 1 ? `${vis.length} telas · toque para ver inteira`
+                             : 'toque para ver em tela cheia'}</span></div>
+    <div class="clArte ${uma ? 'uma' : ''}" data-mttira="${p.id}">
+      ${vis.map(midia).join('')}</div>` : ''}
+    ${arqs.length ? `<div class="clArqs">${arqs.map(m => m.tipo === 'link'
+      ? `<a href="${esc(m.url)}" target="_blank" rel="noopener noreferrer">${ic('linkic', 12)} ${esc(m.nome)}</a>`
+      : `<a href="${esc(m.url)}" download="${esc(m.nome)}">${ic('baixar', 12)} ${esc(m.nome)}</a>`).join('')}</div>` : ''}`;
+}
+
+clCard = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    const p = S.pauta.find(x => x.id === S.pcSel);
+    if(!p || !html) return html;
+    clPedirArquivos(p);
+
+    const passo = clPassoDe(p);
+    const naMao = comCliente(p);
+    const bloco = `<div class="clPasso">
+      <span class="num">${passo.n}/2</span>
+      <span class="txt"><b>Passo ${passo.n} de 2 · ${passo.nome}</b>
+        <span>${naMao ? esc(passo.diz) : esc(passo.depois)}</span></span>
+      <span class="bolas">${[1, 2].map(i =>
+        `<i class="${i < passo.n ? 'feita' : ''}${i === passo.n ? 'agora' : ''}"></i>`).join('')}</span>
+    </div>`;
+    html = html.replace('<div class="clhead">', bloco + '\n    <div class="clhead">');
+
+    /* a arte entra antes do texto: no passo 2 é ela que se decide */
+    if(clMostraArte(p)){
+      html = html.replace('<div class="clcap leitura"><div class="caplbl">Texto da publicação</div>',
+        clArteHtml(p) + '\n    <div class="clcap leitura"><div class="caplbl">Texto da publicação</div>');
+    } else if(faseDe(p) === 'post_cli'){
+      html = html.replace('<div class="clcap leitura"><div class="caplbl">Texto da publicação</div>',
+        `<div class="clArteVazia">A imagem ainda não chegou aqui. Avise a agência antes de decidir —
+          sem ela você estaria aprovando só o texto de novo.</div>
+        <div class="clcap leitura"><div class="caplbl">Texto da publicação</div>`);
+    }
+
+    /* o botão fala o mesmo passo */
+    html = html.replace(/>Aprovar(?: o texto)?</,
+      `>Aprovar ${passo.n === 1 ? 'o texto' : 'a publicação'}<`);
+    return html;
+  };
+})(clCard);
+if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clcard = () => clCard();
+
+/* ---------- a lista: o passo e a miniatura ------------------------- */
+clPauta = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    for(const p of cardsDoCliente()){
+      const f = faseDe(p);
+      /* o selo diz o passo, não só "esperando você" */
+      if(f === 'post_cli')
+        html = html.replace(
+          new RegExp(`(data-clcard="${p.id}"[\\s\\S]*?<span class="clpill [^"]*">)Esperando você(<)`),
+          '$1Esperando você · publicação$2');
+      if(f === 'texto_cli')
+        html = html.replace(
+          new RegExp(`(data-clcard="${p.id}"[\\s\\S]*?<span class="clpill [^"]*">)Esperando você · texto(<)`),
+          '$1Esperando você · texto$2');
+      /* a miniatura, quando já existe imagem */
+      const vis = clVisuais(p);
+      if(!vis.length || f === 'texto_cli') continue;
+      const m = vis[0];
+      const thumb = `<span class="clThumb">${
+        m.url && m.tipo === 'imagem' ? `<img src="${m.url}" alt="">`
+        : (m.url || m.poster) && m.tipo === 'video'
+          ? `<video ${m.url ? `src="${m.url}"` : ''} ${m.poster ? `poster="${m.poster}"` : ''}
+               muted playsinline preload="metadata"></video>`
+          : ic('img', 14)}</span>`;
+      html = html.replace(new RegExp(`(<button class="clrow[^"]*" data-clcard="${p.id}"[^>]*>)`), '$1' + thumb);
+    }
+    return html;
+  };
+})(clPauta);
+if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clpauta = () => clPauta();
+
+/* ---------- o visualizador estava morto, e não era só do lado do cliente
+   A v64 pendurou o lightbox num embrulho do `renderLayer`. A v77
+   REESCREVEU `renderLayer` inteiro — para não redesenhar o que não mudou,
+   um ganho real — e nessa troca o embrulho da v64 saiu do caminho. Desde
+   então tocar numa miniatura só ligava `S.lb`: ninguém desenhava nada,
+   nem para a agência. Ninguém tinha reparado porque a tela Material tem
+   o seu próprio caminho.
+
+   Aqui ele volta com casa própria, fora do `#layer` — o mesmo padrão que
+   a v81 usou para a folha do menu. Assim ele não depende de quem
+   reescrever o layer amanhã, e o cache de "só troca se mudou" continua
+   valendo para os dois. */
+(function(){
+  const casa = document.createElement('div');
+  casa.id = 'lbhost';
+  document.body.appendChild(casa);
+  let ultimo = null;
+  renderLayer = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      const h = (S.lb && typeof vLightbox === 'function') ? vLightbox() : '';
+      if(h !== ultimo){ casa.innerHTML = h; ultimo = h; }
+      return r;
+    };
+  })(renderLayer);
+})();
+
+/* o cliente pede os arquivos de volta ao entrar no card */
+(function(){
+  const naEntrada = () => {
+    if(S.view !== 'client') return;
+    const p = S.pauta && S.pauta.find(x => x.id === S.pcSel);
+    if(p) clPedirArquivos(p);
+  };
+  render = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); naEntrada(); return r; };
+  })(render);
+})();
 </script>
