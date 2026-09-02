@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-02 19:00 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-02 19:35 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15832,7 +15832,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v119 · 2 set · documento na tarefa, em qualquer frente';
+const VERSAO_PROTOTIPO = 'v120 · 2 set · filtro por cliente no Ensaio';
 
 menuSheet = (function(orig){
   return function(){
@@ -24145,4 +24145,151 @@ if(typeof hxFoto === 'function'){
       return f; };
   })(hxFoto);
 }
+</script>
+<style>
+/* =====================================================================
+   v120 — filtro por cliente no Ensaio.
+
+   O quadro já filtrava por frente e por pessoa. Faltava a pergunta que
+   o atendimento faz antes de toda reunião: "o que está de pé para a
+   Loja Norte?".
+   ================================================================== */
+.enClis{ display:flex; gap:7px; overflow-x:auto; padding:0 2px 10px;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none; align-items:center }
+.enClis::-webkit-scrollbar{ display:none }
+.enClis .rot{ font-family:var(--mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-500); flex:0 0 auto; padding-right:2px }
+.enCli2{ display:inline-flex; align-items:center; gap:7px; flex:0 0 auto;
+  padding:5px 12px 5px 5px; border-radius:999px; font-size:12.5px;
+  border:1px solid var(--ink-700); background:var(--ink-900); color:var(--ink-300);
+  max-width:100%; overflow:hidden;
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo),
+    background var(--fast) var(--eo) }
+.enCli2.semCara{ padding-left:12px }
+.enCli2:hover{ color:var(--ink-50); border-color:var(--ink-600) }
+.enCli2.on{ color:var(--brass-300); border-color:var(--brass-600);
+  background:rgba(200,150,58,.10) }
+.enCli2 b{ font-family:var(--mono); font-size:10px; color:var(--ink-500) }
+.enCli2.on b{ color:var(--brass-400) }
+.enCli2 .cliFoto{ width:19px; height:19px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v120 — filtro por cliente no Ensaio.
+
+   O quadro é uma closure fechada dentro de `agEnsaio`: as colunas, as
+   contas de cada frente e os chips de pessoa leem `S.ensaio.tarefas`
+   por dentro dela, e não há por onde passar um filtro novo.
+
+   Em vez de reescrever a tela inteira — o caminho que já custou caro
+   neste arquivo — o filtro é aplicado na FONTE: durante o desenho, a
+   lista de tarefas é a fatia daquele cliente. Assim as colunas, os
+   contadores e o filtro de pessoa concordam entre si sem que nenhum
+   deles precise saber que o filtro existe.
+
+   Duas travas para isso ser seguro:
+   · `sincronizarJobs` roda ANTES da troca (a lista precisa estar em dia)
+     e fica muda durante ela — senão ele criaria tarefas para os cards
+     dos outros clientes dentro da fatia, que é descartada no fim;
+   · a troca é desfeita num `finally`, mesmo se o desenho falhar.
+   ================================================================== */
+
+S.enCli2 = S.enCli2 || null;              /* null = todos os clientes */
+
+const enTarefasVisiveis = () => (S.ensaio ? S.ensaio.tarefas : [])
+  .filter(t => (typeof podeVerTarefa !== 'function') || podeVerTarefa(t));
+const enFatiaDoCliente = (lista, cli) =>
+  lista.filter(t => cli === '__sem' ? !t.cli : t.cli === cli);
+
+/* 1. a fonte, durante o desenho */
+agEnsaio = (function(orig){
+  return function(){
+    const cli = S.enCli2;
+    if(!cli || !S.ensaio) return orig.apply(this, arguments);
+    if(typeof sincronizarJobs === 'function') sincronizarJobs();
+    const todas = S.ensaio.tarefas;
+    const sync = typeof sincronizarJobs === 'function' ? sincronizarJobs : null;
+    S.ensaio.tarefas = enFatiaDoCliente(todas, cli);
+    if(sync) sincronizarJobs = () => {};
+    try { return orig.apply(this, arguments); }
+    finally { S.ensaio.tarefas = todas; if(sync) sincronizarJobs = sync; }
+  };
+})(agEnsaio);
+
+/* 2. a fileira de chips — desenhada FORA do filtro, para cada cliente
+      mostrar quantos cards tem, e não quantos sobraram */
+agEnsaio = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    if(!html || !S.ensaio || html.indexOf('<div class="enRolo">') < 0) return html;
+
+    const noQuadro = enTarefasVisiveis();
+    const daFrente = S.enCat === '__todas'
+      ? noQuadro
+      : noQuadro.filter(t => catIdDe(t) === S.enCat);
+    const clientes = CLIS().filter(c => daFrente.some(t => t.cli === c.id));
+    const semCliente = daFrente.filter(t => !t.cli).length;
+    /* frente que não tem cliente nenhum não ganha a fileira */
+    if(!clientes.length && !S.enCli2) return html;
+
+    const chip = (id, rotulo, n, cara) =>
+      `<button class="enCli2 ${S.enCli2 === id ? 'on' : ''} ${cara ? '' : 'semCara'}"
+        data-encli2="${id === null ? '' : id}"
+        title="${esc(rotulo)}">${cara || ''}${esc(rotulo)}<b>${n || ''}</b></button>`;
+
+    const fileira = `<div class="enClis"><span class="rot">cliente</span>
+      ${chip(null, 'Todos', daFrente.length)}
+      ${clientes.map(c => chip(c.id, c.nome, daFrente.filter(t => t.cli === c.id).length,
+          typeof rostoCli === 'function' ? rostoCli(c) : '')).join('')}
+      ${semCliente ? chip('__sem', 'Sem cliente', semCliente) : ''}
+    </div>`;
+    return html.replace('<div class="enRolo">', fileira + '<div class="enRolo">');
+  };
+})(agEnsaio);
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-encli2]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const id = t.dataset.encli2 || null;
+  S.enCli2 = (S.enCli2 === id) ? null : id;    /* tocar de novo tira o filtro */
+  render();
+  if(typeof som === 'function') som('toque');
+}, true);
+
+/* 3. a legenda diz o que está sendo mostrado, para ninguém achar que o
+      quadro esvaziou */
+agEnsaio = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    if(!html || !S.enCli2) return html;
+    const c = CLIS().find(x => x.id === S.enCli2);
+    const nome = S.enCli2 === '__sem' ? 'tarefas sem cliente' : (c ? c.nome : 'um cliente');
+    const aviso = `<p class="enLegenda" style="color:var(--brass-300)">
+      Mostrando só <b style="color:var(--brass-200)">${esc(nome)}</b> — as colunas e as contas
+      acima seguem esse recorte. <button class="cyBtn" data-encli2=""
+      style="margin-left:6px">ver todos os clientes</button></p>`;
+    return html.replace('<div class="enRolo">', aviso.replace('enLegenda', 'enLegenda enCliAviso') + '<div class="enRolo">');
+  };
+})(agEnsaio);
+
+/* a tarefa nova nasce no cliente que está sendo olhado. O modal decide
+   sozinho o cliente inicial — `CLIS()[0]` — e ignora qualquer coisa
+   escrita em `S.enCli` antes dele. Então quem muda é a ORDEM da lista,
+   só durante a chamada: o cliente do filtro passa a ser o primeiro. */
+modalTarefa = (function(orig){
+  return function(id){
+    const cli = S.enCli2;
+    if(id || !cli || cli === '__sem' || !CLIS().some(c => c.id === cli))
+      return orig.apply(this, arguments);
+    const base = CLIS;
+    CLIS = () => { const l = base();
+      const i = l.findIndex(c => c.id === cli);
+      if(i > 0){ const [c] = l.splice(i, 1); l.unshift(c); }
+      return l; };
+    try { return orig.apply(this, arguments); }
+    finally { CLIS = base; }
+  };
+})(modalTarefa);
 </script>
