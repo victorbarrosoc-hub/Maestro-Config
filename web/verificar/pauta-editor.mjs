@@ -157,6 +157,10 @@ checa('com mais de uma tela o nome vira "Stories"',
 // ---------- 3b. o que saiu da tela, e o que subiu ----------
 await abrirNovo();
 checa('a caixa CTA nao existe mais', await pag.locator('#pt-cta').count() === 0);
+checa('o tipo de conteudo se chama so "Post"',
+      (await pag.locator('[data-tcpick="estatico"]').textContent()).trim() === 'Post');
+checa('o valor interno do tipo continua "estatico" (nao quebra o gravar)',
+      await pag.locator('[data-tcpick="estatico"]').count() === 1);
 checa('a caixa "peca que preenche esta pauta" nao existe mais',
       await pag.locator('#pt-peca').count() === 0);
 checa('o chip do formato livre diz so "Livre"',
