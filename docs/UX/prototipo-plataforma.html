@@ -15767,7 +15767,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v108 · 2 set · tipo do cliente e acesso por pessoa';
+const VERSAO_PROTOTIPO = 'v109 · 2 set · o responsável com rosto e nome';
 
 menuSheet = (function(orig){
   return function(){
@@ -21429,4 +21429,100 @@ agEnsaio = (function(orig){
       '<span class="prazo" style="color:var(--ink-500)">R$ ·····</span>');
   };
 })(agEnsaio);
+</script>
+<style>
+/* v109 — o responsável com cara e nome, em todo lugar */
+.ptResp{ display:inline-flex !important; align-items:center; gap:6px;
+  width:auto !important; height:auto !important; border-radius:999px !important;
+  padding:2px 9px 2px 2px; background:var(--ink-800); color:var(--ink-100);
+  font-family:var(--sans) !important; font-size:11.5px !important; font-weight:500 !important;
+  border:1px solid var(--ink-700); max-width:100%; overflow:hidden }
+.ptResp .respFoto{ width:18px; height:18px; border-radius:50%; flex:0 0 auto;
+  display:inline-grid; place-items:center; background:var(--ink-600);
+  font-family:var(--mono); font-size:8px; font-weight:600; color:var(--ink-100) }
+.ptResp .respFoto.comFoto{ padding:0; overflow:hidden; background:var(--ink-700) }
+.ptResp .respFoto.comFoto img{ width:100%; height:100%; object-fit:cover; display:block;
+  border-radius:inherit }
+.ptResp b{ font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+/* na tabela o selo continua cabendo na célula */
+td .ptResp{ max-width:130px }
+
+/* os seletores de responsável: a bolinha vira a pessoa */
+.ptChips button .respFoto, .enResp .respFoto{ width:19px; height:19px; border-radius:50%;
+  flex:0 0 auto; display:inline-grid; place-items:center; background:var(--ink-600);
+  font-family:var(--mono); font-size:8px; font-weight:600; color:var(--ink-100) }
+.ptChips button .respFoto.comFoto, .enResp .respFoto.comFoto{ padding:0; overflow:hidden }
+.ptChips button .respFoto.comFoto img, .enResp .respFoto.comFoto img{ width:100%; height:100%;
+  object-fit:cover; display:block; border-radius:inherit }
+.ptChips button.temPessoa{ padding-left:5px }
+.enResp.temPessoa{ padding-left:5px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v109 — o responsável passa a ter cara e nome.
+
+   A foto do perfil existe desde a v87, mas só era usada na Equipe e no
+   "Quem está aí?". Onde ela mais serve — no card, para saber de relance
+   de quem é aquilo — o produto mostrava duas letras num círculo cinza.
+   Duas letras não são um rosto: numa equipe com Ana Clara e Anna Costa
+   elas são a MESMA coisa.
+
+   Por que a pintura é feita no DOM, e não em cada lugar que desenha:
+   o selo do responsável nasce em oito trechos diferentes, espalhados por
+   blocos de versões diferentes — e a lista do Ensaio, a linha da pauta, a
+   célula da tabela e o modal cada um monta o seu. Reescrever os oito
+   deixaria o nono (o que ainda não existe) de fora. Aqui, tudo que sair
+   com a marca do responsável é pintado depois de a tela existir — quem
+   vier depois entra de graça.
+   ================================================================== */
+
+/* o rosto (foto ou iniciais), no tamanho do selo */
+function rostoDe(m){
+  return (m && m.foto)
+    ? `<span class="respFoto comFoto"><img src="${m.foto}" alt="" aria-hidden="true"></span>`
+    : `<span class="respFoto">${m ? esc(membroIni(m)) : '?'}</span>`;
+}
+/* acha a pessoa pelo nome que o próprio selo já carrega no title */
+function pessoaPeloTitulo(t){
+  const nome = String(t || '').split('·')[0].trim();
+  if(!nome) return null;
+  return (S.equipe || []).find(x => x.n === nome)
+      || (S.equipe || []).find(x => x.n.split(' ')[0] === nome) || null;
+}
+
+function pintarResponsaveis(){
+  /* 1. o selo no card, na linha e na célula */
+  document.querySelectorAll('.ptResp:not(.pintado)').forEach(el => {
+    el.classList.add('pintado');
+    const m = pessoaPeloTitulo(el.getAttribute('title'));
+    if(!m) return;                       /* nome que não é da equipe: fica como está */
+    el.innerHTML = rostoDe(m) + `<b>${esc(m.n.split(' ')[0])}</b>`;
+  });
+
+  /* 2. os seletores: escolher também é falar de quem é */
+  document.querySelectorAll(
+    '[data-resppick]:not(.pintado),[data-enresppick]:not(.pintado),[data-enresp2]:not(.pintado)'
+  ).forEach(b => {
+    b.classList.add('pintado');
+    const id = b.dataset.resppick ?? b.dataset.enresppick ?? b.dataset.enresp2;
+    if(!id) return;                      /* "ninguém ainda", "Todos", "Sem dono" */
+    const m = (S.equipe || []).find(x => membroId(x) === id);
+    if(!m) return;
+    const i = b.querySelector('i');
+    if(i) i.outerHTML = rostoDe(m);      /* a bolinha de cor vira a pessoa */
+    else b.insertAdjacentHTML('afterbegin', rostoDe(m));
+    b.classList.add('temPessoa');
+  });
+}
+
+/* depois de cada pintura de tela — as duas, porque o selo aparece tanto
+   no corpo quanto dentro dos modais */
+render = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); pintarResponsaveis(); return r; };
+})(render);
+renderLayer = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); pintarResponsaveis(); return r; };
+})(renderLayer);
+pintarResponsaveis();
 </script>
