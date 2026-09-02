@@ -118,6 +118,8 @@ checa('a caixa de horario e bem menor que a de texto',
 // ---------- 3c. o bloco de Story segue o formato ----------
 checa('sem o formato Story, o bloco de story nao aparece',
       await pag.locator('.stCampos').count() === 0);
+checa('sem o formato Story, a caixinha de perguntas nem aparece',
+      await pag.locator('#pt-caixinha').count() === 0);
 await pag.click('[data-fmt98="Story"]'); await pag.waitForTimeout(300);
 checa('marcar Story abre o bloco de story',
       await pag.locator('.stCampos').count() > 0 &&
@@ -131,6 +133,8 @@ checa('o bloco de story fica ANTES das plataformas (subiu)',
 checa('ha UM seletor de Pilar na tela, nao dois',
       await pag.evaluate(() => [...document.querySelectorAll('#layer .modalbox .ptChips')]
         .filter(g => g.querySelector('[data-pilarpick]')).length) === 1);
+checa('a caixinha de perguntas mora DENTRO do bloco de story',
+      await pag.evaluate(() => !!document.querySelector('.stCampos #pt-caixinha')));
 checa('com uma tela o nome e "Story"',
       (await pag.locator('.stCampos > b').textContent()).trim() === 'Story');
 
@@ -151,6 +155,19 @@ await pag.evaluate(() => {
   c.story = true; c.telas = [{t:'1'},{t:'2'},{t:'3'}];
   S.ptSemear = true; S.modal = modalPauta(c.id); renderLayer(); });
 await pag.waitForTimeout(300);
+/* um card que ja e story, com OUTRO formato, nao pode perder a caixinha
+   ao ser aberto — e o card que veio da planilha. Fecha antes de abrir,
+   que e o caminho de quem usa. */
+await pag.evaluate(() => {
+  S.modal = null; renderLayer();
+  const c = S.pauta[0];
+  c.story = true; c.caixinha = true; c.fmt = 'Reels'; c.fmts = ['Reels'];
+  S.ptSemear = true; S.modal = modalPauta(c.id); renderLayer(); });
+await pag.waitForTimeout(300);
+checa('um story antigo com outro formato NAO perde a caixinha',
+      await pag.locator('#pt-caixinha').count() === 1 &&
+      await pag.locator('#pt-caixinha').isChecked());
+
 checa('com mais de uma tela o nome vira "Stories"',
       /^Stories/.test((await pag.locator('.stCampos > b').textContent()).trim()));
 
@@ -245,6 +262,18 @@ await pag.click('[data-fmt98="Reels"]'); await pag.waitForTimeout(250);
 checa('sair do Livre devolve as plataformas', await visivel('[data-plat98="ig"]'));
 checa('sair do Livre desmarca o Livre',
       await pag.locator('[data-fmt98="Livre"].on').count() === 0);
+
+/* abrir OUTRO card nao pode trazer o texto do card anterior junto */
+await pag.evaluate(() => { S.modal = null; renderLayer();
+  S.pauta[0].t = 'Card A'; S.pauta[0].texto = 'texto do A';
+  S.pauta[1].t = 'Card B'; S.pauta[1].texto = 'texto do B';
+  S.ptSemear = true; S.modal = modalPauta(S.pauta[0].id); renderLayer(); });
+await pag.waitForTimeout(300);
+await pag.fill('#pt-texto', 'rascunho digitado no A');
+await pag.evaluate(() => { S.ptSemear = true; S.modal = modalPauta(S.pauta[1].id); renderLayer(); });
+await pag.waitForTimeout(300);
+checa('abrir outro card nao vaza o texto do anterior',
+      (await pag.inputValue('#pt-texto')) === 'texto do B');
 
 checa('nenhum erro de JavaScript', erros.length === 0);
 

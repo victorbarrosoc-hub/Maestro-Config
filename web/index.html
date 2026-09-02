@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-02 00:19 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-02 00:27 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15826,7 +15826,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v103 · 2 set · tipo de conteúdo: Post';
+const VERSAO_PROTOTIPO = 'v104 · 2 set · a caixinha vai para dentro do Story';
 
 menuSheet = (function(orig){
   return function(){
@@ -20510,6 +20510,17 @@ function ptDevolverFoco(f){
 renderLayer = (function(orig){
   return function(){
     if(!ptEditorAberto()) return orig.apply(this, arguments);
+
+    /* Colher e repor só vale para REDESENHO DO MESMO CARD. Se o modal
+       passou a ser de outro card — ou é a primeira abertura —, o que está
+       na tela pertence a outro registro, e repor faria o texto de um
+       vazar para o outro. Nesse caso deixa passar direto: quem abriu
+       acabou de montar o modal a partir do card certo. */
+    const naTela = document.querySelector('#layer .modalbox [data-ptok]');
+    const idNaTela = naTela ? (+naTela.dataset.ptok || 0) : null;
+    const idNovo = ptIdAberto() || 0;
+    if(idNaTela === null || idNaTela !== idNovo) return orig.apply(this, arguments);
+
     const guardado = ptColher();
     const foco = ptFoco();
     S.modal = modalPauta(ptIdAberto());     /* do ESTADO, não da string velha */
@@ -20623,6 +20634,21 @@ modalPauta = (function(orig){
       </div>`;
     } else if(blocoStory){
       blocoStory = blocoStory.replace(/<b>Story diário<\/b>/, `<b>${nomeStory}</b>`);
+    }
+
+    /* A caixinha de perguntas é coisa de Story e vivia lá embaixo, entre a
+       Observação e os botões, aparecendo em post que nunca teria caixinha
+       nenhuma. Entra aqui dentro: sobe junto e some junto. */
+    const caixinha = html.match(
+      /<label class="soPost" style="display:flex;gap:9px;align-items:center;margin:4px 0 2px;[\s\S]*?<\/label>/);
+    if(caixinha){
+      html = html.replace(caixinha[0], '');
+      if(blocoStory){
+        /* dentro do bloco o "Story com" já está dito pelo título */
+        const dentro = caixinha[0].replace('Story com caixinha de perguntas',
+                                           'Com caixinha de perguntas');
+        blocoStory = blocoStory.replace(/<\/div>\s*$/, () => dentro + '</div>');
+      }
     }
 
     /* --- "Tipo de conteúdo" sobe para junto do Formato ---------------
