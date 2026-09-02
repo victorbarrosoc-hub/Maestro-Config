@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-02 11:10 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-02 18:25 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15832,7 +15832,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v115 · 2 set · a pauta cabe na tela do celular';
+const VERSAO_PROTOTIPO = 'v116 · 2 set · excluir card no Ensaio';
 
 menuSheet = (function(orig){
   return function(){
@@ -23362,4 +23362,182 @@ renderLayer = (function(orig){
   return function(){ const r = orig.apply(this, arguments); arrumarControlesDaPauta(); return r; };
 })(renderLayer);
 arrumarControlesDaPauta();
+</script>
+<style>
+/* =====================================================================
+   v116 — excluir card no Ensaio.
+
+   Dava para criar e concluir; não dava para apagar. Uma tarefa nascida
+   errada ficava no quadro para sempre.
+   ================================================================== */
+.enCard .acoes .enRm{ margin-left:auto; color:var(--ink-500) !important;
+  border-color:var(--ink-800) !important }
+.enCard .acoes .enRm:hover{ color:var(--danger) !important;
+  border-color:rgba(229,72,77,.45) !important; background:rgba(229,72,77,.08) !important }
+.enApagar{ display:flex; align-items:center; gap:10px; margin-top:16px; padding-top:14px;
+  border-top:1px solid var(--ink-800); font-size:12px; color:var(--ink-400) }
+.enApagar button{ padding:7px 13px; border-radius:9px; border:1px solid rgba(229,72,77,.4);
+  color:var(--danger); font-size:12.5px; font-weight:600 }
+.enApagar button:hover{ background:rgba(229,72,77,.1) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v116 — excluir card no Ensaio.
+
+   Duas naturezas de card, duas consequências — e o texto da confirmação
+   diz qual é qual antes de qualquer coisa acontecer:
+
+   · tarefa da casa (não tem card na pauta) — sai do quadro;
+   · card da pauta — o quadro e a pauta são o MESMO card desde a v-anterior.
+     Excluir aqui é excluir dos dois lugares, e ele vai para a lixeira do
+     cliente, de onde já se resgata.
+
+   O que NÃO se exclui: card que está com o cliente. Ele sumiria da tela
+   de quem está decidindo, no meio da decisão. Traga de volta primeiro.
+   ================================================================== */
+IC.lixo = '<path d="M4 7h16"/><path d="M9.5 7V5.2A1.2 1.2 0 0 1 10.7 4h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/>'
+        + '<path d="M6.4 7l.8 11.4A1.6 1.6 0 0 0 8.8 20h6.4a1.6 1.6 0 0 0 1.6-1.6L17.6 7"/>'
+        + '<path d="M10.2 11v5"/><path d="M13.8 11v5"/>';
+
+/* quem pode: a tarefa da casa segue a chave do Ensaio; o card da pauta,
+   a da pauta — é dela que ele sai */
+const podeExcluirTarefa = t => cardDaTarefa(t) ? pode('pauta') : pode('ensaio');
+
+let ultimoEnRm = null;
+function excluirTarefa(tid){
+  const i = S.ensaio.tarefas.findIndex(x => x.id === +tid);
+  if(i < 0) return false;
+  const t = S.ensaio.tarefas[i];
+  const p = cardDaTarefa(t);
+  if(p && typeof comCliente === 'function' && comCliente(p)){
+    toast('Está com o cliente decidindo. Traga o card de volta antes de excluir.');
+    return false;
+  }
+  if(!podeExcluirTarefa(t)){
+    toast(`${NOME_CAP(p ? 'pauta' : 'ensaio')}: seu acesso está fechado. Quem abre é o administrador.`);
+    return false;
+  }
+  const guardado = { tarefa: t, idxTarefa: i };
+  S.ensaio.tarefas.splice(i, 1);
+  if(p){
+    /* o card da pauta vai para a lixeira do cliente, igual ao que a
+       própria pauta faz — e de lá volta pelo mesmo botão de sempre */
+    const arr = S.pautas[t.cli] || [];
+    const idx = arr.findIndex(x => x.id === p.id);
+    if(idx >= 0){
+      arr.splice(idx, 1);
+      lixeiraDe(t.cli).unshift({ item: p, idx, quando: Date.now() });
+      Object.assign(guardado, { cliId: t.cli, item: p, idx });
+    }
+  } else {
+    /* a tarefa da casa não tem cliente, então não tem lixeira de cliente:
+       fica guardada no próprio quadro, e o desfazer a traz de volta */
+    (S.ensaio.lixo = S.ensaio.lixo || []).unshift({ tarefa: t, quando: Date.now() });
+    if(S.ensaio.lixo.length > 50) S.ensaio.lixo.length = 50;
+  }
+  ultimoEnRm = guardado;
+  setTimeout(() => { if(ultimoEnRm === guardado) ultimoEnRm = null; }, 8000);
+  S.modal = null; som('toque'); render();
+  toast(p ? `"${t.titulo}" excluído — o card foi para a lixeira de ${
+              (CLIS().find(c => c.id === t.cli) || {}).nome || 'quem é dele'}.`
+          : `"${t.titulo}" excluída.`, true);
+  return true;
+}
+
+desfazer = (function(base){
+  return function(){
+    if(ultimoEnRm){
+      const { tarefa, idxTarefa, cliId, item, idx } = ultimoEnRm;
+      if(item){
+        const lx = lixeiraDe(cliId);
+        const j = lx.findIndex(e => e.item && e.item.id === item.id);
+        if(j >= 0) lx.splice(j, 1);
+        const arr = S.pautas[cliId] = S.pautas[cliId] || [];
+        arr.splice(Math.min(idx, arr.length), 0, item);
+      } else if(S.ensaio.lixo){
+        const j = S.ensaio.lixo.findIndex(e => e.tarefa === tarefa);
+        if(j >= 0) S.ensaio.lixo.splice(j, 1);
+      }
+      S.ensaio.tarefas.splice(Math.min(idxTarefa, S.ensaio.tarefas.length), 0, tarefa);
+      if(typeof ligarTarefaAoCard === 'function') ligarTarefaAoCard(tarefa);
+      ultimoEnRm = null; S.toast = null; render();
+      toast(`"${tarefa.titulo}" de volta ao quadro.`);
+      return;
+    }
+    return base.apply(this, arguments);
+  };
+})(desfazer);
+
+function modalExcluirTarefa(tid){
+  const t = S.ensaio.tarefas.find(x => x.id === +tid);
+  if(!t) return '';
+  const p = cardDaTarefa(t);
+  const c = CLIS().find(x => x.id === t.cli);
+  const tempo = kbTempoTotal(t);
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>Excluir "${esc(t.titulo)}"?</h3>
+    <p>${p
+      ? `Este card é o mesmo na pauta e no quadro. Ele sai dos dois, e vai para a
+         <b style="color:var(--ink-50)">lixeira de ${esc(c ? c.nome : 'quem é dele')}</b> —
+         de onde volta inteiro, com material e histórico.`
+      : `Sai do quadro. Nada mais depende dela.`}
+      ${tempo > 60000 ? `<br><br>O cronômetro marcou <b style="color:var(--ink-50)">${kbFmt(tempo)}</b>
+        nesta tarefa; esse tempo sai das contas junto.` : ''}
+      <br><br>Você tem 8 segundos para desfazer.</p>
+    <div class="modalrow">
+      <button class="b gho" data-modalno="1">Voltar</button>
+      <button class="b pri" style="background:var(--danger);color:#fff"
+        data-enrmok="${t.id}">Excluir</button></div></div></div>`;
+}
+
+/* ---------- o botão no cartão, em toda frente ----------------------- */
+function pintarExcluirNoEnsaio(){
+  if(!S.ensaio || S.view !== 'agency') return;
+  document.querySelectorAll('.enCard[data-entar]').forEach(card => {
+    const acoes = card.querySelector('.acoes');
+    if(!acoes || acoes.querySelector('.enRm')) return;
+    const t = S.ensaio.tarefas.find(x => x.id === +card.dataset.entar);
+    if(!t || !podeExcluirTarefa(t)) return;
+    acoes.insertAdjacentHTML('beforeend',
+      `<button class="enRm" data-enrm="${t.id}" title="Excluir" aria-label="Excluir">${ic('lixo', 12)}</button>`);
+  });
+}
+render = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); pintarExcluirNoEnsaio(); return r; };
+})(render);
+renderLayer = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); pintarExcluirNoEnsaio(); return r; };
+})(renderLayer);
+
+/* ---------- e dentro do card aberto -------------------------------- */
+modalTarefa = (function(orig){
+  return function(id){
+    let html = orig.apply(this, arguments);
+    if(!html || !id) return html;
+    const t = S.ensaio.tarefas.find(x => x.id === id);
+    if(!t || !podeExcluirTarefa(t)) return html;
+    const p = cardDaTarefa(t);
+    const rodape = `<div class="enApagar">
+      <span style="flex:1">${p ? 'Sai do quadro e da pauta, para a lixeira do cliente.'
+                               : 'Sai do quadro.'}</span>
+      <button type="button" data-enrm="${t.id}">${ic('lixo', 12)} Excluir</button></div>`;
+    return html.replace(/<div class="modalrow" style="margin-top:14px">/,
+      rodape + '\n    <div class="modalrow" style="margin-top:14px">');
+  };
+})(modalTarefa);
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-enrm],[data-enrmok]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  if(t.dataset.enrmok !== undefined){ excluirTarefa(t.dataset.enrmok); return; }
+  const tr = S.ensaio.tarefas.find(x => x.id === +t.dataset.enrm);
+  if(!tr) return;
+  if(!podeExcluirTarefa(tr)){
+    toast(`${NOME_CAP(cardDaTarefa(tr) ? 'pauta' : 'ensaio')}: seu acesso está fechado. Quem abre é o administrador.`);
+    return;
+  }
+  S.modal = modalExcluirTarefa(tr.id); renderLayer();
+}, true);
 </script>
