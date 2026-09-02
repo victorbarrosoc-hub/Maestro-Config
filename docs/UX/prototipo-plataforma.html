@@ -15767,7 +15767,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v114 · 2 set · o cartão do Ensaio dentro da largura';
+const VERSAO_PROTOTIPO = 'v115 · 2 set · a pauta cabe na tela do celular';
 
 menuSheet = (function(orig){
   return function(){
@@ -23194,4 +23194,107 @@ addEventListener('click', e => {
 
 /* cliente excluído e depois resgatado da lixeira: o canal volta sozinho,
    porque a sincronização olha a lista viva — nada a fazer aqui. */
+</script>
+<style>
+/* =====================================================================
+   v115 — a pauta cabe na tela do celular.
+
+   No aparelho do fundador a primeira publicação começava a 930px do
+   topo: numa tela de 844px, uma tela inteira de controles antes de ver
+   o trabalho. Cinco blocos empilhados, cada um quebrando em duas ou
+   três linhas — cabeçalho (328px), quatro tijolos de número (168px),
+   três fileiras de controle (119px), o compasso (132px) e os filtros
+   de plataforma (78px).
+
+   Nada sai. Tudo continua acessível — só para de ocupar uma tela.
+   No desktop, onde há largura, nada muda.
+   ================================================================== */
+@media(max-width:860px){
+
+  /* ---- 1. o cabeçalho: título menor, ações numa faixa que corre ---- */
+  .mtop{ gap:10px; margin-bottom:14px }
+  .mtop h1{ font-size:22px; line-height:1.15 }
+  .mtop p{ font-size:12px; margin-top:3px }
+  /* a fileira de ações vem com `flex-wrap:wrap` escrito no atributo
+     style de cada tela — daí o !important, que aqui não é preguiça */
+  .mtop > div + div{ flex-wrap:nowrap !important; overflow-x:auto; scrollbar-width:none;
+    width:100%; padding-bottom:2px; -webkit-overflow-scrolling:touch }
+  /* `min-width:auto` é o padrão de todo filho de flex e de grid: sem
+     zerar isso a faixa cresce até caber o conteúdo, e quem rola de lado
+     passa a ser a PÁGINA inteira, não ela */
+  .mtop > div + div, .ptSegBar, .ptSeg .seg, .ptChips, .tabs,
+  .ptFiltros, .mtop, .mtop > div, .venter > *{ min-width:0; max-width:100% }
+  .mtop > div + div::-webkit-scrollbar{ display:none }
+  .mtop > div + div > .b{ flex:0 0 auto }
+  /* botão de topo no celular: o mesmo botão, no tamanho do polegar e
+     não no da tela inteira */
+  .mtop .b{ padding:8px 13px; font-size:12.5px; gap:6px; border-radius:9px }
+  .mtop .b.sm{ padding:7px 12px; font-size:12px }
+  .tabs{ margin-bottom:14px; scrollbar-width:none }
+  .tabs::-webkit-scrollbar{ display:none }
+  .tabs button{ padding:8px 12px; font-size:12.5px }
+
+  /* ---- 2. os quatro números: uma faixa, não quatro tijolos --------- */
+  .ptCheck{ grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px }
+  .ptCheckC{ padding:8px 7px; border-radius:11px; text-align:center }
+  .ptCheckC b{ font-size:17px; margin-bottom:2px }
+  .ptCheckC span{ font-size:9px; line-height:1.25; display:block }
+
+  /* ---- 3. os controles: duas linhas, e os filtros à esquerda ------- */
+  .ptSeg{ flex-direction:column; align-items:stretch; gap:8px; margin-bottom:10px }
+  .ptSeg .seg{ width:100%; overflow-x:auto; scrollbar-width:none }
+  .ptSeg .seg::-webkit-scrollbar{ display:none }
+  .ptSeg .seg button{ padding:6px 13px; white-space:nowrap }
+  .ptSegBar{ display:flex; align-items:center; gap:8px; flex-wrap:nowrap;
+    overflow-x:auto; scrollbar-width:none; padding-bottom:2px }
+  .ptSegBar::-webkit-scrollbar{ display:none }
+  .ptSegBar > *{ flex:0 0 auto }
+  .ptFiltros{ margin-left:0; flex-wrap:nowrap }
+
+  /* ---- 4. o compasso da semana, mais baixo ------------------------ */
+  .ptCab{ padding:12px 14px 11px; border-radius:13px; margin-bottom:11px }
+  .ptCab .lin{ flex-wrap:wrap; gap:2px 10px }
+  .ptLeg{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px 10px; margin-top:9px }
+  .ptLeg span{ font-size:10px }
+
+  /* ---- 5. as plataformas: uma linha que corre --------------------- */
+  .ptChips{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-bottom:2px }
+  .ptChips::-webkit-scrollbar{ display:none }
+  .ptChips button{ flex:0 0 auto; padding:6px 11px; font-size:12px }
+
+  /* ---- 6. o botão de atualizar para de cobrir o conteúdo ---------- */
+  #btAtualizar{ width:36px; height:36px }
+}
+.ptSegBar{ display:flex; align-items:center; gap:10px; margin-left:auto }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v115 — a pauta cabe na tela do celular.
+
+   O CSS resolve quatro dos cinco blocos sozinho. O quinto não: as três
+   fileiras de controle são três `div` irmãos dentro de `.ptSeg`, e
+   `flex-wrap` não sabe agrupar dois deles numa linha só. Então aqui
+   eles ganham um pai — a mesma cirurgia de DOM depois do desenho que a
+   v109 e a v112 já usam, sem reescrever nenhuma tela.
+   ================================================================== */
+function arrumarControlesDaPauta(){
+  document.querySelectorAll('.ptSeg:not(.arrumada)').forEach(seg => {
+    seg.classList.add('arrumada');
+    const resto = [...seg.children].filter(el => !el.classList.contains('seg')
+                                            && !el.classList.contains('ptSegBar'));
+    if(resto.length < 2) return;          /* uma coisa só já é uma linha */
+    const barra = document.createElement('div');
+    barra.className = 'ptSegBar';
+    resto.forEach(el => barra.appendChild(el));
+    seg.appendChild(barra);
+  });
+}
+render = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); arrumarControlesDaPauta(); return r; };
+})(render);
+renderLayer = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); arrumarControlesDaPauta(); return r; };
+})(renderLayer);
+arrumarControlesDaPauta();
 </script>
