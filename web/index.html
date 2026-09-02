@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-02 00:55 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-02 01:04 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -2698,7 +2698,7 @@ let CLIS = () => [
    brief:'Consultoria de marcas e contratos. Autoridade sem juridiquês. O expert é o rosto — Dra. Ana Cortez.',
    links:['drive.google.com/cortez','@cortezjuridico'],refs:'Conteúdo de autoridade, carrosséis didáticos'},
   ...S.novos.map((c,i)=>({id:'n'+i,nome:c.nome,ini:c.ini,seg:c.seg,cor:c.cor,
-    brief:c.brief||'—',links:[],refs:'—'}))];
+    brief:c.brief||'—',links:[],refs:'—', tipo:c.tipo}))];   /* v108: o tipo viaja junto */
 const cliAtual = () => CLIS().find(c=>c.id===S.cli) || CLIS()[0];
 const txAll  = () => S.pecas.filter(p=>p.fase==='TEXTO' && p.st!=='CANCELLED');
 const txPend = () => txAll().filter(t=>t.st==='AWAITING_APPROVAL').length;
@@ -15832,7 +15832,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v107 · 2 set · a seta Check → Act';
+const VERSAO_PROTOTIPO = 'v108 · 2 set · tipo do cliente e acesso por pessoa';
 
 menuSheet = (function(orig){
   return function(){
@@ -21140,5 +21140,358 @@ function enResgatarSumidos(){
 }
 agEnsaio = (function(orig){
   return function(){ enResgatarSumidos(); return orig.apply(this, arguments); };
+})(agEnsaio);
+</script>
+<style>
+/* v108 — tipo do cliente e permissões por pessoa */
+.tipoCli{ display:inline-flex; align-items:center; gap:6px; padding:3px 10px;
+  border-radius:999px; font-size:10.5px; font-family:var(--mono); letter-spacing:.05em;
+  text-transform:uppercase; border:1px solid var(--ink-700); color:var(--ink-300) }
+.tipoCli i{ width:6px; height:6px; border-radius:50%; background:currentColor; flex:0 0 auto }
+.tipoCli.socio{ color:var(--brass-300); border-color:var(--brass-600);
+  background:rgba(200,150,58,.10) }
+.tipoCli.ativo{ color:var(--encore); border-color:rgba(53,184,122,.35);
+  background:rgba(53,184,122,.08) }
+.tipoCli.inativo{ color:var(--ink-400); border-style:dashed }
+.cliLinha.inativo .t b{ color:var(--ink-300) }
+.cliLinha.inativo .cav, .cliLinha.inativo .av{ opacity:.55 }
+
+.pmLista{ display:flex; flex-direction:column; gap:0; margin-top:4px }
+.pmLinha{ display:flex; align-items:flex-start; gap:12px; padding:10px 0;
+  border-bottom:1px solid var(--ink-850) }
+.pmLinha:last-child{ border-bottom:0 }
+.pmTxt{ flex:1; min-width:0 }
+.pmTxt b{ display:block; font-size:13px; color:var(--ink-50); font-weight:600 }
+.pmTxt span{ display:block; font-size:11.5px; color:var(--ink-400); margin-top:1px }
+.pmFora{ font-family:var(--mono); font-size:9.5px; color:var(--brass-400);
+  letter-spacing:.06em; text-transform:uppercase; margin-top:3px }
+.pmChave{ flex:0 0 auto; display:inline-flex; border:1px solid var(--ink-700);
+  border-radius:999px; overflow:hidden; background:var(--ink-950) }
+.pmChave button{ padding:5px 13px; font-size:11.5px; color:var(--ink-400);
+  transition:background var(--fast) var(--eo), color var(--fast) var(--eo) }
+.pmChave button.on{ background:var(--brass-500); color:var(--ink-950); font-weight:600 }
+.pmChave button.on.nao{ background:var(--danger); color:#fff }
+.pmDono{ font-size:12.5px; color:var(--ink-400); margin:2px 0 0 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v108 — quem é o cliente, e o que cada pessoa pode.
+
+   PARTE 1 · O cliente ganha TIPO. A agência não trata todo mundo igual:
+   sócio é sócio, expert ativo está em produção, expert inativo continua
+   no cadastro mas não está rodando. Sem isso a lista de clientes misturava
+   os três e só a memória de quem abriu separava.
+
+   PARTE 2 · Permissão por PESSOA. Até aqui `PERMS` era uma tabela de
+   texto: dizia o que cada papel podia, e não governava nada — as telas
+   perguntavam `ehAdmin()` e pronto. Agora cada capacidade tem uma chave,
+   o papel dá o padrão, e o administrador pode abrir ou fechar uma a uma,
+   no perfil da pessoa.
+
+   Duas regras que não se dobram:
+     · o dono da conta tem tudo, sempre — não existe se trancar para fora;
+     · aprovar conteúdo continua não sendo capacidade de ninguém aqui
+       dentro. Quem aprova é o cliente. Isso não é permissão, é o produto.
+   ================================================================== */
+
+/* ---------- PARTE 1: tipo do cliente -------------------------------- */
+const TIPOS_CLI = [
+  ['socio',   'Sócio',          'da casa — não é conta de cliente'],
+  ['ativo',   'Expert Ativo',   'em produção agora'],
+  ['inativo', 'Expert Inativo', 'no cadastro, fora de produção'],
+];
+const TIPO_CLI_PADRAO = 'ativo';
+const tipoDoCli = c => (c && c.tipo) || TIPO_CLI_PADRAO;
+const nomeTipoCli = k => (TIPOS_CLI.find(([v]) => v === k) || [null, k])[1];
+const selosTipo = (marcado, attr) => TIPOS_CLI.map(([k, nome, dica]) =>
+  `<button type="button" data-${attr}="${k}" class="tipoCli ${k} ${marcado === k ? 'on' : ''}"
+     title="${esc(dica)}" style="${marcado === k ? '' : 'opacity:.5'}"
+   ><i></i>${esc(nome)}</button>`).join('');
+
+/* o campo entra nos dois modais: no de criar e no de editar */
+modalNovoCliente = (function(orig){
+  return function(){
+    if(S.ncTipo === undefined) S.ncTipo = TIPO_CLI_PADRAO;
+    const campo = `<div class="fld"><label>Tipo</label>
+      <div class="ptChips">${selosTipo(S.ncTipo, 'nctipo')}</div></div>`;
+    return orig.apply(this, arguments)
+      .replace('<div class="fld"><label>Cor da marca', campo + '\n  <div class="fld"><label>Cor da marca');
+  };
+})(modalNovoCliente);
+
+modalCliente = (function(orig){
+  return function(id){
+    const html = orig.apply(this, arguments);
+    if(!html) return html;
+    const c = CLIS().find(x => x.id === id);
+    S.cliTipo = tipoDoCli(c);
+    const campo = `<div class="fld"><label>Tipo</label>
+      <div class="ptChips">${selosTipo(S.cliTipo, 'clitipo')}</div></div>`;
+    return html.replace('<div class="fld"><label>Cor</label>',
+      campo + '\n    <div class="fld"><label>Cor</label>');
+  };
+})(modalCliente);
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-nctipo],[data-clitipo]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const novo = t.dataset.nctipo || t.dataset.clitipo;
+  if(t.dataset.nctipo) S.ncTipo = novo; else S.cliTipo = novo;
+  document.querySelectorAll(`[data-${t.dataset.nctipo ? 'nctipo' : 'clitipo'}]`).forEach(b => {
+    const on = (b.dataset.nctipo || b.dataset.clitipo) === novo;
+    b.classList.toggle('on', on);
+    b.style.opacity = on ? '' : '.5';
+  });
+}, true);
+
+/* grava depois do salvar original, que reescreve o registro inteiro */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-createclient],[data-cliok]');
+  if(!t) return;
+  const novo = !!t.dataset.createclient;
+  const tipo = novo ? (S.ncTipo || TIPO_CLI_PADRAO) : (S.cliTipo || TIPO_CLI_PADRAO);
+  const id = t.dataset.cliok;
+  setTimeout(() => {
+    if(novo){
+      const ultimo = S.novos[S.novos.length - 1];
+      if(ultimo){ ultimo.tipo = tipo; S.ncTipo = TIPO_CLI_PADRAO; render(); }
+    } else if(id && S.cliEdit[id]){
+      S.cliEdit[id].tipo = tipo; render();
+    }
+  }, 0);
+}, true);
+
+/* na lista, o tipo aparece — e o inativo cede o brilho.
+   A inserção é por POSIÇÃO, não por regex com o nome: cliente chamado
+   "Loja (Norte) +" quebraria a expressão, e nome de cliente é digitado
+   por gente. */
+agClientes = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    const ABRE = '<div class="cliLinha fu"';
+    CLIS().forEach(c => {
+      const k = tipoDoCli(c);
+      const marca = `<button data-clidet="${c.id}"`;
+      const i = html.indexOf(marca);
+      if(i < 0) return;
+      const seta = html.indexOf('<span class="chev">', i);
+      if(seta < 0) return;
+      html = html.slice(0, seta)
+           + `<span class="tipoCli ${k}"><i></i>${esc(nomeTipoCli(k))}</span>`
+           + html.slice(seta);
+      if(k !== 'inativo') return;
+      const linha = html.lastIndexOf(ABRE, html.indexOf(marca));
+      if(linha >= 0)
+        html = html.slice(0, linha) + '<div class="cliLinha inativo fu"'
+             + html.slice(linha + ABRE.length);
+    });
+    return html;
+  };
+})(agClientes);
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v108 · PARTE 2 — permissão por pessoa.
+
+   `PERMS` era uma tabela de TEXTO: dizia em português o que cada papel
+   podia, e não governava coisa nenhuma — as telas perguntavam `ehAdmin()`
+   e pronto. Quem não era administrador via a mesma coisa que o gestor.
+
+   Agora cada capacidade tem uma chave. O PAPEL dá o padrão; o
+   administrador abre ou fecha uma a uma, no perfil da pessoa. O que fica
+   diferente do papel aparece marcado, para ninguém precisar adivinhar por
+   que a tela de fulano não é igual à da equipe toda.
+
+   Duas regras que não se dobram:
+     · o dono da conta tem tudo, sempre. Não existe se trancar para fora
+       da própria conta, e um produto que permite isso vira chamado.
+     · aprovar conteúdo não é capacidade de ninguém aqui dentro. Quem
+       aprova é o cliente — isso não é permissão, é o produto.
+
+   O que esta tela decide é o que a INTERFACE oferece. A separação de
+   acesso de verdade é do servidor, e é onde a API já valida por papel.
+   ================================================================== */
+
+const CAPACIDADES = [
+  ['clientes',   'Clientes e briefing',   'criar, editar e excluir cliente'],
+  ['pauta',      'Pauta e calendário',    'criar e mexer nos cards da pauta'],
+  ['enviar',     'Enviar para aprovação', 'mandar texto e peça para o cliente'],
+  ['ensaio',     'Ensaio',                'mover cards, contar tempo, concluir'],
+  ['financeiro', 'Valores e financeiro',  'ver e lançar valores nas frentes'],
+  ['equipe',     'Equipe e papéis',       'convidar, editar e definir permissões'],
+  ['plano',      'Plano e faturamento',   'trocar de plano, ver a cobrança'],
+];
+const CHAVES_CAP = CAPACIDADES.map(([k]) => k);
+
+/* o padrão de cada papel — a leitura em chaves da mesma tabela que o
+   PERMS já dizia em português */
+const PADRAO_PAPEL = {
+  Administrador: CHAVES_CAP,
+  Gestor:        ['clientes','pauta','enviar','ensaio','equipe'],
+  Atendimento:   ['clientes','pauta','enviar','ensaio'],
+  Designer:      ['pauta','ensaio'],
+  Copywriter:    ['pauta','ensaio'],
+  Videomaker:    ['pauta','ensaio'],
+  /* os papéis de casa de comunicação que a v-anterior acrescentou. O padrão
+     vem do que o PERMS já dizia de cada um, em português. */
+  'Revisor':            ['clientes','pauta','ensaio'],   /* lê tudo, não envia */
+  'Social Media':       ['clientes','pauta','enviar','ensaio'],
+  'Editor de Vídeo':    ['pauta','ensaio'],
+  'Motion Designer':    ['pauta','ensaio'],
+  'Gestor de Tráfego':  ['pauta','ensaio','financeiro'], /* verbas de mídia */
+};
+const padraoDoPapel = (papel, chave) =>
+  (PADRAO_PAPEL[papel] || PADRAO_PAPEL.Designer).includes(chave);
+
+/* o que ESTA pessoa pode: o dono tem tudo; senão vale o ajuste explícito,
+   e na falta dele o padrão do papel */
+function podeMembro(m, chave){
+  if(!m) return false;
+  if(m.dono) return true;
+  const ajuste = (m.perms || {})[chave];
+  return ajuste === undefined ? padraoDoPapel(m.papel, chave) : !!ajuste;
+}
+const membroLogado = () =>
+  (S.equipe || []).find(x => membroId(x) === (S.usuario && S.usuario.id)) || null;
+/* sem ninguém identificado o protótipo segue aberto, como sempre foi —
+   trancar quem ainda não entrou não protege nada e só atrapalha o teste */
+const pode = chave => { const m = membroLogado(); return m ? podeMembro(m, chave) : true; };
+const forcado = (m, chave) => m && !m.dono && (m.perms || {})[chave] !== undefined;
+
+/* ---------- no perfil da pessoa ------------------------------------- */
+function pmBloco(m, i){
+  if(!ehAdmin()) return '';                 /* só quem manda distribui poder */
+  if(m.dono) return `<div class="hxSecao"><b>Acesso</b>
+    <p class="pmDono">Dono da conta: tem tudo, sempre. Não dá para se trancar
+      para fora da própria conta.</p></div>`;
+  return `<div class="hxSecao"><b>O que ${esc(m.n.split(' ')[0])} pode acessar</b>
+    <div class="pmLista">${CAPACIDADES.map(([k, nome, dica]) => {
+      const on = podeMembro(m, k);
+      return `<div class="pmLinha">
+        <span class="pmTxt"><b>${esc(nome)}</b><span>${esc(dica)}</span>
+          ${forcado(m, k) ? `<span class="pmFora">definido para ${esc(m.n.split(' ')[0])}
+            · o papel ${esc(m.papel)} ${padraoDoPapel(m.papel, k) ? 'daria' : 'não daria'}</span>` : ''}</span>
+        <span class="pmChave">
+          <button type="button" data-pmset="${i}|${k}|1" class="${on ? 'on' : ''}">Pode</button>
+          <button type="button" data-pmset="${i}|${k}|0" class="${on ? '' : 'on nao'}">Não</button>
+        </span></div>`;
+    }).join('')}</div>
+    <div class="modalrow" style="margin-top:12px">
+      <button type="button" class="b gho sm" data-pmpadrao="${i}"
+        style="flex:0 0 auto">Voltar ao padrão do papel ${esc(m.papel)}</button></div>
+  </div>`;
+}
+modalMembro = (function(orig){
+  return function(i){
+    const html = orig.apply(this, arguments);
+    const m = membroPorIndice(i);
+    if(!html || !m) return html;
+    return html.replace('<div class="modalrow"><button class="b gho" data-modalno="1">Cancelar</button>',
+      pmBloco(m, i) + '\n    <div class="modalrow"><button class="b gho" data-modalno="1">Cancelar</button>');
+  };
+})(modalMembro);
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-pmset],[data-pmpadrao]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  if(!ehAdmin()){ toast('Só o administrador define acessos.'); return; }
+  if(t.dataset.pmpadrao !== undefined){
+    const m = membroPorIndice(+t.dataset.pmpadrao);
+    if(m){ delete m.perms; S.modal = modalMembro(+t.dataset.pmpadrao); renderLayer();
+      toast(`${m.n.split(' ')[0]} volta a seguir o papel ${m.papel}.`); }
+    return;
+  }
+  const [i, chave, valor] = t.dataset.pmset.split('|');
+  const m = membroPorIndice(+i);
+  if(!m || m.dono) return;
+  m.perms = m.perms || {};
+  /* voltou a coincidir com o papel? então não é mais um ajuste — sai */
+  if(padraoDoPapel(m.papel, chave) === (valor === '1')) delete m.perms[chave];
+  else m.perms[chave] = valor === '1';
+  if(!Object.keys(m.perms).length) delete m.perms;
+  S.modal = modalMembro(+i); renderLayer(); render();
+}, true);
+
+/* ---------- os chips da lista passam a dizer a verdade --------------- */
+agEquipe = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    (S.equipe || []).forEach(m => {
+      const sim = CAPACIDADES.filter(([k]) => podeMembro(m, k));
+      const nao = CAPACIDADES.filter(([k]) => !podeMembro(m, k));
+      const chips = sim.map(([k, n]) => `<span>✓ ${esc(n)}${forcado(m, k) ? ' ·' : ''}</span>`).join('')
+        + nao.map(([k, n]) => `<span class="no">${esc(n)}</span>`).join('')
+        + `<span class="no" style="border-style:solid;text-decoration:none">aprovar conteúdo — é do cliente</span>`;
+      /* troca os chips estáticos do PERMS pelos que valem de verdade */
+      const velho = `<div class="permchips">
+      ${PERMS[m.papel].sim.map(x => `<span>✓ ${x}</span>`).join('')}
+      ${PERMS[m.papel].nao.map(x => `<span class="no">${x}</span>`).join('')}
+    </div>`;
+      if(html.includes(velho))
+        html = html.replace(velho, `<div class="permchips">${chips}</div>`);
+    });
+    return html;
+  };
+})(agEquipe);
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v108 · PARTE 3 — a permissão precisa GOVERNAR, senão é enfeite.
+
+   Uma tela de permissões que não recusa nada é pior que não ter tela:
+   ela promete controle e entrega decoração. Aqui as chaves passam a
+   barrar as ações de verdade, na captura da janela — antes de qualquer
+   handler do produto, incluindo os que cortam a propagação.
+
+   O que a recusa faz: um toast dizendo O QUE falta e A QUEM pedir. "Sem
+   permissão" sozinho manda a pessoa adivinhar; o nome da capacidade e a
+   palavra "administrador" resolvem o chamado antes dele existir.
+   ================================================================== */
+
+const GUARDAS = [
+  ['clientes',   '[data-newclient],[data-createclient],[data-cliedit],[data-cliok],[data-clidel],[data-clidelok]'],
+  ['pauta',      '[data-ptnew],[data-ptok],[data-ptdel],[data-ptreset],[data-ptresetok]'],
+  ['enviar',     '[data-sendlote],[data-ptenviar],[data-ptenviartudo],[data-enviook]'],
+  ['ensaio',     '[data-ennova],[data-enok],[data-enmove],[data-enfim],[data-entimer]'],
+  ['equipe',     '[data-invite],[data-convidarok],[data-editmembro],[data-savemembro],[data-rmmembro],[data-dormembro],[data-pmset],[data-pmpadrao],[data-chaveabre]'],
+];
+const NOME_CAP = k => (CAPACIDADES.find(([c]) => c === k) || [null, k])[1];
+
+addEventListener('click', e => {
+  if(!e.target.closest) return;
+  for(const [chave, seletor] of GUARDAS){
+    if(!e.target.closest(seletor)) continue;
+    if(pode(chave)) return;                 /* pode: sai da frente */
+    e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault();
+    toast(`${NOME_CAP(chave)}: seu acesso está fechado. Quem abre é o administrador.`);
+    return;
+  }
+}, true);
+
+/* o Planos é rota, não botão: a guarda mora na entrada dela */
+render = (function(orig){
+  return function(){
+    if(S.view === 'agency' && S.route === 'planos' && !pode('plano')){
+      S.route = 'dash';
+      toast('Plano e faturamento: seu acesso está fechado. Quem abre é o administrador.');
+    }
+    return orig.apply(this, arguments);
+  };
+})(render);
+
+/* valores só para quem tem a chave do financeiro. O card do Ensaio
+   mostra R$ na frente Comercial — quem não pode ver, não vê. */
+agEnsaio = (function(orig){
+  return function(){
+    const html = orig.apply(this, arguments);
+    if(pode('financeiro')) return html;
+    return html.replace(/<span class="prazo" style="color:[^"]*">R\$[^<]*<\/span>/g,
+      '<span class="prazo" style="color:var(--ink-500)">R$ ·····</span>');
+  };
 })(agEnsaio);
 </script>
