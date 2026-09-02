@@ -15767,7 +15767,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v112 · 2 set · o ciclo de produção e o link de quem aprova';
+const VERSAO_PROTOTIPO = 'v113 · 2 set · conversas acompanham os clientes';
 
 menuSheet = (function(orig){
   return function(){
@@ -23044,4 +23044,146 @@ addEventListener('click', e => {
   let n = 0;
   const iv = setInterval(() => { trancar(); if(tentar() || ++n > 60) clearInterval(iv); }, 500);
 })();
+</script>
+<style>
+/* =====================================================================
+   v113 — Conversas acompanha a lista de clientes, e o administrador
+   apaga o que ficou bloqueado.
+   ================================================================== */
+.cvTag{ font-family:var(--mono); font-size:8.5px; letter-spacing:.08em; text-transform:uppercase;
+  padding:2px 6px; border-radius:999px; border:1px solid var(--ink-700); color:var(--ink-400);
+  font-style:normal; flex:0 0 auto; margin-left:auto }
+.cvTag.novo{ color:var(--encore); border-color:rgba(53,184,122,.4) }
+.cvTag.bloq{ color:#F0B5B5; border-color:rgba(224,90,90,.4) }
+.cvCanal .cvTag + small{ margin-left:6px }
+.cvApagar{ color:var(--danger) !important; border-color:rgba(229,72,77,.4) !important }
+.cvAviso{ margin:0 0 10px; padding:9px 12px; border-radius:10px; font-size:12.5px; line-height:1.5;
+  background:rgba(224,90,90,.08); border:1px solid rgba(224,90,90,.3); color:#F0B5B5 }
+.cvAviso b{ color:#FF9E9E }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v113 — Conversas acompanha os clientes.
+
+   Os canais de cliente nasciam UMA vez, na semente do chat, e o chat
+   viaja inteiro no estado. Cliente cadastrado depois ficava sem canal;
+   cliente excluído deixava um canal órfão que ninguém podia apagar —
+   a regra dizia "só squad se apaga". E as sementes traziam membros de
+   demonstração ("victor", "marina") que não existem na equipe real: o
+   canal ficava trancado para todo mundo menos o administrador.
+
+   Três regras novas:
+   1. todo cliente da lista tem canal — criado ao aparecer, renomeado
+      quando o cliente muda de nome;
+   2. canal de cliente é de toda a agência: uma lista de membros que não
+      bate com ninguém da equipe é apagada (o canal é a porta do cliente,
+      não um segredo);
+   3. o administrador apaga o que está bloqueado: squad sem ninguém da
+      equipe e canal de cliente que já saiu. O Geral e as conversas
+      diretas continuam intocáveis.
+   ================================================================== */
+
+const cvNomeDoCliente = c => `${c.nome} · atendimento`;
+const cvClienteDoCanal = c => c && c.tipo === 'cliente' ? (CLIS().find(x => x.id === c.cli) || null) : null;
+const cvOrfao = c => !!c && c.tipo === 'cliente' && !cvClienteDoCanal(c);
+/* bloqueado: tem lista de membros e nenhum deles existe na equipe */
+const cvBloqueado = c => !!c && Array.isArray(c.membros) && c.membros.length > 0
+  && !c.membros.some(id => membroCru(id));
+
+function cvSincronizarClientes(){
+  if(!S.chat) S.chat = chatSemente();
+  let mudou = false;
+  for(const c of CLIS()){
+    const id = 'cli_' + c.id;
+    let canal = canalPorId(id);
+    if(!canal){
+      canal = { id, nome: cvNomeDoCliente(c), tipo: 'cliente', cli: c.id, membros: null, msgs: [],
+        criadoEm: Date.now(), novo: true };
+      S.chat.canais.push(canal); mudou = true;
+      continue;
+    }
+    if(canal.nome !== cvNomeDoCliente(c)){ canal.nome = cvNomeDoCliente(c); mudou = true; }
+    if(cvBloqueado(canal)){ canal.membros = null; mudou = true; }   /* regra 2 */
+  }
+  return mudou;
+}
+/* roda antes de qualquer lista de canais ser montada */
+canaisVisiveis = (function(orig){
+  return function(){
+    if(S.chat) cvSincronizarClientes();
+    return orig.apply(this, arguments);
+  };
+})(canaisVisiveis);
+
+/* o que o administrador pode apagar, além do que já podia */
+const cvPodeApagar = c => !!c && c.id !== 'geral' && !ehDireto(c) && ehAdmin()
+  && (c.tipo === 'squad' || cvOrfao(c));
+
+/* ---------- a lista: etiquetas ---------- */
+telaConversas = (function(orig){
+  return function(shell){
+    let html = orig(shell);
+    if(!S.chat) return html;
+    for(const c of canaisVisiveis()){
+      let tag = '';
+      if(cvOrfao(c)) tag = '<em class="cvTag bloq">cliente excluído</em>';
+      else if(cvBloqueado(c)) tag = '<em class="cvTag bloq">bloqueado</em>';
+      else if(c.novo && Date.now() - (c.criadoEm || 0) < 7 * 86400000) tag = '<em class="cvTag novo">novo</em>';
+      if(!tag) continue;
+      const re = new RegExp(`(<button class="cvCanal[^"]*"\\s+data-cvcanal="${c.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}">[\\s\\S]*?)(<small>)`);
+      html = html.replace(re, `$1${tag}$2`);
+    }
+    /* o cabeçalho: o aviso e o botão de apagar */
+    const c = canalPorId(S.cvAtivo);
+    if(c && (cvOrfao(c) || cvBloqueado(c) || cvPodeApagar(c))){
+      const aviso = cvOrfao(c)
+        ? `<div class="cvAviso"><b>Este cliente saiu da lista.</b> O canal ficou órfão: ninguém do lado de lá vai ler. Apague, ou guarde por enquanto — o histórico não se perde.</div>`
+        : cvBloqueado(c)
+          ? `<div class="cvAviso"><b>Canal bloqueado.</b> A lista de membros não tem ninguém da equipe atual. Ajuste em Membros, ou apague.</div>`
+          : '';
+      const botao = cvPodeApagar(c)
+        ? `<button class="b gho cvApagar" data-cvapagar="${c.id}">${ic('x', 12)} Apagar</button>` : '';
+      html = html.replace(/(<div class="cvTopo">[\s\S]*?)(<\/div>\s*<div class="cvMsgs")/,
+        (m, a, b) => a + botao + b);
+      if(aviso) html = html.replace('<div class="cvMsgs"', aviso + '<div class="cvMsgs"');
+    }
+    return html;
+  };
+})(telaConversas);
+
+/* ---------- apagar: o mesmo caminho do squad, com desfazer ---------- */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-cvapagar],[data-cvapagarok]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const d = t.dataset;
+  if(d.cvapagar !== undefined){
+    const c = canalPorId(d.cvapagar);
+    if(!cvPodeApagar(c)){ toast('Só o administrador apaga canais — e o Geral e as conversas diretas ficam.'); return; }
+    const n = c.msgs.length;
+    S.modal = `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+      <h3>Apagar ${esc(c.nome)}?</h3>
+      <p>${cvOrfao(c) ? 'O cliente já não está na lista; o canal só ocupa lugar. ' : ''}Sai da lista de todo mundo${n ? `, com as ${n} ${n === 1 ? 'mensagem' : 'mensagens'} da conversa` : ''}.
+        O histórico não é destruído — fica guardado, fora da vista. Você tem 8 segundos para desfazer.</p>
+      <div class="modalrow"><button class="b gho" data-modalno="1">Voltar</button>
+        <button class="b pri" style="background:var(--danger);color:#fff" data-cvapagarok="${c.id}">Apagar canal</button></div></div></div>`;
+    renderLayer(); return;
+  }
+  const id = d.cvapagarok, c = canalPorId(id);
+  if(!cvPodeApagar(c)) return;
+  const avisosDele = (S.avisos || []).filter(a => a.canal === id);
+  if(S.avisos) S.avisos = S.avisos.filter(a => a.canal !== id);
+  if(!S.chat.fora) S.chat.fora = [];
+  S.chat.fora.push(id);
+  ultimoSqRm = { id, avisos: avisosDele, ativoAntes: S.cvAtivo };
+  clearTimeout(_sqUndo);
+  _sqUndo = setTimeout(() => { ultimoSqRm = null; }, 8000);
+  if(S.cvAtivo === id) S.cvAtivo = (canaisVisiveis()[0] || {}).id || null;
+  S.modal = null; som('toque'); render();
+  toast(`"${c.nome}" apagado.`, true);
+}, true);
+
+/* cliente excluído e depois resgatado da lixeira: o canal volta sozinho,
+   porque a sincronização olha a lista viva — nada a fazer aqui. */
 </script>
