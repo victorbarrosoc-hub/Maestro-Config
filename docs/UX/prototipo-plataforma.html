@@ -15767,7 +15767,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v123 · 2 set · o ciclo com endereço próprio: /fluxopdcamaestro';
+const VERSAO_PROTOTIPO = 'v124 · 2 set · o ciclo virou coisa de mexer';
 
 menuSheet = (function(orig){
   return function(){
@@ -24968,5 +24968,534 @@ if(eFluxoPdca()){
   [80, 200, 400, 800, 1500, 3000, 3500, 4200].forEach(t => setTimeout(montarFluxoPdca, t));
   addEventListener('DOMContentLoaded', montarFluxoPdca);
   addEventListener('load', montarFluxoPdca);
+}
+</script>
+<style>
+/* =====================================================================
+   v124 — o ciclo vira coisa de mexer.
+
+   O desenho mostrava o caminho; ninguém PERCORRIA o caminho. Quem abre o
+   link agora conduz um card: escolhe o que fazer em cada coluna, vê o
+   cliente aprovar ou pedir alteração, e o card volta amarelo na frente
+   dos olhos. Entender um fluxo assim leva trinta segundos; lendo um
+   organograma, não leva.
+
+   Um só desenho de tela para os dois tamanhos: uma régua de colunas em
+   cima (a mesma do quadro do Ensaio), o card embaixo dela apontando para
+   onde está, o que acontece ali, e os botões do que dá para fazer AGORA.
+   No celular a régua encolhe e os botões viram lista; nada rola de lado.
+   ================================================================== */
+
+/* ---------- as duas frentes ---------------------------------------- */
+.cicAbas{ display:flex; gap:8px; padding:2px 18px 0; flex:0 0 auto; flex-wrap:wrap }
+.cicAba{ display:inline-flex; flex-direction:column; gap:2px; padding:8px 14px;
+  border-radius:11px; border:1px solid var(--ink-800); background:var(--ink-950);
+  color:var(--ink-300); text-align:left }
+.cicAba b{ font-size:13px; font-weight:600; color:var(--ink-100) }
+.cicAba span{ font-family:var(--mono); font-size:9px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-500) }
+.cicAba:hover{ border-color:var(--ink-600) }
+.cicAba.on{ border-color:var(--brass-600); background:rgba(200,150,58,.09) }
+.cicAba.on b{ color:var(--brass-300) } .cicAba.on span{ color:var(--brass-500) }
+
+/* ---------- o corpo do jogo ---------------------------------------- */
+.cicJogo{ flex:1; min-height:0; overflow-y:auto; overflow-x:hidden;
+  padding:12px 18px 18px; -webkit-overflow-scrolling:touch }
+
+/* a régua: as colunas do quadro, na ordem em que existem */
+.cicTrilho{ display:grid; gap:7px; margin:0 0 4px }
+.cicCol{ display:flex; flex-direction:column; gap:5px; min-width:0; text-align:left;
+  padding:8px 9px 9px; border-radius:11px; border:1px solid var(--ink-850);
+  background:var(--ink-950); transition:border-color .2s var(--eo), background .2s var(--eo) }
+.cicCol .rail{ height:3px; border-radius:2px; background:var(--cor); opacity:.4;
+  transition:opacity .2s var(--eo) }
+.cicCol b{ font-size:12.5px; font-weight:600; color:var(--ink-300); white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; width:100%; max-width:100% }
+.cicCol b.curto, .cicAba b.curto{ display:none }
+.cicCol i{ font-style:normal; font-size:11px; line-height:1.35; color:var(--ink-500);
+  display:none }
+.cicCol:hover{ border-color:var(--ink-600) }
+.cicCol.aqui{ border-color:var(--cor); background:color-mix(in srgb, var(--cor) 12%, var(--ink-950)) }
+.cicCol.aqui .rail{ opacity:1 } .cicCol.aqui b{ color:var(--ink-50) }
+.cicCol.passou .rail{ opacity:.75 }
+.cicCol.fora{ opacity:.4 }
+
+/* a seta que aponta para a coluna onde o card está */
+.cicSetas{ display:grid; gap:7px; margin:0 0 -1px }
+.cicSetas span{ height:9px; position:relative }
+.cicSetas span.aqui::after{ content:''; position:absolute; left:50%; top:1px;
+  transform:translateX(-50%); border:6px solid transparent; border-bottom-color:var(--cor);
+  transition:opacity .2s var(--eo) }
+
+/* ---------- o card que anda ---------------------------------------- */
+.cicCartao{ border:1px solid var(--cor, var(--ink-700)); border-radius:13px; padding:12px 13px;
+  background:color-mix(in srgb, var(--cor, var(--ink-800)) 10%, var(--ink-950));
+  display:grid; gap:6px }
+.cicCartao .top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+.cicCartao .selo{ font-family:var(--mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--cor); border:1px solid var(--cor);
+  border-radius:999px; padding:3px 8px; white-space:nowrap }
+.cicCartao .volta{ font-family:var(--mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-500) }
+.cicCartao h2{ font-family:var(--serif); font-weight:400; font-size:18px; line-height:1.25;
+  color:var(--ink-50); margin:0 }
+.cicCartao .sub{ font-size:12px; color:var(--ink-400) }
+
+/* ---------- o que acontece aqui ------------------------------------ */
+.cicPasso{ margin:12px 0 0; border-left:2px solid var(--cor, var(--ink-700)); padding:2px 0 2px 12px }
+.cicPasso h3{ font-size:14px; font-weight:600; color:var(--ink-100); margin:0 0 5px }
+.cicPasso p{ font-size:13.5px; line-height:1.55; color:var(--ink-300); margin:0 }
+.cicPasso .quem{ display:inline-flex; align-items:center; gap:6px; margin-top:8px;
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--ink-500) }
+.cicPasso .quem.cli{ color:var(--brass-400) }
+
+/* ---------- o que dá para fazer agora ------------------------------ */
+.cicAcoes{ display:flex; gap:9px; flex-wrap:wrap; margin:14px 0 0 }
+.cicAcao{ display:inline-flex; align-items:center; gap:8px; padding:11px 15px; border-radius:11px;
+  border:1px solid var(--ink-700); background:var(--ink-950); color:var(--ink-100);
+  font-size:13.5px; font-weight:600; text-align:left; line-height:1.3 }
+.cicAcao:hover{ border-color:var(--ink-500) }
+.cicAcao.vai{ border-color:var(--brass-600); color:var(--brass-300);
+  background:rgba(200,150,58,.08) }
+.cicAcao.vai:hover{ background:rgba(200,150,58,.16) }
+.cicAcao.volta{ border-color:#8A6A1E; color:#E5C54D }
+.cicAcao.volta:hover{ background:rgba(229,197,77,.1) }
+.cicAcao.fim{ border-color:#2C7D57; color:#5FD39A }
+.cicAcao .dedo{ font-family:var(--mono); font-size:9px; letter-spacing:.1em; opacity:.7 }
+
+/* a trilha: por onde o card já passou */
+.cicTrilha{ display:flex; gap:6px; align-items:center; margin:16px 0 0; overflow-x:auto;
+  padding-bottom:3px; scrollbar-width:none }
+.cicTrilha::-webkit-scrollbar{ display:none }
+.cicTrilha .rot{ font-family:var(--mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-600); flex:0 0 auto }
+.cicTrilha em{ font-style:normal; font-size:11px; color:var(--ink-400); flex:0 0 auto;
+  border:1px solid var(--ink-850); border-radius:7px; padding:3px 8px; white-space:nowrap }
+.cicTrilha em.volta{ border-color:#8A6A1E; color:#E5C54D }
+.cicTrilha em.agora{ border-color:var(--brass-600); color:var(--brass-300) }
+
+/* a legenda das cores: o card muda de cor, e a cor quer dizer algo */
+.cicCores{ display:flex; gap:12px; flex-wrap:wrap; margin:16px 0 0; padding-top:12px;
+  border-top:1px solid var(--ink-870, #22242A) }
+.cicCores span{ display:inline-flex; align-items:center; gap:6px; font-size:11px;
+  color:var(--ink-500); white-space:nowrap }
+.cicCores i{ width:9px; height:9px; border-radius:3px; background:var(--c); flex:0 0 auto }
+
+/* ---------- os comandos de cima ------------------------------------ */
+.cicComandos{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:0 0 12px }
+.cicCmd{ display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border-radius:9px;
+  border:1px solid var(--ink-800); background:transparent; color:var(--ink-400); font-size:12px }
+.cicCmd:hover{ border-color:var(--ink-600); color:var(--ink-100) }
+.cicCmd.on{ border-color:var(--brass-600); color:var(--brass-300) }
+.cicCmd[disabled]{ opacity:.35 }
+.cicCmd .i{ font-size:13px }
+
+/* o pôster (o desenho da v123) sai de cena e volta com um botão. O
+   encaixar/ampliar é dele: fora do pôster não há o que encaixar. */
+#fluxoPagina:not(.poster) .fxPalco, #fluxoPagina:not(.poster) .fxDica,
+#fluxoPagina:not(.poster) [data-fxzoom]{ display:none }
+/* com o tabuleiro na tela a apresentação é uma frase: cada linha de
+   texto é uma linha a menos de jogo. No pôster ela volta inteira. */
+#fluxoPagina:not(.poster) .fxCabeca .fxMais{ display:none }
+#fluxoPagina.poster .cicAbas, #fluxoPagina.poster .cicJogo{ display:none }
+
+@media(prefers-reduced-motion:reduce){ .cicCol, .cicCol .rail, .cicSetas span::after{ transition:none } }
+
+/* ---------- desktop: a régua ganha a explicação de cada coluna ------ */
+@media(min-width:861px){
+  .cicCol i{ display:block }
+  /* o tabuleiro corre de ponta a ponta, na mesma margem do cabeçalho e
+     do rodapé: um quadro ocupa a largura, e o que sobra fica embaixo,
+     onde não parece buraco */
+  .cicJogo{ display:grid; grid-template-columns:1fr; gap:0; align-content:start }
+  .cicCartao h2{ font-size:20px }
+  .cicPasso{ padding-left:14px }
+  .cicPasso h3{ font-size:15px }
+}
+/* ---------- celular: a régua encolhe, os botões viram lista -------- */
+@media(max-width:860px){
+  .cicAbas{ padding:2px 12px 0; gap:6px }
+  .cicAba{ padding:7px 11px; flex:1 } .cicAba b{ font-size:12px } .cicAba span{ font-size:8px }
+  .cicJogo{ padding:10px 12px 16px }
+  .cicTrilho{ gap:4px } .cicSetas{ gap:4px }
+  .cicCol{ padding:7px 5px 8px; border-radius:9px; align-items:center; text-align:center }
+  .cicCol b{ font-size:10px; letter-spacing:-.01em; text-align:center }
+  .cicCol b.longo, .cicAba b.longo{ display:none }
+  .cicCol b.curto, .cicAba b.curto{ display:block }
+  .cicCol .rail{ width:100%; height:3px }
+  .cicCartao h2{ font-size:17px }
+  .cicPasso p{ font-size:13px }
+  .cicAcoes{ flex-direction:column; gap:8px }
+  .cicAcao{ width:100%; justify-content:space-between; padding:13px 15px }
+  .cicCores{ gap:9px } .cicCores span{ font-size:10.5px }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v124 — o ciclo vira coisa de mexer.
+
+   O desenho da v123 mostrava o caminho. Este bloco faz o visitante
+   PERCORRER o caminho: ele conduz um card de verdade — "Reels do ateliê"
+   — coluna por coluna, decide como o revisor, decide como o cliente, e
+   vê o card voltar amarelo quando pedem alteração. É a diferença entre
+   ler o manual e dirigir o carro.
+
+   O modelo é o do produto, não uma simplificação: as mesmas colunas do
+   Ensaio (Inbox · Plan · Do · Check · Com o cliente · Act), as mesmas
+   duas voltas da produção, o mesmo lote que segura o card antes de ir
+   para fora, e as mesmas cores (amarelo = pediu alteração, azul = texto
+   aprovado). Quem entender aqui, entende a plataforma.
+   ================================================================== */
+
+/* as cores são as do quadro do Ensaio — as mesmas de EN_COLS */
+const CIC_COR = { inbox:'#9AA1AC', plan:'#5B8DEF', do:'#E5C54D', check:'#E5854D',
+  cliente:'#C8963A', act:'#35B87A' };
+/* e as dos ESTADOS do card, que é outra conversa: a cor diz em que pé está */
+const CIC_ESTADO = {
+  novo:    { cor:'#9AA1AC', selo:'em andamento' },
+  lote:    { cor:'#C8963A', selo:'no lote · a enviar' },
+  espera:  { cor:'#C8963A', selo:'com o cliente' },
+  alterar: { cor:'#E5C54D', selo:'pediu alteração' },
+  texto:   { cor:'#5B8DEF', selo:'texto aprovado' },
+  fazendo: { cor:'#5B8DEF', selo:'texto aprovado · em produção' },
+  noar:    { cor:'#35B87A', selo:'no ar' }
+};
+
+const CIC_COLS = {
+  producao: [['inbox','Inbox','a ideia entra, sem estrutura'],
+             ['plan','Plan','o que, quem, até quando'],
+             ['do','Do','a peça é feita e sobe'],
+             ['check','Check','só o revisor libera'],
+             ['cliente','Com o cliente','daqui quem move é ele','Cliente'],
+             ['act','Act','agendado e no ar']],
+  frentes:  [['inbox','Inbox','a ideia entra'],
+             ['plan','Plan','o que, quem, até quando'],
+             ['do','Do','fazendo agora'],
+             ['check','Check','conferir antes de valer'],
+             ['act','Act','ajustar e concluir']]
+};
+
+/* Cada passo é uma SITUAÇÃO: onde o card está, em que pé, o que
+   acontece ali, quem manda, e o que dá para fazer. As ações levam a
+   outra situação — é um grafo, não uma lista, porque o fluxo tem
+   retorno e tem duas voltas. */
+const CIC_PASSOS = {
+  /* ================= PRODUÇÃO · 1ª VOLTA · O TEXTO ================= */
+  inbox: { curto:'Inbox', col:'inbox', volta:1, estado:'novo', titulo:'A ideia entra',
+    texto:'Qualquer um da equipe joga a ideia aqui: um pedido do cliente no meio da reunião, uma sacada, um documento de referência. Sem estrutura, sem dono — o Inbox existe para nada se perder.',
+    quem:'qualquer um da equipe',
+    acoes:[{ r:'Dar um responsável e mandar para o Plan', p:'plan1', t:'vai' }] },
+
+  plan1: { curto:'Plan', col:'plan', volta:1, estado:'novo', titulo:'Quem cuida estrutura a pauta',
+    texto:'Objetivo, formato, plataforma, data, hora — e o texto. Nesta volta o que vai ao cliente é só o texto, que é quando mudar ainda é barato.',
+    quem:'o responsável pela pauta',
+    acoes:[{ r:'Mandar para a aprovação interna', p:'check1', t:'vai' }] },
+
+  check1: { curto:'Check', col:'check', volta:1, estado:'novo', titulo:'Aprovação interna do texto',
+    texto:'O Check é da casa. Só quem tem a função de Revisor libera — nem o dono do card se aprova sozinho. É o filtro que impede o cliente de receber rascunho.',
+    quem:'só o Revisor',
+    acoes:[{ r:'Revisor aprova', p:'lote1', t:'vai' },
+           { r:'Revisor devolve para ajustar', p:'plan1', t:'volta' }] },
+
+  lote1: { curto:'No lote', col:'cliente', volta:1, estado:'lote', titulo:'No lote, esperando o conjunto',
+    texto:'Aprovado por dentro, o card ainda não sai: espera no lote. O cliente recebe tudo de uma vez, com uma notificação só — receber de um em um cansa quem aprova e atrasa a resposta.',
+    quem:'quem atende decide a hora de mandar',
+    acoes:[{ r:'Enviar o lote ao cliente', p:'cli1', t:'vai' }] },
+
+  cli1: { curto:'Cliente · texto', col:'cliente', volta:1, estado:'espera', titulo:'1ª volta — ele decide o TEXTO', cli:true,
+    texto:'O cliente entra pelo link de aprovação, sem criar conta e sem senha. Vê o texto, comenta dentro do conteúdo e decide. Enquanto está aqui, ninguém da agência mexe no card.',
+    quem:'o cliente',
+    acoes:[{ r:'Cliente aprovou o texto', p:'plan2', t:'vai' },
+           { r:'Cliente pediu alteração', p:'plan1v', t:'volta' }] },
+
+  plan1v: { curto:'Plan · amarelo', col:'plan', volta:1, estado:'alterar', titulo:'Voltou amarelo, com o pedido dentro',
+    texto:'O card volta ao Plan inteiro amarelo — de longe se vê quem está esperando ajuste. O pedido do cliente fica no card, com autor, data e a versão comentada.',
+    quem:'o responsável pela pauta',
+    acoes:[{ r:'Ajustar e mandar de novo', p:'check1', t:'vai' }] },
+
+  /* ================= PRODUÇÃO · 2ª VOLTA · A PEÇA ================= */
+  plan2: { curto:'Plan · azul', col:'plan', volta:2, estado:'texto', titulo:'Texto aprovado — começa a 2ª volta',
+    texto:'O card volta ao Plan, agora azul: o texto está congelado, com a versão exata que o cliente aprovou. A pergunta muda de "o que vamos falar" para "quem executa a peça".',
+    quem:'quem atende, ou o gestor',
+    acoes:[{ r:'Colocar o responsável pela execução', p:'do2', t:'vai' }] },
+
+  do2: { curto:'Do', col:'do', volta:2, estado:'fazendo', titulo:'A peça é feita e sobe no card',
+    texto:'Arte, vídeo, carrossel, áudio, PDF — o que for. O material sobe no próprio card, versionado. Subir é o que move: o card vai sozinho para o Check, sem ninguém arrastar.',
+    quem:'o responsável pela execução',
+    acoes:[{ r:'Subir o material', p:'check2', t:'vai' }] },
+
+  check2: { curto:'Check', col:'check', volta:2, estado:'fazendo', titulo:'Aprovação interna da peça',
+    texto:'De novo só o Revisor. É a última chance de a casa olhar antes de a peça ir para fora — refazer depois da aprovação do cliente custa caro.',
+    quem:'só o Revisor',
+    acoes:[{ r:'Revisor aprova', p:'lote2', t:'vai' },
+           { r:'Revisor devolve para refazer', p:'do2', t:'volta' }] },
+
+  lote2: { curto:'No lote', col:'cliente', volta:2, estado:'lote', titulo:'No lote de novo',
+    texto:'Mesma regra da 1ª volta: o card espera o conjunto. O cliente recebe as peças prontas de uma vez, e decide todas na mesma sentada.',
+    quem:'quem atende decide a hora de mandar',
+    acoes:[{ r:'Enviar o lote ao cliente', p:'cli2', t:'vai' }] },
+
+  cli2: { curto:'Cliente · peça', col:'cliente', volta:2, estado:'espera', titulo:'2ª volta — ele decide a PUBLICAÇÃO', cli:true,
+    texto:'Agora ele vê a peça pronta, do jeito que vai ao ar, com o texto que já tinha aprovado. Comenta por ponto na arte, como no Figma. É a última decisão: aprovou, publica.',
+    quem:'o cliente',
+    acoes:[{ r:'Cliente aprovou a publicação', p:'act', t:'vai' },
+           { r:'Cliente pediu alteração', p:'plan2v', t:'volta' }] },
+
+  plan2v: { curto:'Plan · amarelo', col:'plan', volta:2, estado:'alterar', titulo:'Amarelo outra vez — só a peça',
+    texto:'Volta ao Plan da peça, amarelo, com o pedido dentro. O texto continua aprovado: não se refaz a 1ª volta por causa de um ajuste de arte.',
+    quem:'o responsável pela execução',
+    acoes:[{ r:'Refazer e subir de novo', p:'do2', t:'vai' }] },
+
+  act: { curto:'Act', col:'act', volta:2, estado:'texto', titulo:'Aprovado — pronto para ir ao ar',
+    texto:'No Act já estão as opções de agendar e publicar: data, hora e as redes. É a etapa que queremos automática — o card sai daqui para o Instagram sem ninguém copiar e colar.',
+    quem:'quem agenda, ou o robô',
+    acoes:[{ r:'Agendar e publicar', p:'noar', t:'fim' }] },
+
+  noar: { curto:'No ar', col:'act', volta:2, estado:'noar', titulo:'No ar',
+    texto:'O histórico guarda tudo: quem aprovou, quando, de que IP, com quais comentários e qual versão exata foi aprovada. Se alguém perguntar daqui a seis meses, a resposta está no card.',
+    quem:'ninguém precisa mais tocar',
+    acoes:[{ r:'Percorrer de novo desde o Inbox', p:'inbox', t:'reset' }] },
+
+  /* ================= AS OUTRAS QUATRO FRENTES ===================== */
+  oinbox: { curto:'Inbox', col:'inbox', volta:0, estado:'novo', titulo:'A ideia entra, igual',
+    texto:'Estratégico, Comercial, Acompanhamento, Pessoas e Conhecimento. Qualquer um joga aqui — uma proposta a fazer, um processo a escrever, uma conversa a ter.',
+    quem:'qualquer um da equipe',
+    acoes:[{ r:'Dar um responsável e mandar para o Plan', p:'oplan', t:'vai' }] },
+
+  oplan: { curto:'Plan', col:'plan', volta:0, estado:'novo', titulo:'Planejar',
+    texto:'O que é, quem faz, até quando. Uma volta só: aqui não existe cliente para aprovar, então não há 1ª e 2ª volta.',
+    quem:'o responsável',
+    acoes:[{ r:'Começar a fazer', p:'odo', t:'vai' }] },
+
+  odo: { curto:'Do', col:'do', volta:0, estado:'novo', titulo:'Fazendo agora',
+    texto:'O trabalho acontece e o material sobe no card, como na produção. A diferença é o destino: o que sai daqui fica dentro de casa.',
+    quem:'o responsável',
+    acoes:[{ r:'Mandar para conferência', p:'ocheck', t:'vai' }] },
+
+  ocheck: { curto:'Check', col:'check', volta:0, estado:'novo', titulo:'Conferir antes de valer',
+    texto:'Alguém de dentro confere. É o mesmo Check da produção, com o mesmo poder de Revisor — o que muda é que não há coluna depois dele para o cliente.',
+    quem:'só o Revisor',
+    acoes:[{ r:'Aprovar', p:'oact', t:'vai' },
+           { r:'Devolver para ajustar', p:'odo', t:'volta' }] },
+
+  oact: { curto:'Act', col:'act', volta:0, estado:'noar', titulo:'Ajustar e concluir',
+    texto:'Fecha na casa, sem passar por fora. Assunto de agência não vai para o cliente — e frente restrita só aparece para o responsável, para quem for marcado e para os sócios.',
+    quem:'o responsável',
+    acoes:[{ r:'Percorrer de novo desde o Inbox', p:'oinbox', t:'reset' }] }
+};
+
+const CIC_INICIO = { producao:'inbox', frentes:'oinbox' };
+/* o que "tocar o ciclo" percorre sozinho: o caminho inteiro, com uma
+   alteração pedida no meio — porque o retorno é a parte que ninguém
+   entende de primeira */
+const CIC_FITA = {
+  producao: ['plan1','check1','lote1','cli1','plan1v','check1','lote1','cli1',
+             'plan2','do2','check2','lote2','cli2','act','noar'],
+  frentes:  ['oplan','odo','ocheck','oact']
+};
+
+S.cic = { fluxo:'producao', passo:'inbox', trilha:[], tocando:false, relogio:null };
+
+/* ---------- desenhar ------------------------------------------------ */
+function cicNome(col){ return (CIC_COLS[S.cic.fluxo].find(c => c[0] === col) || [,col])[1]; }
+const cicCurto = k => CIC_PASSOS[k].curto || cicNome(CIC_PASSOS[k].col);
+
+function cicTrilhoHtml(){
+  const cols = CIC_COLS[S.cic.fluxo];
+  const p = CIC_PASSOS[S.cic.passo];
+  const passadas = new Set(S.cic.trilha.map(x => x.col).concat(p.col));
+  const celas = cols.map(([k, n, d, curto]) => {
+    const marca = k === p.col ? ' aqui' : (passadas.has(k) ? ' passou' : '');
+    /* o nome curto é para o celular, onde a coluna tem um sexto de 390px */
+    const nome = curto ? `<b class="longo">${n}</b><b class="curto">${curto}</b>` : `<b>${n}</b>`;
+    return `<button type="button" class="cicCol${marca}" data-ciccol="${k}" style="--cor:${CIC_COR[k]}"
+      aria-label="${esc(n)}" aria-current="${k === p.col ? 'step' : 'false'}">
+      <span class="rail"></span>${nome}<i>${d}</i></button>`;
+  }).join('');
+  const setas = cols.map(([k]) =>
+    `<span class="${k === p.col ? 'aqui' : ''}" style="--cor:${CIC_COR[k]}"></span>`).join('');
+  const larg = `grid-template-columns:repeat(${cols.length},minmax(0,1fr))`;
+  return `<div class="cicTrilho" style="${larg}" aria-label="as colunas do quadro">${celas}</div>
+          <div class="cicSetas" style="${larg}" aria-hidden="true">${setas}</div>`;
+}
+
+function cicJogoHtml(){
+  const p = CIC_PASSOS[S.cic.passo];
+  const e = CIC_ESTADO[p.estado];
+  const volta = p.volta === 0 ? 'uma volta só'
+    : (p.volta === 1 ? '1ª volta · o texto' : '2ª volta · a peça pronta');
+  const trilha = S.cic.trilha.map(x =>
+    `<em class="${x.t === 'volta' ? 'volta' : ''}">${esc(x.n)}</em>`).join('')
+    + `<em class="agora">${esc(cicCurto(S.cic.passo))}</em>`;
+  return `
+    <div class="cicComandos">
+      <button type="button" class="cicCmd${S.cic.tocando ? ' on' : ''}" data-cictocar="1">
+        ${ic(S.cic.tocando ? 'x' : 'play', 13)} ${S.cic.tocando ? 'Parar' : 'Tocar o ciclo inteiro'}</button>
+      <button type="button" class="cicCmd" data-cicvoltar="1" ${S.cic.trilha.length ? '' : 'disabled'}>
+        ${ic('arrowl', 13)} Desfazer</button>
+      <button type="button" class="cicCmd" data-cicreset="1">Recomeçar</button>
+    </div>
+    ${cicTrilhoHtml()}
+    <div class="cicCartao" style="--cor:${e.cor}">
+      <div class="top"><span class="selo">${e.selo}</span><span class="volta">${volta}</span></div>
+      <h2>Reels do ateliê</h2>
+      <div class="sub">Linho &amp; Co · Instagram · quinta, 18h30${
+        S.cic.fluxo === 'frentes' ? ' — exemplo de uma frente da casa' : ''}</div>
+    </div>
+    <div class="cicPasso" style="--cor:${CIC_COR[p.col]}">
+      <h3>${esc(cicNome(p.col))} — ${esc(p.titulo)}</h3>
+      <p>${p.texto}</p>
+      <span class="quem${p.cli ? ' cli' : ''}">${ic('person', 12)} ${esc(p.quem)}</span>
+    </div>
+    <div class="cicAcoes">${p.acoes.map((a, i) =>
+      `<button type="button" class="cicAcao ${a.t}" data-cicacao="${i}">
+        <span>${esc(a.r)}</span>
+        <span class="dedo">${a.t === 'volta' ? '↩' : (a.t === 'reset' ? '⟳' : '→')}</span></button>`).join('')}</div>
+    <div class="cicTrilha"><span class="rot">por onde passou</span>${trilha}</div>
+    <div class="cicCores">
+      <span><i style="--c:#9AA1AC"></i>em andamento</span>
+      <span><i style="--c:#C8963A"></i>com o cliente</span>
+      <span><i style="--c:#E5C54D"></i>pediu alteração</span>
+      <span><i style="--c:#5B8DEF"></i>texto aprovado</span>
+      <span><i style="--c:#35B87A"></i>no ar</span>
+    </div>`;
+}
+
+function cicPintar(){
+  const casa = document.getElementById('cicJogo');
+  if(!casa) return;
+  casa.innerHTML = cicJogoHtml();
+  document.querySelectorAll('.cicAba').forEach(a =>
+    a.classList.toggle('on', a.dataset.cicaba === S.cic.fluxo));
+  const t = casa.querySelector('.cicTrilha');
+  if(t) t.scrollLeft = t.scrollWidth;
+}
+
+/* ---------- andar --------------------------------------------------- */
+function cicAndar(i){
+  const p = CIC_PASSOS[S.cic.passo];
+  const a = p.acoes[i]; if(!a) return;
+  if(a.t === 'reset'){ cicRecomecar(); return; }
+  S.cic.trilha.push({ n: cicCurto(S.cic.passo), col: p.col, t: a.t, de: S.cic.passo });
+  if(S.cic.trilha.length > 24) S.cic.trilha.shift();
+  S.cic.passo = a.p;
+  cicPintar();
+}
+function cicDesfazer(){
+  const v = S.cic.trilha.pop(); if(!v) return;
+  S.cic.passo = v.de; cicPintar();
+}
+function cicRecomecar(){
+  S.cic.passo = CIC_INICIO[S.cic.fluxo]; S.cic.trilha = []; cicPintar();
+}
+function cicTrocarFluxo(f){
+  if(!CIC_COLS[f] || f === S.cic.fluxo) return;
+  cicParar(); S.cic.fluxo = f; cicRecomecar();
+}
+/* pular direto para uma coluna, para quem quer ver só o Do */
+function cicPular(col){
+  const p = CIC_PASSOS[S.cic.passo];
+  if(col === p.col) return;
+  const alvo = Object.keys(CIC_PASSOS).find(k => {
+    const x = CIC_PASSOS[k];
+    return x.col === col && (S.cic.fluxo === 'frentes' ? x.volta === 0 : x.volta > 0);
+  });
+  if(!alvo) return;
+  cicParar(); S.cic.passo = alvo; S.cic.trilha = []; cicPintar();
+}
+
+/* ---------- tocar o ciclo inteiro ----------------------------------- */
+function cicParar(){
+  S.cic.tocando = false;
+  if(S.cic.relogio){ clearTimeout(S.cic.relogio); S.cic.relogio = null; }
+}
+function cicTocar(){
+  if(S.cic.tocando){ cicParar(); cicPintar(); return; }
+  cicRecomecar();
+  S.cic.tocando = true;
+  const fita = CIC_FITA[S.cic.fluxo].slice();
+  const REDUZIDO = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const passo = () => {
+    if(!S.cic.tocando) return;
+    const alvo = fita.shift();
+    if(!alvo){ cicParar(); cicPintar(); return; }
+    const i = CIC_PASSOS[S.cic.passo].acoes.findIndex(a => a.p === alvo);
+    if(i < 0){ cicParar(); cicPintar(); return; }
+    cicAndar(i);
+    S.cic.relogio = setTimeout(passo, REDUZIDO ? 600 : 1600);
+  };
+  cicPintar();
+  S.cic.relogio = setTimeout(passo, 700);
+}
+
+/* ---------- os cliques ---------------------------------------------- */
+addEventListener('click', e => {
+  const alvo = e.target.closest && e.target.closest(
+    '[data-cicacao],[data-cicaba],[data-ciccol],[data-cictocar],[data-cicvoltar],[data-cicreset],[data-cicposter]');
+  if(!alvo || !document.getElementById('fluxoPagina')) return;
+  e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+  const d = alvo.dataset;
+  if(d.cicacao !== undefined){ cicParar(); cicAndar(+d.cicacao); return; }
+  if(d.cicaba !== undefined) return cicTrocarFluxo(d.cicaba);
+  if(d.ciccol !== undefined) return cicPular(d.ciccol);
+  if(d.cictocar !== undefined) return cicTocar();
+  if(d.cicvoltar !== undefined){ cicParar(); return cicDesfazer(); }
+  if(d.cicreset !== undefined){ cicParar(); return cicRecomecar(); }
+  if(d.cicposter !== undefined){
+    const p = document.getElementById('fluxoPagina');
+    cicParar(); p.classList.toggle('poster');
+    const r = alvo.querySelector('.rot');
+    if(r) r.textContent = p.classList.contains('poster') ? 'Passo a passo' : 'Desenho';
+    cicPintar();
+  }
+}, true);
+
+/* teclado: → segue pelo caminho principal, ← desfaz */
+addEventListener('keydown', e => {
+  if(!document.getElementById('fluxoPagina') || document.getElementById('fluxoPagina').classList.contains('poster')) return;
+  if(e.key === 'ArrowRight'){ cicParar(); cicAndar(0); }
+  else if(e.key === 'ArrowLeft'){ cicParar(); cicDesfazer(); }
+});
+
+/* ---------- a página ganha as abas e o tabuleiro --------------------- */
+montarFluxoPdca = (function(orig){
+  return function(){
+    const novo = !document.getElementById('fluxoPagina');
+    orig.apply(this, arguments);
+    const pg = document.getElementById('fluxoPagina');
+    if(!pg || !novo || pg.querySelector('.cicAbas')) return;
+
+    /* o botão do desenho entra na barra de cima, ao lado do PNG */
+    const zoom = pg.querySelector('[data-fxzoom]');
+    if(zoom) zoom.insertAdjacentHTML('beforebegin',
+      `<button type="button" class="fxBt" data-cicposter="1">${ic('kanban', 13)}
+        <span class="rot">Desenho</span></button>`);
+
+    const abas = document.createElement('div');
+    abas.className = 'cicAbas';
+    abas.innerHTML = `
+      <button type="button" class="cicAba on" data-cicaba="producao">
+        <b>Produção</b><span>duas voltas com o cliente</span></button>
+      <button type="button" class="cicAba" data-cicaba="frentes">
+        <b class="longo">As outras quatro frentes</b><b class="curto">Outras frentes</b>
+        <span>uma volta, dentro de casa</span></button>`;
+    const jogo = document.createElement('div');
+    jogo.className = 'cicJogo'; jogo.id = 'cicJogo';
+    const palco = pg.querySelector('.fxPalco');
+    palco.parentNode.insertBefore(abas, palco);
+    palco.parentNode.insertBefore(jogo, palco);
+    cicPintar();
+  };
+})(montarFluxoPdca);
+
+/* a v123 já montou a página ao ler o endereço, alguns milissegundos
+   antes deste bloco existir: refaço com as abas e o tabuleiro */
+if(document.getElementById('fluxoPagina')){
+  /* a v123 já montou a página antes deste bloco: refaço com as abas */
+  const velho = document.getElementById('fluxoPagina');
+  velho.remove(); document.body.classList.remove('soFluxo');
+  montarFluxoPdca();
 }
 </script>

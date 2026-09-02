@@ -34,9 +34,11 @@ const pg = await abrir('/fluxopdcamaestro');
 await pg.waitForTimeout(900);
 const cedo = await pg.evaluate(() => ({
   pagina: !!document.getElementById('fluxoPagina'),
+  jogo: document.querySelectorAll('#cicJogo .cicCol').length,
   svg: !!document.querySelector('#fluxoPagina .fxPalco svg'),
   cortina: !!document.getElementById('abertura') }));
-checa('o desenho já está na tela antes de a cortina terminar', cedo.pagina && cedo.svg, cedo);
+checa('o ciclo já está na tela antes de a cortina terminar',
+      cedo.pagina && cedo.jogo >= 5 && cedo.svg, cedo);
 
 /* o "quem está aí?" entra a 3400ms: espero passar dele */
 await pg.waitForTimeout(3200);
@@ -65,18 +67,20 @@ const conteudo = await pg.evaluate(() => {
   const txt = svg ? svg.textContent.replace(/\s+/g, ' ') : '';
   return { txt, h1: document.querySelector('.fxCabeca h1')?.textContent.trim(),
     caixas: svg ? svg.querySelectorAll('rect[rx="12"]').length : 0,
-    botoes: [...document.querySelectorAll('#fluxoPagina .fxBt')].map(x => x.textContent.trim()),
+    /* só os que aparecem: o encaixar/ampliar é do pôster e fica escondido */
+    botoes: [...document.querySelectorAll('#fluxoPagina .fxBt')]
+      .filter(x => x.getBoundingClientRect().height > 0).map(x => x.innerText.trim()),
     pe: document.querySelector('.fxPe')?.textContent.replace(/\s+/g, ' ').trim() };
 });
-checa('é o mesmo ciclo do Ensaio: as duas voltas e as quatro frentes',
+checa('o pôster continua ali, com as duas voltas e as quatro frentes',
       /1ª VOLTA · O TEXTO/.test(conteudo.txt) && /2ª VOLTA · A PUBLICAÇÃO PRONTA/.test(conteudo.txt)
       && /AS OUTRAS QUATRO FRENTES/.test(conteudo.txt) && conteudo.caixas >= 16, conteudo.caixas);
 checa('com um título que explica sem jargão',
       /ideia vira publicação/i.test(conteudo.h1 || ''), conteudo.h1);
-checa('os três botões estão lá: PNG, zoom e link',
-      /Baixar PNG/.test(conteudo.botoes.join('|')) && conteudo.botoes.length === 3, conteudo.botoes);
+checa('os três botões de cima: o PNG, o desenho e o link',
+      conteudo.botoes.join('|') === 'Baixar PNG|Desenho|Copiar o link', conteudo.botoes);
 checa('o rodapé mostra o endereço e a versão',
-      /fluxopdcamaestro/.test(conteudo.pe || '') && /v123/.test(conteudo.pe || ''), conteudo.pe);
+      /fluxopdcamaestro/.test(conteudo.pe || '') && /protótipo v\d+/.test(conteudo.pe || ''), conteudo.pe);
 checa('e uma porta para quem quiser entrar na plataforma',
       await pg.locator('.fxPe [data-fxentrar]').count() === 1);
 
@@ -181,6 +185,9 @@ await normal.close();
 console.log('\n  — no celular —');
 const cel = await abrir('/fluxopdcamaestro', { width: 390, height: 844 });
 await cel.waitForTimeout(1200);
+/* o pôster agora mora atrás do botão "Desenho": a página abre no
+   passo a passo */
+await cel.click('[data-cicposter]'); await cel.waitForTimeout(400);
 const m = await cel.evaluate(() => {
   const p = document.getElementById('fluxoPagina');
   const svg = p.querySelector('.fxPalco svg'), palco = p.querySelector('.fxPalco');
@@ -202,25 +209,28 @@ checa('e centrado, sem um vazio embaixo', m.centrado, m);
 checa('a página não escorrega de lado', m.docW <= m.tela + 1, m);
 checa('e cabe na janela, sem rolagem de página', m.alturaPagina <= m.telaH + 1, m);
 
-/* a barra de cima é uma linha só, e não come a tela do desenho */
+/* de volta ao passo a passo, para medir a barra de cima */
+await cel.click('[data-cicposter]'); await cel.waitForTimeout(350);
 const barra = await cel.evaluate(() => {
   const t = document.querySelector('.fxTopo');
-  const centros = [...t.children].map(c => { const r = c.getBoundingClientRect(); return r.top + r.height / 2; });
+  const vistos = [...t.children].filter(c => c.getBoundingClientRect().height > 0);
+  const centros = vistos.map(c => { const r = c.getBoundingClientRect(); return r.top + r.height / 2; });
   return { h: Math.round(t.getBoundingClientRect().height),
     linhas: centros.reduce((a, c) => a.some(x => Math.abs(x - c) < 10) ? a : [...a, c], []).length,
     /* innerText, não textContent: o rótulo longo continua no DOM, escondido */
-    rotulos: [...t.querySelectorAll('.fxBt')].map(b => b.innerText.trim()),
+    rotulos: vistos.filter(c => c.classList.contains('fxBt')).map(b => b.innerText.trim()),
     cabeca: Math.round(document.querySelector('.fxCabeca').getBoundingClientRect().height),
-    palco: Math.round(document.querySelector('.fxPalco').getBoundingClientRect().height) };
+    jogo: Math.round(document.querySelector('.cicJogo').getBoundingClientRect().height) };
 });
-const cabecaEncaixada = barra.cabeca;
+
 checa('celular: os três botões cabem numa linha só', barra.linhas === 1 && barra.h <= 60, barra);
 checa('celular: com rótulos curtos, que cabem',
-      barra.rotulos.join('|') === 'PNG|Ampliar|Link', barra.rotulos);
-checa('celular: encaixado, a explicação inteira cabe e o desenho fica com mais tela',
-      barra.cabeca <= 210 && barra.palco > barra.cabeca, barra);
+      barra.rotulos.join('|') === 'PNG|Desenho|Link', barra.rotulos);
+checa('celular: a apresentação encolhe e o tabuleiro fica com a maior parte da tela',
+      barra.cabeca <= 150 && barra.jogo > barra.cabeca, barra);
 
-/* encaixado, o próprio desenho é o botão de ampliar: é onde o dedo vai */
+/* no pôster, encaixado, o próprio desenho é o botão de ampliar */
+await cel.click('[data-cicposter]'); await cel.waitForTimeout(350);
 await cel.click('.fxPalco svg'); await cel.waitForTimeout(300);
 const ampliado = await cel.evaluate(() => {
   const p = document.getElementById('fluxoPagina');
@@ -238,8 +248,6 @@ checa('tocar no próprio desenho abre o tamanho de leitura, rolando por dentro',
 checa('e começa no início do ciclo, no Inbox da 1ª volta', ampliado.comecaNoInbox, ampliado);
 checa('a página em si não escorrega de lado', ampliado.docW <= ampliado.tela + 1, ampliado);
 checa('o botão passa a dizer "Ver inteiro"', ampliado.rotulo === 'Ver inteiro', ampliado.rotulo);
-checa('e ampliado a apresentação encolhe para dar a tela ao desenho',
-      ampliado.cabeca < cabecaEncaixada, { ampliado: ampliado.cabeca, encaixado: cabecaEncaixada });
 await cel.close();
 
 checa('nenhum erro de JavaScript', erros.length === 0);
