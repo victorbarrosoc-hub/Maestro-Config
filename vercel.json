@@ -6,6 +6,14 @@
       "destination": "/web/index.html"
     },
     {
+      "source": "/fluxopdcamaestro",
+      "destination": "/web/index.html"
+    },
+    {
+      "source": "/fluxopdcamaestro/",
+      "destination": "/web/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/web/$1"
     }
@@ -31,6 +39,15 @@
     },
     {
       "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate, max-age=0"
+        }
+      ]
+    },
+    {
+      "source": "/fluxopdcamaestro",
       "headers": [
         {
           "key": "Cache-Control",

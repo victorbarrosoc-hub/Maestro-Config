@@ -15767,7 +15767,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v122 · 2 set · o ciclo desenhado e o link no card do cliente';
+const VERSAO_PROTOTIPO = 'v123 · 2 set · o ciclo com endereço próprio: /fluxopdcamaestro';
 
 menuSheet = (function(orig){
   return function(){
@@ -24697,4 +24697,276 @@ render = (function(orig){
     return orig.apply(this, arguments);
   };
 })(render);
+</script>
+<style>
+/* =====================================================================
+   v123 — o ciclo ganha endereço próprio.
+
+   O fundador pediu a imagem do ciclo em PNG para mandar para a equipe, e
+   emendou: "ou cria uma extensão do link". As duas coisas cabem na mesma
+   página. /fluxopdcamaestro abre o desenho sozinho — sem cortina, sem
+   "quem está aí?", sem entrar na plataforma — e de lá se baixa o PNG.
+
+   Quem recebe o link não é da casa: pode ser um cliente, um freelancer,
+   alguém numa reunião. A página tem que abrir e explicar em três
+   segundos, sem pedir nada.
+   ================================================================== */
+#fluxoPagina{ position:fixed; inset:0; z-index:2400; background:var(--ink-990, #0B0C0E);
+  display:flex; flex-direction:column; overflow:hidden;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) }
+body.soFluxo{ overflow:hidden }
+/* a plataforma continua montada atrás — mas calada. O aviso não: ele é
+   desta página (copiou o link, salvou a imagem) e precisa passar por cima. */
+body.soFluxo #root, body.soFluxo #abertura, body.soFluxo #quemEsta,
+body.soFluxo #entrarMaestro{ display:none !important }
+body.soFluxo .toast{ z-index:2600 }
+
+.fxTopo{ display:flex; align-items:center; gap:10px; flex:0 0 auto; flex-wrap:wrap;
+  padding:13px 16px; border-bottom:1px solid var(--ink-870, #22242A) }
+.fxTopo .marca{ display:flex; align-items:center; gap:9px }
+.fxTopo .marca b{ font-family:var(--serif); font-weight:400; font-size:19px; color:var(--ink-50) }
+.fxTopo .sp{ flex:1 }
+.fxBt{ display:inline-flex; align-items:center; gap:7px; padding:7px 12px; border-radius:9px;
+  border:1px solid var(--ink-700); background:var(--ink-950); color:var(--ink-100);
+  font-size:12.5px; font-weight:600; white-space:nowrap }
+.fxBt:hover{ border-color:var(--brass-600); color:var(--brass-300) }
+.fxBt.ouro{ border-color:var(--brass-600); color:var(--brass-300) }
+.fxBt[disabled]{ opacity:.55 }
+
+.fxCabeca{ flex:0 0 auto; padding:14px 18px 8px }
+.fxCabeca .rot{ font-family:var(--mono); font-size:9.5px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--brass-500) }
+.fxCabeca h1{ font-family:var(--serif); font-weight:400; font-size:25px; line-height:1.16;
+  color:var(--ink-50); margin:6px 0 5px }
+.fxCabeca p{ font-size:13.5px; line-height:1.5; color:var(--ink-300); margin:0; max-width:96ch }
+
+/* o palco centra o desenho: encaixado, ele fica no meio da tela em vez
+   de boiar no alto com um vazio embaixo */
+.fxPalco{ flex:1; min-height:0; overflow:auto; padding:4px 18px 16px;
+  -webkit-overflow-scrolling:touch; display:grid; align-content:start }
+/* encaixado o desenho é baixo: centrado, ele para no meio da tela em vez
+   de boiar no alto com um vazio embaixo */
+#fluxoPagina.cabe .fxPalco{ align-content:center }
+.fxPalco svg{ display:block; width:1280px; max-width:none; margin:0 auto;
+  border:1px solid var(--ink-850, #1E2026); border-radius:14px }
+#fluxoPagina.cabe .fxPalco svg{ width:100%; max-width:1280px; cursor:zoom-in }
+.fxDica{ font-size:11.5px; color:var(--ink-500); margin:0 0 7px; text-align:center }
+#fluxoPagina:not(.cabe) .fxDica .zoom{ display:none }
+#fluxoPagina.cabe .fxDica .arrasta{ display:none }
+/* o desenho já cabe inteiro na tela: não há o que dizer */
+@media(min-width:1340px){ #fluxoPagina:not(.cabe) .fxDica{ display:none } }
+
+.fxPe{ flex:0 0 auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  padding:10px 18px calc(12px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--ink-870, #22242A);
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--ink-500) }
+.fxPe .sp{ flex:1 }
+.fxPe a{ color:var(--ink-400) } .fxPe a:hover{ color:var(--brass-300) }
+
+/* no celular a barra tinha que caber numa linha só: os rótulos encurtam
+   e a apresentação vira uma frase. O que sobra de altura é do desenho. */
+.fxBt .curto{ display:none }
+@media(max-width:860px){
+  .fxTopo{ padding:10px 11px; gap:7px; flex-wrap:nowrap }
+  .fxTopo .marca b{ font-size:16px }
+  .fxBt{ padding:6px 9px; font-size:11.5px; gap:5px }
+  .fxBt .curto{ display:inline } .fxBt .longo{ display:none }
+  .fxCabeca{ padding:12px 14px 6px } .fxCabeca h1{ font-size:21px }
+  .fxCabeca p{ font-size:12.5px; line-height:1.45 }
+  /* ampliado, cada linha de texto é uma linha a menos de desenho: aí a
+     explicação encolhe para a primeira frase */
+  #fluxoPagina:not(.cabe) .fxCabeca .fxMais{ display:none }
+  .fxPalco{ padding:4px 12px 12px }
+  .fxPe{ font-size:9px; gap:8px; padding:9px 12px calc(10px + env(safe-area-inset-bottom)) }
+}
+@media(max-width:420px){ .fxTopo .marca b{ display:none } }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v123 — o ciclo ganha endereço próprio: /fluxopdcamaestro
+
+   Três caminhos chegam ao mesmo lugar, porque nem todo hospedeiro
+   reescreve caminho:
+     · /fluxopdcamaestro          — o endereço que o fundador quer mandar
+     · ?fluxo=pdca                — funciona em qualquer lugar, sempre
+     · #fluxopdcamaestro          — o que sobra quando nem a query passa
+
+   A página é um desvio da abertura, não uma rota da plataforma: ela é
+   montada antes de qualquer render e cala a casa inteira (a cortina, o
+   "quem está aí?", a porta). Quem abre o link não entra na Maestro —
+   vê o desenho.
+   ================================================================== */
+
+const FLUXO_CAMINHO = '/fluxopdcamaestro';
+const eFluxoPdca = () =>
+     /(^|\/)fluxopdcamaestro\/?$/i.test(location.pathname)
+  || /[?&]fluxo=pdca(&|$)/i.test(location.search)
+  || /^#!?fluxopdcamaestro$/i.test(location.hash);
+
+/* o endereço para compartilhar. Em produção é o caminho limpo; num
+   servidor que não reescreve (o teste local, um file://) cai na query,
+   que sempre funciona. */
+function linkDoFluxo(){
+  const daCasa = /^https?:$/.test(location.protocol)
+    && !/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);
+  return daCasa ? location.origin + FLUXO_CAMINHO
+                : 'https://maestroapptest.vercel.app' + FLUXO_CAMINHO;
+}
+
+/* ---------- o PNG, gerado no próprio navegador ---------------------- */
+/* Sem servidor e sem biblioteca: o SVG vira imagem, a imagem vira tela,
+   a tela vira PNG. Em 2x, para o desenho aguentar projetor e retina. */
+function fluxoSvgTexto(){
+  return svgCicloMaestro()
+    .replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="790" ');
+}
+function fluxoParaPng(){
+  return new Promise((ok, erro) => {
+    const blob = new Blob([fluxoSvgTexto()], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const E = 2, c = document.createElement('canvas');
+      c.width = 1280 * E; c.height = 790 * E;
+      const g = c.getContext('2d');
+      g.fillStyle = '#0E0F12'; g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? ok(b) : erro(new Error('sem blob')), 'image/png');
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); erro(new Error('svg não abriu')); };
+    img.src = url;
+  });
+}
+function baixarFluxoPng(bt){
+  const antes = bt && bt.innerHTML;
+  if(bt){ bt.disabled = true; bt.textContent = 'Gerando…'; }
+  fluxoParaPng().then(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'ciclo-da-maestro.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    /* no iPhone o download vira aba: quem não baixou, ao menos vê e
+       segura o dedo para salvar */
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    if(bt){ bt.disabled = false; bt.innerHTML = antes; }
+    if(typeof toast === 'function') toast('Imagem salva: ciclo-da-maestro.png');
+  }).catch(() => {
+    if(bt){ bt.disabled = false; bt.innerHTML = antes; }
+    if(typeof toast === 'function') toast('Não deu para gerar a imagem aqui — use a tela cheia e tire um print.');
+  });
+}
+
+/* ---------- a página ------------------------------------------------ */
+/* a cortina, o "quem está aí?" e a porta entram por temporizador, DEPOIS
+   deste bloco: por isso calar a casa é tarefa que se repete, e não parte
+   de montar a página (que só acontece uma vez). */
+function calarACasa(){
+  document.getElementById('abertura')?.remove();
+  document.getElementById('quemEsta')?.remove();
+  document.getElementById('entrarMaestro')?.remove();
+  document.body.classList.remove('cortina');
+}
+
+function montarFluxoPdca(){
+  calarACasa();
+  if(document.getElementById('fluxoPagina')) return;
+  document.title = 'O ciclo da Maestro — como uma ideia vira publicação';
+  document.body.classList.add('soFluxo');
+
+  const el = document.createElement('div');
+  el.id = 'fluxoPagina';
+  /* No celular o desenho abre ENCAIXADO. Em tamanho de leitura só cabe
+     um terço de uma coluna na tela: quem abre o link vê um canto e não
+     entende onde está. Encaixado ele entrega a forma — duas voltas em
+     cima, a casa embaixo — e um toque amplia para ler as notas.
+     No desktop os 1280px cabem: não há o que encaixar. */
+  if(innerWidth < 1100) el.classList.add('cabe');
+  el.innerHTML = `
+    <div class="fxTopo">
+      <span class="marca">${LOGO('var(--brass-500)', 24)}<b>Maestro</b></span>
+      <span class="sp"></span>
+      <button type="button" class="fxBt ouro" data-fxpng="1">${ic('baixar', 13)}<span class="longo">Baixar PNG</span><span class="curto">PNG</span></button>
+      <button type="button" class="fxBt" data-fxzoom="1">${ic('search', 13)} <span class="rot">${el.classList.contains('cabe') ? 'Ampliar' : 'Ver inteiro'}</span></button>
+      <button type="button" class="fxBt" data-fxlink="1">${ic('linkic', 13)}<span class="longo">Copiar o link</span><span class="curto">Link</span></button>
+    </div>
+    <div class="fxCabeca">
+      <div class="rot">o ciclo · PDCA da Maestro</div>
+      <h1>Como uma ideia vira publicação</h1>
+      <p>A <b>produção</b> dá duas voltas com o cliente: primeiro o texto, depois a peça pronta.<span class="fxMais">
+         As outras quatro frentes — estratégico, comercial, acompanhamento e pessoas — ficam
+         dentro de casa, sem coluna de cliente. Este é o caminho de todo card na Maestro.</span></p>
+    </div>
+    <div class="fxPalco">
+      <p class="fxDica"><span class="zoom">Toque no desenho para ampliar e ler as notas.</span><span class="arrasta">Arraste para o lado para percorrer o ciclo, do Inbox ao Act.</span></p>
+      ${svgCicloMaestro()}
+    </div>
+    <div class="fxPe">
+      <span>maestroapptest.vercel.app/fluxopdcamaestro</span>
+      <span class="sp"></span>
+      <span>protótipo ${typeof VERSAO_PROTOTIPO === 'string' ? esc(VERSAO_PROTOTIPO.split(' · ')[0]) : ''}</span>
+      <a href="/" data-fxentrar="1">Abrir a Maestro →</a>
+    </div>`;
+  document.body.appendChild(el);
+}
+
+function fluxoZoom(){
+  const p = document.getElementById('fluxoPagina'); if(!p) return;
+  p.classList.toggle('cabe');
+  const r = p.querySelector('[data-fxzoom] .rot');
+  if(r) r.textContent = p.classList.contains('cabe') ? 'Ampliar' : 'Ver inteiro';
+}
+
+addEventListener('click', e => {
+  /* encaixado, o próprio desenho é o botão: é onde o dedo vai */
+  const p = document.getElementById('fluxoPagina');
+  if(p && p.classList.contains('cabe') && e.target.closest && e.target.closest('.fxPalco svg')){
+    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+    return fluxoZoom();
+  }
+  const b = e.target.closest && e.target.closest('[data-fxpng],[data-fxzoom],[data-fxlink],[data-fxcopiar]');
+  if(!b) return;
+  e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+  if(b.dataset.fxpng !== undefined) return baixarFluxoPng(b);
+  if(b.dataset.fxzoom !== undefined) return fluxoZoom();
+  /* copiar o link serve nos dois lugares: na página e dentro do Ensaio */
+  copiarTexto(linkDoFluxo()).then(ok => toast(ok
+    ? 'Link do ciclo copiado. Quem receber vê o desenho sem entrar na plataforma.'
+    : 'Não deu para copiar — o endereço é ' + linkDoFluxo()));
+}, true);
+
+/* dentro do Ensaio, ao lado do "ver em tela cheia": o botão de mandar */
+enRecolherLegenda = (function(orig){
+  return function(){
+    orig.apply(this, arguments);
+    const bt = document.querySelector('.enComoCorpo [data-pdcafull]');
+    if(!bt || bt.parentNode.querySelector('[data-fxcopiar]')) return;
+    bt.insertAdjacentHTML('afterend',
+      ` <button type="button" class="pdcaBt" data-fxcopiar="1"
+         title="Copiar o link do ciclo para mandar à equipe">${ic('linkic', 13)} Copiar o link do ciclo</button>`);
+  };
+})(enRecolherLegenda);
+
+/* ---------- o desvio, antes de tudo --------------------------------- */
+if(eFluxoPdca()){
+  /* a casa fica calada: ninguém pede senha a quem só veio ver um desenho */
+  S.viaLink = true;
+  if(typeof abrirQuemEsta === 'function') abrirQuemEsta = function(){};
+  try{
+    if(window.MaestroPorta && !window.MaestroPorta._soFluxo){
+      window.MaestroPorta.pedir = function(){};
+      window.MaestroPorta._soFluxo = true;
+    }
+  }catch(e){}
+  render = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); montarFluxoPdca(); return r; };
+  })(render);
+  montarFluxoPdca();
+  /* a cortina e o "quem está aí?" entram por temporizador: insisto, e
+     por um tempo — o "quem está aí?" só é chamado aos 3400ms */
+  [80, 200, 400, 800, 1500, 3000, 3500, 4200].forEach(t => setTimeout(montarFluxoPdca, t));
+  addEventListener('DOMContentLoaded', montarFluxoPdca);
+  addEventListener('load', montarFluxoPdca);
+}
 </script>
