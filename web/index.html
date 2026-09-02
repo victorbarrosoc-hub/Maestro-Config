@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-02 19:35 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-02 20:03 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15832,7 +15832,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v120 · 2 set · filtro por cliente no Ensaio';
+const VERSAO_PROTOTIPO = 'v121 · 2 set · o Ensaio organizado, nos dois tamanhos';
 
 menuSheet = (function(orig){
   return function(){
@@ -24292,4 +24292,211 @@ modalTarefa = (function(orig){
     finally { CLIS = base; }
   };
 })(modalTarefa);
+</script>
+<style>
+/* =====================================================================
+   v121 — o Ensaio organizado, nos dois tamanhos.
+
+   O que a medição mostrou, antes:
+   · celular — as frentes quebravam em QUATRO linhas (174px), o quadro
+     começava a 444px do topo e a página tinha 2928px: três telas de
+     rolagem vertical para chegar no Act, com colunas de 240px numa
+     tela de 390;
+   · desktop — as colunas somavam 1252px numa área de 1092: rolagem
+     lateral com 1440px de tela sobrando; e a página com 2523px, o que
+     fazia o cabeçalho da coluna sumir justo quando se rola atrás de um
+     card.
+
+   O quadro passa a se comportar como quadro: cabeçalho e filtros
+   parados, e as COLUNAS rolando por dentro. É o que Trello e Linear
+   fazem, e resolve os dois problemas de uma vez.
+   ================================================================== */
+
+/* ---------- 1. as três fileiras de filtro viram uma barra ---------- */
+.enFiltros{ display:grid; gap:6px; margin:0 0 10px }
+.enFiltros .linha{ display:flex; align-items:center; gap:8px; min-width:0 }
+.enFiltros .rot{ font-family:var(--mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-500); flex:0 0 52px; text-align:right }
+.enFiltros .fila{ display:flex; gap:6px; overflow-x:auto; min-width:0; flex:1;
+  padding:2px 2px 3px; scrollbar-width:none; -webkit-overflow-scrolling:touch }
+.enFiltros .fila::-webkit-scrollbar{ display:none }
+.enFiltros .fila > *{ flex:0 0 auto }
+/* as fileiras antigas perdem a margem e a quebra: quem organiza é a barra */
+.enCats, .enResps, .enClis{ margin:0 !important; padding:0 !important;
+  flex-wrap:nowrap !important; overflow:visible !important }
+.enCats .enCat, .enResps .enResp, .enClis .enCli2{ padding:5px 11px; font-size:12px }
+.enClis .enCli2{ padding-left:4px } .enClis .enCli2.semCara{ padding-left:11px }
+.enClis .rot{ display:none }        /* o rótulo agora é da barra */
+.enCat{ gap:6px !important }
+
+/* ---------- 2. o quadro ocupa a altura que sobra ------------------- */
+.enRolo{ grid-auto-columns:minmax(232px, 1fr) !important;
+  align-items:stretch !important; padding-bottom:4px !important;
+  height:var(--enAltura, auto); overflow-y:hidden }
+.enCol{ display:flex; flex-direction:column; min-height:0; padding:10px 10px 4px }
+.enColHd{ flex:0 0 auto; margin-bottom:9px }
+.enColCorpo{ flex:1; min-height:0; overflow-y:auto; padding-right:2px;
+  scrollbar-width:thin; scrollbar-color:var(--ink-700) transparent }
+.enColCorpo::-webkit-scrollbar{ width:6px }
+.enColCorpo::-webkit-scrollbar-thumb{ background:var(--ink-700); border-radius:3px }
+.enColCorpo > :last-child{ margin-bottom:8px }
+
+/* desktop: as cinco colunas dividem a largura, sem rolagem lateral */
+@media(min-width:861px){
+  /* 5 colunas + 4 vãos têm de caber na área útil: o piso baixo deixa o
+     `1fr` esticar até a largura real, em vez de transbordar por 6px */
+  .enRolo{ grid-auto-columns:minmax(180px, 1fr) !important }
+  .enFiltros{ gap:5px }
+}
+/* celular: uma coluna por vez, com encaixe — desliza como uma tela */
+@media(max-width:860px){
+  .enRolo{ grid-auto-columns:86vw !important; scroll-snap-type:x mandatory !important;
+    gap:10px !important }
+  .enFiltros .rot{ flex-basis:44px; font-size:8.5px }
+  /* na tela pequena o quadro é a tela: o cabeçalho da rota cede o
+     espaço, e o cartão fica mais baixo para caber mais de um */
+  body.emEnsaio .mtop{ margin-bottom:10px }
+  body.emEnsaio .mtop p{ display:none }
+  body.emEnsaio .enCard{ padding:9px 10px; margin-bottom:7px }
+  body.emEnsaio .enCard .tit{ font-size:13px; margin-bottom:6px }
+  body.emEnsaio .enCard .meta{ gap:5px }
+  body.emEnsaio .enCard .acoes{ gap:4px; margin-top:7px; row-gap:5px }
+  body.emEnsaio .enCard .acoes button{ width:24px; height:24px }
+  body.emEnsaio .enCard .cyBtn, body.emEnsaio .enCard .enPasso,
+  body.emEnsaio .enCard .conclui{ height:24px; padding:0 8px !important }
+  body.emEnsaio .enTrilho{ margin-top:7px }
+  body.emEnsaio .enBola{ margin-top:6px; font-size:10.5px }
+}
+
+/* ---------- 3. a legenda longa se recolhe ------------------------- */
+.enComo{ margin:8px 2px 0; border-top:1px solid var(--ink-850); padding-top:9px }
+.enComoBt{ display:inline-flex; align-items:center; gap:7px;
+  font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-400) }
+.enComoBt:hover{ color:var(--brass-300) }
+.enComoBt::after{ content:'+'; font-size:13px; line-height:1 }
+.enComoBt.aberto::after{ content:'–' }
+.enComo .enLegenda{ margin-top:8px }
+.enComo .cyAuto{ margin-top:10px }
+/* o aviso do filtro de cliente não se recolhe: ele é estado, não ajuda */
+.enCliAviso{ margin:0 2px 8px !important; font-size:12px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v121 — o Ensaio organizado, nos dois tamanhos.
+
+   Três cirurgias no DOM depois do desenho, no padrão que a casa já usa
+   (v109, v112, v116): a tela não é reescrita, só arrumada.
+
+   1. as três fileiras de filtro entram numa barra única, cada uma com
+      o seu rótulo e correndo de lado quando não cabe;
+   2. cada coluna ganha um CORPO que rola por dentro, e o quadro passa
+      a ter a altura do que sobra da janela — o cabeçalho da coluna
+      para de fugir;
+   3. a legenda e o interruptor de agendamento vão para um "como
+      funciona" recolhido.
+   ================================================================== */
+
+const EN_ROTULOS = [['enCats', 'frente'], ['enResps', 'pessoa'], ['enClis', 'cliente']];
+
+function enArrumarFiltros(){
+  const rolo = document.querySelector('.enRolo');
+  if(!rolo || document.querySelector('.enFiltros')) return;
+  const fileiras = EN_ROTULOS
+    .map(([cls, rot]) => [document.querySelector('.' + cls), rot])
+    .filter(([el]) => el);
+  if(!fileiras.length) return;
+  const barra = document.createElement('div');
+  barra.className = 'enFiltros';
+  fileiras.forEach(([el, rot]) => {
+    const linha = document.createElement('div');
+    linha.className = 'linha';
+    linha.innerHTML = `<span class="rot">${rot}</span>`;
+    const fila = document.createElement('div');
+    fila.className = 'fila';
+    el.parentNode.insertBefore(barra, el);       /* a barra ocupa o lugar da primeira */
+    fila.appendChild(el);
+    linha.appendChild(fila);
+    barra.appendChild(linha);
+  });
+}
+
+/* cada coluna passa a ter cabeçalho parado e corpo que rola */
+function enArrumarColunas(){
+  document.querySelectorAll('.enCol').forEach(col => {
+    if(col.querySelector('.enColCorpo')) return;
+    const corpo = document.createElement('div');
+    corpo.className = 'enColCorpo';
+    const hd = col.querySelector('.enColHd');
+    let n = hd ? hd.nextSibling : col.firstChild;
+    while(n){ const prox = n.nextSibling; corpo.appendChild(n); n = prox; }
+    col.appendChild(corpo);
+  });
+}
+
+/* a altura do quadro: o que sobra entre o topo dele e o pé da janela
+   (menos a doca do celular, que é medida e vive em --mnAltura) */
+function enAltura(){
+  const rolo = document.querySelector('.enRolo');
+  if(!rolo) return;
+  const topo = rolo.getBoundingClientRect().top + window.scrollY - window.scrollY;
+  const doca = parseInt(getComputedStyle(document.documentElement)
+    .getPropertyValue('--mnAltura') || '0', 10) || 0;
+  const sobra = Math.round(window.innerHeight - topo - doca - 16);
+  /* abaixo de 320px de sobra o quadro engessado atrapalha mais do que
+     ajuda: aí ele volta a crescer com a página */
+  rolo.style.setProperty('--enAltura', sobra >= 320 ? sobra + 'px' : 'auto');
+}
+
+/* a legenda e o interruptor viram "como funciona" */
+/* `<details>` parecia o caminho natural, e não é: neste navegador o
+   conteúdo fechado continuou desenhado, com 221px de altura. Um botão
+   e um `hidden` explícito não dependem de comportamento de UA. */
+S.enComoAberto = S.enComoAberto || false;
+function enRecolherLegenda(){
+  const rolo = document.querySelector('.enRolo');
+  if(!rolo || document.querySelector('.enComo')) return;
+  const pecas = [...document.querySelectorAll('.enLegenda:not(.enCliAviso), .cyAuto')];
+  if(!pecas.length) return;
+  const caixa = document.createElement('div');
+  caixa.className = 'enComo';
+  caixa.innerHTML = `<button type="button" class="enComoBt ${S.enComoAberto ? 'aberto' : ''}"
+    data-encomo="1" aria-expanded="${S.enComoAberto}">como este quadro funciona</button>
+    <div class="enComoCorpo" ${S.enComoAberto ? '' : 'hidden'}></div>`;
+  pecas[0].parentNode.insertBefore(caixa, pecas[0]);
+  const corpo = caixa.querySelector('.enComoCorpo');
+  pecas.forEach(p => corpo.appendChild(p));
+}
+addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-encomo]');
+  if(!b) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  S.enComoAberto = !S.enComoAberto;
+  b.classList.toggle('aberto', S.enComoAberto);
+  b.setAttribute('aria-expanded', String(S.enComoAberto));
+  const corpo = b.parentElement.querySelector('.enComoCorpo');
+  if(corpo) corpo.hidden = !S.enComoAberto;
+}, true);
+
+function enOrganizar(){
+  /* a marca no corpo permite apertar o cabeçalho SÓ nesta rota, sem
+     mexer no resto da agência */
+  document.body.classList.toggle('emEnsaio',
+    S.view === 'agency' && S.route === 'producao');
+  if(!(S.view === 'agency' && S.route === 'producao')) return;
+  enArrumarFiltros();
+  enArrumarColunas();
+  enRecolherLegenda();
+  enAltura();
+}
+render = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); enOrganizar(); return r; };
+})(render);
+renderLayer = (function(orig){
+  return function(){ const r = orig.apply(this, arguments); enAltura(); return r; };
+})(renderLayer);
+addEventListener('resize', enAltura);
+addEventListener('orientationchange', () => setTimeout(enAltura, 200));
+enOrganizar();
 </script>

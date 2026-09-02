@@ -159,6 +159,9 @@ await pg.click(cardSel(tid) + ' [data-jbpasso]'); await pg.waitForTimeout(200);
 checa('agendar fecha a segunda volta', await fase(pg, cardId) === 'agendado');
 
 /* ---------- 8. agendar sozinho (opcional, desligado por padrão) --------- */
+/* v121: a legenda e o interruptor moram no "como este quadro funciona",
+   recolhido por padrão — abrir faz parte do caminho de quem o usa */
+if(await pg.locator('.enComoCorpo[hidden]').count()){ await pg.click('[data-encomo]'); await pg.waitForTimeout(300); }
 checa('o interruptor existe e nasce desligado', await pg.locator('[data-cyauto]').count() === 1 && !(await pg.isChecked('[data-cyauto]')));
 await pg.check('[data-cyauto]'); await pg.waitForTimeout(150);
 const auto = await pg.evaluate(() => {
