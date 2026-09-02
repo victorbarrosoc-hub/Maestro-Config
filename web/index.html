@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-02 05:22 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-02 10:53 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15832,7 +15832,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v113 · 2 set · conversas acompanham os clientes';
+const VERSAO_PROTOTIPO = 'v114 · 2 set · o cartão do Ensaio dentro da largura';
 
 menuSheet = (function(orig){
   return function(){
@@ -21840,12 +21840,15 @@ nav.cltab.mnFixa .mnAbas button{ color:var(--ink-400) } nav.cltab.mnFixa .mnAbas
 
 /* ---------- metas do ciclo: realizado / previsto ---------------------- */
 .metas{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:8px 0 6px }
-.meta{ padding:12px; border-radius:12px; background:var(--ink-850); border:1px solid var(--ink-800) }
-.meta b{ display:block; font-family:var(--serif); font-size:22px; color:var(--ink-50); line-height:1 }
-.meta b small{ font-family:var(--mono); font-size:11px; color:var(--mut); margin-left:3px }
-.meta span{ display:block; font-size:11px; color:var(--mut); margin-top:5px }
-.meta .barra{ height:4px; background:var(--ink-700); border-radius:2px; margin-top:8px; overflow:hidden }
-.meta .barra i{ display:block; height:100%; background:var(--brass-500); border-radius:2px }
+/* SEMPRE dentro de .metas: `.meta` sozinho é a linha de dados do card do
+   Ensaio desde a v54, e sem escopo estas regras vazavam para lá — nome do
+   cliente e do responsável em serifada de 22px, cada chip em bloco. */
+.metas .meta{ padding:12px; border-radius:12px; background:var(--ink-850); border:1px solid var(--ink-800) }
+.metas .meta b{ display:block; font-family:var(--serif); font-size:22px; color:var(--ink-50); line-height:1 }
+.metas .meta b small{ font-family:var(--mono); font-size:11px; color:var(--mut); margin-left:3px }
+.metas .meta span{ display:block; font-size:11px; color:var(--mut); margin-top:5px }
+.metas .meta .barra{ height:4px; background:var(--ink-700); border-radius:2px; margin-top:8px; overflow:hidden }
+.metas .meta .barra i{ display:block; height:100%; background:var(--brass-500); border-radius:2px }
 
 /* ---------- conquistas ------------------------------------------------- */
 .conquistas{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:8px 0 4px }
@@ -22384,6 +22387,11 @@ render = (function(orig){
 
 /* o nome do cliente no selo herdava 22px de uma regra do card */
 .enCard .cli b{ font-size:inherit !important; line-height:1.25 }
+/* e nada dentro do cartão sai da largura dele: os botões do ciclo são
+   largos, e a fila deles vinha sem quebra de linha */
+.enCard .acoes{ flex-wrap:wrap; row-gap:6px }
+.enCard{ overflow:hidden }
+.enCard .cyBtn{ max-width:100%; overflow:hidden; text-overflow:ellipsis }
 /* modal mais alto que a tela (o perfil da pessoa, com as permissões)
    rola por dentro — antes o botão de baixo ficava fora do alcance */
 .modalbox{ max-height:calc(100vh - 32px); max-height:calc(100dvh - 32px); overflow-y:auto }
