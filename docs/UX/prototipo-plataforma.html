@@ -6357,7 +6357,7 @@ function modalPauta(id){
       <div class="fld"><label for="pt-hora">Horário</label>
         <input id="pt-hora" value="${p?p.hora:'18:30'}" inputmode="numeric"></div>
     </div>
-    <div class="fld"><label for="pt-texto">Conteúdo &amp; pauta — o que produzir e por quê</label>
+    <div class="fld"><label for="pt-texto">Briefing / Conteúdo / Descrição</label>
       <textarea id="pt-texto" placeholder="O que é a postagem, o que ela diz e por quê.">${p?esc(p.texto):''}</textarea></div>
     <div class="fld"><label for="pt-cta">CTA / ação</label>
       <input id="pt-cta" value="${p?esc(p.cta||''):''}" placeholder="Ex.: link na bio, salve este post…"></div>
@@ -10681,10 +10681,14 @@ document.addEventListener('click', e => {
     ? S.pauta.find(x=>x.id===+t.dataset.ptok)
     : S.pauta[S.pauta.length-1];
   if(!alvo) return;
+  const jaEraStory = !!alvo.story;
   Object.assign(alvo, { story:true, ...campos });
   if(!alvo.telas) alvo.telas = [];
-  // o objetivo é o que a visão de stories mostra no lugar do texto
-  if(campos.objetivo) alvo.texto = campos.objetivo;
+  // o objetivo é o que a visão de stories mostra no lugar do texto.
+  // v102: só espelha em quem JÁ era story, ou em quem não escreveu nada —
+  // desde que o formato Story abre estes campos no editor comum, sobrescrever
+  // apagaria o Briefing/Conteúdo que a pessoa acabou de digitar ao lado.
+  if(campos.objetivo && (jaEraStory || !alvo.texto)) alvo.texto = campos.objetivo;
   render();
 });
 
@@ -15757,7 +15761,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v101 · 1 set · editor da pauta mais enxuto';
+const VERSAO_PROTOTIPO = 'v102 · 2 set · story segue o formato';
 
 menuSheet = (function(orig){
   return function(){
@@ -20309,12 +20313,9 @@ telaConversas = (function(orig){
 </script>
 <style>
 /* v98 — campo por plataforma e o formato Livre */
-.platCampos{ display:flex; flex-direction:column; gap:9px; margin-top:9px }
-.platCampos .fld{ margin:0 }
-.platCampos label{ display:flex; align-items:center; gap:7px }
-.platCampos label i{ width:9px; height:9px; border-radius:3px; flex:0 0 auto }
-.platCampos textarea{ min-height:56px }
 .platVazio{ font-size:12.5px; color:var(--ink-400); margin:9px 0 0 }
+/* o horário é HH:MM — não precisa da largura de uma frase */
+.fld input#pt-hora{ width:auto; min-width:130px; max-width:160px }
 .ptLivre .soPost{ display:none !important }
 /* o Tipo de conteúdo subiu para o meio do formulário: no fim ele encostava
    no botão, aqui encostaria no rótulo seguinte. A linha de cima já separa;
@@ -20485,22 +20486,16 @@ modalPauta = (function(orig){
     html = html.replace(/<div class="fld"><label>Formato<\/label>[\s\S]*?<\/div><\/div>/,
       `<div class="fld"><label>Formato</label><div class="ptChips">${fmtChips}</div></div>`);
 
-    /* --- plataformas: uma caixa de texto para cada uma que for marcada --- */
+    /* --- plataformas: só os chips. O campo "o que muda aqui" por rede saiu
+       a pedido do founder — o que já estava escrito nele NÃO é apagado
+       (ver o gravar, mais abaixo). --- */
     const platChips = Object.entries(PLATS).map(([k, v]) =>
       `<button type="button" data-plat98="${k}" class="${S.ptPlats.has(k) ? 'on' : ''}"
         ><i style="background:${v.c}"></i>${esc(v.n)}</button>`).join('');
-    const platCampos = [...S.ptPlats].filter(k => PLATS[k]).map(k => `
-      <div class="fld"><label for="ptp-${k}"><i style="background:${PLATS[k].c}"></i>
-        ${esc(PLATS[k].n)} — o que muda aqui</label>
-        <textarea id="ptp-${k}" data-plattxt="${k}" rows="2"
-          placeholder="O que este post tem de diferente no ${esc(PLATS[k].n)} — corte, legenda, formato, chamada."
-          >${esc(porPlat[k] || '')}</textarea></div>`).join('');
     html = html.replace(/<div class="fld"><label>Plataformas[\s\S]*?<\/div><\/div>/,
       `<div class="fld soPost"><label>Plataformas — onde esta postagem vai ao ar</label>
         <div class="ptChips">${platChips}</div>
-        ${S.ptPlats.size
-          ? `<div class="platCampos">${platCampos}</div>`
-          : `<p class="platVazio">Escolha ao menos uma. Cada uma ganha um campo próprio aqui embaixo.</p>`}
+        ${S.ptPlats.size ? '' : `<p class="platVazio">Escolha ao menos uma.</p>`}
       </div>`);
 
     /* --- o que só existe quando a postagem vai ao ar --- */
@@ -20528,6 +20523,43 @@ modalPauta = (function(orig){
       /* a linha do título dividia espaço com a peça: sem ela, ocupa tudo */
       .replace(/<div class="frow">(\s*<div class="fld"><label for="pt-t">)/, '<div>$1');
 
+    /* --- o bloco do Story passa a seguir o FORMATO -------------------
+       Antes ele só existia para card que já era story (veio da planilha
+       ou da visão Stories); escolher o formato Story no editor não abria
+       nada. Agora o formato manda: marcou Story, os campos aparecem —
+       e sobem para junto dele, em vez de ficarem no fim.
+
+       O nome acompanha a contagem: uma tela é Story, mais de uma é
+       Stories. */
+    const querStory = !livre && S.ptFmts.has('Story');
+    const nTelas = ((p && p.telas) || []).length;
+    const nomeStory = nTelas > 1 ? `Stories · ${nTelas} telas` : 'Story';
+    const achado = html.match(
+      /<div class="stCampos soPost">[\s\S]*?(?=\s*<div class="fld"><label>Responsável)/);
+    let blocoStory = achado ? achado[0] : '';
+    if(achado) html = html.replace(achado[0], '');
+
+    if(!blocoStory && querStory){
+      /* Card que ainda não é story: os mesmos campos da v42, MENOS o Pilar
+         — nele o seletor geral de Pilar continua na tela logo abaixo, e
+         dois seletores da mesma coisa é o que a D-076 chama de dizer duas
+         vezes. (No card que já é story o Pilar vive aqui dentro, porque
+         lá o geral não é desenhado.) */
+      blocoStory = `<div class="stCampos soPost"><b>${nomeStory}</b>
+        <div class="fld"><label for="pt-obj">Objetivo — o que este story precisa conseguir</label>
+          <input id="pt-obj" value="${esc((p && p.objetivo) || '')}"
+            placeholder="Ex.: distribuir o artigo e gerar leitura qualificada"></div>
+        <div class="fld"><label for="pt-stick">Interação / sticker</label>
+          <input id="pt-stick" value="${esc((p && p.sticker) || '')}"
+            placeholder="Ex.: enquete na tela 2 — Sim / Ainda não"></div>
+        <div class="fld"><label for="pt-rec">Recursos / produção</label>
+          <textarea id="pt-rec" rows="2"
+            placeholder="O que a produção precisa ter à mão.">${esc((p && p.recursos) || '')}</textarea></div>
+      </div>`;
+    } else if(blocoStory){
+      blocoStory = blocoStory.replace(/<b>Story diário<\/b>/, `<b>${nomeStory}</b>`);
+    }
+
     /* --- "Tipo de conteúdo" sobe para junto do Formato ---------------
        Ele decide QUAIS campos existem (roteiro, timecodes). Ficando no
        fim, a pessoa escrevia o conteúdo e só depois descobria que havia
@@ -20535,10 +20567,19 @@ modalPauta = (function(orig){
        a segunda metade da pergunta "que peça é esta?". */
     const tipoConteudo = html.match(
       /<div class="tcSecao soPost">[\s\S]*?(?=<div class="modalrow")/);
-    if(tipoConteudo){
-      html = html.replace(tipoConteudo[0], '')
-                 .replace('<div class="fld soPost"><label>Plataformas',
-                          () => tipoConteudo[0] + '\n    <div class="fld soPost"><label>Plataformas');
+    if(tipoConteudo) html = html.replace(tipoConteudo[0], '');
+
+    /* os dois blocos que respondem "que peça é esta?" entram juntos, logo
+       antes das plataformas.
+
+       O bloco de story volta se o formato Story está marcado OU se o card
+       já era story — senão, um card vindo da planilha com formato Reels
+       perderia os campos que ele já tinha ao ser aberto. */
+    const antesDasPlats = (tipoConteudo ? tipoConteudo[0] : '')
+                        + ((querStory || achado) ? blocoStory : '');
+    if(antesDasPlats){
+      html = html.replace('<div class="fld soPost"><label>Plataformas',
+        () => antesDasPlats + '\n    <div class="fld soPost"><label>Plataformas');
     }
 
     if(!livre) { S.ptSemear = false; return html; }
@@ -20557,7 +20598,7 @@ modalPauta = (function(orig){
       .replace('placeholder="Ex.: Corte do vídeo · parte 2"',
                'placeholder="Ex.: fechar o financeiro de agosto"')
       .replace('>Data da postagem<', '>Data<')
-      .replace(/>Conteúdo &amp; pauta — o que produzir e por quê</,
+      .replace('>Briefing / Conteúdo / Descrição<',
                '>Descrição — o que precisa ser feito<')
       .replace(/<button class="b pri" data-ptok="(\d+)" data-agendar="1">[\s\S]*?<\/button>/,
         '<button class="b pri" data-ptok="$1" data-livreok="1">Salvar demanda</button>');
@@ -20614,9 +20655,14 @@ document.addEventListener('click', e => {
     ? S.pauta.find(x => x.id === +t.dataset.ptok)
     : S.pauta[S.pauta.length - 1];
   if(!alvo) return;
-  const fica = {};                    /* só das plataformas que ficaram */
-  (alvo.plats || []).forEach(k => { if((escrito[k] || '').trim()) fica[k] = escrito[k].trim(); });
-  alvo.porPlat = fica;
+  /* o campo por plataforma saiu da tela. Enquanto não houver caixa nenhuma
+     para ler, o que estava gravado fica onde está — apagar seria decidir
+     por quem escreveu. */
+  if(document.querySelector('#layer [data-plattxt]') || Object.keys(escrito).length){
+    const fica = {};                  /* só das plataformas que ficaram */
+    (alvo.plats || []).forEach(k => { if((escrito[k] || '').trim()) fica[k] = escrito[k].trim(); });
+    alvo.porPlat = fica;
+  }
   /* devolve o que o salvar original zerou por ler campos que já não existem */
   const herdado = S.ptHerdado; S.ptHerdado = null;
   if(herdado){

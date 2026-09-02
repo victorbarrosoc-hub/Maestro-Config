@@ -88,29 +88,71 @@ await pag.waitForTimeout(350);
 checa('o formato tambem sobrevive ao toast',
       await pag.locator('[data-fmt98="Carrossel"].on').count() > 0);
 
-// ---------- 3. campo por plataforma ----------
+// ---------- 3. o campo por plataforma saiu, sem apagar o que havia ----------
 await abrirNovo();
-await pag.fill('#pt-t', 'Post com campo por rede');
 await pag.click('[data-plat98="li"]'); await pag.waitForTimeout(250);
-checa('cada plataforma marcada ganha a sua caixa de texto',
-      await pag.locator('[data-plattxt="ig"]').count() > 0 &&
-      await pag.locator('[data-plattxt="li"]').count() > 0);
-await pag.fill('[data-plattxt="ig"]', 'No Instagram: carrossel de 6 telas.');
-await pag.fill('[data-plattxt="li"]', 'No LinkedIn: texto longo, sem hashtag.');
-await pag.click('[data-plat98="tt"]'); await pag.waitForTimeout(250);
-checa('marcar outra plataforma nao apaga o que ja foi escrito',
-      (await pag.inputValue('[data-plattxt="ig"]')) === 'No Instagram: carrossel de 6 telas.' &&
-      (await pag.inputValue('[data-plattxt="li"]')) === 'No LinkedIn: texto longo, sem hashtag.');
-await pag.click('[data-plat98="tt"]'); await pag.waitForTimeout(250);
-checa('desmarcar tira a caixa daquela plataforma',
-      await pag.locator('[data-plattxt="tt"]').count() === 0);
+checa('nao ha mais caixa "o que muda aqui" por plataforma',
+      await pag.locator('[data-plattxt]').count() === 0);
+checa('marcar plataforma continua funcionando sem a caixa',
+      await pag.locator('[data-plat98="li"].on').count() > 0);
 
+/* um card que ja tinha texto por rede nao pode perde-lo ao ser salvo */
+await pag.evaluate(() => { S.modal = null; renderLayer();
+  S.pauta[0].porPlat = { ig: 'texto antigo por rede' };
+  S.ptSemear = true; S.modal = modalPauta(S.pauta[0].id); renderLayer(); });
+await pag.waitForTimeout(350);
+await pag.click('[data-ptok]'); await pag.waitForTimeout(450);
+checa('salvar sem a caixa NAO apaga o texto por rede ja gravado',
+      await pag.evaluate(() => (S.pauta[0].porPlat || {}).ig === 'texto antigo por rede'));
+
+// ---------- 3a. o horario nao ocupa a linha inteira ----------
+await abrirNovo();
+const larguras = await pag.evaluate(() => {
+  const cx = document.querySelector('#layer .modalbox');
+  return { hora: cx.querySelector('#pt-hora').getBoundingClientRect().width,
+           titulo: cx.querySelector('#pt-t').getBoundingClientRect().width };
+});
+checa('a caixa de horario e bem menor que a de texto',
+      larguras.hora < larguras.titulo * 0.6);
+
+// ---------- 3c. o bloco de Story segue o formato ----------
+checa('sem o formato Story, o bloco de story nao aparece',
+      await pag.locator('.stCampos').count() === 0);
+await pag.click('[data-fmt98="Story"]'); await pag.waitForTimeout(300);
+checa('marcar Story abre o bloco de story',
+      await pag.locator('.stCampos').count() > 0 &&
+      await pag.locator('#pt-obj').count() > 0);
+checa('o bloco de story fica ANTES das plataformas (subiu)',
+      await pag.evaluate(() => {
+        const cx = document.querySelector('#layer .modalbox');
+        const t = [...cx.querySelectorAll('*')];
+        return t.indexOf(cx.querySelector('.stCampos'))
+             < t.indexOf(cx.querySelector('[data-plat98]')); }));
+checa('ha UM seletor de Pilar na tela, nao dois',
+      await pag.evaluate(() => [...document.querySelectorAll('#layer .modalbox .ptChips')]
+        .filter(g => g.querySelector('[data-pilarpick]')).length) === 1);
+checa('com uma tela o nome e "Story"',
+      (await pag.locator('.stCampos > b').textContent()).trim() === 'Story');
+
+/* o Objetivo nao pode sobrescrever o Briefing que a pessoa escreveu ao lado */
+await pag.fill('#pt-t', 'Story com briefing proprio');
+await pag.fill('#pt-texto', 'O BRIEFING que nao pode ser sobrescrito.');
+await pag.fill('#pt-obj', 'Distribuir o artigo.');
 await pag.click('[data-ptok]'); await pag.waitForTimeout(500);
-const salvo = await pag.evaluate(() => S.pauta[S.pauta.length - 1]);
-checa('o texto de cada plataforma entra no card',
-      salvo && salvo.porPlat && salvo.porPlat.ig && salvo.porPlat.li);
-checa('so o texto das plataformas que ficaram e guardado',
-      salvo && salvo.porPlat && !salvo.porPlat.tt);
+const st = await pag.evaluate(() => S.pauta.find(x => x.t === 'Story com briefing proprio'));
+checa('marcar Story grava o card como story', st && st.story === true);
+checa('o Objetivo NAO sobrescreve o Briefing digitado',
+      st && st.texto === 'O BRIEFING que nao pode ser sobrescrito.' &&
+      st.objetivo === 'Distribuir o artigo.');
+
+/* mais de uma tela: o nome vai para o plural */
+await pag.evaluate(() => {
+  const c = S.pauta[0];
+  c.story = true; c.telas = [{t:'1'},{t:'2'},{t:'3'}];
+  S.ptSemear = true; S.modal = modalPauta(c.id); renderLayer(); });
+await pag.waitForTimeout(300);
+checa('com mais de uma tela o nome vira "Stories"',
+      /^Stories/.test((await pag.locator('.stCampos > b').textContent()).trim()));
 
 // ---------- 3b. o que saiu da tela, e o que subiu ----------
 await abrirNovo();
@@ -119,8 +161,8 @@ checa('a caixa "peca que preenche esta pauta" nao existe mais',
       await pag.locator('#pt-peca').count() === 0);
 checa('o chip do formato livre diz so "Livre"',
       (await pag.locator('[data-fmt98="Livre"]').textContent()).trim() === 'Livre');
-checa('o rotulo do conteudo nao promete mais a legenda (ela e campo proprio)',
-      !/pauta — a legenda/.test(await pag.evaluate(() => document.body.innerText)));
+checa('o campo de conteudo se chama Briefing / Conteudo / Descricao',
+      /briefing \/ conteúdo \/ descrição/i.test(await pag.evaluate(() => document.body.innerText)));
 
 /* "Tipo de conteudo" decide QUAIS campos existem: tem de vir antes deles */
 const posicoes = await pag.evaluate(() => {
