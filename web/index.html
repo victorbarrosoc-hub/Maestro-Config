@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-02 00:43 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-02 00:55 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15832,7 +15832,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v106 · 2 set · Ensaio: histórico e todas as frentes';
+const VERSAO_PROTOTIPO = 'v107 · 2 set · a seta Check → Act';
 
 menuSheet = (function(orig){
   return function(){
@@ -21066,4 +21066,79 @@ modalTarefa = (function(orig){
       hxBloco(t) + '\n    <div class="modalrow" style="margin-top:14px">');
   };
 })(modalTarefa);
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v107 — a seta parava de existir entre Check e Act.
+
+   "Com o cliente" foi inserida ENTRE Check e Act na lista de colunas, e o
+   botão de mover anda por ÍNDICE. Então Check + 1 caía em "Com o cliente"
+   — que só é desenhada na frente Produção. Num card de Estratégico,
+   Comercial ou Financeiro o card ia para uma coluna que não existe na
+   tela: sumia, sem erro nenhum e sem volta pela interface.
+
+   A regra que faltava: "Com o cliente" é do fluxo de PRODUÇÃO. É onde um
+   card da pauta espera a decisão de quem aprova. Um card de financeiro
+   não tem o que esperar ali. Fora da produção a seta pula essa coluna;
+   dentro dela nada muda — mandar para o cliente pela seta continua sendo
+   o envio para aprovação, com todas as recusas do moverJob valendo.
+   ================================================================== */
+
+/* onde este card pode pisar */
+function enColunasDe(tr){
+  const producao = catIdDe(tr) === 'producao';
+  return EN_COLS.map(([k]) => k).filter(k => k !== 'cliente' || producao);
+}
+
+addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-enmove]');
+  if(!b || !S.ensaio) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const [id, dir] = b.dataset.enmove.split('|');
+  const tr = S.ensaio.tarefas.find(x => x.id === +id);
+  if(!tr) return;
+  const passo = +dir;
+  const cols = enColunasDe(tr);
+
+  /* de "Com o cliente" as setas continuam levando para os vizinhos certos,
+     mesmo quando a coluna não está na lista deste card (card que ficou
+     preso lá pelo defeito antigo consegue sair) */
+  let destino;
+  if(tr.col === 'cliente' && !cols.includes('cliente')){
+    destino = passo > 0 ? 'act' : 'check';
+  } else {
+    const i = cols.indexOf(tr.col);
+    if(i < 0) return;
+    const j = Math.max(0, Math.min(cols.length - 1, i + passo));
+    if(j === i) return;
+    destino = cols[j];
+  }
+  tr.col = destino;              /* em card da pauta isto vira mudança de fase */
+  if(typeof som === 'function') som('toque');
+  render();
+}, true);
+
+/* ---- resgate: o que o defeito escondeu volta a aparecer -------------
+   Card sem vínculo com a pauta, fora da produção, parado em "Com o
+   cliente" só pode ter chegado ali pela seta quebrada — e lá ninguém o
+   via, nem havia botão para tirá-lo. Volta para Check, que é de onde saiu.
+
+   Roda a cada desenho do quadro, e não uma vez na abertura: o Ensaio
+   também chega do banco depois, e um card escondido lá teria de esperar
+   um recarregamento para reaparecer. */
+function enResgatarSumidos(){
+  if(!S.ensaio || !S.ensaio.tarefas) return 0;
+  let n = 0;
+  S.ensaio.tarefas.forEach(t => {
+    if(catIdDe(t) === 'producao') return;
+    if(cardDaTarefa(t)) return;          /* job de pauta: a fase é que manda */
+    if(t.col !== 'cliente') return;
+    t.col = 'check'; n++;
+  });
+  return n;
+}
+agEnsaio = (function(orig){
+  return function(){ enResgatarSumidos(); return orig.apply(this, arguments); };
+})(agEnsaio);
 </script>
