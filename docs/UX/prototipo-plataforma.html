@@ -14525,7 +14525,13 @@ window.addEventListener('click', e => {
         toast(`Card criado na pauta de ${CLIS().find(c=>c.id===tr.cli)?.nome||''} — o mesmo job, nos dois lugares.`);
       } else if(extras.cardSel){ tr.cardId = +extras.cardSel; }
       else if(extras.cardSel==='') tr.cardId = tr.cardId && extras.cardSel!=='' ? tr.cardId : null;
-    } else { tr.cardId = null; }
+    }
+    /* v106 — NÃO desliga o vínculo ao trocar de frente.
+       Era isto que duplicava o card: sem `cardId`, o sincronizarJobs não
+       reconhecia mais que aquele card da pauta já tinha tarefa, e criava
+       OUTRA em Produção. O card aparecia nas duas frentes ao mesmo tempo.
+       O vínculo é identidade — "esta tarefa É o card X" —, não
+       classificação; mudar a frente não muda quem o card é. */
     render();
   }, 0);
 }, true);
@@ -15761,7 +15767,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v105 · 2 set · Ensaio filtra por responsável';
+const VERSAO_PROTOTIPO = 'v106 · 2 set · Ensaio: histórico e todas as frentes';
 
 menuSheet = (function(orig){
   return function(){
@@ -16452,15 +16458,25 @@ agEnsaio = function(){
   if(!S.ensaio) S.ensaio = kbSemente();
   sincronizarJobs();
   const cats = catsDoQuadro();
-  if(!cats.some(c=>c.id===S.enCat)) S.enCat = 'producao';
-  const catAtiva = CATS_ENSAIO.find(c=>c.id===S.enCat);
-  const producao = S.enCat === 'producao';
+  /* v106 — "Todas as frentes": a visão que a direção quer na segunda de
+     manhã. Sem ela, saber o que a agência tem em curso exigia abrir uma
+     frente de cada vez e somar de cabeça. */
+  const TODAS = '__todas';
+  const todas = S.enCat === TODAS;
+  if(!todas && !cats.some(c=>c.id===S.enCat)) S.enCat = 'producao';
+  const catAtiva = todas
+    ? { id:TODAS, nome:'Todas as frentes', cor:'var(--brass-500)',
+        dica:'tudo o que a agência tem em curso, junto' }
+    : CATS_ENSAIO.find(c=>c.id===S.enCat);
+  /* com tudo junto a coluna do cliente entra: os cards de produção estão aí */
+  const producao = todas || S.enCat === 'producao';
   /* v105: o filtro é por PESSOA. `S.enSoMinhas` continua valendo como o
      atalho antigo (é o mesmo que escolher a si mesmo), mas quem manda,
      quando existe, é a escolha explícita. '__sem' é a fatia que mais
      importa num quadro: o que não tem dono. */
   const filtroResp = S.enResp2 || (S.enSoMinhas && S.usuario ? S.usuario.id : null);
-  const doQuadro = t => catIdDe(t)===S.enCat && podeVerTarefa(t)
+  const daFrente = t => todas || catIdDe(t)===S.enCat;
+  const doQuadro = t => daFrente(t) && podeVerTarefa(t)
     && (!filtroResp || (filtroResp === '__sem' ? !t.resp : t.resp === filtroResp));
 
   const cartao = t => {
@@ -16520,8 +16536,11 @@ agEnsaio = function(){
       </div>`;
     }).join('');
 
-  const chips = cats.map(c=>{
-    const n = S.ensaio.tarefas.filter(t=>(t.cat||'marketing')===c.id && podeVerTarefa(t)).length;
+  const nTudo = S.ensaio.tarefas.filter(t=>podeVerTarefa(t)).length;
+  const chips = `<button class="enCat ${todas?'on':''}" data-encat="${TODAS}"
+      style="--catCor:var(--brass-500)"><i style="background:var(--brass-500)"></i>Todas as
+      frentes<b>${nTudo||''}</b></button>` + cats.map(c=>{
+    const n = S.ensaio.tarefas.filter(t=>catIdDe(t)===c.id && podeVerTarefa(t)).length;
     return `<button class="enCat ${c.id===S.enCat?'on':''}" data-encat="${c.id}"
       style="--catCor:${c.cor}"><i style="background:${c.cor}"></i>${c.nome}<b>${n||''}</b></button>`;
   }).join('');
@@ -16530,7 +16549,7 @@ agEnsaio = function(){
      "Só as minhas" que existia era este mesmo filtro com uma pessoa só;
      virou o chip com o seu nome, para não ficarem dois controles dizendo
      a mesma coisa e podendo se contradizer. */
-  const noQuadro = S.ensaio.tarefas.filter(t => catIdDe(t)===S.enCat && podeVerTarefa(t));
+  const noQuadro = S.ensaio.tarefas.filter(t => daFrente(t) && podeVerTarefa(t));
   const eu = (S.usuario && S.usuario.tipo === 'agencia') ? S.usuario.id : null;
   const contaResp = id => noQuadro.filter(t =>
     id === '__sem' ? !t.resp : t.resp === id).length;
@@ -16560,7 +16579,10 @@ agEnsaio = function(){
   <div class="enCats">${chips}</div>
   <div class="enResps">${respChips}</div>
   <div class="enRolo">${cols}</div>
-  ${producao ? `<p class="enLegenda"><b>Um card só, duas voltas.</b> O calendário da
+  ${todas ? `<p class="enLegenda"><b>Todas as frentes juntas.</b> O mesmo PDCA para
+    conteúdo, estratégia, comercial e o resto — cada card guarda de que frente é
+    (a bolinha colorida na borda). Para mexer numa só, escolha a frente acima.</p>`
+  : producao ? `<p class="enLegenda"><b>Um card só, duas voltas.</b> O calendário da
     semana é o Plan — o card entra aqui quando alguém começa. Na <b>1ª volta</b> vai o
     <b>texto</b>; na <b>2ª</b>, a <b>peça pronta</b>. Arrastar aqui muda a fase lá: é o
     mesmo card, na pauta e no quadro. Em <b>Com o cliente</b> ninguém da agência mexe —
@@ -20804,4 +20826,179 @@ addEventListener('click', e => {
   S.enSoMinhas = false;                          /* o atalho antigo cede a vez */
   render();
 }, true);
+</script>
+<style>
+/* v106 — histórico do card e registro do cronômetro */
+.hxSecao{ border-top:1px solid var(--ink-800); margin-top:15px; padding-top:14px }
+.hxSecao > b{ display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--brass-300); margin-bottom:11px }
+.hxLista{ display:flex; flex-direction:column; gap:0; max-height:34vh; overflow:auto }
+.hxLinha{ display:flex; gap:10px; padding:8px 0; border-bottom:1px solid var(--ink-850);
+  font-size:12.5px; color:var(--ink-200); align-items:flex-start }
+.hxLinha:last-child{ border-bottom:0 }
+.hxQuando{ font-family:var(--mono); font-size:10.5px; color:var(--ink-500);
+  flex:0 0 84px; padding-top:1px }
+.hxQuem{ color:var(--ink-50); font-weight:600 }
+.hxAlvo{ color:var(--brass-300) }
+.hxCrono{ font-family:var(--mono); font-size:11px; color:var(--encore) }
+.hxVazio{ font-size:12.5px; color:var(--ink-400); margin:0 }
+.hxTotal{ display:flex; gap:8px; align-items:baseline; margin:0 0 11px;
+  font-size:12.5px; color:var(--ink-300) }
+.hxTotal b{ font-family:var(--mono); font-size:15px; color:var(--ink-50) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v106 — o card do Ensaio ganha memória.
+
+   "Tudo possui histórico" é princípio 6 do produto, e o quadro era o
+   único lugar que não cumpria: dava para mover, trocar de dono, trocar de
+   frente e concluir sem deixar rastro de quem fez o quê.
+
+   E o cronômetro contava, mas só guardava o TOTAL. Quem trabalhou das
+   14:32 às 15:10 e quem trabalhou 38 minutos espalhados em seis pedaços
+   ficavam idênticos — e é justamente a diferença entre os dois que diz se
+   a estimativa da agência presta.
+
+   Como o registro é feito: não instrumentando cada handler (são muitos, em
+   blocos diferentes, e um novo escaparia), e sim COMPARANDO o card antes e
+   depois de cada clique. O que mudou vira uma linha. Assim qualquer
+   caminho que altere o card — inclusive os que ainda não existem — entra
+   no histórico sozinho.
+   ================================================================== */
+
+const HX_CAMPOS = [
+  ['titulo', 'o título'], ['col', 'a coluna'], ['cat', 'a frente'],
+  ['resp', 'o responsável'], ['cli', 'o cliente'], ['prazo', 'o prazo'],
+];
+const hxTodas = () => [...((S.ensaio||{}).tarefas || []), ...((S.ensaio||{}).feitas || [])];
+const hxQuem = () => {
+  const m = S.usuario && S.usuario.tipo === 'agencia' ? membro(S.usuario.id) : null;
+  return m ? m.nome : 'alguém';
+};
+const hxNomeCol = k => (EN_COLS.find(([c]) => c === k) || [null, k])[1];
+const hxNomeCat = k => (CATS_ENSAIO.find(c => c.id === k) || { nome:k }).nome;
+const hxNomeCli = k => (CLIS().find(c => c.id === k) || {}).nome || '—';
+const hxNomeResp = k => (k && membro(k) ? membro(k).nome : 'ninguém');
+
+function hxFoto(t){
+  if(!t) return null;
+  const f = { id:t.id, desde:t.desde || null, tempoMs:t.tempoMs || 0,
+              feita: (((S.ensaio||{}).feitas) || []).some(x => x.id === t.id) };
+  HX_CAMPOS.forEach(([k]) => { f[k] = t[k] ?? null; });
+  return f;
+}
+function hxRotulo(campo, v){
+  if(v === null || v === undefined || v === '') return '—';
+  if(campo === 'col')  return hxNomeCol(v);
+  if(campo === 'cat')  return hxNomeCat(v);
+  if(campo === 'cli')  return hxNomeCli(v);
+  if(campo === 'resp') return hxNomeResp(v);
+  if(campo === 'prazo') return rotuloData(v);
+  return String(v);
+}
+function hxRegistrar(t, entrada){
+  (t.hist = t.hist || []).push({ ts: Date.now(), quem: hxQuem(), ...entrada });
+  if(t.hist.length > 200) t.hist = t.hist.slice(-200);   /* não cresce sem fim */
+}
+
+/* --- o cronômetro vira sessões: começo, fim e quanto durou ---------- */
+function hxConciliarCronometro(){
+  hxTodas().forEach(t => {
+    const aberta = (t.sessoes || []).find(s => !s.fim);
+    if(t.desde && !aberta){
+      (t.sessoes = t.sessoes || []).push({ ini: t.desde, quem: hxQuem() });
+      hxRegistrar(t, { tipo:'crono_ini', ts: t.desde });
+    }
+    if(!t.desde && aberta){
+      aberta.fim = Date.now();
+      aberta.ms = Math.max(0, aberta.fim - aberta.ini);
+      hxRegistrar(t, { tipo:'crono_fim', ini: aberta.ini, fim: aberta.fim, ms: aberta.ms });
+    }
+  });
+}
+
+/* --- antes e depois de cada clique do Ensaio ------------------------
+   O handler base do quadro corta a propagação (stopImmediatePropagation),
+   então não adianta escutar na bolha: ela nunca chega. A captura da JANELA
+   roda ANTES de tudo — dali guardo o retrato e agendo a comparação, que
+   cai depois dos handlers síncronos e também depois dos que aplicam em
+   setTimeout (o salvar da categoria é um deles). */
+const HX_GATILHOS = '[data-enmove],[data-entimer],[data-enok],[data-enfim],[data-jbpasso]';
+
+function hxComparar(mapa){
+  const feitas = (S.ensaio.feitas) || [];
+  hxTodas().forEach(t => {
+    const a = mapa.get(t.id);
+    if(!a){ hxRegistrar(t, { tipo:'criada' }); mapa.set(t.id, hxFoto(t)); return; }
+    HX_CAMPOS.forEach(([campo]) => {
+      const de = a[campo] ?? null, para = t[campo] ?? null;
+      if(de !== para) hxRegistrar(t, { tipo:'campo', campo, de, para });
+    });
+    if(!a.feita && feitas.some(f => f.id === t.id)) hxRegistrar(t, { tipo:'concluida' });
+    /* o retrato é atualizado aqui: assim a segunda passada não reescreve
+       o que a primeira já registrou */
+    mapa.set(t.id, hxFoto(t));
+  });
+  hxConciliarCronometro();
+}
+
+addEventListener('click', e => {
+  if(!e.target.closest || !e.target.closest(HX_GATILHOS)) return;
+  if(!S.ensaio) return;
+  const mapa = new Map(hxTodas().map(t => [t.id, hxFoto(t)]));
+  setTimeout(() => hxComparar(mapa), 0);    /* handlers síncronos */
+  setTimeout(() => hxComparar(mapa), 40);   /* e os que aplicam depois */
+}, true);
+
+/* --- como o histórico aparece no card ------------------------------- */
+const hxHora = ts => { const d = new Date(ts); return `${D2(d.getHours())}:${D2(d.getMinutes())}`; };
+/* o kbFmt do quadro arredonda para minuto — bom no cartão, ruim no
+   registro: uma contagem de 40 segundos virava "0m", que parece defeito.
+   Aqui, abaixo de um minuto, fala em segundos. */
+const hxDuracao = ms => ms < 60000 ? `${Math.max(1, Math.round(ms/1000))}s` : kbFmt(ms);
+const hxDiaHora = ts => {
+  const d = new Date(ts);
+  const hoje = new Date();
+  const mesmoDia = d.toDateString() === hoje.toDateString();
+  return mesmoDia ? hxHora(ts) : `${D2(d.getDate())}/${D2(d.getMonth()+1)} ${hxHora(ts)}`;
+};
+function hxFrase(h){
+  if(h.tipo === 'criada')    return `<span class="hxQuem">${esc(h.quem)}</span> criou o card`;
+  if(h.tipo === 'concluida') return `<span class="hxQuem">${esc(h.quem)}</span> concluiu o card`;
+  if(h.tipo === 'crono_ini')
+    return `<span class="hxQuem">${esc(h.quem)}</span> começou a contar o tempo`;
+  if(h.tipo === 'crono_fim')
+    return `<span class="hxQuem">${esc(h.quem)}</span> parou o cronômetro ·
+      <span class="hxCrono">${hxHora(h.ini)} → ${hxHora(h.fim)} · ${hxDuracao(h.ms)}</span>`;
+  const nome = (HX_CAMPOS.find(([k]) => k === h.campo) || [null, h.campo])[1];
+  return `<span class="hxQuem">${esc(h.quem)}</span> mudou ${esc(nome)} de
+    <span class="hxAlvo">${esc(hxRotulo(h.campo, h.de))}</span> para
+    <span class="hxAlvo">${esc(hxRotulo(h.campo, h.para))}</span>`;
+}
+function hxBloco(t){
+  const hist = (t.hist || []).slice().reverse();
+  const sessoes = (t.sessoes || []).filter(s => s.fim);
+  const somado = sessoes.reduce((n, s) => n + (s.ms || 0), 0);
+  return `<div class="hxSecao"><b>Histórico</b>
+    ${sessoes.length ? `<p class="hxTotal">Cronômetro: <b>${hxDuracao(somado)}</b>
+      em ${sessoes.length} ${sessoes.length === 1 ? 'contagem' : 'contagens'}${
+      t.desde ? ' · <span class="hxCrono">contando agora</span>' : ''}</p>` : ''}
+    ${hist.length
+      ? `<div class="hxLista">${hist.map(h => `<div class="hxLinha">
+          <span class="hxQuando">${hxDiaHora(h.ts)}</span>
+          <span>${hxFrase(h)}</span></div>`).join('')}</div>`
+      : `<p class="hxVazio">Nada ainda. A partir daqui, toda mudança neste card
+         fica registrada com autor e hora.</p>`}
+  </div>`;
+}
+modalTarefa = (function(orig){
+  return function(id){
+    const html = orig.apply(this, arguments);
+    const t = id ? S.ensaio.tarefas.find(x => x.id === id) : null;
+    if(!t || !html) return html;
+    return html.replace('<div class="modalrow" style="margin-top:14px">',
+      hxBloco(t) + '\n    <div class="modalrow" style="margin-top:14px">');
+  };
+})(modalTarefa);
 </script>
