@@ -5,7 +5,47 @@
    dossiê é NOSSO, então a leitura é determinística — nenhum token
    gasto, nenhuma chave necessária. Se um dia alguém "melhorar" isso
    chamando a IA para ler, este teste reclama. */
-import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs';
+import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs'; import zlib from 'zlib';
+
+/* um .docx de verdade, montado aqui: ZIP com deflate, como o Word grava.
+   Os setores vêm como TÍTULO do Word e as listas como numeração — sem
+   nenhum "##" no texto. É o que prova que o leitor entende Word, não só
+   texto colado. */
+const crc32 = buf => { let c, crc = 0xFFFFFFFF; for(let n = 0; n < buf.length; n++){ c = (crc ^ buf[n]) & 0xFF;
+  for(let k = 0; k < 8; k++) c = c & 1 ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); crc = (crc >>> 8) ^ c; } return (crc ^ 0xFFFFFFFF) >>> 0; };
+function zipar(arquivos){
+  const locais = [], centrais = []; let off = 0;
+  for(const f of arquivos){
+    const dados = Buffer.from(f.texto, 'utf8'), comp = zlib.deflateRawSync(dados), nome = Buffer.from(f.nome);
+    const lh = Buffer.alloc(30); lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(20, 4); lh.writeUInt16LE(8, 8);
+    lh.writeUInt32LE(crc32(dados), 14); lh.writeUInt32LE(comp.length, 18); lh.writeUInt32LE(dados.length, 22); lh.writeUInt16LE(nome.length, 26);
+    const ch = Buffer.alloc(46); ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(20, 4); ch.writeUInt16LE(20, 6); ch.writeUInt16LE(8, 10);
+    ch.writeUInt32LE(crc32(dados), 16); ch.writeUInt32LE(comp.length, 20); ch.writeUInt32LE(dados.length, 24); ch.writeUInt16LE(nome.length, 28); ch.writeUInt32LE(off, 42);
+    locais.push(lh, nome, comp); centrais.push(ch, nome); off += lh.length + nome.length + comp.length;
+  }
+  const cd = Buffer.concat(centrais), eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0); eocd.writeUInt16LE(arquivos.length, 8); eocd.writeUInt16LE(arquivos.length, 10);
+  eocd.writeUInt32LE(cd.length, 12); eocd.writeUInt32LE(off, 16);
+  return Buffer.concat([...locais, cd, eocd]);
+}
+const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const par = (txt, extra) => `<w:p>${extra || ''}<w:r><w:t xml:space="preserve">${txt}</w:t></w:r></w:p>`;
+const tit = txt => `<w:p><w:pPr><w:pStyle w:val="Ttulo2"/></w:pPr><w:r><w:t>${txt}</w:t></w:r></w:p>`;
+const item = txt => `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>${txt}</w:t></w:r></w:p>`;
+const DOCX = zipar([
+  { nome: '[Content_Types].xml', texto: '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>' },
+  { nome: 'word/document.xml', texto: `<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="${W}"><w:body>
+    ${tit('Identidade')}
+    ${par('Quem é: Escola de jiu-jitsu para adultos que nunca treinaram')}
+    <w:p><w:r><w:t xml:space="preserve">Para quem: </w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:t>Adultos de 28 a 45 anos</w:t></w:r></w:p>
+    ${tit('VOZ')}
+    ${par('Como fala: Acolhedora &amp; sem bravata')}
+    ${par('Nunca dizer:')}
+    ${item('guerreiro')}${item('sangue no olho')}
+    ${tit('Restrições')}
+    ${par('Jurídico: não prometer resultado')}
+  </w:body></w:document>` }
+]);
 
 const html = fs.readFileSync('docs/UX/prototipo-plataforma.html', 'utf8');
 const srv = http.createServer((q, r) => { r.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); r.end(html); });
@@ -324,6 +364,96 @@ checa('e SEM o blob da imagem — url de blob não vale em outro navegador',
       linha && !JSON.stringify(linha.dados).includes('blob:')
       && JSON.stringify(linha.dados).includes('cb_1'), linha && JSON.stringify(linha.dados).slice(0, 120));
 await sb.close();
+
+/* ---------- 8b. o dossiê em arquivo: .docx, .pdf, .txt ------------ */
+console.log('\n  — o dossiê em arquivo —');
+const arq = await abrir();
+await arq.route('https://cdnjs.cloudflare.com/**', r => { bateuNaIA++; r.abort(); });   /* por enquanto, sem CDN */
+await arq.click('[data-cbcolar]'); await arq.waitForTimeout(350);
+checa('o modal oferece subir o arquivo, além de colar',
+      await arq.evaluate(() => { const i = document.querySelector('input[data-cbarquivo]');
+        return !!i && /docx/.test(i.accept) && /pdf/.test(i.accept) && /Subir o arquivo/.test(i.closest('label').textContent); }));
+
+/* .docx de verdade — títulos do Word, sem "##" */
+bateuNaIA = 0;
+await arq.setInputFiles('input[data-cbarquivo]', { name: 'dossie-ejup.docx', buffer: DOCX,
+  mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+await arq.waitForTimeout(900);
+const docx = await arq.evaluate(() => ({ c: S.cerebro.n0, modal: !!document.querySelector('.modal'),
+  toast: document.querySelector('.toast')?.textContent.trim() }));
+checa('o .docx é lido no navegador, com o leitor de ZIP que a casa já tinha',
+      /Escola de jiu-jitsu/.test(docx.c.identidade.quem || ''), docx.c.identidade);
+checa('o TÍTULO do Word vira setor, mesmo sem "##" — e "Ttulo2" do Word em português conta',
+      /não prometer resultado/.test(docx.c.restricoes.juridico || ''), docx.c.restricoes);
+checa('um parágrafo com vários trechos (negrito no meio) fecha numa linha só',
+      docx.c.identidade.paraQuem === 'Adultos de 28 a 45 anos', docx.c.identidade.paraQuem);
+checa('a numeração do Word vira lista, um por linha',
+      docx.c.voz.nunca === 'guerreiro\nsangue no olho', docx.c.voz.nunca);
+checa('e o &amp; do XML volta a ser &', /Acolhedora & sem bravata/.test(docx.c.voz.comoFala || ''), docx.c.voz.comoFala);
+checa('o modal fecha e o aviso diz de que arquivo veio',
+      !docx.modal && /de dossie-ejup\.docx/.test(docx.toast || ''), docx.toast);
+checa('sem IA e sem CDN: .docx não precisa de nada de fora', bateuNaIA === 0, bateuNaIA);
+
+/* .txt colado como arquivo */
+await arq.evaluate(() => { S.cerebro.n0 = {}; });
+await arq.click('[data-cbcolar]'); await arq.waitForTimeout(300);
+await arq.setInputFiles('input[data-cbarquivo]', { name: 'dossie.txt', mimeType: 'text/plain',
+  buffer: Buffer.from('## PESSOAS\nQuem aparece: Professor Dió\nQuem assina: Dió', 'utf8') });
+await arq.waitForTimeout(600);
+checa('um .txt entra do mesmo jeito', await arq.evaluate(() => S.cerebro.n0.pessoas?.rosto) === 'Professor Dió');
+
+/* PDF sem rede: aviso legível, nada apagado, texto não some */
+await arq.evaluate(() => { cbDe('n0').identidade.quem = 'fica'; });
+await arq.click('[data-cbcolar]'); await arq.waitForTimeout(300);
+await arq.setInputFiles('input[data-cbarquivo]', { name: 'dossie.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 fake') });
+await arq.waitForTimeout(1200);
+const semRede = await arq.evaluate(() => ({ aviso: document.getElementById('cb-achou')?.textContent, classe: document.getElementById('cb-achou')?.className,
+  modal: !!document.querySelector('.modal'), quem: S.cerebro.n0.identidade.quem }));
+checa('PDF sem conseguir baixar o leitor: aviso que explica e manda colar o texto',
+      /leitor de PDF/.test(semRede.aviso || '') && /cole/.test(semRede.aviso || '') && /erro/.test(semRede.classe || ''), semRede);
+checa('e nada do que já existia é apagado', semRede.modal && semRede.quem === 'fica', semRede);
+await arq.click('[data-cbfechar]'); await arq.waitForTimeout(200);
+
+/* PDF com o leitor no ar — o pdf.js de verdade não roda neste sandbox
+   (o CDN é bloqueado daqui), então entra um módulo falso no MESMO
+   endereço, com a MESMA forma de resposta: itens posicionados por
+   página. O que este teste prova é o encanamento — do arquivo ao setor,
+   passando pela remontagem de linhas. O pdf.js real fica para o
+   navegador do fundador. */
+await arq.unroute('https://cdnjs.cloudflare.com/**');
+let pediuCdn = null;
+await arq.route('https://cdnjs.cloudflare.com/**', r => {
+  pediuCdn = r.request().url();
+  const itens = [
+    ['IDENTIDADE', 50, 700], ['Quem é: Escola de jiu-jitsu', 50, 680],
+    ['Para quem: Adultos de 28', 50, 660], ['a 45 anos', 190, 660],        /* mesma linha, em dois pedaços */
+    ['OFERTA E PROVAS', 50, 630], ['A dor que resolve: vergonha', 50, 610]
+  ].map(([s, x, y]) => ({ str: s, transform: [1, 0, 0, 1, x, y], width: s.length * 5.2 }));
+  const doc = `{ promise: Promise.resolve({ numPages: 1, getPage: async () => ({ getTextContent: async () => ({ items: ${JSON.stringify(itens)} }) }) }) }`;
+  /* o módulo (.mjs) e o build antigo (.js, por <script>) têm formas diferentes */
+  const corpo = /\.mjs(\?|$)/.test(pediuCdn)
+    ? `export const GlobalWorkerOptions = {}; export function getDocument(){ return ${doc}; }`
+    : `window.pdfjsLib = { GlobalWorkerOptions: {}, getDocument(){ return ${doc}; } };`;
+  r.fulfill({ status: 200, contentType: 'text/javascript', headers: { 'access-control-allow-origin': '*' }, body: corpo });
+});
+await arq.evaluate(() => { S.cerebro.n0 = {}; });
+await arq.click('[data-cbcolar]'); await arq.waitForTimeout(300);
+await arq.setInputFiles('input[data-cbarquivo]', { name: 'dossie.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 fake') });
+await arq.waitForTimeout(1200);
+const pdf = await arq.evaluate(() => ({ c: S.cerebro.n0, modal: !!document.querySelector('.modal'),
+  texto: document.getElementById('cb-dossie')?.value }));
+/* a URL pode vir com o carimbo da segunda tentativa: a primeira falhou
+   na rodada sem rede e ficou gravada como falha no mapa de módulos */
+checa('o leitor de PDF é pedido ao CDN só quando um PDF é escolhido, com versão fixa',
+      /cdnjs\.cloudflare\.com\/ajax\/libs\/pdf\.js\/4\.10\.38\/pdf\.min\.mjs(\?tenta=\d+)?$/.test(pediuCdn || ''), pediuCdn);
+checa('e uma falha anterior de rede não trava a tentativa seguinte (carimbo na URL)',
+      /\?tenta=/.test(pediuCdn || ''), pediuCdn);
+checa('as linhas do PDF são remontadas pela altura — e o setor entra sem "##"',
+      /Escola de jiu-jitsu/.test(pdf.c.identidade?.quem || '') && /vergonha/.test(pdf.c.oferta?.dor || ''), pdf.c);
+checa('dois pedaços na mesma altura viram uma linha só, com o espaço no lugar',
+      pdf.c.identidade?.paraQuem === 'Adultos de 28 a 45 anos', pdf.c.identidade?.paraQuem);
+checa('e o modal fecha', !pdf.modal);
+await arq.close();
 
 /* ---------- 9. no celular ------------------------------------------- */
 console.log('\n  — no celular —');

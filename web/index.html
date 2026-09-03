@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-03 14:27 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-03 14:43 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15838,7 +15838,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v130 · 3 set · o interruptor da IA';
+const VERSAO_PROTOTIPO = 'v131 · 3 set · o dossiê em .docx e .pdf';
 
 menuSheet = (function(orig){
   return function(){
@@ -26999,7 +26999,14 @@ function cbLerDossie(cliId, texto){
   const porSecao = {};
   let atual = null;
   String(texto || '').split('\n').forEach(l => {
-    const cab = /^\s*#{1,4}\s*(.+?)\s*$/.exec(l);
+    let cab = /^\s*#{1,4}\s*(.+?)\s*$/.exec(l);
+    /* um .docx traz o setor como TÍTULO do Word, um PDF traz como linha
+       solta — sem "##". Uma linha que é exatamente o nome de um setor
+       vale como cabeçalho. Só igualdade: valor de campo nunca é só isso. */
+    if(!cab){
+      const so = limpa(l);
+      if(so && CB_SETORES.some(x => limpa(x.k) === so || limpa(x.n) === so)) cab = [l, l.trim()];
+    }
     if(cab){
       /* IGUALDADE ANTES DE PREFIXO. "## IDENTIDADE VISUAL" começa com
          "identidade", e o casamento por prefixo o entregava ao setor
@@ -27227,8 +27234,10 @@ function cbModalColar(){
   const c = cliAtual();
   return `<div class="modal"><div class="modalbox wide cbColar" role="dialog" aria-modal="true">
     <h3>Colar o dossiê da ${esc(c.nome)}</h3>
-    <p class="aviso">Cole o dossiê inteiro. A leitura é feita aqui mesmo, sem IA e sem custo —
+    <p class="aviso">Suba o arquivo ou cole o texto. A leitura é feita aqui mesmo, sem IA e sem custo —
       o formato é conhecido. O que estiver preenchido é substituído; o que faltar fica como está.</p>
+    <label class="cbSubir" style="margin:0 0 12px">${ic('doc', 13)} Subir o arquivo — .docx, .pdf, .txt ou .md
+      <input type="file" accept=".docx,.pdf,.txt,.md,application/pdf,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document" data-cbarquivo="1"></label>
     <textarea id="cb-dossie" placeholder="## IDENTIDADE&#10;Quem é: ...&#10;Para quem: ...&#10;&#10;## VOZ&#10;Como fala: ..."></textarea>
     <div class="achou" id="cb-achou"></div>
     <div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px">
@@ -27260,6 +27269,134 @@ agClienteDet = (function(orig){
   };
 })(agClienteDet);
 
+function cbLerEPreencher(texto, origem){
+  const aviso = document.getElementById('cb-achou');
+  const r = cbLerDossie(cliAtual().id, texto);
+  if(!r.campos){
+    if(aviso){ aviso.className = 'achou erro';
+      aviso.textContent = origem
+        ? `Li ${origem}, mas não achei os campos do dossiê. O texto ficou aí embaixo — confira os cabeçalhos.`
+        : 'Não achei nenhum campo. Confira se os cabeçalhos "## " vieram junto.'; }
+    return false;
+  }
+  S.modal = null;
+  /* o cérebro é do cliente e da equipe: viaja no banco da casa */
+  if(typeof sbGravarConfig === 'function') sbGravarConfig();
+  CB_SETORES.forEach(s => { S.cbAberto[s.k] = false; });
+  render();
+  toast(`Dossiê lido${origem ? ` de ${origem}` : ''}: ${r.campos} campos em ${r.setores} setores. A mandala já usa.`);
+  return true;
+}
+
+/* ---------- o dossiê em arquivo: .docx, .pdf, .txt, .md -------------
+   DOCX é um ZIP com XML dentro: o navegador abre com o mesmo leitor
+   nativo que o importador de planilha já usa (zipIndice/zipLer, com a
+   DecompressionStream). Nenhuma biblioteca. Título do Word vira "## ",
+   item de lista vira "- ".
+
+   PDF é outra história: texto em PDF é glifo posicionado, com fonte
+   embutida e codificação própria — ler isso na mão só funciona nos
+   PDFs simples e quebra nos exportados do Word e do Google Docs, que é
+   justamente o que o fundador vai subir. É o único lugar da casa em que
+   uma biblioteca entra: o pdf.js, carregado só quando um PDF é escolhido,
+   e só da internet. Sem rede, o aviso manda colar o texto. */
+async function cbTextoDoArquivo(f){
+  const nome = (f.name || '').toLowerCase();
+  if(/\.docx$/.test(nome) || f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    return cbDocxTexto(await f.arrayBuffer());
+  if(/\.pdf$/.test(nome) || f.type === 'application/pdf')
+    return cbPdfTexto(await f.arrayBuffer());
+  if(/\.doc$/.test(nome)) throw new Error('.doc antigo não abre aqui — salve como .docx no Word e suba de novo.');
+  return await f.text();
+}
+async function cbDocxTexto(buf){
+  if(!window.DecompressionStream) throw new Error('Este navegador não abre .docx aqui — copie o texto e cole.');
+  const bytes = new Uint8Array(buf), dv = new DataView(buf);
+  let entradas; try{ entradas = zipIndice(bytes, dv); }catch(e){ throw new Error('Não parece um .docx válido.'); }
+  const xml = await zipLer(bytes, dv, entradas, 'word/document.xml');
+  if(!xml) throw new Error('Não achei o texto dentro do .docx.');
+  const decod = t => t.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/&amp;/g, '&');
+  const linhas = [];
+  xml.split(/<w:p[\s>]/).slice(1).forEach(p => {
+    const corpo = p.split('</w:p>')[0];
+    const titulo = /<w:pStyle w:val="(?:Heading|T[ií]?tulo|Ttulo|Title)\d*"/i.test(corpo);
+    const lista = /<w:numPr>/.test(corpo);
+    const re = /<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>|<w:tab\/>|<w:br[^>]*\/>/g;
+    let m, t = '';
+    while((m = re.exec(corpo))) t += m[1] !== undefined ? decod(m[1]) : (/^<w:br/.test(m[0]) ? '\n' : ' ');
+    t = t.trim(); if(!t) return;
+    linhas.push(titulo ? '## ' + t : (lista ? '- ' + t : t));
+  });
+  return linhas.join('\n');
+}
+const CB_PDFJS = ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs',
+                  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs'];
+const CB_PDFJS_ANTIGO = ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+                         'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'];
+let _cbPdfjs = null;
+async function cbPdfjs(){
+  if(_cbPdfjs) return _cbPdfjs;
+  /* Duas tentativas, a segunda com carimbo na URL: um import() que falhou
+     (sem rede naquele momento) fica gravado como falha no mapa de módulos
+     do navegador, e a MESMA URL não é pedida de novo até recarregar a
+     página. URL diferente, módulo diferente, tentativa de verdade. */
+  for(const url of [CB_PDFJS[0], CB_PDFJS[0] + '?tenta=' + Date.now()]){
+    try{
+      const mod = await import(url);
+      try{ mod.GlobalWorkerOptions.workerSrc = CB_PDFJS[1]; }catch(e){}
+      return (_cbPdfjs = mod);
+    }catch(e){}
+  }
+  /* o módulo não veio: tenta o build antigo, que entra por <script> */
+  await new Promise((ok, erro) => {
+    const sc = document.createElement('script'); sc.src = CB_PDFJS_ANTIGO[0];
+    sc.onload = ok; sc.onerror = () => erro(new Error('sem rede')); document.head.appendChild(sc);
+  }).catch(() => { throw new Error('Não consegui carregar o leitor de PDF — ele vem da internet. Copie o texto do PDF e cole aqui.'); });
+  const lib = window.pdfjsLib;
+  if(!lib) throw new Error('Não consegui carregar o leitor de PDF — ele vem da internet. Copie o texto do PDF e cole aqui.');
+  try{ lib.GlobalWorkerOptions.workerSrc = CB_PDFJS_ANTIGO[1]; }catch(e){}
+  return (_cbPdfjs = lib);
+}
+async function cbPdfTexto(buf){
+  const lib = await cbPdfjs();
+  let pdf; try{ pdf = await lib.getDocument({ data: new Uint8Array(buf) }).promise; }
+  catch(e){ throw new Error('Não consegui abrir este PDF. Se ele tiver senha, tire a senha e suba de novo.'); }
+  const linhas = [];
+  for(let n = 1; n <= pdf.numPages; n++){
+    const pg = await pdf.getPage(n), tc = await pg.getTextContent();
+    const itens = (tc.items || []).filter(i => typeof i.str === 'string' && i.transform)
+      .map(i => ({ s: i.str, x: i.transform[4], y: i.transform[5], w: i.width || 0 }));
+    /* de cima para baixo, da esquerda para a direita; a mesma altura é a mesma linha */
+    itens.sort((a, b) => Math.abs(b.y - a.y) > 2 ? b.y - a.y : a.x - b.x);
+    let linha = null, ultimo = null;
+    for(const it of itens){
+      if(!linha || Math.abs(it.y - linha.y) > 2){ if(linha) linhas.push(linha.t); linha = { y: it.y, t: '' }; ultimo = null; }
+      const sep = ultimo && it.x - (ultimo.x + ultimo.w) > 1 && linha.t && !/\s$/.test(linha.t) && !/^\s/.test(it.s) ? ' ' : '';
+      linha.t += sep + it.s; ultimo = it;
+    }
+    if(linha) linhas.push(linha.t);
+  }
+  const texto = linhas.map(l => l.trim()).join('\n');
+  if(!texto.replace(/\s/g, '')) throw new Error('O PDF não tem texto para ler — parece imagem escaneada. Copie o texto de onde ele veio e cole.');
+  return texto;
+}
+addEventListener('change', async e => {
+  const el = e.target;
+  if(!el || !el.dataset || el.dataset.cbarquivo === undefined) return;
+  const f = el.files && el.files[0]; if(!f) return;
+  const aviso = document.getElementById('cb-achou'), ta = document.getElementById('cb-dossie');
+  if(aviso){ aviso.className = 'achou'; aviso.textContent = `Lendo ${f.name}…`; }
+  try{
+    const texto = await cbTextoDoArquivo(f);
+    if(ta) ta.value = texto;                /* fica visível: dá para conferir e corrigir */
+    cbLerEPreencher(texto, f.name);
+  }catch(err){
+    if(aviso){ aviso.className = 'achou erro'; aviso.textContent = err.message || 'Não deu para ler o arquivo.'; }
+  }
+  el.value = '';
+}, true);
+
 /* ---------- os cliques ---------------------------------------------- */
 addEventListener('click', e => {
   const t = e.target.closest && e.target.closest(
@@ -27281,19 +27418,7 @@ addEventListener('click', e => {
   if(d.cbfechar !== undefined){ S.modal = null; renderLayer(); return; }
   if(d.cblerok !== undefined){
     const el = document.getElementById('cb-dossie');
-    const aviso = document.getElementById('cb-achou');
-    const r = cbLerDossie(cliAtual().id, el ? el.value : '');
-    if(!r.campos){
-      if(aviso){ aviso.className = 'achou erro';
-        aviso.textContent = 'Não achei nenhum campo. Confira se os cabeçalhos "## " vieram junto.'; }
-      return;
-    }
-    S.modal = null;
-    /* o cérebro é do cliente e da equipe: viaja no banco da casa */
-    if(typeof sbGravarConfig === 'function') sbGravarConfig();
-    CB_SETORES.forEach(s => { S.cbAberto[s.k] = false; });
-    render();
-    toast(`Dossiê lido: ${r.campos} campos em ${r.setores} setores. A mandala já usa.`);
+    cbLerEPreencher(el ? el.value : '', null);
     return;
   }
   if(d.cbrefdel !== undefined){
