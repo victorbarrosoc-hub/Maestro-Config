@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-03 15:13 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-03 15:30 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15838,7 +15838,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v133 · 3 set · a mandala pelo método';
+const VERSAO_PROTOTIPO = 'v134 · 3 set · campanha pela mandala';
 
 menuSheet = (function(orig){
   return function(){
@@ -27733,4 +27733,277 @@ sbCarregar = (function(orig){
   };
 })(sbCarregar);
 [2200, 5200, 12000].forEach(t => setTimeout(cbCarregar, t));
+</script>
+<style>
+/* =====================================================================
+   v134 — a campanha inteira, pela mandala.
+   O curso fala de campanha por OBJETIVO: uma de conversão (que o método
+   casa com remarketing), uma de relacionamento, uma de descoberta. Aqui
+   o botão pega o objetivo, o ritmo e a data, e põe as peças na pauta do
+   cliente — cada uma um rascunho com o ponto da mandala e o código.
+   ================================================================== */
+.mdcObj button i{ display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:1px }
+.mdcSobre{ font-size:12.5px; line-height:1.5; color:var(--ink-400); margin:8px 0 14px; min-height:2.6em }
+.mdcSobre b{ color:var(--ink-100); font-weight:500 }
+.mdcLinha{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
+.mdcRitmo{ display:flex; gap:6px; flex-wrap:wrap }
+.mdcRitmo button, .mdcRmk{ padding:6px 11px; border-radius:999px; border:1px solid var(--ink-800);
+  background:none; color:var(--ink-300); font:inherit; font-size:12.5px; cursor:pointer }
+.mdcRitmo button.on, .mdcRmk.on{ border-color:var(--brass-600); color:var(--brass-300); background:rgba(200,150,58,.08) }
+.mdcPrev{ margin:16px 0 0; padding:12px 14px; border:1px solid var(--ink-800); border-radius:12px;
+  font-size:13px; line-height:1.5; color:var(--ink-200) }
+.mdcPrev b{ color:var(--brass-300); font-weight:600 }
+.mdcPrev .barra{ display:flex; height:6px; border-radius:3px; overflow:hidden; margin:9px 0 0; background:var(--ink-800) }
+.mdcPrev .barra i{ display:block; height:100% }
+.mdcPrev .aviso{ display:block; margin:9px 0 0; font-size:12px; color:var(--brass-300);
+  border-left:2px solid var(--brass-600); padding-left:9px }
+@media (max-width:560px){ .mdcLinha{ grid-template-columns:1fr } }
+
+/* na pauta: a faixa de campanhas e a etiqueta em cada peça */
+.ptCamps{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin:0 0 12px }
+.ptCamps button{ display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10.5px;
+  letter-spacing:.06em; padding:5px 12px; border-radius:999px; border:1px solid var(--ink-700);
+  color:var(--ink-300); background:var(--ink-900); cursor:pointer }
+.ptCamps button i{ width:7px; height:7px; border-radius:50%; flex:none }
+.ptCamps button b{ color:var(--ink-100); font-weight:700 }
+.ptCamps button.on{ color:var(--brass-300); border-color:var(--brass-600) }
+.ptCamp{ display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:9.5px;
+  letter-spacing:.1em; color:var(--ink-400); margin:0 0 3px }
+.ptCamp i{ width:6px; height:6px; border-radius:50%; flex:none }
+.ptCamp em{ font-style:normal; color:var(--brass-300) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v134 — montar uma campanha pelo objetivo.
+   ================================================================== */
+/* a mistura de cada objetivo: os momentos que cabem nele e os tipos que
+   o curso mais associa a ele. Nada de prontidão fora de conversão e
+   remarketing; nada de "sem chamada" numa peça de conversão. */
+const MDC_MIX = {
+  descoberta:     { temps:['oportunidade', 'urgencia'],             ganchos:[9, 3, 12, 10, 17, 5, 18, 16] },
+  relacionamento: { temps:['urgencia', 'urgencia', 'oportunidade'], ganchos:[3, 18, 1, 7, 6, 2, 14, 4] },
+  conversao:      { temps:['prontidao', 'urgencia'],                ganchos:[2, 14, 8, 11, 13, 15, 1, 17] },
+  /* na ordem da trilha dos 30 dias: lembrar, provar, contar, mostrar, mudar a oferta */
+  remarketing:    { temps:['urgencia', 'prontidao'],                ganchos:[6, 14, 12, 8, 13, 4] }
+};
+const MDC_OBJS = [
+  ['descoberta', 'Descoberta'], ['relacionamento', 'Relacionamento'],
+  ['conversao', 'Conversão'], ['remarketing', 'Remarketing'], ['funil', 'Funil inteiro']
+];
+const MDC_DIAS = { 2:[1, 3], 3:[0, 2, 4], 5:[0, 1, 2, 3, 4] };     /* 0 = segunda */
+S.mdc = S.mdc || { obj:'conversao', nome:'', inicio:'', n:8, ritmo:3, rmk:true };
+if(typeof PASSAGEIRO !== 'undefined' && PASSAGEIRO.add) PASSAGEIRO.add('mdc');
+
+const mdcIso = dt => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+function mdcProximaSegunda(){
+  const dt = new Date(); dt.setHours(12, 0, 0, 0);
+  do{ dt.setDate(dt.getDate() + 1); }while(dt.getDay() !== 1);
+  return mdcIso(dt);
+}
+/* o plano: uma lista de pontos da mandala, na ordem em que vão ao ar.
+   Conversão com remarketing segue o 3 + 5 da validação; o funil inteiro
+   segue a semana do estágio do cliente. Os tipos rodam sem repetir até
+   o balde esvaziar. */
+function mdcPlano(obj, n, comRmk){
+  const slots = [];
+  if(obj === 'funil'){
+    const sem = MD_ESTAGIOS[mdEstagio()].semana;
+    for(let i = 0; i < n; i++) slots.push(sem[i % sem.length]);
+  } else if(obj === 'conversao' && comRmk){
+    const nc = Math.max(1, Math.round(n * 3 / 8));
+    for(let i = 0; i < n; i++) slots.push(i < nc ? 'conversao' : 'remarketing');
+  } else for(let i = 0; i < n; i++) slots.push(obj);
+  const cursor = {};
+  return slots.map(fase => {
+    const m = MDC_MIX[fase], k = cursor[fase] || 0; cursor[fase] = k + 1;
+    return { fase, temp:m.temps[k % m.temps.length], gancho:m.ganchos[k % m.ganchos.length] };
+  });
+}
+function mdcDatas(inicioIso, n, ritmo){
+  const dias = MDC_DIAS[ritmo] || MDC_DIAS[3];
+  const [a, m, d] = String(inicioIso || mdcProximaSegunda()).split('-').map(Number);
+  const dt = new Date(a, m - 1, d, 12); const out = [];
+  let guarda = 0;
+  while(out.length < n && guarda++ < 400){
+    if(dias.includes((dt.getDay() + 6) % 7)) out.push(mdcIso(dt));
+    dt.setDate(dt.getDate() + 1);
+  }
+  return out;
+}
+function mdcNomePadrao(){
+  const obj = MDC_OBJS.find(o => o[0] === S.mdc.obj), c = mdCli();
+  const mes = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][+(S.mdc.inicio || mdcProximaSegunda()).split('-')[1] - 1];
+  return `${obj ? obj[1] : 'Campanha'} · ${c.nome} · ${mes}`;
+}
+/* o resumo que muda enquanto a pessoa mexe: quantas peças de cada
+   objetivo, de quando a quando, e o aviso do método se couber */
+function mdcResumoHtml(){
+  const cfg = S.mdc, n = Math.max(1, Math.min(40, +cfg.n || 8));
+  const plano = mdcPlano(cfg.obj, n, cfg.rmk), datas = mdcDatas(cfg.inicio, n, cfg.ritmo);
+  const cont = {};
+  plano.forEach(p => { cont[p.fase] = (cont[p.fase] || 0) + 1; });
+  const partes = MD_ORDEM_FASES.filter(f => cont[f]).map(f => `${cont[f]} ${MD_FASES[f].n}`);
+  const barra = MD_ORDEM_FASES.filter(f => cont[f]).map(f => `<i style="width:${cont[f] / n * 100}%;background:${MD_FASES[f].cor}"></i>`).join('');
+  const est = mdEstagio();
+  let aviso = '';
+  if(est === 'validando' && ['descoberta', 'relacionamento'].includes(cfg.obj))
+    aviso = `Este cliente ainda está validando: o método começa por Conversão e Remarketing. ${MD_FASES[cfg.obj].n} agora é verba fora de hora.`;
+  else if(cfg.obj === 'conversao' && !cfg.rmk)
+    aviso = 'Conversão sem remarketing perde quem entrou na página e não comprou — o método casa as duas.';
+  else if(cfg.obj === 'remarketing')
+    aviso = 'Remarketing é só para quem viu a oferta e não comprou. Na primeira semana, só lembrete.';
+  return `<b>${n} ${n === 1 ? 'peça' : 'peças'}</b> · ${partes.join(' + ')}<br>
+    de ${dataCurta(datas[0])} a ${dataCurta(datas[datas.length - 1])}, ${cfg.ritmo} por semana
+    <div class="barra">${barra}</div>${aviso ? `<span class="aviso">${esc(aviso)}</span>` : ''}`;
+}
+function mdcSobreHtml(){
+  const o = S.mdc.obj;
+  if(o === 'funil'){
+    const e = MD_ESTAGIOS[mdEstagio()];
+    return `<b>O funil inteiro</b>, no ritmo do estágio do cliente (${esc(e.n)}): ${esc(e.d)}.`;
+  }
+  const f = MD_FASES[o];
+  return `<b>${esc(f.n)} — ${esc(f.obj)}.</b> Para ${esc(f.quem)}. ${esc(f.regra)}`;
+}
+function mdcModal(){
+  const cfg = S.mdc;
+  return `<div class="modal"><div class="modalbox wide mdcBox" role="dialog" aria-modal="true" aria-labelledby="mdc-tit">
+    <h3 id="mdc-tit">Montar campanha</h3>
+    <p style="margin:0 0 12px;font-size:13px;color:var(--ink-400)">Para a <b style="color:var(--ink-100)">${esc(mdCli().nome)}</b>. Cada peça entra na pauta como rascunho, com o ponto da mandala e o código.</p>
+    <label class="rot" style="display:block;font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-500);margin:0 0 6px">objetivo</label>
+    <div class="mdPlats mdcObj">${MDC_OBJS.map(([k, n]) => `<button type="button" data-mdcobj="${k}" class="${cfg.obj === k ? 'on' : ''}"><i style="background:${k === 'funil' ? 'var(--brass-400)' : MD_FASES[k].cor}"></i>${n}</button>`).join('')}</div>
+    <div class="mdcSobre">${mdcSobreHtml()}</div>
+    <div class="fld"><label for="mdc-nome">Nome</label>
+      <input id="mdc-nome" value="${esc(cfg.nome)}" placeholder="${esc(mdcNomePadrao())}"></div>
+    <div class="mdcLinha">
+      <div class="fld"><label for="mdc-inicio">Começa em</label>
+        <input id="mdc-inicio" type="date" value="${esc(cfg.inicio)}"></div>
+      <div class="fld"><label for="mdc-n">Peças</label>
+        <input id="mdc-n" type="number" min="1" max="40" inputmode="numeric" value="${cfg.n}"></div>
+    </div>
+    <label class="rot" style="display:block;font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-500);margin:4px 0 6px">ritmo</label>
+    <div class="mdcRitmo">
+      ${[2, 3, 5].map(r => `<button type="button" data-mdcritmo="${r}" class="${cfg.ritmo === r ? 'on' : ''}">${r} por semana</button>`).join('')}
+      ${cfg.obj === 'conversao' ? `<button type="button" class="mdcRmk ${cfg.rmk ? 'on' : ''}" data-mdcrmk="1" role="switch" aria-checked="${cfg.rmk ? 'true' : 'false'}">+ remarketing (3 e 5, como o método)</button>` : ''}
+    </div>
+    <div class="mdcPrev" id="mdc-prev">${mdcResumoHtml()}</div>
+    <div class="modalrow" style="margin-top:16px">
+      <button class="b gho" data-modalno="1">Voltar</button>
+      <button class="b pri" data-mdccriar="1">Criar as peças na pauta</button></div>
+  </div></div>`;
+}
+function mdcAbrir(){
+  S.mdc.obj = S.md.fase; S.mdc.nome = ''; S.mdc.inicio = mdcProximaSegunda();
+  S.mdc.n = 8; S.mdc.ritmo = 3; S.mdc.rmk = true;
+  S.modal = mdcModal(); renderLayer();
+}
+const mdcRepintar = () => { const p = document.getElementById('mdc-prev'); if(p) p.innerHTML = mdcResumoHtml(); };
+
+/* criar: cada ponto do plano vira uma ideia do motor, e cada ideia vira
+   uma postagem na pauta — a mesma P() da planilha importada, com a
+   campanha e o ponto da mandala gravados junto. A tela vai para a
+   pauta do cliente, já filtrada na campanha. */
+function mdcCriar(){
+  const c = mdCli(), cfg = S.mdc;
+  const n = Math.max(1, Math.min(40, +cfg.n || 8));
+  const plano = mdcPlano(cfg.obj, n, cfg.rmk), datas = mdcDatas(cfg.inicio, n, cfg.ritmo);
+  const id = 'c' + Date.now().toString(36);
+  const nome = (cfg.nome || '').trim() || mdcNomePadrao();
+  const plats = (S.md.plats || ['ig']).filter(k => PLATS[k]); if(!plats.length) plats.push('ig');
+  const arr = S.pautas[c.id] = S.pautas[c.id] || [];
+  const novos = plano.map((s, k) => {
+    const i = mdIdeia(s.fase, s.temp, s.gancho, {});
+    const fmt = i.formato === 'Stories' ? 'Story' : (i.formato || 'Post');
+    const texto = [i.abertura, '', ...i.roteiro.slice(0, 3).map((p, j) => `${j + 1}. ${p}`)].join('\n');
+    return P(datas[k], '11:00', fmt, [...plats], i.titulo, texto, i.cta,
+      { camp:{ id, nome, obj:cfg.obj }, mandala:{ fase:s.fase, temp:s.temp, gancho:s.gancho, omt:i.omt } });
+  });
+  arr.push(...novos);
+  S.modal = null; S.cli = c.id; S.view = 'agency'; S.route = 'clientedet'; S.tab = 'pauta';
+  S.ptCamp = id; S.ptFiltro = 'todas';
+  /* a campanha nasce com datas no futuro: o Dia mostraria hoje, vazio.
+     A Semana lista tudo de uma vez — e a pessoa troca se quiser */
+  S.ptVista = 'semana'; S.ptVistaAuto = false;
+  if(typeof som === 'function') som('toque');
+  render(); window.scrollTo(0, 0);
+  toast(`Campanha "${nome}": ${novos.length} peças na pauta da ${c.nome}, de ${dataCurta(datas[0])} a ${dataCurta(datas[datas.length - 1])}. Cada uma é um rascunho com o ponto da mandala.`);
+}
+
+/* ---------- na pauta: a faixa de campanhas e a etiqueta ------------- */
+function mdcCampanhasDe(arr){
+  const m = new Map();
+  (arr || []).forEach(p => {
+    if(!p.camp || !p.camp.id) return;
+    const e = m.get(p.camp.id) || { ...p.camp, n:0, de:p.data, ate:p.data };
+    e.n++; if(p.data < e.de) e.de = p.data; if(p.data > e.ate) e.ate = p.data;
+    m.set(p.camp.id, e);
+  });
+  return [...m.values()];
+}
+corpoPauta = (function(orig){
+  return function(){
+    const cli = cliAtual().id, todos = S.pautas[cli] || [];
+    const camps = mdcCampanhasDe(todos);
+    if(S.ptCamp && !camps.some(k => k.id === S.ptCamp)) S.ptCamp = null;
+    let html;
+    if(S.ptCamp){
+      /* o filtro por campanha é o mesmo truque da impressão: a pauta do
+         cliente vira só a campanha enquanto o miolo desenha, e volta */
+      S.pautas[cli] = todos.filter(p => p.camp && p.camp.id === S.ptCamp);
+      try{ html = orig.apply(this, arguments); } finally{ S.pautas[cli] = todos; }
+    } else html = orig.apply(this, arguments);
+    if(!camps.length) return html;
+    const faixa = `<div class="ptCamps" role="group" aria-label="Campanhas">
+      <button type="button" class="${!S.ptCamp ? 'on' : ''}" data-ptcamp="">toda a pauta<b>${todos.length}</b></button>
+      ${camps.map(k => `<button type="button" class="${S.ptCamp === k.id ? 'on' : ''}" data-ptcamp="${k.id}"
+        title="${dataCurta(k.de)} a ${dataCurta(k.ate)}"><i style="background:${k.obj === 'funil' ? 'var(--brass-400)' : (MD_FASES[k.obj] || {}).cor || 'var(--brass-400)'}"></i>${esc(k.nome)}<b>${k.n}</b></button>`).join('')}
+    </div>`;
+    return faixa + html;
+  };
+})(corpoPauta);
+ptItemHtml = (function(orig){
+  return function(p, i){
+    const html = orig(p, i);
+    if(!p.camp) return html;
+    const cor = p.camp.obj === 'funil' ? 'var(--brass-400)' : (MD_FASES[p.camp.obj] || {}).cor || 'var(--brass-400)';
+    const omt = (p.mandala && p.mandala.omt) || (p.mandala ? mdOmt(p.mandala.fase, p.mandala.temp, p.mandala.gancho) : '');
+    const chip = `<span class="ptCamp"><i style="background:${cor}"></i>${omt ? `<em>${esc(omt)}</em> · ` : ''}${esc(p.camp.nome)}</span>`;
+    return html.replace('<span class="ptTit">', chip + '<span class="ptTit">');
+  };
+})(ptItemHtml);
+
+/* ---------- o botão na mandala, e os toques ------------------------- */
+agMandala = (function(orig){
+  return function(){
+    return orig.apply(this, arguments).replace(
+      '<button class="b gho" data-mdsemana="1">A semana toda</button>',
+      '<button class="b gho" data-mdsemana="1">A semana toda</button>\n        <button class="b gho" data-mdcampanha="1">Montar campanha</button>');
+  };
+})(agMandala);
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-mdcampanha],[data-mdcobj],[data-mdcritmo],[data-mdcrmk],[data-mdccriar],[data-ptcamp]');
+  if(!t) return;
+  e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+  const d = t.dataset;
+  if(d.mdcampanha !== undefined) return mdcAbrir();
+  if(d.mdcobj !== undefined){ S.mdc.obj = d.mdcobj; S.modal = mdcModal(); renderLayer(); return; }
+  if(d.mdcritmo !== undefined){
+    S.mdc.ritmo = +d.mdcritmo;
+    document.querySelectorAll('[data-mdcritmo]').forEach(b => b.classList.toggle('on', +b.dataset.mdcritmo === S.mdc.ritmo));
+    return mdcRepintar();
+  }
+  if(d.mdcrmk !== undefined){
+    S.mdc.rmk = !S.mdc.rmk; t.classList.toggle('on', S.mdc.rmk); t.setAttribute('aria-checked', S.mdc.rmk ? 'true' : 'false');
+    return mdcRepintar();
+  }
+  if(d.mdccriar !== undefined) return mdcCriar();
+  if(d.ptcamp !== undefined){ S.ptCamp = d.ptcamp || null; render(); return; }
+}, true);
+addEventListener('input', e => {
+  const el = e.target; if(!el || !el.id) return;
+  if(el.id === 'mdc-nome'){ S.mdc.nome = el.value; return; }
+  if(el.id === 'mdc-inicio'){ if(/^\d{4}-\d{2}-\d{2}$/.test(el.value)) S.mdc.inicio = el.value; return mdcRepintar(); }
+  if(el.id === 'mdc-n'){ S.mdc.n = +el.value || 1; return mdcRepintar(); }
+}, true);
 </script>
