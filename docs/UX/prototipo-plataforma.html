@@ -15767,7 +15767,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v125 · 3 set · a Mandala Criativa';
+const VERSAO_PROTOTIPO = 'v126 · 3 set · o caminho da chave dentro do aviso';
 
 menuSheet = (function(orig){
   return function(){
@@ -25617,6 +25617,18 @@ if(document.getElementById('fluxoPagina')){
 /* a chave da IA */
 .mdChave .aviso{ font-size:12.5px; line-height:1.5; color:var(--ink-300); margin:0 0 12px }
 .mdChave code{ font-family:var(--mono); font-size:11.5px; color:var(--brass-300) }
+/* o caminho da chave mora AQUI: a pergunta nasce nesta caixa, e sair da
+   Maestro para descobrir onde pegar é onde o fundador travou */
+.mdOnde{ border:1px solid var(--ink-800); border-radius:12px; padding:12px 14px 13px;
+  background:var(--ink-950); margin:0 0 14px }
+.mdOnde .rot{ font-family:var(--mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--brass-500); margin:0 0 8px }
+.mdOnde ol{ margin:0 0 11px; padding-left:18px; font-size:12.5px; line-height:1.55; color:var(--ink-200) }
+.mdOnde ol li{ margin:0 0 7px }
+.mdOnde ol li em{ display:block; font-style:normal; font-size:11.5px; color:var(--ink-500); margin-top:2px }
+.mdOnde a{ color:var(--brass-300); text-decoration:underline; text-underline-offset:3px;
+  word-break:break-all }
+.mdOnde a:hover{ color:var(--brass-200, var(--brass-300)) }
 
 @media(max-width:860px){
   .mdRoda > svg{ max-width:340px }
@@ -26257,6 +26269,17 @@ function mdModalIA(){
   return `<div class="modal"><div class="modalbox mdChave" role="dialog" aria-modal="true">
     <h3>A IA da mandala</h3>
     <p class="aviso">A Mandala funciona sem IA. Com a chave da Anthropic, o botão <b>Desenvolver com IA</b> lê o briefing do cliente e devolve a ideia inteira — abertura, roteiro, legenda e hashtags — seguindo o método.</p>
+    <div class="mdOnde">
+      <div class="rot">onde pegar a chave</div>
+      <ol>
+        <li>Abra <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com/settings/keys</a> e entre.
+          <em>É outra conta: a assinatura do Claude.ai não vale aqui.</em></li>
+        <li>Toque em <b>Create Key</b>, dê um nome (ex.: Maestro) e copie.
+          <em>Ela só aparece uma vez.</em></li>
+        <li>Em <b>Billing</b>, ponha alguns dólares de crédito — sem crédito a chave existe mas não responde.</li>
+      </ol>
+      <button type="button" class="b gho sm" data-mdconsole="1">${ic('linkic', 12)} Copiar o endereço do console</button>
+    </div>
     <p class="aviso">A chave fica guardada <b>só neste aparelho</b> (nunca no banco compartilhado, que hoje qualquer um com o link lê). Cada pedido custa centavos: modelo <code>${MD_MODELO}</code>.</p>
     <div class="fld"><label for="md-chave">Chave da API (sk-ant-…)</label>
       <input id="md-chave" type="password" value="${esc(cfg.chave || '')}" placeholder="sk-ant-api03-…" autocomplete="off"></div>
@@ -26295,7 +26318,7 @@ addEventListener('click', e => {
   const t = e.target.closest && e.target.closest(
     '[data-mdfase],[data-mdtemp],[data-mdgancho],[data-mdgirar],[data-mdsogancho],[data-mdcli],[data-mdplat],'
     + '[data-mdgerar],[data-mdsemana],[data-mdia],[data-mdinbox],[data-mdguardar],[data-mdapagar],[data-mdcopiar],'
-    + '[data-mdlimpar],[data-mdchave],[data-mdchaveok],[data-mdchavex],[data-mdfechar],[data-mdsocli]');
+    + '[data-mdlimpar],[data-mdchave],[data-mdchaveok],[data-mdchavex],[data-mdfechar],[data-mdsocli],[data-mdconsole]');
   if(!t) return;
   e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
   const d = t.dataset;
@@ -26322,6 +26345,10 @@ addEventListener('click', e => {
   }
   if(d.mdlimpar !== undefined){ S.md.ideias = []; S.md.erro = null; render(); return; }
   if(d.mdsocli !== undefined){ S.md.soCliente = !S.md.soCliente; render(); return; }
+  if(d.mdconsole !== undefined)
+    return copiarTexto('https://console.anthropic.com/settings/keys').then(ok =>
+      toast(ok ? 'Endereço copiado. Abra no computador, crie a chave e volte aqui.'
+               : 'console.anthropic.com/settings/keys'));
   if(d.mdchave !== undefined){ S.modal = mdModalIA(); renderLayer(); return; }
   if(d.mdfechar !== undefined){ S.modal = null; renderLayer(); return; }
   if(d.mdchavex !== undefined){ mdIaGuardar(''); S.modal = null; render(); toast('Chave esquecida.'); return; }

@@ -223,6 +223,29 @@ const pediuChave = await pg.evaluate(() => ({ modal: !!document.querySelector('.
 checa('sem chave, "Desenvolver com IA" abre a configuração, em vez de falhar',
       pediuChave.modal, pediuChave);
 checa('que avisa que a chave fica só neste aparelho', /só neste aparelho/.test(pediuChave.aviso), pediuChave.aviso.slice(0, 100));
+
+/* o fundador perguntou "onde vejo a chave?" — a resposta tem de estar
+   nesta caixa, não numa conversa */
+const onde = await pg.evaluate(() => {
+  const box = document.querySelector('.modal .mdOnde');
+  const a = box?.querySelector('a');
+  return { tem: !!box, href: a?.getAttribute('href'), alvo: a?.getAttribute('target'),
+    passos: box ? box.querySelectorAll('ol li').length : 0,
+    txt: box?.textContent.replace(/\s+/g, ' ') || '' };
+});
+checa('a caixa diz onde pegar a chave, em passos', onde.tem && onde.passos === 3, onde);
+checa('com o link do console, abrindo em outra aba',
+      onde.href === 'https://console.anthropic.com/settings/keys' && onde.alvo === '_blank', onde);
+checa('avisando que a assinatura do Claude.ai não vale aqui', /não vale aqui/.test(onde.txt), onde.txt.slice(0, 140));
+checa('e que sem crédito a chave não responde', /sem crédito/.test(onde.txt), onde.txt.slice(0, 200));
+await pg.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+await pg.click('[data-mdconsole]'); await pg.waitForTimeout(500);
+const copiou = await pg.evaluate(async () => {
+  let t = ''; try{ t = await navigator.clipboard.readText(); }catch(e){}
+  return { t, toast: document.querySelector('.toast')?.textContent || '' };
+});
+checa('e dá para copiar o endereço, para abrir no computador',
+      copiou.t === 'https://console.anthropic.com/settings/keys' && /computador/.test(copiou.toast), copiou);
 await pg.fill('#md-chave', 'abc'); await pg.click('[data-mdchaveok]'); await pg.waitForTimeout(150);
 checa('uma chave que não é da Anthropic é recusada na hora',
       await pg.evaluate(() => !!document.querySelector('.modal .mdChave') && !localStorage.getItem('maestro-ia-v1')));
