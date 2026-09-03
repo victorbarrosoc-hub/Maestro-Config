@@ -15773,7 +15773,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v128 · 3 set · a Mandala mais simples, puxando da pauta';
+const VERSAO_PROTOTIPO = 'v129 · 3 set · o Cérebro da Marca, por cliente';
 
 menuSheet = (function(orig){
   return function(){
@@ -25922,7 +25922,14 @@ const mdPreencher = (tpl, x) => tpl.replace(/\{(\w+)\}/g, (m, k) => x[k] !== und
   .replace(/^\w/, ch => ch.toUpperCase());
 /* no título cada campo entra curto: até seis palavras, cortado na
    palavra — título de pauta é para ler de relance */
-const mdCurto = (v, n) => { const p = String(v || '').split(/\s+/); return p.length > (n || 6) ? p.slice(0, n || 6).join(' ') + '…' : v; };
+const mdCurto = (v, n) => {
+  /* corta na primeira vírgula antes de contar palavras: o campo "O que
+     vende" costuma ser uma lista ("Aulas para iniciantes, plano mensal,
+     primeira aula grátis") e o título só quer o primeiro item */
+  let t = String(v || '').split(/[,;]/)[0].trim() || String(v || '');
+  const p = t.split(/\s+/);
+  return p.length > (n || 6) ? p.slice(0, n || 6).join(' ') + '…' : t;
+};
 const mdCtxCurto = x => Object.fromEntries(Object.entries(x).map(([k, v]) => [k, ['cliente', 'brief', 'seg'].includes(k) ? v : mdCurto(v, 6)]));
 
 /* ---------- o sorteio ---------------------------------------------- */
@@ -26633,4 +26640,705 @@ sbCarregar = (function(orig){
 /* a abertura pode chamar a carga por uma referência antiga, sem esta
    camada (a v112 já pagou para aprender): insisto por conta própria */
 [2000, 5000, 12000].forEach(t => setTimeout(mdCarregarBanco, t));
+</script>
+<style>
+/* =====================================================================
+   v129 — o Cérebro da Marca.
+
+   Uma aba por cliente onde a IA é alimentada. Oito setores, e um
+   dossiê que entra colado de uma vez.
+
+   A decisão de desenho: isto é um CHECKLIST, não um formulário. Oito
+   setores fechados, cada um dizendo se está preenchido e o que tem
+   dentro. Ninguém encara trinta campos abertos — abre um setor por vez,
+   e vê o progresso. Formulário grande é o que fez o fundador dizer "tem
+   muita informação" na mandala; não repito o erro.
+   ================================================================== */
+.cbTopo{ display:grid; gap:14px; margin:0 0 20px }
+.cbChamada{ border:1px solid var(--ink-800); border-radius:14px; padding:16px 17px;
+  background:var(--ink-950); display:grid; gap:11px }
+.cbChamada h4{ font-family:var(--serif); font-weight:400; font-size:18px; color:var(--ink-50); margin:0 }
+.cbChamada p{ font-size:13px; line-height:1.55; color:var(--ink-300); margin:0 }
+.cbChamada .passos{ display:grid; gap:5px; font-size:12.5px; line-height:1.5; color:var(--ink-400);
+  counter-reset:cbp; margin:2px 0 0 }
+.cbChamada .passos div{ display:flex; gap:9px }
+.cbChamada .passos div::before{ counter-increment:cbp; content:counter(cbp);
+  font-family:var(--mono); font-size:9px; color:var(--brass-500); flex:0 0 14px; padding-top:3px }
+.cbChamada .bts{ display:flex; gap:9px; flex-wrap:wrap; margin-top:3px }
+
+/* a barra de força: quanto do cérebro está preenchido */
+.cbForca{ display:flex; align-items:center; gap:12px; font-size:12.5px; color:var(--ink-400) }
+.cbForca .trilho{ flex:1; height:5px; border-radius:3px; background:var(--ink-850); overflow:hidden;
+  min-width:80px }
+.cbForca .trilho i{ display:block; height:100%; background:var(--brass-500);
+  transition:width .45s var(--eo) }
+.cbForca b{ color:var(--ink-50); font-weight:600; font-family:var(--mono); font-size:12px }
+
+/* os setores */
+.cbSetores{ display:grid; gap:9px }
+.cbSetor{ border:1px solid var(--ink-850); border-radius:13px; background:var(--ink-900);
+  overflow:hidden; transition:border-color .2s var(--eo) }
+.cbSetor:hover{ border-color:var(--ink-700) }
+.cbSetor.on{ border-color:var(--ink-700); background:var(--ink-900) }
+.cbSetor > button.cabeca{ display:flex; align-items:center; gap:12px; width:100%; padding:14px 16px;
+  text-align:left; background:none; border:0 }
+.cbSetor .pt{ width:8px; height:8px; border-radius:50%; background:var(--ink-700); flex:0 0 auto;
+  transition:background .25s var(--eo) }
+.cbSetor.cheio .pt{ background:var(--encore) }
+.cbSetor.meio .pt{ background:var(--brass-500) }
+.cbSetor .tit{ flex:1; min-width:0; display:grid; gap:2px }
+.cbSetor .tit b{ font-size:14px; font-weight:600; color:var(--ink-50) }
+.cbSetor .tit span{ font-size:12px; color:var(--ink-500); overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap }
+.cbSetor .chev{ color:var(--ink-600); font-size:15px; transition:transform .22s var(--eo) }
+.cbSetor.on .chev{ transform:rotate(90deg) }
+.cbCorpo{ padding:2px 16px 16px; display:grid; gap:13px; border-top:1px solid var(--ink-870, #22242A) }
+.cbCorpo .porque{ font-size:12px; line-height:1.5; color:var(--ink-500); margin:11px 0 0 }
+.cbCampo label{ display:block; font:500 10px var(--mono); letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ink-500); margin:0 0 6px }
+.cbCampo label em{ font-style:normal; text-transform:none; letter-spacing:0; font-size:10.5px;
+  color:var(--ink-600); font-family:var(--sans); margin-left:7px }
+.cbCampo input, .cbCampo textarea{ width:100%; background:var(--ink-950); color:var(--ink-50);
+  border:1px solid var(--ink-800); border-radius:10px; padding:11px 12px; font-size:13.5px;
+  line-height:1.5; font-family:inherit }
+.cbCampo textarea{ min-height:66px; resize:vertical }
+.cbCampo input:focus, .cbCampo textarea:focus{ outline:none; border-color:var(--brass-600) }
+.cbCampo.lista textarea{ min-height:80px }
+
+/* as referências visuais */
+.cbRefs{ display:grid; grid-template-columns:repeat(auto-fill, minmax(88px, 1fr)); gap:8px }
+.cbRef{ position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden;
+  border:1px solid var(--ink-800); background:var(--ink-950) }
+.cbRef img{ width:100%; height:100%; object-fit:cover; display:block }
+.cbRef .nome{ position:absolute; inset:auto 0 0 0; padding:4px 6px; font-size:9px;
+  background:rgba(8,9,11,.82); color:var(--ink-300); white-space:nowrap; overflow:hidden;
+  text-overflow:ellipsis }
+.cbRef button{ position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:6px;
+  background:rgba(8,9,11,.8); border:1px solid var(--ink-700); color:var(--ink-200); font-size:10px;
+  display:grid; place-items:center }
+.cbRef button:hover{ border-color:var(--danger); color:var(--danger) }
+.cbSubir{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px;
+  border:1px dashed var(--ink-700); color:var(--ink-300); font-size:12.5px; cursor:pointer }
+.cbSubir:hover{ border-color:var(--brass-600); color:var(--brass-300) }
+.cbSubir input{ display:none }
+
+/* as cores, quando o dossiê traz os hex */
+.cbCores{ display:flex; gap:7px; flex-wrap:wrap; margin:2px 0 0 }
+.cbCores span{ display:inline-flex; align-items:center; gap:7px; font-family:var(--mono);
+  font-size:10.5px; color:var(--ink-400); border:1px solid var(--ink-800); border-radius:7px;
+  padding:4px 9px 4px 5px }
+.cbCores i{ width:14px; height:14px; border-radius:4px; background:var(--c);
+  border:1px solid rgba(255,255,255,.14) }
+
+/* o que a casa aprendeu sozinha */
+.cbAprend{ display:grid; gap:9px }
+.cbAprend .item{ font-size:12.5px; line-height:1.5; color:var(--ink-300);
+  border-left:2px solid var(--cor, var(--ink-700)); padding-left:11px }
+.cbAprend .item b{ display:block; font-family:var(--mono); font-size:9px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--ink-600); margin-bottom:3px; font-weight:500 }
+.cbNada{ font-size:12.5px; line-height:1.55; color:var(--ink-500) }
+
+/* colar o dossiê */
+.cbColar textarea{ width:100%; min-height:210px; background:var(--ink-950); color:var(--ink-50);
+  border:1px solid var(--ink-800); border-radius:11px; padding:13px; font-family:var(--mono);
+  font-size:12px; line-height:1.6; resize:vertical }
+.cbColar textarea:focus{ outline:none; border-color:var(--brass-600) }
+.cbColar .aviso{ font-size:12.5px; line-height:1.55; color:var(--ink-300); margin:0 0 12px }
+.cbColar .achou{ font-size:12.5px; color:var(--encore); margin:10px 0 0; min-height:18px }
+.cbColar .achou.erro{ color:var(--danger) }
+
+@media(max-width:860px){
+  .cbSetor > button.cabeca{ padding:13px 13px }
+  .cbCorpo{ padding:2px 13px 14px }
+  .cbChamada{ padding:14px }
+  .cbChamada .bts .b{ flex:1 1 100%; justify-content:center }
+  .cbRefs{ grid-template-columns:repeat(auto-fill, minmax(74px, 1fr)) }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v129 — o Cérebro da Marca.
+
+   O fundador desenhou: "cada cliente no seu card tem uma aba de banco de
+   dados pra IA ser alimentada por ali, organizada por setor". E a
+   pergunta que decidiu a arquitetura: "posso gerar esse dossiê em vez
+   dos outros documentos?".
+
+   Pode. E é aqui que está o truque: EU DEFINO O FORMATO DO DOSSIÊ. A
+   Maestro dá o pedido pronto para copiar; ele cola numa conversa do
+   Claude que já conhece o cliente; o Claude escreve o dossiê naquele
+   formato; ele cola de volta aqui. O formato sendo meu, a leitura é
+   determinística — nenhum token gasto, nenhuma chave necessária,
+   resultado instantâneo. A IA só é preciso para material bruto e
+   desorganizado, que é o caso menos comum.
+
+   E o cérebro não é retrato: é o estado inicial. A pauta o alimenta
+   (v128), e as aprovações também — o cliente aprovou de primeira, virou
+   exemplo de voz; mandou refazer, o comentário dele virou regra.
+
+   O que este bloco NÃO faz: a oficina (produzir a peça dentro da
+   Maestro). O fundador adiou de propósito — geração de imagem come o
+   crédito rápido, e ideia é o que ele precisa hoje.
+   ================================================================== */
+
+/* ---------- os oito setores ----------------------------------------- */
+const CB_SETORES = [
+  { k:'identidade', n:'Identidade', d:'quem é, para quem, e o que não é',
+    porque:'O "o que não é" delimita melhor que três parágrafos de "o que é" — e é o que impede a IA de escrever como o concorrente.',
+    campos:[
+      ['quem',     'Quem é',          'Consultoria de marcas e contratos para pequenas empresas'],
+      ['paraQuem', 'Para quem',       'Donos de negócio de 30 a 50 anos, sem departamento jurídico'],
+      ['naoE',     'O que NÃO é',     'Não é escritório de contencioso. Não fala como petição.']] },
+
+  { k:'voz', n:'Voz', d:'como fala, e o que nunca diz',
+    porque:'Adjetivo não ensina: "tom próximo" qualquer marca diria. O que ensina é a lista de proibições e os exemplos reais.',
+    campos:[
+      ['comoFala', 'Como fala',            'Autoridade sem juridiquês. Explica como se explicasse para um amigo.'],
+      ['nunca',    'Nunca dizer',          'juridiquês\ngarantia de resultado\n"meritíssimo"', 1],
+      ['palavras', 'Palavras da casa',     'contrato-guarda-chuva, sociedade blindada']] },
+
+  { k:'exemplos', n:'Exemplos aprovados', d:'trechos reais que ficaram do jeito certo',
+    porque:'É o setor mais valioso da aba. Três legendas que vocês escreveram e o cliente aprovou ensinam a voz melhor que qualquer descrição.',
+    campos:[
+      ['trechos', 'Trechos', 'Sem juridiquês: três mudanças que afetam quem tem contrato de prestação.\nA Dra. Ana explica o que acontece quando o sócio quer sair e não há papel.', 1]] },
+
+  { k:'oferta', n:'Oferta e provas', d:'o que vende, a dor que resolve, e a prova',
+    porque:'Sem prova a IA escreve promessa vaga — que é exatamente o cheiro de texto de robô. E a dor e o desejo são o que a mandala usa para montar a frase.',
+    campos:[
+      ['vende',  'O que vende',        'Contratos societários, registro de marca, consultoria mensal'],
+      ['dor',    'A dor que resolve',  'sociedade sem contrato, que só aparece quando alguém quer sair'],
+      ['desejo', 'O que o cliente quer', 'dormir tranquilo com a empresa em ordem'],
+      ['dif',    'O diferencial',      'atendimento direto com a sócia, sem estagiário no meio'],
+      ['preco',  'Pode falar preço?',  'não em conteúdo de marca; só no direct'],
+      ['provas', 'Provas',             '120 contratos revisados em 2025\n"Resolveram em uma semana o que travou por um ano" — cliente', 1]] },
+
+  { k:'pessoas', n:'Pessoas', d:'quem é o rosto e quem assina',
+    porque:'"A Dra. Ana Cortez explica" e "a equipe explica" produzem textos completamente diferentes.',
+    campos:[
+      ['rosto',  'Quem aparece', 'Dra. Ana Cortez, sócia'],
+      ['assina', 'Quem assina',  'Ana, em primeira pessoa']] },
+
+  { k:'visual', n:'Identidade visual', d:'cores, tipografia e regras do logo',
+    porque:'Identidade visual não se gera, se aplica: estes valores é que alimentam os templates. Descrição de cor não substitui o hex.',
+    campos:[
+      ['cores',  'Cores',            '#1B2A4A\n#C8963A\n#F5F2EC', 1],
+      ['tipos',  'Tipografia',       'Títulos em Playfair, texto em Inter'],
+      ['regras', 'Regras do logo',   'sempre no canto inferior direito; nunca sobre foto clara']] },
+
+  { k:'refs', n:'Referências visuais', d:'a cara da marca, em imagem',
+    porque:'Aqui é o único setor onde texto não resolve: descrição de mood não substitui a imagem. Suba os arquivos.',
+    campos:[
+      ['eNos',   'O que é a cara da marca', 'carrossel com muito respiro, foto real de escritório'],
+      ['naoNos', 'O que nunca',             'stock de gravata e aperto de mão, fundo degradê']],
+    arquivos:1 },
+
+  { k:'restricoes', n:'Restrições', d:'jurídico e compliance',
+    porque:'O que a marca não pode dizer por lei. A IA precisa saber antes de escrever, não depois de o cliente reprovar.',
+    campos:[
+      ['juridico',   'Jurídico',   'advogado não promete resultado (OAB)'],
+      ['compliance', 'Compliance', '']] }
+];
+const cbSetor = k => CB_SETORES.find(s => s.k === k);
+
+/* ---------- o modelo ------------------------------------------------ */
+S.cerebro = S.cerebro || {};
+function cbDe(cliId){
+  const c = S.cerebro[cliId] = S.cerebro[cliId] || {};
+  CB_SETORES.forEach(s => { c[s.k] = c[s.k] || {}; });
+  c.aprendizado = c.aprendizado || { aprovados:[], pedidos:[] };
+  return c;
+}
+const cbVal = (cliId, sk, ck) => (cbDe(cliId)[sk] || {})[ck] || '';
+const cbLinhas = v => String(v || '').split('\n').map(x => x.trim()).filter(Boolean);
+
+/* quanto de um setor está preenchido — vira o pontinho e a barra */
+function cbForcaSetor(cliId, s){
+  const c = cbDe(cliId)[s.k] || {};
+  const n = s.campos.filter(([ck]) => String(c[ck] || '').trim()).length;
+  const arq = s.arquivos ? ((c.arquivos || []).length ? 1 : 0) : 0;
+  const alvo = s.campos.length + (s.arquivos ? 1 : 0);
+  return { n: n + arq, alvo, cheio: (n + arq) >= alvo, vazio: (n + arq) === 0 };
+}
+function cbForca(cliId){
+  let n = 0, alvo = 0;
+  CB_SETORES.forEach(s => { const f = cbForcaSetor(cliId, s); n += f.n; alvo += f.alvo; });
+  return { n, alvo, pct: alvo ? Math.round(n / alvo * 100) : 0 };
+}
+
+/* ---------- o formato do dossiê -------------------------------------
+   Um cabeçalho `## CHAVE` por setor, e dentro `Campo: valor` ou lista
+   com `- `. Simples de escrever, simples de ler, e sem ambiguidade —
+   é o que permite ler sem IA. */
+function cbPedidoDoDossie(c){
+  const secoes = CB_SETORES.map(s => {
+    const linhas = s.campos.map(([ck, rot, ex, lista]) =>
+      lista ? `${rot}:\n- (um por linha)` : `${rot}: `).join('\n');
+    return `## ${s.k.toUpperCase()}\n${linhas}`;
+  }).join('\n\n');
+  return `Escreva o DOSSIÊ DA MARCA da ${c.nome}${c.seg ? ` (${c.seg})` : ''} no formato exato abaixo, para eu colar numa plataforma que lê esse formato.
+
+Regras:
+- Responda SÓ o dossiê, sem introdução e sem comentário.
+- Mantenha os cabeçalhos "## " e os nomes dos campos exatamente como estão.
+- Seja concreto e curto: quem lê é uma IA que vai escrever conteúdo, não uma pessoa que quer prosa.
+- Em "Nunca dizer" e "Restrições", seja específico — é o que mais evita erro.
+- Em "Trechos", use legendas ou textos REAIS da marca, não invente.
+- Se não souber um campo, deixe vazio em vez de inventar.
+
+${secoes}`;
+}
+
+/* o leitor: aceita o formato acima, e perdoa acento, caixa e "- " */
+function cbLerDossie(cliId, texto){
+  const limpa = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  const porSecao = {};
+  let atual = null;
+  String(texto || '').split('\n').forEach(l => {
+    const cab = /^\s*#{1,4}\s*(.+?)\s*$/.exec(l);
+    if(cab){
+      /* IGUALDADE ANTES DE PREFIXO. "## IDENTIDADE VISUAL" começa com
+         "identidade", e o casamento por prefixo o entregava ao setor
+         Identidade — que então SOBRESCREVIA a seção já lida. Dois
+         setores se perdiam calados. Exato primeiro; prefixo só depois,
+         e do nome mais longo para o mais curto. */
+      const alvo0 = limpa(cab[1]);
+      let alvo = CB_SETORES.find(s => limpa(s.k) === alvo0 || limpa(s.n) === alvo0);
+      if(!alvo){
+        alvo = [...CB_SETORES]
+          .sort((a, b) => Math.max(b.k.length, b.n.length) - Math.max(a.k.length, a.n.length))
+          .find(s => alvo0.startsWith(limpa(s.n)) || alvo0.startsWith(limpa(s.k)));
+      }
+      atual = alvo ? alvo.k : null;
+      if(atual) porSecao[atual] = porSecao[atual] || [];
+      return;
+    }
+    if(atual) porSecao[atual].push(l);
+  });
+  const c = cbDe(cliId);
+  let campos = 0, setores = 0;
+  for(const sk of Object.keys(porSecao)){
+    const s = cbSetor(sk); if(!s) continue;
+    const linhas = porSecao[sk];
+    let achouAqui = 0;
+    s.campos.forEach(([ck, rot, ex, lista]) => {
+      /* onde o campo começa, e onde começa o próximo: o que está no
+         meio é o valor — é o que faz lista de várias linhas funcionar */
+      const iEste = linhas.findIndex(l => limpa(l).startsWith(limpa(rot) + ':'));
+      if(iEste < 0) return;
+      const outros = s.campos.map(([, r]) => limpa(r) + ':').filter(r => r !== limpa(rot) + ':');
+      let iProx = linhas.length;
+      for(let j = iEste + 1; j < linhas.length; j++)
+        if(outros.some(r => limpa(linhas[j]).startsWith(r))){ iProx = j; break; }
+      const primeira = linhas[iEste].slice(linhas[iEste].indexOf(':') + 1).trim();
+      const resto = linhas.slice(iEste + 1, iProx)
+        .map(l => l.replace(/^\s*[-*•]\s*/, '').trim())
+        .filter(l => l && !/^\(.*\)$/.test(l));
+      const valor = [primeira, ...resto].filter(Boolean).join('\n').trim();
+      if(!valor) return;
+      c[sk][ck] = lista ? valor : valor.replace(/\n+/g, ' ');
+      campos++; achouAqui++;
+    });
+    if(achouAqui) setores++;
+  }
+  return { campos, setores };
+}
+
+/* ---------- o cérebro em texto, para a IA --------------------------- */
+/* Estável por cliente: entra no prompt antes do pedido, que é o que
+   deixa ele elegível a cache — do segundo pedido em diante, barato. */
+function cbParaIA(cliId){
+  const c = cbDe(cliId), cli = CLIS().find(x => x.id === cliId);
+  const partes = [];
+  CB_SETORES.forEach(s => {
+    const linhas = s.campos.map(([ck, rot]) => {
+      const v = String((c[s.k] || {})[ck] || '').trim();
+      if(!v) return null;
+      return v.includes('\n') ? `${rot}:\n${cbLinhas(v).map(x => `- ${x}`).join('\n')}` : `${rot}: ${v}`;
+    }).filter(Boolean);
+    if(s.arquivos){
+      const n = ((c[s.k] || {}).arquivos || []).length;
+      if(n) linhas.push(`Referências visuais no acervo: ${n} imagem${n > 1 ? 's' : ''}.`);
+    }
+    if(linhas.length) partes.push(`## ${s.n.toUpperCase()}\n${linhas.join('\n')}`);
+  });
+  const ap = c.aprendizado || {};
+  if((ap.aprovados || []).length)
+    partes.push(`## APROVADO DE PRIMEIRA (a voz que funciona)\n`
+      + ap.aprovados.slice(-5).map(a => `- «${a.txt}»`).join('\n'));
+  if((ap.pedidos || []).length)
+    partes.push(`## O CLIENTE JÁ PEDIU PARA MUDAR (não repita)\n`
+      + ap.pedidos.slice(-6).map(a => `- ${a.txt}`).join('\n'));
+  if(!partes.length) return '';
+  return `DOSSIÊ DA MARCA — ${cli ? cli.nome : cliId}\n\n${partes.join('\n\n')}`;
+}
+const cbTemAlgo = cliId => !!cbParaIA(cliId);
+
+/* ---------- o aprendizado, sozinho ----------------------------------
+   A aprovação passa por dentro da Maestro — nenhuma ferramenta de
+   conteúdo enxerga isso. Cada peça aprovada de primeira é a voz que
+   funciona; cada alteração pedida é uma regra dita pelo próprio
+   cliente. Colher isso é de graça e melhora a cada lote. */
+function cbColher(){
+  let mudou = 0;
+  CLIS().forEach(cli => {
+    const c = cbDe(cli.id), ap = c.aprendizado;
+    (S.pautas[cli.id] || []).forEach(p => {
+      const txt = String(p.texto || '').trim();
+      if(!txt || txt.length < 25) return;
+      const fase = typeof faseDe === 'function' ? faseDe(p) : null;
+      const ok = ['texto_ok', 'aprovado', 'agendado', 'postado'].includes(fase);
+      if(ok && !ap.aprovados.some(a => a.id === p.id)){
+        ap.aprovados.push({ id:p.id, txt: txt.slice(0, 320) }); mudou++;
+      }
+    });
+    if(ap.aprovados.length > 12) ap.aprovados.splice(0, ap.aprovados.length - 12);
+  });
+  /* o pedido de alteração vem das peças, onde mora a nota do cliente */
+  (S.pecas || []).forEach(p => {
+    const cliId = p.cli || 'ln';
+    const c = cbDe(cliId), ap = c.aprendizado;
+    const notas = (p.notes || []).map(n => (n && (n.nota || n.txt || n)) || '').filter(x => typeof x === 'string' && x.trim());
+    if(p.st !== 'CHANGES_REQUESTED' || !notas.length) return;
+    notas.forEach((nota, k) => {
+      const chave = p.id + ':' + k;
+      if(!ap.pedidos.some(a => a.id === chave)){
+        ap.pedidos.push({ id:chave, txt: `Em "${p.t}": ${nota.trim().slice(0, 220)}` }); mudou++;
+      }
+    });
+    if(ap.pedidos.length > 14) ap.pedidos.splice(0, ap.pedidos.length - 14);
+  });
+  return mudou;
+}
+
+/* ---------- a tela -------------------------------------------------- */
+function cbCampoHtml(cliId, sk, campo){
+  const [ck, rot, ex, lista] = campo;
+  const v = cbVal(cliId, sk, ck);
+  const id = `cb-${sk}-${ck}`;
+  const dica = lista ? 'um por linha' : '';
+  return `<div class="cbCampo${lista ? ' lista' : ''}">
+    <label for="${id}">${rot}${dica ? `<em>${dica}</em>` : ''}</label>
+    ${lista || (ex || '').length > 46
+      ? `<textarea id="${id}" data-cbcampo="${sk}|${ck}" placeholder="${esc(ex || '')}">${esc(v)}</textarea>`
+      : `<input id="${id}" data-cbcampo="${sk}|${ck}" value="${esc(v)}" placeholder="${esc(ex || '')}">`}
+  </div>`;
+}
+function cbRefsHtml(cliId){
+  const arq = (cbDe(cliId).refs.arquivos || []);
+  return `<div class="cbCampo"><label>Imagens de referência<em>o único setor onde texto não resolve</em></label>
+    ${arq.length ? `<div class="cbRefs">${arq.map((a, i) => `<div class="cbRef">
+      ${a.url ? `<img src="${a.url}" alt="${esc(a.nome)}">` : ''}
+      <span class="nome">${esc(a.nome)}</span>
+      <button data-cbrefdel="${i}" aria-label="Remover ${esc(a.nome)}">${ic('x', 10)}</button></div>`).join('')}</div>` : ''}
+    <label class="cbSubir" style="margin-top:${arq.length ? '9px' : '0'}">
+      ${ic('img', 13)} Subir imagens
+      <input type="file" accept="image/*" multiple data-cbref="1"></label></div>`;
+}
+function cbCoresHtml(cliId){
+  const cores = cbLinhas(cbVal(cliId, 'visual', 'cores')).filter(x => /^#?[0-9a-f]{3,8}$/i.test(x));
+  if(!cores.length) return '';
+  return `<div class="cbCores">${cores.map(x => {
+    const h = x.startsWith('#') ? x : '#' + x;
+    return `<span style="--c:${esc(h)}"><i></i>${esc(h.toUpperCase())}</span>`;
+  }).join('')}</div>`;
+}
+function cbAprendHtml(cliId){
+  const ap = cbDe(cliId).aprendizado;
+  const ok = (ap.aprovados || []).slice(-4).reverse(), pd = (ap.pedidos || []).slice(-4).reverse();
+  if(!ok.length && !pd.length)
+    return `<p class="cbNada">Ainda não há o que aprender: este setor se preenche sozinho conforme
+      os lotes passam. Cada peça aprovada de primeira vira exemplo de voz; cada alteração pedida vira
+      uma regra, dita pelo próprio cliente.</p>`;
+  return `<div class="cbAprend">
+    ${ok.map(a => `<div class="item" style="--cor:var(--encore)"><b>aprovado de primeira</b>${esc(a.txt)}</div>`).join('')}
+    ${pd.map(a => `<div class="item" style="--cor:var(--coral)"><b>pediu para mudar</b>${esc(a.txt)}</div>`).join('')}
+  </div>`;
+}
+
+function cbCorpoHtml(cliId, s){
+  if(s.k === 'refs')
+    return `<div class="cbCorpo">${s.campos.map(cp => cbCampoHtml(cliId, s.k, cp)).join('')}
+      ${cbRefsHtml(cliId)}<p class="porque">${s.porque}</p></div>`;
+  if(s.k === 'visual')
+    return `<div class="cbCorpo">${s.campos.map(cp => cbCampoHtml(cliId, s.k, cp)).join('')}
+      ${cbCoresHtml(cliId)}<p class="porque">${s.porque}</p></div>`;
+  return `<div class="cbCorpo">${s.campos.map(cp => cbCampoHtml(cliId, s.k, cp)).join('')}
+    <p class="porque">${s.porque}</p></div>`;
+}
+
+function cbTela(){
+  const c = cliAtual(), f = cbForca(c.id);
+  S.cbAberto = S.cbAberto || {};
+  const setores = CB_SETORES.map(s => {
+    const fs = cbForcaSetor(c.id, s), aberto = !!S.cbAberto[s.k];
+    const resumo = fs.vazio ? s.d : `${fs.n} de ${fs.alvo} preenchido${fs.n > 1 ? 's' : ''} · ${s.d}`;
+    return `<div class="cbSetor ${aberto ? 'on ' : ''}${fs.cheio ? 'cheio' : (fs.vazio ? '' : 'meio')}">
+      <button type="button" class="cabeca" data-cbabrir="${s.k}">
+        <span class="pt"></span>
+        <span class="tit"><b>${s.n}</b><span>${esc(resumo)}</span></span>
+        <span class="chev">${ic('chevr')}</span></button>
+      ${aberto ? cbCorpoHtml(c.id, s) : ''}</div>`;
+  }).join('');
+  const apAberto = !!S.cbAberto.aprendizado;
+  const ap = cbDe(c.id).aprendizado;
+  const nAp = (ap.aprovados || []).length + (ap.pedidos || []).length;
+  return `
+  <div class="cbTopo">
+    <div class="cbChamada">
+      <h4>O dossiê preenche tudo de uma vez</h4>
+      <p>Em vez de subir briefing, posicionamento e manual separados, um documento só resolve
+        todos os setores de texto. Peça a ele numa conversa que já conhece a ${esc(c.nome)}.</p>
+      <div class="passos">
+        <div>Copie o pedido e cole numa conversa com o Claude sobre a ${esc(c.nome)}.</div>
+        <div>Ele escreve o dossiê no formato que esta aba lê.</div>
+        <div>Cole aqui de volta — a leitura é instantânea e não gasta crédito de IA.</div>
+      </div>
+      <div class="bts">
+        <button class="b gho sm" data-cbpedido="1">${ic('doc', 13)} Copiar o pedido do dossiê</button>
+        <button class="b pri sm" data-cbcolar="1">${ic('enviar', 13)} Colar o dossiê</button>
+      </div>
+    </div>
+    <div class="cbForca">
+      <b>${f.pct}%</b>
+      <span class="trilho"><i style="width:${f.pct}%"></i></span>
+      <span>${f.n} de ${f.alvo} campos${f.pct >= 60 ? ' · já dá um bom texto' : (f.pct > 0 ? ' · quanto mais, mais parecido' : '')}</span>
+    </div>
+  </div>
+  <div class="cbSetores">
+    ${setores}
+    <div class="cbSetor ${apAberto ? 'on ' : ''}${nAp ? 'cheio' : ''}">
+      <button type="button" class="cabeca" data-cbabrir="aprendizado">
+        <span class="pt"></span>
+        <span class="tit"><b>Aprendizado</b><span>${nAp ? `${nAp} sinais colhidos das aprovações` : 'se preenche sozinho, conforme os lotes passam'}</span></span>
+        <span class="chev">${ic('chevr')}</span></button>
+      ${apAberto ? `<div class="cbCorpo">${cbAprendHtml(c.id)}
+        <p class="porque">A aprovação passa por dentro da Maestro — nenhuma ferramenta de conteúdo
+        enxerga isso. É o que faz a IA errar menos a cada lote.</p></div>` : ''}
+    </div>
+  </div>`;
+}
+
+function cbModalColar(){
+  const c = cliAtual();
+  return `<div class="modal"><div class="modalbox wide cbColar" role="dialog" aria-modal="true">
+    <h3>Colar o dossiê da ${esc(c.nome)}</h3>
+    <p class="aviso">Cole o dossiê inteiro. A leitura é feita aqui mesmo, sem IA e sem custo —
+      o formato é conhecido. O que estiver preenchido é substituído; o que faltar fica como está.</p>
+    <textarea id="cb-dossie" placeholder="## IDENTIDADE&#10;Quem é: ...&#10;Para quem: ...&#10;&#10;## VOZ&#10;Como fala: ..."></textarea>
+    <div class="achou" id="cb-achou"></div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px">
+      <button class="b gho sm" data-cbfechar="1">Fechar</button>
+      <button class="b pri sm" data-cblerok="1">Ler e preencher</button></div>
+  </div></div>`;
+}
+
+/* ---------- a aba entra na régua do cliente ------------------------- */
+abasCliente = (function(orig){
+  return function(atual){
+    return orig.apply(this, arguments).replace(
+      /(<button data-tab="equipe")/,
+      `<button data-tab="banco" class="${atual === 'banco' ? 'on' : ''}">Banco de dados</button>$1`);
+  };
+})(abasCliente);
+
+agClienteDet = (function(orig){
+  return function(){
+    if(S.tab !== 'banco') return orig.apply(this, arguments);
+    const c = cliAtual();
+    cbColher();
+    return agShell(`
+    <div class="mtop"><div>
+      <button class="b gho sm" data-r="clientes" style="margin-bottom:13px">${ic('arrowl')} Clientes</button>
+      <h1>${esc(c.nome)}</h1><p>O que a IA sabe desta marca</p></div></div>
+    ${abasCliente('banco')}
+    ${cbTela()}`);
+  };
+})(agClienteDet);
+
+/* ---------- os cliques ---------------------------------------------- */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest(
+    '[data-cbabrir],[data-cbpedido],[data-cbcolar],[data-cbfechar],[data-cblerok],[data-cbrefdel]');
+  if(!t) return;
+  e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+  const d = t.dataset;
+  if(d.cbabrir !== undefined){
+    S.cbAberto[d.cbabrir] = !S.cbAberto[d.cbabrir];
+    render(); return;
+  }
+  if(d.cbpedido !== undefined){
+    const txt = cbPedidoDoDossie(cliAtual());
+    return copiarTexto(txt).then(ok => toast(ok
+      ? 'Pedido copiado. Cole numa conversa que já conhece este cliente.'
+      : 'Não deu para copiar aqui.'));
+  }
+  if(d.cbcolar !== undefined){ S.modal = cbModalColar(); renderLayer(); return; }
+  if(d.cbfechar !== undefined){ S.modal = null; renderLayer(); return; }
+  if(d.cblerok !== undefined){
+    const el = document.getElementById('cb-dossie');
+    const aviso = document.getElementById('cb-achou');
+    const r = cbLerDossie(cliAtual().id, el ? el.value : '');
+    if(!r.campos){
+      if(aviso){ aviso.className = 'achou erro';
+        aviso.textContent = 'Não achei nenhum campo. Confira se os cabeçalhos "## " vieram junto.'; }
+      return;
+    }
+    S.modal = null;
+    /* o cérebro é do cliente e da equipe: viaja no banco da casa */
+    if(typeof sbGravarConfig === 'function') sbGravarConfig();
+    CB_SETORES.forEach(s => { S.cbAberto[s.k] = false; });
+    render();
+    toast(`Dossiê lido: ${r.campos} campos em ${r.setores} setores. A mandala já usa.`);
+    return;
+  }
+  if(d.cbrefdel !== undefined){
+    const arq = cbDe(cliAtual().id).refs.arquivos || [];
+    const fora = arq.splice(+d.cbrefdel, 1)[0];
+    if(fora && fora.chave && typeof idbApagar === 'function') idbApagar(fora.chave).catch(() => {});
+    render();
+    if(typeof sbGravarConfig === 'function') sbGravarConfig();
+    return;
+  }
+}, true);
+
+/* os campos gravam enquanto se digita, sem redesenhar — redesenhar a
+   cada tecla roubaria o foco (a lição da v125) */
+addEventListener('input', e => {
+  const el = e.target;
+  if(!el || !el.dataset || el.dataset.cbcampo === undefined) return;
+  const [sk, ck] = el.dataset.cbcampo.split('|');
+  cbDe(cliAtual().id)[sk][ck] = el.value;
+  clearTimeout(S.cbGravar);
+  S.cbGravar = setTimeout(() => {
+    if(typeof sbGravarConfig === 'function') sbGravarConfig();
+    /* a força e as cores acompanham, sem mexer no campo em foco */
+    const f = cbForca(cliAtual().id);
+    const barra = document.querySelector('.cbForca .trilho i');
+    const pct = document.querySelector('.cbForca b');
+    if(barra) barra.style.width = f.pct + '%';
+    if(pct) pct.textContent = f.pct + '%';
+  }, 900);
+}, true);
+
+/* as referências visuais entram por arquivo */
+addEventListener('change', e => {
+  const el = e.target;
+  if(!el || !el.dataset || el.dataset.cbref === undefined) return;
+  const c = cbDe(cliAtual().id);
+  const arr = c.refs.arquivos = c.refs.arquivos || [];
+  [...(el.files || [])].forEach(f => {
+    const chave = typeof novaChave === 'function' ? novaChave('cb') : 'cb' + Date.now();
+    arr.push({ nome:f.name, peso:f.size, chave, url:URL.createObjectURL(f) });
+    if(typeof idbSalvar === 'function') idbSalvar(chave, f).catch(() => {});
+  });
+  el.value = '';
+  render();
+  if(typeof sbGravarConfig === 'function') sbGravarConfig();
+}, true);
+
+/* ---------- a mandala passa a ler o cérebro ------------------------- */
+/* O motor: os campos da mandala nascem preenchidos do cérebro. Depois
+   do dossiê, gerar ideia não pede mais nada. */
+/* O dossiê é escrito para gente ler: frases completas, com ponto final
+   e enumeração. Metido no meio de um modelo, sai "…no dia a dia de
+   Adultos de 28 a 45 anos, sedentários, com medo de passar vergonha na
+   primeira aula., mesmo quando". Então o que vem do cérebro é aparado
+   antes de entrar na frase: sem ponto final, e só até a primeira
+   vírgula quando o que sobra ainda diz a coisa. */
+function cbFrase(v){
+  let t = String(v || '').trim().replace(/\s*\.\s*$/, '');
+  const antes = t.split(/[,;]/)[0].trim();
+  if(antes && antes.split(/\s+/).length >= 3) t = antes;
+  const p = t.split(/\s+/);
+  return p.length > 14 ? p.slice(0, 14).join(' ') : t;
+}
+mdCtx = (function(orig){
+  return function(){
+    const x = orig.apply(this, arguments);
+    const c = mdCli(); if(!c || !cbTemAlgo(c.id)) return x;
+    const b = cbDe(c.id);
+    const pega = (sk, ck) => cbFrase((b[sk] || {})[ck] || '');
+    /* o que a pessoa escreveu na mandala MANDA; o cérebro só preenche
+       o que está vazio */
+    return {
+      produto: x.produto || pega('oferta', 'vende'),
+      publico: x.publico || pega('identidade', 'paraQuem'),
+      dor:     x.dor     || pega('oferta', 'dor'),
+      desejo:  x.desejo  || pega('oferta', 'desejo'),
+      dif:     x.dif     || pega('oferta', 'dif')
+    };
+  };
+})(mdCtx);
+
+/* a IA recebe o dossiê inteiro, antes do pedido */
+mdPedido = (function(orig){
+  return function(fase, temp, gancho, n){
+    const base = orig.apply(this, arguments);
+    const dossie = cbParaIA(mdCli().id);
+    if(!dossie) return base;
+    return `${dossie}\n\n${'='.repeat(48)}\n\n${base}`;
+  };
+})(mdPedido);
+
+/* o cérebro entra no que a tela da mandala já mostra saber */
+if(typeof mdMemoria === 'function'){
+  mdMemoria = (function(orig){
+    return function(cliId){
+      const m = orig.apply(this, arguments);
+      m.cerebro = cbForca(cliId).pct;
+      return m;
+    };
+  })(mdMemoria);
+}
+
+/* ---------- o cérebro viaja no banco da casa ------------------------ */
+sbGravarConfig = (function(orig){
+  let _esp = null;
+  return async function(){
+    await orig.apply(this, arguments);
+    if(!_sbLigado || !S.cerebro) return;
+    /* o arquivo de verdade fica no aparelho (IndexedDB); o que viaja é
+       o nome e a chave — blob URL não sobrevive a outro navegador */
+    const limpo = JSON.parse(JSON.stringify(S.cerebro, (k, v) => k === 'url' ? undefined : v));
+    const corpo = JSON.stringify(limpo);
+    if(_esp === corpo) return;
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/pauta?on_conflict=cliente`, {
+        method:'POST', headers:{ ...sbCab(), Prefer:'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({ cliente:'__cerebro__', dados:limpo, atualizado_em:new Date().toISOString() }) });
+      if(r.ok) _esp = corpo;
+    }catch(e){}
+  };
+})(sbGravarConfig);
+
+let _cbCarregado = false;
+async function cbCarregar(){
+  if(_cbCarregado || !_sbLigado) return;
+  try{
+    const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__cerebro__&select=dados`, { headers:sbCab() });
+    if(!r.ok) return;
+    _cbCarregado = true;
+    const [l] = await r.json();
+    if(l && l.dados && typeof l.dados === 'object'){
+      S.cerebro = l.dados;
+      /* as imagens voltam do aparelho, se estiverem nele */
+      CLIS().forEach(cli => {
+        const arq = ((S.cerebro[cli.id] || {}).refs || {}).arquivos || [];
+        arq.forEach(a => {
+          if(a.url || !a.chave || typeof idbLer !== 'function') return;
+          idbLer(a.chave).then(b => { if(b){ a.url = URL.createObjectURL(b); render(); } }).catch(() => {});
+        });
+      });
+      if(S.view === 'agency' && S.route === 'clientedet' && S.tab === 'banco') render();
+    }
+  }catch(e){}
+}
+sbCarregar = (function(orig){
+  return function(){
+    const p = orig.apply(this, arguments);
+    return Promise.resolve(p).then(ok => { if(ok) cbCarregar(); return ok; });
+  };
+})(sbCarregar);
+[2200, 5200, 12000].forEach(t => setTimeout(cbCarregar, t));
 </script>
