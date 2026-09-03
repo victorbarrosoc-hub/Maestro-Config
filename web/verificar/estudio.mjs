@@ -146,7 +146,7 @@ const resumo = await pg.evaluate(() => document.querySelector('.estAcoes .sel')?
 checa('sem seleção, o card sai das mais votadas e das ideias-chave', /mais votadas/.test(resumo) && /chave/.test(resumo), resumo);
 await pg.click('[data-estcard]'); await pg.waitForTimeout(300);
 const modal = await pg.evaluate(() => ({ titulo: document.getElementById('est-titulo')?.value, passos: document.querySelectorAll('[data-estpasso]').length,
-  cli: document.getElementById('est-cli')?.options.length, desc: document.getElementById('est-desc')?.value }));
+  cli: document.querySelectorAll('[data-estcli]').length, desc: document.getElementById('est-desc')?.value }));
 checa('o modal monta o card: a ideia-chave vira o título, as outras viram passos', /Ideia número 6/.test(modal.titulo || '') && modal.passos === 5 && modal.cli >= 2, modal);
 await pg.evaluate(() => { document.querySelectorAll('[data-estpasso]')[0].checked = false; });
 const antesEnsaio = await pg.evaluate(() => (S.ensaio?.tarefas || []).length);
@@ -216,6 +216,184 @@ checa('celular: arrastar com o dedo move a nota, na escala do zoom', Math.abs(p1
 await cel.click('[data-estzoom="1"]'); await cel.waitForTimeout(100);
 checa('celular: o zoom responde', await cel.evaluate(z0 => S.est.vista.z > z0 && new RegExp(Math.round(S.est.vista.z * 100) + '%').test(document.querySelector('.estZoom span').textContent), p0.z));
 await cel.close();
+
+/* ---------- 7. v137: luz, instrução e colab ---------------------------- */
+console.log('\n  — luz, instrução e colab —');
+const v7 = await abrir();
+/* o modelo explica como se usa, antes de a pessoa escolher */
+const como = await v7.evaluate(() => ({
+  botoes: document.querySelectorAll('[data-estcomo]').length,
+  fechados: [...document.querySelectorAll('.estModelo .como')].every(x => getComputedStyle(x).display === 'none'),
+  modelos: document.querySelectorAll('.estModelo').length }));
+checa('cada modelo traz um "como usar", fechado até alguém pedir',
+      como.botoes === 7 && como.modelos === 7 && como.fechados, como);
+await v7.click('[data-estcomo="crazy8"]'); await v7.waitForTimeout(200);
+const aberto8 = await v7.evaluate(() => {
+  const cx = [...document.querySelectorAll('.estModelo')].find(x => /Crazy 8/.test(x.textContent));
+  return { visivel: getComputedStyle(cx.querySelector('.como')).display !== 'none',
+    passos: cx.querySelectorAll('.como ol li').length, dica: cx.querySelector('.como .dica')?.textContent || '',
+    rot: cx.querySelector('.ver')?.textContent, outros: [...document.querySelectorAll('.estModelo .como')].filter(x => getComputedStyle(x).display !== 'none').length };
+});
+checa('abrir mostra os passos e a dica só daquele modelo',
+      aberto8.visivel && aberto8.passos === 3 && /pressa é o método/.test(aberto8.dica) && aberto8.rot === 'esconder' && aberto8.outros === 1, aberto8);
+await v7.click('[data-estcomo="crazy8"]'); await v7.waitForTimeout(150);
+checa('e fecha de novo', await v7.evaluate(() => getComputedStyle([...document.querySelectorAll('.estModelo')].find(x => /Crazy 8/.test(x.textContent)).querySelector('.como')).display === 'none'));
+
+/* com o quadro aberto, o "como usar" fica à mão na barra */
+await v7.click('[data-estmodelo="despejo"]'); await v7.waitForTimeout(500);
+await v7.click('[data-estcomoq]'); await v7.waitForTimeout(300);
+const modalComo = await v7.evaluate(() => ({ tem: !!document.querySelector('.estComo'),
+  titulo: document.querySelector('.estComo .cab b')?.textContent,
+  passos: document.querySelectorAll('.estComo ol li').length,
+  quando: document.querySelector('.estComo p')?.textContent || '',
+  dica: document.querySelector('.estComo .dica')?.textContent || '' }));
+checa('no quadro, "como usar" abre a instrução do modelo daquele quadro',
+      modalComo.tem && modalComo.titulo === 'Despejo' && modalComo.passos === 4 && /Antes de escolher/.test(modalComo.quando) && /Julgar durante o despejo/.test(modalComo.dica), modalComo);
+await v7.click('[data-modalno]'); await v7.waitForTimeout(250);
+
+/* a luz: o painel inteiro em claro, e a escolha fica com a pessoa */
+const escuro = await v7.evaluate(() => {
+  const w = document.querySelector('.estWrap'), n = document.querySelector('.estNota:not(.texto)');
+  return { tema: w?.dataset.tema, fundo: getComputedStyle(document.querySelector('.estPalco')).backgroundColor,
+    texto: getComputedStyle(n.querySelector('textarea')).color, rotulo: getComputedStyle(n.querySelector('.pega .n')).color,
+    notaBg: getComputedStyle(n).backgroundColor, notaImg: getComputedStyle(n).backgroundImage,
+    botoes: document.querySelectorAll('[data-estluz]').length };
+});
+checa('o Estúdio abre no escuro, com o interruptor de luz à mão', escuro.tema === 'escuro' && escuro.botoes === 2, escuro);
+/* a queixa da leitura: a nota tem papel por baixo do véu, texto no topo da rampa */
+const lum = c => { const [r, g, b] = c.match(/\d+/g).map(Number); return .2126 * r + .7152 * g + .0722 * b; };
+checa('no escuro, a caixa ganhou papel próprio e o texto subiu de contraste',
+      /linear-gradient/.test(escuro.notaImg) && lum(escuro.texto) > 220 && lum(escuro.rotulo) > 130,
+      { texto: escuro.texto, rotulo: escuro.rotulo, papel: escuro.notaBg });
+await v7.click('[data-estluz="claro"]'); await v7.waitForTimeout(500);
+const claro = await v7.evaluate(() => {
+  const w = document.querySelector('.estWrap'), n = document.querySelector('.estNota:not(.texto)');
+  return { tema: w?.dataset.tema, gravou: estMeu().tema,
+    palco: getComputedStyle(document.querySelector('.estPalco')).backgroundColor,
+    texto: getComputedStyle(n.querySelector('textarea')).color,
+    titulo: getComputedStyle(document.querySelector('.estWrap .mtop h1')).color,
+    ferr: getComputedStyle(document.querySelector('.estFerr')).backgroundColor,
+    aside: getComputedStyle(document.querySelector('.aside')).backgroundColor,
+    notaImg: getComputedStyle(n).backgroundImage,
+    on: document.querySelector('[data-estluz="claro"]')?.className };
+});
+checa('em claro o painel inteiro vira papel: palco, título e ferramentas',
+      claro.tema === 'claro' && lum(claro.palco) > 200 && lum(claro.titulo) < 60 && lum(claro.ferr) > 200 && /on/.test(claro.on || ''), claro);
+checa('e o texto da nota inverte junto — escuro sobre claro', lum(claro.texto) < 60, claro.texto);
+/* a nota continua colorida no papel — e com a paleta CLARA, não a do escuro */
+const clarasOk = ['rgba(214, 150, 20', 'rgba(47, 98, 200', 'rgba(30, 138, 86', 'rgba(196, 81, 42', 'rgba(91, 75, 196', 'rgba(90, 84, 70'];
+checa('a nota mantém a cor, com o corpo da paleta clara',
+      /linear-gradient/.test(claro.notaImg) && clarasOk.some(c => claro.notaImg.includes(c)), claro.notaImg.slice(0, 80));
+checa('a luz é da pessoa e fica gravada', claro.gravou === 'claro', claro.gravou);
+await v7.reload({ waitUntil: 'load' }); await v7.waitForTimeout(1400);
+await v7.evaluate(() => {
+  document.getElementById('abertura')?.remove(); document.getElementById('entrarMaestro')?.remove();
+  S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Administrador')) };
+  document.getElementById('quemEsta')?.remove();
+  S.view = 'agency'; S.route = 'estudio'; S.skel = false; render();
+});
+await v7.waitForTimeout(400);
+const depoisReload = await v7.evaluate(() => ({ tema: document.querySelector('.estWrap')?.dataset.tema,
+  guardado: estMeu().tema, quem: estQuemSou(), ls: !!localStorage.getItem('maestro-estudio-' + estQuemSou()), rota: S.route, skel: S.skel }));
+checa('e volta em claro depois de recarregar', depoisReload.tema === 'claro', depoisReload);
+await v7.click('[data-estluz="escuro"]'); await v7.waitForTimeout(400);
+checa('o interruptor volta para o escuro', await v7.evaluate(() => document.querySelector('.estWrap')?.dataset.tema === 'escuro' && estMeu().tema === 'escuro'));
+
+/* colab: o card sai para mais de um cliente */
+await v7.evaluate(() => { const n = estQuadro().itens.filter(i => i.tipo === 'nota'); n[0].txt = 'Live com a EJUP sobre contrato de atleta'; n[0].fixa = true; n[1].txt = 'Corte do melhor momento'; estPintar(); });
+await v7.click('[data-estcard]'); await v7.waitForTimeout(350);
+const colab0 = await v7.evaluate(() => ({ chips: document.querySelectorAll('[data-estcli]').length,
+  marcados: document.querySelectorAll('[data-estcli].on').length, nota: document.getElementById('est-colab-nota')?.textContent || '',
+  select: !!document.getElementById('est-cli') }));
+checa('o card oferece todos os clientes como chips, com um já marcado',
+      colab0.chips >= 2 && colab0.marcados === 1 && !colab0.select && /frente de produção/.test(colab0.nota), colab0);
+const idsCli = await v7.evaluate(() => CLIS().map(c => c.id));
+const outro = await v7.evaluate(l => { const m = document.querySelector('[data-estcli].on').dataset.estcli; return l.find(x => x !== m); }, idsCli);
+await v7.click(`[data-estcli="${outro}"]`); await v7.waitForTimeout(200);
+const colab1 = await v7.evaluate(() => ({ marcados: document.querySelectorAll('[data-estcli].on').length,
+  nota: document.getElementById('est-colab-nota')?.textContent || '', lista: S.est.cardClis }));
+checa('marcar um segundo cliente vira colab, e o aviso diz quem responde',
+      colab1.marcados === 2 && /Colab entre 2/.test(colab1.nota) && /nasce na/.test(colab1.nota) && colab1.lista.length === 2, colab1);
+const antesN = await v7.evaluate(() => S.ensaio ? S.ensaio.tarefas.length : 0);
+await v7.click('[data-estenviar]'); await v7.waitForTimeout(600);
+const enviouColab = await v7.evaluate(() => { const t = S.ensaio.tarefas[S.ensaio.tarefas.length - 1];
+  return { cli: t.cli, clis: t.clis, desc: t.desc, toast: document.querySelector('.toast')?.textContent || '' }; });
+checa('a tarefa nasce com o dono e a lista de parceiros, e o texto registra o colab',
+      enviouColab.clis && enviouColab.clis.length === 2 && enviouColab.clis[0] === enviouColab.cli && /Colab: .+ \+ /.test(enviouColab.desc) && /Colab de 2/.test(enviouColab.toast), enviouColab);
+/* e o cartão do quadro mostra o "+1" */
+await v7.evaluate(() => { S.view = 'agency'; S.route = 'producao'; S.enCat = 'producao'; render(); });
+await v7.waitForTimeout(600);
+const noQuadro = await v7.evaluate(() => {
+  const t = S.ensaio.tarefas[S.ensaio.tarefas.length - 1];
+  const card = document.querySelector(`.enCard[data-entar="${t.id}"]`);
+  return { achou: !!card, mais: card?.querySelector('.cli .maisCli')?.textContent || '', titulo: card?.querySelector('.cli')?.getAttribute('title') || '' };
+});
+checa('no quadro do Ensaio o cartão mostra "+1" e diz com quem é o colab',
+      noQuadro.achou && noQuadro.mais === '+1' && /colab com/.test(noQuadro.titulo), noQuadro);
+
+/* a mesma coisa na tarefa nova do Ensaio */
+await v7.evaluate(() => { S.modal = modalTarefa(null); renderLayer(); });
+await v7.waitForTimeout(300);
+const nova = await v7.evaluate(() => ({ colab: document.querySelectorAll('[data-encolab]').length,
+  rot: [...document.querySelectorAll('.fld label')].map(l => l.textContent.trim()).find(x => /Também para/.test(x)) || '' }));
+checa('a tarefa nova do Ensaio também oferece o colab', nova.colab >= 2 && /colab/.test(nova.rot), nova);
+const donoTar = await v7.evaluate(() => S.enCli);
+const parceiro = await v7.evaluate(d => CLIS().map(c => c.id).find(x => x !== d), donoTar);
+await v7.fill('#en-t', 'Post a quatro mãos');
+await v7.click(`[data-encolab="${parceiro}"]`); await v7.waitForTimeout(150);
+await v7.click('[data-enok="0"]'); await v7.waitForTimeout(600);
+const salvouColab = await v7.evaluate(() => { const t = S.ensaio.tarefas[S.ensaio.tarefas.length - 1]; return { titulo: t.titulo, cli: t.cli, clis: t.clis }; });
+checa('e grava o parceiro na tarefa, com o dono na frente',
+      salvouColab.titulo === 'Post a quatro mãos' && salvouColab.clis && salvouColab.clis.length === 2 && salvouColab.clis[0] === salvouColab.cli, salvouColab);
+await v7.close();
+
+/* O CONTRASTE, MEDIDO — não olhado. A primeira versão do claro trocava
+   os tokens e não pintava a folha: texto escuro sobre o fundo escuro do
+   app, 1,05 de contraste. Este teste é o que impede isso de voltar. */
+const contraste = await abrir();
+const medirTudo = async pg => pg.evaluate(() => {
+  const rel = (a, b) => { const L = c => { const [r, g, bb] = c.match(/[\d.]+/g).map(Number);
+    const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+    return .2126 * f(r) + .7152 * f(g) + .0722 * f(bb); };
+    const l1 = Math.max(L(a), L(b)), l2 = Math.min(L(a), L(b)); return (l1 + .05) / (l2 + .05); };
+  const fundoDe = el => { let n = el; while(n && n !== document.documentElement){
+    const m = (getComputedStyle(n).backgroundColor || '').match(/[\d.]+/g);
+    if(m && (m.length < 4 || +m[3] > .85)) return `rgb(${m[0]}, ${m[1]}, ${m[2]})`;
+    n = n.parentElement; } return 'rgb(22, 22, 22)'; };
+  const alvos = ['.estWrap .mtop h1', '.estWrap .mtop p', '.estBarra .nome', '.estCrono b',
+    '.estQuem .txt b', '.estNota:not(.texto) textarea', '.estNota:not(.texto) .pega .n',
+    '.estNota.texto textarea', '.estDica', '.estQuadros button.on', '.estBarra .lk'];
+  return alvos.map(sel => { const el = document.querySelector(sel); if(!el) return [sel, 0];
+    return [sel, +rel(getComputedStyle(el).color, fundoDe(el)).toFixed(2)]; });
+});
+await contraste.click('[data-estmodelo="crazy8"]'); await contraste.waitForTimeout(700);
+await contraste.evaluate(() => { const n = estQuadro().itens.filter(i => i.tipo === 'nota'); n[0].txt = 'Uma ideia escrita'; estPintar(); });
+await contraste.waitForTimeout(250);
+const cEscuro = await medirTudo(contraste);
+checa('no escuro, todo texto do Estúdio passa do mínimo de leitura (3,0)',
+      cEscuro.every(([, v]) => v >= 3), cEscuro.filter(([, v]) => v < 3));
+await contraste.click('[data-estluz="claro"]'); await contraste.waitForTimeout(500);
+await contraste.evaluate(() => { const n = estQuadro().itens.filter(i => i.tipo === 'nota'); n[0].txt = 'Uma ideia escrita'; estPintar(); });
+await contraste.waitForTimeout(250);
+const cClaro = await medirTudo(contraste);
+checa('no claro também — a folha é pintada, não só o palco',
+      cClaro.every(([, v]) => v >= 3), cClaro.filter(([, v]) => v < 3));
+checa('e a folha clara existe de verdade: fundo do painel acima de 200 de luz',
+      await contraste.evaluate(() => { const m = getComputedStyle(document.querySelector('.estWrap')).backgroundColor.match(/\d+/g);
+        return (+m[0] + +m[1] + +m[2]) / 3 > 200; }));
+await contraste.close();
+
+/* no celular, em claro */
+const celClaro = await abrir({ width: 390, height: 844 });
+await celClaro.click('[data-estluz="claro"]'); await celClaro.waitForTimeout(400);
+await celClaro.click('[data-estmodelo="dor"]'); await celClaro.waitForTimeout(600);
+const mc = await celClaro.evaluate(() => ({ docW: document.documentElement.scrollWidth, tela: innerWidth,
+  tema: document.querySelector('.estWrap')?.dataset.tema,
+  ferr: getComputedStyle(document.querySelector('.estFerr')).backgroundColor,
+  luzAlvo: Math.round(document.querySelector('[data-estluz]').getBoundingClientRect().height) }));
+checa('celular: o claro também cabe, sem rolar de lado, com o interruptor de dedo',
+      mc.docW <= mc.tela + 1 && mc.tema === 'claro' && mc.luzAlvo >= 28, mc);
+await celClaro.close();
 
 checa('nenhum erro de JavaScript', erros.length === 0);
 if(erros.length) console.log(erros.slice(0, 5));

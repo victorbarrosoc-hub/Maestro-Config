@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-03 16:42 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-03 17:45 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -66,6 +66,34 @@
 <meta name="twitter:title" content="Maestro — o sistema operacional para agências criativas">
 <meta name="twitter:description" content="Briefing, calendário, aprovação e publicação num lugar só — com o cliente dentro.">
 <meta name="twitter:image" content="https://maestroapptest.vercel.app/icones/maestro-og-v2.png">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- v137 — A PISCADA BRANCA DO BOOT.
+     O primeiro <style> desta casa tem 13 KB, e o navegador só aplica o
+     CSS de um bloco depois de ler o </style> inteiro. Até lá ele pinta
+     a tela padrão: BRANCO. Medido em quadro, no celular: 255 de
+     luminância por ~90 ms, e só então cai para o #161616. É a piscada
+     que o fundador via antes da animação da logo.
+     A cura tem de caber nos primeiros bytes: um bloco minúsculo que
+     fecha na mesma linha, mais o color-scheme, que é o que diz ao
+     navegador para pintar o canvas (e a barra de rolagem, e o
+     overscroll do iOS) em escuro desde o primeiro quadro. -->
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#161616">
+<style>html,body{background:#161616;margin:0}
+/* E A SEGUNDA PISCADA, a que o fundador chamou de "antes da animação da
+   logo": a cortina é montada no DOMContentLoaded, mas o app pinta ANTES
+   disso — os scripts do fim do corpo rodam e o navegador desenha. Medido
+   em quadro: a tela do site aparecia inteira por ~250 ms e só então a
+   cortina caía por cima. Um corte seco, no meio da abertura.
+   Aqui o palco fica no escuro até a cortina estar pendurada. */
+html.abrindo #root, html.abrindo .ctx, html.abrindo #layer{ visibility:hidden }</style>
+<script>try{ if(location.hash !== '#abertura' && !matchMedia('(prefers-reduced-motion: reduce)').matches){
+  document.documentElement.classList.add('abrindo');
+  /* rede de segurança: se a cortina não subir, a casa aparece assim mesmo */
+  setTimeout(function(){ document.documentElement.classList.remove('abrindo'); }, 4000);
+} }catch(e){}</script>
+<title>Maestro</title>
 <style>
 /* =====================================================================
    Maestro — protótipo navegável v2
@@ -5248,6 +5276,10 @@ function abrirCortina(){
     </div>
     <div class="abPular">toque para entrar</div>`;
   document.body.appendChild(el);
+  /* a cortina está pendurada: o que estiver atrás pode acender, porque
+     ninguém vê. É aqui, e não no fim da animação, para o app ter tempo
+     de montar sem que a espera apareça. */
+  document.documentElement.classList.remove('abrindo');
 
   // a afinacao — o navegador so libera audio depois de um gesto, entao
   // aqui e tentativa: se nao tocar, nao faz falta
@@ -15838,7 +15870,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v136 · 3 set · o Estúdio';
+const VERSAO_PROTOTIPO = 'v137 · 3 set · luz, instrução e colab';
 
 menuSheet = (function(orig){
   return function(){
@@ -28689,7 +28721,10 @@ function estModalCard(){
 function estEnviarCard(){
   const q = estQuadro(); if(!q) return;
   const titulo = (document.getElementById('est-titulo')?.value || '').trim() || q.nome;
-  const cli = document.getElementById('est-cli')?.value || (CLIS()[0] || {}).id;
+  /* v137: o seletor virou lista — o primeiro é o dono do card, o resto
+     entra como parceiro logo depois de a tarefa nascer */
+  const cli = (typeof estClisEscolhidos === 'function' ? estClisEscolhidos()[0] : null)
+    || document.getElementById('est-cli')?.value || (CLIS()[0] || {}).id;
   const desc = (document.getElementById('est-desc')?.value || '').trim();
   const passos = [...document.querySelectorAll('[data-estpasso]:checked')].map(c => c.nextElementSibling?.textContent.trim()).filter(Boolean);
   if(!S.ensaio && typeof kbSemente === 'function') S.ensaio = kbSemente();
@@ -28987,4 +29022,445 @@ sbCarregar = (function(orig){
     try{ const l = localStorage.getItem('maestro-estudio-' + agora); if(l && !(S.estudio[agora] && S.estudio[agora].quadros && S.estudio[agora].quadros.length)){ const v = JSON.parse(l); if(v && v.quadros) S.estudio[agora] = v; } }catch(e){}
     if(S.view === 'agency' && S.route === 'estudio') render(); } }, 800);
 })();
+</script>
+<style>
+/* =====================================================================
+   v137 — o Estúdio ganha luz, instrução e colaboração.
+
+   Quatro pedidos do fundador, no mesmo lugar:
+   · uma versão clara do painel inteiro, com interruptor;
+   · leitura melhor DENTRO das caixas, no escuro;
+   · um explicativo por modelo, para saber como usar;
+   · e o card que sai daqui podendo ser de mais de um cliente — colab.
+   ================================================================== */
+
+/* ---------- 1. o interruptor de luz ---------------------------------- */
+.estLuz{ display:inline-flex; align-items:center; gap:0; padding:3px; border:1px solid var(--ink-850); border-radius:999px; background:none }
+.estLuz button{ display:grid; place-items:center; width:30px; height:30px; border-radius:50%; border:0; background:none;
+  color:var(--ink-500); cursor:pointer; transition:background var(--fast) var(--eo), color var(--fast) var(--eo) }
+.estLuz button.on{ background:var(--brass-500); color:#161616 }
+.estLuz button svg{ width:15px; height:15px }
+
+/* A CASA INTEIRA, EM CLARO. A rampa da tinta se inverte dentro do
+   Estúdio e mais nada precisa mudar: cada regra já fala por token.
+   Não é o escuro com o fundo trocado — é a mesma partitura, no papel. */
+.estWrap[data-tema="claro"]{
+  --ink-950:#FBFAF6; --ink-900:#FFFFFF; --ink-870:#F1EDE4; --ink-850:#EAE5DA;
+  --ink-800:#DED8CA; --ink-700:#C6BEAC; --ink-600:#A69D89; --ink-500:#7B7462;
+  --ink-400:#5C5648; --ink-300:#443F35; --ink-200:#2C2822; --ink-100:#1A1712; --ink-50:#0F0D0A;
+  --brass-100:#5C4308; --brass-300:#8A6410; --brass-400:#A87C18; --brass-500:#C08F1F;
+  --brass-600:#B99235; --brass-700:#8A6A22;
+  --cobalt:#2F62C8; --encore:#1E8A56; --coral:#C4512A; --violet:#5B4BC4;
+  --estFerrBg:rgba(255,255,255,.94); --estSombra:0 6px 18px -12px rgba(60,50,30,.55);
+  --estPapel:#FFFFFF;
+  /* O PAINEL INTEIRO, e não só o palco. Trocar os tokens deixava o texto
+     escuro sobre o fundo escuro do app: 1,05 de contraste, ilegível.
+     A folha precisa ser pintada — é ela que faz o claro existir. */
+  background:var(--ink-950); color:var(--ink-100);
+  border:1px solid var(--ink-800); border-radius:18px;
+  padding:18px 20px 22px; margin:2px 0 0;
+}
+.estWrap[data-tema="escuro"]{ --estFerrBg:rgba(22,22,22,.92); --estSombra:0 8px 24px -14px rgba(0,0,0,.8); --estPapel:var(--ink-900) }
+.estWrap[data-tema="claro"] .estPalco{ background:var(--ink-900) }   /* a mesa é creme, o quadro é branco */
+.estWrap[data-tema="claro"] .estGrade{ opacity:.75 }
+/* o link secundário do Estúdio sobe um degrau: em 12px, ink-400 fica em
+   3,5 de contraste — abaixo do mínimo para texto pequeno */
+.estWrap .lk{ color:var(--ink-300) }
+.estWrap .estDica{ color:var(--ink-300) }
+.estWrap[data-tema="claro"] .estFios line{ stroke:var(--ink-600) }
+.estWrap[data-tema="claro"] .estFios line.on{ stroke:var(--brass-400) }
+.estWrap[data-tema="claro"] .estNota{ box-shadow:var(--estSombra) }
+.estWrap[data-tema="claro"] .estNota .votos i{ box-shadow:0 0 0 1px var(--ink-950) }
+.estWrap[data-tema="claro"] .estXp svg .tr{ stroke:var(--ink-800) }
+.estWrap[data-tema="claro"] .estQuadros button.on{ background:rgba(200,143,31,.12) }
+.estFerr{ background:var(--estFerrBg) }
+.estZoom, .estDica{ background:var(--estFerrBg) }
+
+/* ---------- 2. ler dentro das caixas, no escuro ---------------------- */
+/* A queixa é sobre a CAIXA, não sobre a tela: o texto da nota estava em
+   ink-100 sobre um véu de 13% — cinza claro sobre cinza escuro, com o
+   rótulo mono quase apagado. Agora a nota tem papel próprio por baixo
+   do véu de cor, o texto é o mais claro da rampa, e o rótulo sobe dois
+   degraus. A cor continua identificando; ela é que cede. */
+.estNota{ background:linear-gradient(var(--np, rgba(255,200,87,.13)), var(--np, rgba(255,200,87,.13))), var(--estPapel, var(--ink-900)) }
+.estNota .pega .n{ color:var(--ink-300); font-size:9px }
+.estNota textarea{ color:var(--ink-50); font-size:14px; line-height:1.45 }
+.estNota textarea::placeholder{ color:var(--ink-400) }
+.estNota.texto{ background:none }
+.estNota.texto textarea{ color:var(--ink-100) }
+.estNota .pe button{ color:var(--ink-400) }
+.estNota .pe button:hover{ color:var(--ink-100); background:var(--ink-850) }
+
+/* ---------- 3. como usar cada modelo -------------------------------- */
+.estModelo .como{ display:none }
+.estModelo.aberto .como{ display:block; margin:8px 0 0; padding:9px 0 0; border-top:1px solid var(--ink-850) }
+.estModelo .como ol{ margin:0; padding-left:16px; font-size:12px; line-height:1.5; color:var(--ink-300) }
+.estModelo .como ol li{ margin:0 0 3px }
+.estModelo .como .dica{ display:block; margin:7px 0 0; font-size:11.5px; line-height:1.45; color:var(--brass-300) }
+.estModelo .ver{ display:inline-block; margin:6px 0 0; font-family:var(--mono); font-size:9.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--brass-300); border-bottom:1px solid rgba(200,150,58,.35); padding-bottom:1px }
+.estComo{ display:grid; gap:14px }
+.estComo .cab{ display:flex; align-items:center; gap:11px }
+.estComo .cab .em{ font-size:24px; display:block }
+.estComo .cab .em svg{ width:24px; height:24px }   /* o ícone do modelo, no cabeçalho */
+.estComo .cab b{ font-family:var(--serif); font-weight:400; font-size:22px; color:var(--ink-100) }
+.estComo .cab span{ font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--brass-300) }
+.estComo p{ margin:0; font-size:13.5px; line-height:1.55; color:var(--ink-300) }
+.estComo ol{ margin:0; padding-left:18px; font-size:13.5px; line-height:1.6; color:var(--ink-200) }
+.estComo ol li{ margin:0 0 5px }
+.estComo .dica{ font-size:12.5px; line-height:1.5; color:var(--brass-300); border-left:2px solid var(--brass-600); padding-left:11px }
+
+/* ---------- 4. colab: mais de um cliente ---------------------------- */
+.estClis{ display:flex; gap:6px; flex-wrap:wrap }
+.estClis button{ display:inline-flex; align-items:center; gap:7px; padding:5px 12px 5px 6px; border-radius:999px;
+  border:1px solid var(--ink-800); background:none; color:var(--ink-300); font:inherit; font-size:12.5px; cursor:pointer }
+.estClis button.on{ border-color:var(--brass-600); color:var(--brass-300); background:rgba(200,150,58,.08) }
+.estColabNota{ font-size:12px; line-height:1.5; color:var(--ink-400); margin:7px 0 0 }
+.estColabNota b{ color:var(--brass-300); font-weight:500 }
+.enCard .cli .maisCli{ display:inline-flex; align-items:center; gap:3px; margin-left:2px;
+  font-family:var(--mono); font-size:9px; color:var(--brass-300) }
+.enColab{ display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 0 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v137 — luz, instrução e colaboração no Estúdio.
+   ================================================================== */
+
+/* ---------- 1. a luz -------------------------------------------------- */
+const EST_TEMAS = { escuro:'Escuro', claro:'Claro' };
+function estTema(){ const t = estMeu().tema; return EST_TEMAS[t] ? t : 'escuro'; }
+function estPorLuz(sim){
+  estMeu().tema = sim ? 'claro' : 'escuro';
+  estGravar(); render();
+  if(typeof som === 'function') som('toque');
+}
+function estLuzHtml(){
+  const t = estTema();
+  return `<span class="estLuz" role="group" aria-label="Luz do Estúdio">
+    <button type="button" data-estluz="escuro" class="${t === 'escuro' ? 'on' : ''}" title="Escuro" aria-label="Escuro" aria-pressed="${t === 'escuro'}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.2 8.2 0 0 1 9.5 4 8.4 8.4 0 1 0 20 14.5z"/></svg></button>
+    <button type="button" data-estluz="claro" class="${t === 'claro' ? 'on' : ''}" title="Claro" aria-label="Claro" aria-pressed="${t === 'claro'}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2M12 19.4v2M2.6 12h2M19.4 12h2M5.4 5.4l1.4 1.4M17.2 17.2l1.4 1.4M18.6 5.4l-1.4 1.4M6.8 17.2l-1.4 1.4"/></svg></button>
+  </span>`;
+}
+/* as notas mudam de véu conforme a luz: no papel, a cor precisa de mais
+   corpo para não sumir; no escuro, de menos para não gritar */
+const EST_CORES_CLARO = {
+  latao:['rgba(214,150,20,.16)', 'rgba(176,124,20,.45)'],
+  cobalto:['rgba(47,98,200,.13)', 'rgba(47,98,200,.42)'],
+  encore:['rgba(30,138,86,.13)', 'rgba(30,138,86,.4)'],
+  coral:['rgba(196,81,42,.13)', 'rgba(196,81,42,.42)'],
+  violeta:['rgba(91,75,196,.13)', 'rgba(91,75,196,.4)'],
+  tinta:['rgba(90,84,70,.09)', 'rgba(90,84,70,.3)']
+};
+estNotaHtml = (function(orig){
+  return function(i){
+    const html = orig.apply(this, arguments);
+    if(estTema() !== 'claro') return html;
+    const c = EST_CORES_CLARO[(i && i.cor) || 'latao'] || EST_CORES_CLARO.latao;
+    return html.replace(/--np:[^;"]*;--nb:[^;"]*/, `--np:${c[0]};--nb:${c[1]}`);
+  };
+})(estNotaHtml);
+/* a paleta de cores dentro da nota também acompanha a luz */
+estPintar = (function(orig){
+  return function(){
+    const r = orig.apply(this, arguments);
+    if(estTema() === 'claro') document.querySelectorAll('.estNota .cores button').forEach(b => {
+      const k = (b.dataset.estcor || '').split('|')[1];
+      if(EST_CORES_CLARO[k]) b.style.background = EST_CORES_CLARO[k][1];
+    });
+    return r;
+  };
+})(estPintar);
+
+/* ---------- 2. como usar cada modelo ---------------------------------- */
+/* O modelo põe as caixas na tela; o que faltava era o ensaio: em que
+   ordem mexer, quanto tempo dar a cada passo, e o erro que estraga. */
+const EST_COMO = {
+  branco: { quando:'A ideia já está na cabeça e você só quer um lugar para pousar.',
+    passos:['Escreva a ideia na nota que já está aberta.', 'Toque duas vezes no vazio para cada nova nota.', 'Marque com ★ a que vale virar card.'],
+    dica:'Se você travar olhando o branco, troque para o Despejo — quadro vazio é pior conselheiro que prazo curto.' },
+  despejo: { quando:'Começo de tudo. Antes de escolher, é preciso ter de onde escolher.',
+    passos:['Cinco minutos no relógio: escreva sem julgar nada.', 'Uma ideia por nota — ideia grudada em outra não dá para votar.', 'Só quando o tempo acabar: leia tudo e vote nas cinco melhores.', 'Junte as vizinhas com o modo Ligar e ★ na que puxa as outras.'],
+    dica:'Ideia ruim escrita vale mais que ideia boa engolida: ela é o degrau da próxima. Julgar durante o despejo é o erro clássico.' },
+  crazy8: { quando:'Você tem um tema e precisa de variedade rápida, não de profundidade.',
+    passos:['Oito minutos, oito notas, uma por minuto — sem voltar atrás.', 'Quando travar numa, pule: a seguinte destrava a anterior.', 'Ao fim, vote nas três e desenvolva só essas.'],
+    dica:'A pressa é o método, não um defeito. É ela que cala o crítico interno tempo suficiente para o inesperado sair.' },
+  mapa: { quando:'O assunto é grande e você precisa ver as partes antes de escolher uma.',
+    passos:['Escreva o tema na nota do centro.', 'Cada ramo é uma pergunta: quem, por quê, como, onde.', 'Puxe notas novas de cada ramo e ligue com o modo Ligar.', 'O ramo que encher mais é por onde o conteúdo quer sair.'],
+    dica:'Ramo que não enche não é ramo fraco — é pergunta mal feita. Reescreva a pergunta antes de desistir dele.' },
+  certo: { quando:'A marca tem um jeito próprio e o mercado tem um jeito preguiçoso.',
+    passos:['À esquerda, o jeito de sempre — sem caricatura, do jeito que o cliente faz.', 'À direita, o que vocês fazem diferente, e só isso.', 'Cada par vira uma peça: o contraste é o conteúdo.'],
+    dica:'É o tipo 7 da Mandala. Funciona porque tem muitos opostos — e falha quando vira ataque a pessoas em vez de método.' },
+  scamper: { quando:'Já existe uma ideia boa e você quer sete versões dela sem começar do zero.',
+    passos:['Escreva a ideia base num título solto, em cima.', 'Passe por cada lente sem pular: o valor está justamente na que parece boba.', 'Nas que renderem, ★ e desenvolva.'],
+    dica:'Inverter é a lente que mais surpreende: pergunte o que aconteceria se fizessem o oposto exato do que a marca faz hoje.' },
+  dor: { quando:'A peça precisa vender, e não só existir.',
+    passos:['À esquerda, a dor com as palavras que o cliente usa — não as suas.', 'À direita, como fica depois, concreto e mensurável.', 'No meio, a ponte: o que a marca faz para atravessar.', 'A ponte é a peça; a dor é a abertura; o desejo é o CTA.'],
+    dica:'Se a ponte não couber numa frase, ela ainda não é uma peça — é uma campanha, e precisa ser quebrada.' }
+};
+function estComoHtml(k){
+  const m = EST_MODELOS.find(x => x.k === k), c = EST_COMO[k];
+  if(!m || !c) return '';
+  return `<div class="estComo">
+    <div class="cab"><span class="em">${m.em}</span><div><b>${esc(m.n)}</b><br><span>${esc(m.t)}</span></div></div>
+    <p>${esc(c.quando)}</p>
+    <ol>${c.passos.map(p => `<li>${esc(p)}</li>`).join('')}</ol>
+    <div class="dica">${esc(c.dica)}</div></div>`;
+}
+function estModalComo(k){
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3 style="margin-bottom:14px">Como usar</h3>
+    ${estComoHtml(k)}
+    <div class="modalrow" style="margin-top:18px"><button class="b gho" data-modalno="1">Fechar</button></div></div></div>`;
+}
+/* no seletor, cada modelo abre o próprio "como usar" sem sair da lista */
+estModelosHtml = (function(orig){
+  return function(){
+    S.est.comoAberto = S.est.comoAberto || {};
+    return EST_MODELOS.map(m => {
+      const c = EST_COMO[m.k], ab = !!S.est.comoAberto[m.k];
+      return `<div class="estModelo${ab ? ' aberto' : ''}">
+        <button type="button" data-estmodelo="${m.k}" style="all:unset;cursor:pointer;display:grid;gap:5px;align-content:start;text-align:left">
+          <span class="em">${m.em}</span><b>${esc(m.n)}</b><span class="t">${esc(m.t)}</span><span>${esc(m.d)}</span></button>
+        ${c ? `<button type="button" class="ver" data-estcomo="${m.k}">${ab ? 'esconder' : 'como usar'}</button>
+        <div class="como"><ol>${c.passos.map(p => `<li>${esc(p)}</li>`).join('')}</ol>
+          <span class="dica">${esc(c.dica)}</span></div>` : ''}
+      </div>`;
+    }).join('');
+  };
+})(estModelosHtml);
+/* a lista precisa ser uma grade de cartões, não de botões */
+(function(){
+  const st = document.createElement('style');
+  st.textContent = `.estModelos{ display:grid; grid-template-columns:repeat(auto-fill, minmax(216px, 1fr)); gap:10px; margin:12px 0 0; align-items:stretch }
+    .estModelo{ display:flex; flex-direction:column; text-align:left; padding:15px 15px 13px; border:1px solid var(--ink-800); border-radius:14px;
+      transition:border-color var(--fast), transform var(--fast) var(--eo) }
+    .estModelo:hover{ border-color:var(--brass-600); transform:translateY(-1px) }
+    /* align-content:start — sem isso a grade estica as linhas para
+       preencher o cartão, e o mesmo texto fica frouxo num cartão e
+       apertado no vizinho, só porque um está aberto */
+    .estModelo > button:first-child{ display:grid; gap:5px; align-content:start }
+    .estModelo .em{ display:block; color:var(--brass-400); line-height:0 }
+    .estModelo .em svg{ width:21px; height:21px }
+    .estModelo b{ font-family:var(--serif); font-weight:400; font-size:17px; line-height:1.2; color:var(--ink-100); display:block }
+    .estModelo .t{ font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--brass-300); display:block }
+    .estModelo > button:first-child > span:last-child{ font-size:12px; line-height:1.45; color:var(--ink-400); display:block }
+    /* o "como usar" desce para o rodapé do cartão, e a régua dele é do
+       tamanho da palavra — não da largura do cartão */
+    .estModelo .ver{ align-self:flex-start; width:max-content; margin-top:auto; padding-top:10px }
+    .estModelo.aberto .ver{ margin-top:10px }`;
+  document.head.appendChild(st);
+})();
+estModelosHtml = (function(orig){
+  return function(){ return `<div class="estModelos">${orig.apply(this, arguments)}</div>`; };
+})(estModelosHtml);
+
+/* O EMOJI COLORIDO DENUNCIA A PLATAFORMA GENÉRICA. Um 🧩 verde no meio
+   de uma tela de tinta e latão é o único elemento da casa que não foi
+   desenhado por ninguém. Cada modelo ganha um ícone de linha, na cor do
+   latão, como todo ícone daqui. */
+const EST_ICONE = {
+  branco:'<rect x="4.5" y="4.5" width="15" height="15" rx="2.5"/>',
+  despejo:'<path d="M7.5 11.5a3.5 3.5 0 0 1 .4-7 5 5 0 0 1 9.3 1.4 3.2 3.2 0 0 1-.7 5.6"/><path d="M8 15v2M12 14.5v3.5M16 15v2"/>',
+  crazy8:'<path d="M13.5 3 5.5 13.5H11L10 21l8-10.5h-5.5z"/>',
+  mapa:'<circle cx="12" cy="12" r="2.6"/><circle cx="4.5" cy="6" r="1.8"/><circle cx="19.5" cy="6" r="1.8"/><circle cx="4.5" cy="18" r="1.8"/><circle cx="19.5" cy="18" r="1.8"/><path d="M9.7 10.8 6.2 7.4M14.3 10.8l3.5-3.4M9.7 13.2l-3.5 3.4M14.3 13.2l3.5 3.4"/>',
+  certo:'<path d="M3.5 8.5h13l-3-3M20.5 15.5h-13l3 3"/>',
+  scamper:'<rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><path d="M17 13.5v7M13.5 17h7"/>',
+  dor:'<circle cx="4.8" cy="12" r="2.3"/><path d="M7.6 12h8.6M13.6 8.4 17.2 12l-3.6 3.6"/><path d="m20.2 8.6.7 1.9 1.9.7-1.9.7-.7 1.9-.7-1.9-1.9-.7 1.9-.7z"/>'
+};
+const estIcone = k => EST_ICONE[k]
+  ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${EST_ICONE[k]}</svg>`
+  : '';
+estModelosHtml = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    EST_MODELOS.forEach(m => { html = html.replace(`<span class="em">${m.em}</span>`, `<span class="em">${estIcone(m.k)}</span>`); });
+    return html;
+  };
+})(estModelosHtml);
+estComoHtml = (function(orig){
+  return function(k){
+    const m = EST_MODELOS.find(x => x.k === k);
+    const html = orig.apply(this, arguments);
+    return m ? html.replace(`<span class="em">${m.em}</span>`, `<span class="em" style="color:var(--brass-400);line-height:0">${estIcone(k)}</span>`) : html;
+  };
+})(estComoHtml);
+
+/* ---------- 3. o card para mais de um cliente ------------------------- */
+/* Colab entre clientes é post que sai nos dois perfis. O card continua
+   tendo UM dono (o Ensaio inteiro conta com isso — pauta, permissão,
+   filtro), e os outros entram como parceiros: aparecem no cartão, no
+   texto do job e no aviso. */
+S.est.cardClis = S.est.cardClis || [];
+function estClisEscolhidos(){
+  const val = CLIS().map(c => c.id);
+  const l = (S.est.cardClis || []).filter(x => val.includes(x));
+  return l.length ? l : [S.cli && val.includes(S.cli) ? S.cli : val[0]];
+}
+estModalCard = (function(orig){
+  return function(){
+    const html = orig.apply(this, arguments);
+    S.est.cardClis = estClisEscolhidos();
+    const chips = `<div class="fld"><label>Clientes <em style="font-style:normal;color:var(--ink-500);text-transform:none;letter-spacing:0;font-size:11px">toque para marcar mais de um</em></label>
+      <div class="estClis">${CLIS().map(c => `<button type="button" data-estcli="${c.id}" class="${S.est.cardClis.includes(c.id) ? 'on' : ''}">${
+        typeof rostoCli === 'function' ? rostoCli(c) : ''}${esc(c.nome)}</button>`).join('')}</div>
+      <div class="estColabNota" id="est-colab-nota">${estColabNotaTexto()}</div></div>`;
+    /* troca o seletor de um cliente só pelo de vários */
+    return html.replace(/<div class="fld"><label for="est-cli">[\s\S]*?<\/select><\/div>/, chips);
+  };
+})(estModalCard);
+function estColabNotaTexto(){
+  const l = estClisEscolhidos(), nomes = l.map(id => (CLIS().find(c => c.id === id) || {}).nome).filter(Boolean);
+  if(nomes.length <= 1) return `O card entra na frente de produção da <b>${esc(nomes[0] || '—')}</b>.`;
+  return `<b>Colab entre ${nomes.length}.</b> O card nasce na <b>${esc(nomes[0])}</b>, que responde por ele, e sai marcado como colab com ${esc(nomes.slice(1).join(', '))}.`;
+}
+/* o envio já lê a lista: a v136 tinha um <select> de um cliente só, e
+   aqui ele virou lista. O aviso conta quem é o dono e quem é parceiro. */
+estEnviarCard = (function(orig){
+  return function(){
+    const clis = estClisEscolhidos();
+    const antes = (S.ensaio && S.ensaio.tarefas.length) || 0;
+    const r = orig.apply(this, arguments);
+    const t = S.ensaio && S.ensaio.tarefas[S.ensaio.tarefas.length - 1];
+    if(t && S.ensaio.tarefas.length > antes && clis.length > 1){
+      t.clis = clis.slice();
+      const nomes = clis.map(id => (CLIS().find(c => c.id === id) || {}).nome).filter(Boolean);
+      t.desc = `${t.desc}\nColab: ${nomes.join(' + ')}`;
+      estGravar(); render();
+      toast(`Colab de ${nomes.length}: o card é da ${nomes[0]} e sai marcado com ${nomes.slice(1).join(', ')}.`);
+    }
+    return r;
+  };
+})(estEnviarCard);
+
+/* o mesmo no Ensaio: nova tarefa também pode ser de mais de um cliente */
+S.enColab = S.enColab || [];
+modalTarefa = (function(orig){
+  return function(id){
+    const html = orig.apply(this, arguments);
+    const t = id ? S.ensaio.tarefas.find(x => x.id === id) : null;
+    S.enColab = t && t.clis ? t.clis.filter(x => x !== t.cli) : [];
+    const linha = `<div class="fld"><label>Também para <em style="font-style:normal;text-transform:none;letter-spacing:0;font-size:11px;color:var(--ink-500)">colab — o post sai nos dois perfis</em></label>
+      <div class="estClis enColab">${CLIS().map(c => `<button type="button" data-encolab="${c.id}"
+        class="${S.enColab.includes(c.id) ? 'on' : ''}">${typeof rostoCli === 'function' ? rostoCli(c) : ''}${esc(c.nome)}</button>`).join('')}</div></div>`;
+    /* logo depois do seletor de cliente, dentro do bloco de produção */
+    return html.replace(/(<div class="fld"><label>Cliente<\/label>[\s\S]*?<\/div><\/div>)/, `$1${linha}`);
+  };
+})(modalTarefa);
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-estluz],[data-estcomo],[data-estcli],[data-encolab],[data-estcomoq]');
+  if(!t) return;
+  e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+  const d = t.dataset;
+  if(d.estluz !== undefined) return estPorLuz(d.estluz === 'claro');
+  if(d.estcomoq !== undefined){ S.modal = estModalComo(d.estcomoq); renderLayer(); return; }
+  if(d.estcomo !== undefined){
+    S.est.comoAberto = S.est.comoAberto || {};
+    S.est.comoAberto[d.estcomo] = !S.est.comoAberto[d.estcomo];
+    const cx = t.closest('.estModelo');
+    if(cx){ cx.classList.toggle('aberto', !!S.est.comoAberto[d.estcomo]); t.textContent = S.est.comoAberto[d.estcomo] ? 'esconder' : 'como usar'; }
+    return;
+  }
+  if(d.estcli !== undefined){
+    const s = new Set(estClisEscolhidos());
+    s.has(d.estcli) ? s.delete(d.estcli) : s.add(d.estcli);
+    /* nunca zero: um card sem cliente não tem para onde ir */
+    if(s.size) S.est.cardClis = [...s];
+    document.querySelectorAll('[data-estcli]').forEach(b => b.classList.toggle('on', S.est.cardClis.includes(b.dataset.estcli)));
+    const nota = document.getElementById('est-colab-nota'); if(nota) nota.innerHTML = estColabNotaTexto();
+    return;
+  }
+  if(d.encolab !== undefined){
+    const s = new Set(S.enColab || []);
+    s.has(d.encolab) ? s.delete(d.encolab) : s.add(d.encolab);
+    S.enColab = [...s].filter(x => x !== S.enCli);
+    document.querySelectorAll('[data-encolab]').forEach(b => b.classList.toggle('on', S.enColab.includes(b.dataset.encolab)));
+    return;
+  }
+}, true);
+/* o salvar do Ensaio já existe e não sabe de colab: o parceiro entra
+   logo depois, pelo mesmo caminho que o projeto usa desde a v122 */
+addEventListener('click', e => {
+  const ok = e.target.closest && e.target.closest('[data-enok]');
+  if(!ok) return;
+  const idTarefa = +ok.dataset.enok;
+  const colab = (S.enColab || []).slice();
+  setTimeout(() => {
+    if(!idTarefa && S.modal) return;                       /* o salvar recusou */
+    const tr = idTarefa ? S.ensaio.tarefas.find(x => x.id === idTarefa)
+                        : S.ensaio.tarefas[S.ensaio.tarefas.length - 1];
+    if(!tr) return;
+    const outros = colab.filter(x => x !== tr.cli);
+    if(outros.length){ tr.clis = [tr.cli, ...outros]; render(); }
+    else if(tr.clis){ delete tr.clis; render(); }
+  }, 3);
+}, true);
+/* e o cartão do quadro mostra os parceiros, sem mexer no desenho dele */
+if(typeof pintarClientes === 'function'){
+  pintarClientes = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      document.querySelectorAll('.enCard .cli.pintado:not(.colabFeito)').forEach(el => {
+        el.classList.add('colabFeito');
+        const card = el.closest('.enCard[data-entar]'); if(!card || !S.ensaio) return;
+        const t = (S.ensaio.tarefas || []).find(x => x.id === +card.dataset.entar);
+        const outros = t && (t.clis || []).filter(x => x !== t.cli);
+        if(!outros || !outros.length) return;
+        const nomes = outros.map(id => (CLIS().find(c => c.id === id) || {}).nome).filter(Boolean);
+        el.insertAdjacentHTML('beforeend', `<span class="maisCli" title="Colab com ${esc(nomes.join(', '))}">+${outros.length}</span>`);
+        el.setAttribute('title', `${el.getAttribute('title') || ''} · colab com ${nomes.join(', ')}`);
+      });
+      return r;
+    };
+  })(pintarClientes);
+}
+
+/* A LUZ TEM DE VOLTAR NA PRIMEIRA PINTURA. A v136 lia o aparelho uma vez
+   no carregamento, quando ninguém entrou ainda (o id é 'anon'), e depois
+   só a cada 800 ms, no relógio que vigia a troca de login. Resultado: ao
+   recarregar já logado, o Estúdio abria no escuro e clareava sozinho um
+   instante depois — outra piscada. Agora quem hidrata é o próprio
+   estMeu(): a primeira vez que ele é chamado para uma pessoa, procura o
+   que aquele aparelho guardou. */
+/* E O ESTÚDIO SAI DO COFRE GERAL. A v75 guarda TODO S que não esteja na
+   lista de passageiros, e o Estúdio não estava nela: passou a existir em
+   duas cópias — a do cofre geral e a própria, por pessoa. Na volta, a do
+   cofre chegava primeiro, mais velha, com quadros mas sem a luz que a
+   pessoa tinha acabado de escolher. O Estúdio entra na lista pelo mesmo
+   motivo que `pautas` e `usuario` estão nela: já tem dono. */
+if(typeof PASSAGEIRO !== 'undefined' && PASSAGEIRO.add) PASSAGEIRO.add('estudio');
+const _estHidratou = new Set();
+estMeu = (function(orig){
+  return function(){
+    const id = estQuemSou();
+    if(id !== 'anon' && !_estHidratou.has(id)){
+      _estHidratou.add(id);
+      const atual = S.estudio[id];
+      if(!atual || !(atual.quadros || []).length){
+        try{ const l = localStorage.getItem('maestro-estudio-' + id);
+          if(l){ const v = JSON.parse(l); if(v && v.quadros) S.estudio[id] = v; } }catch(e){}
+      }
+    }
+    return orig.apply(this, arguments);
+  };
+})(estMeu);
+
+/* ---------- 4. a tela: envelope com tema, e o "como usar" na barra ---- */
+agEstudio = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    /* o interruptor ao lado das faíscas */
+    html = html.replace('<div class="estQuem">', `${estLuzHtml()}<div class="estQuem">`);
+    /* como usar ESTE modelo, ao lado de "da mandala" */
+    const q = estQuadro();
+    if(q && EST_COMO[q.modelo])
+      html = html.replace('<button class="lk" data-estdomandala="1"',
+        `<button class="lk" data-estcomoq="${q.modelo}" title="Como usar este modelo">como usar</button>\n    <button class="lk" data-estdomandala="1"`);
+    /* e a página inteira num envelope que carrega o tema */
+    return html.replace('<div class="mtop estTopo">', `<div class="estWrap" data-tema="${estTema()}"><div class="mtop estTopo">`)
+               .replace('</div></main>', '</div></div></main>');
+  };
+})(agEstudio);
 </script>
