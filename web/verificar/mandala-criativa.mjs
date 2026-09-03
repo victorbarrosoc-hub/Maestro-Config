@@ -77,6 +77,7 @@ const roda = await pg.evaluate(() => ({
   nomes: [...document.querySelectorAll('.mdRoda .fase text')].map(t => t.textContent.trim()),
   numeros: [...document.querySelectorAll('.mdRoda .gancho text')].map(t => +t.textContent),
   hub: document.querySelector('.miolo .nome')?.textContent,
+  num: document.querySelector('.miolo .n')?.textContent,
   agulha: document.querySelector('.mdRoda .agulha')?.style.transform }));
 checa('quatro fases, na ordem da mandala: Descoberta → Relacionamento → Conversão → Remarketing',
       roda.fases.join(',') === 'descoberta,relacionamento,conversao,remarketing', roda.fases);
@@ -85,7 +86,7 @@ checa('três temperaturas: Oportunidade, Urgência oculta e Prontidão',
       roda.temps.join(',') === 'oportunidade,urgencia,prontidao', roda.temps);
 checa('dezoito ganchos numerados de 1 a 18',
       roda.ganchos === 18 && roda.numeros.join(',') === [...Array(18)].map((_, i) => i + 1).join(','), roda);
-checa('o miolo diz o gancho escolhido', roda.hub === 'História', roda.hub);
+checa('o miolo diz o gancho escolhido', roda.hub === 'HISTÓRIA' && roda.num === '12', roda);
 checa('e a agulha aponta para ele', /rotate\(230deg\)/.test(roda.agulha || ''), roda.agulha);
 
 /* Prontidão só existe onde há compra — e o toque LEVA até lá, em vez de
@@ -117,16 +118,16 @@ await tocarNaRoda(pg, 172, 45); await pg.waitForTimeout(200);          /* Conver
 const conv = await pg.evaluate(() => ({ fase: S.md.fase,
   aceso: document.querySelector('.mdRoda .fase.on')?.dataset.mdfase,
   prontidao: document.querySelector('.mdTempChips [data-mdtemp="prontidao"]').disabled,
-  leitura: document.querySelector('.mdLeitura')?.textContent.replace(/\s+/g, ' ') }));
+  leitura: document.querySelector('.mdPonto p')?.textContent.replace(/\s+/g, ' ') }));
 checa('tocar numa fase da roda a escolhe', conv.fase === 'conversao' && conv.aceso === 'conversao', conv);
 checa('e em Conversão a Prontidão abre', conv.prontidao === false, conv);
-checa('a leitura embaixo explica o ponto em uma frase', /quem está decidindo agora/.test(conv.leitura || ''), conv.leitura);
+checa('o painel do ponto explica para quem é, em uma frase', /quem está decidindo agora/.test(conv.leitura || ''), conv.leitura);
 await pg.click('.mdTempChips [data-mdtemp="prontidao"]'); await pg.waitForTimeout(150);
 checa('a temperatura muda pelo chip', await pg.evaluate(() => S.md.temp) === 'prontidao');
 await tocarNaRoda(pg, 83, -90 + 13 * 20 + 10); await pg.waitForTimeout(200);   /* a fatia 14 */
 const g14 = await pg.evaluate(() => ({ g: S.md.gancho, hub: document.querySelector('.miolo .nome')?.textContent,
   aceso: document.querySelector('.mdRoda .gancho.on')?.dataset.mdgancho }));
-checa('tocar numa fatia escolhe o gancho', g14.g === 14 && g14.hub === 'Prova' && g14.aceso === '14', g14);
+checa('tocar numa fatia escolhe o gancho', g14.g === 14 && g14.hub === 'PROVA' && g14.aceso === '14', g14);
 
 /* girar sorteia e a agulha dá voltas */
 const antes = await pg.evaluate(() => ({ ...S.md, ang: document.querySelector('.mdRoda .agulha').style.transform }));
@@ -144,6 +145,16 @@ checa('a roda não é redesenhada — é o que deixa a agulha animar', depois.me
 console.log('\n  — o motor —');
 await pg.evaluate(() => { S.md.fase = 'descoberta'; S.md.temp = 'oportunidade'; S.md.gancho = 12; S.md.cli = 'ln'; render(); });
 await pg.waitForTimeout(300);
+/* o formulário saiu da frente: cinco campos viraram um painel que se
+   abre só para quem quer precisão. Este é o "mais fácil de preencher". */
+const antesDeAbrir = await pg.evaluate(() => ({
+  visiveis: [...document.querySelectorAll('.mdCtx input')].filter(i => i.offsetParent).map(i => i.id),
+  painel: document.querySelector('.mdDetalhe')?.hidden }));
+checa('a tela pede UM campo, não cinco',
+      antesDeAbrir.visiveis.join(',') === 'md-tema' && antesDeAbrir.painel === true, antesDeAbrir);
+await pg.click('[data-mddetalhe]'); await pg.waitForTimeout(250);
+checa('e os cinco continuam a um toque, para quem quiser precisão',
+      await pg.evaluate(() => [...document.querySelectorAll('.mdDetalhe input')].filter(i => i.offsetParent).length) === 5);
 await pg.fill('#md-produto', 'o vestido de linho da coleção de inverno');
 await pg.fill('#md-publico', 'mulheres que trabalham em escritório');
 await pg.fill('#md-dor', 'roupa que amassa na reunião das 15h');
@@ -189,8 +200,8 @@ checa('cobrindo as quatro fases: duas descobertas, duas de relacionamento, duas 
 checa('sem repetir gancho na mesma semana', new Set(semana.map(s => s.g)).size === 7, semana.map(s => s.g));
 checa('e cada dia com temperatura válida para a fase',
       await pg.evaluate(() => S.md.ideias.every(i => MD_TEMPS[i.temp].fases.includes(i.fase))));
-const diasNaTela = await pg.evaluate(() => [...document.querySelectorAll('.mdIdeia .tags .tag')].map(t => t.textContent)
-  .filter(t => /Segunda|Terça|Quarta|Quinta|Sexta|Sábado|Domingo/.test(t)).length);
+const diasNaTela = await pg.evaluate(() => [...document.querySelectorAll('.mdIdeia header .quem span')]
+  .filter(t => /Segunda|Terça|Quarta|Quinta|Sexta|Sábado|Domingo/.test(t.textContent)).length);
 checa('os dias aparecem nos cards', diasNaTela === 7, diasNaTela);
 
 /* ---------- 3. a ideia sai da ferramenta: Inbox e banco -------------- */
@@ -233,6 +244,67 @@ checa('e o banco viaja para o banco da casa, numa linha própria',
 await pg.click('.mdBanco [data-mdapagar]'); await pg.waitForTimeout(300);
 checa('apagar do banco tira de lá', await pg.evaluate(() => S.mandala.banco.length) === 0);
 
+/* ---------- 3b. o conteúdo puxa do que o cliente já publica ---------
+   "Quero conteúdo mais perto do que já faço na EJUP." A resposta não é
+   mais campo para preencher: é ler a pauta que a agência já montou —
+   título, formato e o texto de posts que aquela equipe escreveu. */
+console.log('\n  — puxando da pauta real —');
+await pg.evaluate(() => {
+  S.pautas.cj = [
+    { id: 91, t: 'Reforma tributária: o que muda no seu contrato', fmt: 'Carrossel', plats: ['li'],
+      texto: 'Sem juridiquês: três mudanças que afetam quem tem contrato de prestação de serviço.' },
+    { id: 92, t: 'Sociedade sem contrato é sociedade sem saída', fmt: 'Carrossel', plats: ['li', 'ig'],
+      texto: 'A Dra. Ana Cortez explica o que acontece quando o sócio quer sair e não há papel.' },
+    { id: 93, t: 'Marca registrada: quanto custa não registrar', fmt: 'Reels', plats: ['ig'] }];
+  S.md.cli = 'cj'; S.mandala.ctx.cj = {}; S.md.tema = ''; render();
+});
+await pg.waitForTimeout(400);
+const sabe = await pg.evaluate(() => document.querySelector('.mdSabe')?.innerText.replace(/\s+/g, ' ') || '');
+checa('a tela diz o que a casa já sabe do cliente, sem pedir nada',
+      /3 posts na pauta/.test(sabe) && /Carrossel/.test(sabe) && /LinkedIn/.test(sabe), sabe);
+
+await pg.click('[data-mdgerar]'); await pg.waitForTimeout(400);
+const nortes = await pg.evaluate(() => S.md.ideias.map(i => ({ t: i.titulo, a: i.abertura, n: i.norte, completo: i.completo })));
+checa('sem contexto preenchido, o cartão vira NORTE: um comando, não uma frase inventada',
+      nortes.every(i => i.completo === false) && /·\s*Cortez Jurídico$/.test(nortes[0].t), nortes[0]);
+checa('e o norte aponta para o que a marca já publicou',
+      nortes.every(i => /Cortez Jurídico já publicou/.test(i.n || ''))
+      && /Reforma tributária|Sociedade sem contrato|Marca registrada/.test(nortes[0].n), nortes[0].n);
+checa('dizendo inclusive o formato que ela costuma usar',
+      /Carrossel \(2\)/.test(nortes[0].n || ''), nortes[0].n);
+/* a frase quebrada que a foto pegou: "De o problema que o que a… a o
+   resultado que quem segue a…". Nunca mais. */
+const texto = nortes.map(i => i.t + ' ' + i.a + ' ' + (i.roteiro || []).join(' ')).join(' ');
+checa('e nenhuma frase sai emendada, sem sujeito ou com artigo duplo',
+      !/\ba o\b|\bde o\b|que o que a|\.\.\.|…\s*a\s/i.test(texto), texto.slice(0, 160));
+
+/* com dor e desejo escritos, o motor volta a montar a frase inteira */
+await pg.evaluate(() => { S.mandala.ctx.cj = { dor: 'sócio que quer sair sem contrato',
+  desejo: 'sair da sociedade sem processo' }; render(); });
+await pg.waitForTimeout(300);
+await pg.click('[data-mdgerar]'); await pg.waitForTimeout(400);
+const cheias = await pg.evaluate(() => S.md.ideias.map(i => ({ t: i.titulo, completo: i.completo })));
+checa('com a dor e o desejo escritos, ele volta a montar a frase inteira',
+      cheias.every(i => i.completo === true) && /sócio que quer sair/.test(cheias.map(i => i.t).join(' ')), cheias[0]);
+
+/* o gancho repetido vira aviso: é o que impede a agência de repetir.
+   As linhas são propositalmente TORTAS (sem fase nem temp): o banco vem
+   do Supabase e pode ter linha de uma versão anterior — uma delas não
+   pode derrubar a tela. */
+await pg.evaluate(() => {
+  S.mandala.banco = [{ id: 'a', cli: 'cj', gancho: 12 }, { id: 'b', cli: 'cj', gancho: 12 }];
+  S.md.fase = 'descoberta'; S.md.temp = 'oportunidade'; S.md.gancho = 12; S.mandala.ctx.cj = {}; render();
+});
+await pg.waitForTimeout(300);
+await pg.click('[data-mdgerar]'); await pg.waitForTimeout(400);
+const repetido = await pg.evaluate(() => (S.md.ideias.find(i => i.gancho === 12) || {}).norte || '');
+checa('e um gancho já usado demais avisa, para a agência não se repetir',
+      /já saiu 2× para este cliente/.test(repetido), repetido);
+checa('uma linha torta no banco compartilhado não derruba a tela',
+      await pg.evaluate(() => document.querySelectorAll('.mdBanco .mdIdeia').length) === 2);
+await pg.evaluate(() => { S.mandala.banco = []; S.md.cli = 'ln'; render(); });
+await pg.waitForTimeout(300);
+
 /* ---------- 4. a IA ------------------------------------------------- */
 console.log('\n  — a IA —');
 await pg.click('[data-mdia]'); await pg.waitForTimeout(300);
@@ -269,10 +341,10 @@ checa('uma chave que não é da Anthropic é recusada na hora',
       await pg.evaluate(() => !!document.querySelector('.modal .mdChave') && !localStorage.getItem('maestro-ia-v1')));
 await pg.fill('#md-chave', 'sk-ant-api03-teste'); await pg.click('[data-mdchaveok]'); await pg.waitForTimeout(300);
 const ligada = await pg.evaluate(() => ({ guardada: JSON.parse(localStorage.getItem('maestro-ia-v1') || '{}').chave,
-  modal: !!document.querySelector('.modal'), selo: document.querySelector('.mdIA')?.textContent.trim() }));
+  modal: !!document.querySelector('.modal'), selo: document.querySelector('[data-mdchave]')?.textContent.trim() }));
 checa('a chave boa fica no localStorage — e nunca vai para o banco compartilhado',
       ligada.guardada === 'sk-ant-api03-teste' && !gravacoes.some(g => JSON.stringify(g).includes('sk-ant')), ligada);
-checa('e a tela mostra a IA ligada, com o modelo', /IA ligada/.test(ligada.selo) && /Opus 5/.test(ligada.selo), ligada.selo);
+checa('e o botão do topo passa a dizer que a IA está ligada', /IA ligada/.test(ligada.selo || ''), ligada.selo);
 
 /* o servidor da Anthropic, interceptado: confere o pedido e responde */
 let pedido = null;
@@ -303,11 +375,14 @@ checa('e o pedido leva o briefing do cliente, o contexto e o ponto da roda',
       pedido && /Nunca falar de preço/.test(pedido.body.messages[0].content) && /vestido de linho/.test(pedido.body.messages[0].content)
       && /Fase: Descoberta/.test(pedido.body.messages[0].content) && /nº 12 História/.test(pedido.body.messages[0].content), pedido && pedido.body.messages[0].content?.slice(0, 160));
 const daIA = await pg.evaluate(() => ({ n: S.md.ideias.length, origem: S.md.ideias[0]?.origem,
-  cards: document.querySelectorAll('.mdIdeia.ia').length, legenda: document.querySelector('.mdIdeia .legenda')?.textContent,
+  cards: document.querySelectorAll('.mdIdeia.ia').length,
+  meta: document.querySelector('.mdIdeia header .quem span')?.textContent,
+  legenda: document.querySelector('.mdIdeia .legenda')?.textContent,
   hash: document.querySelector('.mdIdeia .hash')?.textContent, rotulo: document.querySelector('.mdIdeias .cab h3')?.textContent,
   pensando: !!document.querySelector('.mdPensando') }));
 checa('a resposta vira três cards marcados como IA, com legenda e hashtags',
-      daIA.n === 3 && daIA.origem === 'ia' && daIA.cards === 3 && /Legenda 1/.test(daIA.legenda || '') && daIA.hash === '#linho #slowfashion', daIA);
+      daIA.n === 3 && daIA.origem === 'ia' && daIA.cards === 3 && /Legenda 1/.test(daIA.legenda || '')
+      && daIA.hash === '#linho #slowfashion' && /IA/.test(daIA.meta || ''), daIA);
 checa('e o "pensando" some', !daIA.pensando);
 
 /* a recusa e o erro têm mensagem, não tela morta */
@@ -328,7 +403,9 @@ console.log('\n  — no celular —');
 const cel = await abrir({ width: 390, height: 844 });
 const m = await cel.evaluate(() => {
   const svg = document.querySelector('.mdRoda > svg');
-  const girar = document.querySelector('[data-mdgirar]');
+  /* o miolo da roda TAMBÉM gira ao toque: `[data-mdgirar]` casa com ele
+     antes do botão, então o teste aponta para o botão */
+  const girar = document.querySelector('button[data-mdgirar]');
   return { svgW: Math.round(svg.getBoundingClientRect().width), docW: document.documentElement.scrollWidth, tela: innerWidth,
     icone: Math.round(girar.querySelector('svg').getBoundingClientRect().width),
     girarH: Math.round(girar.getBoundingClientRect().height),
@@ -341,6 +418,11 @@ checa('celular: o ícone do botão é ícone, não uma roda inteira', m.icone <=
 checa('celular: cada fatia de gancho ainda é alvo de dedo', m.fatia >= 18, m.fatia);
 await tocarNaRoda(cel, 83, -90 + 4 * 20 + 10); await cel.waitForTimeout(200);   /* a fatia 5 */
 checa('celular: tocar na fatia escolhe', await cel.evaluate(() => S.md.gancho) === 5);
+/* o miolo é onde o dedo naturalmente vai: gira também */
+const antesDoMiolo = await cel.evaluate(() => S.md.gancho);
+await tocarNaRoda(cel, 20, 0); await cel.waitForTimeout(300);
+checa('celular: tocar no miolo gira a mandala',
+      await cel.evaluate(() => S.md.gancho) !== antesDoMiolo);
 
 /* o aviso da casa inteira: `left:50%` com largura automática limitava a
    caixa ao que sobra à direita do meio da tela — 195px de 390, cinco

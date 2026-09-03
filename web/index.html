@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-03 10:23 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-03 10:45 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15838,7 +15838,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v127 · 3 set · Prontidão leva, em vez de recusar';
+const VERSAO_PROTOTIPO = 'v128 · 3 set · a Mandala mais simples, puxando da pauta';
 
 menuSheet = (function(orig){
   return function(){
@@ -25583,110 +25583,162 @@ if(document.getElementById('fluxoPagina')){
    Desktop: a roda à esquerda, o contexto à direita, as ideias embaixo.
    Celular: empilhado, a roda primeiro e menor. Nada rola de lado.
    ================================================================== */
-.mdGrade{ display:grid; grid-template-columns:minmax(300px, 420px) 1fr; gap:22px; align-items:start }
-@media(max-width:960px){ .mdGrade{ grid-template-columns:1fr; gap:14px } }
+.mdGrade{ display:grid; grid-template-columns:minmax(280px, 380px) 1fr; gap:34px; align-items:start }
+@media(max-width:960px){ .mdGrade{ grid-template-columns:1fr; gap:20px } }
 
-/* ---------- a roda ---------- */
+/* ---------- a roda ----------
+   Menos infográfico, mais instrumento. A regra é uma só: COR ONDE VOCÊ
+   ESTÁ, cinza no resto. Um mostrador que pinta tudo compete com o
+   conteúdo; um que pinta só a posição atual informa. */
 .mdRoda{ position:relative }
-.mdRoda > svg{ display:block; width:100%; max-width:420px; margin:0 auto; user-select:none;
+.mdRoda > svg{ display:block; width:100%; max-width:400px; margin:0 auto; user-select:none;
   -webkit-tap-highlight-color:transparent }
-.mdRoda .fase path{ fill:var(--ink-850); stroke:var(--ink-950); stroke-width:2; cursor:pointer;
-  transition:fill .25s var(--eo) }
-.mdRoda .fase:hover path{ fill:var(--ink-800) }
-.mdRoda .fase.on path{ fill:var(--cor) }
-.mdRoda .fase text{ font:600 11.5px var(--sans); letter-spacing:.14em; fill:var(--ink-300);
-  pointer-events:none; text-transform:uppercase }
-.mdRoda .fase.on text{ fill:var(--ink-950) }
-.mdRoda .temp path{ fill:var(--ink-900); stroke:var(--ink-950); stroke-width:1.5; cursor:pointer;
-  transition:fill .25s var(--eo) }
-.mdRoda .temp:hover path{ fill:var(--ink-850) }
-.mdRoda .temp.on path{ fill:rgba(200,150,58,.28) }
-/* apagada quer dizer "não é aqui", não "não pode": o dedo continua
-   valendo, e o toque leva a roda até a fase onde ela existe */
-.mdRoda .temp.fora path{ opacity:.4 }
-.mdRoda .temp text{ font:500 7.5px var(--mono); letter-spacing:.16em; fill:var(--ink-400);
-  pointer-events:none; text-transform:uppercase }
-.mdRoda .temp.on text{ fill:var(--brass-300) }
-.mdRoda .gancho path{ fill:var(--ink-900); stroke:var(--ink-950); stroke-width:1.2; cursor:pointer;
-  transition:fill .2s var(--eo) }
-.mdRoda .gancho:hover path{ fill:var(--ink-800) }
-.mdRoda .gancho.on path{ fill:rgba(200,150,58,.42); stroke:var(--brass-500); stroke-width:1.5 }
-.mdRoda .gancho text{ font:600 8.5px var(--mono); fill:var(--ink-400); pointer-events:none }
-.mdRoda .gancho.on text{ fill:var(--ink-50) }
-.mdRoda .agulha{ fill:var(--brass-300); transform-origin:200px 200px;
-  transition:transform 2.6s cubic-bezier(.17,.84,.3,1) }
-.mdRoda .agulha.ponta{ fill:var(--brass-400) }
-.mdRoda .miolo circle{ fill:var(--ink-950); stroke:var(--brass-600); stroke-width:1.5 }
-.mdRoda .miolo .n{ font:600 9px var(--mono); letter-spacing:.14em; fill:var(--brass-500) }
-.mdRoda .miolo .nome{ font:400 13px var(--serif); fill:var(--ink-50) }
-.mdRoda .miolo .sub{ font:400 8px var(--mono); letter-spacing:.1em; fill:var(--ink-400);
-  text-transform:uppercase }
+.mdRoda .guia{ fill:none; stroke:none; pointer-events:none }
+.mdRoda .fase .fatia{ fill:var(--ink-900); stroke:var(--ink-950); stroke-width:1.5; cursor:pointer;
+  transition:fill .22s var(--eo) }
+.mdRoda .fase:hover .fatia{ fill:var(--ink-850) }
+.mdRoda .fase.on .fatia{ fill:color-mix(in srgb, var(--cor) 26%, var(--ink-900)); stroke:var(--cor) }
+.mdRoda .fase text{ font:500 10px var(--mono); letter-spacing:.2em; fill:var(--ink-600);
+  pointer-events:none }
+.mdRoda .fase.on text{ fill:var(--cor) }
+/* o alvo do dedo é a faixa inteira, invisível; a linha é só o que se vê */
+.mdRoda .temp .alvo{ fill:transparent; stroke:none; cursor:pointer }
+.mdRoda .temp .linha{ fill:none; stroke:var(--ink-800); stroke-width:1.5; pointer-events:none;
+  transition:stroke .22s var(--eo), stroke-width .22s var(--eo) }
+.mdRoda .temp:hover .linha{ stroke:var(--ink-600) }
+.mdRoda .temp.on .linha{ stroke:var(--brass-500); stroke-width:2.5 }
+.mdRoda .temp.fora .linha{ stroke-dasharray:3 4 }
+.mdRoda .temp text{ font:500 7px var(--mono); letter-spacing:.18em; fill:var(--ink-700);
+  pointer-events:none }
+.mdRoda .temp.on text{ fill:var(--brass-400) }
+.mdRoda .gancho .fatia{ fill:transparent; stroke:var(--ink-870, #22242A); stroke-width:1; cursor:pointer;
+  transition:fill .18s var(--eo) }
+.mdRoda .gancho:hover .fatia{ fill:var(--ink-850) }
+.mdRoda .gancho.on .fatia{ fill:color-mix(in srgb, var(--brass-500) 20%, var(--ink-950)); stroke:var(--brass-500) }
+.mdRoda .gancho text{ font:500 8px var(--mono); fill:var(--ink-600); pointer-events:none;
+  transition:fill .18s var(--eo) }
+.mdRoda .gancho:hover text{ fill:var(--ink-300) }
+.mdRoda .gancho.on text{ fill:var(--brass-300); font-weight:700 }
+.mdRoda .agulha{ fill:none; stroke:var(--brass-400); stroke-width:1.5; stroke-linecap:round;
+  transform-origin:200px 200px; transition:transform 2.4s cubic-bezier(.16,.84,.28,1) }
+.mdRoda .miolo{ cursor:pointer }
+.mdRoda .miolo circle{ fill:var(--ink-950); stroke:var(--ink-800); transition:stroke .2s var(--eo) }
+.mdRoda .miolo:hover circle{ stroke:var(--brass-600) }
+.mdGirar{ display:flex; justify-content:center; margin:14px 0 0 }
+.mdRoda .miolo .n{ font:400 34px var(--serif); fill:var(--brass-300) }
+.mdRoda .miolo .nome{ font:500 8.5px var(--mono); letter-spacing:.16em; fill:var(--ink-400) }
 @media(prefers-reduced-motion:reduce){ .mdRoda .agulha{ transition:none } }
 
-.mdBotoes{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:10px 0 0 }
-.mdLeitura{ margin:12px 0 0; padding:12px 14px; border:1px solid var(--ink-800); border-radius:12px;
-  background:var(--ink-950); font-size:13px; line-height:1.5; color:var(--ink-300) }
-.mdLeitura b{ color:var(--ink-50); font-weight:600 }
-.mdLeitura .tag{ display:inline-block; font-family:var(--mono); font-size:9px; letter-spacing:.14em;
-  text-transform:uppercase; color:var(--brass-400); margin-right:8px }
+/* a barra de clientes: a primeira decisão da tela, e a única obrigatória */
+.mdBarraCli{ display:flex; gap:7px; overflow-x:auto; padding:2px 2px 10px; margin:0 0 14px;
+  border-bottom:1px solid var(--ink-870, #22242A); scrollbar-width:none }
+.mdBarraCli::-webkit-scrollbar{ display:none }
+.mdCli{ display:inline-flex; align-items:center; gap:8px; flex:0 0 auto; padding:6px 13px 6px 6px;
+  border-radius:999px; border:1px solid transparent; color:var(--ink-400); font-size:13px;
+  font-weight:500; background:transparent; transition:color .18s var(--eo) }
+.mdCli:hover{ color:var(--ink-100); background:var(--ink-900) }
+.mdCli.on{ color:var(--ink-50); background:var(--ink-850); border-color:var(--ink-700) }
+.mdCli .cav, .mdCli .av{ width:24px; height:24px; font-size:9px }
 
-/* ---------- o contexto ---------- */
-.mdCtx .rot{ font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
-  color:var(--ink-500); margin:0 0 8px }
-.mdCtx .cchips{ margin:0 0 12px }
-.mdCtx .fld{ margin-bottom:10px }
-.mdCtx .fld input, .mdCtx .fld textarea{ font-size:13.5px }
-.mdCtx .fld textarea{ min-height:58px }
-.mdPlats{ display:flex; gap:6px; flex-wrap:wrap; margin:0 0 12px }
-.mdPlats button{ padding:6px 11px; border-radius:999px; border:1px solid var(--ink-700);
-  color:var(--ink-300); font-size:12px; background:var(--ink-950) }
-.mdPlats button.on{ border-color:var(--brass-500); color:var(--brass-300); background:rgba(200,150,58,.1) }
-.mdPlats button.fora{ opacity:.45; border-style:dashed }
-.mdPlats button.fora:hover{ opacity:.8; border-color:var(--brass-600); color:var(--brass-300) }
-.mdAcoes{ display:flex; gap:9px; flex-wrap:wrap; margin:4px 0 0 }
-.mdAcoes .b{ gap:7px }
-.mdIA{ display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:9.5px;
-  letter-spacing:.12em; text-transform:uppercase; color:var(--ink-500); margin-top:10px }
-.mdIA i{ width:7px; height:7px; border-radius:50%; background:var(--ink-600); font-style:normal }
-.mdIA.ligada i{ background:var(--encore) }
+/* as temperaturas, embaixo da roda */
+.mdTempChips{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin:14px 0 0 }
+.mdTempChips button{ padding:6px 12px; border-radius:999px; border:1px solid var(--ink-800);
+  color:var(--ink-400); font-size:12px; background:transparent }
+.mdTempChips button:hover{ border-color:var(--ink-600); color:var(--ink-100) }
+.mdTempChips button.on{ border-color:var(--brass-600); color:var(--brass-300);
+  background:rgba(200,150,58,.08) }
+.mdTempChips button.fora{ opacity:.45; border-style:dashed }
+.mdTempChips button.fora:hover{ opacity:.85 }
 
-/* ---------- as ideias ---------- */
-.mdIdeias{ margin-top:22px }
-.mdIdeias .cab{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin:0 0 10px }
-.mdIdeias .cab h3{ font-family:var(--serif); font-weight:400; font-size:20px; color:var(--ink-50); margin:0 }
-.mdIdeias .cab .sp{ flex:1 }
-.mdLista{ display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:12px }
-.mdIdeia{ border:1px solid var(--ink-800); border-radius:13px; padding:14px 15px; background:var(--ink-900);
-  display:grid; gap:9px; align-content:start }
-.mdIdeia.ia{ border-color:rgba(200,150,58,.45) }
-.mdIdeia .tags{ display:flex; gap:6px; flex-wrap:wrap }
-.mdIdeia .tag{ font-family:var(--mono); font-size:8.5px; letter-spacing:.14em; text-transform:uppercase;
-  padding:3px 7px; border-radius:6px; border:1px solid var(--ink-700); color:var(--ink-400) }
-.mdIdeia .tag.f{ color:var(--cor); border-color:var(--cor) }
-.mdIdeia .tag.ia{ color:var(--brass-300); border-color:var(--brass-600) }
-.mdIdeia h4{ font-family:var(--serif); font-weight:400; font-size:17px; line-height:1.25; color:var(--ink-50); margin:0 }
-.mdIdeia .abre{ font-size:13px; line-height:1.5; color:var(--ink-100); border-left:2px solid var(--brass-600);
-  padding-left:10px; font-style:italic }
-.mdIdeia ol{ margin:0; padding-left:18px; font-size:12.5px; line-height:1.5; color:var(--ink-300) }
-.mdIdeia ol li{ margin:0 0 3px }
+/* ---------- o ponto, escrito ---------- */
+.mdPonto{ border-bottom:1px solid var(--ink-870, #22242A); padding:0 0 16px; margin:0 0 16px }
+.mdPonto .topo{ display:flex; align-items:baseline; gap:11px; margin:0 0 7px }
+.mdPonto .n{ font-family:var(--serif); font-size:30px; line-height:1; color:var(--brass-400) }
+.mdPonto h2{ font-family:var(--serif); font-weight:400; font-size:25px; line-height:1.1;
+  color:var(--ink-50); margin:0; flex:1 }
+.mdPonto p{ font-size:13.5px; line-height:1.55; color:var(--ink-300); margin:0 }
+.mdPonto p b{ color:var(--ink-100); font-weight:500 }
+.mdLeitura{ display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; margin:10px 0 0 }
+.mdLeitura .tag{ font-family:var(--mono); font-size:8.5px; letter-spacing:.14em; text-transform:uppercase;
+  padding:3px 8px; border-radius:5px; border:1px solid var(--c, var(--ink-700)); color:var(--c, var(--ink-400)) }
+.mdLeitura .regra{ font-size:12px; line-height:1.5; color:var(--ink-500); flex:1 1 100% }
+
+/* ---------- o único campo ---------- */
+.mdTema label{ display:flex; align-items:baseline; gap:8px }
+.mdTema label em{ font-style:normal; text-transform:none; letter-spacing:0; font-size:10px;
+  color:var(--ink-600); font-family:var(--sans) }
+.mdTema input{ font-size:15px !important; padding:13px 14px !important }
+.mdAcoes{ display:flex; gap:9px; flex-wrap:wrap; margin:14px 0 0 }
+.mdAcoes .b{ flex:1 1 auto; justify-content:center }
+
+/* o que a casa já sabe deste cliente — informação, não formulário */
+.mdSabe{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin:16px 0 0;
+  padding-top:14px; border-top:1px solid var(--ink-870, #22242A);
+  font-size:12.5px; color:var(--ink-500) }
+.mdSabe b{ color:var(--ink-100); font-weight:600 }
+.lk{ background:none; border:0; padding:0; font-size:12.5px; color:var(--ink-400);
+  text-decoration:underline; text-underline-offset:3px; cursor:pointer }
+.lk:hover{ color:var(--brass-300) }
+.lk[disabled]{ opacity:.45; text-decoration:none; cursor:default }
+.mdDetalhe{ margin:14px 0 0 }
+.mdDetalhe .brief{ font-size:12.5px; line-height:1.55; color:var(--ink-400); margin:0 0 14px;
+  padding-left:11px; border-left:2px solid var(--ink-800) }
+.mdDetalhe .rot{ display:block; font:500 10px var(--mono); letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-600); margin:4px 0 8px }
+.mdPlats{ display:flex; gap:6px; flex-wrap:wrap }
+.mdPlats button{ padding:6px 11px; border-radius:999px; border:1px solid var(--ink-800);
+  color:var(--ink-400); font-size:12px; background:transparent }
+.mdPlats button.on{ border-color:var(--brass-600); color:var(--brass-300); background:rgba(200,150,58,.08) }
+
+/* ---------- as ideias ----------
+   O cartão fechado responde "esta ideia serve?" — gancho, título,
+   primeira frase, três batidas e de onde puxar. O resto abre num toque. */
+.mdIdeias{ margin-top:26px }
+.cab{ display:flex; align-items:baseline; gap:11px; flex-wrap:wrap; margin:0 0 14px }
+.cab h3{ font-family:var(--serif); font-weight:400; font-size:21px; color:var(--ink-50); margin:0 }
+.cab .sp{ flex:1 }
+.mdLista{ display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:14px;
+  align-items:start }
+.mdIdeia{ border:1px solid var(--ink-850); border-radius:14px; padding:16px 17px 14px;
+  background:var(--ink-900); display:grid; gap:11px; align-content:start;
+  transition:border-color .2s var(--eo) }
+.mdIdeia:hover, .mdIdeia.aberta{ border-color:var(--ink-700) }
+.mdIdeia.ia{ border-color:rgba(200,150,58,.35) }
+.mdIdeia header{ display:flex; align-items:center; gap:11px }
+.mdIdeia header .n{ font-family:var(--serif); font-size:23px; line-height:1; color:var(--cor);
+  min-width:24px }
+.mdIdeia header .quem{ display:grid; gap:1px; flex:1; min-width:0 }
+.mdIdeia header .quem b{ font-size:13px; font-weight:600; color:var(--ink-100) }
+.mdIdeia header .quem span{ font-family:var(--mono); font-size:8.5px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--ink-600) }
+.mdIdeia header .cli{ font-family:var(--mono); font-size:8.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-600); white-space:nowrap }
+.mdIdeia h4{ font-family:var(--serif); font-weight:400; font-size:19px; line-height:1.25;
+  color:var(--ink-50); margin:0 }
+.mdIdeia .abre{ font-size:13.5px; line-height:1.5; color:var(--ink-100);
+  border-left:2px solid var(--cor); padding-left:11px }
+.mdIdeia ol{ margin:0; padding-left:17px; font-size:12.5px; line-height:1.5; color:var(--ink-400) }
+.mdIdeia ol li{ margin:0 0 4px }
+.mdIdeia .norte{ font-size:12px; line-height:1.5; color:var(--ink-500);
+  background:var(--ink-950); border-radius:9px; padding:9px 11px }
+.mdIdeia .mais{ display:grid; gap:11px; padding-top:2px }
+.mdIdeia .legenda{ font-size:12.5px; line-height:1.55; color:var(--ink-300); white-space:pre-wrap }
 .mdIdeia .cta{ font-size:12.5px; color:var(--ink-100) }
-.mdIdeia .cta b{ font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--ink-500); margin-right:6px; font-weight:500 }
-.mdIdeia .legenda{ font-size:12.5px; line-height:1.5; color:var(--ink-300); white-space:pre-wrap }
-.mdIdeia .porque{ font-size:11.5px; line-height:1.45; color:var(--ink-500) }
-.mdIdeia .hash{ font-size:11.5px; color:var(--brass-500) }
-.mdIdeia .acoes{ display:flex; gap:7px; flex-wrap:wrap; margin-top:2px }
-.mdIdeia .acoes .b{ padding:7px 11px; font-size:12px }
-.mdVazio{ border:1px dashed var(--ink-700); border-radius:13px; padding:22px; text-align:center;
-  color:var(--ink-400); font-size:13px; line-height:1.5 }
-.mdPensando{ display:flex; align-items:center; gap:10px; padding:14px; border:1px solid var(--ink-800);
-  border-radius:12px; color:var(--ink-300); font-size:13px }
-.mdPensando i{ width:10px; height:10px; border-radius:50%; border:2px solid var(--brass-500);
+.mdIdeia .cta b{ font-family:var(--mono); font-size:8.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-600); margin-right:7px; font-weight:500 }
+.mdIdeia .hash{ font-size:12px; color:var(--brass-500) }
+.mdIdeia .porque{ font-size:11.5px; line-height:1.45; color:var(--ink-600) }
+.mdIdeia .acoes{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-top:3px;
+  padding-top:12px; border-top:1px solid var(--ink-870, #22242A) }
+.mdIdeia .acoes .b{ padding:8px 14px; font-size:12.5px }
+.mdVazio{ border:1px dashed var(--ink-800); border-radius:14px; padding:30px 22px; text-align:center;
+  color:var(--ink-500); font-size:13px; line-height:1.6 }
+.mdPensando{ display:flex; align-items:center; gap:11px; padding:16px; border:1px solid var(--ink-850);
+  border-radius:14px; color:var(--ink-300); font-size:13px }
+.mdPensando i{ width:11px; height:11px; border-radius:50%; border:2px solid var(--brass-500);
   border-top-color:transparent; animation:mdGira .9s linear infinite; font-style:normal }
 @keyframes mdGira{ to{ transform:rotate(360deg) } }
-
-/* o banco de ideias guardadas */
-.mdBanco{ margin-top:22px }
+.mdBanco{ margin-top:30px; padding-top:24px; border-top:1px solid var(--ink-870, #22242A) }
 .mdBanco .mdIdeia{ background:var(--ink-950) }
 
 /* a chave da IA */
@@ -25706,10 +25758,12 @@ if(document.getElementById('fluxoPagina')){
 .mdOnde a:hover{ color:var(--brass-200, var(--brass-300)) }
 
 @media(max-width:860px){
-  .mdRoda > svg{ max-width:340px }
-  .mdIdeias .cab h3{ font-size:18px }
+  .mdRoda > svg{ max-width:320px }
+  .cab h3{ font-size:19px }
   .mdLista{ grid-template-columns:1fr }
-  .mdAcoes .b{ flex:1 1 auto; justify-content:center }
+  .mdPonto h2{ font-size:22px } .mdPonto .n{ font-size:26px }
+  .mdAcoes{ gap:8px } .mdAcoes .b{ flex:1 1 100%; padding:13px }
+  .mdIdeia{ padding:15px 15px 13px }
 }
 </style>
 <script>
@@ -25771,92 +25825,92 @@ const MD_ORDEM_TEMPS = ['oportunidade', 'urgencia', 'prontidao'];
    como abre, que passos tem e em que formato costuma render. Os modelos
    usam {produto} {publico} {dor} {desejo} {dif} {cliente}. */
 const MD_GANCHOS = [
-  { n:1, nome:'Comparação', o:'dois caminhos lado a lado — a diferença aparece sozinha', fmt:'Carrossel',
+  { n:1, faz:'Compare o jeito de sempre com o de vocês', nome:'Comparação', o:'dois caminhos lado a lado — a diferença aparece sozinha', fmt:'Carrossel',
     tit:['Antes e depois: de {dor} a {desejo}', '{produto} versus o jeito de sempre'],
     abre:['{publico} que resolve {dor} do jeito antigo, e {publico} que usa {produto}: a diferença aparece em {desejo}.',
           'Coloque lado a lado: o jeito de sempre e {produto}. Não precisa argumentar — só mostrar.'],
     passos:['Mostre os dois lados sem julgar nos primeiros segundos', 'Aponte a única diferença que importa para {publico}', 'Feche com o que muda no dia a dia de quem escolhe {produto}'] },
-  { n:2, nome:'Problema / Solução', o:'o problema nomeado, e a saída logo depois', fmt:'Reels',
+  { n:2, faz:'Nomeie um problema e mostre a saída', nome:'Problema / Solução', o:'o problema nomeado, e a saída logo depois', fmt:'Reels',
     tit:['{dor}: o caminho que resolve', 'Se você vive {dor}, é por aqui'],
     abre:['{dor}. É assim que começa para {publico} — e é aqui que {produto} entra.',
           'Se você já passou por {dor}, este é o caminho que resolve, do começo ao fim.'],
     passos:['Nomeie o problema com as palavras que {publico} usa', 'Mostre por que os remendos não resolvem', 'Apresente {produto} como a saída, com um exemplo real'] },
-  { n:3, nome:'Explicação', o:'como funciona, sem vender', fmt:'Carrossel',
+  { n:3, faz:'Explique como funciona, em 3 passos', nome:'Explicação', o:'como funciona, sem vender', fmt:'Carrossel',
     tit:['Como {produto} funciona, em 3 passos', 'O mecanismo por trás de {desejo}'],
     abre:['Como {produto} funciona, do começo ao fim, em 3 passos — sem juridiquês, sem enrolação.',
           'O que ninguém explica sobre {dor}: o mecanismo por trás, e por que {produto} age nele.'],
     passos:['Passo 1: o que acontece primeiro, em uma frase', 'Passo 2: o que muda no meio do caminho', 'Passo 3: o resultado, e por que ele dura'] },
-  { n:4, nome:'Apelo emocional', o:'o que o problema pesa por dentro', fmt:'Reels',
+  { n:4, faz:'Fale do que o problema pesa por dentro', nome:'Apelo emocional', o:'o que o problema pesa por dentro', fmt:'Reels',
     tit:['Para quem cansou de {dor}', 'O peso de {dor} que ninguém vê'],
     abre:['Isto é para quem já cansou de {dor} e ainda assim não desistiu de {desejo}.',
           'A parte que ninguém fala: como {dor} pesa no dia a dia de {publico}, mesmo quando parece que está tudo bem.'],
     passos:['Descreva a cena, não o problema: onde dói, em que hora do dia', 'Dê nome ao sentimento — {publico} vai se reconhecer', 'Mostre {desejo} como alívio, não como conquista'] },
-  { n:5, nome:'Curiosidade', o:'uma lacuna aberta que só fecha no fim', fmt:'Reels',
+  { n:5, faz:'Abra uma lacuna e só feche no fim', nome:'Curiosidade', o:'uma lacuna aberta que só fecha no fim', fmt:'Reels',
     tit:['O detalhe de {produto} que quase ninguém repara', 'Por que {publico} está mudando de ideia sobre {dor}'],
     abre:['O detalhe de {produto} que quase ninguém repara — e que muda tudo em {desejo}.',
           'Por que {publico} está trocando o jeito antigo de resolver {dor}? A resposta está no fim.'],
     passos:['Abra a lacuna na primeira frase e não feche cedo', 'Dê duas pistas que apontam para {dif}', 'Feche com a revelação e o que fazer com ela'] },
-  { n:6, nome:'Reflexão', o:'uma pergunta que fica na cabeça', fmt:'Post',
+  { n:6, faz:'Faça uma pergunta que fique na cabeça', nome:'Reflexão', o:'uma pergunta que fica na cabeça', fmt:'Post',
     tit:['Quanto {dor} já custou a você?', 'O que você faria com o tempo que {dor} rouba?'],
     abre:['Quanto {dor} já custou a você este ano? Pare um minuto e conte de verdade.',
           'O que você faria com o tempo e a energia que {dor} rouba toda semana?'],
     passos:['Faça a pergunta e deixe o silêncio depois dela', 'Some o custo em algo que {publico} sente: tempo, dinheiro, paz', 'Aponte {desejo} como a resposta possível, sem empurrar {produto}'] },
-  { n:7, nome:'Certo vs Errado', o:'o erro comum e o jeito certo, lado a lado', fmt:'Carrossel',
+  { n:7, faz:'Mostre o erro comum e o jeito certo', nome:'Certo vs Errado', o:'o erro comum e o jeito certo, lado a lado', fmt:'Carrossel',
     tit:['3 erros de {publico} ao tentar {desejo}', 'Errado e certo: {dor}'],
     abre:['Errado: tentar resolver {dor} do jeito de sempre. Certo: o que {produto} faz diferente — e por quê.',
           '3 erros que {publico} comete tentando {desejo} — e o que fazer no lugar de cada um.'],
     passos:['Mostre o erro que todo mundo comete, sem humilhar', 'Explique o que ele custa', 'Mostre o certo com {dif} como exemplo'] },
-  { n:8, nome:'Demonstração', o:'o produto acontecendo, sem corte', fmt:'Reels',
+  { n:8, faz:'Mostre o trabalho acontecendo, sem corte', nome:'Demonstração', o:'o produto acontecendo, sem corte', fmt:'Reels',
     tit:['{produto} em ação, do zero ao resultado', 'Veja acontecendo: {desejo}'],
     abre:['{produto} em ação: do zero ao resultado, sem corte e sem promessa.',
           'Veja acontecendo: {dor} entrando, {desejo} saindo. Só a câmera e o processo.'],
     passos:['Comece pelo estado inicial — o problema visível', 'Mostre o processo em tempo real, ou acelerado com honestidade', 'Termine no resultado e deixe {publico} tirar a conclusão'] },
-  { n:9, nome:'Ultra segmentado', o:'fala com uma pessoa só, pelo nome da tribo', fmt:'Reels',
+  { n:9, faz:'Fale com uma tribo só, pelo nome dela', nome:'Ultra segmentado', o:'fala com uma pessoa só, pelo nome da tribo', fmt:'Reels',
     tit:['Se você é {publico} e vive {dor}, é para você', 'Só para {publico}'],
     abre:['Se você é {publico} e vive {dor}, este conteúdo é literalmente para você — mais ninguém.',
           'Só para {publico}: o que muda quando {produto} entra na rotina, com os detalhes que só vocês entendem.'],
     passos:['Nomeie a tribo na primeira frase, com precisão', 'Use uma situação que só {publico} reconhece', 'Mostre {desejo} nos termos deles'] },
-  { n:10, nome:'Visual', o:'a imagem fala; o texto quase some', fmt:'Post',
+  { n:10, faz:'Deixe a imagem falar e quase não escreva', nome:'Visual', o:'a imagem fala; o texto quase some', fmt:'Post',
     tit:['{produto}, sem texto', '{desejo} num enquadramento só'],
     abre:['Sem texto, só imagem: {produto} em cinco cenas que {publico} entende sem legenda.',
           'Deixe o visual falar: {desejo} em um enquadramento só, e a legenda com uma linha.'],
     passos:['Escolha uma imagem que carrega a mensagem inteira', 'Tire toda palavra que a imagem já diz', 'Uma linha de legenda: o convite'] },
-  { n:11, nome:'Oportunidade', o:'a janela que está aberta agora', fmt:'Stories',
+  { n:11, faz:'Mostre a janela que está aberta agora', nome:'Oportunidade', o:'a janela que está aberta agora', fmt:'Stories',
     tit:['Janela aberta: {desejo} antes dos outros', 'O momento certo para {publico}'],
     abre:['Janela aberta: quem fizer isto agora chega em {desejo} antes dos outros — e {produto} é o atalho.',
           'Existe um momento certo para {publico} resolver {dor}. É este. Aqui está o porquê.'],
     passos:['Mostre o que mudou: por que agora, e não depois', 'Ligue o momento a {produto}', 'Diga o que {publico} ganha por ser o primeiro'] },
-  { n:12, nome:'História', o:'começo, meio e virada — com gente de verdade', fmt:'Reels',
+  { n:12, faz:'Conte a história de um cliente', nome:'História', o:'começo, meio e virada — com gente de verdade', fmt:'Reels',
     tit:['De {dor} a {desejo}: a história de um cliente', 'Era uma vez {publico} com {dor}'],
     abre:['Era uma vez {publico} com {dor}. Foi assim que virou {desejo} — capítulo por capítulo.',
-          'A história de um cliente de {cliente}: de {dor} a {desejo}, com o que quase deu errado no meio.'],
+          'A história de um cliente da {cliente}: de {dor} a {desejo}, com o que quase deu errado no meio.'],
     passos:['Apresente a pessoa e o problema, em duas frases', 'A virada: o que ela decidiu, e o que {produto} fez', 'O depois, com um detalhe pequeno e verdadeiro'] },
-  { n:13, nome:'Dilema', o:'duas escolhas, e o custo de cada uma', fmt:'Post',
+  { n:13, faz:'Ponha duas escolhas na mesa e o custo de cada uma', nome:'Dilema', o:'duas escolhas, e o custo de cada uma', fmt:'Post',
     tit:['Resolver agora ou esperar: o custo de cada caminho', 'A escolha desconfortável que leva a {desejo}'],
     abre:['Ou você continua com {dor}, ou faz a escolha desconfortável que leva a {desejo}. As duas custam.',
           'Resolver {dor} agora com {produto} ou esperar mais um mês: quanto custa cada caminho?'],
     passos:['Ponha as duas escolhas na mesa, sem torcer por uma', 'Some o custo de cada uma em termos de {publico}', 'Deixe claro que não escolher também é escolher'] },
-  { n:14, nome:'Prova', o:'resultado, número, print, depoimento', fmt:'Carrossel',
+  { n:14, faz:'Mostre prova: número, print ou depoimento', nome:'Prova', o:'resultado, número, print, depoimento', fmt:'Carrossel',
     tit:['O resultado de quem usou {produto}', 'Não acredite em nós: veja {publico} falando'],
     abre:['O resultado de quem usou {produto}: números, prints e a frase que a pessoa disse depois.',
           'Não acredite em nós. Veja o que {publico} disse depois de chegar em {desejo}.'],
     passos:['Uma prova por tela: número, print ou frase', 'Contexto de quem era antes — com {dor}', 'O que mudou, nas palavras do cliente'] },
-  { n:15, nome:'Contraste', o:'o mesmo dia em duas versões', fmt:'Reels',
+  { n:15, faz:'Mostre o mesmo dia em duas versões', nome:'Contraste', o:'o mesmo dia em duas versões', fmt:'Reels',
     tit:['O mesmo dia, com e sem {produto}', '{dor} de um lado, {desejo} do outro'],
     abre:['De um lado, {dor}. Do outro, {desejo}. No meio, {produto}. O mesmo dia, duas versões.',
           'O mesmo dia, duas versões: uma com {produto}, outra sem. Repare onde a diferença começa.'],
     passos:['Mostre a versão sem: a rotina com {dor}', 'Corte para a versão com: mesma cena, resultado diferente', 'Aponte o ponto exato em que os dois dias se separam'] },
-  { n:16, nome:'Sensação', o:'o que se sente, antes do que se ganha', fmt:'Stories',
+  { n:16, faz:'Descreva a sensação, antes do resultado', nome:'Sensação', o:'o que se sente, antes do que se ganha', fmt:'Stories',
     tit:['Aquela sensação de {desejo}', 'O que {desejo} faz sentir'],
     abre:['Sabe aquela sensação de {desejo}? É isso que {produto} entrega — antes de qualquer número.',
           'Feche os olhos e imagine {desejo}. Agora abra: é o que {publico} sente depois de {produto}.'],
     passos:['Descreva a sensação com os cinco sentidos', 'Ligue a sensação a uma cena concreta', 'Diga o caminho para chegar nela, sem pressa'] },
-  { n:17, nome:'Clickbait honesto', o:'promessa forte na entrada — e cumprida no fim', fmt:'Reels',
+  { n:17, faz:'Faça uma promessa forte — e cumpra no fim', nome:'Clickbait honesto', o:'promessa forte na entrada — e cumprida no fim', fmt:'Reels',
     tit:['Você está usando {produto} errado', 'O que {publico} descobre tarde demais sobre {dor}'],
     abre:['Você está usando {produto} errado — e é por isso que {dor} continua. Vou mostrar onde.',
           'O que {publico} descobre tarde demais sobre {dor}: o erro que quase todo mundo comete.'],
     passos:['Promessa forte na primeira frase — e que você consegue cumprir', 'Entregue exatamente o prometido, sem enrolar', 'Feche com o próximo passo para {desejo}'] },
-  { n:18, nome:'Mito', o:'a crença que todo mundo repete — desmontada', fmt:'Carrossel',
+  { n:18, faz:'Derrube um mito que todo mundo repete', nome:'Mito', o:'a crença que todo mundo repete — desmontada', fmt:'Carrossel',
     tit:['Mito: {dor} não tem jeito', 'A verdade sobre {dor}'],
     abre:['Mito: "{dor} é normal, é assim mesmo". Verdade: {produto} resolve — e aqui está como.',
           'Todo mundo diz que {dor} não tem jeito. Aqui está a prova de que tem, e o que {publico} pode fazer hoje.'],
@@ -25869,11 +25923,37 @@ const MD_DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'D
 S.mandala = S.mandala || { ctx:{}, banco:[] };
 S.mandala.ctx = S.mandala.ctx || {}; S.mandala.banco = S.mandala.banco || [];
 S.md = S.md || { fase:'descoberta', temp:'oportunidade', gancho:12, cli:null, ideias:[], voltas:0,
-  pensando:false, erro:null, plats:['ig'] };
+  pensando:false, erro:null, plats:['ig'], tema:'', detalhe:false, abertas:{} };
+S.md.abertas = S.md.abertas || {};
 S.md.plats = S.md.plats || ['ig'];
 if(typeof PASSAGEIRO !== 'undefined' && PASSAGEIRO.add){ PASSAGEIRO.add('mdGravar'); }
 
 const mdCli = () => CLIS().find(c => c.id === S.md.cli) || CLIS()[0];
+
+/* ---------- o que este cliente JÁ publica --------------------------
+   A queixa foi "quero conteúdo mais perto do que já faço na EJUP". A
+   resposta não está em mais campos para preencher: está na pauta que a
+   agência já montou para aquele cliente. Título, formato, plataforma e
+   o texto de cada post são a voz da marca, escrita por quem a atende.
+   A mandala passa a ler isso — e a IA recebe junto. */
+function mdMemoria(cliId){
+  const lista = (S.pautas[cliId] || []).filter(p => p && p.t);
+  const cont = {};
+  lista.forEach(p => { if(p.fmt) cont[p.fmt] = (cont[p.fmt] || 0) + 1; });
+  const plat = {};
+  lista.forEach(p => (p.plats || []).forEach(k => plat[k] = (plat[k] || 0) + 1));
+  /* ganchos já usados: o banco de ideias e o que já foi para o Ensaio */
+  const usados = {};
+  (S.mandala.banco || []).forEach(b => { if(b.cli === cliId && b.gancho) usados[b.gancho] = (usados[b.gancho] || 0) + 1; });
+  ((S.ensaio && S.ensaio.tarefas) || []).forEach(t => {
+    if(t.cli === cliId && t.mandala) usados[t.mandala.gancho] = (usados[t.mandala.gancho] || 0) + 1; });
+  const ordena = o => Object.entries(o).sort((a, b) => b[1] - a[1]);
+  return { n: lista.length,
+    titulos: lista.slice(-12).map(p => p.t).reverse(),
+    textos: lista.filter(p => p.texto && p.texto.length > 20).slice(-4).map(p => p.texto),
+    fmts: ordena(cont), plats: ordena(plat), usados };
+}
+const MD_PLAT_NOME = { ig:'Instagram', tt:'TikTok', li:'LinkedIn', yt:'YouTube', fb:'Facebook', x:'X', pi:'Pinterest' };
 function mdCtx(){
   const c = mdCli();
   const salvo = S.mandala.ctx[c.id] || {};
@@ -25884,12 +25964,24 @@ function mdCtx(){
 function mdCtxCheio(){
   const c = mdCli(), x = mdCtx();
   const cliente = c.nome;
-  const produto = x.produto || (c.seg ? `o que a ${cliente} oferece em ${c.seg.toLowerCase()}` : `o que a ${cliente} oferece`);
-  const publico = x.publico || `quem segue a ${cliente}`;
-  const dor     = x.dor     || `o problema que ${produto} resolve`;
-  const desejo  = x.desejo  || `o resultado que ${publico} procura`;
-  const dif     = x.dif     || `o jeito ${cliente} de fazer`;
-  return { cliente, produto, publico, dor, desejo, dif, brief:c.brief || '', seg:c.seg || '' };
+  /* "Sobre o que?" é o único campo que a pessoa precisa tocar. Quando
+     está preenchido, ele MANDA: é o assunto do dia, e entra no lugar do
+     produto nas frases. Vazio, a casa se vira com o cadastro. */
+  /* Fallback CURTO, e que funciona como instrução. O antigo montava
+     frases compostas ("o problema que o que a Loja Norte oferece em
+     varejo de moda resolve") que, cortadas no título, viravam
+     "De o problema que o que a… a o resultado que quem segue a…".
+     Frase quebrada é pior que frase genérica. */
+  const produto = (S.md.tema || '').trim() || x.produto || `a ${cliente}`;
+  const publico = x.publico || `quem acompanha a ${cliente}`;
+  const dor     = x.dor     || 'a dor';
+  const desejo  = x.desejo  || 'o desejo';
+  const dif     = x.dif     || `o diferencial da ${cliente}`;
+  /* o motor precisa saber o que é REAL e o que é remendo: sem dor e
+     desejo de verdade, ele não monta frase — dá o norte */
+  const completo = !!((x.dor || '').trim() && (x.desejo || '').trim());
+  return { cliente, produto, publico, dor, desejo, dif, completo,
+    brief:c.brief || '', seg:c.seg || '' };
 }
 const mdPreencher = (tpl, x) => tpl.replace(/\{(\w+)\}/g, (m, k) => x[k] !== undefined ? x[k] : m)
   .replace(/^\w/, ch => ch.toUpperCase());
@@ -25968,36 +26060,39 @@ const MD_QUAD = { descoberta:[180, 270], relacionamento:[270, 360], conversao:[0
 const MD_BANDA = { oportunidade:[136, 150], urgencia:[121, 135], prontidao:[106, 120] };
 
 function mdRodaSvg(){
+  /* cada peça leva CLASSE própria: o caminho do texto também é <path>, e
+     uma regra em `.fase path` pintaria a curva invisível junto com a
+     fatia. Classe explícita é o que impede esse tipo de acidente. */
   const fases = MD_ORDEM_FASES.map(f => {
     const [a0, a1] = MD_QUAD[f], emCima = a0 >= 180;
     return `<g class="fase" data-mdfase="${f}" style="--cor:${MD_FASES[f].cor}">
-      <path d="${mdFatia(152, 192, a0, a1)}"/>
-      <path id="mdTxt_${f}" d="${mdArcoTexto(169, a0 + 4, a1 - 4, emCima)}" fill="none"/>
+      <path class="fatia" d="${mdFatia(150, 190, a0, a1)}"/>
+      <path id="mdTxt_${f}" class="guia" d="${mdArcoTexto(168, a0 + 5, a1 - 5, emCima)}" fill="none"/>
       <text dominant-baseline="middle"><textPath href="#mdTxt_${f}" startOffset="50%" text-anchor="middle">${MD_FASES[f].n.toUpperCase()}</textPath></text>
     </g>`;
   }).join('');
   const temps = MD_ORDEM_TEMPS.map(t => {
     const [r1, r2] = MD_BANDA[t], rm = (r1 + r2) / 2;
     return `<g class="temp" data-mdtemp="${t}">
-      <path d="${mdAnel(r1, r2)}" fill-rule="evenodd"/>
-      <path id="mdTmp_${t}" d="${mdArcoTexto(rm - 2.5, 200, 340, true)}" fill="none"/>
+      <path class="alvo" d="${mdAnel(r1, r2)}" fill-rule="evenodd"/>
+      <circle class="linha" cx="200" cy="200" r="${rm}"/>
+      <path id="mdTmp_${t}" class="guia" d="${mdArcoTexto(rm - 3, 202, 338, true)}" fill="none"/>
       <text><textPath href="#mdTmp_${t}" startOffset="50%" text-anchor="middle">${MD_TEMPS[t].n.toUpperCase()}</textPath></text>
     </g>`;
   }).join('');
   const ganchos = MD_GANCHOS.map(g => {
-    const a0 = -90 + (g.n - 1) * 20, a1 = a0 + 20, [x, y] = mdPt(83, a0 + 10);
+    const a0 = -90 + (g.n - 1) * 20, a1 = a0 + 20, [x, y] = mdPt(84, a0 + 10);
     return `<g class="gancho" data-mdgancho="${g.n}"><title>${g.n} · ${esc(g.nome)}</title>
-      <path d="${mdFatia(62, 104, a0, a1)}"/>
+      <path class="fatia" d="${mdFatia(64, 104, a0, a1)}"/>
       <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle">${g.n}</text></g>`;
   }).join('');
   return `<svg viewBox="0 0 400 400" role="img" aria-label="A mandala criativa: fases, temperaturas e ganchos">
     ${fases}${temps}${ganchos}
-    <polygon class="agulha" points="200,66 197.5,200 202.5,200" style="transform:rotate(${mdAngulo()}deg)"/>
-    <g class="miolo">
-      <circle cx="200" cy="200" r="56"/>
-      <text class="n" x="200" y="184" text-anchor="middle">GANCHO</text>
-      <text class="nome" x="200" y="205" text-anchor="middle"></text>
-      <text class="sub" x="200" y="223" text-anchor="middle"></text>
+    <line class="agulha" x1="200" y1="200" x2="200" y2="112" style="transform:rotate(${mdAngulo()}deg)"/>
+    <g class="miolo" data-mdgirar="1"><title>Girar a mandala</title>
+      <circle cx="200" cy="200" r="58"/>
+      <text class="n" x="200" y="196" text-anchor="middle" dominant-baseline="middle"></text>
+      <text class="nome" x="200" y="221" text-anchor="middle"></text>
     </g>
   </svg>`;
 }
@@ -26014,10 +26109,16 @@ function mdPintarRoda(){
   svg.querySelectorAll('.gancho').forEach(el => el.classList.toggle('on', +el.dataset.mdgancho === S.md.gancho));
   const ag = svg.querySelector('.agulha'); if(ag) ag.style.transform = `rotate(${mdAngulo()}deg)`;
   const g = mdGancho(S.md.gancho);
-  const nome = svg.querySelector('.miolo .nome'), sub = svg.querySelector('.miolo .sub');
-  if(nome) nome.textContent = g.nome;
-  if(sub) sub.textContent = 'Nº ' + g.n;
+  const num = svg.querySelector('.miolo .n'), nome = svg.querySelector('.miolo .nome');
+  if(num) num.textContent = g.n;
+  if(nome) nome.textContent = g.nome.toUpperCase();
   const leitura = document.querySelector('.mdLeitura'); if(leitura) leitura.innerHTML = mdLeituraHtml();
+  /* o painel da direita é o mesmo ponto, escrito: anda junto com a roda */
+  const pn = document.querySelector('.mdPonto .n'), ph = document.querySelector('.mdPonto h2'),
+        pp = document.querySelector('.mdPonto p');
+  if(pn) pn.textContent = g.n;
+  if(ph) ph.textContent = g.nome;
+  if(pp) pp.innerHTML = `${esc(g.o.replace(/^\w/, ch => ch.toUpperCase()))}. Para <b>${MD_FASES[S.md.fase].quem}</b>, que <b>${MD_TEMPS[S.md.temp].quem}</b>.`;
   document.querySelectorAll('.mdTempChips button').forEach(b => {
     const t = b.dataset.mdtemp, aqui = validas.includes(t);
     b.classList.toggle('on', t === S.md.temp);
@@ -26028,26 +26129,52 @@ function mdPintarRoda(){
   });
 }
 function mdLeituraHtml(){
-  const f = MD_FASES[S.md.fase], t = MD_TEMPS[S.md.temp], g = mdGancho(S.md.gancho);
-  return `<span class="tag" style="color:${f.cor}">${f.n}</span><span class="tag">${t.n}</span><span class="tag">nº ${g.n} · ${esc(g.nome)}</span>
-    <div style="margin-top:6px">Para <b>${f.quem}</b>, que <b>${t.quem}</b>: ${esc(g.o)}. ${t.tom.replace(/^\w/, c => c.toUpperCase())}.</div>`;
+  const f = MD_FASES[S.md.fase], t = MD_TEMPS[S.md.temp];
+  /* uma linha: o que fazer aqui. O resto já está no desenho. */
+  return `<span class="tag" style="--c:${f.cor}">${f.n}</span><span class="tag">${t.n}</span>
+    <span class="regra">${esc(t.tom.replace(/^\w/, c => c.toUpperCase()))}. ${esc(f.regra)}</span>`;
 }
 
 /* ---------- o motor: ideia sem IA ----------------------------------- */
 let _mdSeq = 0;
+/* O NORTE — o que o social media pede quando abre a ferramenta às nove
+   da manhã: não o post pronto, mas para onde apontar. Uma frase que junta
+   o que o gancho pede com o que aquele cliente já publicou. */
+function mdNorteDe(g, fase, c){
+  const mem = mdMemoria(c.id);
+  const pedaco = [];
+  if(mem.titulos.length)
+    pedaco.push(`Puxe do que a ${c.nome} já publicou — os últimos foram “${mem.titulos.slice(0, 2).join('”, “')}”.`);
+  else if(c.brief && c.brief !== '—')
+    pedaco.push(`Ainda não há pauta para a ${c.nome}: puxe do briefing.`);
+  if(mem.fmts.length)
+    pedaco.push(`Aqui costuma sair ${mem.fmts.slice(0, 2).map(([n, q]) => `${n} (${q})`).join(' e ')}.`);
+  const rep = mem.usados[g.n] || 0;
+  if(rep >= 2) pedaco.push(`Atenção: este gancho já saiu ${rep}× para este cliente — vale variar.`);
+  return pedaco.join(' ');
+}
+
 function mdIdeia(fase, temp, gancho, extra){
   const x = mdCtxCheio(), f = MD_FASES[fase], t = MD_TEMPS[temp], g = mdGancho(gancho);
   const k = Math.floor(Math.random() * 2);
   const roteiro = g.passos.map(p => mdPreencher(p, x));
   roteiro.push(`Temperatura: ${t.tom} — o público ${t.quem}`);
+  /* DOIS MODOS. Com dor e desejo escritos, o motor monta a frase. Sem
+     eles, ele não inventa: entrega o COMANDO do gancho e os passos, que
+     é o "norte" que o social media pede às nove da manhã. */
+  const titulo = x.completo
+    ? mdPreencher(g.tit[k], mdCtxCurto(x))
+    : `${g.faz} · ${x.cliente}`;
+  const abertura = x.completo
+    ? mdPreencher(g.abre[k], x)
+    : `${g.o.replace(/^\w/, ch => ch.toUpperCase())}. ${t.tom.replace(/^\w/, ch => ch.toUpperCase())}.`;
   return { id:'i' + Date.now().toString(36) + (_mdSeq++), origem:'motor', cli:mdCli().id,
-    fase, temp, gancho:g.n, quando:Date.now(),
-    titulo: mdPreencher(g.tit[k], mdCtxCurto(x)),
-    abertura: mdPreencher(g.abre[k], x),
-    roteiro,
+    fase, temp, gancho:g.n, quando:Date.now(), completo:x.completo,
+    titulo, abertura, roteiro,
     cta: mdSorteio(f.ctas),
     formato: g.fmt,
     porque: `${f.n} é para ${f.quem}: ${f.regra} Aqui o público ${t.quem} — então ${t.tom}.`,
+    norte: mdNorteDe(g, fase, mdCli()),
     ...(extra || {}) };
 }
 function mdGerar(n){
@@ -26061,7 +26188,9 @@ function mdGerar(n){
     usados.add(g);
     S.md.ideias.push(mdIdeia(S.md.fase, S.md.temp, g));
   }
-  S.md.erro = null; S.md.rotulo = 'Três caminhos para o ponto da roda';
+  S.md.erro = null;
+  S.md.rotulo = mdCtxCheio().completo ? 'Três caminhos para o ponto da roda'
+                                      : 'Três nortes para hoje';
   render();
 }
 /* a semana: sete ideias, uma por dia, cobrindo as quatro fases —
@@ -26130,24 +26259,39 @@ const MD_ESQUEMA = {
       formato:{ type:'string' }, porque:{ type:'string' } } } } }
 };
 function mdPedido(fase, temp, gancho, n){
-  const x = mdCtxCheio(), f = MD_FASES[fase], t = MD_TEMPS[temp], g = mdGancho(gancho);
-  const plats = { ig:'Instagram', tt:'TikTok', li:'LinkedIn', yt:'YouTube', fb:'Facebook' };
-  return `CLIENTE: ${x.cliente}${x.seg ? ` (${x.seg})` : ''}
+  const c = mdCli(), x = mdCtxCheio(), f = MD_FASES[fase], t = MD_TEMPS[temp], g = mdGancho(gancho);
+  const mem = mdMemoria(c.id);
+  /* A PAUTA REAL VAI JUNTO. É a diferença entre "conteúdo de agência" e
+     "conteúdo da EJUP": título, formato e o texto de posts que aquela
+     equipe já escreveu ensinam a voz melhor que qualquer adjetivo de
+     briefing. Sem isso a IA escreve marketing genérico. */
+  const jaSaiu = mem.titulos.length
+    ? `\n\nO QUE ESTA MARCA JÁ PUBLICOU (${mem.n} posts na pauta — escreva no MESMO tom, e não repita estes assuntos):\n`
+      + mem.titulos.slice(0, 10).map(t2 => `· ${t2}`).join('\n')
+      + (mem.fmts.length ? `\nFormatos que ela usa: ${mem.fmts.map(([nm, q]) => `${nm} (${q}x)`).join(', ')}.` : '')
+      + (mem.textos.length ? `\n\nTRECHOS REAIS, para você pegar a voz:\n`
+          + mem.textos.map(t2 => `«${t2.slice(0, 400)}»`).join('\n') : '')
+    : '\n\nAinda não há pauta para esta marca: siga o briefing.';
+  const repetido = Object.entries(mem.usados).filter(([, q]) => q >= 2).map(([nk]) => mdGancho(+nk).nome);
+  return `CLIENTE: ${c.nome}${x.seg ? ` (${x.seg})` : ''}
 BRIEFING DA MARCA: ${x.brief || '—'}
+${(S.md.tema || '').trim() ? `TEMA DE HOJE (o assunto tem de ser este): ${S.md.tema.trim()}` : ''}
 PRODUTO OU OFERTA: ${x.produto}
 PÚBLICO: ${x.publico}
 DOR: ${x.dor}
 DESEJO: ${x.desejo}
 DIFERENCIAL: ${x.dif}
-PLATAFORMAS: ${(S.md.plats || ['ig']).map(p => plats[p] || p).join(', ')}
+PLATAFORMAS: ${(S.md.plats || ['ig']).map(p2 => MD_PLAT_NOME[p2] || p2).join(', ')}${jaSaiu}
 
 PONTO DA MANDALA:
 - Fase: ${f.n} (${f.obj})
 - Temperatura: ${t.n}
-- Gancho: nº ${g.n} ${g.nome} — ${g.o}
+- Gancho: n${'\u00ba'} ${g.n} ${g.nome} — ${g.o}
+${repetido.length ? `\nJá foi usado demais para este cliente, evite repetir: ${repetido.join(', ')}.` : ''}
 
 Crie ${n} ideias de conteúdo para exatamente este ponto. Em "porque", explique em uma frase por que a ideia funciona nesta fase e nesta temperatura.`;
 }
+
 async function mdChamarIA(fase, temp, gancho, n){
   const cfg = mdIaCfg();
   if(!cfg.chave) throw new Error('sem-chave');
@@ -26257,29 +26401,42 @@ function mdApagar(id){
 
 /* ---------- a tela ------------------------------------------------- */
 function mdIdeiaHtml(i, noBanco){
-  const f = MD_FASES[i.fase], t = MD_TEMPS[i.temp], g = mdGancho(i.gancho);
+  /* O banco de ideias é estado COMPARTILHADO, lido do Supabase: pode ter
+     linha gravada por uma versão anterior, ou meio escrita. Um campo
+     faltando não pode derrubar a tela inteira — cai no padrão e segue. */
+  const f = MD_FASES[i.fase] || MD_FASES.descoberta;
+  const t = MD_TEMPS[i.temp] || MD_TEMPS.oportunidade;
+  const g = mdGancho(i.gancho);
   const c = CLIS().find(x => x.id === i.cli);
-  return `<article class="mdIdeia${i.origem === 'ia' ? ' ia' : ''}" data-mdideia="${i.id}" style="--cor:${f.cor}">
-    <div class="tags">
-      ${i.dia !== undefined ? `<span class="tag">${MD_DIAS[i.dia]}</span>` : ''}
-      <span class="tag f">${f.n}</span><span class="tag">${t.n}</span>
-      <span class="tag">nº ${g.n} ${esc(g.nome)}</span><span class="tag">${esc(i.formato || '')}</span>
-      ${i.origem === 'ia' ? '<span class="tag ia">IA</span>' : ''}
-      ${noBanco && c ? `<span class="tag">${esc(c.nome)}</span>` : ''}
-    </div>
+  const aberto = (S.md.abertas || {})[i.id];
+  /* Enxuto por fora, inteiro por dentro. A queixa foi "tem muita
+     informação": o cartão fechado mostra o que decide se a ideia serve —
+     o gancho, o título, a primeira frase e três batidas. Legenda, CTA,
+     hashtags e a justificativa ficam a um toque. */
+  return `<article class="mdIdeia${aberto ? ' aberta' : ''}${i.origem === 'ia' ? ' ia' : ''}" data-mdideia="${i.id}" style="--cor:${f.cor}">
+    <header>
+      <span class="n">${g.n}</span>
+      <span class="quem"><b>${esc(g.nome)}</b><span>${f.n} · ${esc(i.formato || '')}${i.dia !== undefined ? ' · ' + MD_DIAS[i.dia] : ''}${i.origem === 'ia' ? ' · IA' : ''}</span></span>
+      ${noBanco && c ? `<span class="cli">${esc(c.nome)}</span>` : ''}
+    </header>
     <h4>${esc(i.titulo)}</h4>
     <div class="abre">${esc(i.abertura)}</div>
-    <ol>${(i.roteiro || []).map(p => `<li>${esc(p)}</li>`).join('')}</ol>
-    ${i.legenda ? `<div class="legenda">${esc(i.legenda)}</div>` : ''}
-    <div class="cta"><b>CTA</b>${esc(i.cta || '')}</div>
-    ${i.hashtags && i.hashtags.length ? `<div class="hash">${i.hashtags.map(h => esc(h.startsWith('#') ? h : '#' + h)).join(' ')}</div>` : ''}
-    <div class="porque">${esc(i.porque || '')}</div>
+    <ol>${(i.roteiro || []).slice(0, 3).map(p => `<li>${esc(p)}</li>`).join('')}</ol>
+    ${i.norte ? `<div class="norte">${esc(i.norte)}</div>` : ''}
+    <div class="mais" ${aberto ? '' : 'hidden'}>
+      ${(i.roteiro || []).length > 3 ? `<ol start="4">${(i.roteiro || []).slice(3).map(p => `<li>${esc(p)}</li>`).join('')}</ol>` : ''}
+      ${i.legenda ? `<div class="legenda">${esc(i.legenda)}</div>` : ''}
+      <div class="cta"><b>CTA</b>${esc(i.cta || '')}</div>
+      ${i.hashtags && i.hashtags.length ? `<div class="hash">${i.hashtags.map(h => esc(h.startsWith('#') ? h : '#' + h)).join(' ')}</div>` : ''}
+      <div class="porque">${esc(i.porque || '')}</div>
+    </div>
     <div class="acoes">
-      <button class="b pri sm" data-mdinbox="${i.id}" ${i.noInbox ? 'disabled' : ''}>${ic('kanban', 12)} ${i.noInbox ? 'No Inbox' : 'Mandar para o Inbox'}</button>
+      <button class="b pri sm" data-mdinbox="${i.id}" ${i.noInbox ? 'disabled' : ''}>${i.noInbox ? 'No Inbox' : 'Mandar para o Inbox'}</button>
+      <button class="lk" data-mdabrir="${i.id}">${aberto ? 'Menos' : 'Ver tudo'}</button>
       ${noBanco
-        ? `<button class="b gho sm" data-mdapagar="${i.id}">${ic('x', 12)} Apagar</button>`
-        : `<button class="b gho sm" data-mdguardar="${i.id}" ${i.guardada ? 'disabled' : ''}>${i.guardada ? 'Guardada' : 'Guardar'}</button>`}
-      <button class="b gho sm" data-mdcopiar="${i.id}">Copiar</button>
+        ? `<button class="lk" data-mdapagar="${i.id}">Apagar</button>`
+        : `<button class="lk" data-mdguardar="${i.id}" ${i.guardada ? 'disabled' : ''}>${i.guardada ? 'Guardada' : 'Guardar'}</button>`}
+      <button class="lk" data-mdcopiar="${i.id}">Copiar</button>
     </div>
   </article>`;
 }
@@ -26287,74 +26444,92 @@ function mdIdeiaHtml(i, noBanco){
 function agMandala(){
   const c = mdCli(), x = mdCtx();
   const validas = mdTempsDaFase(S.md.fase);
+  const mem = mdMemoria(c.id);
+  const g = mdGancho(S.md.gancho);
   const plats = [['ig', 'Instagram'], ['tt', 'TikTok'], ['li', 'LinkedIn'], ['yt', 'YouTube'], ['fb', 'Facebook']];
   const banco = (S.mandala.banco || []).filter(b => !S.md.soCliente || b.cli === c.id);
-  const campo = (k, rot, dica, area) => `<div class="fld"><label for="md-${k}">${rot}</label>
-    ${area ? `<textarea id="md-${k}" data-mdctx="${k}" placeholder="${esc(dica)}">${esc(x[k] || '')}</textarea>`
-           : `<input id="md-${k}" data-mdctx="${k}" value="${esc(x[k] || '')}" placeholder="${esc(dica)}">`}</div>`;
+  const campo = (k, rot, dica) => `<div class="fld"><label for="md-${k}">${rot}</label>
+    <input id="md-${k}" data-mdctx="${k}" value="${esc(x[k] || '')}" placeholder="${esc(dica)}"></div>`;
   return agShell(`
   <div class="mtop"><div><h1>Mandala Criativa</h1>
-      <p>Fase × temperatura × gancho. Gira, escolhe o cliente, e sai com ideia — nunca mais tela em branco.</p></div>
+      <p>Escolha o cliente, gire, e saia com um norte.</p></div>
     <div style="display:flex;gap:9px;flex-wrap:wrap">
-      <button class="b gho sm" data-mdchave="1">${ic('spark', 13)} ${mdIaLigada() ? 'IA ligada' : 'Configurar a IA'}</button></div></div>
+      <button class="b gho sm" data-mdchave="1">${mdIaLigada() ? 'IA ligada' : 'Configurar a IA'}</button></div></div>
+
+  <div class="mdBarraCli">
+    ${CLIS().map(k => `<button class="mdCli ${k.id === c.id ? 'on' : ''}" data-mdcli="${k.id}">
+      ${avCliente(k, 'cav')}<span>${esc(k.nome)}</span></button>`).join('')}
+  </div>
 
   <div class="mdGrade">
     <div class="mdRoda">
       ${mdRodaSvg()}
-      <div class="mdBotoes">
-        <button class="b pri sm" data-mdgirar="1">${ic('refresh', 13)} Girar a mandala</button>
-        <button class="b gho sm" data-mdsogancho="1">Só outro gancho</button>
-      </div>
-      <div class="mdPlats mdTempChips" style="justify-content:center;margin:10px 0 0">
+      <div class="mdGirar"><button class="b gho sm" data-mdgirar="1">${ic('refresh', 13)} Girar a mandala</button></div>
+      <div class="mdTempChips">
         ${MD_ORDEM_TEMPS.map(t => `<button data-mdtemp="${t}" class="${t === S.md.temp ? 'on' : ''}${validas.includes(t) ? '' : ' fora'}"
           title="${validas.includes(t) ? esc(MD_TEMPS[t].quem) : `Só em ${MD_TEMPS[t].fases.map(f => MD_FASES[f].n).join(' e ')} — toque para ir`}">${MD_TEMPS[t].n}</button>`).join('')}
       </div>
-      <div class="mdLeitura">${mdLeituraHtml()}</div>
     </div>
 
     <div class="mdCtx">
-      <div class="rot">para quem</div>
-      <div class="cchips">${CLIS().map(k => `<button class="cchip ${k.id === c.id ? 'on' : ''}" data-mdcli="${k.id}">
-        ${avCliente(k, 'cav')}${esc(k.nome)}</button>`).join('')}</div>
-      ${c.brief && c.brief !== '—' ? `<div class="mdLeitura" style="margin:0 0 12px;font-size:12px"><span class="tag">briefing</span>${esc(c.brief)}</div>` : ''}
-      <div class="rot" style="margin-top:2px">o que entra nas frases · escreva curto, como fala</div>
-      <div class="frow">
-        ${campo('produto', 'Produto ou oferta', 'Ex.: o vestido de linho da coleção de inverno')}
-        ${campo('publico', 'Para quem', 'Ex.: mulheres de 30 a 45 que trabalham em escritório')}
+      <div class="mdPonto">
+        <div class="topo"><span class="n">${g.n}</span><h2>${esc(g.nome)}</h2>
+          <button class="lk" data-mdsogancho="1">outro gancho</button></div>
+        <p>${esc(g.o.replace(/^\w/, ch => ch.toUpperCase()))}. Para <b>${MD_FASES[S.md.fase].quem}</b>, que <b>${MD_TEMPS[S.md.temp].quem}</b>.</p>
+        <div class="mdLeitura">${mdLeituraHtml()}</div>
       </div>
-      <div class="frow">
-        ${campo('dor', 'A dor', 'Ex.: roupa que amassa e parece desleixada na reunião das 15h')}
-        ${campo('desejo', 'O desejo', 'Ex.: sair de casa arrumada e chegar arrumada')}
-      </div>
-      ${campo('dif', 'O diferencial', 'Ex.: linho lavado que não amassa, feito em Fortaleza')}
-      <div class="rot">onde vai ao ar</div>
-      <div class="mdPlats">${plats.map(([k, n]) => `<button data-mdplat="${k}" class="${(S.md.plats || []).includes(k) ? 'on' : ''}">${n}</button>`).join('')}</div>
+
+      <div class="fld mdTema"><label for="md-tema">Sobre o que? <em>opcional</em></label>
+        <input id="md-tema" value="${esc(S.md.tema || '')}"
+          placeholder="Ex.: a reforma tributária que entra em janeiro"></div>
+
       <div class="mdAcoes">
-        <button class="b pri sm" data-mdgerar="1">${ic('zap', 13)} Gerar 3 ideias</button>
-        <button class="b gho sm" data-mdsemana="1">${ic('cal', 13)} Montar a semana</button>
-        <button class="b gho sm" data-mdia="1" ${S.md.pensando ? 'disabled' : ''}>${ic('spark', 13)} Desenvolver com IA</button>
+        <button class="b pri" data-mdgerar="1">Me dá 3 ideias</button>
+        <button class="b gho" data-mdsemana="1">A semana toda</button>
+        <button class="b gho" data-mdia="1" ${S.md.pensando ? 'disabled' : ''}>Desenvolver com IA</button>
       </div>
-      <div class="mdIA ${mdIaLigada() ? 'ligada' : ''}"><i></i>${mdIaLigada() ? 'IA ligada · Claude Opus 5 · a chave fica só neste aparelho' : 'sem IA: o motor gera sozinho; com a chave, a IA desenvolve'}</div>
+
+      <div class="mdSabe">
+        <span>${mem.n
+          ? `<b>${mem.n}</b> ${mem.n === 1 ? 'post na pauta' : 'posts na pauta'} da ${esc(c.nome)}${
+              mem.fmts.length ? ` · costuma ser ${esc(mem.fmts.slice(0, 2).map(f => f[0]).join(' e '))}` : ''}${
+              mem.plats.length ? ` · ${esc(mem.plats.slice(0, 2).map(k => MD_PLAT_NOME[k[0]] || k[0]).join(' e '))}` : ''}`
+          : `Sem pauta ainda para a ${esc(c.nome)} — as ideias saem do briefing.`}</span>
+        <button class="lk" data-mddetalhe="1">${S.md.detalhe ? 'esconder' : 'ajustar o contexto'}</button>
+      </div>
+
+      <div class="mdDetalhe" ${S.md.detalhe ? '' : 'hidden'}>
+        ${c.brief && c.brief !== '—' ? `<p class="brief">${esc(c.brief)}</p>` : ''}
+        <div class="frow">
+          ${campo('produto', 'Produto ou oferta', 'o que vocês vendem')}
+          ${campo('publico', 'Para quem', 'quem compra')}
+        </div>
+        <div class="frow">
+          ${campo('dor', 'A dor', 'o que incomoda antes')}
+          ${campo('desejo', 'O desejo', 'como fica depois')}
+        </div>
+        ${campo('dif', 'O diferencial', 'por que vocês e não outro')}
+        <label class="rot">onde vai ao ar</label>
+        <div class="mdPlats">${plats.map(([k, n]) => `<button data-mdplat="${k}" class="${(S.md.plats || []).includes(k) ? 'on' : ''}">${n}</button>`).join('')}</div>
+      </div>
     </div>
   </div>
 
   <div class="mdIdeias">
-    <div class="cab"><h3>${S.md.ideias.length ? esc(S.md.rotulo || 'Ideias') : 'Ideias'}</h3><span class="sp"></span>
-      ${S.md.ideias.length ? `<button class="b gho sm" data-mdlimpar="1">Limpar</button>` : ''}</div>
-    ${S.md.pensando ? `<div class="mdPensando"><i></i> A IA está lendo o briefing e desenvolvendo três caminhos…</div>` : ''}
+    ${S.md.pensando ? `<div class="mdPensando"><i></i> A IA está lendo a pauta da ${esc(c.nome)} e desenvolvendo três caminhos…</div>` : ''}
     ${S.md.erro ? `<div class="mdVazio" style="border-color:var(--danger);color:var(--danger)">${esc(S.md.erro)}</div>` : ''}
     ${!S.md.pensando && !S.md.erro && !S.md.ideias.length
-      ? `<div class="mdVazio">Gire a roda ou escolha um ponto nela, conte sobre o cliente, e toque em <b>Gerar</b>.<br>
-          Cada ideia sai com abertura, roteiro, CTA da fase e o motivo de funcionar ali.</div>` : ''}
-    ${S.md.ideias.length ? `<div class="mdLista">${S.md.ideias.map(i => mdIdeiaHtml(i, false)).join('')}</div>` : ''}
+      ? `<div class="mdVazio">Toque em <b>Me dá 3 ideias</b>.<br>Cada uma vem com a primeira frase, três batidas e de onde puxar.</div>` : ''}
+    ${S.md.ideias.length ? `<div class="cab"><h3>${esc(S.md.rotulo || 'Ideias')}</h3><span class="sp"></span>
+      <button class="lk" data-mdlimpar="1">Limpar</button></div>
+      <div class="mdLista">${S.md.ideias.map(i => mdIdeiaHtml(i, false)).join('')}</div>` : ''}
   </div>
 
   ${(S.mandala.banco || []).length ? `<div class="mdBanco">
-    <div class="cab" style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px">
-      <h3 style="font-family:var(--serif);font-weight:400;font-size:20px;color:var(--ink-50);margin:0">Banco de ideias</h3>
+    <div class="cab"><h3>Banco de ideias</h3>
       <span style="font-size:12px;color:var(--ink-400)">${banco.length} guardada${banco.length === 1 ? '' : 's'}${S.md.soCliente ? ` de ${esc(c.nome)}` : ''}</span>
-      <span class="sp" style="flex:1"></span>
-      <button class="b gho sm" data-mdsocli="1">${S.md.soCliente ? 'Ver de todos' : 'Só deste cliente'}</button></div>
+      <span class="sp"></span>
+      <button class="lk" data-mdsocli="1">${S.md.soCliente ? 'ver de todos' : 'só deste cliente'}</button></div>
     <div class="mdLista">${banco.map(b => mdIdeiaHtml(b, true)).join('')}</div>
   </div>` : ''}`);
 }
@@ -26413,7 +26588,8 @@ addEventListener('click', e => {
   const t = e.target.closest && e.target.closest(
     '[data-mdfase],[data-mdtemp],[data-mdgancho],[data-mdgirar],[data-mdsogancho],[data-mdcli],[data-mdplat],'
     + '[data-mdgerar],[data-mdsemana],[data-mdia],[data-mdinbox],[data-mdguardar],[data-mdapagar],[data-mdcopiar],'
-    + '[data-mdlimpar],[data-mdchave],[data-mdchaveok],[data-mdchavex],[data-mdfechar],[data-mdsocli],[data-mdconsole]');
+    + '[data-mdlimpar],[data-mdchave],[data-mdchaveok],[data-mdchavex],[data-mdfechar],[data-mdsocli],[data-mdconsole],'
+    + '[data-mdabrir],[data-mddetalhe]');
   if(!t) return;
   e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
   const d = t.dataset;
@@ -26438,7 +26614,20 @@ addEventListener('click', e => {
     const i = mdAchar(d.mdcopiar); if(!i) return;
     return copiarTexto(mdTextoDaIdeia(i)).then(ok => toast(ok ? 'Ideia copiada, inteira.' : 'Não deu para copiar aqui.'));
   }
-  if(d.mdlimpar !== undefined){ S.md.ideias = []; S.md.erro = null; render(); return; }
+  if(d.mdlimpar !== undefined){ S.md.ideias = []; S.md.erro = null; S.md.abertas = {}; render(); return; }
+  if(d.mdabrir !== undefined){
+    S.md.abertas[d.mdabrir] = !S.md.abertas[d.mdabrir];
+    /* só o cartão muda: redesenhar a tela inteira perderia a rolagem */
+    const art = t.closest('.mdIdeia'), i = mdAchar(d.mdabrir);
+    if(art && i) art.outerHTML = mdIdeiaHtml(i, !!(S.mandala.banco || []).find(b => b.id === i.id && !S.md.ideias.includes(i)));
+    return;
+  }
+  if(d.mddetalhe !== undefined){
+    S.md.detalhe = !S.md.detalhe;
+    const painel = document.querySelector('.mdDetalhe');
+    if(painel){ painel.hidden = !S.md.detalhe; t.textContent = S.md.detalhe ? 'esconder' : 'ajustar o contexto'; }
+    return;
+  }
   if(d.mdsocli !== undefined){ S.md.soCliente = !S.md.soCliente; render(); return; }
   if(d.mdconsole !== undefined)
     return copiarTexto('https://console.anthropic.com/settings/keys').then(ok =>
@@ -26460,6 +26649,7 @@ addEventListener('click', e => {
    roubaria o foco */
 addEventListener('input', e => {
   const el = e.target;
+  if(el && el.id === 'md-tema'){ S.md.tema = el.value; return; }
   if(!el || !el.dataset || el.dataset.mdctx === undefined) return;
   const c = mdCli();
   S.mandala.ctx[c.id] = S.mandala.ctx[c.id] || {};
