@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-03 17:45 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-03 18:00 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15870,7 +15870,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v137 · 3 set · luz, instrução e colab';
+const VERSAO_PROTOTIPO = 'v138 · 3 set · link de visualização do card';
 
 menuSheet = (function(orig){
   return function(){
@@ -29463,4 +29463,292 @@ agEstudio = (function(orig){
                .replace('</div></main>', '</div></div></main>');
   };
 })(agEstudio);
+</script>
+<style>
+/* =====================================================================
+   v138 — o link de visualização.
+
+   O fundador pediu: "cada card ter um link pra eu mandar pra alguém
+   visualizar". A casa já tinha dois links: o de aprovação, que é a chave
+   do cliente inteiro, e o `#post=`, que é atalho de quem já está dentro.
+   Faltava o terceiro: UM card, aberto por quem não tem conta, sem
+   entrar em nada — e sem ver o resto da operação.
+
+   A folha mostra o que a peça É e esconde o que é da casa: pendência,
+   observação, quem é o responsável, se está feito. Quem recebe precisa
+   entender a peça, não a produção dela.
+   ================================================================== */
+body.soVer{ overflow-x:hidden }
+body.soVer #root, body.soVer #abertura, body.soVer #quemEsta,
+body.soVer #entrarMaestro, body.soVer .ctx,
+/* nada da casa aparece por cima da folha: o botão de atualizar, a barra
+   de abas do celular e o menu fixo são da operação, não de quem lê */
+body.soVer #btAtualizar, body.soVer .tabbar, body.soVer .mnFixa,
+body.soVer .cltab{ display:none !important }
+
+#verFolha{ min-height:100dvh; padding:0 0 calc(28px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(120% 60% at 50% 0%, #1C1C1C 0%, var(--ink-950) 58%, var(--ink-950) 100%);
+}
+.vfTopo{ display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  max-width:760px; margin:0 auto; padding:20px 20px 0 }
+.vfMarca{ display:flex; align-items:center; gap:10px; min-width:0 }
+.vfMarca .cliFoto{ width:34px; height:34px; border-radius:9px; font-size:11px }
+.vfMarca b{ display:block; font-size:15px; font-weight:600; color:var(--ink-100); line-height:1.2 }
+.vfMarca span{ font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-500) }
+.vfSelo{ margin-left:auto; font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--brass-300); border:1px solid rgba(200,150,58,.35); border-radius:999px; padding:5px 11px; white-space:nowrap }
+
+.vfFolha{ max-width:760px; margin:16px auto 0; background:var(--ink-900);
+  border:1px solid var(--ink-850); border-radius:18px; padding:24px 22px 26px;
+  box-shadow:0 30px 80px -40px rgba(0,0,0,.9) }
+.vfMeta{ display:flex; gap:7px; flex-wrap:wrap; align-items:center; margin:0 0 14px }
+.vfMeta span{ font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-300); border:1px solid var(--ink-800); border-radius:999px; padding:4px 10px }
+.vfMeta span.q{ color:var(--brass-300); border-color:rgba(200,150,58,.35) }
+.vfMeta span.p{ display:inline-flex; align-items:center; gap:6px }
+.vfMeta span.p i{ width:7px; height:7px; border-radius:50%; flex:none }
+.vfFolha h1{ font-family:var(--serif); font-weight:400; font-size:clamp(24px, 5.4vw, 33px);
+  line-height:1.18; color:var(--ink-50); margin:0 0 18px; letter-spacing:-.01em }
+.vfBloco{ border-top:1px solid var(--ink-850); padding:16px 0 0; margin:16px 0 0 }
+.vfBloco:first-of-type{ border-top:0; padding-top:0; margin-top:0 }
+.vfBloco > .rot{ display:flex; align-items:baseline; gap:9px; margin:0 0 8px }
+.vfBloco > .rot b{ font-family:var(--mono); font-size:9.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-400); font-weight:500 }
+.vfBloco > .rot .cp{ margin-left:auto; background:none; border:0; padding:2px 6px; border-radius:6px;
+  font:inherit; font-size:11.5px; color:var(--ink-500); cursor:pointer }
+.vfBloco > .rot .cp:hover{ color:var(--brass-300); background:var(--ink-850) }
+.vfBloco p{ margin:0; font-size:15px; line-height:1.62; color:var(--ink-100); white-space:pre-wrap }
+.vfBloco p + p{ margin-top:10px }
+.vfSub{ font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--brass-300); display:block; margin:0 0 3px }
+.vfTC{ display:inline-flex; align-items:center; gap:7px; margin:0 7px 7px 0; padding:5px 11px;
+  border:1px solid var(--ink-800); border-radius:999px; font-family:var(--mono); font-size:11.5px; color:var(--ink-200) }
+.vfTC .ord{ color:var(--brass-400) }
+.vfArtes{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px }
+.vfArte{ position:relative; aspect-ratio:4/5; border-radius:12px; overflow:hidden;
+  background:var(--ink-850); border:1px solid var(--ink-800); display:grid; place-items:center }
+.vfArte img, .vfArte video{ width:100%; height:100%; object-fit:cover; display:block }
+.vfArte .semArte{ text-align:center; padding:14px; font-size:11.5px; line-height:1.45; color:var(--ink-500) }
+.vfArte .semArte b{ display:block; color:var(--ink-300); font-size:12px; margin-bottom:3px }
+.vfPe{ max-width:760px; margin:18px auto 0; padding:0 20px; display:flex; gap:10px;
+  align-items:center; flex-wrap:wrap; font-size:12px; color:var(--ink-500) }
+.vfPe .lg{ display:inline-flex; align-items:center; gap:7px; color:var(--ink-300) }
+.vfPe .lg svg{ width:17px; height:17px; color:var(--brass-500) }
+.vfPe .sp{ flex:1 }
+.vfAviso{ max-width:760px; margin:60px auto; padding:26px 22px; text-align:center;
+  border:1px solid var(--ink-850); border-radius:18px; background:var(--ink-900) }
+.vfAviso h2{ font-family:var(--serif); font-weight:400; font-size:24px; color:var(--ink-100); margin:0 0 8px }
+.vfAviso p{ margin:0; font-size:14px; line-height:1.6; color:var(--ink-400) }
+.vfCarregando{ max-width:760px; margin:80px auto; text-align:center; color:var(--ink-500); font-size:13.5px }
+.vfCarregando i{ display:inline-block; width:22px; height:22px; border-radius:50%;
+  border:2px solid var(--ink-800); border-top-color:var(--brass-500); animation:vfGira .8s linear infinite; margin-bottom:12px }
+@keyframes vfGira{ to{ transform:rotate(360deg) } }
+
+/* o botão do link, no rodapé do card */
+.vzLinkFeito{ font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--brass-300); background:none; border:0; cursor:pointer; padding:6px 4px; text-decoration:underline }
+@media (max-width:560px){
+  .vfFolha{ margin:14px 12px 0; padding:20px 17px 22px; border-radius:16px }
+  .vfTopo{ padding:16px 16px 0 }
+}
+@media print{
+  #verFolha{ background:#fff }
+  .vfFolha{ background:#fff; border-color:#ddd; box-shadow:none; color:#111 }
+  .vfFolha h1, .vfBloco p{ color:#111 }
+  .vfSelo, .vfPe{ display:none }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v138 — o link de visualização de um card.
+   ================================================================== */
+const verTokenNovo = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+/* o token mora no próprio card: viaja com a pauta para o banco, e some
+   com ela. Gerar outro invalida o que já foi mandado. */
+function verToken(cliId, p, forcar){
+  if(!p) return null;
+  if(!p.verTok || forcar){
+    p.verTok = verTokenNovo();
+    if(typeof sbAgendar === 'function') sbAgendar();
+  }
+  return p.verTok;
+}
+const linkDeVer = (cliId, p) =>
+  `${location.origin}${location.pathname}?ver=${encodeURIComponent(cliId)}.${p.id}.${verToken(cliId, p)}`;
+
+/* ---------- a folha ---------------------------------------------------- */
+function vfPlatsHtml(p){
+  return (p.plats || []).map(k => PLATS[k]
+    ? `<span class="p"><i style="background:${PLATS[k].c}"></i>${esc(PLATS[k].n)}</span>` : '').join('');
+}
+function vfBloco(rot, corpo, copiavel){
+  if(!corpo) return '';
+  return `<div class="vfBloco"><div class="rot"><b>${esc(rot)}</b>${
+    copiavel ? `<button type="button" class="cp" data-vfcopiar="${esc(copiavel)}">copiar</button>` : ''
+  }</div>${corpo}</div>`;
+}
+function verFolhaHtml(c, p){
+  const fmts = p.fmts && p.fmts.length ? p.fmts : [p.fmt];
+  const ms = (typeof materiaisDe === 'function' ? materiaisDe(p.id) : []).filter(m => m.tipo !== 'link');
+  const par = t => `<p>${esc(t)}</p>`;
+  const r = p.roteiro || {}, corte = p.corte || {};
+  const agencia = (S.agencia && S.agencia.nome) || 'a agência';
+  return `<div id="verFolha">
+    <div class="vfTopo">
+      <div class="vfMarca">${typeof rostoCli === 'function' ? rostoCli(c) : ''}
+        <span><b>${esc(c.nome)}</b>${c.seg ? `<span>${esc(c.seg)}</span>` : ''}</span></div>
+      <span class="vfSelo">somente leitura</span>
+    </div>
+    <div class="vfFolha">
+      <div class="vfMeta">
+        ${p.data ? `<span class="q">${esc(rotuloData(p.data))}</span>` : ''}
+        ${p.hora ? `<span>${esc(p.hora)}</span>` : ''}
+        ${fmts.filter(Boolean).map(f => `<span>${esc(f)}</span>`).join('')}
+        ${vfPlatsHtml(p)}
+      </div>
+      <h1>${esc(p.t)}</h1>
+      ${vfBloco('Conteúdo', p.texto ? par(p.texto) : '', p.texto ? 'texto' : '')}
+      ${vfBloco('Legenda', p.legenda ? par(p.legenda) : '', p.legenda ? 'legenda' : '')}
+      ${(r.hook || r.des || r.cta) ? vfBloco('Roteiro',
+        `${r.hook ? `<span class="vfSub">Hook</span>${par(r.hook)}` : ''}
+         ${r.des ? `<span class="vfSub" style="margin-top:12px">Desenvolvimento</span>${par(r.des)}` : ''}
+         ${r.cta ? `<span class="vfSub" style="margin-top:12px">CTA</span>${par(r.cta)}` : ''}`) : ''}
+      ${(p.telas && p.telas.length) ? vfBloco('Telas do story',
+        p.telas.map((t, i) => `<span class="vfSub">Tela ${i + 1}</span>${par(t)}`).join('')) : ''}
+      ${(corte.ep || (corte.tcs || []).length) ? vfBloco('Corte',
+        `${corte.ep ? par(corte.ep) : ''}<div style="margin-top:9px">${(corte.tcs || []).map(tc =>
+          `<span class="vfTC"><span class="ord">${esc(String(tc.ordem ?? ''))}</span>${esc(tc.de || '?')} → ${esc(tc.ate || '?')}</span>`).join('')}</div>`) : ''}
+      ${vfBloco('CTA', p.cta ? par(p.cta) : '', p.cta ? 'cta' : '')}
+      ${p.sticker ? vfBloco('Interação', par(p.sticker)) : ''}
+      ${ms.length ? vfBloco(`Arte (${ms.length})`, `<div class="vfArtes">${ms.slice(0, 8).map(m => `<div class="vfArte">${
+        m.url && m.tipo === 'imagem' ? `<img src="${m.url}" alt="${esc(m.nome || 'arte')}">`
+        : m.url && m.tipo === 'video' ? `<video src="${m.url}" ${m.poster ? `poster="${m.poster}"` : ''} controls playsinline preload="metadata"></video>`
+        : `<span class="semArte"><b>${esc(m.nome || 'arquivo')}</b>a arte está no aparelho de quem montou o card</span>`
+      }</div>`).join('')}</div>`) : ''}
+    </div>
+    <div class="vfPe">
+      <span class="lg">${typeof LOGO === 'function' ? LOGO('var(--brass-500)') : ''} Maestro</span>
+      <span class="sp"></span>
+      <span>enviado por ${esc(agencia)}</span>
+    </div>
+  </div>`;
+}
+function vfAviso(titulo, texto){
+  return `<div id="verFolha"><div class="vfAviso"><h2>${esc(titulo)}</h2><p>${esc(texto)}</p></div></div>`;
+}
+
+/* ---------- entrar pelo link ------------------------------------------- */
+(function(){
+  const m = /[?&]ver=([^&.]+)\.(\d+)\.([^&]+)/.exec(location.search);
+  if(!m) return;
+  const cli = decodeURIComponent(m[1]), id = +m[2], tok = decodeURIComponent(m[3]);
+  S.soVer = true;
+  document.documentElement.classList.remove('abrindo');   /* a cortina não é para quem vem ver um card */
+  const casa = () => {
+    document.body.classList.add('soVer');
+    document.getElementById('abertura')?.remove();
+    document.getElementById('quemEsta')?.remove();
+    document.getElementById('entrarMaestro')?.remove();
+  };
+  /* a porta é pergunta para a equipe; quem tem o link do card já disse
+     a que veio, e não vai criar conta para ler uma peça */
+  const trancar = () => {
+    if(typeof abrirQuemEsta === 'function' && !abrirQuemEsta._soVer){
+      const o = abrirQuemEsta; abrirQuemEsta = function(){ if(S.soVer) return; return o.apply(this, arguments); };
+      abrirQuemEsta._soVer = true;
+    }
+    if(window.MaestroPorta && !window.MaestroPorta._soVer){
+      const o = window.MaestroPorta.pedir;
+      window.MaestroPorta.pedir = function(){ if(S.soVer) return; return o.apply(this, arguments); };
+      window.MaestroPorta._soVer = true;
+    }
+  };
+  let caixa = null;
+  const pintar = html => {
+    if(!caixa){ caixa = document.createElement('div'); caixa.id = 'verPagina'; document.body.appendChild(caixa); }
+    caixa.innerHTML = html;
+  };
+  let pronto = false, achouCard = false;
+  /* NÃO JULGAR O TOKEN CEDO DEMAIS. O card de exemplo já existe no
+     código, mas o token só existe no banco: decidir na primeira
+     tentativa diria "este link não vale mais" para todo link legítimo,
+     no meio segundo antes de o banco responder. Só o token que CASA
+     encerra a espera; o resto continua tentando até o prazo. */
+  function tentar(){
+    if(pronto) return true;
+    casa(); trancar();
+    const c = (typeof CLIS === 'function' ? CLIS() : []).find(x => x.id === cli);
+    const p = c && (S.pautas[cli] || []).find(x => x.id === id);
+    if(!c || !p) return false;
+    achouCard = true;
+    if(!p.verTok || p.verTok !== tok) return false;
+    pronto = true;
+    document.title = `${p.t} · ${c.nome}`;
+    pintar(verFolhaHtml(c, p));
+    return true;
+  }
+  casa(); trancar();
+  pintar(`<div class="vfCarregando"><i></i><br>abrindo o card…</div>`);
+  addEventListener('DOMContentLoaded', casa);
+  [60, 200, 500, 900, 1500, 2400, 3600, 5200, 7000].forEach(t => setTimeout(tentar, t));
+  setTimeout(() => {
+    if(pronto) return;
+    pintar(achouCard
+      ? vfAviso('Este link não vale mais',
+          'Quem mandou gerou um link novo para este card, ou ele foi retirado do ar. Peça o link atualizado.')
+      : vfAviso('Não achei este card',
+          'O link pode estar incompleto, ou o card foi apagado. Peça o link de novo para quem mandou.'));
+  }, 8200);
+  /* copiar de dentro da folha: quem recebe costuma querer a legenda */
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-vfcopiar]'); if(!b) return;
+    e.preventDefault();
+    const p = (S.pautas[cli] || []).find(x => x.id === id); if(!p) return;
+    const txt = { texto:p.texto, legenda:p.legenda, cta:p.cta }[b.dataset.vfcopiar] || '';
+    copiarTexto(txt).then(ok => toast(ok ? 'Copiado.' : 'Não deu para copiar aqui.'));
+  }, true);
+})();
+
+/* ---------- o botão, no rodapé do card --------------------------------- */
+modalVer = (function(orig){
+  return function(id){
+    const html = orig.apply(this, arguments);
+    if(!html || !(S.usuario && S.usuario.tipo === 'agencia')) return html;
+    const p = S.pauta.find(x => x.id === id); if(!p) return html;
+    const feito = !!p.verTok;
+    const botao = `<button class="b gho" data-verlink="${p.id}" title="Um link só deste card, para quem não tem conta">${ic('enviar', 13)} Link de visualização</button>`
+      + (feito ? `<button type="button" class="vzLinkFeito" data-vernovo="${p.id}" title="O link antigo deixa de valer">gerar outro</button>` : '');
+    return html.replace('<button class="b gho" data-modalno="1">Fechar</button>',
+      x => x + botao);
+  };
+})(modalVer);
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-verlink],[data-vernovo]');
+  if(!t) return;
+  e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+  const novo = t.dataset.vernovo !== undefined;
+  const id = +(t.dataset.verlink || t.dataset.vernovo);
+  const c = cliAtual(), p = S.pauta.find(x => x.id === id);
+  if(!c || !p) return;
+  if(novo) verToken(c.id, p, true);
+  const url = linkDeVer(c.id, p);
+  /* no celular, o share do sistema é o caminho curto para o WhatsApp */
+  /* o rodapé muda de estado ao ganhar link — e S.modal guarda o HTML
+     antigo, de antes de o token existir: redesenhar o modal, não a capa */
+  const repintar = () => { if(S.modal){ S.modal = modalVer(p.id); renderLayer(); } };
+  if(!novo && navigator.share){
+    navigator.share({ title:p.t, text:`${p.t} — ${c.nome}`, url })
+      .then(repintar)
+      .catch(() => copiarTexto(url).then(ok => { repintar(); toast(ok ? 'Link copiado. Quem abrir vê só este card, sem entrar na Maestro.' : url); }));
+    return;
+  }
+  copiarTexto(url).then(ok => {
+    repintar();
+    toast(ok ? (novo ? 'Link novo copiado. O anterior deixou de valer.'
+                     : 'Link copiado. Quem abrir vê só este card, sem entrar na Maestro.')
+             : url);
+  });
+}, true);
 </script>
