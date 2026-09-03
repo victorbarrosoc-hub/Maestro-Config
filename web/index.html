@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-02 21:24 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-03 03:12 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15832,7 +15832,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v124 · 2 set · o ciclo virou coisa de mexer';
+const VERSAO_PROTOTIPO = 'v125 · 3 set · a Mandala Criativa';
 
 menuSheet = (function(orig){
   return function(){
@@ -25563,4 +25563,892 @@ if(document.getElementById('fluxoPagina')){
   velho.remove(); document.body.classList.remove('soFluxo');
   montarFluxoPdca();
 }
+</script>
+<style>
+/* =====================================================================
+   v125 — a Mandala Criativa.
+
+   A mandala de conteúdo do método Venda Todo Santo Dia (Leandro Ladeira)
+   vira uma tela da Maestro: quatro fases do funil no anel de fora,
+   três temperaturas de público no anel do meio, dezoito ganchos no anel
+   de dentro. Gira, escolhe o cliente, e sai com ideia — a agência nunca
+   mais fica na tela em branco.
+
+   Desktop: a roda à esquerda, o contexto à direita, as ideias embaixo.
+   Celular: empilhado, a roda primeiro e menor. Nada rola de lado.
+   ================================================================== */
+.mdGrade{ display:grid; grid-template-columns:minmax(300px, 420px) 1fr; gap:22px; align-items:start }
+@media(max-width:960px){ .mdGrade{ grid-template-columns:1fr; gap:14px } }
+
+/* ---------- a roda ---------- */
+.mdRoda{ position:relative }
+.mdRoda > svg{ display:block; width:100%; max-width:420px; margin:0 auto; user-select:none;
+  -webkit-tap-highlight-color:transparent }
+.mdRoda .fase path{ fill:var(--ink-850); stroke:var(--ink-950); stroke-width:2; cursor:pointer;
+  transition:fill .25s var(--eo) }
+.mdRoda .fase:hover path{ fill:var(--ink-800) }
+.mdRoda .fase.on path{ fill:var(--cor) }
+.mdRoda .fase text{ font:600 11.5px var(--sans); letter-spacing:.14em; fill:var(--ink-300);
+  pointer-events:none; text-transform:uppercase }
+.mdRoda .fase.on text{ fill:var(--ink-950) }
+.mdRoda .temp path{ fill:var(--ink-900); stroke:var(--ink-950); stroke-width:1.5; cursor:pointer;
+  transition:fill .25s var(--eo) }
+.mdRoda .temp:hover path{ fill:var(--ink-850) }
+.mdRoda .temp.on path{ fill:rgba(200,150,58,.28) }
+.mdRoda .temp.fora path{ opacity:.35; cursor:not-allowed }
+.mdRoda .temp text{ font:500 7.5px var(--mono); letter-spacing:.16em; fill:var(--ink-400);
+  pointer-events:none; text-transform:uppercase }
+.mdRoda .temp.on text{ fill:var(--brass-300) }
+.mdRoda .gancho path{ fill:var(--ink-900); stroke:var(--ink-950); stroke-width:1.2; cursor:pointer;
+  transition:fill .2s var(--eo) }
+.mdRoda .gancho:hover path{ fill:var(--ink-800) }
+.mdRoda .gancho.on path{ fill:rgba(200,150,58,.42); stroke:var(--brass-500); stroke-width:1.5 }
+.mdRoda .gancho text{ font:600 8.5px var(--mono); fill:var(--ink-400); pointer-events:none }
+.mdRoda .gancho.on text{ fill:var(--ink-50) }
+.mdRoda .agulha{ fill:var(--brass-300); transform-origin:200px 200px;
+  transition:transform 2.6s cubic-bezier(.17,.84,.3,1) }
+.mdRoda .agulha.ponta{ fill:var(--brass-400) }
+.mdRoda .miolo circle{ fill:var(--ink-950); stroke:var(--brass-600); stroke-width:1.5 }
+.mdRoda .miolo .n{ font:600 9px var(--mono); letter-spacing:.14em; fill:var(--brass-500) }
+.mdRoda .miolo .nome{ font:400 13px var(--serif); fill:var(--ink-50) }
+.mdRoda .miolo .sub{ font:400 8px var(--mono); letter-spacing:.1em; fill:var(--ink-400);
+  text-transform:uppercase }
+@media(prefers-reduced-motion:reduce){ .mdRoda .agulha{ transition:none } }
+
+.mdBotoes{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:10px 0 0 }
+.mdLeitura{ margin:12px 0 0; padding:12px 14px; border:1px solid var(--ink-800); border-radius:12px;
+  background:var(--ink-950); font-size:13px; line-height:1.5; color:var(--ink-300) }
+.mdLeitura b{ color:var(--ink-50); font-weight:600 }
+.mdLeitura .tag{ display:inline-block; font-family:var(--mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--brass-400); margin-right:8px }
+
+/* ---------- o contexto ---------- */
+.mdCtx .rot{ font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-500); margin:0 0 8px }
+.mdCtx .cchips{ margin:0 0 12px }
+.mdCtx .fld{ margin-bottom:10px }
+.mdCtx .fld input, .mdCtx .fld textarea{ font-size:13.5px }
+.mdCtx .fld textarea{ min-height:58px }
+.mdPlats{ display:flex; gap:6px; flex-wrap:wrap; margin:0 0 12px }
+.mdPlats button{ padding:6px 11px; border-radius:999px; border:1px solid var(--ink-700);
+  color:var(--ink-300); font-size:12px; background:var(--ink-950) }
+.mdPlats button.on{ border-color:var(--brass-500); color:var(--brass-300); background:rgba(200,150,58,.1) }
+.mdAcoes{ display:flex; gap:9px; flex-wrap:wrap; margin:4px 0 0 }
+.mdAcoes .b{ gap:7px }
+.mdIA{ display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:9.5px;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--ink-500); margin-top:10px }
+.mdIA i{ width:7px; height:7px; border-radius:50%; background:var(--ink-600); font-style:normal }
+.mdIA.ligada i{ background:var(--encore) }
+
+/* ---------- as ideias ---------- */
+.mdIdeias{ margin-top:22px }
+.mdIdeias .cab{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin:0 0 10px }
+.mdIdeias .cab h3{ font-family:var(--serif); font-weight:400; font-size:20px; color:var(--ink-50); margin:0 }
+.mdIdeias .cab .sp{ flex:1 }
+.mdLista{ display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:12px }
+.mdIdeia{ border:1px solid var(--ink-800); border-radius:13px; padding:14px 15px; background:var(--ink-900);
+  display:grid; gap:9px; align-content:start }
+.mdIdeia.ia{ border-color:rgba(200,150,58,.45) }
+.mdIdeia .tags{ display:flex; gap:6px; flex-wrap:wrap }
+.mdIdeia .tag{ font-family:var(--mono); font-size:8.5px; letter-spacing:.14em; text-transform:uppercase;
+  padding:3px 7px; border-radius:6px; border:1px solid var(--ink-700); color:var(--ink-400) }
+.mdIdeia .tag.f{ color:var(--cor); border-color:var(--cor) }
+.mdIdeia .tag.ia{ color:var(--brass-300); border-color:var(--brass-600) }
+.mdIdeia h4{ font-family:var(--serif); font-weight:400; font-size:17px; line-height:1.25; color:var(--ink-50); margin:0 }
+.mdIdeia .abre{ font-size:13px; line-height:1.5; color:var(--ink-100); border-left:2px solid var(--brass-600);
+  padding-left:10px; font-style:italic }
+.mdIdeia ol{ margin:0; padding-left:18px; font-size:12.5px; line-height:1.5; color:var(--ink-300) }
+.mdIdeia ol li{ margin:0 0 3px }
+.mdIdeia .cta{ font-size:12.5px; color:var(--ink-100) }
+.mdIdeia .cta b{ font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-500); margin-right:6px; font-weight:500 }
+.mdIdeia .legenda{ font-size:12.5px; line-height:1.5; color:var(--ink-300); white-space:pre-wrap }
+.mdIdeia .porque{ font-size:11.5px; line-height:1.45; color:var(--ink-500) }
+.mdIdeia .hash{ font-size:11.5px; color:var(--brass-500) }
+.mdIdeia .acoes{ display:flex; gap:7px; flex-wrap:wrap; margin-top:2px }
+.mdIdeia .acoes .b{ padding:7px 11px; font-size:12px }
+.mdVazio{ border:1px dashed var(--ink-700); border-radius:13px; padding:22px; text-align:center;
+  color:var(--ink-400); font-size:13px; line-height:1.5 }
+.mdPensando{ display:flex; align-items:center; gap:10px; padding:14px; border:1px solid var(--ink-800);
+  border-radius:12px; color:var(--ink-300); font-size:13px }
+.mdPensando i{ width:10px; height:10px; border-radius:50%; border:2px solid var(--brass-500);
+  border-top-color:transparent; animation:mdGira .9s linear infinite; font-style:normal }
+@keyframes mdGira{ to{ transform:rotate(360deg) } }
+
+/* o banco de ideias guardadas */
+.mdBanco{ margin-top:22px }
+.mdBanco .mdIdeia{ background:var(--ink-950) }
+
+/* a chave da IA */
+.mdChave .aviso{ font-size:12.5px; line-height:1.5; color:var(--ink-300); margin:0 0 12px }
+.mdChave code{ font-family:var(--mono); font-size:11.5px; color:var(--brass-300) }
+
+@media(max-width:860px){
+  .mdRoda > svg{ max-width:340px }
+  .mdIdeias .cab h3{ font-size:18px }
+  .mdLista{ grid-template-columns:1fr }
+  .mdAcoes .b{ flex:1 1 auto; justify-content:center }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v125 — a Mandala Criativa.
+
+   O fundador trouxe a mandala de conteúdo do método Venda Todo Santo
+   Dia e pediu uma ferramenta para a agência nunca ficar sem ideia. A
+   mandala é um sistema de coordenadas: FASE do funil (onde o público
+   está) × TEMPERATURA (o quanto ele sabe do problema) × GANCHO (o
+   jeito de contar). Qualquer ponto nesse espaço é uma ideia; o bloqueio
+   criativo é ficar parado num ponto só. A roda gira para tirar você
+   dele.
+
+   Três camadas, de propósito:
+   1. a RODA — o desenho do método, interativo, que sorteia;
+   2. o MOTOR — gera ideias na hora, sem chave e sem internet, a partir
+      do contexto do cliente. É o piso: sempre funciona;
+   3. a IA — com a chave da Anthropic, desenvolve a ideia inteira
+      (abertura, roteiro, legenda, hashtags) seguindo o método. É o teto.
+
+   E a ideia não morre na ferramenta: vai para o Inbox do Ensaio, que é
+   por onde toda ideia entra na casa (v112). Um lugar só para cada coisa.
+   ================================================================== */
+
+/* ---------- o método ------------------------------------------------ */
+const MD_FASES = {
+  descoberta: { n:'Descoberta', obj:'criar público', cor:'#5B8DEF',
+    quem:'quem ainda não te conhece',
+    regra:'Não fale da oferta. Fale do problema, do mundo dele, e dê um motivo para seguir.',
+    ctas:['Salva para não perder.', 'Segue para a próxima parte.', 'Marca alguém que precisa ver isso.'] },
+  relacionamento: { n:'Relacionamento', obj:'consciência', cor:'#35B87A',
+    quem:'quem já te segue e ainda não entendeu o tamanho do problema',
+    regra:'Aprofunde: mostre o mecanismo, o custo, o caminho. Peça conversa, não compra.',
+    ctas:['Comenta o que você faria.', 'Responde na enquete dos stories.', 'Manda no direct que eu te explico.'] },
+  conversao: { n:'Conversão', obj:'venda', cor:'#C8963A',
+    quem:'quem está decidindo agora',
+    regra:'Oferta clara, caminho curto. Tire a última dúvida e diga exatamente o próximo passo.',
+    ctas:['Link na bio.', 'Chama no WhatsApp e a gente resolve hoje.', 'Garanta a sua antes de fechar.'] },
+  remarketing: { n:'Remarketing', obj:'venda realizada', cor:'#E5854D',
+    quem:'quem viu, se interessou e não comprou',
+    regra:'Volte com prova, objeção respondida ou prazo. Ele já conhece: não reapresente, resolva o que travou.',
+    ctas:['Última chamada: fecha hoje.', 'A dúvida que mais ouvimos, respondida.', 'Quem já foi: veja o que disseram.'] }
+};
+const MD_ORDEM_FASES = ['descoberta', 'relacionamento', 'conversao', 'remarketing'];
+
+const MD_TEMPS = {
+  oportunidade: { n:'Oportunidade', quem:'ainda não sabe que tem o problema',
+    tom:'mostre o ganho, não a dor', fases:MD_ORDEM_FASES },
+  urgencia:     { n:'Urgência oculta', quem:'sabe do problema, mas não sente pressa',
+    tom:'revele o custo de esperar', fases:MD_ORDEM_FASES },
+  prontidao:    { n:'Prontidão', quem:'está pronto para comprar',
+    tom:'tire a última dúvida e dê o caminho', fases:['conversao', 'remarketing'] }
+};
+const MD_ORDEM_TEMPS = ['oportunidade', 'urgencia', 'prontidao'];
+
+/* os dezoito ganchos, na numeração da mandala. Cada um sabe o que é,
+   como abre, que passos tem e em que formato costuma render. Os modelos
+   usam {produto} {publico} {dor} {desejo} {dif} {cliente}. */
+const MD_GANCHOS = [
+  { n:1, nome:'Comparação', o:'dois caminhos lado a lado — a diferença aparece sozinha', fmt:'Carrossel',
+    tit:['Antes e depois: de {dor} a {desejo}', '{produto} versus o jeito de sempre'],
+    abre:['{publico} que resolve {dor} do jeito antigo, e {publico} que usa {produto}: a diferença aparece em {desejo}.',
+          'Coloque lado a lado: o jeito de sempre e {produto}. Não precisa argumentar — só mostrar.'],
+    passos:['Mostre os dois lados sem julgar nos primeiros segundos', 'Aponte a única diferença que importa para {publico}', 'Feche com o que muda no dia a dia de quem escolhe {produto}'] },
+  { n:2, nome:'Problema / Solução', o:'o problema nomeado, e a saída logo depois', fmt:'Reels',
+    tit:['{dor}: o caminho que resolve', 'Se você vive {dor}, é por aqui'],
+    abre:['{dor}. É assim que começa para {publico} — e é aqui que {produto} entra.',
+          'Se você já passou por {dor}, este é o caminho que resolve, do começo ao fim.'],
+    passos:['Nomeie o problema com as palavras que {publico} usa', 'Mostre por que os remendos não resolvem', 'Apresente {produto} como a saída, com um exemplo real'] },
+  { n:3, nome:'Explicação', o:'como funciona, sem vender', fmt:'Carrossel',
+    tit:['Como {produto} funciona, em 3 passos', 'O mecanismo por trás de {desejo}'],
+    abre:['Como {produto} funciona, do começo ao fim, em 3 passos — sem juridiquês, sem enrolação.',
+          'O que ninguém explica sobre {dor}: o mecanismo por trás, e por que {produto} age nele.'],
+    passos:['Passo 1: o que acontece primeiro, em uma frase', 'Passo 2: o que muda no meio do caminho', 'Passo 3: o resultado, e por que ele dura'] },
+  { n:4, nome:'Apelo emocional', o:'o que o problema pesa por dentro', fmt:'Reels',
+    tit:['Para quem cansou de {dor}', 'O peso de {dor} que ninguém vê'],
+    abre:['Isto é para quem já cansou de {dor} e ainda assim não desistiu de {desejo}.',
+          'A parte que ninguém fala: como {dor} pesa no dia a dia de {publico}, mesmo quando parece que está tudo bem.'],
+    passos:['Descreva a cena, não o problema: onde dói, em que hora do dia', 'Dê nome ao sentimento — {publico} vai se reconhecer', 'Mostre {desejo} como alívio, não como conquista'] },
+  { n:5, nome:'Curiosidade', o:'uma lacuna aberta que só fecha no fim', fmt:'Reels',
+    tit:['O detalhe de {produto} que quase ninguém repara', 'Por que {publico} está mudando de ideia sobre {dor}'],
+    abre:['O detalhe de {produto} que quase ninguém repara — e que muda tudo em {desejo}.',
+          'Por que {publico} está trocando o jeito antigo de resolver {dor}? A resposta está no fim.'],
+    passos:['Abra a lacuna na primeira frase e não feche cedo', 'Dê duas pistas que apontam para {dif}', 'Feche com a revelação e o que fazer com ela'] },
+  { n:6, nome:'Reflexão', o:'uma pergunta que fica na cabeça', fmt:'Post',
+    tit:['Quanto {dor} já custou a você?', 'O que você faria com o tempo que {dor} rouba?'],
+    abre:['Quanto {dor} já custou a você este ano? Pare um minuto e conte de verdade.',
+          'O que você faria com o tempo e a energia que {dor} rouba toda semana?'],
+    passos:['Faça a pergunta e deixe o silêncio depois dela', 'Some o custo em algo que {publico} sente: tempo, dinheiro, paz', 'Aponte {desejo} como a resposta possível, sem empurrar {produto}'] },
+  { n:7, nome:'Certo vs Errado', o:'o erro comum e o jeito certo, lado a lado', fmt:'Carrossel',
+    tit:['3 erros de {publico} ao tentar {desejo}', 'Errado e certo: {dor}'],
+    abre:['Errado: tentar resolver {dor} do jeito de sempre. Certo: o que {produto} faz diferente — e por quê.',
+          '3 erros que {publico} comete tentando {desejo} — e o que fazer no lugar de cada um.'],
+    passos:['Mostre o erro que todo mundo comete, sem humilhar', 'Explique o que ele custa', 'Mostre o certo com {dif} como exemplo'] },
+  { n:8, nome:'Demonstração', o:'o produto acontecendo, sem corte', fmt:'Reels',
+    tit:['{produto} em ação, do zero ao resultado', 'Veja acontecendo: {desejo}'],
+    abre:['{produto} em ação: do zero ao resultado, sem corte e sem promessa.',
+          'Veja acontecendo: {dor} entrando, {desejo} saindo. Só a câmera e o processo.'],
+    passos:['Comece pelo estado inicial — o problema visível', 'Mostre o processo em tempo real, ou acelerado com honestidade', 'Termine no resultado e deixe {publico} tirar a conclusão'] },
+  { n:9, nome:'Ultra segmentado', o:'fala com uma pessoa só, pelo nome da tribo', fmt:'Reels',
+    tit:['Se você é {publico} e vive {dor}, é para você', 'Só para {publico}'],
+    abre:['Se você é {publico} e vive {dor}, este conteúdo é literalmente para você — mais ninguém.',
+          'Só para {publico}: o que muda quando {produto} entra na rotina, com os detalhes que só vocês entendem.'],
+    passos:['Nomeie a tribo na primeira frase, com precisão', 'Use uma situação que só {publico} reconhece', 'Mostre {desejo} nos termos deles'] },
+  { n:10, nome:'Visual', o:'a imagem fala; o texto quase some', fmt:'Post',
+    tit:['{produto}, sem texto', '{desejo} num enquadramento só'],
+    abre:['Sem texto, só imagem: {produto} em cinco cenas que {publico} entende sem legenda.',
+          'Deixe o visual falar: {desejo} em um enquadramento só, e a legenda com uma linha.'],
+    passos:['Escolha uma imagem que carrega a mensagem inteira', 'Tire toda palavra que a imagem já diz', 'Uma linha de legenda: o convite'] },
+  { n:11, nome:'Oportunidade', o:'a janela que está aberta agora', fmt:'Stories',
+    tit:['Janela aberta: {desejo} antes dos outros', 'O momento certo para {publico}'],
+    abre:['Janela aberta: quem fizer isto agora chega em {desejo} antes dos outros — e {produto} é o atalho.',
+          'Existe um momento certo para {publico} resolver {dor}. É este. Aqui está o porquê.'],
+    passos:['Mostre o que mudou: por que agora, e não depois', 'Ligue o momento a {produto}', 'Diga o que {publico} ganha por ser o primeiro'] },
+  { n:12, nome:'História', o:'começo, meio e virada — com gente de verdade', fmt:'Reels',
+    tit:['De {dor} a {desejo}: a história de um cliente', 'Era uma vez {publico} com {dor}'],
+    abre:['Era uma vez {publico} com {dor}. Foi assim que virou {desejo} — capítulo por capítulo.',
+          'A história de um cliente de {cliente}: de {dor} a {desejo}, com o que quase deu errado no meio.'],
+    passos:['Apresente a pessoa e o problema, em duas frases', 'A virada: o que ela decidiu, e o que {produto} fez', 'O depois, com um detalhe pequeno e verdadeiro'] },
+  { n:13, nome:'Dilema', o:'duas escolhas, e o custo de cada uma', fmt:'Post',
+    tit:['Resolver agora ou esperar: o custo de cada caminho', 'A escolha desconfortável que leva a {desejo}'],
+    abre:['Ou você continua com {dor}, ou faz a escolha desconfortável que leva a {desejo}. As duas custam.',
+          'Resolver {dor} agora com {produto} ou esperar mais um mês: quanto custa cada caminho?'],
+    passos:['Ponha as duas escolhas na mesa, sem torcer por uma', 'Some o custo de cada uma em termos de {publico}', 'Deixe claro que não escolher também é escolher'] },
+  { n:14, nome:'Prova', o:'resultado, número, print, depoimento', fmt:'Carrossel',
+    tit:['O resultado de quem usou {produto}', 'Não acredite em nós: veja {publico} falando'],
+    abre:['O resultado de quem usou {produto}: números, prints e a frase que a pessoa disse depois.',
+          'Não acredite em nós. Veja o que {publico} disse depois de chegar em {desejo}.'],
+    passos:['Uma prova por tela: número, print ou frase', 'Contexto de quem era antes — com {dor}', 'O que mudou, nas palavras do cliente'] },
+  { n:15, nome:'Contraste', o:'o mesmo dia em duas versões', fmt:'Reels',
+    tit:['O mesmo dia, com e sem {produto}', '{dor} de um lado, {desejo} do outro'],
+    abre:['De um lado, {dor}. Do outro, {desejo}. No meio, {produto}. O mesmo dia, duas versões.',
+          'O mesmo dia, duas versões: uma com {produto}, outra sem. Repare onde a diferença começa.'],
+    passos:['Mostre a versão sem: a rotina com {dor}', 'Corte para a versão com: mesma cena, resultado diferente', 'Aponte o ponto exato em que os dois dias se separam'] },
+  { n:16, nome:'Sensação', o:'o que se sente, antes do que se ganha', fmt:'Stories',
+    tit:['Aquela sensação de {desejo}', 'O que {desejo} faz sentir'],
+    abre:['Sabe aquela sensação de {desejo}? É isso que {produto} entrega — antes de qualquer número.',
+          'Feche os olhos e imagine {desejo}. Agora abra: é o que {publico} sente depois de {produto}.'],
+    passos:['Descreva a sensação com os cinco sentidos', 'Ligue a sensação a uma cena concreta', 'Diga o caminho para chegar nela, sem pressa'] },
+  { n:17, nome:'Clickbait honesto', o:'promessa forte na entrada — e cumprida no fim', fmt:'Reels',
+    tit:['Você está usando {produto} errado', 'O que {publico} descobre tarde demais sobre {dor}'],
+    abre:['Você está usando {produto} errado — e é por isso que {dor} continua. Vou mostrar onde.',
+          'O que {publico} descobre tarde demais sobre {dor}: o erro que quase todo mundo comete.'],
+    passos:['Promessa forte na primeira frase — e que você consegue cumprir', 'Entregue exatamente o prometido, sem enrolar', 'Feche com o próximo passo para {desejo}'] },
+  { n:18, nome:'Mito', o:'a crença que todo mundo repete — desmontada', fmt:'Carrossel',
+    tit:['Mito: {dor} não tem jeito', 'A verdade sobre {dor}'],
+    abre:['Mito: "{dor} é normal, é assim mesmo". Verdade: {produto} resolve — e aqui está como.',
+          'Todo mundo diz que {dor} não tem jeito. Aqui está a prova de que tem, e o que {publico} pode fazer hoje.'],
+    passos:['Enuncie o mito como {publico} ouve por aí', 'Mostre onde ele quebra, com um fato', 'Coloque {dif} no lugar do mito'] }
+];
+const mdGancho = n => MD_GANCHOS.find(g => g.n === n) || MD_GANCHOS[0];
+const MD_DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+
+/* ---------- estado ------------------------------------------------- */
+S.mandala = S.mandala || { ctx:{}, banco:[] };
+S.mandala.ctx = S.mandala.ctx || {}; S.mandala.banco = S.mandala.banco || [];
+S.md = S.md || { fase:'descoberta', temp:'oportunidade', gancho:12, cli:null, ideias:[], voltas:0,
+  pensando:false, erro:null, plats:['ig'] };
+S.md.plats = S.md.plats || ['ig'];
+if(typeof PASSAGEIRO !== 'undefined' && PASSAGEIRO.add){ PASSAGEIRO.add('mdGravar'); }
+
+const mdCli = () => CLIS().find(c => c.id === S.md.cli) || CLIS()[0];
+function mdCtx(){
+  const c = mdCli();
+  const salvo = S.mandala.ctx[c.id] || {};
+  return { produto:'', publico:'', dor:'', desejo:'', dif:'', ...salvo };
+}
+/* o que a pessoa não escreveu, o motor deduz do cadastro do cliente —
+   para nunca gerar frase com buraco */
+function mdCtxCheio(){
+  const c = mdCli(), x = mdCtx();
+  const cliente = c.nome;
+  const produto = x.produto || (c.seg ? `o que a ${cliente} oferece em ${c.seg.toLowerCase()}` : `o que a ${cliente} oferece`);
+  const publico = x.publico || `quem segue a ${cliente}`;
+  const dor     = x.dor     || `o problema que ${produto} resolve`;
+  const desejo  = x.desejo  || `o resultado que ${publico} procura`;
+  const dif     = x.dif     || `o jeito ${cliente} de fazer`;
+  return { cliente, produto, publico, dor, desejo, dif, brief:c.brief || '', seg:c.seg || '' };
+}
+const mdPreencher = (tpl, x) => tpl.replace(/\{(\w+)\}/g, (m, k) => x[k] !== undefined ? x[k] : m)
+  .replace(/^\w/, ch => ch.toUpperCase());
+/* no título cada campo entra curto: até seis palavras, cortado na
+   palavra — título de pauta é para ler de relance */
+const mdCurto = (v, n) => { const p = String(v || '').split(/\s+/); return p.length > (n || 6) ? p.slice(0, n || 6).join(' ') + '…' : v; };
+const mdCtxCurto = x => Object.fromEntries(Object.entries(x).map(([k, v]) => [k, ['cliente', 'brief', 'seg'].includes(k) ? v : mdCurto(v, 6)]));
+
+/* ---------- o sorteio ---------------------------------------------- */
+const mdSorteio = lista => lista[Math.floor(Math.random() * lista.length)];
+const mdTempsDaFase = f => MD_ORDEM_TEMPS.filter(t => MD_TEMPS[t].fases.includes(f));
+function mdGirar(soGancho){
+  const antes = S.md.gancho;
+  if(!soGancho){
+    S.md.fase = mdSorteio(MD_ORDEM_FASES);
+    S.md.temp = mdSorteio(mdTempsDaFase(S.md.fase));
+  }
+  let g = antes; let tenta = 0;
+  while(g === antes && tenta++ < 10) g = mdSorteio(MD_GANCHOS).n;
+  S.md.gancho = g;
+  S.md.voltas = (S.md.voltas || 0) + 3;         /* três voltas inteiras antes de parar */
+  mdPintarRoda();
+}
+/* a temperatura tem de valer para a fase: Prontidão só existe onde há
+   compra (Conversão e Remarketing), como na mandala original */
+function mdEscolherFase(f){
+  if(!MD_FASES[f]) return;
+  S.md.fase = f;
+  if(!mdTempsDaFase(f).includes(S.md.temp)) S.md.temp = 'urgencia';
+  mdPintarRoda();
+}
+function mdEscolherTemp(t){
+  if(!MD_TEMPS[t] || !mdTempsDaFase(S.md.fase).includes(t)) return;
+  S.md.temp = t; mdPintarRoda();
+}
+function mdEscolherGancho(n){
+  if(!mdGancho(n)) return;
+  S.md.gancho = +n; mdPintarRoda();
+}
+const mdAngulo = () => (S.md.voltas || 0) * 360 + (S.md.gancho - 1) * 20 + 10;
+
+/* ---------- a roda (SVG) -------------------------------------------- */
+const mdPt = (r, a) => [200 + r * Math.cos(a * Math.PI / 180), 200 + r * Math.sin(a * Math.PI / 180)]
+  .map(v => +v.toFixed(2));
+function mdFatia(r1, r2, a0, a1){
+  const [x0, y0] = mdPt(r2, a0), [x1, y1] = mdPt(r2, a1), [x2, y2] = mdPt(r1, a1), [x3, y3] = mdPt(r1, a0);
+  const big = (a1 - a0) > 180 ? 1 : 0;
+  return `M${x0} ${y0} A${r2} ${r2} 0 ${big} 1 ${x1} ${y1} L${x2} ${y2} A${r1} ${r1} 0 ${big} 0 ${x3} ${y3} Z`;
+}
+function mdAnel(r1, r2){
+  return `M${200 - r2} 200 A${r2} ${r2} 0 1 1 ${200 + r2} 200 A${r2} ${r2} 0 1 1 ${200 - r2} 200 `
+       + `M${200 - r1} 200 A${r1} ${r1} 0 1 0 ${200 + r1} 200 A${r1} ${r1} 0 1 0 ${200 - r1} 200 Z`;
+}
+/* o caminho do texto: em cima, horário; embaixo, anti-horário — para o
+   texto nunca ficar de cabeça para baixo */
+function mdArcoTexto(r, a0, a1, emCima){
+  const [xa, ya] = mdPt(r, emCima ? a0 : a1), [xb, yb] = mdPt(r, emCima ? a1 : a0);
+  return `M${xa} ${ya} A${r} ${r} 0 0 ${emCima ? 1 : 0} ${xb} ${yb}`;
+}
+const MD_QUAD = { descoberta:[180, 270], relacionamento:[270, 360], conversao:[0, 90], remarketing:[90, 180] };
+const MD_BANDA = { oportunidade:[136, 150], urgencia:[121, 135], prontidao:[106, 120] };
+
+function mdRodaSvg(){
+  const fases = MD_ORDEM_FASES.map(f => {
+    const [a0, a1] = MD_QUAD[f], emCima = a0 >= 180;
+    return `<g class="fase" data-mdfase="${f}" style="--cor:${MD_FASES[f].cor}">
+      <path d="${mdFatia(152, 192, a0, a1)}"/>
+      <path id="mdTxt_${f}" d="${mdArcoTexto(169, a0 + 4, a1 - 4, emCima)}" fill="none"/>
+      <text dominant-baseline="middle"><textPath href="#mdTxt_${f}" startOffset="50%" text-anchor="middle">${MD_FASES[f].n.toUpperCase()}</textPath></text>
+    </g>`;
+  }).join('');
+  const temps = MD_ORDEM_TEMPS.map(t => {
+    const [r1, r2] = MD_BANDA[t], rm = (r1 + r2) / 2;
+    return `<g class="temp" data-mdtemp="${t}">
+      <path d="${mdAnel(r1, r2)}" fill-rule="evenodd"/>
+      <path id="mdTmp_${t}" d="${mdArcoTexto(rm - 2.5, 200, 340, true)}" fill="none"/>
+      <text><textPath href="#mdTmp_${t}" startOffset="50%" text-anchor="middle">${MD_TEMPS[t].n.toUpperCase()}</textPath></text>
+    </g>`;
+  }).join('');
+  const ganchos = MD_GANCHOS.map(g => {
+    const a0 = -90 + (g.n - 1) * 20, a1 = a0 + 20, [x, y] = mdPt(83, a0 + 10);
+    return `<g class="gancho" data-mdgancho="${g.n}"><title>${g.n} · ${esc(g.nome)}</title>
+      <path d="${mdFatia(62, 104, a0, a1)}"/>
+      <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle">${g.n}</text></g>`;
+  }).join('');
+  return `<svg viewBox="0 0 400 400" role="img" aria-label="A mandala criativa: fases, temperaturas e ganchos">
+    ${fases}${temps}${ganchos}
+    <polygon class="agulha" points="200,66 197.5,200 202.5,200" style="transform:rotate(${mdAngulo()}deg)"/>
+    <g class="miolo">
+      <circle cx="200" cy="200" r="56"/>
+      <text class="n" x="200" y="184" text-anchor="middle">GANCHO</text>
+      <text class="nome" x="200" y="205" text-anchor="middle"></text>
+      <text class="sub" x="200" y="223" text-anchor="middle"></text>
+    </g>
+  </svg>`;
+}
+
+/* pintar sem redesenhar: a agulha só anima se o elemento sobreviver */
+function mdPintarRoda(){
+  const svg = document.querySelector('.mdRoda svg'); if(!svg) return;
+  svg.querySelectorAll('.fase').forEach(el => el.classList.toggle('on', el.dataset.mdfase === S.md.fase));
+  const validas = mdTempsDaFase(S.md.fase);
+  svg.querySelectorAll('.temp').forEach(el => {
+    el.classList.toggle('on', el.dataset.mdtemp === S.md.temp);
+    el.classList.toggle('fora', !validas.includes(el.dataset.mdtemp));
+  });
+  svg.querySelectorAll('.gancho').forEach(el => el.classList.toggle('on', +el.dataset.mdgancho === S.md.gancho));
+  const ag = svg.querySelector('.agulha'); if(ag) ag.style.transform = `rotate(${mdAngulo()}deg)`;
+  const g = mdGancho(S.md.gancho);
+  const nome = svg.querySelector('.miolo .nome'), sub = svg.querySelector('.miolo .sub');
+  if(nome) nome.textContent = g.nome;
+  if(sub) sub.textContent = 'Nº ' + g.n;
+  const leitura = document.querySelector('.mdLeitura'); if(leitura) leitura.innerHTML = mdLeituraHtml();
+  document.querySelectorAll('.mdTempChips button').forEach(b => {
+    b.classList.toggle('on', b.dataset.mdtemp === S.md.temp);
+    b.disabled = !validas.includes(b.dataset.mdtemp);
+  });
+}
+function mdLeituraHtml(){
+  const f = MD_FASES[S.md.fase], t = MD_TEMPS[S.md.temp], g = mdGancho(S.md.gancho);
+  return `<span class="tag" style="color:${f.cor}">${f.n}</span><span class="tag">${t.n}</span><span class="tag">nº ${g.n} · ${esc(g.nome)}</span>
+    <div style="margin-top:6px">Para <b>${f.quem}</b>, que <b>${t.quem}</b>: ${esc(g.o)}. ${t.tom.replace(/^\w/, c => c.toUpperCase())}.</div>`;
+}
+
+/* ---------- o motor: ideia sem IA ----------------------------------- */
+let _mdSeq = 0;
+function mdIdeia(fase, temp, gancho, extra){
+  const x = mdCtxCheio(), f = MD_FASES[fase], t = MD_TEMPS[temp], g = mdGancho(gancho);
+  const k = Math.floor(Math.random() * 2);
+  const roteiro = g.passos.map(p => mdPreencher(p, x));
+  roteiro.push(`Temperatura: ${t.tom} — o público ${t.quem}`);
+  return { id:'i' + Date.now().toString(36) + (_mdSeq++), origem:'motor', cli:mdCli().id,
+    fase, temp, gancho:g.n, quando:Date.now(),
+    titulo: mdPreencher(g.tit[k], mdCtxCurto(x)),
+    abertura: mdPreencher(g.abre[k], x),
+    roteiro,
+    cta: mdSorteio(f.ctas),
+    formato: g.fmt,
+    porque: `${f.n} é para ${f.quem}: ${f.regra} Aqui o público ${t.quem} — então ${t.tom}.`,
+    ...(extra || {}) };
+}
+function mdGerar(n){
+  const usados = new Set();
+  S.md.ideias = [];
+  for(let i = 0; i < (n || 3); i++){
+    /* a primeira é o ponto da roda; as outras variam o gancho, para a
+       pessoa ver três caminhos e não três versões do mesmo */
+    let g = S.md.gancho;
+    if(i > 0){ let tenta = 0; do{ g = mdSorteio(MD_GANCHOS).n; }while(usados.has(g) && tenta++ < 20); }
+    usados.add(g);
+    S.md.ideias.push(mdIdeia(S.md.fase, S.md.temp, g));
+  }
+  S.md.erro = null; S.md.rotulo = 'Três caminhos para o ponto da roda';
+  render();
+}
+/* a semana: sete ideias, uma por dia, cobrindo as quatro fases —
+   duas de descoberta, duas de relacionamento, duas de conversão, uma de
+   remarketing. É o ritmo de um funil que gira toda semana. */
+function mdSemana(){
+  const ordem = ['descoberta', 'relacionamento', 'conversao', 'descoberta', 'relacionamento', 'conversao', 'remarketing'];
+  const usados = new Set();
+  S.md.ideias = ordem.map((fase, dia) => {
+    let g; let tenta = 0;
+    do{ g = mdSorteio(MD_GANCHOS).n; }while(usados.has(g) && tenta++ < 30);
+    usados.add(g);
+    const temp = mdSorteio(mdTempsDaFase(fase));
+    return mdIdeia(fase, temp, g, { dia });
+  });
+  S.md.erro = null; S.md.rotulo = 'A semana, dia a dia — o funil inteiro em sete posts';
+  render();
+}
+
+/* ---------- a IA: a mesma mandala, desenvolvida ---------------------- */
+const MD_CHAVE_IA = 'maestro-ia-v1';
+function mdIaCfg(){ try{ return JSON.parse(localStorage.getItem(MD_CHAVE_IA) || '{}') || {}; }catch(e){ return {}; } }
+function mdIaGuardar(chave){
+  try{ chave ? localStorage.setItem(MD_CHAVE_IA, JSON.stringify({ chave })) : localStorage.removeItem(MD_CHAVE_IA); }catch(e){}
+}
+const mdIaLigada = () => !!mdIaCfg().chave;
+const MD_MODELO = 'claude-opus-5';
+
+function mdSistema(){
+  const ganchos = MD_GANCHOS.map(g => `${g.n}. ${g.nome} — ${g.o}`).join('\n');
+  return `Você é o diretor de criação de uma agência que usa a Mandala de Conteúdo do método Venda Todo Santo Dia (Leandro Ladeira) para nunca ficar sem ideia. A mandala é um sistema de coordenadas e você cria conteúdo para um ponto dela:
+
+FASES DO FUNIL (onde o público está):
+- Descoberta: ${MD_FASES.descoberta.quem}. Objetivo: criar público. Regra: ${MD_FASES.descoberta.regra}
+- Relacionamento: ${MD_FASES.relacionamento.quem}. Objetivo: consciência. Regra: ${MD_FASES.relacionamento.regra}
+- Conversão: ${MD_FASES.conversao.quem}. Objetivo: venda. Regra: ${MD_FASES.conversao.regra}
+- Remarketing: ${MD_FASES.remarketing.quem}. Objetivo: venda realizada. Regra: ${MD_FASES.remarketing.regra}
+
+TEMPERATURAS (o quanto o público sabe do problema):
+- Oportunidade: ${MD_TEMPS.oportunidade.quem} — ${MD_TEMPS.oportunidade.tom}.
+- Urgência oculta: ${MD_TEMPS.urgencia.quem} — ${MD_TEMPS.urgencia.tom}.
+- Prontidão: ${MD_TEMPS.prontidao.quem} — ${MD_TEMPS.prontidao.tom}. Só existe em Conversão e Remarketing.
+
+OS 18 GANCHOS (o jeito de contar):
+${ganchos}
+
+Como você trabalha:
+- Escreve em português do Brasil, no tom da marca do cliente. Respeita à risca qualquer "nunca" do briefing dele.
+- Cada ideia é específica para este cliente, este público e esta dor — nada de conselho genérico que serviria para qualquer marca.
+- A abertura é a primeira frase falada ou o primeiro slide: ela tem que segurar quem passa rolando o feed.
+- O roteiro tem de 3 a 6 passos curtos, na ordem de gravação ou de slides.
+- A legenda é pronta para publicar, com o CTA da fase no fim.
+- Ideias diferentes têm ângulos diferentes: não entregue variações da mesma frase.
+- Sem clichês de marketing ("desbloqueie", "transforme sua vida", "não perca") e sem promessa que a marca não pode cumprir.`;
+}
+const MD_ESQUEMA = {
+  type:'object', additionalProperties:false, required:['ideias'],
+  properties:{ ideias:{ type:'array', items:{
+    type:'object', additionalProperties:false,
+    required:['titulo', 'abertura', 'roteiro', 'legenda', 'cta', 'hashtags', 'formato', 'porque'],
+    properties:{
+      titulo:{ type:'string' }, abertura:{ type:'string' },
+      roteiro:{ type:'array', items:{ type:'string' } },
+      legenda:{ type:'string' }, cta:{ type:'string' },
+      hashtags:{ type:'array', items:{ type:'string' } },
+      formato:{ type:'string' }, porque:{ type:'string' } } } } }
+};
+function mdPedido(fase, temp, gancho, n){
+  const x = mdCtxCheio(), f = MD_FASES[fase], t = MD_TEMPS[temp], g = mdGancho(gancho);
+  const plats = { ig:'Instagram', tt:'TikTok', li:'LinkedIn', yt:'YouTube', fb:'Facebook' };
+  return `CLIENTE: ${x.cliente}${x.seg ? ` (${x.seg})` : ''}
+BRIEFING DA MARCA: ${x.brief || '—'}
+PRODUTO OU OFERTA: ${x.produto}
+PÚBLICO: ${x.publico}
+DOR: ${x.dor}
+DESEJO: ${x.desejo}
+DIFERENCIAL: ${x.dif}
+PLATAFORMAS: ${(S.md.plats || ['ig']).map(p => plats[p] || p).join(', ')}
+
+PONTO DA MANDALA:
+- Fase: ${f.n} (${f.obj})
+- Temperatura: ${t.n}
+- Gancho: nº ${g.n} ${g.nome} — ${g.o}
+
+Crie ${n} ideias de conteúdo para exatamente este ponto. Em "porque", explique em uma frase por que a ideia funciona nesta fase e nesta temperatura.`;
+}
+async function mdChamarIA(fase, temp, gancho, n){
+  const cfg = mdIaCfg();
+  if(!cfg.chave) throw new Error('sem-chave');
+  const corpo = {
+    model: MD_MODELO, max_tokens: 8000,
+    fallbacks: 'default',
+    system: mdSistema(),
+    messages: [{ role:'user', content: mdPedido(fase, temp, gancho, n) }],
+    output_config: { format: { type:'json_schema', schema: MD_ESQUEMA } }
+  };
+  let r;
+  try{
+    r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'content-type':'application/json',
+        'x-api-key': cfg.chave,
+        'anthropic-version':'2023-06-01',
+        'anthropic-beta':'server-side-fallback-2026-07-01',
+        /* a chamada sai do navegador de propósito: o protótipo não tem
+           servidor. A chave fica só neste aparelho. */
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body: JSON.stringify(corpo)
+    });
+  }catch(e){ throw new Error('Não deu para falar com a IA daqui. Confira a internet — e se a chave é da Anthropic.'); }
+  if(r.status === 401) throw new Error('A chave foi recusada. Confira em Configurar a IA.');
+  if(r.status === 429) throw new Error('A IA está no limite de uso agora. Tente de novo em um minuto.');
+  if(!r.ok){
+    let msg = ''; try{ msg = (await r.json()).error?.message || ''; }catch(e){}
+    throw new Error(`A IA respondeu com erro ${r.status}${msg ? ': ' + msg : ''}.`);
+  }
+  const j = await r.json();
+  if(j.stop_reason === 'refusal'){
+    const por = j.stop_details && j.stop_details.explanation;
+    throw new Error('A IA recusou este pedido' + (por ? ': ' + por : '.'));
+  }
+  const texto = (j.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+  let dados; try{ dados = JSON.parse(texto); }catch(e){ throw new Error('A IA respondeu fora do formato. Tente de novo.'); }
+  return { ideias: dados.ideias || [], modelo: j.model || MD_MODELO };
+}
+async function mdDesenvolver(){
+  if(!mdIaLigada()){ S.modal = mdModalIA(); renderLayer(); return; }
+  if(S.md.pensando) return;
+  S.md.pensando = true; S.md.erro = null; render();
+  const { fase, temp, gancho } = S.md;
+  try{
+    const { ideias, modelo } = await mdChamarIA(fase, temp, gancho, 3);
+    const x = mdCtxCheio();
+    S.md.ideias = ideias.map(i => ({
+      id:'i' + Date.now().toString(36) + (_mdSeq++), origem:'ia', modelo, cli:mdCli().id,
+      fase, temp, gancho, quando:Date.now(),
+      titulo:i.titulo, abertura:i.abertura, roteiro:i.roteiro || [], legenda:i.legenda,
+      cta:i.cta, hashtags:i.hashtags || [], formato:i.formato || mdGancho(gancho).fmt, porque:i.porque }));
+    S.md.rotulo = `Desenvolvidas pela IA para ${x.cliente}`;
+    if(typeof som === 'function') som('toque');
+  }catch(e){
+    S.md.erro = e.message === 'sem-chave' ? 'Configure a chave da IA primeiro.' : e.message;
+  }
+  S.md.pensando = false; render();
+}
+
+/* ---------- guardar, mandar, copiar --------------------------------- */
+const mdAchar = id => (S.md.ideias || []).find(i => i.id === id) || (S.mandala.banco || []).find(i => i.id === id);
+function mdTextoDaIdeia(i){
+  const f = MD_FASES[i.fase], t = MD_TEMPS[i.temp], g = mdGancho(i.gancho);
+  const linhas = [
+    `Mandala: ${f.n} · ${t.n} · gancho nº ${g.n} ${g.nome}${i.dia !== undefined ? ` · ${MD_DIAS[i.dia]}` : ''}`,
+    `Formato: ${i.formato}`, '',
+    `ABERTURA: ${i.abertura}`, '',
+    'ROTEIRO:', ...(i.roteiro || []).map((p, k) => `${k + 1}. ${p}`), '',
+    i.legenda ? `LEGENDA:\n${i.legenda}\n` : '',
+    `CTA: ${i.cta}`,
+    i.hashtags && i.hashtags.length ? i.hashtags.map(h => h.startsWith('#') ? h : '#' + h).join(' ') : '', '',
+    `Por que funciona aqui: ${i.porque}`
+  ];
+  return linhas.filter(l => l !== undefined).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+function mdParaInbox(id){
+  const i = mdAchar(id); if(!i) return;
+  if(!S.ensaio && typeof kbSemente === 'function') S.ensaio = kbSemente();
+  if(!S.ensaio) { toast('O Ensaio ainda não abriu nesta sessão. Abra o Ensaio uma vez e tente de novo.'); return; }
+  const cli = i.cli || mdCli().id;
+  S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo:i.titulo, cli, resp:null, col:'inbox', cat:'producao',
+    criada:Date.now(), prazo:null, tempoMs:0, desde:null, desc:mdTextoDaIdeia(i),
+    mandala:{ fase:i.fase, temp:i.temp, gancho:i.gancho } });
+  i.noInbox = true;
+  if(typeof som === 'function') som('toque');
+  render();
+  toast(`"${i.titulo}" está no Inbox do Ensaio. Dá um responsável e ela vira Plan.`);
+}
+function mdGuardar(id){
+  const i = mdAchar(id); if(!i) return;
+  if(!S.mandala.banco.some(b => b.id === id)){
+    S.mandala.banco.unshift(JSON.parse(JSON.stringify(i)));
+    if(S.mandala.banco.length > 60) S.mandala.banco.length = 60;
+  }
+  i.guardada = true; render();
+  if(typeof sbGravarConfig === 'function') sbGravarConfig();
+  toast('Guardada no banco de ideias — de qualquer aparelho da equipe.');
+}
+function mdApagar(id){
+  S.mandala.banco = S.mandala.banco.filter(b => b.id !== id);
+  render();
+  if(typeof sbGravarConfig === 'function') sbGravarConfig();
+}
+
+/* ---------- a tela ------------------------------------------------- */
+function mdIdeiaHtml(i, noBanco){
+  const f = MD_FASES[i.fase], t = MD_TEMPS[i.temp], g = mdGancho(i.gancho);
+  const c = CLIS().find(x => x.id === i.cli);
+  return `<article class="mdIdeia${i.origem === 'ia' ? ' ia' : ''}" data-mdideia="${i.id}" style="--cor:${f.cor}">
+    <div class="tags">
+      ${i.dia !== undefined ? `<span class="tag">${MD_DIAS[i.dia]}</span>` : ''}
+      <span class="tag f">${f.n}</span><span class="tag">${t.n}</span>
+      <span class="tag">nº ${g.n} ${esc(g.nome)}</span><span class="tag">${esc(i.formato || '')}</span>
+      ${i.origem === 'ia' ? '<span class="tag ia">IA</span>' : ''}
+      ${noBanco && c ? `<span class="tag">${esc(c.nome)}</span>` : ''}
+    </div>
+    <h4>${esc(i.titulo)}</h4>
+    <div class="abre">${esc(i.abertura)}</div>
+    <ol>${(i.roteiro || []).map(p => `<li>${esc(p)}</li>`).join('')}</ol>
+    ${i.legenda ? `<div class="legenda">${esc(i.legenda)}</div>` : ''}
+    <div class="cta"><b>CTA</b>${esc(i.cta || '')}</div>
+    ${i.hashtags && i.hashtags.length ? `<div class="hash">${i.hashtags.map(h => esc(h.startsWith('#') ? h : '#' + h)).join(' ')}</div>` : ''}
+    <div class="porque">${esc(i.porque || '')}</div>
+    <div class="acoes">
+      <button class="b pri sm" data-mdinbox="${i.id}" ${i.noInbox ? 'disabled' : ''}>${ic('kanban', 12)} ${i.noInbox ? 'No Inbox' : 'Mandar para o Inbox'}</button>
+      ${noBanco
+        ? `<button class="b gho sm" data-mdapagar="${i.id}">${ic('x', 12)} Apagar</button>`
+        : `<button class="b gho sm" data-mdguardar="${i.id}" ${i.guardada ? 'disabled' : ''}>${i.guardada ? 'Guardada' : 'Guardar'}</button>`}
+      <button class="b gho sm" data-mdcopiar="${i.id}">Copiar</button>
+    </div>
+  </article>`;
+}
+
+function agMandala(){
+  const c = mdCli(), x = mdCtx();
+  const validas = mdTempsDaFase(S.md.fase);
+  const plats = [['ig', 'Instagram'], ['tt', 'TikTok'], ['li', 'LinkedIn'], ['yt', 'YouTube'], ['fb', 'Facebook']];
+  const banco = (S.mandala.banco || []).filter(b => !S.md.soCliente || b.cli === c.id);
+  const campo = (k, rot, dica, area) => `<div class="fld"><label for="md-${k}">${rot}</label>
+    ${area ? `<textarea id="md-${k}" data-mdctx="${k}" placeholder="${esc(dica)}">${esc(x[k] || '')}</textarea>`
+           : `<input id="md-${k}" data-mdctx="${k}" value="${esc(x[k] || '')}" placeholder="${esc(dica)}">`}</div>`;
+  return agShell(`
+  <div class="mtop"><div><h1>Mandala Criativa</h1>
+      <p>Fase × temperatura × gancho. Gira, escolhe o cliente, e sai com ideia — nunca mais tela em branco.</p></div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="b gho sm" data-mdchave="1">${ic('spark', 13)} ${mdIaLigada() ? 'IA ligada' : 'Configurar a IA'}</button></div></div>
+
+  <div class="mdGrade">
+    <div class="mdRoda">
+      ${mdRodaSvg()}
+      <div class="mdBotoes">
+        <button class="b pri sm" data-mdgirar="1">${ic('refresh', 13)} Girar a mandala</button>
+        <button class="b gho sm" data-mdsogancho="1">Só outro gancho</button>
+      </div>
+      <div class="mdPlats mdTempChips" style="justify-content:center;margin:10px 0 0">
+        ${MD_ORDEM_TEMPS.map(t => `<button data-mdtemp="${t}" class="${t === S.md.temp ? 'on' : ''}" ${validas.includes(t) ? '' : 'disabled'}>${MD_TEMPS[t].n}</button>`).join('')}
+      </div>
+      <div class="mdLeitura">${mdLeituraHtml()}</div>
+    </div>
+
+    <div class="mdCtx">
+      <div class="rot">para quem</div>
+      <div class="cchips">${CLIS().map(k => `<button class="cchip ${k.id === c.id ? 'on' : ''}" data-mdcli="${k.id}">
+        ${avCliente(k, 'cav')}${esc(k.nome)}</button>`).join('')}</div>
+      ${c.brief && c.brief !== '—' ? `<div class="mdLeitura" style="margin:0 0 12px;font-size:12px"><span class="tag">briefing</span>${esc(c.brief)}</div>` : ''}
+      <div class="rot" style="margin-top:2px">o que entra nas frases · escreva curto, como fala</div>
+      <div class="frow">
+        ${campo('produto', 'Produto ou oferta', 'Ex.: o vestido de linho da coleção de inverno')}
+        ${campo('publico', 'Para quem', 'Ex.: mulheres de 30 a 45 que trabalham em escritório')}
+      </div>
+      <div class="frow">
+        ${campo('dor', 'A dor', 'Ex.: roupa que amassa e parece desleixada na reunião das 15h')}
+        ${campo('desejo', 'O desejo', 'Ex.: sair de casa arrumada e chegar arrumada')}
+      </div>
+      ${campo('dif', 'O diferencial', 'Ex.: linho lavado que não amassa, feito em Fortaleza')}
+      <div class="rot">onde vai ao ar</div>
+      <div class="mdPlats">${plats.map(([k, n]) => `<button data-mdplat="${k}" class="${(S.md.plats || []).includes(k) ? 'on' : ''}">${n}</button>`).join('')}</div>
+      <div class="mdAcoes">
+        <button class="b pri sm" data-mdgerar="1">${ic('zap', 13)} Gerar 3 ideias</button>
+        <button class="b gho sm" data-mdsemana="1">${ic('cal', 13)} Montar a semana</button>
+        <button class="b gho sm" data-mdia="1" ${S.md.pensando ? 'disabled' : ''}>${ic('spark', 13)} Desenvolver com IA</button>
+      </div>
+      <div class="mdIA ${mdIaLigada() ? 'ligada' : ''}"><i></i>${mdIaLigada() ? 'IA ligada · Claude Opus 5 · a chave fica só neste aparelho' : 'sem IA: o motor gera sozinho; com a chave, a IA desenvolve'}</div>
+    </div>
+  </div>
+
+  <div class="mdIdeias">
+    <div class="cab"><h3>${S.md.ideias.length ? esc(S.md.rotulo || 'Ideias') : 'Ideias'}</h3><span class="sp"></span>
+      ${S.md.ideias.length ? `<button class="b gho sm" data-mdlimpar="1">Limpar</button>` : ''}</div>
+    ${S.md.pensando ? `<div class="mdPensando"><i></i> A IA está lendo o briefing e desenvolvendo três caminhos…</div>` : ''}
+    ${S.md.erro ? `<div class="mdVazio" style="border-color:var(--danger);color:var(--danger)">${esc(S.md.erro)}</div>` : ''}
+    ${!S.md.pensando && !S.md.erro && !S.md.ideias.length
+      ? `<div class="mdVazio">Gire a roda ou escolha um ponto nela, conte sobre o cliente, e toque em <b>Gerar</b>.<br>
+          Cada ideia sai com abertura, roteiro, CTA da fase e o motivo de funcionar ali.</div>` : ''}
+    ${S.md.ideias.length ? `<div class="mdLista">${S.md.ideias.map(i => mdIdeiaHtml(i, false)).join('')}</div>` : ''}
+  </div>
+
+  ${(S.mandala.banco || []).length ? `<div class="mdBanco">
+    <div class="cab" style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px">
+      <h3 style="font-family:var(--serif);font-weight:400;font-size:20px;color:var(--ink-50);margin:0">Banco de ideias</h3>
+      <span style="font-size:12px;color:var(--ink-400)">${banco.length} guardada${banco.length === 1 ? '' : 's'}${S.md.soCliente ? ` de ${esc(c.nome)}` : ''}</span>
+      <span class="sp" style="flex:1"></span>
+      <button class="b gho sm" data-mdsocli="1">${S.md.soCliente ? 'Ver de todos' : 'Só deste cliente'}</button></div>
+    <div class="mdLista">${banco.map(b => mdIdeiaHtml(b, true)).join('')}</div>
+  </div>` : ''}`);
+}
+
+function mdModalIA(){
+  const cfg = mdIaCfg();
+  return `<div class="modal"><div class="modalbox mdChave" role="dialog" aria-modal="true">
+    <h3>A IA da mandala</h3>
+    <p class="aviso">A Mandala funciona sem IA. Com a chave da Anthropic, o botão <b>Desenvolver com IA</b> lê o briefing do cliente e devolve a ideia inteira — abertura, roteiro, legenda e hashtags — seguindo o método.</p>
+    <p class="aviso">A chave fica guardada <b>só neste aparelho</b> (nunca no banco compartilhado, que hoje qualquer um com o link lê). Cada pedido custa centavos: modelo <code>${MD_MODELO}</code>.</p>
+    <div class="fld"><label for="md-chave">Chave da API (sk-ant-…)</label>
+      <input id="md-chave" type="password" value="${esc(cfg.chave || '')}" placeholder="sk-ant-api03-…" autocomplete="off"></div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end">
+      ${cfg.chave ? `<button class="b gho sm" data-mdchavex="1">Esquecer a chave</button>` : ''}
+      <button class="b gho sm" data-mdfechar="1">Fechar</button>
+      <button class="b pri sm" data-mdchaveok="1">Guardar neste aparelho</button></div>
+  </div></div>`;
+}
+
+/* ---------- rota, menu, cliques ------------------------------------- */
+render = (function(orig){
+  return function(){
+    if(S.view === 'agency' && S.route === 'mandala' && !S.skel){
+      if(!S.md.cli) S.md.cli = CLIS()[0].id;
+      document.getElementById('root').innerHTML = agMandala();
+      renderLayer(); ctxBar(); posRender();
+      mdPintarRoda();
+      return;
+    }
+    return orig.apply(this, arguments);
+  };
+})(render);
+(function(){
+  const i = AGNAV.findIndex(x => x.r === 'producao');
+  if(i >= 0 && !AGNAV.some(x => x.r === 'mandala'))
+    AGNAV.splice(i + 1, 0, { g:'Inteligência' }, { r:'mandala', n:'Mandala Criativa', icn:'spark' });
+  if(!MENU_AG.some(g => (g.it || []).some(it => it[0] === 'mandala'))){
+    const j = MENU_AG.findIndex(g => g.g === 'Produção');
+    MENU_AG.splice(j + 1, 0, { g:'Inteligência', h:'ferramentas que ajudam sem interromper',
+      it:[['mandala', 'Mandala Criativa', 'spark']] });
+  }
+})();
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest(
+    '[data-mdfase],[data-mdtemp],[data-mdgancho],[data-mdgirar],[data-mdsogancho],[data-mdcli],[data-mdplat],'
+    + '[data-mdgerar],[data-mdsemana],[data-mdia],[data-mdinbox],[data-mdguardar],[data-mdapagar],[data-mdcopiar],'
+    + '[data-mdlimpar],[data-mdchave],[data-mdchaveok],[data-mdchavex],[data-mdfechar],[data-mdsocli]');
+  if(!t) return;
+  e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+  const d = t.dataset;
+  if(d.mdfase !== undefined) return mdEscolherFase(d.mdfase);
+  if(d.mdtemp !== undefined) return mdEscolherTemp(d.mdtemp);
+  if(d.mdgancho !== undefined) return mdEscolherGancho(+d.mdgancho);
+  if(d.mdgirar !== undefined) return mdGirar(false);
+  if(d.mdsogancho !== undefined) return mdGirar(true);
+  if(d.mdcli !== undefined){ S.md.cli = d.mdcli; render(); return; }
+  if(d.mdplat !== undefined){
+    const s = new Set(S.md.plats || []);
+    s.has(d.mdplat) ? s.delete(d.mdplat) : s.add(d.mdplat);
+    S.md.plats = [...s]; t.classList.toggle('on'); return;
+  }
+  if(d.mdgerar !== undefined) return mdGerar(3);
+  if(d.mdsemana !== undefined) return mdSemana();
+  if(d.mdia !== undefined) return mdDesenvolver();
+  if(d.mdinbox !== undefined) return mdParaInbox(d.mdinbox);
+  if(d.mdguardar !== undefined) return mdGuardar(d.mdguardar);
+  if(d.mdapagar !== undefined) return mdApagar(d.mdapagar);
+  if(d.mdcopiar !== undefined){
+    const i = mdAchar(d.mdcopiar); if(!i) return;
+    return copiarTexto(mdTextoDaIdeia(i)).then(ok => toast(ok ? 'Ideia copiada, inteira.' : 'Não deu para copiar aqui.'));
+  }
+  if(d.mdlimpar !== undefined){ S.md.ideias = []; S.md.erro = null; render(); return; }
+  if(d.mdsocli !== undefined){ S.md.soCliente = !S.md.soCliente; render(); return; }
+  if(d.mdchave !== undefined){ S.modal = mdModalIA(); renderLayer(); return; }
+  if(d.mdfechar !== undefined){ S.modal = null; renderLayer(); return; }
+  if(d.mdchavex !== undefined){ mdIaGuardar(''); S.modal = null; render(); toast('Chave esquecida.'); return; }
+  if(d.mdchaveok !== undefined){
+    const v = (document.getElementById('md-chave')?.value || '').trim();
+    if(!/^sk-ant-/.test(v)){ const el = document.getElementById('md-chave'); if(el){ el.style.borderColor = 'var(--danger)'; el.focus(); } return; }
+    mdIaGuardar(v); S.modal = null; render();
+    toast('IA ligada neste aparelho. "Desenvolver com IA" já funciona.');
+    return;
+  }
+}, true);
+
+/* os campos do contexto gravam sem redesenhar — redesenhar a cada tecla
+   roubaria o foco */
+addEventListener('input', e => {
+  const el = e.target;
+  if(!el || !el.dataset || el.dataset.mdctx === undefined) return;
+  const c = mdCli();
+  S.mandala.ctx[c.id] = S.mandala.ctx[c.id] || {};
+  S.mandala.ctx[c.id][el.dataset.mdctx] = el.value;
+  clearTimeout(S.mdGravar);
+  S.mdGravar = setTimeout(() => { if(typeof sbGravarConfig === 'function') sbGravarConfig(); }, 1500);
+}, true);
+
+/* ---------- o banco de ideias viaja com a casa ---------------------- */
+sbGravarConfig = (function(orig){
+  let _esp = null;
+  return async function(){
+    await orig.apply(this, arguments);
+    if(!_sbLigado || !S.mandala) return;
+    const corpo = JSON.stringify({ ctx:S.mandala.ctx, banco:S.mandala.banco });
+    if(_esp === corpo) return;
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/pauta?on_conflict=cliente`, {
+        method:'POST', headers:{ ...sbCab(), Prefer:'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({ cliente:'__mandala__', dados:{ ctx:S.mandala.ctx, banco:S.mandala.banco },
+          atualizado_em:new Date().toISOString() }) });
+      if(r.ok) _esp = corpo;
+    }catch(e){}
+  };
+})(sbGravarConfig);
+let _mdCarregado = false;
+async function mdCarregarBanco(){
+  if(_mdCarregado || !_sbLigado) return;
+  try{
+    const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__mandala__&select=dados`, { headers:sbCab() });
+    if(!r.ok) return;
+    _mdCarregado = true;
+    const [l] = await r.json();
+    if(l && l.dados){
+      S.mandala.ctx = l.dados.ctx || {}; S.mandala.banco = l.dados.banco || [];
+      if(S.view === 'agency' && S.route === 'mandala') render();
+    }
+  }catch(e){}
+}
+sbCarregar = (function(orig){
+  return function(){
+    const p = orig.apply(this, arguments);
+    return Promise.resolve(p).then(ok => { if(ok) mdCarregarBanco(); return ok; });
+  };
+})(sbCarregar);
+/* a abertura pode chamar a carga por uma referência antiga, sem esta
+   camada (a v112 já pagou para aprender): insisto por conta própria */
+[2000, 5000, 12000].forEach(t => setTimeout(mdCarregarBanco, t));
 </script>
