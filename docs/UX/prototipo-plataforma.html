@@ -22961,9 +22961,15 @@ function chaveDoCliente(id){
   }
   return S.cliEdit[id].chave;
 }
+/* O ENDEREÇO DA CASA, num lugar só. Ele aparecia escrito à mão em três
+   pontos, e trocar de domínio era caçar os três. Serve de reserva: quando
+   a página está no ar, quem manda é o endereço de onde ela foi aberta —
+   assim o link nasce certo mesmo antes de o domínio propagar. */
+const CASA_URL = 'https://sejamaestro.com.br';
+const CASA_HOST = CASA_URL.replace(/^https?:\/\//, '');
 const baseDoLink = () =>
   (/^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname))
-    ? location.origin + location.pathname : 'https://maestroapptest.vercel.app/';
+    ? location.origin + location.pathname : CASA_URL + '/';
 const linkDeAprovacao = id => `${baseDoLink()}?aprovar=${id}.${chaveDoCliente(id)}`;
 
 /* o salvar do cliente troca o objeto inteiro: a chave sobrevive */
@@ -24846,7 +24852,7 @@ function linkDoFluxo(){
   const daCasa = /^https?:$/.test(location.protocol)
     && !/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);
   return daCasa ? location.origin + FLUXO_CAMINHO
-                : 'https://maestroapptest.vercel.app' + FLUXO_CAMINHO;
+                : (typeof CASA_URL === 'string' ? CASA_URL : '') + FLUXO_CAMINHO;
 }
 
 /* ---------- o PNG, gerado no próprio navegador ---------------------- */
@@ -24938,7 +24944,7 @@ function montarFluxoPdca(){
       ${svgCicloMaestro()}
     </div>
     <div class="fxPe">
-      <span>maestroapptest.vercel.app/fluxopdcamaestro</span>
+      <span>${esc((typeof CASA_HOST === 'string' ? CASA_HOST : location.host) + FLUXO_CAMINHO)}</span>
       <span class="sp"></span>
       <span>protótipo ${typeof VERSAO_PROTOTIPO === 'string' ? esc(VERSAO_PROTOTIPO.split(' · ')[0]) : ''}</span>
       <a href="/" data-fxentrar="1">Abrir a Maestro →</a>

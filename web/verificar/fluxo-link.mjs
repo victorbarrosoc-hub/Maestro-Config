@@ -1,7 +1,7 @@
 /* v123 — o ciclo com endereço próprio.
 
    O fundador pediu a imagem em PNG e emendou: "ou cria uma extensão do
-   link, tipo maestroapptest.vercel.app/fluxopdcamaestro". Este teste
+   link, tipo sejamaestro.com.br/fluxopdcamaestro". Este teste
    cobre as duas coisas: o endereço abre o desenho sozinho, sem cortina,
    sem "quem está aí?" e sem entrar na plataforma — e de lá sai o PNG.
 
@@ -121,7 +121,7 @@ const copiado = await pg.evaluate(async () => {
   return { texto, toast: document.querySelector('.toast')?.textContent.replace(/\s+/g, ' ').trim() };
 });
 checa('copia o endereço de produção, não o do teste local',
-      copiado.texto === 'https://maestroapptest.vercel.app/fluxopdcamaestro', copiado);
+      copiado.texto === 'https://sejamaestro.com.br/fluxopdcamaestro', copiado);
 checa('e diz que quem receber não precisa entrar na plataforma',
       /sem entrar na plataforma/.test(copiado.toast || ''), copiado.toast);
 await pg.close();
@@ -171,7 +171,7 @@ const doEnsaio = await normal.evaluate(async () => {
   return texto;
 });
 checa('copiar dali dá o mesmo endereço',
-      doEnsaio === 'https://maestroapptest.vercel.app/fluxopdcamaestro', doEnsaio);
+      doEnsaio === 'https://sejamaestro.com.br/fluxopdcamaestro', doEnsaio);
 
 /* redesenhar não duplica o botão */
 const dupl = await normal.evaluate(async () => {

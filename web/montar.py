@@ -20,7 +20,7 @@ LANCAMENTO = io.open(tags, encoding='utf-8').read().strip() if os.path.exists(ta
 # Isto NÃO é decoração: o WhatsApp exige URL ABSOLUTA na imagem do preview.
 # Com caminho relativo ele não busca a imagem, e o link chega como texto seco.
 # Trocou de domínio? troque aqui (ou exporte MAESTRO_URL antes de montar).
-SITE = os.environ.get('MAESTRO_URL', 'https://maestroapptest.vercel.app').rstrip('/')
+SITE = os.environ.get('MAESTRO_URL', 'https://sejamaestro.com.br').rstrip('/')
 
 # O nome carrega versão porque o WhatsApp guarda a imagem POR URL e não
 # volta a buscar: para trocar a arte, troca-se o nome do arquivo.

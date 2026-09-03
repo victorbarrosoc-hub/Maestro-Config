@@ -1,9 +1,9 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-03 18:00 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-03 18:07 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
-<link rel="canonical" href="https://maestroapptest.vercel.app/">
+<link rel="canonical" href="https://sejamaestro.com.br/">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1C1C1C">
 <meta name="description" content="O sistema operacional para agências e equipes criativas. Briefing, estratégia, aprovação e publicação num lugar só — com o cliente dentro.">
@@ -53,11 +53,11 @@
 <meta property="og:site_name" content="Maestro">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://maestroapptest.vercel.app/">
+<meta property="og:url" content="https://sejamaestro.com.br/">
 <meta property="og:title" content="Maestro — o sistema operacional para agências criativas">
 <meta property="og:description" content="Briefing, calendário, aprovação e publicação num lugar só — com o cliente dentro.">
-<meta property="og:image" content="https://maestroapptest.vercel.app/icones/maestro-og-v2.png">
-<meta property="og:image:secure_url" content="https://maestroapptest.vercel.app/icones/maestro-og-v2.png">
+<meta property="og:image" content="https://sejamaestro.com.br/icones/maestro-og-v2.png">
+<meta property="og:image:secure_url" content="https://sejamaestro.com.br/icones/maestro-og-v2.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -65,7 +65,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Maestro — o sistema operacional para agências criativas">
 <meta name="twitter:description" content="Briefing, calendário, aprovação e publicação num lugar só — com o cliente dentro.">
-<meta name="twitter:image" content="https://maestroapptest.vercel.app/icones/maestro-og-v2.png">
+<meta name="twitter:image" content="https://sejamaestro.com.br/icones/maestro-og-v2.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- v137 — A PISCADA BRANCA DO BOOT.
@@ -23029,9 +23029,15 @@ function chaveDoCliente(id){
   }
   return S.cliEdit[id].chave;
 }
+/* O ENDEREÇO DA CASA, num lugar só. Ele aparecia escrito à mão em três
+   pontos, e trocar de domínio era caçar os três. Serve de reserva: quando
+   a página está no ar, quem manda é o endereço de onde ela foi aberta —
+   assim o link nasce certo mesmo antes de o domínio propagar. */
+const CASA_URL = 'https://sejamaestro.com.br';
+const CASA_HOST = CASA_URL.replace(/^https?:\/\//, '');
 const baseDoLink = () =>
   (/^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname))
-    ? location.origin + location.pathname : 'https://maestroapptest.vercel.app/';
+    ? location.origin + location.pathname : CASA_URL + '/';
 const linkDeAprovacao = id => `${baseDoLink()}?aprovar=${id}.${chaveDoCliente(id)}`;
 
 /* o salvar do cliente troca o objeto inteiro: a chave sobrevive */
@@ -24914,7 +24920,7 @@ function linkDoFluxo(){
   const daCasa = /^https?:$/.test(location.protocol)
     && !/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname);
   return daCasa ? location.origin + FLUXO_CAMINHO
-                : 'https://maestroapptest.vercel.app' + FLUXO_CAMINHO;
+                : (typeof CASA_URL === 'string' ? CASA_URL : '') + FLUXO_CAMINHO;
 }
 
 /* ---------- o PNG, gerado no próprio navegador ---------------------- */
@@ -25006,7 +25012,7 @@ function montarFluxoPdca(){
       ${svgCicloMaestro()}
     </div>
     <div class="fxPe">
-      <span>maestroapptest.vercel.app/fluxopdcamaestro</span>
+      <span>${esc((typeof CASA_HOST === 'string' ? CASA_HOST : location.host) + FLUXO_CAMINHO)}</span>
       <span class="sp"></span>
       <span>protótipo ${typeof VERSAO_PROTOTIPO === 'string' ? esc(VERSAO_PROTOTIPO.split(' · ')[0]) : ''}</span>
       <a href="/" data-fxentrar="1">Abrir a Maestro →</a>
