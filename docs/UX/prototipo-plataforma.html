@@ -537,7 +537,13 @@ svg.i{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;
   z-index:950;background:var(--ink-800);color:var(--ink-50);border:1px solid var(--ink-600);
   border-radius:13px;padding:13px 17px;font-size:13.5px;
   box-shadow:0 18px 48px rgba(0,0,0,.55);display:flex;align-items:center;gap:15px;
-  max-width:calc(100vw - 32px);animation:fadeUp .3s var(--spring);overflow:hidden}
+  /* `left:50%` com largura automática limita a caixa ao que sobra À
+     DIREITA do meio da tela: no celular todo aviso saía com 195px de 390
+     e quebrava em cinco linhas. `max-content` devolve a largura natural,
+     e o `max-width` continua segurando a borda. Vale para todo aviso da
+     casa, não só o da mandala. */
+  width:max-content;max-width:calc(100vw - 32px);
+  animation:fadeUp .3s var(--spring);overflow:hidden}
 .toast svg.i{color:var(--encore);font-size:16px}
 .toast button{color:var(--brass-400);font-weight:600;font-size:13px;white-space:nowrap}
 .toast .drain{position:absolute;left:0;bottom:0;height:2px;background:var(--brass-500);
@@ -15767,7 +15773,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v126 · 3 set · o caminho da chave dentro do aviso';
+const VERSAO_PROTOTIPO = 'v127 · 3 set · Prontidão leva, em vez de recusar';
 
 menuSheet = (function(orig){
   return function(){
@@ -25530,7 +25536,9 @@ if(document.getElementById('fluxoPagina')){
   transition:fill .25s var(--eo) }
 .mdRoda .temp:hover path{ fill:var(--ink-850) }
 .mdRoda .temp.on path{ fill:rgba(200,150,58,.28) }
-.mdRoda .temp.fora path{ opacity:.35; cursor:not-allowed }
+/* apagada quer dizer "não é aqui", não "não pode": o dedo continua
+   valendo, e o toque leva a roda até a fase onde ela existe */
+.mdRoda .temp.fora path{ opacity:.4 }
 .mdRoda .temp text{ font:500 7.5px var(--mono); letter-spacing:.16em; fill:var(--ink-400);
   pointer-events:none; text-transform:uppercase }
 .mdRoda .temp.on text{ fill:var(--brass-300) }
@@ -25568,6 +25576,8 @@ if(document.getElementById('fluxoPagina')){
 .mdPlats button{ padding:6px 11px; border-radius:999px; border:1px solid var(--ink-700);
   color:var(--ink-300); font-size:12px; background:var(--ink-950) }
 .mdPlats button.on{ border-color:var(--brass-500); color:var(--brass-300); background:rgba(200,150,58,.1) }
+.mdPlats button.fora{ opacity:.45; border-style:dashed }
+.mdPlats button.fora:hover{ opacity:.8; border-color:var(--brass-600); color:var(--brass-300) }
 .mdAcoes{ display:flex; gap:9px; flex-wrap:wrap; margin:4px 0 0 }
 .mdAcoes .b{ gap:7px }
 .mdIA{ display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:9.5px;
@@ -25846,8 +25856,23 @@ function mdEscolherFase(f){
   if(!mdTempsDaFase(f).includes(S.md.temp)) S.md.temp = 'urgencia';
   mdPintarRoda();
 }
+/* Prontidão só existe em Conversão e Remarketing — é o método, não um
+   capricho: quem está pronto para comprar não mora no topo do funil.
+   Mas RECUSAR o toque em silêncio é o que o fundador viu como "não dá
+   pra clicar". Um botão que não responde parece quebrado, mesmo estando
+   certo. Então o toque não recusa: LEVA. A roda anda até a fase onde
+   aquela temperatura existe, e o aviso conta o porquê. */
 function mdEscolherTemp(t){
-  if(!MD_TEMPS[t] || !mdTempsDaFase(S.md.fase).includes(t)) return;
+  if(!MD_TEMPS[t]) return;
+  if(!mdTempsDaFase(S.md.fase).includes(t)){
+    const destino = MD_TEMPS[t].fases[0];
+    S.md.fase = destino; S.md.temp = t; mdPintarRoda();
+    /* curto: no celular o aviso vira um paredão e cobre a roda que
+       acabou de se mexer — justo o que a pessoa quer ver */
+    if(typeof toast === 'function')
+      toast(`${MD_TEMPS[t].n} só existe em ${MD_TEMPS[t].fases.map(f => MD_FASES[f].n).join(' e ')} — levei a roda para lá.`);
+    return;
+  }
   S.md.temp = t; mdPintarRoda();
 }
 function mdEscolherGancho(n){
@@ -25929,8 +25954,12 @@ function mdPintarRoda(){
   if(sub) sub.textContent = 'Nº ' + g.n;
   const leitura = document.querySelector('.mdLeitura'); if(leitura) leitura.innerHTML = mdLeituraHtml();
   document.querySelectorAll('.mdTempChips button').forEach(b => {
-    b.classList.toggle('on', b.dataset.mdtemp === S.md.temp);
-    b.disabled = !validas.includes(b.dataset.mdtemp);
+    const t = b.dataset.mdtemp, aqui = validas.includes(t);
+    b.classList.toggle('on', t === S.md.temp);
+    /* apagado, não desligado: continua clicável, e o toque leva até lá */
+    b.classList.toggle('fora', !aqui);
+    b.title = aqui ? MD_TEMPS[t].quem
+      : `Só em ${MD_TEMPS[t].fases.map(f => MD_FASES[f].n).join(' e ')} — toque para ir`;
   });
 }
 function mdLeituraHtml(){
@@ -26212,7 +26241,8 @@ function agMandala(){
         <button class="b gho sm" data-mdsogancho="1">Só outro gancho</button>
       </div>
       <div class="mdPlats mdTempChips" style="justify-content:center;margin:10px 0 0">
-        ${MD_ORDEM_TEMPS.map(t => `<button data-mdtemp="${t}" class="${t === S.md.temp ? 'on' : ''}" ${validas.includes(t) ? '' : 'disabled'}>${MD_TEMPS[t].n}</button>`).join('')}
+        ${MD_ORDEM_TEMPS.map(t => `<button data-mdtemp="${t}" class="${t === S.md.temp ? 'on' : ''}${validas.includes(t) ? '' : ' fora'}"
+          title="${validas.includes(t) ? esc(MD_TEMPS[t].quem) : `Só em ${MD_TEMPS[t].fases.map(f => MD_FASES[f].n).join(' e ')} — toque para ir`}">${MD_TEMPS[t].n}</button>`).join('')}
       </div>
       <div class="mdLeitura">${mdLeituraHtml()}</div>
     </div>

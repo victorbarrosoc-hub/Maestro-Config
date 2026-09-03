@@ -88,13 +88,31 @@ checa('dezoito ganchos numerados de 1 a 18',
 checa('o miolo diz o gancho escolhido', roda.hub === 'História', roda.hub);
 checa('e a agulha aponta para ele', /rotate\(230deg\)/.test(roda.agulha || ''), roda.agulha);
 
-/* Prontidão só existe onde há compra */
-const fora = await pg.evaluate(() => ({
-  bandaFora: document.querySelector('.mdRoda .temp[data-mdtemp="prontidao"]').classList.contains('fora'),
-  chipFora: document.querySelector('.mdTempChips [data-mdtemp="prontidao"]').disabled }));
-checa('em Descoberta, Prontidão está fora — como na mandala original', fora.bandaFora && fora.chipFora, fora);
-await pg.click('.mdTempChips [data-mdtemp="prontidao"]', { force: true }); await pg.waitForTimeout(150);
-checa('e tocar nela não muda nada', await pg.evaluate(() => S.md.temp) === 'oportunidade');
+/* Prontidão só existe onde há compra — e o toque LEVA até lá, em vez de
+   recusar calado. Um botão que não responde parece quebrado (foi o que o
+   fundador viu: "não dá pra clicar"). */
+const fora = await pg.evaluate(() => {
+  const chip = document.querySelector('.mdTempChips [data-mdtemp="prontidao"]');
+  return { bandaFora: document.querySelector('.mdRoda .temp[data-mdtemp="prontidao"]').classList.contains('fora'),
+    chipFora: chip.classList.contains('fora'), desligado: chip.disabled, dica: chip.title };
+});
+checa('em Descoberta, Prontidão aparece apagada — como na mandala original', fora.bandaFora && fora.chipFora, fora);
+checa('mas continua clicável: apagado é dica, não parede', fora.desligado === false, fora);
+checa('e a dica já diz onde ela existe', /Só em Conversão e Remarketing/.test(fora.dica || ''), fora.dica);
+await pg.click('.mdTempChips [data-mdtemp="prontidao"]'); await pg.waitForTimeout(250);
+const levou = await pg.evaluate(() => ({ fase: S.md.fase, temp: S.md.temp,
+  toast: document.querySelector('.toast')?.textContent.replace(/\s+/g, ' ').trim() || '',
+  acesa: document.querySelector('.mdRoda .fase.on')?.dataset.mdfase }));
+checa('tocar nela leva a roda até Conversão, com a Prontidão escolhida',
+      levou.fase === 'conversao' && levou.temp === 'prontidao' && levou.acesa === 'conversao', levou);
+checa('e o aviso conta o porquê, sem deixar ninguém no escuro',
+      /só existe em Conversão e Remarketing/.test(levou.toast) && /levei a roda/.test(levou.toast), levou.toast);
+/* o aviso é curto: no celular um paredão cobriria a roda que acabou de
+   se mexer — justo o que a pessoa quer ver */
+checa('e cabe em duas linhas, sem cobrir a roda', levou.toast.length <= 90, levou.toast.length);
+/* de volta ao topo do funil, para o resto do teste seguir de onde estava */
+await pg.evaluate(() => { S.md.fase = 'descoberta'; S.md.temp = 'oportunidade'; mdPintarRoda(); });
+await pg.waitForTimeout(150);
 await tocarNaRoda(pg, 172, 45); await pg.waitForTimeout(200);          /* Conversão: o quadrante de baixo, à direita */
 const conv = await pg.evaluate(() => ({ fase: S.md.fase,
   aceso: document.querySelector('.mdRoda .fase.on')?.dataset.mdfase,
@@ -323,6 +341,21 @@ checa('celular: o ícone do botão é ícone, não uma roda inteira', m.icone <=
 checa('celular: cada fatia de gancho ainda é alvo de dedo', m.fatia >= 18, m.fatia);
 await tocarNaRoda(cel, 83, -90 + 4 * 20 + 10); await cel.waitForTimeout(200);   /* a fatia 5 */
 checa('celular: tocar na fatia escolhe', await cel.evaluate(() => S.md.gancho) === 5);
+
+/* o aviso da casa inteira: `left:50%` com largura automática limitava a
+   caixa ao que sobra à direita do meio da tela — 195px de 390, cinco
+   linhas para uma frase. Vale para todo toast do produto. */
+const aviso = await cel.evaluate(async () => {
+  toast('Prontidão só existe em Conversão e Remarketing — levei a roda para lá.');
+  await new Promise(r => setTimeout(r, 350));
+  const t = document.querySelector('.toast'); const r = t.getBoundingClientRect();
+  return { w: Math.round(r.width), tela: innerWidth, esq: Math.round(r.left),
+    dir: Math.round(innerWidth - r.right), linhas: Math.round(r.height / 20) };
+});
+checa('celular: o aviso usa a largura da tela, em vez de metade dela',
+      aviso.w >= aviso.tela * 0.85, aviso);
+checa('celular: e continua centrado, sem encostar na borda',
+      aviso.esq >= 12 && Math.abs(aviso.esq - aviso.dir) <= 2, aviso);
 await cel.close();
 
 checa('nenhum erro de JavaScript', erros.length === 0);
