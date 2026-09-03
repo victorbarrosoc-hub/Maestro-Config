@@ -15773,7 +15773,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v134 · 3 set · campanha pela mandala';
+const VERSAO_PROTOTIPO = 'v135 · 3 set · o dossiê como ele vem';
 
 menuSheet = (function(orig){
   return function(){
@@ -26891,6 +26891,18 @@ sbCarregar = (function(orig){
 .cbSetor.on .chev{ transform:rotate(90deg) }
 .cbCorpo{ padding:2px 16px 16px; display:grid; gap:13px; border-top:1px solid var(--ink-870, #22242A) }
 .cbCorpo .porque{ font-size:12px; line-height:1.5; color:var(--ink-500); margin:11px 0 0 }
+/* v135 — texto livre do setor e documentos lidos */
+.cbExtra{ margin:0 0 14px }
+.cbExtra label, .cbDocs label{ display:block; font:500 10px var(--mono); letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ink-400); margin:0 0 6px }
+.cbExtra label em, .cbDocs label em{ font-style:normal; text-transform:none; letter-spacing:0; font-size:10.5px; color:var(--ink-500); margin-left:8px }
+.cbExtra pre{ margin:0; white-space:pre-wrap; font:12.5px/1.55 var(--sans); color:var(--ink-300);
+  background:var(--ink-950); border:1px solid var(--ink-800); border-radius:10px; padding:10px 12px; max-height:220px; overflow:auto }
+.cbExtra .lk, .cbDocs .lk{ background:none; border:0; color:var(--ink-500); font:inherit; font-size:12px; cursor:pointer; padding:0; text-decoration:underline }
+.cbExtra .lk{ margin-top:6px }
+.cbDocs{ margin:0 0 14px; padding:12px 14px; border:1px solid var(--ink-850); border-radius:12px }
+.cbDocs .doc{ display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; font-size:12.5px; color:var(--ink-300); margin:0 0 4px }
+.cbDocs .doc b{ color:var(--ink-100); font-weight:500; word-break:break-all }
 .cbCampo label{ display:block; font:500 10px var(--mono); letter-spacing:.13em; text-transform:uppercase;
   color:var(--ink-500); margin:0 0 6px }
 .cbCampo label em{ font-style:normal; text-transform:none; letter-spacing:0; font-size:10.5px;
@@ -27057,7 +27069,8 @@ function cbForcaSetor(cliId, s){
   const n = s.campos.filter(([ck]) => String(c[ck] || '').trim()).length;
   const arq = s.arquivos ? ((c.arquivos || []).length ? 1 : 0) : 0;
   const alvo = s.campos.length + (s.arquivos ? 1 : 0);
-  return { n: n + arq, alvo, cheio: (n + arq) >= alvo, vazio: (n + arq) === 0 };
+  const extra = !!String(c.extra || '').trim();
+  return { n: n + arq, alvo, cheio: (n + arq) >= alvo, vazio: (n + arq) === 0 && !extra, extra };
 }
 function cbForca(cliId){
   let n = 0, alvo = 0;
@@ -27089,65 +27102,160 @@ ${secoes}`;
 }
 
 /* o leitor: aceita o formato acima, e perdoa acento, caixa e "- " */
-function cbLerDossie(cliId, texto){
-  const limpa = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-  const porSecao = {};
-  let atual = null;
-  String(texto || '').split('\n').forEach(l => {
-    let cab = /^\s*#{1,4}\s*(.+?)\s*$/.exec(l);
-    /* um .docx traz o setor como TÍTULO do Word, um PDF traz como linha
-       solta — sem "##". Uma linha que é exatamente o nome de um setor
-       vale como cabeçalho. Só igualdade: valor de campo nunca é só isso. */
-    if(!cab){
-      const so = limpa(l);
-      if(so && CB_SETORES.some(x => limpa(x.k) === so || limpa(x.n) === so)) cab = [l, l.trim()];
-    }
-    if(cab){
-      /* IGUALDADE ANTES DE PREFIXO. "## IDENTIDADE VISUAL" começa com
-         "identidade", e o casamento por prefixo o entregava ao setor
-         Identidade — que então SOBRESCREVIA a seção já lida. Dois
-         setores se perdiam calados. Exato primeiro; prefixo só depois,
-         e do nome mais longo para o mais curto. */
-      const alvo0 = limpa(cab[1]);
-      let alvo = CB_SETORES.find(s => limpa(s.k) === alvo0 || limpa(s.n) === alvo0);
-      if(!alvo){
-        alvo = [...CB_SETORES]
-          .sort((a, b) => Math.max(b.k.length, b.n.length) - Math.max(a.k.length, a.n.length))
-          .find(s => alvo0.startsWith(limpa(s.n)) || alvo0.startsWith(limpa(s.k)));
+/* v135 — o dossiê como ele VEM, não como a gente pediu.
+   O fundador subiu o dossiê real da EJUP e o leitor não achou nada: o
+   documento usa "Identidade" como título e "Quem é" como subtítulo, com
+   o valor nos parágrafos de baixo — não "Quem é: valor" numa linha. E
+   um manual de marca vai chamar o setor de "Tom de voz", "Paleta",
+   "Porta-vozes". Então o leitor passou a aceitar: título = setor (pelo
+   nome ou por sinônimo), subtítulo = campo (idem), e o que vem embaixo
+   é o valor. O que não casa com campo nenhum não se perde: fica como
+   texto livre do setor, e o documento inteiro fica guardado para a IA. */
+const CB_SINONIMOS = {
+  identidade:['identidade', 'marca', 'quem somos', 'posicionamento', 'sobre', 'a marca', 'essência', 'essencia', 'propósito', 'proposito'],
+  voz:['voz', 'tom de voz', 'tom', 'linguagem', 'voz da marca', 'como falamos', 'verbal', 'identidade verbal'],
+  exemplos:['exemplos', 'exemplos aprovados', 'manifesto', 'trechos', 'textos aprovados', 'frases'],
+  oferta:['oferta', 'oferta e provas', 'produto', 'produtos', 'serviços', 'servicos', 'o que vendemos', 'portfólio', 'portfolio'],
+  pessoas:['pessoas', 'time', 'equipe', 'porta-voz', 'porta-vozes', 'quem fala', 'rostos'],
+  visual:['identidade visual', 'visual', 'miv', 'cores e tipografia', 'design', 'logo', 'logotipo', 'paleta'],
+  refs:['referências visuais', 'referencias visuais', 'referências', 'referencias', 'moodboard', 'inspirações', 'inspiracoes'],
+  restricoes:['restrições', 'restricoes', 'jurídico e compliance', 'jurídico', 'juridico', 'compliance', 'regras', 'o que não pode', 'limites']
+};
+const CB_CAMPO_SIN = {
+  'identidade|quem':['quem é', 'quem somos', 'missão', 'missao', 'a empresa', 'quem é a marca'],
+  'identidade|paraQuem':['para quem', 'público', 'publico', 'público-alvo', 'publico-alvo', 'persona', 'personas', 'audiência', 'audiencia'],
+  'identidade|naoE':['o que não é', 'o que nao e', 'o que não somos', 'não é', 'anti-público', 'anti-publico'],
+  'voz|comoFala':['como fala', 'tom de voz', 'tom', 'princípios de fala', 'principios de fala', 'como falamos', 'estilo'],
+  'voz|nunca':['nunca dizer', 'nunca', 'não dizer', 'nao dizer', 'proibido', 'o que evitar', 'evitar'],
+  'voz|palavras':['palavras da casa', 'palavras', 'vocabulário', 'vocabulario', 'glossário', 'glossario', 'léxico', 'lexico'],
+  'exemplos|trechos':['trechos', 'exemplos', 'manifesto', 'frases', 'textos'],
+  'oferta|vende':['o que vende', 'o que vendemos', 'produtos', 'serviços', 'servicos', 'oferta', 'portfólio', 'portfolio'],
+  'oferta|dor':['a dor que resolve', 'dor', 'a dor', 'problema', 'o problema'],
+  'oferta|desejo':['o que o cliente quer', 'desejo', 'o desejo', 'quadro na parede', 'resultado'],
+  'oferta|dif':['o diferencial', 'diferencial', 'diferenciais', 'por que nós', 'por que a gente'],
+  'oferta|bigIdea':['big idea', 'tese', 'ideia central'],
+  'oferta|metodo':['método com nome', 'metodo com nome', 'método', 'metodo', 'a furadeira', 'furadeira'],
+  'oferta|preco':['pode falar preço?', 'pode falar preço', 'pode falar preco', 'preço', 'preco', 'política de preço', 'politica de preco', 'valores'],
+  'oferta|provas':['provas', 'prova', 'prova social', 'resultados', 'depoimentos', 'números', 'numeros'],
+  'pessoas|rosto':['quem aparece', 'rosto', 'rostos', 'porta-voz', 'porta-vozes'],
+  'pessoas|assina':['quem assina', 'assinatura', 'assina'],
+  'visual|cores':['cores', 'paleta', 'paleta de cores', 'cor'],
+  'visual|tipos':['tipografia', 'fontes', 'fonte', 'tipos'],
+  'visual|regras':['regras do logo', 'logo', 'logotipo', 'uso do logo', 'aplicação do logo', 'aplicacao do logo', 'marca gráfica', 'marca grafica'],
+  'refs|eNos':['o que é a cara da marca', 'é a cara da marca', 'referências', 'referencias', 'é nós', 'e nos', 'moodboard'],
+  'refs|naoNos':['o que nunca', 'não é nós', 'nao e nos'],
+  'restricoes|juridico':['jurídico', 'juridico', 'legal', 'regras jurídicas', 'regras juridicas', 'oab'],
+  'restricoes|compliance':['compliance', 'lgpd', 'regulatório', 'regulatorio']
+};
+const cbLimpa = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  .replace(/[:：]\s*$/, '').replace(/\s+/g, ' ').trim();
+/* qual setor um cabeçalho nomeia. Título de nível 1 ou 2 aceita prefixo
+   ("Oferta" para "Oferta e provas", "IDENTIDADE VISUAL 2026" para o
+   setor visual) — do nome mais longo para o mais curto, para "Identidade
+   visual" nunca cair em "Identidade". Nível 3 em diante só aceita igual. */
+function cbSetorDoTitulo(h, nivel){
+  const a = cbLimpa(h); if(!a) return null;
+  const igual = CB_SETORES.find(x => cbLimpa(x.k) === a || cbLimpa(x.n) === a || (CB_SINONIMOS[x.k] || []).some(y => cbLimpa(y) === a));
+  if(igual) return igual.k;
+  if(nivel > 2) return null;
+  const cand = [...CB_SETORES].sort((p, q) => q.n.length - p.n.length).find(x =>
+    (a.length >= 4 && cbLimpa(x.n).startsWith(a)) || a.startsWith(cbLimpa(x.n) + ' ')
+    || (CB_SINONIMOS[x.k] || []).some(y => cbLimpa(y).length >= 5 && a.startsWith(cbLimpa(y) + ' ')));
+  return cand ? cand.k : null;
+}
+/* qual campo um subtítulo nomeia: pelo rótulo exato, primeiro no setor
+   atual; depois por sinônimo. Devolve { sk, ck, lista } */
+function cbCampoDoTitulo(h, sk, soRotulo){
+  const a = cbLimpa(h); if(!a) return null;
+  const rot = s => { const c = s.campos.find(([, r]) => cbLimpa(r) === a); return c ? { sk:s.k, ck:c[0], lista:!!c[3], exato:true } : null; };
+  /* sinônimo igual, ou no começo do título: "Paleta — as 8 cores do MIV"
+     é Cores, "Tipografia institucional" é Tipografia */
+  const casa = y => { const b = cbLimpa(y); return b === a || (b.length >= 4 && new RegExp('^' + b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\s|[—–(:/-])').test(a)); };
+  const sin = s => { const c = s.campos.find(([ck]) => (CB_CAMPO_SIN[`${s.k}|${ck}`] || []).some(casa)); return c ? { sk:s.k, ck:c[0], lista:!!c[3] } : null; };
+  const ordem = [cbSetor(sk), ...CB_SETORES.filter(x => x.k !== sk)].filter(Boolean);
+  for(const s of ordem){ const r = rot(s); if(r) return r; }
+  if(soRotulo) return null;
+  for(const s of ordem){ const r = sin(s); if(r) return r; }
+  return null;
+}
+function cbLerDossie(cliId, texto, origem){
+  const linhas = String(texto || '').split('\n');
+  let sk = null, campo = null, achouSetor = 0;
+  const buf = {}, extras = {};
+  const empurra = l => {
+    if(!l) return;
+    if(campo){ (buf[`${campo.sk}|${campo.ck}`] = buf[`${campo.sk}|${campo.ck}`] || []).push(l); return; }
+    if(!sk) return;
+    /* setor de um campo só (Exemplos): texto solto é o campo */
+    const s = cbSetor(sk);
+    if(s.campos.length === 1){ const k = `${sk}|${s.campos[0][0]}`; (buf[k] = buf[k] || []).push(l); return; }
+    (extras[sk] = extras[sk] || []).push(l);
+  };
+  linhas.forEach(raw => {
+    const l = raw.replace(/\s+$/, ''); if(!l.trim()) return;
+    /* "##" com espaço: "#0D131A" é uma cor, não um título */
+    const mh = /^\s*(#{1,4})\s+(.+?)\s*$/.exec(l);
+    let nivel = mh ? mh[1].length : 0, h = mh ? mh[2] : null;
+    /* "Rótulo: valor" na mesma linha — o formato que a Maestro pede — vem
+       ANTES de qualquer outra leitura, para o valor nunca se perder */
+    if(!h){
+      const mi = /^\s*([^:：\-•*#][^:：]{1,60})[:：]\s*(\S.*)$/.exec(l);
+      if(mi){
+        /* pelo rótulo exato, de qualquer setor; por sinônimo, só dentro do
+           setor aberto — "Fontes: MIV 2026" no cabeçalho do documento não
+           é a tipografia */
+        const c2 = cbCampoDoTitulo(mi[1], sk);
+        if(c2 && (c2.exato || c2.sk === sk)){ sk = c2.sk; campo = c2; empurra(mi[2].trim()); return; }
       }
-      atual = alvo ? alvo.k : null;
-      if(atual) porSecao[atual] = porSecao[atual] || [];
+    }
+    /* PDF e texto colado não trazem "##": uma linha curta que É o nome de
+       um setor ou de um campo vale como cabeçalho */
+    if(!h){
+      const so = cbLimpa(l);
+      if(so.split(' ').length <= 6 && !/[.!]$/.test(l.trim()) && !/[:：]\s*\S/.test(l)
+         && (cbSetorDoTitulo(so, 9) || cbCampoDoTitulo(so, sk))){ h = l.trim(); nivel = 3; }
+    }
+    if(h){
+      if(nivel <= 2){
+        const s2 = cbSetorDoTitulo(h, nivel); if(s2){ sk = s2; campo = null; achouSetor++; return; }
+        const c2 = cbCampoDoTitulo(h, sk); if(c2){ sk = c2.sk; campo = c2; return; }
+      } else {
+        const c1 = cbCampoDoTitulo(h, sk, true); if(c1){ sk = c1.sk; campo = c1; return; }
+        const s2 = cbSetorDoTitulo(h, 9); if(s2){ sk = s2; campo = null; achouSetor++; return; }
+        const c2 = cbCampoDoTitulo(h, sk); if(c2){ sk = c2.sk; campo = c2; return; }
+      }
+      /* cabeçalho que não é setor nem campo: fecha o campo e vira texto
+         livre do setor, com o título junto para não perder o sentido */
+      campo = null; if(sk) (extras[sk] = extras[sk] || []).push(h.replace(/[:：]\s*$/, '') + ':');
       return;
     }
-    if(atual) porSecao[atual].push(l);
+    empurra(l.replace(/^\s*[-*•]\s*/, '').trim());
   });
   const c = cbDe(cliId);
-  let campos = 0, setores = 0;
-  for(const sk of Object.keys(porSecao)){
-    const s = cbSetor(sk); if(!s) continue;
-    const linhas = porSecao[sk];
-    let achouAqui = 0;
-    s.campos.forEach(([ck, rot, ex, lista]) => {
-      /* onde o campo começa, e onde começa o próximo: o que está no
-         meio é o valor — é o que faz lista de várias linhas funcionar */
-      const iEste = linhas.findIndex(l => limpa(l).startsWith(limpa(rot) + ':'));
-      if(iEste < 0) return;
-      const outros = s.campos.map(([, r]) => limpa(r) + ':').filter(r => r !== limpa(rot) + ':');
-      let iProx = linhas.length;
-      for(let j = iEste + 1; j < linhas.length; j++)
-        if(outros.some(r => limpa(linhas[j]).startsWith(r))){ iProx = j; break; }
-      const primeira = linhas[iEste].slice(linhas[iEste].indexOf(':') + 1).trim();
-      const resto = linhas.slice(iEste + 1, iProx)
-        .map(l => l.replace(/^\s*[-*•]\s*/, '').trim())
-        .filter(l => l && !/^\(.*\)$/.test(l));
-      const valor = [primeira, ...resto].filter(Boolean).join('\n').trim();
-      if(!valor) return;
-      c[sk][ck] = lista ? valor : valor.replace(/\n+/g, ' ');
-      campos++; achouAqui++;
-    });
-    if(achouAqui) setores++;
+  let campos = 0; const tocados = new Set();
+  Object.entries(buf).forEach(([k, ls]) => {
+    const [s2, ck] = k.split('|'); const s = cbSetor(s2); const def = s && s.campos.find(x => x[0] === ck);
+    if(!def) return;
+    const vals = ls.map(x => x.trim()).filter(x => x && !/^\(.*\)$/.test(x));
+    if(!vals.length) return;
+    c[s2][ck] = def[3] ? vals.join('\n') : vals.join(' ');
+    campos++; tocados.add(s2);
+  });
+  Object.entries(extras).forEach(([s2, ls]) => {
+    const t = ls.join('\n').trim(); if(!t) return;
+    c[s2].extra = t.slice(0, 6000); tocados.add(s2);
+  });
+  /* o documento inteiro fica guardado: campo é atalho, o texto é a
+     fonte. Só o que é lixo curto (uma linha colada por engano) não entra */
+  const txt = String(texto || '').trim();
+  const guardou = !!(campos || achouSetor || txt.length >= 400);
+  if(guardou){
+    const nome = origem || 'texto colado';
+    c.docs = (c.docs || []).filter(d => d.nome !== nome);
+    c.docs.push({ nome, quando:Date.now(), texto:txt.slice(0, 40000), campos, setores:tocados.size });
+    if(c.docs.length > 4) c.docs = c.docs.slice(-4);
   }
-  return { campos, setores };
+  return { campos, setores:tocados.size, extras:Object.keys(extras).length, doc:guardou };
 }
 
 /* ---------- o cérebro em texto, para a IA --------------------------- */
@@ -27166,7 +27274,17 @@ function cbParaIA(cliId){
       const n = ((c[s.k] || {}).arquivos || []).length;
       if(n) linhas.push(`Referências visuais no acervo: ${n} imagem${n > 1 ? 's' : ''}.`);
     }
+    const extra = String((c[s.k] || {}).extra || '').trim();
+    if(extra) linhas.push(`Mais, do documento:\n${cbLinhas(extra).map(x => `- ${x}`).join('\n')}`);
     if(linhas.length) partes.push(`## ${s.n.toUpperCase()}\n${linhas.join('\n')}`);
+  });
+  /* o documento inteiro, com teto — o campo é o resumo, o texto é a
+     fonte. Entra por último, do mais recente para o mais antigo. */
+  let orcamento = 12000;
+  (c.docs || []).slice().reverse().forEach(d => {
+    if(orcamento <= 0 || !d.texto) return;
+    const t = d.texto.slice(0, Math.min(orcamento, 8000)); orcamento -= t.length;
+    partes.push(`## DOCUMENTO DA MARCA: ${d.nome}\n${t}`);
   });
   const ap = c.aprendizado || {};
   if((ap.aprovados || []).length)
@@ -27329,8 +27447,9 @@ function cbModalColar(){
   const c = cliAtual();
   return `<div class="modal"><div class="modalbox wide cbColar" role="dialog" aria-modal="true">
     <h3>Colar o dossiê da ${esc(c.nome)}</h3>
-    <p class="aviso">Suba o arquivo ou cole o texto. A leitura é feita aqui mesmo, sem IA e sem custo —
-      o formato é conhecido. O que estiver preenchido é substituído; o que faltar fica como está.</p>
+    <p class="aviso">Suba o dossiê, o manual da marca ou qualquer documento sobre ela — ou cole o texto.
+      A leitura é feita aqui mesmo, sem IA e sem custo: o que casar com os setores entra nos campos,
+      e o resto fica guardado inteiro para a IA. O que estiver preenchido é substituído; o que faltar fica como está.</p>
     <label class="cbSubir" style="margin:0 0 12px">${ic('doc', 13)} Subir o arquivo — .docx, .pdf, .txt ou .md
       <input type="file" accept=".docx,.pdf,.txt,.md,application/pdf,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document" data-cbarquivo="1"></label>
     <textarea id="cb-dossie" placeholder="## IDENTIDADE&#10;Quem é: ...&#10;Para quem: ...&#10;&#10;## VOZ&#10;Como fala: ..."></textarea>
@@ -27340,6 +27459,39 @@ function cbModalColar(){
       <button class="b pri sm" data-cblerok="1">Ler e preencher</button></div>
   </div></div>`;
 }
+
+/* v135 — o que ficou de fora dos campos aparece, e os documentos lidos também */
+cbCorpoHtml = (function(orig){
+  return function(cliId, s){
+    const html = orig.apply(this, arguments);
+    const ex = String((cbDe(cliId)[s.k] || {}).extra || '').trim();
+    if(!ex) return html;
+    return html.replace('<p class="porque">',
+      `<div class="cbExtra"><label>Do documento, sem campo certo<em>a IA lê isto também</em></label>
+        <pre>${esc(ex)}</pre><button type="button" class="lk" data-cbextrax="${s.k}">apagar</button></div><p class="porque">`);
+  };
+})(cbCorpoHtml);
+cbTela = (function(orig){
+  return function(){
+    const html = orig.apply(this, arguments);
+    const c = cliAtual(), docs = (cbDe(c.id).docs || []);
+    if(!docs.length) return html;
+    const lista = docs.map((d, i) => `<span class="doc"><b>${esc(d.nome)}</b> · ${new Date(d.quando).toLocaleDateString('pt-BR', { day:'2-digit', month:'short' })}${
+      d.campos ? ` · ${d.campos} campos` : ' · só texto'}<button type="button" class="lk" data-cbdocx="${i}" title="Tirar este documento do cérebro">tirar</button></span>`).join('');
+    return html.replace('<div class="cbSetores">',
+      `<div class="cbDocs"><label>Documentos lidos<em>inteiros, para a IA</em></label>${lista}</div><div class="cbSetores">`);
+  };
+})(cbTela);
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-cbdocx],[data-cbextrax]');
+  if(!t) return;
+  e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+  const c = cbDe(cliAtual().id);
+  if(t.dataset.cbdocx !== undefined){ (c.docs || []).splice(+t.dataset.cbdocx, 1); }
+  if(t.dataset.cbextrax !== undefined){ if(c[t.dataset.cbextrax]) delete c[t.dataset.cbextrax].extra; }
+  if(typeof sbGravarConfig === 'function') sbGravarConfig();
+  render();
+}, true);
 
 /* ---------- a aba entra na régua do cliente ------------------------- */
 abasCliente = (function(orig){
@@ -27366,8 +27518,8 @@ agClienteDet = (function(orig){
 
 function cbLerEPreencher(texto, origem){
   const aviso = document.getElementById('cb-achou');
-  const r = cbLerDossie(cliAtual().id, texto);
-  if(!r.campos){
+  const r = cbLerDossie(cliAtual().id, texto, origem);
+  if(!r.campos && !r.doc){
     if(aviso){ aviso.className = 'achou erro';
       aviso.textContent = origem
         ? `Li ${origem}, mas não achei os campos do dossiê. O texto ficou aí embaixo — confira os cabeçalhos.`
@@ -27379,7 +27531,9 @@ function cbLerEPreencher(texto, origem){
   if(typeof sbGravarConfig === 'function') sbGravarConfig();
   CB_SETORES.forEach(s => { S.cbAberto[s.k] = false; });
   render();
-  toast(`Dossiê lido${origem ? ` de ${origem}` : ''}: ${r.campos} campos em ${r.setores} setores. A mandala já usa.`);
+  toast(r.campos
+    ? `Dossiê lido${origem ? ` de ${origem}` : ''}: ${r.campos} campos em ${r.setores} setores${r.extras ? ', e o resto guardado por setor' : ''}. A mandala já usa.`
+    : `Não achei os campos, mas guardei ${origem || 'o texto'} inteiro: a IA da mandala lê ele.`);
   return true;
 }
 
@@ -27413,15 +27567,28 @@ async function cbDocxTexto(buf){
   const decod = t => t.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
     .replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/&amp;/g, '&');
   const linhas = [];
-  xml.split(/<w:p[\s>]/).slice(1).forEach(p => {
+  /* dentro de tabela, célula é célula: nem negrito nem estilo viram
+     título — senão a paleta do manual ("Hex | Amostra | #0D131A") fecha
+     o campo Cores antes de a primeira cor entrar */
+  const semTabela = xml.replace(/<w:tbl>[\s\S]*?<\/w:tbl>/g, m =>
+    m.replace(/<w:b\/>|<w:b\s[^>]*\/>/g, '').replace(/<w:pStyle w:val="[^"]*"\/>/g, ''));
+  semTabela.split(/<w:p[\s>]/).slice(1).forEach(p => {
     const corpo = p.split('</w:p>')[0];
-    const titulo = /<w:pStyle w:val="(?:Heading|T[ií]?tulo|Ttulo|Title)\d*"/i.test(corpo);
+    /* Título 1 é setor, Título 2 em diante é campo: o leitor precisa da
+       diferença para "Identidade" abrir o setor e "Quem é" abrir o campo */
+    const mt = /<w:pStyle w:val="(?:Heading|T[ií]?tulo|Ttulo|Title)(\d*)"/i.exec(corpo);
+    const nivel = mt ? (mt[1] === '' ? 1 : +mt[1]) : 0;
     const lista = /<w:numPr>/.test(corpo);
     const re = /<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>|<w:tab\/>|<w:br[^>]*\/>/g;
     let m, t = '';
     while((m = re.exec(corpo))) t += m[1] !== undefined ? decod(m[1]) : (/^<w:br/.test(m[0]) ? '\n' : ' ');
     t = t.trim(); if(!t) return;
-    linhas.push(titulo ? '## ' + t : (lista ? '- ' + t : t));
+    /* parágrafo curto todo em negrito é subtítulo — é assim que muito
+       manual de marca é escrito, sem estilo de título nenhum */
+    const runs = corpo.split(/<w:r[\s>]/).slice(1).filter(r => /<w:t[\s>]/.test(r));
+    const negrito = !mt && !lista && runs.length > 0 && runs.every(r => /<w:b\b/.test(r.split('</w:rPr>')[0] || ''))
+      && t.split(/\s+/).length <= 8 && !/[.!?]$/.test(t) && /[A-Za-zÀ-ÿ]/.test(t) && !/^#/.test(t);
+    linhas.push(nivel === 1 ? '## ' + t : (nivel >= 2 || negrito) ? '### ' + t : (lista ? '- ' + t : t));
   });
   return linhas.join('\n');
 }

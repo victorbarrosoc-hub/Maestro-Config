@@ -32,6 +32,9 @@ const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const par = (txt, extra) => `<w:p>${extra || ''}<w:r><w:t xml:space="preserve">${txt}</w:t></w:r></w:p>`;
 const tit = txt => `<w:p><w:pPr><w:pStyle w:val="Ttulo2"/></w:pPr><w:r><w:t>${txt}</w:t></w:r></w:p>`;
 const item = txt => `<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>${txt}</w:t></w:r></w:p>`;
+const montarDocx = corpo => zipar([
+  { nome: '[Content_Types].xml', texto: '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>' },
+  { nome: 'word/document.xml', texto: `<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="${W}"><w:body>${corpo}</w:body></w:document>` }]);
 const DOCX = zipar([
   { nome: '[Content_Types].xml', texto: '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>' },
   { nome: 'word/document.xml', texto: `<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="${W}"><w:body>
@@ -456,6 +459,90 @@ checa('dois pedaços na mesma altura viram uma linha só, com o espaço no lugar
       pdf.c.identidade?.paraQuem === 'Adultos de 28 a 45 anos', pdf.c.identidade?.paraQuem);
 checa('e o modal fecha', !pdf.modal);
 await arq.close();
+
+
+/* ---------- 8b. o dossiê como ele vem (v135) --------------------------
+   O fundador subiu o dossiê real da EJUP: "Identidade" como título,
+   "Quem é" como subtítulo, o valor nos parágrafos de baixo. O leitor
+   antigo não achou nada. Este teste cola esse documento (o real, em
+   fixtures/) e confere que os campos entram, que o que não casa fica
+   como texto do setor, e que o documento inteiro vai para a IA. */
+console.log('\n  — o dossiê como ele vem —');
+const REAL = fs.readFileSync('web/verificar/fixtures/dossie-ejup-real.md', 'utf8');
+const pr = await abrir();
+await pr.evaluate(() => { S.cerebro.n0 = {}; });
+await pr.click('[data-cbcolar]'); await pr.waitForTimeout(300);
+await pr.fill('#cb-dossie', REAL);
+await pr.click('[data-cblerok]'); await pr.waitForTimeout(700);
+const real = await pr.evaluate(() => {
+  const c = S.cerebro.n0;
+  return { toast: document.querySelector('.toast')?.textContent.trim(), modal: !!document.querySelector('.modal'),
+    quem: c.identidade.quem, paraQuem: c.identidade.paraQuem, naoE: c.identidade.naoE, idExtra: c.identidade.extra,
+    comoFala: c.voz.comoFala, nunca: c.voz.nunca, palavras: c.voz.palavras, vozExtra: c.voz.extra,
+    trechos: c.exemplos.trechos, vende: c.oferta.vende, dor: c.oferta.dor, desejo: c.oferta.desejo, preco: c.oferta.preco, provas: c.oferta.provas,
+    rosto: c.pessoas.rosto, assina: c.pessoas.assina, cores: c.visual.cores, tipos: c.visual.tipos, logo: c.visual.regras, visExtra: c.visual.extra,
+    eNos: c.refs.eNos, naoNos: c.refs.naoNos, juridico: c.restricoes.juridico, compliance: c.restricoes.compliance,
+    docs: (c.docs || []).map(d => ({ nome: d.nome, campos: d.campos, tam: d.texto.length })),
+    forca: document.querySelector('.cbForca b')?.textContent,
+    ia: cbParaIA('n0') };
+});
+checa('título = setor, subtítulo = campo, parágrafo = valor: os campos entram',
+      /Sábio/.test(real.quem || '') && /advogados/.test(real.paraQuem || '') && /EJUPcast/.test(real.vende || '')
+      && /superficialidade/.test(real.dor || '') && /Pivotto/.test(real.rosto || ''), { quem: (real.quem || '').slice(0, 60), vende: (real.vende || '').slice(0, 60) });
+checa('lista do Word vira uma linha por item (nos campos de lista); os outros ficam numa linha',
+      (real.nunca || '').split('\n').length >= 5 && /Não é curso de atalho/.test(real.naoE || '') && !/\n/.test(real.naoE || ''), { naoE: real.naoE, nunca: real.nunca });
+checa('"Princípios de fala" cai em Como fala, por sinônimo', /Nomeia o inimigo/.test(real.comoFala || ''), real.comoFala);
+checa('"Pode falar preço?" com interrogação também casa', /Não há política/.test(real.preco || ''), real.preco);
+checa('Exemplos, que só tem um campo, recebe as frases soltas', (real.trechos || '').split('\n').length >= 8 && /Alma clássica/.test(real.trechos), (real.trechos || '').slice(0, 80));
+checa('"Paleta — as 8 cores" cai em Cores, com os hex', /#0D131A/.test(real.cores || '') && /#F0B855/.test(real.cores || ''), real.cores);
+checa('Tipografia e Regras do logo entram no setor visual', !!real.tipos && !!real.logo, { tipos: real.tipos, logo: real.logo });
+checa('Referências e Restrições também', !!real.eNos && !!real.naoNos && !!real.juridico && !!real.compliance, { eNos: real.eNos });
+checa('o parágrafo de abertura, sem campo, fica como texto do setor',
+      /Escola Jurídica é uma plataforma/.test(real.idExtra || '') && /autoridade silenciosa/.test(real.vozExtra || ''), { id: (real.idExtra || '').slice(0, 60) });
+checa('o subtítulo desconhecido ("Regra de contraste") vai para o texto do setor, com o título',
+      /Regra de contraste/.test(real.visExtra || ''), real.visExtra);
+checa('o documento inteiro fica guardado, com nome e tamanho',
+      real.docs.length === 1 && real.docs[0].nome === 'texto colado' && real.docs[0].tam > 5000 && real.docs[0].campos >= 20, real.docs);
+checa('a IA recebe os campos, o texto livre e o documento',
+      /## IDENTIDADE/.test(real.ia) && /Mais, do documento:/.test(real.ia) && /## DOCUMENTO DA MARCA: texto colado/.test(real.ia) && /Alma clássica/.test(real.ia), real.ia.length);
+checa('o aviso diz quantos campos, que o resto foi guardado, e o modal fecha',
+      /\d+ campos em \d+ setores, e o resto guardado por setor/.test(real.toast || '') && !real.modal, real.toast);
+checa('a força sobe', parseInt(real.forca) >= 80, real.forca);
+
+const telaReal = await pr.evaluate(() => ({
+  docs: document.querySelector('.cbDocs')?.innerText || '',
+  cheios: document.querySelectorAll('.cbSetor.cheio').length }));
+checa('a aba lista o documento lido', /texto colado/.test(telaReal.docs) && /campos/.test(telaReal.docs), telaReal.docs);
+await pr.click('[data-cbabrir="identidade"]'); await pr.waitForTimeout(250);
+const extraUi = await pr.evaluate(() => ({ tem: !!document.querySelector('.cbExtra'), txt: document.querySelector('.cbExtra pre')?.textContent || '' }));
+checa('e o setor mostra o texto que não coube em campo', extraUi.tem && /Escola Jurídica/.test(extraUi.txt), extraUi);
+await pr.click('[data-cbextrax="identidade"]'); await pr.waitForTimeout(250);
+checa('"apagar" tira o texto livre do setor', await pr.evaluate(() => !S.cerebro.n0.identidade.extra && !document.querySelector('.cbExtra')));
+await pr.click('.cbDocs [data-cbdocx="0"]'); await pr.waitForTimeout(250);
+checa('"tirar" tira o documento — os campos ficam', await pr.evaluate(() => (S.cerebro.n0.docs || []).length === 0 && /Sábio/.test(S.cerebro.n0.identidade.quem)));
+
+/* um manual de marca sem estrutura nenhuma: nada casa, mas nada se perde */
+await pr.click('[data-cbcolar]'); await pr.waitForTimeout(300);
+await pr.fill('#cb-dossie', 'MANUAL DA MARCA\n' + 'A marca fala baixo e pensa alto. '.repeat(30));
+await pr.click('[data-cblerok]'); await pr.waitForTimeout(500);
+const solto = await pr.evaluate(() => ({ toast: document.querySelector('.toast')?.textContent.trim(), modal: !!document.querySelector('.modal'),
+  docs: (S.cerebro.n0.docs || []).length, ia: /pensa alto/.test(cbParaIA('n0')) }));
+checa('um texto longo sem setor nenhum não vira erro: fica guardado inteiro para a IA',
+      /guardei o texto inteiro/.test(solto.toast || '') && !solto.modal && solto.docs === 1 && solto.ia, solto);
+
+/* o .docx com Título 1 e Título 2 vira "##" e "###" */
+const docx2 = await pr.evaluate(async bytes => {
+  const t = await cbDocxTexto(new Uint8Array(bytes).buffer);
+  return t.split('\n').filter(l => /^#/.test(l));
+}, [...montarDocx([
+  `<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Voz</w:t></w:r></w:p>`,
+  `<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Como fala</w:t></w:r></w:p>`,
+  `<w:p><w:r><w:t>Calma e densa.</w:t></w:r></w:p>`,
+  `<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Nunca dizer</w:t></w:r></w:p>`,
+  `<w:p><w:r><w:t>Uma frase normal, longa o bastante, que termina com ponto.</w:t></w:r></w:p>`].join(''))]);
+checa('no .docx, Título 1 vira "##", Título 2 vira "###", e negrito curto também é subtítulo',
+      docx2.join('|') === '## Voz|### Como fala|### Nunca dizer', docx2);
+await pr.close();
 
 /* ---------- 9. no celular ------------------------------------------- */
 console.log('\n  — no celular —');
