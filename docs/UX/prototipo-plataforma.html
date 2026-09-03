@@ -15773,7 +15773,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v135 · 3 set · o dossiê como ele vem';
+const VERSAO_PROTOTIPO = 'v136 · 3 set · o Estúdio';
 
 menuSheet = (function(orig){
   return function(){
@@ -28108,4 +28108,818 @@ addEventListener('input', e => {
   if(el.id === 'mdc-inicio'){ if(/^\d{4}-\d{2}-\d{2}$/.test(el.value)) S.mdc.inicio = el.value; return mdcRepintar(); }
   if(el.id === 'mdc-n'){ S.mdc.n = +el.value || 1; return mdcRepintar(); }
 }, true);
+</script>
+<style>
+/* =====================================================================
+   v136 — o Estúdio: o espaço pessoal de cada pessoa da agência.
+   Só seu. Onde a ideia nasce, se organiza e vira card do Ensaio.
+   Referências: o quadro do Miro e do FigJam (notas, ligações, votação,
+   cronômetro), o Milanote (quadros por projeto, visual limpo) e o
+   Freeform (toque, pinça, sem menu pesado). Nada de cara de IA: é a
+   mesma casa — tinta, latão, serifa no título, mono nos rótulos.
+   ================================================================== */
+.estTopo{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap }
+.estQuem{ display:flex; align-items:center; gap:10px; padding:8px 12px 8px 8px; border:1px solid var(--ink-850); border-radius:999px }
+.estQuem .av{ width:30px; height:30px; font-size:11px }
+.estQuem .txt{ display:grid; line-height:1.2 }
+.estQuem .txt b{ font-size:13px; font-weight:600; color:var(--ink-100) }
+.estQuem .txt span{ font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-500) }
+.estXp{ display:flex; align-items:center; gap:10px; padding:6px 12px 6px 6px; border:1px solid var(--ink-850); border-radius:999px; cursor:pointer; background:none; color:inherit; font:inherit }
+.estXp:hover{ border-color:var(--brass-600) }
+.estXp svg{ width:30px; height:30px; transform:rotate(-90deg) }
+.estXp svg circle{ fill:none; stroke-width:3 }
+.estXp svg .tr{ stroke:var(--ink-800) }
+.estXp svg .pr{ stroke:var(--brass-400); stroke-linecap:round; transition:stroke-dasharray .5s var(--eo) }
+.estXp .n{ font-family:var(--serif); font-size:17px; color:var(--brass-300); line-height:1 }
+.estXp .rot{ font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-500) }
+.estQuadros{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin:16px 0 10px }
+.estQuadros button{ padding:6px 12px; border-radius:999px; border:1px solid var(--ink-800); background:none; color:var(--ink-300);
+  font:inherit; font-size:12.5px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; max-width:220px }
+.estQuadros button span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.estQuadros button i{ width:6px; height:6px; border-radius:50%; background:var(--ink-600); flex:none }
+.estQuadros button.on{ border-color:var(--brass-600); color:var(--brass-300); background:rgba(200,150,58,.08) }
+.estQuadros button.on i{ background:var(--brass-400) }
+.estQuadros button.novo{ border-style:dashed; color:var(--ink-400) }
+.estBarra{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 10px }
+.estBarra .sp{ flex:1 }
+.estBarra .nome{ font-family:var(--serif); font-size:20px; color:var(--ink-100); background:none; border:0; border-bottom:1px solid transparent; padding:2px 0; min-width:120px; max-width:60vw }
+.estBarra .nome:focus{ outline:none; border-bottom-color:var(--brass-600) }
+.estBarra .modo{ font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--brass-300);
+  border:1px solid rgba(200,150,58,.35); border-radius:6px; padding:3px 8px }
+.estCrono{ display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:13px; color:var(--ink-100);
+  border:1px solid var(--ink-800); border-radius:999px; padding:5px 12px }
+.estCrono b{ font-weight:600; font-variant-numeric:tabular-nums; min-width:44px; text-align:center }
+.estCrono.quente{ border-color:var(--brass-600); color:var(--brass-300) }
+.estCrono.fim{ border-color:var(--encore); color:var(--encore) }
+.estCrono button{ background:none; border:0; color:var(--ink-400); cursor:pointer; padding:0; font:inherit; font-size:12px }
+
+/* o palco: o quadro em si */
+.estPalco{ position:relative; height:min(68vh, 680px); min-height:420px; border:1px solid var(--ink-850); border-radius:16px; overflow:hidden;
+  background:var(--ink-950); touch-action:none; user-select:none; -webkit-user-select:none; cursor:grab }
+.estPalco.arrastando{ cursor:grabbing }
+.estPalco.modo-ligar, .estPalco.modo-votar{ cursor:crosshair }
+.estGrade{ position:absolute; inset:0; background-image:radial-gradient(circle, var(--ink-800) 1px, transparent 1.2px);
+  background-size:24px 24px; opacity:.55; pointer-events:none }
+.estMundo{ position:absolute; left:0; top:0; transform-origin:0 0; will-change:transform }
+.estFios{ position:absolute; left:0; top:0; overflow:visible; pointer-events:none }
+.estFios line{ stroke:var(--ink-600); stroke-width:1.5; stroke-linecap:round }
+.estFios line.on{ stroke:var(--brass-400) }
+.estFios circle{ fill:var(--ink-600) }
+.estNota{ position:absolute; width:190px; min-height:96px; border-radius:12px; padding:10px 11px 9px;
+  background:var(--np, rgba(255,200,87,.13)); border:1px solid var(--nb, rgba(255,200,87,.35));
+  box-shadow:0 8px 24px -14px rgba(0,0,0,.8); display:flex; flex-direction:column; gap:6px;
+  animation:estNasce .28s var(--spring) both }
+@keyframes estNasce{ from{ transform:scale(.86); opacity:0 } }
+.estNota.sel{ outline:2px solid var(--brass-400); outline-offset:2px }
+.estNota.fixa{ border-width:1.5px }
+.estNota.arr{ box-shadow:0 22px 38px -16px rgba(0,0,0,.9); z-index:20 }
+.estNota.texto{ background:none; border-color:transparent; box-shadow:none; min-height:0; width:460px }
+.estNota.texto textarea{ font-family:var(--serif); font-size:22px; line-height:1.15; color:var(--ink-100) }
+.estNota .pega{ display:flex; align-items:center; gap:6px; cursor:grab; min-height:16px }
+.estNota .pega .em{ font-size:13px; line-height:1 }
+.estNota .pega .n{ font-family:var(--mono); font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-500) }
+.estNota .pega .sp{ flex:1 }
+.estNota .pega .pin{ font-size:10px; color:var(--brass-400) }
+.estNota textarea{ width:100%; border:0; background:none; resize:none; color:var(--ink-100); font:inherit; font-size:13.5px; line-height:1.4;
+  padding:0; min-height:44px; outline:none; overflow:hidden; user-select:text; -webkit-user-select:text; cursor:text }
+.estNota textarea::placeholder{ color:var(--ink-500) }
+.estNota .pe{ display:flex; align-items:center; gap:4px; min-height:14px }
+.estNota .pe .sp{ flex:1 }
+.estNota .votos{ display:inline-flex; gap:3px }
+.estNota .votos i{ width:8px; height:8px; border-radius:50%; background:var(--brass-400); box-shadow:0 0 0 1px var(--ink-950) }
+.estNota .pe button{ background:none; border:0; color:var(--ink-500); cursor:pointer; padding:1px 3px; font:inherit; font-size:11px; border-radius:4px; opacity:0; transition:opacity var(--fast) }
+.estNota:hover .pe button, .estNota.sel .pe button{ opacity:1 }
+.estNota .pe button:hover{ color:var(--ink-100); background:var(--ink-850) }
+.estNota .cores{ display:none; gap:4px; position:absolute; left:10px; bottom:-26px; padding:4px; background:var(--ink-900); border:1px solid var(--ink-800); border-radius:999px; z-index:30 }
+.estNota.sel .cores{ display:inline-flex }
+.estNota .cores button{ width:16px; height:16px; border-radius:50%; border:1px solid rgba(255,255,255,.12); padding:0; cursor:pointer; opacity:1 }
+.estNota.ligavel{ outline:1px dashed var(--brass-600); outline-offset:3px }
+
+/* ferramentas: à esquerda no desktop, embaixo no celular */
+.estFerr{ position:absolute; left:12px; top:12px; display:flex; flex-direction:column; gap:4px; padding:5px; background:rgba(22,22,22,.92);
+  border:1px solid var(--ink-800); border-radius:14px; z-index:40; backdrop-filter:blur(8px) }
+.estFerr button{ width:38px; height:38px; border-radius:10px; border:0; background:none; color:var(--ink-300); cursor:pointer; display:grid; place-items:center;
+  transition:background var(--fast), color var(--fast) }
+.estFerr button:hover{ background:var(--ink-850); color:var(--ink-100) }
+.estFerr button.on{ background:rgba(200,150,58,.14); color:var(--brass-300) }
+.estFerr button svg{ width:17px; height:17px }
+.estFerr .sep{ height:1px; background:var(--ink-800); margin:2px 6px }
+.estZoom{ position:absolute; right:12px; bottom:12px; display:flex; gap:2px; padding:4px; background:rgba(22,22,22,.92); border:1px solid var(--ink-800); border-radius:999px; z-index:40 }
+.estZoom button{ width:32px; height:32px; border-radius:50%; border:0; background:none; color:var(--ink-300); cursor:pointer; font:inherit; font-size:15px }
+.estZoom button:hover{ background:var(--ink-850); color:var(--ink-100) }
+.estZoom span{ font-family:var(--mono); font-size:10px; color:var(--ink-500); align-self:center; padding:0 6px; min-width:38px; text-align:center }
+.estDica{ position:absolute; left:50%; bottom:14px; transform:translateX(-50%); font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-400); background:rgba(22,22,22,.9); border:1px solid var(--ink-800); border-radius:999px; padding:6px 12px; z-index:40; white-space:nowrap; pointer-events:none }
+.estVazio{ position:absolute; inset:0; display:grid; place-items:center; text-align:center; color:var(--ink-400); pointer-events:none; padding:24px }
+.estVazio h3{ font-family:var(--serif); font-weight:400; font-size:24px; color:var(--ink-100); margin:0 0 6px }
+.estVazio p{ margin:0; font-size:13.5px; line-height:1.5; max-width:340px }
+.estAcoes{ display:flex; gap:9px; flex-wrap:wrap; margin:12px 0 0; align-items:center }
+.estAcoes .b{ justify-content:center }
+.estAcoes .sel{ font-size:12.5px; color:var(--ink-400) }
+.estAcoes .sel b{ color:var(--ink-100) }
+
+/* modelos */
+.estModelos{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:10px; margin:12px 0 0 }
+.estModelo{ text-align:left; padding:14px; border:1px solid var(--ink-800); border-radius:14px; background:none; color:inherit; font:inherit; cursor:pointer;
+  display:grid; gap:5px; transition:border-color var(--fast), transform var(--fast) var(--eo) }
+.estModelo:hover{ border-color:var(--brass-600); transform:translateY(-1px) }
+.estModelo .em{ font-size:20px }
+.estModelo b{ font-family:var(--serif); font-weight:400; font-size:17px; color:var(--ink-100) }
+.estModelo span{ font-size:12px; line-height:1.45; color:var(--ink-400) }
+.estModelo .t{ font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--brass-300) }
+
+/* selos e faíscas */
+.estSelos{ display:grid; gap:10px; margin:12px 0 0 }
+.estSelo{ display:flex; gap:12px; align-items:center; padding:10px 12px; border:1px solid var(--ink-850); border-radius:12px }
+.estSelo .em{ width:38px; height:38px; border-radius:50%; display:grid; place-items:center; font-size:18px; background:var(--ink-900); flex:none; filter:grayscale(1); opacity:.45 }
+.estSelo.tem .em{ filter:none; opacity:1; background:rgba(200,150,58,.14); box-shadow:0 0 0 1px rgba(200,150,58,.35) }
+.estSelo b{ display:block; font-size:13.5px; font-weight:600; color:var(--ink-100) }
+.estSelo span{ font-size:12px; color:var(--ink-400) }
+.estNivel{ display:flex; gap:6px; flex-wrap:wrap; margin:8px 0 0 }
+.estNivel span{ font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-500); padding:4px 9px; border:1px solid var(--ink-850); border-radius:999px }
+.estNivel span.on{ color:var(--brass-300); border-color:var(--brass-600) }
+.estConfete{ position:fixed; inset:0; pointer-events:none; z-index:2700; overflow:hidden }
+.estConfete i{ position:absolute; top:-12px; width:8px; height:12px; border-radius:2px; animation:estCai 1.6s var(--eo) forwards }
+@keyframes estCai{ to{ transform:translateY(110vh) rotate(540deg); opacity:.2 } }
+
+/* o card que sai daqui */
+.estCard .lista{ display:grid; gap:6px; margin:0 0 12px }
+.estCard .lista label{ display:flex; gap:9px; align-items:flex-start; font-size:13px; color:var(--ink-200); cursor:pointer }
+.estCard .lista input{ margin-top:3px }
+.estCard .fld textarea{ min-height:96px }
+
+@media (max-width:760px){
+  .estPalco{ height:calc(100dvh - 330px); min-height:380px; border-radius:14px }
+  .estFerr{ left:50%; transform:translateX(-50%); top:auto; bottom:10px; flex-direction:row; border-radius:999px; padding:4px }
+  .estFerr .sep{ width:1px; height:auto; margin:6px 2px }
+  .estFerr button{ width:40px; height:40px }
+  .estZoom{ right:10px; bottom:62px }
+  .estDica{ bottom:auto; top:10px }
+  .estNota{ width:170px }
+  .estNota.texto{ width:320px }
+  .estBarra .nome{ max-width:100% }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v136 — o Estúdio.
+   ================================================================== */
+const EST_CORES = [
+  ['latao',  'rgba(255,200,87,.13)',  'rgba(255,200,87,.38)'],
+  ['cobalto','rgba(91,141,239,.14)',  'rgba(91,141,239,.42)'],
+  ['encore', 'rgba(53,184,122,.13)',  'rgba(53,184,122,.4)'],
+  ['coral',  'rgba(240,120,76,.14)',  'rgba(240,120,76,.42)'],
+  ['violeta','rgba(139,123,240,.14)', 'rgba(139,123,240,.42)'],
+  ['tinta',  'rgba(160,160,166,.10)', 'rgba(160,160,166,.32)']
+];
+const estCor = k => EST_CORES.find(c => c[0] === k) || EST_CORES[0];
+/* os modelos: o que cada um prepara no quadro, e o cronômetro que liga */
+const EST_MODELOS = [
+  { k:'branco',  em:'◻︎', n:'Em branco',        t:'livre',      d:'Uma nota e o espaço. Para quando a ideia já está na cabeça.' },
+  { k:'despejo', em:'🌧', n:'Despejo',          t:'5 minutos',  d:'Despeje tudo sem julgar — o curso manda começar assim. Depois é que se escolhe.' },
+  { k:'crazy8',  em:'⚡', n:'Crazy 8',          t:'8 em 8 min', d:'Oito notas, oito minutos, uma ideia por minuto. O clássico do design sprint.' },
+  { k:'mapa',    em:'🕸', n:'Mapa mental',      t:'ramos',      d:'Um tema no centro e quatro ramos ligados. Puxe o que cada ramo abre.' },
+  { k:'certo',   em:'⇄', n:'Certo × Errado',   t:'contraste',  d:'Dois lados: o jeito de sempre e o de vocês. O tipo 7 da mandala nasce aqui.' },
+  { k:'scamper', em:'🧩', n:'SCAMPER',          t:'7 lentes',   d:'Substituir, Combinar, Adaptar, Modificar, outro uso, Eliminar, inverter.' },
+  { k:'dor',     em:'→', n:'Dor → Desejo',      t:'travessia',  d:'A dor de um lado, o desejo do outro, e a ponte no meio — que é a peça.' }
+];
+/* faíscas: o que cada gesto vale, e os patamares */
+const EST_VALE = { nota:1, liga:2, voto:1, crono:8, card:12, quadro:3 };
+const EST_NIVEIS = [[0, 'Afinando'], [30, 'Solista'], [90, 'Compositor'], [220, 'Maestro']];
+const EST_SELOS = [
+  { k:'primeiro', em:'✦', n:'Primeiro quadro',     d:'Abriu o Estúdio e criou o primeiro quadro.' },
+  { k:'dez',      em:'✎', n:'Dez ideias',          d:'Dez notas no mesmo quadro — o despejo aconteceu.' },
+  { k:'oito',     em:'⚡', n:'Oito em oito',        d:'Fechou um Crazy 8 com as oito notas escritas.' },
+  { k:'fios',     em:'⌘', n:'Cartógrafo',          d:'Dez ligações — as ideias viraram um mapa.' },
+  { k:'palco',    em:'🎼', n:'Do esboço ao palco',  d:'O primeiro card saiu daqui para o Ensaio.' },
+  { k:'semana',   em:'☀', n:'Sete dias',           d:'Pensou aqui em sete dias diferentes.' }
+];
+
+/* ---------- estado: por pessoa --------------------------------------- */
+S.estudio = S.estudio || {};
+S.est = S.est || { quadro:null, modo:'mover', sel:[], vista:{ x:0, y:0, z:1 }, liga:null, crono:null, desfazer:[], votosDados:0 };
+if(typeof PASSAGEIRO !== 'undefined' && PASSAGEIRO.add) PASSAGEIRO.add('est');
+const estQuemSou = () => (S.usuario && S.usuario.tipo === 'agencia' && S.usuario.id) || 'anon';
+function estMeu(){
+  const id = estQuemSou();
+  const m = S.estudio[id] = S.estudio[id] || { quadros:[], xp:{ faiscas:0, selos:[], dias:[] } };
+  m.quadros = m.quadros || []; m.xp = m.xp || { faiscas:0, selos:[], dias:[] };
+  m.xp.selos = m.xp.selos || []; m.xp.dias = m.xp.dias || [];
+  return m;
+}
+function estQuadro(){
+  const m = estMeu();
+  let q = m.quadros.find(x => x.id === S.est.quadro);
+  if(!q && m.quadros.length){ q = m.quadros[0]; S.est.quadro = q.id; }
+  return q || null;
+}
+const estId = p => (p || 'n') + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
+const estHoje = () => new Date().toISOString().slice(0, 10);
+const estNivel = f => { let n = EST_NIVEIS[0]; EST_NIVEIS.forEach(x => { if(f >= x[0]) n = x; }); return n; };
+const estProximo = f => EST_NIVEIS.find(x => x[0] > f) || null;
+
+/* gravar: no aparelho, agora; na casa, logo depois. O que viaja é o
+   estúdio de TODAS as pessoas numa linha só (__estudio__), mas a tela
+   só desenha o de quem entrou. */
+function estGravar(){
+  try{ localStorage.setItem('maestro-estudio-' + estQuemSou(), JSON.stringify(estMeu())); }catch(e){}
+  clearTimeout(S.estGravarT);
+  S.estGravarT = setTimeout(() => { if(typeof sbGravarConfig === 'function') sbGravarConfig(); }, 1200);
+}
+function estFaisca(chave, quantas){
+  const m = estMeu(); m.xp.faiscas += quantas === undefined ? (EST_VALE[chave] || 1) : quantas;
+  const hoje = estHoje(); if(!m.xp.dias.includes(hoje)) m.xp.dias.push(hoje);
+  estConferirSelos();
+  const el = document.querySelector('.estXp'); if(el) el.outerHTML = estXpHtml();
+}
+function estGanhaSelo(k){
+  const m = estMeu(); if(m.xp.selos.includes(k)) return;
+  m.xp.selos.push(k);
+  const s = EST_SELOS.find(x => x.k === k);
+  if(typeof som === 'function') som('conclusao');
+  if(s) toast(`Selo: ${s.em} ${s.n}. ${s.d}`);
+  estConfete();
+}
+function estConferirSelos(){
+  const m = estMeu(), q = estQuadro();
+  if(m.quadros.length) estGanhaSelo('primeiro');
+  if(q && q.itens.filter(i => i.tipo === 'nota').length >= 10) estGanhaSelo('dez');
+  if(q && (q.liga || []).length >= 10) estGanhaSelo('fios');
+  if(m.xp.dias.length >= 7) estGanhaSelo('semana');
+}
+function estConfete(){
+  const c = document.createElement('div'); c.className = 'estConfete';
+  const cores = ['#FFC857', '#5B8DEF', '#35B87A', '#F0784C', '#8B7BF0'];
+  for(let i = 0; i < 42; i++){
+    const p = document.createElement('i');
+    p.style.left = Math.random() * 100 + 'vw'; p.style.background = cores[i % cores.length];
+    p.style.animationDelay = (Math.random() * .5) + 's'; p.style.animationDuration = (1.3 + Math.random()) + 's';
+    c.appendChild(p);
+  }
+  document.body.appendChild(c); setTimeout(() => c.remove(), 2600);
+}
+
+/* ---------- desfazer: o quadro inteiro, até 30 passos ----------------- */
+function estLembrar(){
+  const q = estQuadro(); if(!q) return;
+  S.est.desfazer.push(JSON.stringify({ itens:q.itens, liga:q.liga }));
+  if(S.est.desfazer.length > 30) S.est.desfazer.shift();
+}
+function estDesfazer(){
+  const q = estQuadro(); if(!q || !S.est.desfazer.length) return;
+  const v = JSON.parse(S.est.desfazer.pop()); q.itens = v.itens; q.liga = v.liga;
+  S.est.sel = S.est.sel.filter(id => q.itens.some(i => i.id === id));
+  estGravar(); estPintar();
+}
+
+/* ---------- quadros e modelos ------------------------------------------ */
+function estNovoQuadro(modelo, nome){
+  const m = estMeu(), md = EST_MODELOS.find(x => x.k === modelo) || EST_MODELOS[0];
+  const q = { id:estId('q'), nome:nome || (md.k === 'branco' ? 'Quadro novo' : md.n), modelo:md.k, criado:Date.now(), itens:[], liga:[] };
+  const nota = (x, y, txt, cor, extra) => { const i = { id:estId(), tipo:'nota', x, y, cor:cor || 'latao', txt:txt || '', em:'', votos:0, fixa:false, ...(extra || {}) }; q.itens.push(i); return i; };
+  const texto = (x, y, txt) => { const i = { id:estId(), tipo:'texto', x, y, txt, cor:'tinta' }; q.itens.push(i); return i; };
+  /* no celular a grade é de duas colunas: quatro colunas enquadradas
+     viram notas de 38%, ilegíveis. Duas cabem a 75%. */
+  const mob = typeof innerWidth === 'number' && innerWidth < 700;
+  const cols = mob ? 2 : 4, passo = 215, linha = 150;
+  const grade = (i, y0) => [80 + (i % cols) * passo, (y0 || 110) + Math.floor(i / cols) * linha];
+  if(md.k === 'branco') nota(120, 90, '');
+  if(md.k === 'despejo'){
+    texto(80, 40, 'Despeje. Sem julgar.');
+    nota(...grade(0, 120), 'Escreva tudo que vier. Uma ideia por nota. Julgar é depois, com os votos.', 'tinta');
+    for(let i = 1; i < 6; i++) nota(...grade(i, 120), '');
+  }
+  if(md.k === 'crazy8'){
+    texto(80, 30, 'Crazy 8 — uma ideia por minuto');
+    for(let i = 0; i < 8; i++) nota(...grade(i), '', ['latao', 'cobalto', 'encore', 'coral'][i % 4], { em:String(i + 1) });
+  }
+  if(md.k === 'mapa'){
+    const c = nota(mob ? 190 : 360, 220, 'O tema', 'latao', { fixa:true, em:'◉' });
+    const ramos = mob ? [[40, 60, 'Quem'], [340, 60, 'Por quê'], [40, 400, 'Como'], [340, 400, 'Onde']]
+                      : [[80, 80, 'Quem'], [640, 80, 'Por quê'], [80, 380, 'Como'], [640, 380, 'Onde']];
+    ramos.forEach(([x, y, t]) => { const r = nota(x, y, t, 'cobalto'); q.liga.push({ de:c.id, para:r.id }); });
+  }
+  if(md.k === 'certo'){
+    const x2 = mob ? 295 : 520;
+    texto(80, 30, 'O jeito de sempre'); texto(x2, 30, 'O jeito de vocês');
+    nota(80, 100, '', 'coral'); nota(80, 240, '', 'coral'); nota(x2, 100, '', 'encore'); nota(x2, 240, '', 'encore');
+  }
+  if(md.k === 'scamper'){
+    texto(80, 30, 'SCAMPER — sete lentes sobre a mesma ideia');
+    ['Substituir', 'Combinar', 'Adaptar', 'Modificar', 'Pôr em outro uso', 'Eliminar', 'Inverter']
+      .forEach((t, i) => nota(...grade(i), t + ': ', ['latao', 'cobalto', 'encore', 'coral', 'violeta', 'latao', 'cobalto'][i], { em:t[0] }));
+  }
+  if(md.k === 'dor'){
+    if(mob){
+      texto(60, 30, 'A dor'); texto(60, 190, 'A ponte'); texto(60, 350, 'O desejo');
+      const a = nota(60, 80, '', 'coral'), b = nota(60, 240, '', 'latao'), c = nota(60, 400, '', 'encore');
+      q.liga.push({ de:a.id, para:b.id }, { de:b.id, para:c.id });
+    } else {
+      texto(60, 30, 'A dor'); texto(360, 30, 'A ponte'); texto(660, 30, 'O desejo');
+      const a = nota(60, 100, '', 'coral'), b = nota(360, 100, '', 'latao'), c = nota(660, 100, '', 'encore');
+      q.liga.push({ de:a.id, para:b.id }, { de:b.id, para:c.id });
+    }
+  }
+  m.quadros.unshift(q);
+  S.est.quadro = q.id; S.est.sel = []; S.est.desfazer = []; S.est.vista = { x:0, y:0, z:1 }; S.est.modo = 'mover'; S.est.enquadrar = true;
+  estFaisca('quadro');
+  if(md.k === 'despejo') estCrono(5 * 60, 'despejo');
+  if(md.k === 'crazy8') estCrono(8 * 60, 'crazy8');
+  if(typeof som === 'function') som('toque');
+  estGravar();
+  return q;
+}
+function estApagarQuadro(id){
+  const m = estMeu(); m.quadros = m.quadros.filter(q => q.id !== id);
+  if(S.est.quadro === id) S.est.quadro = m.quadros[0] ? m.quadros[0].id : null;
+  estGravar(); render();
+}
+
+/* ---------- cronômetro ------------------------------------------------- */
+function estCrono(seg, modo){
+  S.est.crono = { fim:Date.now() + seg * 1000, dur:seg, modo:modo || 'livre', feito:false };
+  clearInterval(S.estCronoT);
+  S.estCronoT = setInterval(estCronoTic, 500);
+  estCronoTic();
+}
+function estCronoTic(){
+  const c = S.est.crono, el = document.querySelector('.estCrono');
+  if(!c){ clearInterval(S.estCronoT); if(el) el.remove(); return; }
+  const resta = Math.max(0, Math.round((c.fim - Date.now()) / 1000));
+  if(el){
+    el.querySelector('b').textContent = `${String(Math.floor(resta / 60)).padStart(2, '0')}:${String(resta % 60).padStart(2, '0')}`;
+    el.classList.toggle('quente', resta > 0 && resta <= 60); el.classList.toggle('fim', resta === 0);
+  }
+  if(resta === 0 && !c.feito){
+    c.feito = true; clearInterval(S.estCronoT);
+    const q = estQuadro();
+    const escritas = q ? q.itens.filter(i => i.tipo === 'nota' && (i.txt || '').trim().length > 2).length : 0;
+    if(c.modo === 'crazy8' && escritas >= 8){ estGanhaSelo('oito'); estFaisca('crono'); toast('Oito em oito minutos. Agora vote nas três melhores.'); }
+    else if(c.modo === 'crazy8') toast(`Tempo. ${escritas} de 8 escritas — vale terminar, mas o exercício é a pressa.`);
+    else { estFaisca('crono', 4); toast('Tempo. Agora escolha: vote nas que valem virar card.'); }
+    if(typeof som === 'function') som('conclusao');
+  }
+}
+function estCronoParar(){ S.est.crono = null; clearInterval(S.estCronoT); const el = document.querySelector('.estCrono'); if(el) el.remove(); }
+
+/* ---------- desenho ---------------------------------------------------- */
+function estXpHtml(){
+  const m = estMeu(), f = m.xp.faiscas, nv = estNivel(f), px = estProximo(f);
+  const pct = px ? Math.min(1, (f - nv[0]) / (px[0] - nv[0])) : 1;
+  const r = 12, c = 2 * Math.PI * r;
+  return `<button type="button" class="estXp" data-estselos="1" title="Faíscas e selos">
+    <svg viewBox="0 0 30 30"><circle class="tr" cx="15" cy="15" r="${r}"/><circle class="pr" cx="15" cy="15" r="${r}" stroke-dasharray="${(c * pct).toFixed(1)} ${c.toFixed(1)}"/></svg>
+    <span><span class="n">${f}</span><br><span class="rot">${esc(nv[1])} · ${m.xp.selos.length} ${m.xp.selos.length === 1 ? 'selo' : 'selos'}</span></span></button>`;
+}
+function estNotaHtml(i){
+  const [k, np, nb] = estCor(i.cor);
+  const sel = S.est.sel.includes(i.id);
+  if(i.tipo === 'texto')
+    return `<div class="estNota texto${sel ? ' sel' : ''}" data-estnota="${i.id}" style="left:${i.x}px;top:${i.y}px">
+      <div class="pega"><span class="n">título</span><span class="sp"></span></div>
+      <textarea data-esttxt="${i.id}" rows="1" placeholder="Um título">${esc(i.txt || '')}</textarea></div>`;
+  return `<div class="estNota${sel ? ' sel' : ''}${i.fixa ? ' fixa' : ''}${S.est.liga === i.id ? ' ligavel' : ''}" data-estnota="${i.id}"
+      style="left:${i.x}px;top:${i.y}px;--np:${np};--nb:${nb}">
+    <div class="pega">${i.em ? `<span class="em">${esc(i.em)}</span>` : ''}<span class="n">${esc(k)}</span><span class="sp"></span>${i.fixa ? '<span class="pin">★ chave</span>' : ''}</div>
+    <textarea data-esttxt="${i.id}" rows="2" placeholder="Uma ideia por nota">${esc(i.txt || '')}</textarea>
+    <div class="pe">
+      <span class="votos">${'<i></i>'.repeat(Math.min(9, i.votos || 0))}</span><span class="sp"></span>
+      <button type="button" data-estfixa="${i.id}" title="${i.fixa ? 'Tirar de ideia-chave' : 'Marcar como ideia-chave'}">${i.fixa ? '★' : '☆'}</button>
+      <button type="button" data-estcopia="${i.id}" title="Duplicar">⧉</button>
+      <button type="button" data-estapaga="${i.id}" title="Apagar">✕</button>
+    </div>
+    <div class="cores">${EST_CORES.map(c => `<button type="button" data-estcor="${i.id}|${c[0]}" style="background:${c[2]}" title="${c[0]}"></button>`).join('')}</div>
+  </div>`;
+}
+function estFiosHtml(q){
+  const pos = id => { const i = q.itens.find(x => x.id === id); if(!i) return null; return [i.x + (i.tipo === 'texto' ? 130 : 95), i.y + 48]; };
+  return (q.liga || []).map(l => {
+    const a = pos(l.de), b = pos(l.para); if(!a || !b) return '';
+    const on = S.est.sel.includes(l.de) || S.est.sel.includes(l.para);
+    return `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="${on ? 'on' : ''}" data-estfio="${l.de}|${l.para}"/><circle cx="${b[0]}" cy="${b[1]}" r="3"/>`;
+  }).join('');
+}
+function estPalcoHtml(){
+  const q = estQuadro(); if(!q) return '';
+  const v = S.est.vista;
+  const dica = { mover:'arraste · toque duas vezes para nova nota', ligar:'toque em duas notas para ligar', votar:`toque para votar · ${Math.max(0, 5 - S.est.votosDados)} votos` }[S.est.modo] || '';
+  const ferr = [
+    ['nota', 'Nova nota (N)', '<path d="M12 5v14M5 12h14"/>'],
+    ['texto', 'Título', '<path d="M5 6h14M12 6v13"/>'],
+    ['sep'],
+    ['mover', 'Mover e selecionar', '<path d="M5 9l7-6 7 6M5 15l7 6 7-6"/>'],
+    ['ligar', 'Ligar duas notas', '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8 8l8 8"/>'],
+    ['votar', 'Votar (5 por quadro)', '<circle cx="12" cy="12" r="3.5"/><circle cx="12" cy="12" r="8"/>'],
+    ['sep'],
+    ['crono', 'Cronômetro (5 min)', '<circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M9 3h6"/>'],
+    ['desfazer', 'Desfazer (Ctrl+Z)', '<path d="M9 8H4v5M4 8c3-3 8-4 12-1s4 8 0 11"/>']
+  ];
+  return `<div class="estPalco modo-${S.est.modo}" data-estpalco="1">
+    <div class="estGrade"></div>
+    <div class="estMundo" style="transform:translate(${v.x}px,${v.y}px) scale(${v.z})">
+      <svg class="estFios" width="1" height="1">${estFiosHtml(q)}</svg>
+      ${q.itens.map(estNotaHtml).join('')}
+    </div>
+    ${!q.itens.length ? `<div class="estVazio"><div><h3>Quadro vazio</h3><p>Toque duas vezes no palco, ou no + da barra, para a primeira nota.</p></div></div>` : ''}
+    <div class="estFerr">${ferr.map(f => f[0] === 'sep' ? '<div class="sep"></div>'
+      : `<button type="button" data-estferr="${f[0]}" class="${S.est.modo === f[0] ? 'on' : ''}" title="${f[1]}" aria-label="${f[1]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${f[2]}</svg></button>`).join('')}</div>
+    <div class="estZoom"><button type="button" data-estzoom="-1" aria-label="Afastar">−</button><span>${Math.round(v.z * 100)}%</span><button type="button" data-estzoom="1" aria-label="Aproximar">+</button><button type="button" data-estzoom="0" title="Enquadrar" aria-label="Enquadrar">⌖</button></div>
+    ${dica ? `<div class="estDica">${esc(dica)}</div>` : ''}
+  </div>`;
+}
+function estModelosHtml(){
+  return `<div class="estModelos">${EST_MODELOS.map(m => `<button type="button" class="estModelo" data-estmodelo="${m.k}">
+    <span class="em">${m.em}</span><b>${esc(m.n)}</b><span class="t">${esc(m.t)}</span><span>${esc(m.d)}</span></button>`).join('')}</div>`;
+}
+function estCronoHtml(){
+  const c = S.est.crono; if(!c) return '';
+  return `<span class="estCrono"><b>--:--</b><button type="button" data-estcronox="1" title="Parar">parar</button></span>`;
+}
+function agEstudio(){
+  const m = estMeu(), q = estQuadro(), eu = membroCru(estQuemSou());
+  const nSel = S.est.sel.filter(id => q && q.itens.some(i => i.id === id && i.tipo === 'nota')).length;
+  const nNotas = q ? q.itens.filter(i => i.tipo === 'nota' && (i.txt || '').trim()).length : 0;
+  return agShell(`
+  <div class="mtop estTopo"><div><h1>Estúdio</h1>
+      <p>Só seu. Onde a ideia nasce, se organiza e vira card.</p></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div class="estQuem">${avMembro(eu, 'av')}<span class="txt"><b>${esc(eu ? eu.n : 'Você')}</b><span>ninguém mais vê</span></span></div>
+      ${estXpHtml()}
+    </div></div>
+
+  ${m.quadros.length ? `<div class="estQuadros">
+    ${m.quadros.map(x => `<button type="button" class="${q && x.id === q.id ? 'on' : ''}" data-estquadro="${x.id}"><i></i><span>${esc(x.nome)}</span></button>`).join('')}
+    <button type="button" class="novo" data-estnovo="1">+ novo quadro</button>
+  </div>` : ''}
+
+  ${q ? `
+  <div class="estBarra">
+    <input class="nome" value="${esc(q.nome)}" data-estnome="${q.id}" aria-label="Nome do quadro">
+    <span class="modo">${esc((EST_MODELOS.find(x => x.k === q.modelo) || EST_MODELOS[0]).n)}</span>
+    ${estCronoHtml()}
+    <span class="sp"></span>
+    <button class="lk" data-estdomandala="1" title="Trazer ideias guardadas na Mandala">da mandala</button>
+    <button class="lk" data-estapagarq="${q.id}">apagar quadro</button>
+  </div>
+  ${estPalcoHtml()}
+  <div class="estAcoes">
+    <button class="b pri" data-estcard="1" ${nNotas ? '' : 'disabled'}>Estruturar card${nSel ? ` (${nSel})` : ''}</button>
+    <span class="sel">${nSel ? `<b>${nSel}</b> selecionada${nSel > 1 ? 's' : ''} — o card sai delas` : (nNotas ? `sem seleção, o card sai das <b>mais votadas</b> e das <b>★ chave</b>` : 'escreva uma nota para começar')}</span>
+  </div>`
+  : `<div class="mdVazio" style="margin-top:14px"><b>Seu primeiro quadro.</b><br>Escolha um modelo — cada um já vem com o cronômetro e a estrutura certa.</div>${estModelosHtml()}`}
+  `);
+}
+/* só o palco, sem perder o foco nem o cronômetro */
+function estPintar(){
+  const p = document.querySelector('.estPalco'); if(!p) return render();
+  p.outerHTML = estPalcoHtml();
+  const a = document.querySelector('.estAcoes'); if(a){ const tmp = document.createElement('div'); tmp.innerHTML = agEstudio(); const nova = tmp.querySelector('.estAcoes'); if(nova) a.replaceWith(nova); }
+  estAjustarAlturas();
+}
+function estAjustarAlturas(){
+  document.querySelectorAll('.estNota textarea').forEach(t => { t.style.height = 'auto'; t.style.height = Math.max(44, t.scrollHeight) + 'px'; });
+}
+
+/* ---------- modelos: novo quadro ---------------------------------------- */
+function estModalNovo(){
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true"><h3>Novo quadro</h3>
+    <p style="font-size:13px;color:var(--ink-400);margin:0 0 4px">Cada modelo já vem com a estrutura e o cronômetro certos. Dá para mudar tudo depois.</p>
+    ${estModelosHtml()}
+    <div class="modalrow" style="margin-top:16px"><button class="b gho" data-modalno="1">Voltar</button></div></div></div>`;
+}
+function estModalSelos(){
+  const m = estMeu(), f = m.xp.faiscas;
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true"><h3>Faíscas e selos</h3>
+    <p style="font-size:13px;color:var(--ink-400);margin:0">Cada nota, ligação, voto e card vale faíscas. Ninguém compete com ninguém: é o seu ritmo, só seu.</p>
+    <div class="estNivel">${EST_NIVEIS.map(n => `<span class="${estNivel(f)[0] === n[0] ? 'on' : ''}">${n[1]} · ${n[0]}</span>`).join('')}</div>
+    <div class="estSelos">${EST_SELOS.map(s => `<div class="estSelo${m.xp.selos.includes(s.k) ? ' tem' : ''}"><span class="em">${s.em}</span><div><b>${esc(s.n)}</b><span>${esc(s.d)}</span></div></div>`).join('')}</div>
+    <div class="modalrow" style="margin-top:16px"><button class="b gho" data-modalno="1">Fechar</button></div></div></div>`;
+}
+
+/* ---------- o card: da nota ao Ensaio ---------------------------------- */
+function estNotasDoCard(){
+  const q = estQuadro(); if(!q) return [];
+  const notas = q.itens.filter(i => i.tipo === 'nota' && (i.txt || '').trim());
+  const sel = notas.filter(i => S.est.sel.includes(i.id));
+  if(sel.length) return sel;
+  const ordem = [...notas].sort((a, b) => (b.fixa - a.fixa) || ((b.votos || 0) - (a.votos || 0)));
+  return ordem.slice(0, 6);
+}
+function estModalCard(){
+  const notas = estNotasDoCard(), q = estQuadro();
+  const chave = notas.find(n => n.fixa) || notas[0];
+  const titulo = (chave ? chave.txt : (q ? q.nome : '')).split('\n')[0].slice(0, 90);
+  const resto = notas.filter(n => n !== chave);
+  return `<div class="modal"><div class="modalbox wide estCard" role="dialog" aria-modal="true"><h3>Estruturar o card</h3>
+    <p style="font-size:13px;color:var(--ink-400);margin:0 0 12px">Do rascunho para o Ensaio: a ideia-chave vira o título, as outras viram o passo a passo. Você ajusta antes de mandar.</p>
+    <div class="fld"><label for="est-titulo">Título</label><input id="est-titulo" value="${esc(titulo)}"></div>
+    <div class="fld"><label for="est-cli">Cliente</label><select id="est-cli">${CLIS().map(c => `<option value="${c.id}" ${S.cli === c.id ? 'selected' : ''}>${esc(c.nome)}</option>`).join('')}</select></div>
+    <div class="fld"><label for="est-desc">O que é</label><textarea id="est-desc">${esc(chave ? chave.txt : '')}</textarea></div>
+    <label class="rot" style="display:block;font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-500);margin:0 0 6px">passos — desmarque o que não entra</label>
+    <div class="lista">${resto.map(n => `<label><input type="checkbox" checked data-estpasso="${n.id}"> <span>${esc(n.txt.split('\n')[0].slice(0, 120))}</span></label>`).join('') || '<span style="font-size:12.5px;color:var(--ink-500)">Só a ideia-chave — sem passos ainda.</span>'}</div>
+    <div class="modalrow"><button class="b gho" data-modalno="1">Voltar</button><button class="b pri" data-estenviar="1">Mandar para o Ensaio</button></div>
+  </div></div>`;
+}
+function estEnviarCard(){
+  const q = estQuadro(); if(!q) return;
+  const titulo = (document.getElementById('est-titulo')?.value || '').trim() || q.nome;
+  const cli = document.getElementById('est-cli')?.value || (CLIS()[0] || {}).id;
+  const desc = (document.getElementById('est-desc')?.value || '').trim();
+  const passos = [...document.querySelectorAll('[data-estpasso]:checked')].map(c => c.nextElementSibling?.textContent.trim()).filter(Boolean);
+  if(!S.ensaio && typeof kbSemente === 'function') S.ensaio = kbSemente();
+  if(!S.ensaio){ toast('O Ensaio ainda não abriu nesta sessão. Abra o Ensaio uma vez e tente de novo.'); return; }
+  const corpo = [desc, passos.length ? '\nPASSOS:\n' + passos.map((p, i) => `${i + 1}. ${p}`).join('\n') : '', `\nDo Estúdio · quadro "${q.nome}"`].filter(Boolean).join('\n');
+  S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo, cli, resp:null, col:'inbox', cat:'producao',
+    criada:Date.now(), prazo:null, tempoMs:0, desde:null, desc:corpo, estudio:{ quadro:q.id, notas:estNotasDoCard().map(n => n.id) } });
+  q.enviados = (q.enviados || 0) + 1;
+  S.modal = null; S.est.sel = [];
+  estFaisca('card'); estGanhaSelo('palco');
+  if(typeof som === 'function') som('conclusao');
+  estGravar(); render();
+  toast(`"${titulo}" está no Inbox do Ensaio, para a ${(CLIS().find(c => c.id === cli) || {}).nome || 'agência'}. Dá um responsável e ela vira Plan.`);
+}
+/* da mandala para cá: o banco de ideias vira notas */
+function estTrazerDaMandala(){
+  const q = estQuadro(); if(!q) return;
+  const banco = (S.mandala && S.mandala.banco) || [];
+  if(!banco.length){ toast('O banco de ideias da Mandala está vazio. Guarde uma ideia lá e ela aparece aqui.'); return; }
+  estLembrar();
+  const base = q.itens.length ? Math.max(...q.itens.map(i => i.y)) + 160 : 80;
+  banco.slice(0, 8).forEach((b, k) => q.itens.push({ id:estId(), tipo:'nota', x:80 + (k % 4) * 215, y:base + Math.floor(k / 4) * 150, cor:'violeta',
+    txt:`${b.titulo}\n${b.abertura || ''}`.trim(), em:'✦', votos:0, fixa:false, mandala:{ fase:b.fase, temp:b.temp, gancho:b.gancho } }));
+  estFaisca('nota', Math.min(8, banco.length)); estGravar(); estPintar();
+  toast(`${Math.min(8, banco.length)} ideias da Mandala entraram como notas.`);
+}
+
+/* ---------- gestos: arrastar, pan, pinça, toque duplo ------------------ */
+let _estG = null;
+function estMundoPt(palco, cx, cy){
+  const r = palco.getBoundingClientRect(), v = S.est.vista;
+  return [(cx - r.left - v.x) / v.z, (cy - r.top - v.y) / v.z];
+}
+function estNovaNotaEm(x, y, txt){
+  const q = estQuadro(); if(!q) return null;
+  estLembrar();
+  const i = { id:estId(), tipo:'nota', x:Math.round(x), y:Math.round(y), cor:EST_CORES[q.itens.length % 5][0], txt:txt || '', em:'', votos:0, fixa:false };
+  q.itens.push(i); S.est.sel = [i.id];
+  estFaisca('nota'); estGravar(); estPintar();
+  const t = document.querySelector(`[data-esttxt="${i.id}"]`); if(t) t.focus();
+  return i;
+}
+addEventListener('pointerdown', e => {
+  const palco = e.target.closest && e.target.closest('.estPalco'); if(!palco) return;
+  if(e.target.closest('.estFerr,.estZoom,button,textarea,.cores')) return;
+  const notaEl = e.target.closest('.estNota');
+  const q = estQuadro(); if(!q) return;
+  if(notaEl){
+    const id = notaEl.dataset.estnota, i = q.itens.find(x => x.id === id); if(!i) return;
+    if(S.est.modo === 'ligar'){
+      e.preventDefault();
+      if(!S.est.liga){ S.est.liga = id; estPintar(); return; }
+      if(S.est.liga !== id && !q.liga.some(l => (l.de === S.est.liga && l.para === id) || (l.de === id && l.para === S.est.liga))){
+        estLembrar(); q.liga.push({ de:S.est.liga, para:id }); estFaisca('liga'); if(typeof som === 'function') som('toque');
+      }
+      S.est.liga = null; estGravar(); estPintar(); return;
+    }
+    if(S.est.modo === 'votar'){
+      e.preventDefault();
+      if(S.est.votosDados >= 5){ toast('Cinco votos por quadro. Tire um voto tocando com o modo Mover na bolinha.'); return; }
+      i.votos = (i.votos || 0) + 1; S.est.votosDados++; estFaisca('voto'); estGravar(); estPintar(); return;
+    }
+    /* mover: seleciona e arrasta */
+    const multi = e.shiftKey || e.metaKey || e.ctrlKey;
+    if(!S.est.sel.includes(id)) S.est.sel = multi ? [...S.est.sel, id] : [id];
+    else if(multi) S.est.sel = S.est.sel.filter(x => x !== id);
+    palco.querySelectorAll('.estNota.sel').forEach(n => n.classList.remove('sel'));
+    S.est.sel.forEach(s => palco.querySelector(`[data-estnota="${s}"]`)?.classList.add('sel'));
+    const ids = S.est.sel.includes(id) ? S.est.sel : [id];
+    _estG = { tipo:'nota', ids, x0:e.clientX, y0:e.clientY, pos:ids.map(s => { const n = q.itens.find(x => x.id === s); return [n.x, n.y]; }), moveu:false, pid:e.pointerId };
+    notaEl.classList.add('arr'); try{ notaEl.setPointerCapture && notaEl.setPointerCapture(e.pointerId); }catch(x){}
+    e.preventDefault(); return;
+  }
+  /* palco: pan (ou pinça, com dois dedos) */
+  if(_estG && _estG.tipo === 'pan' && _estG.pid !== e.pointerId){
+    _estG = { tipo:'pinca', a:{ id:_estG.pid, x:_estG.x0, y:_estG.y0 }, b:{ id:e.pointerId, x:e.clientX, y:e.clientY }, z0:S.est.vista.z, v0:{ ...S.est.vista } };
+    return;
+  }
+  _estG = { tipo:'pan', x0:e.clientX, y0:e.clientY, v0:{ ...S.est.vista }, moveu:false, pid:e.pointerId, t:Date.now() };
+  palco.classList.add('arrastando');
+}, true);
+addEventListener('pointermove', e => {
+  if(!_estG) return;
+  const palco = document.querySelector('.estPalco'); if(!palco) return;
+  if(_estG.tipo === 'nota'){
+    const dx = (e.clientX - _estG.x0) / S.est.vista.z, dy = (e.clientY - _estG.y0) / S.est.vista.z;
+    if(Math.abs(dx) + Math.abs(dy) > 2) _estG.moveu = true;
+    const q = estQuadro();
+    _estG.ids.forEach((id, k) => { const n = q.itens.find(x => x.id === id); if(!n) return;
+      n.x = Math.round(_estG.pos[k][0] + dx); n.y = Math.round(_estG.pos[k][1] + dy);
+      const el = palco.querySelector(`[data-estnota="${id}"]`); if(el){ el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; } });
+    const svg = palco.querySelector('.estFios'); if(svg) svg.innerHTML = estFiosHtml(q);
+    return;
+  }
+  if(_estG.tipo === 'pan'){
+    const dx = e.clientX - _estG.x0, dy = e.clientY - _estG.y0;
+    if(Math.abs(dx) + Math.abs(dy) > 3) _estG.moveu = true;
+    S.est.vista.x = _estG.v0.x + dx; S.est.vista.y = _estG.v0.y + dy;
+    const m = palco.querySelector('.estMundo'); if(m) m.style.transform = `translate(${S.est.vista.x}px,${S.est.vista.y}px) scale(${S.est.vista.z})`;
+    return;
+  }
+  if(_estG.tipo === 'pinca'){
+    const p = _estG.a.id === e.pointerId ? _estG.a : (_estG.b.id === e.pointerId ? _estG.b : null); if(!p) return;
+    const d0 = Math.hypot(_estG.a.x - _estG.b.x, _estG.a.y - _estG.b.y) || 1;
+    p.x = e.clientX; p.y = e.clientY;
+    const d1 = Math.hypot(_estG.a.x - _estG.b.x, _estG.a.y - _estG.b.y);
+    S.est.vista.z = Math.min(2.5, Math.max(.35, _estG.z0 * d1 / d0));
+    const m = palco.querySelector('.estMundo'); if(m) m.style.transform = `translate(${S.est.vista.x}px,${S.est.vista.y}px) scale(${S.est.vista.z})`;
+    const z = palco.querySelector('.estZoom span'); if(z) z.textContent = Math.round(S.est.vista.z * 100) + '%';
+  }
+}, true);
+addEventListener('pointerup', e => {
+  if(!_estG) return;
+  const palco = document.querySelector('.estPalco');
+  if(_estG.tipo === 'nota'){
+    const g = _estG; _estG = null;
+    palco && palco.querySelectorAll('.estNota.arr').forEach(n => n.classList.remove('arr'));
+    if(g.moveu){ estGravar(); } else { estPintar(); }
+    return;
+  }
+  if(_estG.tipo === 'pan'){
+    const g = _estG; _estG = null; palco && palco.classList.remove('arrastando');
+    if(!g.moveu){
+      /* toque simples no vazio limpa a seleção; toque duplo cria nota */
+      const agora = Date.now();
+      if(S.est.ultimoToque && agora - S.est.ultimoToque < 380 && palco){
+        S.est.ultimoToque = 0; const [x, y] = estMundoPt(palco, e.clientX, e.clientY); estNovaNotaEm(x - 95, y - 40); return;
+      }
+      S.est.ultimoToque = agora;
+      if(S.est.sel.length || S.est.liga){ S.est.sel = []; S.est.liga = null; estPintar(); }
+    } else estGravar();
+    return;
+  }
+  if(_estG.tipo === 'pinca'){ _estG = null; estGravar(); }
+}, true);
+addEventListener('pointercancel', () => { _estG = null; }, true);
+/* roda do mouse: zoom com ctrl, pan sem */
+addEventListener('wheel', e => {
+  const palco = e.target.closest && e.target.closest('.estPalco'); if(!palco) return;
+  e.preventDefault();
+  if(e.ctrlKey || e.metaKey){
+    const r = palco.getBoundingClientRect(), v = S.est.vista;
+    const z = Math.min(2.5, Math.max(.35, v.z * (e.deltaY < 0 ? 1.1 : .9)));
+    const px = e.clientX - r.left, py = e.clientY - r.top;
+    v.x = px - (px - v.x) * z / v.z; v.y = py - (py - v.y) * z / v.z; v.z = z;
+  } else { S.est.vista.x -= e.deltaX; S.est.vista.y -= e.deltaY; }
+  const m = palco.querySelector('.estMundo'); if(m) m.style.transform = `translate(${S.est.vista.x}px,${S.est.vista.y}px) scale(${S.est.vista.z})`;
+  const zl = palco.querySelector('.estZoom span'); if(zl) zl.textContent = Math.round(S.est.vista.z * 100) + '%';
+}, { passive:false, capture:true });
+
+/* enquadrar: tudo visível, centrado — e é como o quadro abre no celular,
+   onde 100% mostraria só duas notas */
+function estEnquadrar(){
+  const q = estQuadro(), v = S.est.vista, p = document.querySelector('.estPalco'); if(!q || !p) return;
+  const r = p.getBoundingClientRect();
+  if(!q.itens.length){ v.x = 0; v.y = 0; v.z = 1; return; }
+  const xs = q.itens.map(i => i.x), ys = q.itens.map(i => i.y);
+  const minX = Math.min(...xs) - 40, minY = Math.min(...ys) - 40, maxX = Math.max(...xs) + 260, maxY = Math.max(...ys) + 160;
+  const z = Math.min(1.6, Math.max(.35, Math.min(r.width / (maxX - minX), r.height / (maxY - minY))));
+  v.z = z; v.x = (r.width - (maxX - minX) * z) / 2 - minX * z; v.y = (r.height - (maxY - minY) * z) / 2 - minY * z;
+}
+
+/* ---------- toques nos botões --------------------------------------------- */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-estmodelo],[data-estnovo],[data-estquadro],[data-estapagarq],[data-estferr],[data-estzoom],[data-estfixa],[data-estcopia],[data-estapaga],[data-estcor],[data-estcard],[data-estenviar],[data-estselos],[data-estcronox],[data-estdomandala]');
+  if(!t) return;
+  e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+  const d = t.dataset, q = estQuadro();
+  if(d.estmodelo !== undefined){ S.modal = null; estNovoQuadro(d.estmodelo); render(); toast('Quadro criado. Só você vê o que faz aqui.'); return; }
+  if(d.estnovo !== undefined){ S.modal = estModalNovo(); renderLayer(); return; }
+  if(d.estquadro !== undefined){ S.est.quadro = d.estquadro; S.est.sel = []; S.est.desfazer = []; S.est.vista = { x:0, y:0, z:1 }; S.est.votosDados = 0; S.est.enquadrar = true; estCronoParar(); render(); return; }
+  if(d.estapagarq !== undefined){ if(confirm('Apagar este quadro? Não tem volta.')) estApagarQuadro(d.estapagarq); return; }
+  if(d.estselos !== undefined){ S.modal = estModalSelos(); renderLayer(); return; }
+  if(d.estcronox !== undefined){ estCronoParar(); return; }
+  if(d.estdomandala !== undefined) return estTrazerDaMandala();
+  if(d.estcard !== undefined){ S.modal = estModalCard(); renderLayer(); return; }
+  if(d.estenviar !== undefined) return estEnviarCard();
+  if(!q) return;
+  if(d.estferr !== undefined){
+    const f = d.estferr;
+    if(f === 'nota'){ const v = S.est.vista, p = document.querySelector('.estPalco'); const r = p.getBoundingClientRect();
+      const [x, y] = [(r.width / 2 - v.x) / v.z - 95 + (q.itens.length % 3) * 24, (r.height / 2 - v.y) / v.z - 48 + (q.itens.length % 3) * 24]; estNovaNotaEm(x, y); return; }
+    if(f === 'texto'){ estLembrar(); const v = S.est.vista, p = document.querySelector('.estPalco'); const r = p.getBoundingClientRect();
+      const i = { id:estId(), tipo:'texto', x:Math.round((r.width / 2 - v.x) / v.z - 130), y:Math.round((r.height / 2 - v.y) / v.z - 120), txt:'', cor:'tinta' };
+      q.itens.push(i); S.est.sel = [i.id]; estGravar(); estPintar(); document.querySelector(`[data-esttxt="${i.id}"]`)?.focus(); return; }
+    if(f === 'crono'){ if(S.est.crono) estCronoParar(); else { estCrono(5 * 60, 'livre'); render(); } return; }
+    if(f === 'desfazer') return estDesfazer();
+    S.est.modo = f; S.est.liga = null; estPintar(); return;
+  }
+  if(d.estzoom !== undefined){
+    const v = S.est.vista;
+    if(d.estzoom === '0') estEnquadrar();
+    else v.z = Math.min(2.5, Math.max(.35, v.z * (d.estzoom === '1' ? 1.2 : 1 / 1.2)));
+    estPintar(); return;
+  }
+  if(d.estfixa !== undefined){ const i = q.itens.find(x => x.id === d.estfixa); if(i){ estLembrar(); i.fixa = !i.fixa; estGravar(); estPintar(); } return; }
+  if(d.estcopia !== undefined){ const i = q.itens.find(x => x.id === d.estcopia); if(i){ estLembrar(); const c = { ...i, id:estId(), x:i.x + 24, y:i.y + 24, votos:0, fixa:false }; q.itens.push(c); S.est.sel = [c.id]; estFaisca('nota'); estGravar(); estPintar(); } return; }
+  if(d.estapaga !== undefined){ estLembrar(); q.itens = q.itens.filter(x => x.id !== d.estapaga); q.liga = q.liga.filter(l => l.de !== d.estapaga && l.para !== d.estapaga); S.est.sel = S.est.sel.filter(x => x !== d.estapaga); estGravar(); estPintar(); return; }
+  if(d.estcor !== undefined){ const [id, cor] = d.estcor.split('|'); const i = q.itens.find(x => x.id === id); if(i){ i.cor = cor; estGravar(); estPintar(); } return; }
+}, true);
+/* texto: grava sem redesenhar; nome do quadro idem */
+addEventListener('input', e => {
+  const el = e.target; if(!el || !el.dataset) return;
+  const q = estQuadro(); if(!q) return;
+  if(el.dataset.esttxt !== undefined){ const i = q.itens.find(x => x.id === el.dataset.esttxt); if(i){ i.txt = el.value; el.style.height = 'auto'; el.style.height = Math.max(44, el.scrollHeight) + 'px'; estGravar(); } return; }
+  if(el.dataset.estnome !== undefined){ q.nome = el.value; estGravar(); const b = document.querySelector(`.estQuadros [data-estquadro="${q.id}"] span`); if(b) b.textContent = q.nome; }
+}, true);
+/* teclado: N nota, Delete apaga, Esc sai do modo, Ctrl+Z desfaz */
+addEventListener('keydown', e => {
+  if(!(S.view === 'agency' && S.route === 'estudio') || S.modal) return;
+  const emTexto = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '');
+  if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !emTexto){ e.preventDefault(); return estDesfazer(); }
+  if(emTexto){ if(e.key === 'Escape') e.target.blur(); return; }
+  const q = estQuadro(); if(!q) return;
+  if(e.key.toLowerCase() === 'n'){ e.preventDefault(); document.querySelector('[data-estferr="nota"]')?.click(); return; }
+  if(e.key === 'Escape'){ S.est.modo = 'mover'; S.est.liga = null; S.est.sel = []; estPintar(); return; }
+  if((e.key === 'Delete' || e.key === 'Backspace') && S.est.sel.length){
+    e.preventDefault(); estLembrar();
+    q.itens = q.itens.filter(i => !S.est.sel.includes(i.id)); q.liga = q.liga.filter(l => !S.est.sel.includes(l.de) && !S.est.sel.includes(l.para));
+    S.est.sel = []; estGravar(); estPintar();
+  }
+}, true);
+
+/* ---------- rota, menu, persistência --------------------------------------- */
+render = (function(orig){
+  return function(){
+    if(S.view === 'agency' && S.route === 'estudio' && !S.skel){
+      document.getElementById('root').innerHTML = agEstudio();
+      renderLayer(); ctxBar(); posRender();
+      estAjustarAlturas();
+      if(S.est.enquadrar){ S.est.enquadrar = false; const p = document.querySelector('.estPalco'); if(p && p.getBoundingClientRect().width < 700){ estEnquadrar(); estPintar(); } }
+      if(S.est.crono) estCronoTic();
+      return;
+    }
+    return orig.apply(this, arguments);
+  };
+})(render);
+(function(){
+  const i = AGNAV.findIndex(x => x.r === 'mandala');
+  if(i >= 0 && !AGNAV.some(x => x.r === 'estudio')) AGNAV.splice(i + 1, 0, { r:'estudio', n:'Estúdio', icn:'pencil' });
+  const g = MENU_AG.find(x => x.g === 'Inteligência');
+  if(g && !g.it.some(it => it[0] === 'estudio')) g.it.push(['estudio', 'Estúdio', 'pencil']);
+})();
+/* no aparelho, volta na hora; da casa, quando a porta abrir */
+(function(){
+  try{
+    const id = estQuemSou(), l = localStorage.getItem('maestro-estudio-' + id);
+    if(l && id !== 'anon'){ const v = JSON.parse(l); if(v && v.quadros) S.estudio[id] = v; }
+  }catch(e){}
+})();
+sbGravarConfig = (function(orig){
+  let _esp = null;
+  return async function(){
+    await orig.apply(this, arguments);
+    if(!_sbLigado || !S.estudio) return;
+    const corpo = JSON.stringify(S.estudio);
+    if(_esp === corpo) return;
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/pauta?on_conflict=cliente`, {
+        method:'POST', headers:{ ...sbCab(), Prefer:'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({ cliente:'__estudio__', dados:S.estudio, atualizado_em:new Date().toISOString() }) });
+      if(r.ok) _esp = corpo;
+    }catch(e){}
+  };
+})(sbGravarConfig);
+let _estCarregado = false;
+async function estCarregar(){
+  if(_estCarregado || !_sbLigado) return;
+  try{
+    const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__estudio__&select=dados`, { headers:sbCab() });
+    if(!r.ok) return;
+    _estCarregado = true;
+    const [l] = await r.json();
+    if(l && l.dados && typeof l.dados === 'object'){
+      /* o da casa manda, exceto para quem está aqui e já mexeu depois */
+      Object.entries(l.dados).forEach(([id, v]) => {
+        const meu = S.estudio[id];
+        if(!meu || !meu.quadros || !meu.quadros.length || id !== estQuemSou()) S.estudio[id] = v;
+      });
+      if(S.view === 'agency' && S.route === 'estudio') render();
+    }
+  }catch(e){}
+}
+sbCarregar = (function(orig){
+  return function(){
+    const p = orig.apply(this, arguments);
+    return Promise.resolve(p).then(ok => { if(ok) estCarregar(); return ok; });
+  };
+})(sbCarregar);
+[2400, 5600, 12500].forEach(t => setTimeout(estCarregar, t));
+/* quando a pessoa troca de login, o estúdio troca junto */
+(function(){
+  let ultimo = estQuemSou();
+  setInterval(() => { const agora = estQuemSou(); if(agora !== ultimo){ ultimo = agora; S.est.quadro = null; S.est.sel = [];
+    try{ const l = localStorage.getItem('maestro-estudio-' + agora); if(l && !(S.estudio[agora] && S.estudio[agora].quadros && S.estudio[agora].quadros.length)){ const v = JSON.parse(l); if(v && v.quadros) S.estudio[agora] = v; } }catch(e){}
+    if(S.view === 'agency' && S.route === 'estudio') render(); } }, 800);
+})();
 </script>
