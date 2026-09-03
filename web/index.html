@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-03 14:43 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-03 14:52 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15838,7 +15838,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v131 · 3 set · o dossiê em .docx e .pdf';
+const VERSAO_PROTOTIPO = 'v132 · 3 set · formato na mandala';
 
 menuSheet = (function(orig){
   return function(){
@@ -25691,6 +25691,8 @@ if(document.getElementById('fluxoPagina')){
   padding-top:14px; border-top:1px solid var(--ink-870, #22242A);
   font-size:12.5px; color:var(--ink-500) }
 .mdSabe b{ color:var(--ink-100); font-weight:600 }
+.mdSabe .fmtAviso{ color:var(--brass-400) }
+.mdFmts{ margin-top:2px }
 .lk{ background:none; border:0; padding:0; font-size:12.5px; color:var(--ink-400);
   text-decoration:underline; text-underline-offset:3px; cursor:pointer }
 .lk:hover{ color:var(--brass-300) }
@@ -26194,7 +26196,7 @@ function mdIdeia(fase, temp, gancho, extra){
     fase, temp, gancho:g.n, quando:Date.now(), completo:x.completo,
     titulo, abertura, roteiro,
     cta: mdSorteio(f.ctas),
-    formato: g.fmt,
+    formato: S.md.fmt || g.fmt,
     porque: `${f.n} é para ${f.quem}: ${f.regra} Aqui o público ${t.quem} — então ${t.tom}.`,
     norte: mdNorteDe(g, fase, mdCli()),
     ...(extra || {}) };
@@ -26314,7 +26316,8 @@ PÚBLICO: ${x.publico}
 DOR: ${x.dor}
 DESEJO: ${x.desejo}
 DIFERENCIAL: ${x.dif}
-PLATAFORMAS: ${(S.md.plats || ['ig']).map(p2 => MD_PLAT_NOME[p2] || p2).join(', ')}${jaSaiu}
+PLATAFORMAS: ${(S.md.plats || ['ig']).map(p2 => MD_PLAT_NOME[p2] || p2).join(', ')}
+FORMATO: ${S.md.fmt ? `${S.md.fmt} — obrigatório, todas as ideias neste formato` : 'livre — escolha o que melhor serve a cada gancho'}${jaSaiu}
 
 PONTO DA MANDALA:
 - Fase: ${f.n} (${f.obj})
@@ -26379,7 +26382,7 @@ async function mdDesenvolver(){
       id:'i' + Date.now().toString(36) + (_mdSeq++), origem:'ia', modelo, cli:mdCli().id,
       fase, temp, gancho, quando:Date.now(),
       titulo:i.titulo, abertura:i.abertura, roteiro:i.roteiro || [], legenda:i.legenda,
-      cta:i.cta, hashtags:i.hashtags || [], formato:i.formato || mdGancho(gancho).fmt, porque:i.porque }));
+      cta:i.cta, hashtags:i.hashtags || [], formato:S.md.fmt || i.formato || mdGancho(gancho).fmt, porque:i.porque }));
     S.md.rotulo = `Desenvolvidas pela IA para ${x.cliente}`;
     if(typeof som === 'function') som('toque');
   }catch(e){
@@ -26533,6 +26536,7 @@ function agMandala(){
               mem.fmts.length ? ` · costuma ser ${esc(mem.fmts.slice(0, 2).map(f => f[0]).join(' e '))}` : ''}${
               mem.plats.length ? ` · ${esc(mem.plats.slice(0, 2).map(k => MD_PLAT_NOME[k[0]] || k[0]).join(' e '))}` : ''}`
           : `Sem pauta ainda para a ${esc(c.nome)} — as ideias saem do briefing.`}</span>
+        <span class="fmtAviso">${S.md.fmt ? ` · só ${esc(S.md.fmt)}` : ''}</span>
         <button class="lk" data-mddetalhe="1">${S.md.detalhe ? 'esconder' : 'ajustar o contexto'}</button>
       </div>
 
@@ -26549,6 +26553,9 @@ function agMandala(){
         ${campo('dif', 'O diferencial', 'por que vocês e não outro')}
         <label class="rot">onde vai ao ar</label>
         <div class="mdPlats">${plats.map(([k, n]) => `<button data-mdplat="${k}" class="${(S.md.plats || []).includes(k) ? 'on' : ''}">${n}</button>`).join('')}</div>
+        <label class="rot">formato</label>
+        <div class="mdPlats mdFmts">${['Livre', ...FORMATOS].map(f => `<button data-mdfmt="${esc(f)}"
+          class="${(S.md.fmt || 'Livre') === f ? 'on' : ''}" title="${f === 'Livre' ? 'cada gancho no formato que melhor serve a ele' : 'todas as ideias em ' + esc(f)}">${esc(f)}</button>`).join('')}</div>
       </div>
     </div>
   </div>
@@ -26625,7 +26632,7 @@ render = (function(orig){
 
 addEventListener('click', e => {
   const t = e.target.closest && e.target.closest(
-    '[data-mdfase],[data-mdtemp],[data-mdgancho],[data-mdgirar],[data-mdsogancho],[data-mdcli],[data-mdplat],'
+    '[data-mdfase],[data-mdtemp],[data-mdgancho],[data-mdgirar],[data-mdsogancho],[data-mdcli],[data-mdplat],[data-mdfmt],'
     + '[data-mdgerar],[data-mdsemana],[data-mdia],[data-mdinbox],[data-mdguardar],[data-mdapagar],[data-mdcopiar],'
     + '[data-mdlimpar],[data-mdchave],[data-mdchaveok],[data-mdchavex],[data-mdfechar],[data-mdsocli],[data-mdconsole],'
     + '[data-mdabrir],[data-mddetalhe],[data-mdiatoggle]');
@@ -26638,6 +26645,15 @@ addEventListener('click', e => {
   if(d.mdgirar !== undefined) return mdGirar(false);
   if(d.mdsogancho !== undefined) return mdGirar(true);
   if(d.mdcli !== undefined){ S.md.cli = d.mdcli; render(); return; }
+  if(d.mdfmt !== undefined){
+    /* Livre é o padrão: cada gancho no formato que melhor serve a ele.
+       Um formato escolhido manda em todas as ideias — e em toda a semana */
+    S.md.fmt = d.mdfmt === 'Livre' ? '' : d.mdfmt;
+    document.querySelectorAll('.mdFmts button').forEach(b => b.classList.toggle('on', b.dataset.mdfmt === (S.md.fmt || 'Livre')));
+    const sabe = document.querySelector('.mdSabe .fmtAviso');
+    if(sabe) sabe.textContent = S.md.fmt ? ` · só ${S.md.fmt}` : '';
+    return;
+  }
   if(d.mdplat !== undefined){
     const s = new Set(S.md.plats || []);
     s.has(d.mdplat) ? s.delete(d.mdplat) : s.add(d.mdplat);

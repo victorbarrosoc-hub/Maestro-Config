@@ -305,6 +305,40 @@ checa('uma linha torta no banco compartilhado não derruba a tela',
 await pg.evaluate(() => { S.mandala.banco = []; S.md.cli = 'ln'; render(); });
 await pg.waitForTimeout(300);
 
+/* ---------- 3c. o formato --------------------------------------------
+   "Vi que tem por plataforma né? Aí bota por formato tbm." A mesma lista
+   da pauta, ao lado das plataformas. Livre é o padrão — cada gancho no
+   formato que melhor serve a ele; um formato escolhido manda em tudo. */
+console.log('\n  — o formato —');
+/* o contexto da Loja Norte fica: o teste da IA, logo abaixo, conta com ele */
+await pg.evaluate(() => { S.md.cli = 'ln'; S.md.fmt = ''; S.md.detalhe = true; render(); });
+await pg.waitForTimeout(300);
+const fmts = await pg.evaluate(() => ({
+  chips: [...document.querySelectorAll('.mdFmts button')].map(b => b.dataset.mdfmt),
+  aceso: document.querySelector('.mdFmts button.on')?.dataset.mdfmt,
+  daPauta: typeof FORMATOS !== 'undefined' ? FORMATOS.slice() : null }));
+checa('os chips de formato entram ao lado das plataformas, com a MESMA lista da pauta',
+      fmts.daPauta && fmts.chips.join(',') === ['Livre', ...fmts.daPauta].join(','), fmts.chips);
+checa('e "Livre" começa escolhido', fmts.aceso === 'Livre', fmts.aceso);
+await pg.click('[data-mdgerar]'); await pg.waitForTimeout(350);
+const livres = await pg.evaluate(() => S.md.ideias.map(i => [i.formato, mdGancho(i.gancho).fmt]));
+checa('livre: cada ideia sai no formato natural do gancho',
+      livres.every(([f, natural]) => f === natural), livres);
+await pg.click('.mdFmts [data-mdfmt="Reels"]'); await pg.waitForTimeout(200);
+const escolheu = await pg.evaluate(() => ({ fmt: S.md.fmt, aceso: document.querySelector('.mdFmts button.on')?.dataset.mdfmt,
+  aviso: document.querySelector('.mdSabe')?.innerText.replace(/\s+/g, ' ') }));
+checa('escolher Reels troca o chip sem redesenhar a tela', escolheu.fmt === 'Reels' && escolheu.aceso === 'Reels', escolheu);
+checa('e a linha do que a casa sabe avisa "só Reels" — para ninguém esquecer que há um formato mandando',
+      /só Reels/.test(escolheu.aviso || ''), escolheu.aviso);
+await pg.click('[data-mdgerar]'); await pg.waitForTimeout(350);
+checa('com Reels escolhido, as três ideias saem em Reels',
+      await pg.evaluate(() => S.md.ideias.every(i => i.formato === 'Reels')));
+await pg.click('[data-mdsemana]'); await pg.waitForTimeout(400);
+checa('e a semana inteira também', await pg.evaluate(() => S.md.ideias.length === 7 && S.md.ideias.every(i => i.formato === 'Reels')));
+await pg.click('.mdFmts [data-mdfmt="Livre"]'); await pg.waitForTimeout(200);
+checa('voltar para Livre limpa o aviso', await pg.evaluate(() => !S.md.fmt && !/só /.test(document.querySelector('.mdSabe').innerText)));
+await pg.evaluate(() => { S.md.detalhe = false; render(); }); await pg.waitForTimeout(200);
+
 /* ---------- 4. a IA ------------------------------------------------- */
 console.log('\n  — a IA —');
 await pg.click('[data-mdia]'); await pg.waitForTimeout(300);
@@ -386,6 +420,8 @@ checa('pedindo JSON no formato certo — a tela não depende de a IA "se comport
       pedido && pedido.body.output_config?.format?.type === 'json_schema' && pedido.body.output_config.format.schema.required.includes('ideias'), pedido && pedido.body.output_config);
 checa('o sistema ensina o método: fases, temperaturas e os 18 ganchos',
       pedido && /Descoberta/.test(pedido.body.system) && /Urgência oculta/.test(pedido.body.system) && /18\. Mito/.test(pedido.body.system) && /Venda Todo Santo Dia/.test(pedido.body.system), pedido && pedido.body.system?.slice(0, 80));
+checa('e o pedido diz o formato — livre quando nada foi escolhido',
+      pedido && /FORMATO: livre/.test(pedido.body.messages[0].content), pedido && pedido.body.messages[0].content?.match(/FORMATO:[^\n]*/)?.[0]);
 checa('e o pedido leva o briefing do cliente, o contexto e o ponto da roda',
       pedido && /Nunca falar de preço/.test(pedido.body.messages[0].content) && /vestido de linho/.test(pedido.body.messages[0].content)
       && /Fase: Descoberta/.test(pedido.body.messages[0].content) && /nº 12 História/.test(pedido.body.messages[0].content), pedido && pedido.body.messages[0].content?.slice(0, 160));
