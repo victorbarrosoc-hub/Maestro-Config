@@ -121,7 +121,7 @@ const conv = await pg.evaluate(() => ({ fase: S.md.fase,
   leitura: document.querySelector('.mdPonto p')?.textContent.replace(/\s+/g, ' ') }));
 checa('tocar numa fase da roda a escolhe', conv.fase === 'conversao' && conv.aceso === 'conversao', conv);
 checa('e em Conversão a Prontidão abre', conv.prontidao === false, conv);
-checa('o painel do ponto explica para quem é, em uma frase', /quem está decidindo agora/.test(conv.leitura || ''), conv.leitura);
+checa('o painel do ponto explica para quem é, em uma frase', /quem pode comprar agora/.test(conv.leitura || ''), conv.leitura);
 await pg.click('.mdTempChips [data-mdtemp="prontidao"]'); await pg.waitForTimeout(150);
 checa('a temperatura muda pelo chip', await pg.evaluate(() => S.md.temp) === 'prontidao');
 await tocarNaRoda(pg, 83, -90 + 13 * 20 + 10); await pg.waitForTimeout(200);   /* a fatia 14 */
@@ -153,8 +153,8 @@ const antesDeAbrir = await pg.evaluate(() => ({
 checa('a tela pede UM campo, não cinco',
       antesDeAbrir.visiveis.join(',') === 'md-tema' && antesDeAbrir.painel === true, antesDeAbrir);
 await pg.click('[data-mddetalhe]'); await pg.waitForTimeout(250);
-checa('e os cinco continuam a um toque, para quem quiser precisão',
-      await pg.evaluate(() => [...document.querySelectorAll('.mdDetalhe input')].filter(i => i.offsetParent).length) === 5);
+checa('e os sete continuam a um toque, para quem quiser precisão (cinco do contexto, big idea e método)',
+      await pg.evaluate(() => [...document.querySelectorAll('.mdDetalhe input')].filter(i => i.offsetParent).length) === 7);
 await pg.fill('#md-produto', 'o vestido de linho da coleção de inverno');
 await pg.fill('#md-publico', 'mulheres que trabalham em escritório');
 await pg.fill('#md-dor', 'roupa que amassa na reunião das 15h');
@@ -175,9 +175,11 @@ checa('as outras duas mudam o gancho — três caminhos, não três versões',
 checa('a abertura fala do produto e da dor deste cliente, não de uma marca genérica',
       /vestido de linho/.test(ideias[0].a) || /roupa que amassa/.test(ideias[0].a), ideias[0].a);
 checa('cada ideia tem roteiro, CTA da fase, formato e o porquê',
-      ideias.every(i => i.r >= 3 && i.cta && i.fmt && /Descoberta é para/.test(i.porque)), ideias[0]);
-checa('o CTA de Descoberta pede para seguir ou salvar, nunca para comprar',
-      ideias.every(i => /Salva|Segue|Marca/.test(i.cta)), ideias.map(i => i.cta));
+      ideias.every(i => i.r >= 3 && i.cta && i.fmt && /Descoberta \(gerar público\) é para/.test(i.porque)), ideias[0]);
+/* o curso: anúncio de descoberta "geralmente não tem chamada para ação" —
+   no máximo um convite para seguir. Nunca link, nunca oferta. */
+checa('o CTA de Descoberta é sem chamada ou "me segue" — nunca link, nunca compra',
+      ideias.every(i => /Sem chamada|segue|acompanha/.test(i.cta) && !/link|compra|garanta/i.test(i.cta)), ideias.map(i => i.cta));
 checa('o título fica curto mesmo com campo longo', ideias.every(i => i.t.length <= 110), ideias.map(i => i.t.length));
 checa('e nenhuma frase sai com buraco de modelo', ideias.every(i => !/\{\w+\}/.test(i.t + i.a + i.roteiro)), ideias[0]);
 
@@ -217,7 +219,7 @@ const noInbox = await pg.evaluate(() => {
 checa('"Mandar para o Inbox" cria a tarefa no Ensaio, na frente de produção, do cliente certo',
       noInbox.n === (antesInbox < 0 ? noInbox.n : antesInbox + 1) && noInbox.col === 'inbox' && noInbox.cat === 'producao' && noInbox.cli === 'ln', noInbox);
 checa('com a ideia inteira no contexto: abertura, roteiro, CTA e o ponto da mandala',
-      /ABERTURA:/.test(noInbox.desc) && /ROTEIRO:/.test(noInbox.desc) && /CTA:/.test(noInbox.desc) && /Mandala: Descoberta/.test(noInbox.desc), noInbox.desc?.slice(0, 80));
+      /ABERTURA:/.test(noInbox.desc) && /ROTEIRO:/.test(noInbox.desc) && /CTA:/.test(noInbox.desc) && /Mandala D\.\w+\.\d+: Descoberta/.test(noInbox.desc), noInbox.desc?.slice(0, 80));
 checa('e a coordenada gravada na tarefa', noInbox.mandala && noInbox.mandala.fase === 'descoberta', noInbox.mandala);
 checa('o botão vira "No Inbox" e o aviso diz o próximo passo',
       /No Inbox/.test(noInbox.botao) && /responsável/.test(noInbox.toast), noInbox);
@@ -424,7 +426,7 @@ checa('e o pedido diz o formato — livre quando nada foi escolhido',
       pedido && /FORMATO: livre/.test(pedido.body.messages[0].content), pedido && pedido.body.messages[0].content?.match(/FORMATO:[^\n]*/)?.[0]);
 checa('e o pedido leva o briefing do cliente, o contexto e o ponto da roda',
       pedido && /Nunca falar de preço/.test(pedido.body.messages[0].content) && /vestido de linho/.test(pedido.body.messages[0].content)
-      && /Fase: Descoberta/.test(pedido.body.messages[0].content) && /nº 12 História/.test(pedido.body.messages[0].content), pedido && pedido.body.messages[0].content?.slice(0, 160));
+      && /Objetivo: Descoberta/.test(pedido.body.messages[0].content) && /nº 12 História/.test(pedido.body.messages[0].content), pedido && pedido.body.messages[0].content?.slice(0, 160));
 const daIA = await pg.evaluate(() => ({ n: S.md.ideias.length, origem: S.md.ideias[0]?.origem,
   cards: document.querySelectorAll('.mdIdeia.ia').length,
   meta: document.querySelector('.mdIdeia header .quem span')?.textContent,
@@ -448,6 +450,137 @@ await pg.route('https://api.anthropic.com/v1/messages', r => r.fulfill({ status:
 await pg.click('[data-mdia]'); await pg.waitForTimeout(700);
 checa('e a chave recusada também', /chave foi recusada/.test(await pg.evaluate(() => S.md.erro || '')), await pg.evaluate(() => S.md.erro));
 await pg.close();
+
+
+/* ---------- 4b. a mandala pelo método (v133) --------------------------
+   O fundador subiu as anotações do curso inteiro. O que mudou: as fases
+   viraram os OBJETIVOS do curso (com regra, "quando" e para quem
+   impulsionar), as temperaturas viraram os MOMENTOS (com a regra de
+   título de cada um), o ponto ganhou o código O.M.T. ("C.U.10"), o
+   remarketing ganhou a trilha de 30 dias, e o cliente ganhou estágio,
+   big idea e método — que mudam a semana e o que a IA recebe. */
+console.log('\n  — a mandala pelo método —');
+const pm = await abrir();
+const regras = await pm.evaluate(() => ({
+  rmk: MD_FASES.remarketing.regra, rmkCtas: MD_FASES.remarketing.ctas, rmkQuem: MD_FASES.remarketing.quem,
+  desc: MD_FASES.descoberta.regra, descCtas: MD_FASES.descoberta.ctas,
+  conv: MD_FASES.conversao.regra, quandoConv: MD_FASES.conversao.quando,
+  op: MD_TEMPS.oportunidade.titulo, urg: MD_TEMPS.urgencia.titulo, pr: MD_TEMPS.prontidao.titulo,
+  onde: [MD_TEMPS.oportunidade.onde, MD_TEMPS.urgencia.onde, MD_TEMPS.prontidao.onde],
+  dez: MD_GANCHOS[9].nome, sistema: mdSistema() }));
+checa('Remarketing não responde objeção — mostra resultado (o curso: citar reforça)',
+      /objeção reforça/.test(regras.rmk) && /resultado/.test(regras.rmk) && !regras.rmkCtas.some(c => /dúvida/.test(c)), regras.rmk);
+checa('Remarketing é só quem entrou na página de vendas e não comprou',
+      /só quem entrou na página de vendas e não comprou/.test(regras.rmkQuem), regras.rmkQuem);
+checa('Descoberta: para quem é e para quem não é, sem oferta e sem link',
+      /para quem é e para quem não é/.test(regras.desc) && /[Ss]em oferta e sem link/.test(regras.desc), regras.desc);
+checa('Conversão é ultraobjetiva e leva à página de vendas — e é por onde o método começa',
+      /[Uu]ltraobjetiv/.test(regras.conv) && /página de vendas/.test(regras.conv) && /3 anúncios de conversão e 5 de remarketing/.test(regras.quandoConv), regras);
+checa('cada Momento tem a regra de título do curso: oportunidade sem imperativo, urgência com "como…", prontidão com o nome do produto',
+      /[Ss]em imperativo/.test(regras.op) && /"como…"/.test(regras.urg) && /Nome do produto/.test(regras.pr), regras);
+checa('e o lugar de pesca: oceano, piscina, aquário', regras.onde.join(',') === 'oceano,piscina,aquário', regras.onde);
+checa('o tipo 10 chama "Apelo visual", como no curso', regras.dez === 'Apelo visual', regras.dez);
+checa('o sistema da IA ensina O.M.T., a big idea, o Frankenstein e a trilha de remarketing',
+      /O\.M\.T\./.test(regras.sistema) && /BIG IDEA/.test(regras.sistema) && /Frankenstein/.test(regras.sistema)
+      && /aquário/.test(regras.sistema) && /não responde objeção/.test(regras.sistema), regras.sistema.slice(0, 120));
+
+/* o código do ponto */
+await pm.evaluate(() => { mdEscolherFase('conversao'); mdEscolherTemp('urgencia'); mdEscolherGancho(10); });
+await pm.waitForTimeout(150);
+const cu10 = await pm.evaluate(() => ({ cod: mdOmt(S.md.fase, S.md.temp, S.md.gancho),
+  naTela: document.querySelector('.mdLeitura .mdOmt')?.textContent.trim() }));
+checa('Conversão · Urgência oculta · 10 se escreve C.U.10, como o Ladeira fala numa mentoria',
+      cu10.cod === 'C.U.10' && cu10.naTela === 'C.U.10', cu10);
+await pm.click('[data-mdgerar]'); await pm.waitForTimeout(400);
+const cu = await pm.evaluate(() => ({
+  cods: [...document.querySelectorAll('.mdIdeia header .mdOmt')].map(x => x.textContent.trim()),
+  omt: S.md.ideias.map(i => i.omt),
+  momento: S.md.ideias.every(i => i.roteiro.some(l => /Momento Urgência oculta \(piscina\)/.test(l))),
+  porque: S.md.ideias.every(i => /Título no momento Urgência oculta/.test(i.porque)),
+  texto: mdTextoDaIdeia(S.md.ideias[0]).split('\n')[0] }));
+checa('cada cartão leva o código do ponto', cu.cods.length === 3 && cu.cods.every(c => /^C\.U\.\d+$/.test(c)), cu.cods);
+checa('e a primeira é a C.U.10', cu.omt[0] === 'C.U.10', cu.omt);
+checa('o roteiro diz o Momento e o lugar de pesca; o porquê traz a regra de título',
+      cu.momento && cu.porque, cu);
+checa('o texto copiado começa pelo código', /^Mandala C\.U\.10: Conversão · Urgência oculta · tipo nº 10 Apelo visual/.test(cu.texto), cu.texto);
+await pm.click('.mdIdeia [data-mdabrir]'); await pm.waitForTimeout(150);
+const aberto = await pm.evaluate(() => ({
+  pub: document.querySelector('.mdIdeia.aberta .pub')?.innerText || '',
+  dica: document.querySelector('.mdIdeia.aberta .dica')?.innerText || '' }));
+checa('"Ver tudo" mostra para quem impulsionar — o + e o − do curso',
+      /\+ envolvimento/.test(aberto.pub) && /− remarketing/.test(aberto.pub), aberto.pub);
+checa('e o que o curso diz do tipo', /meu Deus, o que é isso/.test(aberto.dica), aberto.dica);
+
+/* a trilha do remarketing */
+await pm.evaluate(() => mdEscolherFase('remarketing')); await pm.waitForTimeout(150);
+const trilha = await pm.evaluate(() => document.querySelector('.mdLeitura .aviso')?.textContent || '');
+checa('em Remarketing a leitura mostra a trilha de 30 dias', /Trilha de 30 dias/.test(trilha) && /1–7: só lembrete/.test(trilha), trilha);
+await pm.click('[data-mdgerar]'); await pm.waitForTimeout(400);
+checa('e cada ideia de remarketing tem a janela de dias',
+      await pm.evaluate(() => S.md.ideias.every(i => i.roteiro.some(l => /Janela de remarketing — dias \d+–\d+/.test(l)))),
+      await pm.evaluate(() => S.md.ideias[0].roteiro));
+
+/* o estágio do cliente muda a semana */
+await pm.click('[data-mddetalhe]'); await pm.waitForTimeout(250);
+const est = await pm.evaluate(() => ({
+  chips: [...document.querySelectorAll('.mdEstagio button')].map(b => b.textContent.trim()),
+  on: document.querySelector('.mdEstagio button.on')?.dataset.mdestagio }));
+checa('o contexto pergunta onde o cliente está: ainda não vende, já vende, quer crescer',
+      est.chips.join('|') === 'Ainda não vende|Já vende|Quer crescer o perfil' && est.on === 'vendendo', est);
+await pm.evaluate(() => mdEscolherFase('descoberta')); await pm.waitForTimeout(100);
+await pm.click('.mdEstagio [data-mdestagio="validando"]'); await pm.waitForTimeout(200);
+const val = await pm.evaluate(() => ({
+  gravou: S.mandala.ctx[S.md.cli]?.estagio,
+  aviso: document.querySelector('.mdLeitura .aviso')?.textContent || '',
+  painel: !document.querySelector('.mdDetalhe')?.hidden,
+  on: document.querySelector('.mdEstagio button.on')?.dataset.mdestagio }));
+checa('escolher "Ainda não vende" grava no cliente, sem fechar o painel', val.gravou === 'validando' && val.painel && val.on === 'validando', val);
+checa('e em Descoberta a leitura avisa: o método começa por Conversão e Remarketing',
+      /ainda está validando/.test(val.aviso) && /Conversão e Remarketing/.test(val.aviso), val.aviso);
+await pm.click('[data-mdsemana]'); await pm.waitForTimeout(400);
+const semVal = await pm.evaluate(() => ({ fases: S.md.ideias.map(i => i.fase), rotulo: S.md.rotulo }));
+checa('a semana de quem não vende é só Conversão e Remarketing — 3 e 4, como o VME manda',
+      semVal.fases.length === 7 && semVal.fases.filter(f => f === 'conversao').length === 3
+      && semVal.fases.filter(f => f === 'remarketing').length === 4, semVal.fases);
+checa('e o rótulo diz por quê', /validação/.test(semVal.rotulo) && /antes da primeira venda/.test(semVal.rotulo), semVal.rotulo);
+await pm.click('.mdEstagio [data-mdestagio="escalando"]'); await pm.waitForTimeout(150);
+await pm.click('[data-mdsemana]'); await pm.waitForTimeout(400);
+const semEsc = await pm.evaluate(() => S.md.ideias.map(i => i.fase));
+checa('quem quer crescer o perfil ganha três Descobertas na semana — verba de guerra',
+      semEsc.filter(f => f === 'descoberta').length === 3 && semEsc.includes('conversao') && semEsc.includes('remarketing'), semEsc);
+
+/* big idea e método entram no motor e no pedido */
+await pm.fill('#md-bigIdea', 'ansiedade não é normal');
+await pm.fill('#md-metodo', 'Método Respira');
+await pm.fill('#md-dor', 'acordar já cansada');
+await pm.fill('#md-desejo', 'dormir a noite inteira');
+await pm.evaluate(() => { mdEscolherFase('conversao'); mdEscolherTemp('prontidao'); });
+await pm.click('[data-mdgerar]'); await pm.waitForTimeout(400);
+const big = await pm.evaluate(() => ({
+  ctx: S.mandala.ctx[S.md.cli],
+  roteiro: S.md.ideias[0].roteiro,
+  entrada: S.md.ideias[0].entrada,
+  pedido: mdPedido(S.md.fase, S.md.temp, S.md.gancho, 3) }));
+checa('big idea e método gravam no contexto do cliente',
+      big.ctx.bigIdea === 'ansiedade não é normal' && big.ctx.metodo === 'Método Respira', big.ctx);
+checa('o roteiro lembra a big idea de onde tudo deriva', big.roteiro.some(l => /Big idea de onde tudo deriva: «ansiedade não é normal»/.test(l)), big.roteiro);
+checa('com dor e desejo, a ideia mostra como fica o título no momento (Prontidão chama o produto pelo nome)',
+      !!big.entrada && !/\{\w+\}/.test(big.entrada), big.entrada);
+checa('o pedido à IA leva big idea, método, estágio, o código do ponto e para quem impulsionar',
+      /BIG IDEA: ansiedade não é normal/.test(big.pedido) && /MÉTODO \(a furadeira, com nome\): Método Respira/.test(big.pedido)
+      && /ESTÁGIO DO CLIENTE: Quer crescer o perfil/.test(big.pedido) && /PONTO DA MANDALA — C\.P\.\d+:/.test(big.pedido)
+      && /Para quem impulsionar: \+ envolvimento/.test(big.pedido) && /Título: Nome do produto/.test(big.pedido), big.pedido.slice(-600));
+await pm.close();
+
+/* no celular, o painel com os campos novos continua cabendo */
+const pcel = await abrir({ width: 390, height: 844 });
+await pcel.click('[data-mddetalhe]'); await pcel.waitForTimeout(250);
+const celEst = await pcel.evaluate(() => ({ docW: document.documentElement.scrollWidth, tela: innerWidth,
+  alt: Math.round(document.querySelector('.mdEstagio button').getBoundingClientRect().height),
+  campos: [...document.querySelectorAll('.mdDetalhe input')].filter(i => i.offsetParent).length }));
+checa('celular: os chips de estágio e os campos novos cabem, sem rolar de lado',
+      celEst.docW <= celEst.tela + 1 && celEst.alt >= 30 && celEst.campos === 7, celEst);
+await pcel.close();
 
 /* ---------- 5. no celular ------------------------------------------- */
 console.log('\n  — no celular —');

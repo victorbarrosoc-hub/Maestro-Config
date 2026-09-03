@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-03 14:52 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-03 15:13 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15838,7 +15838,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v132 · 3 set · formato na mandala';
+const VERSAO_PROTOTIPO = 'v133 · 3 set · a mandala pelo método';
 
 menuSheet = (function(orig){
   return function(){
@@ -25693,6 +25693,16 @@ if(document.getElementById('fluxoPagina')){
 .mdSabe b{ color:var(--ink-100); font-weight:600 }
 .mdSabe .fmtAviso{ color:var(--brass-400) }
 .mdFmts{ margin-top:2px }
+/* v133 — o código O.M.T. do curso, o aviso do método e o que entra no "Ver tudo" */
+.mdOmt{ font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; color:var(--brass-300);
+  border:1px solid rgba(200,150,58,.35); border-radius:6px; padding:2px 6px; white-space:nowrap }
+.mdLeitura .tag.mdOmt{ text-transform:none; background:none }
+.mdLeitura .aviso{ flex:1 1 100%; font-size:12px; line-height:1.5; color:var(--brass-300);
+  border-left:2px solid var(--brass-600); padding-left:9px }
+.mdIdeia .entrada, .mdIdeia .pub, .mdIdeia .dica{ font-size:12px; line-height:1.5; color:var(--ink-400) }
+.mdIdeia .entrada b, .mdIdeia .pub b, .mdIdeia .dica b{ display:block; font:500 9px var(--mono); letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-500); margin:0 0 2px }
+.mdIdeia .pub span{ display:block }
 .lk{ background:none; border:0; padding:0; font-size:12.5px; color:var(--ink-400);
   text-decoration:underline; text-underline-offset:3px; cursor:pointer }
 .lk:hover{ color:var(--brass-300) }
@@ -25808,33 +25818,65 @@ if(document.getElementById('fluxoPagina')){
    ================================================================== */
 
 /* ---------- o método ------------------------------------------------ */
+/* os quatro OBJETIVOS (quadrantes), como o curso define cada um: o que
+   quer, para quem, a regra que não se quebra, quando faz sentido, e para
+   quem impulsionar (o "+" e o "−" da sugestão de público das aulas). */
 const MD_FASES = {
-  descoberta: { n:'Descoberta', obj:'criar público', cor:'#5B8DEF',
-    quem:'quem ainda não te conhece',
-    regra:'Não fale da oferta. Fale do problema, do mundo dele, e dê um motivo para seguir.',
-    ctas:['Salva para não perder.', 'Segue para a próxima parte.', 'Marca alguém que precisa ver isso.'] },
-  relacionamento: { n:'Relacionamento', obj:'consciência', cor:'#35B87A',
-    quem:'quem já te segue e ainda não entendeu o tamanho do problema',
-    regra:'Aprofunde: mostre o mecanismo, o custo, o caminho. Peça conversa, não compra.',
-    ctas:['Comenta o que você faria.', 'Responde na enquete dos stories.', 'Manda no direct que eu te explico.'] },
-  conversao: { n:'Conversão', obj:'venda', cor:'#C8963A',
-    quem:'quem está decidindo agora',
-    regra:'Oferta clara, caminho curto. Tire a última dúvida e diga exatamente o próximo passo.',
+  descoberta: { n:'Descoberta', letra:'D', obj:'gerar público', cor:'#5B8DEF',
+    quem:'quem nunca te viu',
+    regra:'Sem oferta e sem link: diga para quem é e para quem não é, quebre o padrão logo no início e entregue um conteúdo forte. Não tire a pessoa de onde ela está.',
+    quando:'É verba de guerra: para quem já vende e quer crescer o perfil. Antes disso, o método manda ficar em Conversão e Remarketing.',
+    fmts:'vídeo curto no feed; no YouTube pode ser longo — explicação longa, entrevista',
+    publico:{ mais:['interesses do nicho, público frio'], menos:['seguidores', 'envolvimento', 'remarketing'] },
+    ctas:['Sem chamada — deixe o conteúdo trabalhar.', 'Se fez sentido, passa no perfil e me segue.', 'Se você é dessa tribo, me acompanha por aqui.'] },
+  relacionamento: { n:'Relacionamento', letra:'R', obj:'consciência', cor:'#35B87A',
+    quem:'quem já te segue ou engajou',
+    regra:'Explique um problema, um diferencial, gere curiosidade. Pode ser mais longo e mais sério: aqui entra o método. Cite o nome dele sem explicar tudo — o incompleto puxa. Não vende.',
+    quando:'Produto caro pede mais relacionamento; dor física, que já vem com prontidão, pede menos.',
+    fmts:'vídeo no feed, live, e-mail, artigo; no YouTube pode ser longo',
+    publico:{ mais:['seguidores', 'envolvidos', 'quem acessou suas páginas', 'público quente'], menos:['remarketing'] },
+    ctas:['Comenta o que você faria.', 'Me chama no direct que eu te explico.', 'Responde na enquete dos stories.'] },
+  conversao: { n:'Conversão', letra:'C', obj:'venda', cor:'#C8963A',
+    quem:'quem pode comprar agora, seja qual for o momento',
+    regra:'Ultraobjetivo: oferta clara, caminho curto e o link para a página de vendas. Nada de rodeio.',
+    quando:'É por aqui que o método começa: 3 anúncios de conversão e 5 de remarketing, por 30 dias, antes de qualquer Descoberta.',
+    fmts:'stories em vídeo ou animação, reels, imagem no feed',
+    publico:{ mais:['envolvimento', 'seguidores', 'quem visitou suas páginas (menos a de vendas)', 'interesses do nicho'], menos:['remarketing — já conhece a oferta'] },
     ctas:['Link na bio.', 'Chama no WhatsApp e a gente resolve hoje.', 'Garanta a sua antes de fechar.'] },
-  remarketing: { n:'Remarketing', obj:'venda realizada', cor:'#E5854D',
-    quem:'quem viu, se interessou e não comprou',
-    regra:'Volte com prova, objeção respondida ou prazo. Ele já conhece: não reapresente, resolva o que travou.',
-    ctas:['Última chamada: fecha hoje.', 'A dúvida que mais ouvimos, respondida.', 'Quem já foi: veja o que disseram.'] }
+  remarketing: { n:'Remarketing', letra:'RM', obj:'venda realizada', cor:'#E5854D',
+    quem:'só quem entrou na página de vendas e não comprou',
+    regra:'Não responda objeção — citar a objeção reforça. Mostre resultado, reforce a dor ou o desejo, e lembre que a pessoa continua no mesmo lugar. Na primeira semana, só lembrete.',
+    quando:'Até 30 dias por pessoa. Depois disso a venda fica cara: pare, e volte a esse público só em lançamento.',
+    fmts:'vídeo curto, falando direto com a pessoa',
+    publico:{ mais:['quem viu o vídeo de vendas ou a página', 'em janelas: dias 1–7, 8–14, 15–30'], menos:['quem nunca viu a oferta'] },
+    ctas:['Ainda está no mesmo lugar? O caminho continua aberto.', 'Veja o que quem entrou já conseguiu.', 'Hoje tem um empurrão: bônus para quem fechar agora.'] }
 };
 const MD_ORDEM_FASES = ['descoberta', 'relacionamento', 'conversao', 'remarketing'];
 
+/* os três MOMENTOS — o "grau de temperatura": o quanto a pessoa está
+   disposta a comprar. O curso dá a cada um um lugar de pesca (oceano,
+   piscina, aquário) e uma regra de TÍTULO: o que pode e o que não pode
+   estar escrito. Isso é o que separa um anúncio de oportunidade de um
+   de prontidão — não o adjetivo. */
 const MD_TEMPS = {
-  oportunidade: { n:'Oportunidade', quem:'ainda não sabe que tem o problema',
-    tom:'mostre o ganho, não a dor', fases:MD_ORDEM_FASES },
-  urgencia:     { n:'Urgência oculta', quem:'sabe do problema, mas não sente pressa',
-    tom:'revele o custo de esperar', fases:MD_ORDEM_FASES },
-  prontidao:    { n:'Prontidão', quem:'está pronto para comprar',
-    tom:'tire a última dúvida e dê o caminho', fases:['conversao', 'remarketing'] }
+  oportunidade: { n:'Oportunidade', letra:'O', onde:'oceano',
+    quem:'nem sabe que tem o problema',
+    tom:'venda uma ideia, não o produto — curiosidade que pega até quem está fora do público',
+    titulo:'Sem imperativo, sem promessa, sem citar o problema nem o método. Funciona "você sabia que…", "isso não é normal", quiz e teste. Ponha a palavra-chave do nicho, para o algoritmo achar o público.',
+    ex:['Você sabia que {publico} pode {desejo}?', '{dor} não é normal', 'Faça o teste e descubra se {dor} está mais perto do que parece'],
+    fases:MD_ORDEM_FASES },
+  urgencia:     { n:'Urgência oculta', letra:'U', onde:'piscina',
+    quem:'sabe que tem um problema, mas ainda não sabe que precisa de você',
+    tom:'resolva um ponto específico: como fazer, como diminuir, como saber se',
+    titulo:'Imperativo e "como…" funcionam. Nomeie o problema específico que o produto resolve, não o produto. As melhores urgências ocultas têm muita procura, pouca concorrência e ligação direta com a oferta.',
+    ex:['Como resolver {dor}', 'Como saber se {dor} está te custando caro', 'Faça isto e elimine {dor}'],
+    fases:MD_ORDEM_FASES },
+  prontidao:    { n:'Prontidão', letra:'P', onde:'aquário',
+    quem:'já sabe que precisa do seu produto',
+    tom:'chame o produto pelo nome e dê o caminho',
+    titulo:'Nome do produto, o que inclui, prova e certificação. Imperativo permitido. Converte muito e não escala: não saia da big idea.',
+    ex:['{produto}: {desejo}', '{produto} — como funciona, o que inclui, como começar', '{produto}, com {dif}'],
+    fases:['conversao', 'remarketing'] }
 };
 const MD_ORDEM_TEMPS = ['oportunidade', 'urgencia', 'prontidao'];
 
@@ -25887,7 +25929,7 @@ const MD_GANCHOS = [
     abre:['Se você é {publico} e vive {dor}, este conteúdo é literalmente para você — mais ninguém.',
           'Só para {publico}: o que muda quando {produto} entra na rotina, com os detalhes que só vocês entendem.'],
     passos:['Nomeie a tribo na primeira frase, com precisão', 'Use uma situação que só {publico} reconhece', 'Mostre {desejo} nos termos deles'] },
-  { n:10, faz:'Deixe a imagem falar e quase não escreva', nome:'Visual', o:'a imagem fala; o texto quase some', fmt:'Post',
+  { n:10, faz:'Deixe a imagem falar e quase não escreva', nome:'Apelo visual', o:'a imagem fala; o texto quase some', fmt:'Post',
     tit:['{produto}, sem texto', '{desejo} num enquadramento só'],
     abre:['Sem texto, só imagem: {produto} em cinco cenas que {publico} entende sem legenda.',
           'Deixe o visual falar: {desejo} em um enquadramento só, e a legenda com uma linha.'],
@@ -25934,6 +25976,50 @@ const MD_GANCHOS = [
     passos:['Enuncie o mito como {publico} ouve por aí', 'Mostre onde ele quebra, com um fato', 'Coloque {dif} no lugar do mito'] }
 ];
 const mdGancho = n => MD_GANCHOS.find(g => g.n === n) || MD_GANCHOS[0];
+/* o que o curso diz de cada Tipo — e o que ele acha do Tipo em si:
+   "ajuda na criatividade, mas é o menos importante da estratégia". Um
+   foco só por ideia; misturar números vira Frankenstein. */
+const MD_DICAS = {
+  1:'Junta comparação e visual: o iniciante e o experiente, o tempo que levava e o que leva agora.',
+  2:'Tão fácil que todo mundo faz — o que salva é uma urgência oculta específica, não o problema genérico.',
+  3:'Serve para orgânico, pago e blog. Vídeo que já existe pode virar este conteúdo.',
+  7:'É uma comparação: tem muitos opostos para explorar.',
+  8:'Um cliente ou aluno demonstrando vale mais que a marca demonstrando.',
+  9:'Bom para quebrar objeção: "quem disse que precisa ser novo para aprender?". Cuidado com segmentação que a plataforma bloqueia.',
+  10:'Funciona quando quem vê pensa "meu Deus, o que é isso?".',
+  11:'Começa com "você sabia que…" e a oportunidade tem de ser escancarada. Ótimo para levar a uma página de captura.',
+  12:'Sua história ou uma parábola — combina com o visual.',
+  14:'Um trecho de depoimento, e manda direto para o vídeo de vendas.',
+  17:'Promessa forte na entrada, cumprida no fim. Sem cumprir, é só clickbait.'
+};
+/* o código do curso: "crie um anúncio C.U.10" — Conversão, Urgência
+   oculta, tipo 10. É como se fala de um ponto da mandala numa mentoria,
+   e é como a ideia vai identificada daqui para o Inbox. */
+const mdOmt = (fase, temp, gancho) =>
+  `${(MD_FASES[fase] || MD_FASES.descoberta).letra}.${(MD_TEMPS[temp] || MD_TEMPS.oportunidade).letra}.${gancho}`;
+/* onde o cliente está no método (Validação por Menor Esforço): antes
+   da primeira venda, a mandala é só Conversão + Remarketing; vendendo,
+   o funil inteiro gira; crescendo o perfil, entra a verba de guerra. */
+const MD_ESTAGIOS = {
+  validando: { n:'Ainda não vende', d:'valide primeiro: só Conversão e Remarketing, por 30 dias',
+    semana:['conversao', 'remarketing', 'conversao', 'remarketing', 'conversao', 'remarketing', 'remarketing'] },
+  vendendo:  { n:'Já vende', d:'o funil inteiro gira toda semana',
+    semana:['descoberta', 'relacionamento', 'conversao', 'descoberta', 'relacionamento', 'conversao', 'remarketing'] },
+  escalando: { n:'Quer crescer o perfil', d:'verba de guerra: mais Descoberta, sem largar a venda',
+    semana:['descoberta', 'relacionamento', 'descoberta', 'conversao', 'relacionamento', 'descoberta', 'remarketing'] }
+};
+const mdEstagio = () => { const e = (mdCtx() || {}).estagio; return MD_ESTAGIOS[e] ? e : 'vendendo'; };
+/* os 30 dias de remarketing, na ordem do curso: primeiro só lembrar,
+   depois conteúdo cada vez mais forte, e no fim a oferta muda */
+const MD_RMK_TRILHA = [
+  ['1–7',   'só lembrete: "inscrições abertas", sem apelação e sem estímulo novo'],
+  ['8–14',  'depoimentos, com chamada'],
+  ['15–19', 'entrevistas'],
+  ['20–24', 'história e vídeo motivacional'],
+  ['25–27', 'demonstração: como se faz'],
+  ['28–30', 'mudança de oferta: um bônus para quem fechar hoje']
+];
+const mdJanelaRmk = g => ({ 14:1, 12:3, 4:3, 16:3, 8:4, 3:4, 11:5, 13:5, 17:5 }[g.n] || 0);
 const MD_DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
 /* ---------- estado ------------------------------------------------- */
@@ -25974,7 +26060,7 @@ const MD_PLAT_NOME = { ig:'Instagram', tt:'TikTok', li:'LinkedIn', yt:'YouTube',
 function mdCtx(){
   const c = mdCli();
   const salvo = S.mandala.ctx[c.id] || {};
-  return { produto:'', publico:'', dor:'', desejo:'', dif:'', ...salvo };
+  return { produto:'', publico:'', dor:'', desejo:'', dif:'', bigIdea:'', metodo:'', estagio:'vendendo', ...salvo };
 }
 /* o que a pessoa não escreveu, o motor deduz do cadastro do cliente —
    para nunca gerar frase com buraco */
@@ -25998,6 +26084,7 @@ function mdCtxCheio(){
      desejo de verdade, ele não monta frase — dá o norte */
   const completo = !!((x.dor || '').trim() && (x.desejo || '').trim());
   return { cliente, produto, publico, dor, desejo, dif, completo,
+    bigIdea:(x.bigIdea || '').trim(), metodo:(x.metodo || '').trim(), estagio:x.estagio,
     brief:c.brief || '', seg:c.seg || '' };
 }
 const mdPreencher = (tpl, x) => tpl.replace(/\{(\w+)\}/g, (m, k) => x[k] !== undefined ? x[k] : m)
@@ -26012,7 +26099,7 @@ const mdCurto = (v, n) => {
   const p = t.split(/\s+/);
   return p.length > (n || 6) ? p.slice(0, n || 6).join(' ') + '…' : t;
 };
-const mdCtxCurto = x => Object.fromEntries(Object.entries(x).map(([k, v]) => [k, ['cliente', 'brief', 'seg'].includes(k) ? v : mdCurto(v, 6)]));
+const mdCtxCurto = x => Object.fromEntries(Object.entries(x).map(([k, v]) => [k, ['cliente', 'brief', 'seg', 'estagio', 'bigIdea', 'metodo'].includes(k) ? v : mdCurto(v, 6)]));
 
 /* ---------- o sorteio ---------------------------------------------- */
 const mdSorteio = lista => lista[Math.floor(Math.random() * lista.length)];
@@ -26155,8 +26242,18 @@ function mdPintarRoda(){
 function mdLeituraHtml(){
   const f = MD_FASES[S.md.fase], t = MD_TEMPS[S.md.temp];
   /* uma linha: o que fazer aqui. O resto já está no desenho. */
-  return `<span class="tag" style="--c:${f.cor}">${f.n}</span><span class="tag">${t.n}</span>
-    <span class="regra">${esc(t.tom.replace(/^\w/, c => c.toUpperCase()))}. ${esc(f.regra)}</span>`;
+  /* e o que o método manda para ESTE cliente, neste ponto: Descoberta
+     antes de vender é dinheiro fora de hora; Remarketing tem trilha */
+  const est = mdEstagio();
+  let aviso = '';
+  if(est === 'validando' && (S.md.fase === 'descoberta' || S.md.fase === 'relacionamento'))
+    aviso = `${f.n} é para quem já vende. Este cliente ainda está validando: o método começa por Conversão e Remarketing.`;
+  else if(S.md.fase === 'remarketing')
+    aviso = 'Trilha de 30 dias — ' + MD_RMK_TRILHA.map(([d, o]) => `${d}: ${o.split(/[:,]/)[0]}`).join(' · ') + '.';
+  else if(S.md.fase === 'descoberta') aviso = f.quando;
+  return `<span class="tag" style="--c:${f.cor}">${f.n}</span><span class="tag">${t.n}</span><span class="tag mdOmt">${mdOmt(S.md.fase, S.md.temp, S.md.gancho)}</span>
+    <span class="regra">${esc(t.tom.replace(/^\w/, c => c.toUpperCase()))}. ${esc(f.regra)}</span>
+    ${aviso ? `<span class="aviso">${esc(aviso)}</span>` : ''}`;
 }
 
 /* ---------- o motor: ideia sem IA ----------------------------------- */
@@ -26182,7 +26279,11 @@ function mdIdeia(fase, temp, gancho, extra){
   const x = mdCtxCheio(), f = MD_FASES[fase], t = MD_TEMPS[temp], g = mdGancho(gancho);
   const k = Math.floor(Math.random() * 2);
   const roteiro = g.passos.map(p => mdPreencher(p, x));
-  roteiro.push(`Temperatura: ${t.tom} — o público ${t.quem}`);
+  /* o Momento manda no TÍTULO — é regra do curso, não tom de voz; e o
+     remarketing tem dia certo para cada tipo de conteúdo */
+  roteiro.push(`Momento ${t.n} (${t.onde}): ${t.tom}.`);
+  if(fase === 'remarketing'){ const [d, oq] = MD_RMK_TRILHA[mdJanelaRmk(g)]; roteiro.push(`Janela de remarketing — dias ${d}: ${oq}.`); }
+  if(x.bigIdea) roteiro.push(`Big idea de onde tudo deriva: «${x.bigIdea}».`);
   /* DOIS MODOS. Com dor e desejo escritos, o motor monta a frase. Sem
      eles, ele não inventa: entrega o COMANDO do gancho e os passos, que
      é o "norte" que o social media pede às nove da manhã. */
@@ -26197,7 +26298,11 @@ function mdIdeia(fase, temp, gancho, extra){
     titulo, abertura, roteiro,
     cta: mdSorteio(f.ctas),
     formato: S.md.fmt || g.fmt,
-    porque: `${f.n} é para ${f.quem}: ${f.regra} Aqui o público ${t.quem} — então ${t.tom}.`,
+    omt: mdOmt(fase, temp, g.n),
+    /* como o título fica neste momento, com o que o cliente tem */
+    entrada: x.completo ? mdPreencher(mdSorteio(t.ex), mdCtxCurto(x)) : '',
+    publico: f.publico, dica: MD_DICAS[g.n] || '',
+    porque: `${f.n} (${f.obj}) é para ${f.quem}. ${f.regra} Título no momento ${t.n}: ${t.titulo}`,
     norte: mdNorteDe(g, fase, mdCli()),
     ...(extra || {}) };
 }
@@ -26221,7 +26326,10 @@ function mdGerar(n){
    duas de descoberta, duas de relacionamento, duas de conversão, uma de
    remarketing. É o ritmo de um funil que gira toda semana. */
 function mdSemana(){
-  const ordem = ['descoberta', 'relacionamento', 'conversao', 'descoberta', 'relacionamento', 'conversao', 'remarketing'];
+  /* quem ainda não vende não faz Descoberta: o curso é claro — valide
+     em Conversão + Remarketing por 30 dias, e só depois abra o funil */
+  const est = mdEstagio();
+  const ordem = MD_ESTAGIOS[est].semana;
   const usados = new Set();
   S.md.ideias = ordem.map((fase, dia) => {
     let g; let tenta = 0;
@@ -26230,7 +26338,10 @@ function mdSemana(){
     const temp = mdSorteio(mdTempsDaFase(fase));
     return mdIdeia(fase, temp, g, { dia });
   });
-  S.md.erro = null; S.md.rotulo = 'A semana, dia a dia — o funil inteiro em sete posts';
+  S.md.erro = null;
+  S.md.rotulo = est === 'validando' ? 'A semana de validação — 3 de conversão e 4 de remarketing, como o método manda antes da primeira venda'
+              : est === 'escalando' ? 'A semana de crescimento — Descoberta na frente, sem largar a venda'
+              : 'A semana, dia a dia — o funil inteiro em sete posts';
   render();
 }
 
@@ -26255,30 +26366,32 @@ const mdIaLigada = () => { const c = mdIaCfg(); return !!c.chave && c.ligada !==
 const MD_MODELO = 'claude-opus-5';
 
 function mdSistema(){
-  const ganchos = MD_GANCHOS.map(g => `${g.n}. ${g.nome} — ${g.o}`).join('\n');
-  return `Você é o diretor de criação de uma agência que usa a Mandala de Conteúdo do método Venda Todo Santo Dia (Leandro Ladeira) para nunca ficar sem ideia. A mandala é um sistema de coordenadas e você cria conteúdo para um ponto dela:
+  const ganchos = MD_GANCHOS.map(g => `${g.n}. ${g.nome} — ${g.o}${MD_DICAS[g.n] ? ` (${MD_DICAS[g.n]})` : ''}`).join('\n');
+  const fase = k => { const f = MD_FASES[k]; return `- ${f.n} (${f.letra}) — ${f.obj}. Para ${f.quem}. ${f.regra} ${f.quando} Formatos: ${f.fmts}.`; };
+  const temp = k => { const t = MD_TEMPS[k]; return `- ${t.n} (${t.letra}), ${t.onde === 'oceano' ? 'o oceano' : t.onde === 'piscina' ? 'a piscina' : 'o aquário'}: ${t.quem}. ${t.tom.replace(/^\w/, ch => ch.toUpperCase())}. Título: ${t.titulo}`; };
+  return `Você é o diretor de criação de uma agência que usa a Mandala da Criatividade Infinita do método Venda Todo Santo Dia (Leandro Ladeira) para nunca ficar sem ideia. A mandala é um sistema de coordenadas O.M.T. — Objetivo, Momento, Tipo — e você cria conteúdo para um ponto dela. O ponto se escreve como "C.U.10": Conversão, Urgência oculta, tipo 10.
 
-FASES DO FUNIL (onde o público está):
-- Descoberta: ${MD_FASES.descoberta.quem}. Objetivo: criar público. Regra: ${MD_FASES.descoberta.regra}
-- Relacionamento: ${MD_FASES.relacionamento.quem}. Objetivo: consciência. Regra: ${MD_FASES.relacionamento.regra}
-- Conversão: ${MD_FASES.conversao.quem}. Objetivo: venda. Regra: ${MD_FASES.conversao.regra}
-- Remarketing: ${MD_FASES.remarketing.quem}. Objetivo: venda realizada. Regra: ${MD_FASES.remarketing.regra}
+OBJETIVO (o quadrante: a intenção da campanha):
+${MD_ORDEM_FASES.map(fase).join('\n')}
 
-TEMPERATURAS (o quanto o público sabe do problema):
-- Oportunidade: ${MD_TEMPS.oportunidade.quem} — ${MD_TEMPS.oportunidade.tom}.
-- Urgência oculta: ${MD_TEMPS.urgencia.quem} — ${MD_TEMPS.urgencia.tom}.
-- Prontidão: ${MD_TEMPS.prontidao.quem} — ${MD_TEMPS.prontidao.tom}. Só existe em Conversão e Remarketing.
+MOMENTO (grau de temperatura: o quanto a pessoa está disposta a comprar):
+${MD_ORDEM_TEMPS.map(temp).join('\n')}
+Prontidão só existe em Conversão e Remarketing.
 
-OS 18 GANCHOS (o jeito de contar):
+TIPO (o jeito de contar — ajuda na criatividade, mas é o menos importante da estratégia):
 ${ganchos}
+Um tipo por ideia. Misturar dois vira Frankenstein.
+
+A BIG IDEA é o centro: a tese de onde todo título deriva ("ansiedade não é normal", "a venda é o oxigênio do negócio"). Não é promessa e nunca fica no imperativo — o imperativo é para Urgência oculta e Prontidão. O QUADRO NA PAREDE é o desejo único e específico que o cliente compra; a FURADEIRA é o método, com nome próprio; o DECORADO são os benefícios que vêm depois.
 
 Como você trabalha:
 - Escreve em português do Brasil, no tom da marca do cliente. Respeita à risca qualquer "nunca" do briefing dele.
 - Cada ideia é específica para este cliente, este público e esta dor — nada de conselho genérico que serviria para qualquer marca.
-- A abertura é a primeira frase falada ou o primeiro slide: ela tem que segurar quem passa rolando o feed.
+- O título obedece à regra do Momento. A abertura é a primeira frase falada ou o primeiro slide: ela tem que segurar quem passa rolando o feed.
+- Descoberta não leva link nem oferta. Remarketing não responde objeção: mostra resultado. Conversão leva para a página de vendas.
 - O roteiro tem de 3 a 6 passos curtos, na ordem de gravação ou de slides.
-- A legenda é pronta para publicar, com o CTA da fase no fim.
-- Ideias diferentes têm ângulos diferentes: não entregue variações da mesma frase.
+- A legenda é pronta para publicar, com o CTA do objetivo no fim.
+- Despeje sem pré-julgamento: ideias diferentes têm ângulos diferentes — a agência escolhe, grava, testa e melhora. Não entregue variações da mesma frase.
 - Sem clichês de marketing ("desbloqueie", "transforme sua vida", "não perca") e sem promessa que a marca não pode cumprir.`;
 }
 const MD_ESQUEMA = {
@@ -26316,14 +26429,18 @@ PÚBLICO: ${x.publico}
 DOR: ${x.dor}
 DESEJO: ${x.desejo}
 DIFERENCIAL: ${x.dif}
+BIG IDEA: ${x.bigIdea || '— (derive uma tese central e diga qual foi, em "porque")'}
+MÉTODO (a furadeira, com nome): ${x.metodo || '—'}
+ESTÁGIO DO CLIENTE: ${MD_ESTAGIOS[mdEstagio()].n} — ${MD_ESTAGIOS[mdEstagio()].d}
 PLATAFORMAS: ${(S.md.plats || ['ig']).map(p2 => MD_PLAT_NOME[p2] || p2).join(', ')}
 FORMATO: ${S.md.fmt ? `${S.md.fmt} — obrigatório, todas as ideias neste formato` : 'livre — escolha o que melhor serve a cada gancho'}${jaSaiu}
 
-PONTO DA MANDALA:
-- Fase: ${f.n} (${f.obj})
-- Temperatura: ${t.n}
-- Gancho: n${'\u00ba'} ${g.n} ${g.nome} — ${g.o}
-${repetido.length ? `\nJá foi usado demais para este cliente, evite repetir: ${repetido.join(', ')}.` : ''}
+PONTO DA MANDALA — ${mdOmt(fase, temp, g.n)}:
+- Objetivo: ${f.n} (${f.obj})
+- Momento: ${t.n} — ${t.quem}. Título: ${t.titulo}
+- Tipo: n${'\u00ba'} ${g.n} ${g.nome} — ${g.o}
+- Para quem impulsionar: + ${f.publico.mais.join(', ')} · − ${f.publico.menos.join(', ')}
+${fase === 'remarketing' ? `- Trilha de remarketing (30 dias): ${MD_RMK_TRILHA.map(([d, o]) => `dias ${d}, ${o}`).join('; ')}.\n` : ''}${repetido.length ? `\nJá foi usado demais para este cliente, evite repetir: ${repetido.join(', ')}.` : ''}
 
 Crie ${n} ideias de conteúdo para exatamente este ponto. Em "porque", explique em uma frase por que a ideia funciona nesta fase e nesta temperatura.`;
 }
@@ -26396,13 +26513,14 @@ const mdAchar = id => (S.md.ideias || []).find(i => i.id === id) || (S.mandala.b
 function mdTextoDaIdeia(i){
   const f = MD_FASES[i.fase], t = MD_TEMPS[i.temp], g = mdGancho(i.gancho);
   const linhas = [
-    `Mandala: ${f.n} · ${t.n} · gancho nº ${g.n} ${g.nome}${i.dia !== undefined ? ` · ${MD_DIAS[i.dia]}` : ''}`,
+    `Mandala ${i.omt || mdOmt(i.fase, i.temp, g.n)}: ${f.n} · ${t.n} · tipo nº ${g.n} ${g.nome}${i.dia !== undefined ? ` · ${MD_DIAS[i.dia]}` : ''}`,
     `Formato: ${i.formato}`, '',
     `ABERTURA: ${i.abertura}`, '',
     'ROTEIRO:', ...(i.roteiro || []).map((p, k) => `${k + 1}. ${p}`), '',
     i.legenda ? `LEGENDA:\n${i.legenda}\n` : '',
     `CTA: ${i.cta}`,
     i.hashtags && i.hashtags.length ? i.hashtags.map(h => h.startsWith('#') ? h : '#' + h).join(' ') : '', '',
+    f.publico ? `Para quem impulsionar: + ${f.publico.mais.join(', ')} · − ${f.publico.menos.join(', ')}` : '',
     `Por que funciona aqui: ${i.porque}`
   ];
   return linhas.filter(l => l !== undefined).join('\n').replace(/\n{3,}/g, '\n\n').trim();
@@ -26454,6 +26572,7 @@ function mdIdeiaHtml(i, noBanco){
     <header>
       <span class="n">${g.n}</span>
       <span class="quem"><b>${esc(g.nome)}</b><span>${f.n} · ${esc(i.formato || '')}${i.dia !== undefined ? ' · ' + MD_DIAS[i.dia] : ''}${i.origem === 'ia' ? ' · IA' : ''}</span></span>
+      <span class="mdOmt">${esc(i.omt || mdOmt(i.fase, i.temp, g.n))}</span>
       ${noBanco && c ? `<span class="cli">${esc(c.nome)}</span>` : ''}
     </header>
     <h4>${esc(i.titulo)}</h4>
@@ -26465,6 +26584,9 @@ function mdIdeiaHtml(i, noBanco){
       ${i.legenda ? `<div class="legenda">${esc(i.legenda)}</div>` : ''}
       <div class="cta"><b>CTA</b>${esc(i.cta || '')}</div>
       ${i.hashtags && i.hashtags.length ? `<div class="hash">${i.hashtags.map(h => esc(h.startsWith('#') ? h : '#' + h)).join(' ')}</div>` : ''}
+      ${i.entrada ? `<div class="entrada"><b>Título no momento ${esc(t.n)}</b>${esc(i.entrada)}</div>` : ''}
+      ${f.publico ? `<div class="pub"><b>Para quem impulsionar</b><span>+ ${esc(f.publico.mais.join(', '))}</span><span>− ${esc(f.publico.menos.join(', '))}</span></div>` : ''}
+      ${MD_DICAS[g.n] ? `<div class="dica"><b>O curso diz</b>${esc(MD_DICAS[g.n])}</div>` : ''}
       <div class="porque">${esc(i.porque || '')}</div>
     </div>
     <div class="acoes">
@@ -26551,6 +26673,13 @@ function agMandala(){
           ${campo('desejo', 'O desejo', 'como fica depois')}
         </div>
         ${campo('dif', 'O diferencial', 'por que vocês e não outro')}
+        <div class="frow">
+          ${campo('bigIdea', 'Big idea', 'a tese central — "ansiedade não é normal"')}
+          ${campo('metodo', 'Método, com nome', 'a furadeira — "Fórmula da Carreira Blindada"')}
+        </div>
+        <label class="rot">onde este cliente está</label>
+        <div class="mdPlats mdEstagio">${Object.entries(MD_ESTAGIOS).map(([k, e2]) => `<button data-mdestagio="${k}"
+          class="${mdEstagio() === k ? 'on' : ''}" title="${esc(e2.d)}">${esc(e2.n)}</button>`).join('')}</div>
         <label class="rot">onde vai ao ar</label>
         <div class="mdPlats">${plats.map(([k, n]) => `<button data-mdplat="${k}" class="${(S.md.plats || []).includes(k) ? 'on' : ''}">${n}</button>`).join('')}</div>
         <label class="rot">formato</label>
@@ -26635,7 +26764,7 @@ addEventListener('click', e => {
     '[data-mdfase],[data-mdtemp],[data-mdgancho],[data-mdgirar],[data-mdsogancho],[data-mdcli],[data-mdplat],[data-mdfmt],'
     + '[data-mdgerar],[data-mdsemana],[data-mdia],[data-mdinbox],[data-mdguardar],[data-mdapagar],[data-mdcopiar],'
     + '[data-mdlimpar],[data-mdchave],[data-mdchaveok],[data-mdchavex],[data-mdfechar],[data-mdsocli],[data-mdconsole],'
-    + '[data-mdabrir],[data-mddetalhe],[data-mdiatoggle]');
+    + '[data-mdabrir],[data-mddetalhe],[data-mdiatoggle],[data-mdestagio]');
   if(!t) return;
   e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
   const d = t.dataset;
@@ -26652,6 +26781,19 @@ addEventListener('click', e => {
     document.querySelectorAll('.mdFmts button').forEach(b => b.classList.toggle('on', b.dataset.mdfmt === (S.md.fmt || 'Livre')));
     const sabe = document.querySelector('.mdSabe .fmtAviso');
     if(sabe) sabe.textContent = S.md.fmt ? ` · só ${S.md.fmt}` : '';
+    return;
+  }
+  if(d.mdestagio !== undefined){
+    /* o estágio é do cliente, não da sessão: grava junto do contexto.
+       Só o que depende dele muda na tela — a leitura do ponto e os
+       chips — para não perder a rolagem nem o painel aberto */
+    const c = mdCli();
+    S.mandala.ctx[c.id] = S.mandala.ctx[c.id] || {};
+    S.mandala.ctx[c.id].estagio = d.mdestagio;
+    document.querySelectorAll('.mdEstagio button').forEach(b => b.classList.toggle('on', b.dataset.mdestagio === d.mdestagio));
+    const le = document.querySelector('.mdLeitura'); if(le) le.innerHTML = mdLeituraHtml();
+    clearTimeout(S.mdGravar);
+    S.mdGravar = setTimeout(() => { if(typeof sbGravarConfig === 'function') sbGravarConfig(); }, 1500);
     return;
   }
   if(d.mdplat !== undefined){
@@ -26930,6 +27072,8 @@ const CB_SETORES = [
       ['dor',    'A dor que resolve',  'sociedade sem contrato, que só aparece quando alguém quer sair'],
       ['desejo', 'O que o cliente quer', 'dormir tranquilo com a empresa em ordem'],
       ['dif',    'O diferencial',      'atendimento direto com a sócia, sem estagiário no meio'],
+      ['bigIdea', 'Big idea',          'a tese de onde todo título deriva: "sociedade sem contrato não é normal"'],
+      ['metodo', 'Método com nome',    'a furadeira: "Sociedade Blindada em 4 passos"'],
       ['preco',  'Pode falar preço?',  'não em conteúdo de marca; só no direct'],
       ['provas', 'Provas',             '120 contratos revisados em 2025\n"Resolveram em uma semana o que travou por um ano" — cliente', 1]] },
 
@@ -27506,12 +27650,15 @@ mdCtx = (function(orig){
     const pega = (sk, ck) => cbFrase((b[sk] || {})[ck] || '');
     /* o que a pessoa escreveu na mandala MANDA; o cérebro só preenche
        o que está vazio */
-    return {
+    return { ...x,
       produto: x.produto || pega('oferta', 'vende'),
       publico: x.publico || pega('identidade', 'paraQuem'),
       dor:     x.dor     || pega('oferta', 'dor'),
       desejo:  x.desejo  || pega('oferta', 'desejo'),
-      dif:     x.dif     || pega('oferta', 'dif')
+      dif:     x.dif     || pega('oferta', 'dif'),
+      /* a big idea entra inteira: é uma tese, não um campo de frase */
+      bigIdea: x.bigIdea || String((b.oferta || {}).bigIdea || '').trim(),
+      metodo:  x.metodo  || pega('oferta', 'metodo')
     };
   };
 })(mdCtx);

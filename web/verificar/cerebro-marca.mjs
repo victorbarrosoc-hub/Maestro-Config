@@ -83,6 +83,8 @@ O que vende: Aulas para iniciantes, plano mensal, primeira aula grátis
 A dor que resolve: vergonha de ser o pior da sala
 O que o cliente quer: um lugar onde ninguém olha torto para quem começa
 O diferencial: turma só de iniciantes, sem faixa colorida no tatame
+Big idea: ninguém nasce sabendo cair
+Método com nome: Primeiro Mês no Tatame
 Pode falar preço?: sim, o valor do plano pode aparecer
 Provas:
 - 240 alunos começaram do zero em 2025
@@ -290,7 +292,7 @@ checa('com a prova, para não escrever promessa vaga', /240 alunos/.test(m), tru
 checa('e com a restrição jurídica, antes de escrever e não depois',
       /perda de peso/.test(m), true);
 checa('o pedido da mandala continua embaixo, inteiro',
-      /PONTO DA MANDALA/.test(m) && /Fase: Descoberta/.test(m), true);
+      /PONTO DA MANDALA/.test(m) && /Objetivo: Descoberta/.test(m), true);
 await pg.close();
 
 /* ---------- 7. o aprendizado colhe sozinho -------------------------- */
