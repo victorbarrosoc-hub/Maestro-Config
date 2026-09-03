@@ -15773,7 +15773,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v129 · 3 set · o Cérebro da Marca, por cliente';
+const VERSAO_PROTOTIPO = 'v130 · 3 set · o interruptor da IA';
 
 menuSheet = (function(orig){
   return function(){
@@ -25598,6 +25598,21 @@ if(document.getElementById('fluxoPagina')){
   padding:3px 8px; border-radius:5px; border:1px solid var(--c, var(--ink-700)); color:var(--c, var(--ink-400)) }
 .mdLeitura .regra{ font-size:12px; line-height:1.5; color:var(--ink-500); flex:1 1 100% }
 
+/* ---------- o interruptor da IA ---------- */
+.mdIaBarra{ display:flex; align-items:center; gap:12px; flex-wrap:wrap }
+.mdSwitch{ display:inline-flex; align-items:center; gap:9px; padding:5px 12px 5px 5px;
+  border-radius:999px; border:1px solid var(--ink-700); background:var(--ink-950);
+  color:var(--ink-400); transition:border-color .2s var(--eo), color .2s var(--eo) }
+.mdSwitch .bolinha{ width:30px; height:18px; border-radius:999px; background:var(--ink-800);
+  position:relative; transition:background .2s var(--eo) }
+.mdSwitch .bolinha::after{ content:''; position:absolute; top:2px; left:2px; width:14px; height:14px;
+  border-radius:50%; background:var(--ink-400); transition:transform .2s var(--eo), background .2s var(--eo) }
+.mdSwitch .rot{ font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase }
+.mdSwitch:hover{ border-color:var(--ink-500); color:var(--ink-100) }
+.mdSwitch.on{ border-color:var(--brass-600); color:var(--brass-300) }
+.mdSwitch.on .bolinha{ background:rgba(200,150,58,.35) }
+.mdSwitch.on .bolinha::after{ transform:translateX(12px); background:var(--brass-400) }
+
 /* ---------- o único campo ---------- */
 .mdTema label{ display:flex; align-items:baseline; gap:8px }
 .mdTema label em{ font-style:normal; text-transform:none; letter-spacing:0; font-size:10px;
@@ -26156,9 +26171,20 @@ function mdSemana(){
 const MD_CHAVE_IA = 'maestro-ia-v1';
 function mdIaCfg(){ try{ return JSON.parse(localStorage.getItem(MD_CHAVE_IA) || '{}') || {}; }catch(e){ return {}; } }
 function mdIaGuardar(chave){
-  try{ chave ? localStorage.setItem(MD_CHAVE_IA, JSON.stringify({ chave })) : localStorage.removeItem(MD_CHAVE_IA); }catch(e){}
+  /* guardar a chave liga a IA; esquecer a chave apaga tudo */
+  try{ chave ? localStorage.setItem(MD_CHAVE_IA, JSON.stringify({ chave, ligada:true })) : localStorage.removeItem(MD_CHAVE_IA); }catch(e){}
 }
-const mdIaLigada = () => !!mdIaCfg().chave;
+/* O INTERRUPTOR. Antes, o único jeito de desligar a IA era "Esquecer a
+   chave" — e religar exigia ir buscar a chave de novo. Agora a chave
+   fica guardada e o que liga e desliga é uma chavinha: desligada, o
+   botão "Desenvolver com IA" some e nada gasta crédito. */
+function mdIaLigar(sim){
+  const cfg = mdIaCfg(); if(!cfg.chave) return false;
+  try{ localStorage.setItem(MD_CHAVE_IA, JSON.stringify({ ...cfg, ligada: !!sim })); }catch(e){}
+  return true;
+}
+const mdIaTemChave = () => !!mdIaCfg().chave;
+const mdIaLigada = () => { const c = mdIaCfg(); return !!c.chave && c.ligada !== false; };
 const MD_MODELO = 'claude-opus-5';
 
 function mdSistema(){
@@ -26276,7 +26302,8 @@ async function mdChamarIA(fase, temp, gancho, n){
   return { ideias: dados.ideias || [], modelo: j.model || MD_MODELO };
 }
 async function mdDesenvolver(){
-  if(!mdIaLigada()){ S.modal = mdModalIA(); renderLayer(); return; }
+  if(!mdIaTemChave()){ S.modal = mdModalIA(); renderLayer(); return; }
+  if(!mdIaLigada()){ toast('A IA está desligada. Ligue no interruptor do topo — a chave já está guardada.'); return; }
   if(S.md.pensando) return;
   S.md.pensando = true; S.md.erro = null; render();
   const { fase, temp, gancho } = S.md;
@@ -26395,8 +26422,11 @@ function agMandala(){
   return agShell(`
   <div class="mtop"><div><h1>Mandala Criativa</h1>
       <p>Escolha o cliente, gire, e saia com um norte.</p></div>
-    <div style="display:flex;gap:9px;flex-wrap:wrap">
-      <button class="b gho sm" data-mdchave="1">${mdIaLigada() ? 'IA ligada' : 'Configurar a IA'}</button></div></div>
+    <div class="mdIaBarra">
+      <button type="button" class="mdSwitch${mdIaLigada() ? ' on' : ''}" data-mdiatoggle="1" role="switch"
+        aria-checked="${mdIaLigada() ? 'true' : 'false'}" title="${mdIaTemChave() ? (mdIaLigada() ? 'Desligar a IA — a chave fica guardada' : 'Ligar a IA') : 'Configurar a chave da IA'}">
+        <span class="bolinha"></span><span class="rot">IA ${mdIaLigada() ? 'ligada' : (mdIaTemChave() ? 'desligada' : 'sem chave')}</span></button>
+      <button class="lk" data-mdchave="1">${mdIaTemChave() ? 'chave' : 'configurar'}</button></div></div>
 
   <div class="mdBarraCli">
     ${CLIS().map(k => `<button class="mdCli ${k.id === c.id ? 'on' : ''}" data-mdcli="${k.id}">
@@ -26428,7 +26458,8 @@ function agMandala(){
       <div class="mdAcoes">
         <button class="b pri" data-mdgerar="1">Me dá 3 ideias</button>
         <button class="b gho" data-mdsemana="1">A semana toda</button>
-        <button class="b gho" data-mdia="1" ${S.md.pensando ? 'disabled' : ''}>Desenvolver com IA</button>
+        ${mdIaLigada() || !mdIaTemChave()
+          ? `<button class="b gho" data-mdia="1" ${S.md.pensando ? 'disabled' : ''}>Desenvolver com IA</button>` : ''}
       </div>
 
       <div class="mdSabe">
@@ -26493,6 +26524,7 @@ function mdModalIA(){
       <button type="button" class="b gho sm" data-mdconsole="1">${ic('linkic', 12)} Copiar o endereço do console</button>
     </div>
     <p class="aviso">A chave fica guardada <b>só neste aparelho</b> (nunca no banco compartilhado, que hoje qualquer um com o link lê). Cada pedido custa centavos: modelo <code>${MD_MODELO}</code>.</p>
+    ${cfg.chave ? `<p class="aviso">Para parar de gastar sem perder a chave, use o <b>interruptor IA</b> no topo da Mandala. "Esquecer a chave" é só se quiser tirá-la deste aparelho.</p>` : ''}
     <div class="fld"><label for="md-chave">Chave da API (sk-ant-…)</label>
       <input id="md-chave" type="password" value="${esc(cfg.chave || '')}" placeholder="sk-ant-api03-…" autocomplete="off"></div>
     <div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end">
@@ -26531,7 +26563,7 @@ addEventListener('click', e => {
     '[data-mdfase],[data-mdtemp],[data-mdgancho],[data-mdgirar],[data-mdsogancho],[data-mdcli],[data-mdplat],'
     + '[data-mdgerar],[data-mdsemana],[data-mdia],[data-mdinbox],[data-mdguardar],[data-mdapagar],[data-mdcopiar],'
     + '[data-mdlimpar],[data-mdchave],[data-mdchaveok],[data-mdchavex],[data-mdfechar],[data-mdsocli],[data-mdconsole],'
-    + '[data-mdabrir],[data-mddetalhe]');
+    + '[data-mdabrir],[data-mddetalhe],[data-mdiatoggle]');
   if(!t) return;
   e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
   const d = t.dataset;
@@ -26575,6 +26607,13 @@ addEventListener('click', e => {
     return copiarTexto('https://console.anthropic.com/settings/keys').then(ok =>
       toast(ok ? 'Endereço copiado. Abra no computador, crie a chave e volte aqui.'
                : 'console.anthropic.com/settings/keys'));
+  if(d.mdiatoggle !== undefined){
+    if(!mdIaTemChave()){ S.modal = mdModalIA(); renderLayer(); return; }
+    const agora = !mdIaLigada();
+    mdIaLigar(agora); render();
+    toast(agora ? 'IA ligada.' : 'IA desligada — a chave continua guardada neste aparelho.');
+    return;
+  }
   if(d.mdchave !== undefined){ S.modal = mdModalIA(); renderLayer(); return; }
   if(d.mdfechar !== undefined){ S.modal = null; renderLayer(); return; }
   if(d.mdchavex !== undefined){ mdIaGuardar(''); S.modal = null; render(); toast('Chave esquecida.'); return; }

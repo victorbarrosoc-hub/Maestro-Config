@@ -341,10 +341,25 @@ checa('uma chave que não é da Anthropic é recusada na hora',
       await pg.evaluate(() => !!document.querySelector('.modal .mdChave') && !localStorage.getItem('maestro-ia-v1')));
 await pg.fill('#md-chave', 'sk-ant-api03-teste'); await pg.click('[data-mdchaveok]'); await pg.waitForTimeout(300);
 const ligada = await pg.evaluate(() => ({ guardada: JSON.parse(localStorage.getItem('maestro-ia-v1') || '{}').chave,
-  modal: !!document.querySelector('.modal'), selo: document.querySelector('[data-mdchave]')?.textContent.trim() }));
+  modal: !!document.querySelector('.modal'), selo: document.querySelector('.mdSwitch')?.textContent.trim(),
+  aceso: document.querySelector('.mdSwitch')?.getAttribute('aria-checked') }));
 checa('a chave boa fica no localStorage — e nunca vai para o banco compartilhado',
       ligada.guardada === 'sk-ant-api03-teste' && !gravacoes.some(g => JSON.stringify(g).includes('sk-ant')), ligada);
-checa('e o botão do topo passa a dizer que a IA está ligada', /IA ligada/.test(ligada.selo || ''), ligada.selo);
+checa('e o interruptor do topo acende', /IA ligada/.test(ligada.selo || '') && ligada.aceso === 'true', ligada);
+
+/* o interruptor: desliga sem perder a chave, e religa sem buscar a chave */
+await pg.click('[data-mdiatoggle]'); await pg.waitForTimeout(300);
+const desligou = await pg.evaluate(() => ({ cfg: JSON.parse(localStorage.getItem('maestro-ia-v1') || '{}'),
+  botao: !!document.querySelector('[data-mdia]'), aceso: document.querySelector('.mdSwitch')?.getAttribute('aria-checked'),
+  toast: document.querySelector('.toast')?.textContent || '' }));
+checa('desligar guarda a chave e só vira a chavinha',
+      desligou.cfg.chave === 'sk-ant-api03-teste' && desligou.cfg.ligada === false && desligou.aceso === 'false', desligou.cfg);
+checa('desligada, o botão "Desenvolver com IA" some — nada gasta crédito', !desligou.botao, desligou);
+checa('e o aviso diz que a chave continua guardada', /chave continua guardada/.test(desligou.toast), desligou.toast);
+await pg.click('[data-mdiatoggle]'); await pg.waitForTimeout(300);
+const religou = await pg.evaluate(() => ({ cfg: JSON.parse(localStorage.getItem('maestro-ia-v1') || '{}'),
+  botao: !!document.querySelector('[data-mdia]'), modal: !!document.querySelector('.modal') }));
+checa('religar não pede a chave de novo', religou.cfg.ligada === true && religou.botao && !religou.modal, religou);
 
 /* o servidor da Anthropic, interceptado: confere o pedido e responde */
 let pedido = null;
