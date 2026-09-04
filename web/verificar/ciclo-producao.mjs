@@ -176,8 +176,14 @@ const auto = await pg.evaluate(() => {
 checa('ligado, a peça aprovada já entra agendada', auto.ligado && auto.fase === 'agendado' && auto.auto);
 
 /* ---------- 9. o histórico acompanha --------------------------------- */
-const hist = await pg.evaluate(tid => (S.ensaio.tarefas.find(x => x.id === tid).hist || []).map(h => h.tipo + ':' + (h.campo || '')), tid);
-checa('o histórico registra a troca de responsável', hist.some(h => h === 'campo:resp'));
+/* v142: os campos de uma rodada viram UMA linha de "salvou" */
+const hist = await pg.evaluate(tid => {
+  const t = S.ensaio.tarefas.find(x => x.id === tid);
+  return (t.hist || []).map(h => h.tipo === 'salvou'
+    ? 'salvou:' + (h.campos || []).map(c => c.campo).join('+')
+    : h.tipo + ':' + (h.campo || '')); }, tid);
+checa('o histórico registra a troca de responsável',
+      hist.some(h => h === 'campo:resp' || (h.startsWith('salvou:') && h.includes('resp'))), hist);
 
 /* ---------- 10. o link de quem aprova --------------------------------- */
 await pg.evaluate(() => { S.route = 'clientedet'; S.cli = 'ln'; S.tab = 'equipe'; render(); }); await pg.waitForTimeout(300);

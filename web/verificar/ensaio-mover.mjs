@@ -110,9 +110,9 @@ checa('e volta a aparecer na tela', await naTela(preso) === 1);
 const hist = await pag.evaluate(i =>
   (S.ensaio.tarefas.find(t => t.id === i) || {}).hist || [], id);
 checa('mover pela seta continua entrando no historico',
-      hist.filter(h => h.campo === 'col').length >= 2);
+      hist.filter(h => h.tipo === 'etapa').length >= 2);
 checa('o historico registra o destino certo',
-      hist.some(h => h.campo === 'col' && h.de === 'check' && h.para === 'act'));
+      hist.some(h => h.tipo === 'etapa' && h.de === 'check' && h.para === 'act'));
 
 checa('nenhum erro de JavaScript', erros.length === 0);
 

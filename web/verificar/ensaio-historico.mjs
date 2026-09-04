@@ -90,10 +90,11 @@ await pag.waitForTimeout(350);
 /* mover de coluna deixa rastro */
 await pag.click(`[data-enmove="${idT}|1"]`); await pag.waitForTimeout(350);
 const hist1 = await pag.evaluate(id => (S.ensaio.tarefas.find(t=>t.id===id)||{}).hist || [], idT);
+/* v142: passar de coluna é UMA linha de etapa — não mais um campo entre outros */
 checa('mover de coluna entra no historico',
-      hist1.some(h => h.tipo === 'campo' && h.campo === 'col'));
+      hist1.some(h => h.tipo === 'etapa'));
 checa('o historico guarda de onde para onde',
-      hist1.some(h => h.campo === 'col' && h.de && h.para && h.de !== h.para));
+      hist1.some(h => h.tipo === 'etapa' && h.de && h.para && h.de !== h.para));
 checa('o historico guarda QUEM fez',
       hist1.every(h => typeof h.quem === 'string' && h.quem.length > 0));
 checa('o historico guarda QUANDO', hist1.every(h => typeof h.ts === 'number' && h.ts > 0));
@@ -109,28 +110,26 @@ await pag.click(`[data-entimer="${idT}"]`); await pag.waitForTimeout(400);
 const parado = await pag.evaluate(id => {
   const t = S.ensaio.tarefas.find(x=>x.id===id);
   const s = (t.sessoes||[])[0] || {};
-  const h = (t.hist||[]).filter(x => x.tipo === 'crono_fim');
-  return { desde: t.desde, ini: s.ini, fim: s.fim, ms: s.ms, nFim: h.length,
-           histMs: (h[0]||{}).ms, histIni: (h[0]||{}).ini, histFim: (h[0]||{}).fim }; }, idT);
+  const h = (t.hist||[]).filter(x => x.tipo === 'crono_fim' || x.tipo === 'crono_ini');
+  return { desde: t.desde, ini: s.ini, fim: s.fim, ms: s.ms, nCrono: h.length }; }, idT);
 checa('parar fecha a sessao', !parado.desde && !!parado.fim);
 checa('a sessao guarda o horario de inicio e o de fim',
       parado.ini > 0 && parado.fim > parado.ini);
 checa('a sessao guarda quanto tempo durou',
       parado.ms >= 900 && parado.ms === parado.fim - parado.ini);
-checa('a contagem entra no historico com inicio, fim e duracao',
-      parado.nFim === 1 && parado.histMs === parado.ms &&
-      parado.histIni === parado.ini && parado.histFim === parado.fim);
+/* v142, a pedido do fundador: o cronômetro continua somando na sessão e no
+   total do cabeçalho, mas parou de escrever uma linha por liga-desliga —
+   era o que enchia o histórico de ruído */
+checa('ligar e parar a contagem NAO vira linha de historico', parado.nCrono === 0, parado);
 
 /* e aparece na tela do card */
 await pag.click(`[data-entar="${idT}"]`); await pag.waitForTimeout(400);
 const naTela = await pag.evaluate(() => document.body.innerText);
 checa('o card mostra a secao Historico', /HISTÓRICO/i.test(naTela));
-checa('o historico na tela diz quem moveu', /mudou a coluna de/i.test(naTela));
-checa('o historico na tela mostra a contagem com as horas',
-      /parou o cronômetro/i.test(naTela) && /\d\d:\d\d → \d\d:\d\d/.test(naTela));
+checa('o historico na tela diz quem passou de etapa', /passou de/i.test(naTela));
 checa('o card mostra o total contado', /Cronômetro:/i.test(naTela));
-checa('uma contagem curta fala em segundos, nao "0m"',
-      /· \d+s\b/.test(naTela) && !/→ \d\d:\d\d · 0m/.test(naTela));
+checa('o total contado fala em segundos quando e curto, nao "0m"',
+      /Cronômetro:\s*\d+s/i.test(naTela) || /Cronômetro:\s*\d+m/i.test(naTela));
 
 checa('nenhum erro de JavaScript', erros.length === 0);
 

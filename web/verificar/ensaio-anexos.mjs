@@ -149,10 +149,21 @@ checa('os anexos viajam junto do quadro quando ele é salvo', viagem.sobrevive, 
 checa('sem carregar endereço morto — só nome, tipo, peso e chave',
       viagem.semEndereco && viagem.campos === 'chave,nome,peso,tipo', viagem);
 
-/* ---------- 7. o histórico conta ---------- */
-const hist = await pg.evaluate(id => (S.ensaio.tarefas.find(t => t.id === id).hist || [])
-  .filter(h => h.campo === 'nAnexos').length, salva.id);
-checa('o histórico do card registra quando um documento entra', hist >= 1, { hist });
+/* ---------- 7. o histórico conta ----------
+   v142: o histórico deixou de anotar cada micro-movimento. Documento que
+   entra num card que JÁ existe continua virando linha — junto do resto
+   que mudou na mesma gravação, numa linha só. */
+const hist = await pg.evaluate(id => {
+  const t = S.ensaio.tarefas.find(x => x.id === id);
+  const foto = new Map(hxTodas().map(x => [x.id, hxFoto(x)]));
+  (t.anexos = t.anexos || []).push({ nome:'briefing-extra.pdf', tipo:'pdf', peso:1200, chave:'k9' });
+  hxComparar(foto);
+  return (t.hist || []).filter(h => h.tipo === 'salvou'
+    && (h.campos || []).some(c => c.campo === 'nAnexos')).length; }, salva.id);
+await pg.waitForTimeout(200);
+const histDepois = await pg.evaluate(id => (S.ensaio.tarefas.find(t => t.id === id).hist || [])
+  .filter(h => h.tipo === 'salvou' && (h.campos || []).some(c => c.campo === 'nAnexos')).length, salva.id);
+checa('o histórico do card registra quando um documento entra', histDepois >= 1, { hist, histDepois });
 
 checa('nenhum erro de JavaScript', erros.length === 0);
 if(erros.length) console.log(erros.slice(0, 5));

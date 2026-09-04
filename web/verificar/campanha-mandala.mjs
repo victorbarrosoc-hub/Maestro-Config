@@ -145,9 +145,15 @@ await pg.click('.ptCamps [data-ptcamp=""]'); await pg.waitForTimeout(300);
 const toda = await pg.evaluate(() => ({ ptCamp: S.ptCamp, itens: document.querySelectorAll('.ptItem').length, total: S.pautas.ln.length }));
 checa('"toda a pauta" tira o filtro e a pauta inteira volta', toda.ptCamp === null && toda.itens === toda.total && toda.total > 8, toda);
 
-/* grava no banco, com a campanha dentro */
-await pg.waitForTimeout(1800);
-const gravou = gravacoes.find(g => g.cliente === 'ln' && g.dados && (g.dados.pauta || []).some(p => p.camp && p.camp.nome === 'Setembro quente'));
+/* grava no banco, com a campanha dentro.
+   A gravação é debounced: em máquina carregada 1,8s às vezes não bastava
+   e o teste acusava perda que não existia. Espera o efeito, não o relógio. */
+await pg.waitForFunction(() => true);
+for(let i = 0; i < 40 && !gravouCampanha(); i++) await pg.waitForTimeout(300);
+function gravouCampanha(){
+  return gravacoes.some(g => g.cliente === 'ln' && g.dados
+    && (g.dados.pauta || []).some(p => p.camp && p.camp.nome === 'Setembro quente')); }
+const gravou = gravouCampanha();
 checa('a pauta com a campanha vai para o banco, sem passo extra', !!gravou, gravacoes.map(g => g.cliente));
 
 /* ---------- 3. descoberta e o funil inteiro ---------------------------- */

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-04 12:44 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-04 13:47 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15880,7 +15880,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v141 · 4 set · Salvar e Próxima etapa na pauta';
+const VERSAO_PROTOTIPO = 'v142 · 4 set · texto por plataforma, modo claro, card único';
 
 menuSheet = (function(orig){
   return function(){
@@ -30400,3 +30400,525 @@ guardarTudo = (function(orig){
   };
 })(guardarTudo);
 </script>
+
+<style>
+/* =====================================================================
+   v142 — quatro pedidos do fundador:
+   1. cada plataforma com o seu texto;  2. a casa inteira no claro;
+   3. o card do quadro é o card;        4. histórico sem ruído.
+   ================================================================== */
+
+/* ---------- 1. texto por plataforma --------------------------------- */
+.ppSec{ margin:16px 0 4px; border-top:1px solid var(--ink-800); padding-top:14px }
+.ppCab{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:4px }
+.ppCab b{ font-size:13.5px; color:var(--ink-50); font-weight:600 }
+.ppCab span{ font-size:11.5px; color:var(--ink-400) }
+.ppDica{ margin:0 0 11px; font-size:11.5px; color:var(--ink-400); line-height:1.5 }
+.ppPlat{ border:1px solid var(--ink-800); border-radius:12px; padding:11px 12px 12px;
+  background:var(--ink-900); margin-bottom:9px }
+.ppTopo{ display:flex; align-items:center; gap:9px; margin-bottom:8px }
+.ppTopo i{ width:9px; height:9px; border-radius:50%; flex:0 0 auto; font-style:normal }
+.ppTopo b{ font-size:12.5px; color:var(--ink-50); font-weight:600; flex:1 }
+.ppHora{ width:82px; flex:0 0 auto; text-align:center; font-family:var(--mono); font-size:12px;
+  padding:5px 8px; border-radius:8px; border:1px solid var(--ink-700);
+  background:var(--ink-950); color:var(--ink-100) }
+.ppPlat textarea{ width:100%; min-height:64px; resize:vertical; border-radius:9px;
+  border:1px solid var(--ink-700); background:var(--ink-950); color:var(--ink-100);
+  padding:9px 10px; font-family:inherit; line-height:1.5; margin-bottom:7px }
+.ppPlat > input{ width:100%; border-radius:9px; border:1px solid var(--ink-700);
+  background:var(--ink-950); color:var(--ink-100); padding:8px 10px }
+.ppPlat textarea:focus, .ppPlat input:focus{ outline:none; border-color:var(--brass-500) }
+/* onde o card é lido: o bloco de cada plataforma */
+.ppLido{ margin-top:12px; display:grid; gap:8px }
+.ppLido .cx{ border:1px solid var(--ink-800); border-radius:11px; padding:10px 12px;
+  background:var(--ink-900) }
+.ppLido .cb{ display:flex; align-items:center; gap:8px; margin-bottom:6px;
+  font-size:11.5px; color:var(--ink-300) }
+.ppLido .cb i{ width:8px; height:8px; border-radius:50%; font-style:normal; flex:0 0 auto }
+.ppLido .cb b{ color:var(--ink-100); font-weight:600 }
+.ppLido .cb .h{ margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--brass-300) }
+.ppLido p{ margin:0; font-size:13px; line-height:1.55; color:var(--ink-100); white-space:pre-wrap }
+.ppLido .cta{ margin-top:6px; font-size:12px; color:var(--ink-300); font-style:italic }
+.ppChip{ display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:9.5px;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--brass-300);
+  background:rgba(200,150,58,.12); border-radius:6px; padding:2px 7px }
+.clficha + .ppLido{ margin-top:10px }
+
+/* ---------- 2. a casa no claro -------------------------------------- */
+.luz{ display:inline-flex; gap:2px; padding:2px; border-radius:9px;
+  border:1px solid var(--ink-700); background:var(--ink-850) }
+.luz button{ width:26px; height:22px; border-radius:7px; display:grid; place-items:center;
+  color:var(--ink-400); transition:background var(--fast) var(--eo), color var(--fast) var(--eo) }
+.luz button svg{ width:13px; height:13px }
+.luz button.on{ background:var(--brass-500); color:#211A08 }
+
+html[data-tema="claro"]{
+  color-scheme:light;
+  --ink-950:#FBFAF6; --ink-900:#FFFFFF; --ink-870:#F3EFE6; --ink-850:#F4F1E9;
+  --ink-800:#E4DFD3; --ink-700:#CDC5B4; --ink-600:#A69D89; --ink-500:#7B7462;
+  --ink-400:#5C5648; --ink-300:#443F35; --ink-200:#2C2822; --ink-100:#1A1712; --ink-50:#0F0D0A;
+  --brass-100:#5C4308; --brass-300:#8A6410; --brass-400:#A87C18; --brass-500:#C08F1F;
+  --brass-600:#B99235; --brass-700:#8A6A22;
+  --cobalt:#2F62C8; --encore:#1E8A56; --coral:#C4512A; --violet:#5B4BC4; --danger:#C0272C;
+}
+/* o site continua sendo o site: a vitrine é escura de propósito */
+html[data-tema="claro"] .site, html[data-tema="claro"] .gate{
+  color-scheme:dark;
+  --ink-950:#161616; --ink-900:#1C1C1C; --ink-870:#1F1F20; --ink-850:#212122;
+  --ink-800:#29272B; --ink-700:#35333A; --ink-600:#474350; --ink-500:#54505C;
+  --ink-400:#72707A; --ink-300:#A0A0A6; --ink-200:#C7C8CB; --ink-100:#E4E6E6; --ink-50:#F4F7F5;
+  --brass-100:#FFEBC1; --brass-300:#FFDA91; --brass-400:#FFD176; --brass-500:#FFC857;
+  --brass-600:#C99D43; --brass-700:#96752F;
+  --cobalt:#5B8DEF; --encore:#35B87A; --coral:#F0784C; --violet:#8B7BF0; --danger:#E5484D;
+  background:var(--ink-950); color:var(--ink-100);
+}
+/* o que estava pintado à mão em escuro, e por isso não seguia os tokens */
+html[data-tema="claro"] body{ background:var(--ink-950); color:var(--ink-200) }
+html[data-tema="claro"] .ctx{ background:rgba(255,255,255,.9) }
+html[data-tema="claro"] .tabbar,
+html[data-tema="claro"] nav.tabbar.mnFixa,
+html[data-tema="claro"] nav.cltab.mnFixa{ background:rgba(255,255,255,.94) !important;
+  border-top:1px solid var(--ink-800) !important }
+html[data-tema="claro"] .modal{ background:rgba(60,52,34,.34) }
+html[data-tema="claro"] .pal{ background:rgba(60,52,34,.3) }
+html[data-tema="claro"] .stampover{ background:rgba(60,52,34,.34) }
+html[data-tema="claro"] .stampseal{
+  background:radial-gradient(circle at 50% 38%,rgba(200,150,58,.22),rgba(255,255,255,.96)) }
+html[data-tema="claro"] .b.pri, html[data-tema="claro"] .clbtn:not(.sec):not(.chg),
+html[data-tema="claro"] .atalhos button.pri{ color:#211A08 }
+html[data-tema="claro"] .nav.bd, html[data-tema="claro"] .tab .bd,
+html[data-tema="claro"] .nav .bd, html[data-tema="claro"] .cltab .bd{ color:#211A08 }
+html[data-tema="claro"] .tile.hot,
+html[data-tema="claro"] .price.pop{ background:linear-gradient(180deg,rgba(200,150,58,.13),var(--ink-850)) }
+html[data-tema="claro"] .seg button.on{ color:#211A08 }
+html[data-tema="claro"] .sk{ background:linear-gradient(100deg,var(--ink-850) 38%,var(--ink-800) 50%,var(--ink-850) 62%);
+  background-size:200% 100% }
+html[data-tema="claro"] .toast{ box-shadow:0 18px 48px rgba(60,52,34,.28) }
+/* a arte continua sendo lida sobre o escuro — é foto, não interface */
+html[data-tema="claro"] .full{ background:#0B0C0E }
+/* o Estúdio tem o interruptor dele; sem escolha, ele acompanha a casa */
+html[data-tema="claro"] .estWrap[data-tema="claro"]{ border-color:var(--ink-800) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v142 — os quatro pedidos.
+
+   1. TEXTO POR PLATAFORMA. O mesmo post sai no Instagram e no LinkedIn
+      em horas diferentes, com texto diferente — e antes só havia uma
+      caixa. Agora cada plataforma escolhida ganha a sua: texto, CTA e
+      horário. O que fica em branco herda o geral, então quem não
+      precisa não vê diferença nenhuma.
+
+   2. A CASA NO CLARO. Um interruptor na barra de cima troca a luz da
+      plataforma inteira, e a escolha fica no aparelho — vale para quem
+      entra pelo link também. A vitrine (o site) continua escura: ela é
+      peça de marca, não interface de trabalho.
+
+   3. O CARD DO QUADRO É O CARD. Depois de estruturado, ele deixa de ter
+      duas visões: tocar nele abre o card inteiro, sem o botão "abrir o
+      card completo". A visão curta fica só para a tarefa que ainda não
+      virou card — a de quem vai pegar e estruturar.
+
+   4. HISTÓRICO SEM RUÍDO. Registrava cada micro-movimento: cronômetro
+      ligado, cronômetro parado, um campo por linha. Agora são duas
+      coisas: SALVOU (uma linha, com o que mudou) e PASSOU DE ETAPA.
+   ================================================================== */
+
+/* ---------- 1. o texto por plataforma -------------------------------
+   A caixa por rede já existiu (v98) e foi tirada a pedido do fundador —
+   mas o que foi escrito nela nunca foi apagado, e o canal de estado
+   continua de pé (`S.ptPorPlat`, `ptGuardarPorPlat`, o gravar em duas
+   etapas). Ela volta agora com o que faltava: cada rede também tem o
+   SEU horário, porque o mesmo post sai no Instagram de manhã e no
+   LinkedIn à tarde. Nada de engrenagem nova ao lado da que existe.
+
+   O que fica gravado aceita as duas formas — o texto puro de antes e o
+   `{texto, hora}` de agora — e quem lê normaliza. */
+const PP_ORDEM = Object.keys(PLATS);
+function ppNorm(v){
+  if(!v) return { texto:'', hora:'' };
+  if(typeof v === 'string') return { texto: v, hora:'' };
+  return { texto: (v.texto || '').trim(), hora: (v.hora || '').trim() };
+}
+const ppDe = p => (p && p.porPlat && typeof p.porPlat === 'object') ? p.porPlat : {};
+function ppLista(p){
+  const m = ppDe(p), plats = (p && p.plats) || [];
+  return PP_ORDEM.filter(k => plats.includes(k)).map(k => {
+    const v = ppNorm(m[k]);
+    return (v.texto || v.hora)
+      ? { k, nome:(PLATS[k] || {}).n || k, cor:(PLATS[k] || {}).c || '#888', ...v } : null;
+  }).filter(Boolean);
+}
+const ppTem = p => ppLista(p).length > 0;
+
+/* o formulário: uma caixa por rede escolhida. O chip de plataforma
+   remonta a camada inteira (v98), então o que está na tela é gravado no
+   estado antes — é o `ptGuardarPorPlat` que faz isso, e ele agora leva o
+   horário junto. */
+function ppFormHtml(){
+  const mem = S.ptPorPlat || {};
+  const caixas = PP_ORDEM.filter(k => S.ptPlats && S.ptPlats.has(k)).map(k => {
+    const v = { texto: ppNorm(mem[k]).texto, hora: (ppHoras()[k] || '') }, pl = PLATS[k] || {};
+    return `<div class="ppPlat" data-ppplat="${k}">
+      <div class="ppTopo"><i style="background:${pl.c || '#888'}"></i><b>${esc(pl.n || k)}</b>
+        <input class="ppHora" data-pphora="${k}" value="${esc(v.hora)}" placeholder="hora"
+          inputmode="numeric" aria-label="Horário no ${esc(pl.n || k)}"></div>
+      <textarea data-plattxt="${k}" rows="3"
+        placeholder="Texto para ${esc(pl.n || k)} — em branco, usa o de cima">${esc(v.texto)}</textarea>
+    </div>`;
+  }).join('');
+  if(!caixas) return '';
+  return `<div class="ppSec" data-ppsec="1">
+    <div class="ppCab"><b>Texto por plataforma</b>
+      <span>o mesmo post, dito do jeito de cada lugar</span></div>
+    <p class="ppDica">Só preencha onde muda. Rede em branco usa o texto e o horário de cima —
+      e não aparece para quem for ler.</p>
+    ${caixas}</div>`;
+}
+modalPauta = (function(orig){
+  return function(id){
+    let html = orig.apply(this, arguments);
+    if(!html || html.indexOf('data-plat98') < 0 || html.indexOf('data-ppsec') >= 0) return html;
+    /* o que a casa semeou pode vir no formato novo: separa aqui, uma vez */
+    const mem = S.ptPorPlat || {};
+    Object.keys(mem).forEach(k => {
+      if(mem[k] && typeof mem[k] === 'object'){
+        const v = ppNorm(mem[k]);
+        mem[k] = v.texto;
+        if(v.hora) ppHoras()[k] = v.hora;
+      }
+    });
+    const sec = ppFormHtml();
+    if(!sec) return html;
+    return html.replace(/(\s*<div class="modalrow" style="margin-top:14px">)/, '\n    ' + sec + '$1');
+  };
+})(modalPauta);
+
+/* O horário mora no mapa dele. `S.ptPorPlat` continua sendo TEXTO PURO
+   por rede, que é o que o gravar da casa (v98) sabe ler — misturar as
+   duas coisas ali quebrava o salvamento inteiro. Os dois se reúnem no
+   card só no fim. */
+function ppHoras(){ return S.ptPorPlatHora = S.ptPorPlatHora || {}; }
+ptGuardarPorPlat = (function(orig){
+  return function(){
+    orig.apply(this, arguments);           /* os textos, pelo data-plattxt */
+    const h = ppHoras();
+    document.querySelectorAll('#layer [data-pphora]').forEach(el => {
+      h[el.dataset.pphora] = (el.value || '').trim(); });
+  };
+})(ptGuardarPorPlat);
+
+/* o gravar da casa (v98) escreve os textos; o horário entra logo depois,
+   e a rede que só tem horário não se perde no caminho */
+addEventListener('click', e => {
+  const ok = e.target.closest && e.target.closest('[data-ptok]');
+  if(!ok || !document.querySelector('#layer [data-ppsec]')) return;
+  if(typeof ptGuardarPorPlat === 'function') ptGuardarPorPlat();
+  const mem = { ...(S.ptPorPlat || {}) };
+  const horas = { ...ppHoras() };
+  const plats = [...(S.ptPlats || [])];
+  const id = +ok.dataset.ptok;
+  setTimeout(() => {
+    if(!id && S.modal) return;                 /* não gravou: o formulário segue aberto */
+    const p = id ? S.pauta.find(x => x.id === id) : S.pauta[S.pauta.length - 1];
+    if(!p) return;
+    const fica = {};
+    plats.forEach(k => {
+      const texto = ppNorm(mem[k]).texto, hora = (horas[k] || '').trim();
+      if(texto && hora) fica[k] = { texto, hora };
+      else if(hora)     fica[k] = { texto:'', hora };
+      else if(texto)    fica[k] = texto;
+    });
+    if(Object.keys(fica).length) p.porPlat = fica; else delete p.porPlat;
+    if(typeof sbAgendar === 'function') sbAgendar();
+    if(S.modal == null) render();
+  }, 4);
+}, true);
+
+/* onde o card é lido: agência, cliente e o link de visualização */
+function ppLidoHtml(p, titulo){
+  const lista = ppLista(p);
+  if(!lista.length) return '';
+  return `<div class="ppLido">
+    ${titulo ? `<div class="ppCab"><b>${esc(titulo)}</b></div>` : ''}
+    ${lista.map(x => `<div class="cx">
+      <div class="cb"><i style="background:${x.cor}"></i><b>${esc(x.nome)}</b>
+        ${x.hora ? `<span class="h">${ic('clock', 10)} ${esc(x.hora)}</span>` : ''}</div>
+      ${x.texto ? `<p>${esc(x.texto)}</p>`
+                : `<p style="color:var(--ink-400)">mesmo texto, só o horário muda</p>`}
+    </div>`).join('')}</div>`;
+}
+modalVer = (function(orig){
+  return function(id){
+    let html = orig.apply(this, arguments);
+    const p = S.pauta.find(x => x.id === id);
+    if(!html || !p || !ppTem(p)) return html;
+    return html.replace(/(\s*<div class="modalrow")/, '\n    ' + ppLidoHtml(p, 'Texto por plataforma') + '$1');
+  };
+})(modalVer);
+clCard = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    const p = S.pauta.find(x => x.id === S.pcSel);
+    if(!html || !p || !ppTem(p) || html.indexOf('ppLido') >= 0) return html;
+    const bloco = ppLidoHtml(p, 'Como sai em cada lugar');
+    return html.indexOf('<div class="clfoot"') >= 0
+      ? html.replace('<div class="clfoot"', bloco + '<div class="clfoot"')
+      : html.replace(/(<\/div>\s*)$/, bloco + '$1');
+  };
+})(clCard);
+if(typeof verFolhaHtml === 'function') verFolhaHtml = (function(orig){
+  return function(c, p){
+    let html = orig.apply(this, arguments);
+    if(!html || !ppTem(p) || html.indexOf('ppLido') >= 0) return html;
+    return html.replace(/(<\/div>\s*)$/, ppLidoHtml(p, 'Texto por plataforma') + '$1');
+  };
+})(verFolhaHtml);
+/* na lista da pauta, um selo curto conta que existe texto por rede */
+if(typeof ptItemHtml === 'function') ptItemHtml = (function(orig){
+  return function(p){
+    let html = orig.apply(this, arguments);
+    if(!html || !ppTem(p) || html.indexOf('ppChip') >= 0) return html;
+    const n = ppLista(p).length;
+    const selo = `<span class="ppChip">${n} texto${n > 1 ? 's' : ''}</span>`;
+    return html.replace(/(<span class="ptFmtChip">)/, selo + '$1');
+  };
+})(ptItemHtml);
+</script>
+<script>
+"use strict";
+/* ---------- 2. a casa no claro -------------------------------------- */
+const LUZ_CHAVE = 'maestro-luz-v1';
+function luzAtual(){
+  try { const v = localStorage.getItem(LUZ_CHAVE); if(v === 'claro' || v === 'escuro') return v; }
+  catch(_) {}
+  return 'escuro';
+}
+function luzAplicar(t){
+  document.documentElement.dataset.tema = t;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', t === 'claro' ? '#FBFAF6' : '#161616');
+}
+function luzPor(t){
+  if(t !== 'claro' && t !== 'escuro') return;
+  try { localStorage.setItem(LUZ_CHAVE, t); } catch(_) {}
+  luzAplicar(t);
+  if(typeof som === 'function') som('toque');
+  render();
+}
+luzAplicar(luzAtual());
+
+const LUZ_LUA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.2 8.2 0 0 1 9.5 4 8.4 8.4 0 1 0 20 14.5z"/></svg>';
+const LUZ_SOL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2M12 19.4v2M2.6 12h2M19.4 12h2M5.4 5.4l1.4 1.4M17.2 17.2l1.4 1.4M18.6 5.4l-1.4 1.4M6.8 17.2l-1.4 1.4"/></svg>';
+function luzHtml(){
+  const t = luzAtual();
+  return `<span class="luz" role="group" aria-label="Luz da plataforma">
+    <button type="button" data-luz="escuro" class="${t === 'escuro' ? 'on' : ''}"
+      title="Modo escuro" aria-label="Modo escuro" aria-pressed="${t === 'escuro'}">${LUZ_LUA}</button>
+    <button type="button" data-luz="claro" class="${t === 'claro' ? 'on' : ''}"
+      title="Modo claro" aria-label="Modo claro" aria-pressed="${t === 'claro'}">${LUZ_SOL}</button>
+  </span>`;
+}
+/* o interruptor mora na barra de cima — a única que existe nos dois
+   lados, e também para quem entra por link */
+ctxBar = (function(orig){
+  return function(){
+    orig.apply(this, arguments);
+    const el = document.getElementById('ctx');
+    if(!el || el.querySelector('.luz')) return;
+    const sp = el.querySelector('.sp');
+    if(sp) sp.insertAdjacentHTML('afterend', luzHtml());
+    else el.insertAdjacentHTML('beforeend', luzHtml());
+  };
+})(ctxBar);
+addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-luz]');
+  if(!b) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  luzPor(b.dataset.luz);
+}, true);
+/* a folha de leitura (?ver=) esconde a barra: lá o interruptor é dela */
+if(typeof verFolhaHtml === 'function') verFolhaHtml = (function(orig){
+  return function(c, p){
+    let html = orig.apply(this, arguments);
+    if(!html || html.indexOf('data-luz') >= 0) return html;
+    return html.replace('<span class="vfSelo">', luzHtml() + '<span class="vfSelo">');
+  };
+})(verFolhaHtml);
+/* sem escolha própria, o Estúdio acompanha a luz da casa */
+if(typeof estTema === 'function') estTema = (function(orig){
+  return function(){
+    const meu = (typeof estMeu === 'function' ? estMeu() : {}) || {};
+    if(meu.tema === 'claro' || meu.tema === 'escuro') return meu.tema;
+    return luzAtual();
+  };
+})(estTema);
+
+/* ---------- 3. o card do quadro é o card ---------------------------- */
+/* o botão "abrir o card completo" sai do cartão: o cartão inteiro leva
+   para lá. Sobra menos coisa para tocar errado no celular. */
+agEnsaio = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    if(!html) return html;
+    return html.replace(/<button data-hjabre="[^"]*"[^>]*>[\s\S]*?<\/button>\s*/g, '');
+  };
+})(agEnsaio);
+/* Uma visão só. Em vez de mandar para outra janela, o card ENTRA aqui:
+   quem abre um card estruturado lê o conteúdo dele — data, formato,
+   redes, objetivo, briefing, texto por plataforma, material — no mesmo
+   lugar onde já mexe em responsável, prazo, tempo e histórico.
+
+   A visão curta continua existindo para a tarefa que ainda não virou
+   card: é a de quem vai pegar e estruturar. */
+function enCardLidoHtml(t){
+  const p = typeof cardDaTarefa === 'function' ? cardDaTarefa(t) : null;
+  if(!p) return '';
+  const fmts = (p.fmts && p.fmts.length ? p.fmts : [p.fmt]).filter(Boolean);
+  const ms = typeof materiaisDe === 'function' ? materiaisDe(p.id) : [];
+  const fase = typeof rotuloFase === 'function' ? rotuloFase(p) : '';
+  const linha = [
+    p.data && typeof rotuloData === 'function' ? rotuloData(p.data) : '',
+    p.hora || '', fmts.join(' · '),
+    (p.plats || []).map(k => (PLATS[k] || {}).n || k).join(', ')
+  ].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
+  return `<div class="enFicha">
+    <div class="enFichaTopo">${linha}${fase ? `<b>${esc(fase)}</b>` : ''}</div>
+    ${p.objetivo ? `<div class="cx"><span class="lbl">Objetivo</span><p>${esc(p.objetivo)}</p></div>` : ''}
+    ${p.texto ? `<div class="cx"><span class="lbl">Briefing</span><p>${esc(p.texto)}</p></div>` : ''}
+    ${p.cta ? `<div class="cx"><span class="lbl">CTA</span><p>${esc(p.cta)}</p></div>` : ''}
+    ${ppLidoHtml(p, 'Texto por plataforma')}
+    ${ms.length ? `<div class="enFichaMat">${ic('img', 12)} ${ms.length}
+      ${ms.length === 1 ? 'peça anexada' : 'peças anexadas'}</div>` : ''}
+  </div>`;
+}
+modalTarefa = (function(orig){
+  return function(id){
+    let html = orig.apply(this, arguments);
+    if(!html || !id || html.indexOf('enFicha') >= 0) return html;
+    const t = S.ensaio && S.ensaio.tarefas.find(x => x.id === id);
+    const ficha = t ? enCardLidoHtml(t) : '';
+    if(!ficha) return html;
+    /* entra antes do histórico quando ele existe; senão, antes dos botões */
+    return html.indexOf('<div class="hxSecao">') >= 0
+      ? html.replace('<div class="hxSecao">', ficha + '<div class="hxSecao">')
+      : html.replace(/(\s*<div class="modalrow" style="margin-top:14px">)/, '\n    ' + ficha + '$1');
+  };
+})(modalTarefa);
+
+/* ---------- 4. o histórico sem ruído -------------------------------- */
+/* o cronômetro continua contando e somando no cabeçalho; o que sai é a
+   linha por liga-desliga. E os campos de uma mesma gravação viram UMA
+   linha, em vez de uma por campo. */
+const HX_FILA = new Map();          /* tarefa → campos da rodada */
+function hxDespejar(t){
+  const campos = HX_FILA.get(t);
+  HX_FILA.delete(t);
+  if(!campos || !campos.length) return;
+  (t.hist = t.hist || []).push({ ts: Date.now(), quem: hxQuem(), tipo:'salvou', campos });
+  if(t.hist.length > 200) t.hist = t.hist.slice(-200);
+}
+hxRegistrar = (function(orig){
+  return function(t, entrada){
+    if(!t || !entrada) return;
+    const tipo = entrada.tipo;
+    if(tipo === 'crono_ini' || tipo === 'crono_fim') return;      /* ruído puro */
+    if(tipo === 'campo'){
+      /* de vazio para vazio não é mudança: um contador que nasce
+         `undefined` e vira 0 escrevia uma linha a cada clique */
+      const vazio = v => v === null || v === undefined || v === '' || v === 0;
+      if(vazio(entrada.de) && vazio(entrada.para)) return;
+      if(entrada.campo === 'col')                                  /* passou de etapa */
+        return orig.call(this, t, { tipo:'etapa', de: entrada.de, para: entrada.para });
+      const fila = HX_FILA.get(t) || [];
+      /* o mesmo campo mexido duas vezes na rodada conta uma vez só */
+      const j = fila.findIndex(c => c.campo === entrada.campo);
+      if(j >= 0) fila[j].para = entrada.para; else fila.push({ campo: entrada.campo, de: entrada.de, para: entrada.para });
+      HX_FILA.set(t, fila);
+      setTimeout(() => hxDespejar(t), 60);
+      return;
+    }
+    return orig.apply(this, arguments);
+  };
+})(hxRegistrar);
+hxFrase = (function(orig){
+  return function(h){
+    if(h.tipo === 'etapa'){
+      return `<span class="hxQuem">${esc(h.quem)}</span> passou de
+        <span class="hxAlvo">${esc(hxRotulo('col', h.de))}</span> para
+        <span class="hxAlvo">${esc(hxRotulo('col', h.para))}</span>`;
+    }
+    if(h.tipo === 'salvou'){
+      const nome = c => (HX_CAMPOS.find(([k]) => k === c.campo) || [null, c.campo])[1];
+      const partes = (h.campos || []).map(c =>
+        `${esc(nome(c))}: <span class="hxAlvo">${esc(hxRotulo(c.campo, c.para))}</span>`).join(' · ');
+      return `<span class="hxQuem">${esc(h.quem)}</span> salvou${partes ? ' — ' + partes : ''}`;
+    }
+    return orig.apply(this, arguments);
+  };
+})(hxFrase);
+/* o texto do bloco vazio conta a regra nova */
+hxBloco = (function(orig){
+  return function(t){
+    hxDespejar(t);                     /* o que estava na fila entra antes de desenhar */
+    const html = orig.apply(this, arguments);
+    return html.replace('Nada ainda. A partir daqui, toda mudança neste card\n         fica registrada com autor e hora.',
+      'Nada ainda. Fica registrado quando alguém salva o card ou passa ele de etapa — com autor e hora.');
+  };
+})(hxBloco);
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v142.1 — o som chegava atrasado no primeiro toque.
+
+   O contexto de áudio nascia dentro do `som()`: no primeiro clique o
+   navegador ainda estava criando o motor, ligando a saída e saindo do
+   estado "suspenso" — e a nota só saía depois disso, meio compasso
+   atrás do que a pessoa fez. A partir do segundo toque, já quente,
+   ficava certo. É por isso que só o começo soava atrasado.
+
+   A cura é aquecer no primeiro gesto, seja ele qual for: cria o
+   contexto, tira do suspenso e toca um silêncio de um quadro só, que
+   força o navegador a montar o caminho do áudio antes de precisar dele.
+   ================================================================== */
+(function(){
+  let quente = false;
+  function aquecer(){
+    if(quente) return;
+    try{
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      if(AC.state === 'suspended') AC.resume();
+      /* um sopro de silêncio: monta o grafo e acorda a saída */
+      const b = AC.createBuffer(1, 1, AC.sampleRate);
+      const f = AC.createBufferSource();
+      f.buffer = b; f.connect(AC.destination); f.start(0);
+      quente = true;
+    }catch(e){}
+  }
+  ['pointerdown', 'touchstart', 'keydown', 'mousedown'].forEach(ev =>
+    addEventListener(ev, aquecer, { capture:true, passive:true }));
+  /* e se o navegador suspender de novo (aba escondida, chamada), o
+     próximo gesto reacende */
+  addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible' && AC && AC.state === 'suspended') quente = false;
+  });
+})();
+</script>
+<style>
+/* a ficha do card dentro da visão do Ensaio (v142) */
+.enFicha{ margin:14px 0 4px; border-top:1px solid var(--ink-800); padding-top:13px }
+.enFichaTopo{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;
+  font-family:var(--mono); font-size:10.5px; color:var(--ink-400) }
+.enFichaTopo span{ background:var(--ink-900); border:1px solid var(--ink-800);
+  border-radius:7px; padding:3px 8px }
+.enFichaTopo b{ margin-left:auto; color:var(--brass-300); font-weight:600 }
+.enFicha .cx{ margin-bottom:9px }
+.enFicha .lbl{ display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--ink-500); margin-bottom:4px }
+.enFicha .cx p{ margin:0; font-size:13px; line-height:1.55; color:var(--ink-100); white-space:pre-wrap }
+.enFichaMat{ display:inline-flex; align-items:center; gap:7px; font-size:11.5px;
+  color:var(--ink-300); background:var(--ink-900); border:1px solid var(--ink-800);
+  border-radius:9px; padding:6px 10px; margin-top:2px }
+</style>

@@ -88,22 +88,27 @@ await pag.waitForTimeout(350);
 checa('o formato tambem sobrevive ao toast',
       await pag.locator('[data-fmt98="Carrossel"].on').count() > 0);
 
-// ---------- 3. o campo por plataforma saiu, sem apagar o que havia ----------
+// ---------- 3. o texto por plataforma voltou (v142), com horario proprio ----------
 await abrirNovo();
-await pag.click('[data-plat98="li"]'); await pag.waitForTimeout(250);
-checa('nao ha mais caixa "o que muda aqui" por plataforma',
-      await pag.locator('[data-plattxt]').count() === 0);
-checa('marcar plataforma continua funcionando sem a caixa',
+await pag.click('[data-plat98="li"]'); await pag.waitForTimeout(300);
+checa('cada rede escolhida tem a sua caixa de texto',
+      await pag.locator('[data-plattxt]').count() === 2);
+checa('e o seu proprio horario', await pag.locator('[data-pphora]').count() === 2);
+checa('marcar plataforma continua funcionando', 
       await pag.locator('[data-plat98="li"].on').count() > 0);
+await pag.click('[data-plat98="li"]'); await pag.waitForTimeout(300);
+checa('desmarcar a rede tira a caixa dela', await pag.locator('[data-plattxt]').count() === 1);
 
 /* um card que ja tinha texto por rede nao pode perde-lo ao ser salvo */
 await pag.evaluate(() => { S.modal = null; renderLayer();
   S.pauta[0].porPlat = { ig: 'texto antigo por rede' };
   S.ptSemear = true; S.modal = modalPauta(S.pauta[0].id); renderLayer(); });
 await pag.waitForTimeout(350);
-await pag.click('[data-ptok]'); await pag.waitForTimeout(450);
-checa('salvar sem a caixa NAO apaga o texto por rede ja gravado',
-      await pag.evaluate(() => (S.pauta[0].porPlat || {}).ig === 'texto antigo por rede'));
+await pag.click('[data-ptok]'); await pag.waitForTimeout(600);
+checa('salvar NAO apaga o texto por rede ja gravado',
+      await pag.evaluate(() => {
+        const v = (S.pauta[0].porPlat || {}).ig;
+        return (typeof v === 'string' ? v : (v || {}).texto) === 'texto antigo por rede'; }));
 
 // ---------- 3a. o horario nao ocupa a linha inteira ----------
 await abrirNovo();
