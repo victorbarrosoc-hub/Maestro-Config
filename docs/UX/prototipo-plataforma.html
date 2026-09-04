@@ -20,11 +20,26 @@
    cortina caía por cima. Um corte seco, no meio da abertura.
    Aqui o palco fica no escuro até a cortina estar pendurada. */
 html.abrindo #root, html.abrindo .ctx, html.abrindo #layer{ visibility:hidden }</style>
-<script>try{ if(location.hash !== '#abertura' && !matchMedia('(prefers-reduced-motion: reduce)').matches){
-  document.documentElement.classList.add('abrindo');
-  /* rede de segurança: se a cortina não subir, a casa aparece assim mesmo */
-  setTimeout(function(){ document.documentElement.classList.remove('abrindo'); }, 4000);
-} }catch(e){}</script>
+<script>
+/* v147 — A ABERTURA É DE CHEGAR, NÃO DE VOLTAR.
+   A cortina com a logo era a primeira coisa a cada recarregamento — e
+   agora que cada tela tem endereço próprio, recarregar virou rotina.
+   Ela passa a tocar UMA VEZ por aparelho: na primeira visita. Depois
+   disso, quem entra já entra na casa. Para rever, é só abrir com
+   #abertura no fim do endereço. */
+(function(){
+  var vista = false;
+  try{ vista = localStorage.getItem('maestro-abertura-v1') === 'vista'; }catch(e){}
+  var forcada = location.hash === '#abertura';
+  window.MAESTRO_ABRE = forcada || !vista;
+  try{
+    if(window.MAESTRO_ABRE && !forcada && !matchMedia('(prefers-reduced-motion: reduce)').matches){
+      document.documentElement.classList.add('abrindo');
+      /* rede de segurança: se a cortina não subir, a casa aparece assim mesmo */
+      setTimeout(function(){ document.documentElement.classList.remove('abrindo'); }, 4000);
+    }
+  }catch(e){}
+})();</script>
 <title>Maestro</title>
 <style>
 /* =====================================================================
@@ -5281,10 +5296,23 @@ function voarM(el){
   setTimeout(()=>voa.remove(), 900);
 }
 
-/* sobe a cortina assim que a pagina existe */
-if(document.readyState === 'loading')
-  document.addEventListener('DOMContentLoaded', abrirCortina, {once:true});
-else abrirCortina();
+/* sobe a cortina assim que a pagina existe — e só na primeira visita
+   deste aparelho (v147). Quem quiser rever abre com #abertura. */
+function deveAbrirCortina(){
+  if(typeof window.MAESTRO_ABRE === 'boolean') return window.MAESTRO_ABRE;
+  if(location.hash === '#abertura') return true;
+  try{ return localStorage.getItem('maestro-abertura-v1') !== 'vista'; }catch(e){ return true; }
+}
+function aberturaVista(){ try{ localStorage.setItem('maestro-abertura-v1', 'vista'); }catch(e){} }
+if(deveAbrirCortina()){
+  if(document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', abrirCortina, {once:true});
+  else abrirCortina();
+  aberturaVista();
+} else {
+  /* nada de cortina: a casa aparece na hora */
+  document.documentElement.classList.remove('abrindo');
+}
 </script>
 <style>
 /* =====================================================================
@@ -14959,6 +14987,8 @@ function desarmarGesto(){
    e como este script é analisado depois daquele, o nosso corre em segundo,
    com a cortina já na tela. */
 function armarAbertura(){
+  /* sem cortina não há abertura para tocar (v147) */
+  if(typeof deveAbrirCortina === 'function' && !deveAbrirCortina()) return;
   tocarAbertura();                         // se o áudio já estiver liberado
   if(aberturaTocada) return;
   GESTOS.forEach(g => addEventListener(g, aoGesto, true));
@@ -15809,7 +15839,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v146 · 4 set · endereço por tela e refresh de verdade';
+const VERSAO_PROTOTIPO = 'v147 · 4 set · a abertura só na primeira visita';
 
 menuSheet = (function(orig){
   return function(){
