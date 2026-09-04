@@ -15809,7 +15809,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v143 · 4 set · recado no lugar, agendado não é postado';
+const VERSAO_PROTOTIPO = 'v144 · 4 set · tempo e ritmo no Resultados';
 
 menuSheet = (function(orig){
   return function(){
@@ -31009,4 +31009,320 @@ modalVer = (function(orig){
     return html.replace('<div class="vzTopo">', linha + '<div class="vzTopo">');
   };
 })(modalVer);
+</script>
+
+<style>
+/* =====================================================================
+   v144 — o Resultados aprende a contar tempo.
+   ================================================================== */
+.rtSec{ margin-top:22px }
+.rtCab{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:12px }
+.rtCab h3{ margin:0; font-family:var(--serif); font-size:21px; font-weight:400; color:var(--ink-50) }
+.rtCab p{ margin:0; font-size:12.5px; color:var(--ink-400) }
+.rtPer{ display:flex; gap:6px; margin-left:auto; flex-wrap:wrap }
+.rtPer button{ padding:6px 12px; border-radius:999px; border:1px solid var(--ink-700);
+  background:var(--ink-900); color:var(--ink-300); font-size:12px;
+  transition:border-color var(--fast) var(--eo), color var(--fast) var(--eo) }
+.rtPer button.on{ border-color:var(--brass-500); color:var(--brass-200); background:rgba(200,150,58,.1) }
+.rtNums{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px }
+.rtNum{ background:var(--ink-850); border:1px solid var(--ink-800); border-radius:12px; padding:14px }
+.rtNum b{ display:block; font-family:var(--serif); font-size:27px; line-height:1; color:var(--ink-50);
+  font-variant-numeric:tabular-nums }
+.rtNum b em{ font-style:normal; font-size:15px; color:var(--ink-400) }
+.rtNum span{ display:block; margin-top:6px; font-size:11.5px; color:var(--ink-400) }
+.rtGrade{ display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:12px }
+.rtBloco{ background:var(--ink-850); border:1px solid var(--ink-800); border-radius:14px; padding:16px }
+.rtBloco h4{ margin:0 0 4px; font-size:11px; font-family:var(--mono); letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-500); font-weight:500 }
+.rtBloco .dica{ margin:0 0 12px; font-size:11.5px; color:var(--ink-400); line-height:1.5 }
+.rtLinha{ display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--ink-800) }
+.rtLinha:first-of-type{ border-top:0 }
+.rtLinha .nome{ flex:1; min-width:0; font-size:13px; color:var(--ink-100) }
+.rtLinha .nome small{ display:block; font-size:11px; color:var(--ink-400); margin-top:2px }
+.rtLinha .val{ font-family:var(--mono); font-size:13px; color:var(--brass-300); white-space:nowrap;
+  font-variant-numeric:tabular-nums }
+.rtLinha .val small{ color:var(--ink-400); font-size:10.5px }
+.rtBarra{ height:5px; border-radius:3px; background:var(--ink-800); overflow:hidden; margin-top:6px }
+.rtBarra i{ display:block; height:100%; background:var(--brass-500); border-radius:3px }
+.rtMedalha{ font-size:11px; font-family:var(--mono); color:var(--brass-200);
+  background:rgba(200,150,58,.14); border:1px solid rgba(200,150,58,.4);
+  border-radius:999px; padding:2px 9px; white-space:nowrap }
+.rtVazio{ font-size:12.5px; color:var(--ink-400); line-height:1.6; margin:0 }
+.rtVazio b{ color:var(--ink-200) }
+.rtCabe{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;
+  font-size:11.5px; color:var(--ink-400) }
+.rtCabe button{ padding:4px 10px; border-radius:8px; border:1px solid var(--ink-700);
+  background:var(--ink-900); color:var(--ink-300); font-size:11.5px; font-family:var(--mono) }
+.rtCabe button.on{ border-color:var(--brass-500); color:var(--brass-200) }
+.rtEstim{ font-size:10.5px; color:var(--ink-500); font-family:var(--mono) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v144 — o Resultados vira painel de operação.
+
+   O quadro já contava o tempo (o relógio de cada card, com sessões de
+   início e fim) e já sabia quem concluiu o quê. O que faltava era ler
+   isso junto: quantas horas cada pessoa trabalhou no dia, na semana e
+   no mês; quanto demora, em média, cada tipo de peça; e — a pergunta
+   que o fundador faz toda semana — quantos posts cabem, e para quem.
+
+   Três cuidados:
+   · o tempo é de quem CONTOU (a sessão guarda quem), não do dono do
+     card. Quem ajudou aparece;
+   · contagem antiga, feita antes das sessões existirem, não se perde:
+     entra como estimativa, marcada como tal;
+   · onde não há dado, a tela diz o que fazer para haver — em vez de
+     mostrar zero e parecer quebrada.
+   ================================================================== */
+
+/* a sessão passa a guardar o id de quem contou, e não só o nome */
+if(typeof hxConciliarCronometro === 'function') hxConciliarCronometro = (function(orig){
+  return function(){
+    const r = orig.apply(this, arguments);
+    const meuId = (S.usuario && S.usuario.tipo === 'agencia') ? S.usuario.id : null;
+    if(meuId) hxTodas().forEach(t => (t.sessoes || []).forEach(s => {
+      if(!s.quemId && s.quem === hxQuem()) s.quemId = meuId; }));
+    return r;
+  };
+})(hxConciliarCronometro);
+
+const RT_PERIODOS = [['hoje','Hoje'], ['semana','7 dias'], ['mes','Este mês'], ['tudo','Tudo']];
+if(!RT_PERIODOS.some(([k]) => k === S.rtPer)) S.rtPer = 'mes';
+if(![4, 6, 8].includes(S.rtJornada)) S.rtJornada = 6;
+
+const rtTarefas = () => [...((S.ensaio || {}).tarefas || []), ...((S.ensaio || {}).feitas || [])];
+const rtNomeId = nome => {
+  const m = (S.equipe || []).find(x => x.n === nome);
+  return m ? membroId(m) : null;
+};
+/* o tipo da tarefa: o formato da peça quando ela é card da pauta; a
+   frente, quando é tarefa da casa */
+function rtTipo(t){
+  const p = typeof cardDaTarefa === 'function' ? cardDaTarefa(t) : null;
+  if(p) return (p.fmts && p.fmts[0]) || p.fmt || 'Peça';
+  return (typeof catDe === 'function' ? catDe(t).nome : 'Tarefa');
+}
+/* uma linha por contagem: quem contou, quanto, quando, em quê */
+function rtContagens(){
+  const out = [];
+  rtTarefas().forEach(t => {
+    let somado = 0;
+    (t.sessoes || []).forEach(s => {
+      if(!s.fim || !s.ms) return;
+      somado += s.ms;
+      out.push({ ms:s.ms, quando:s.fim, quem: s.quemId || rtNomeId(s.quem) || t.resp || null,
+        tipo: rtTipo(t), cli: t.cli || null, t });
+    });
+    /* o que foi contado antes de existir sessão continua valendo */
+    const resto = (t.tempoMs || 0) - somado;
+    if(resto > 60000) out.push({ ms:resto, quando: t.concluida || t.criada || Date.now(),
+      quem: t.resp || null, tipo: rtTipo(t), cli: t.cli || null, t, estimado:true });
+  });
+  return out;
+}
+function rtJanela(per){
+  const agora = new Date();
+  if(per === 'tudo') return 0;
+  if(per === 'hoje'){ const d = new Date(agora); d.setHours(0, 0, 0, 0); return d.getTime(); }
+  if(per === 'semana') return Date.now() - 7 * 86400000;
+  const d = new Date(agora.getFullYear(), agora.getMonth(), 1);
+  return d.getTime();
+}
+const rtNoPeriodo = (ts, per) => ts >= rtJanela(per || S.rtPer);
+const rtHoras = ms => {
+  const h = ms / 3600000;
+  if(h >= 10) return Math.round(h) + 'h';
+  if(h >= 1) return (Math.round(h * 10) / 10).toString().replace('.', ',') + 'h';
+  return Math.max(1, Math.round(ms / 60000)) + 'min';
+};
+/* concluídas no período, para o ranking e o tempo médio */
+const rtFeitas = per => ((S.ensaio || {}).feitas || [])
+  .filter(f => rtNoPeriodo(f.concluida || 0, per));
+
+function rtPorPessoa(per){
+  const cont = rtContagens().filter(c => rtNoPeriodo(c.quando, per));
+  const feitas = rtFeitas(per);
+  const mapa = new Map();
+  const pega = id => {
+    if(!mapa.has(id)) mapa.set(id, { id, ms:0, msFeitas:0, contagens:0, feitas:0, noPrazo:0, tipos:new Map(), estimado:false });
+    return mapa.get(id);
+  };
+  cont.forEach(c => { if(!c.quem) return;
+    const r = pega(c.quem); r.ms += c.ms; r.contagens++;
+    if(c.estimado) r.estimado = true;
+    const tt = r.tipos.get(c.tipo) || { ms:0, n:0 };
+    tt.ms += c.ms; tt.n++; r.tipos.set(c.tipo, tt);
+  });
+  feitas.forEach(f => { if(!f.resp) return;
+    const r = pega(f.resp); r.feitas++; if(f.noPrazo) r.noPrazo++;
+    r.msFeitas += (f.tempoMs || 0);          /* o tempo DAQUELAS tarefas, para a média */
+  });
+  return [...mapa.values()]
+    .map(r => ({ ...r, m: typeof membro === 'function' ? membro(r.id) : null,
+      pontos: r.feitas * 10 + r.noPrazo * 5 - (r.feitas - r.noPrazo) * 3,
+      /* média = tempo das tarefas que ela concluiu, não o do período inteiro */
+      media: r.feitas && r.msFeitas ? r.msFeitas / r.feitas : 0 }))
+    .filter(r => r.ms > 0 || r.feitas > 0)
+    .sort((a, b) => b.ms - a.ms || b.feitas - a.feitas);
+}
+function rtPorTipo(per){
+  const cont = rtContagens().filter(c => rtNoPeriodo(c.quando, per));
+  const mapa = new Map();
+  cont.forEach(c => {
+    const r = mapa.get(c.tipo) || { tipo:c.tipo, ms:0, tarefas:new Set(), contagens:0 };
+    r.ms += c.ms; r.contagens++; r.tarefas.add(c.t.id); mapa.set(c.tipo, r);
+  });
+  return [...mapa.values()]
+    .map(r => ({ ...r, n:r.tarefas.size, media: r.ms / Math.max(1, r.tarefas.size) }))
+    .sort((a, b) => b.ms - a.ms);
+}
+function rtPorCliente(per){
+  const cont = rtContagens().filter(c => rtNoPeriodo(c.quando, per) && c.cli);
+  const mapa = new Map();
+  cont.forEach(c => { const r = mapa.get(c.cli) || { cli:c.cli, ms:0 }; r.ms += c.ms; mapa.set(c.cli, r); });
+  return [...mapa.values()].sort((a, b) => b.ms - a.ms);
+}
+</script>
+<script>
+"use strict";
+/* ---------- v144, a tela ------------------------------------------- */
+function rtPeriodoHtml(){
+  return `<div class="rtPer" role="group" aria-label="Período">${RT_PERIODOS.map(([k, n]) =>
+    `<button type="button" data-rtper="${k}" class="${S.rtPer === k ? 'on' : ''}">${esc(n)}</button>`).join('')}</div>`;
+}
+function rtNumsHtml(per){
+  const cont = rtContagens().filter(c => rtNoPeriodo(c.quando, per));
+  const ms = cont.reduce((n, c) => n + c.ms, 0);
+  const feitas = rtFeitas(per);
+  const pessoas = new Set(cont.map(c => c.quem).filter(Boolean)).size;
+  const media = feitas.length ? feitas.reduce((n, f) => n + (f.tempoMs || 0), 0) / feitas.length : 0;
+  return `<div class="rtNums">
+    <div class="rtNum"><b>${esc(rtHoras(ms))}</b><span>contadas no relógio</span></div>
+    <div class="rtNum"><b>${feitas.length}</b><span>tarefas concluídas</span></div>
+    <div class="rtNum"><b>${media ? esc(kbFmt(media)) : '—'}</b><span>tempo médio por tarefa</span></div>
+    <div class="rtNum"><b>${pessoas}</b><span>${pessoas === 1 ? 'pessoa contando tempo' : 'pessoas contando tempo'}</span></div>
+  </div>`;
+}
+function rtPessoasHtml(per){
+  const linhas = rtPorPessoa(per);
+  if(!linhas.length) return `<div class="rtBloco"><h4>Por pessoa</h4>
+    <p class="rtVazio">Ninguém contou tempo nem concluiu tarefa neste período.
+      No card do Ensaio, o <b>relógio</b> começa e para a contagem — é dele que sai tudo isto.</p></div>`;
+  const maior = Math.max(...linhas.map(l => l.ms), 1);
+  const doMes = S.rtPer === 'mes';
+  const campeao = [...linhas].sort((a, b) => b.pontos - a.pontos || b.ms - a.ms)[0];
+  return `<div class="rtBloco"><h4>Por pessoa</h4>
+    <p class="dica">Horas contadas no período, tarefas concluídas e pontos
+      (concluída 10 · no prazo +5 · atrasada −3).</p>
+    ${linhas.map(l => {
+      const nome = l.m ? l.m.nome : 'alguém que saiu da equipe';
+      const rei = doMes && campeao && l.id === campeao.id && l.pontos > 0;
+      return `<div class="rtLinha">
+        <span class="nome"><b style="color:var(--ink-50);font-weight:600">${esc(nome)}</b>
+          ${rei ? '<span class="rtMedalha">funcionário do mês</span>' : ''}
+          <small>${l.feitas} ${l.feitas === 1 ? 'concluída' : 'concluídas'} ·
+            ${l.feitas ? Math.round(l.noPrazo / l.feitas * 100) + '% no prazo' : 'sem conclusão ainda'} ·
+            ${l.pontos} pts${l.media ? ' · média ' + esc(kbFmt(l.media)) : ''}</small>
+          <span class="rtBarra"><i style="width:${Math.round(l.ms / maior * 100)}%"></i></span></span>
+        <span class="val">${esc(rtHoras(l.ms))}${l.estimado ? '<small> ~</small>' : ''}</span>
+      </div>`; }).join('')}
+    ${linhas.some(l => l.estimado) ? `<p class="rtEstim" style="margin-top:9px">~ inclui tempo
+      contado antes de a Maestro guardar sessão por sessão</p>` : ''}
+  </div>`;
+}
+function rtTiposHtml(per){
+  const linhas = rtPorTipo(per);
+  if(!linhas.length) return `<div class="rtBloco"><h4>Por tipo de peça</h4>
+    <p class="rtVazio">Sem tempo contado neste período. Assim que o relógio rodar em alguns cards,
+      aqui aparece <b>quanto demora cada tipo</b> — Reels, Carrossel, Artigo, Story.</p></div>`;
+  const jornadaMs = S.rtJornada * 3600000;
+  return `<div class="rtBloco"><h4>Por tipo de peça</h4>
+    <p class="dica">Quanto cada tipo custa de tempo, em média — e quantos cabem
+      num dia de trabalho de uma pessoa.</p>
+    <div class="rtCabe"><span>jornada</span>
+      ${[4, 6, 8].map(h => `<button type="button" data-rtjornada="${h}"
+        class="${S.rtJornada === h ? 'on' : ''}">${h}h</button>`).join('')}
+      <span>por dia</span></div>
+    ${linhas.map(l => {
+      const cabem = l.media > 0 ? Math.floor(jornadaMs / l.media) : 0;
+      return `<div class="rtLinha">
+        <span class="nome"><b style="color:var(--ink-50);font-weight:600">${esc(l.tipo)}</b>
+          <small>${l.n} ${l.n === 1 ? 'peça' : 'peças'} · ${esc(rtHoras(l.ms))} no total${
+            l.n < 3 ? ' · <span class="rtEstim">amostra pequena</span>' : ''}</small></span>
+        <span class="val">${esc(kbFmt(l.media))}<small> cada</small><br>
+          <small>cabem ~${cabem}/dia</small></span>
+      </div>`; }).join('')}
+  </div>`;
+}
+function rtClientesHtml(per){
+  const linhas = rtPorCliente(per);
+  if(!linhas.length) return '';
+  const total = linhas.reduce((n, l) => n + l.ms, 0) || 1;
+  return `<div class="rtBloco"><h4>Por cliente</h4>
+    <p class="dica">Onde as horas da equipe foram parar. É o custo real de cada contrato.</p>
+    ${linhas.map(l => {
+      const c = CLIS().find(x => x.id === l.cli);
+      return `<div class="rtLinha">
+        <span class="nome"><b style="color:var(--ink-50);font-weight:600">${esc(c ? c.nome : 'cliente')}</b>
+          <span class="rtBarra"><i style="width:${Math.round(l.ms / total * 100)}%"></i></span></span>
+        <span class="val">${esc(rtHoras(l.ms))}<small> · ${Math.round(l.ms / total * 100)}%</small></span>
+      </div>`; }).join('')}
+  </div>`;
+}
+/* a pergunta do fundador: quantos posts, e para quem */
+function rtCabeHtml(per){
+  const pessoas = rtPorPessoa(per).filter(l => l.m);
+  const geral = rtPorTipo(per);
+  if(!pessoas.length || !geral.length) return '';
+  const jornadaMs = S.rtJornada * 3600000;
+  const tipos = geral.slice(0, 4);
+  return `<div class="rtBloco"><h4>Quantos cabem, e para quem</h4>
+    <p class="dica">Pelo tempo que cada pessoa levou nesse tipo de peça —
+      e, onde ela ainda não fez nenhuma, pela média da casa. Em ${S.rtJornada}h de trabalho.</p>
+    ${pessoas.map(l => {
+      const cabe = tipos.map(t => {
+        const dela = l.tipos.get(t.tipo);
+        const base = dela && dela.n ? dela.ms / dela.n : t.media;
+        const n = base > 0 ? Math.floor(jornadaMs / base) : 0;
+        return `${n} ${esc(t.tipo)}${dela && dela.n ? '' : '*'}`;
+      }).join(' · ');
+      return `<div class="rtLinha">
+        <span class="nome"><b style="color:var(--ink-50);font-weight:600">${esc(l.m.nome)}</b>
+          <small>${esc(cabe)}</small></span>
+      </div>`; }).join('')}
+    <p class="rtEstim" style="margin-top:9px">* pela média da casa — essa pessoa ainda não fez
+      uma peça desse tipo com o relógio ligado</p>
+  </div>`;
+}
+
+agResultados = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    if(!html || html.indexOf('rtSec') >= 0) return html;
+    const per = S.rtPer;
+    const secao = `<div class="rtSec">
+      <div class="rtCab"><h3>Tempo e ritmo</h3>
+        <p>de onde sai o que a equipe consegue entregar</p>${rtPeriodoHtml()}</div>
+      ${rtNumsHtml(per)}
+      <div class="rtGrade">
+        ${rtPessoasHtml(per)}
+        ${rtTiposHtml(per)}
+        ${rtCabeHtml(per)}
+        ${rtClientesHtml(per)}
+      </div></div>`;
+    return html.replace(/(<button class="b gho sm" data-enranking="1"[\s\S]*?<\/button><\/div>)(\s*<\/div>)/,
+      '$1$2' + secao);
+  };
+})(agResultados);
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-rtper],[data-rtjornada]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  if(t.dataset.rtper) S.rtPer = t.dataset.rtper;
+  else S.rtJornada = +t.dataset.rtjornada;
+  if(typeof som === 'function') som('toque');
+  render();
+}, true);
 </script>
