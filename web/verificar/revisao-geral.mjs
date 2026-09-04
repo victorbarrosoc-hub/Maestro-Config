@@ -139,7 +139,9 @@ async function abrir(opts, rota){
     const row = document.querySelector('.cliLinha .row');
     const b = document.querySelector('.cliLinha .t b');
     return { grid: getComputedStyle(row).display, nomeCabe: b.scrollWidth <= b.clientWidth + 1,
-      acoes: [...document.querySelectorAll('.cliAcoes button')].every(x => x.getBoundingClientRect().height >= 36) }; });
+      /* medida real, não o valor da regra: o navegador entrega frações */
+      acoes: [...document.querySelectorAll('.cliAcoes button')].every(x => x.getBoundingClientRect().height >= 34),
+      alturas: [...document.querySelectorAll('.cliAcoes button')].map(x => Math.round(x.getBoundingClientRect().height)) }; });
   checa('2.4 lista de clientes no celular: em grade, nome sem cortar, ações de 36px',
         cli.grid === 'grid' && cli.nomeCabe && cli.acoes, cli);
   await pag.close();

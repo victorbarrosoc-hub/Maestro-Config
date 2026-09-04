@@ -14195,24 +14195,21 @@ document.addEventListener('click', e => {
   S.modal = null; somAgendar(); render();
   toast(`"${p.t}" na fila — publica ${p.data?rotuloData(p.data):''} às ${p.hora}.`);
 }, true);
-/* a fila trabalha: o que estava agendado e cuja hora passou vira POSTADO */
-function filaPublica(){
-  const agora = new Date();
-  const hoje = hojeISO();
-  const hhmm = `${D2(agora.getHours())}:${D2(agora.getMinutes())}`;
-  let publicou = 0;
-  for(const c of CLIS()){
-    for(const p of (S.pautas[c.id]||[])){
-      if(faseDe(p)!=='agendado' || !p.data) continue;
-      if(p.data < hoje || (p.data===hoje && (p.hora||'00:00') <= hhmm)){
-        porFase(p,'postado'); publicou++;
-      }
-    }
-  }
-  if(publicou){ render(); toast(`${publicou} ${publicou===1?'peça publicada':'peças publicadas'} pela fila.`); }
-}
-setTimeout(filaPublica, 4200);
-setInterval(filaPublica, 60000);
+/* A FILA NÃO PUBLICA MAIS SOZINHA (v143).
+
+   Aqui morava uma simulação: a cada minuto, tudo que estava agendado
+   com a hora vencida virava POSTADO — e postado marca o card como
+   feito. Fazia sentido enquanto isto era demonstração. Em uso de
+   verdade virou mentira: a Maestro ainda não publica em lugar nenhum,
+   e o card aparecia riscado no Cronograma como se tivesse ido ao ar.
+   O fundador viu e disse: "só finaliza quando é postado".
+
+   A função continua de pé, e vazia, para o dia em que existir uma
+   integração que avise de verdade. Quem confirma hoje é gente — o
+   botão "Publiquei", no card (v143), que também registra quem e
+   quando. E os relógios saíram: era o `setTimeout` que segurava a
+   versão antiga da função mesmo depois de trocada. */
+function filaPublica(){ /* nada vai ao ar sem alguém dizer que foi */ }
 </script>
 <style>
 /* =====================================================================
@@ -15812,7 +15809,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v142 · 4 set · texto por plataforma, modo claro, card único';
+const VERSAO_PROTOTIPO = 'v143 · 4 set · recado no lugar, agendado não é postado';
 
 menuSheet = (function(orig){
   return function(){
@@ -30854,3 +30851,162 @@ hxBloco = (function(orig){
   color:var(--ink-300); background:var(--ink-900); border:1px solid var(--ink-800);
   border-radius:9px; padding:6px 10px; margin-top:2px }
 </style>
+<style>
+/* =====================================================================
+   v143 — dois defeitos que o fundador viu em uso.
+   ================================================================== */
+/* o recado do card, agora dentro do card (e não espremido no botão) */
+.ptRow .ptObsLinha{ display:flex; gap:6px; align-items:flex-start; margin-top:7px;
+  font-size:11.5px; color:#B8A98C; font-style:italic; width:100%; text-align:left }
+.ptRow .ptObsLinha svg{ flex:0 0 auto; margin-top:2px }
+
+/* agendado que passou da hora: espera confirmação, não vira "feito" sozinho */
+.ptVenceu{ display:inline-flex; align-items:center; gap:7px; font-size:11.5px;
+  color:var(--brass-200); background:rgba(200,150,58,.14);
+  border:1px solid rgba(200,150,58,.4); border-radius:9px; padding:4px 9px; margin-top:7px }
+.ptVenceu b{ font-weight:600; color:var(--brass-100) }
+.ptItem .ptConfirma{ flex:0 0 auto; align-self:stretch; display:inline-flex; align-items:center;
+  gap:7px; padding:0 12px; border-radius:12px; border:1px solid rgba(200,150,58,.45);
+  background:rgba(200,150,58,.1); color:var(--brass-200); font-size:12px; font-weight:600;
+  white-space:nowrap }
+.ptItem .ptConfirma:hover{ border-color:var(--brass-500); color:var(--brass-100) }
+@media (max-width:520px){
+  /* depois da faixa de ícones, com a linha inteira só para ele */
+  .ptItem > .ptConfirma{ order:4; flex:1 1 100%; height:38px; justify-content:center; margin-top:2px }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v143 — dois defeitos que só o uso mostra.
+
+   1. O RECADO ESPREMIDO. A linha de observação do card entrava entre os
+      botões da faixa de ações — e num deles. Resultado no celular: uma
+      palavra por linha, dentro de um botão de 81px. Ela é do CARD, não
+      da faixa: passa a viver dentro do corpo do card, onde tem a
+      largura toda.
+
+   2. AGENDADO NÃO É POSTADO. Existia uma fila que, a cada minuto,
+      pegava tudo que estava agendado com a hora vencida e marcava como
+      POSTADO — e postado marca o card como feito. Só que a Maestro não
+      publica nada ainda: ninguém foi ao ar. O card aparecia riscado no
+      Cronograma, como se tivesse saído.
+
+      A fila para de publicar sozinha. O que passou da hora ganha um
+      aviso — "era para ter ido ao ar" — e um botão de confirmar, que é
+      quem faz virar postado. Quem confirma fica registrado.
+   ================================================================== */
+
+/* ---------- 1. o recado volta para dentro do card ------------------- */
+ptItemHtml = (function(orig){
+  return function(p, i){
+    let html = orig.apply(this, arguments);
+    if(!html || html.indexOf('ptObsLinha') < 0) return html;
+    const m = html.match(/<span class="ptObsLinha">[\s\S]*?<\/span>\s*<\/span>|<span class="ptObsLinha">[\s\S]*?<\/span>/);
+    if(!m) return html;
+    /* tira de onde caiu e põe no fim do corpo do card */
+    html = html.replace(m[0], '');
+    return html.replace(/(<button class="ptRow"[\s\S]*?)(<\/button>)/, '$1' + m[0] + '$2');
+  };
+})(ptItemHtml);
+
+/* ---------- 2. só gente diz que foi ao ar --------------------------- */
+/* a fila foi esvaziada na origem; esta é a tranca da porta: 'postado' só
+   se alguém confirmar. Qualquer caminho automático que apareça amanhã
+   esbarra aqui em vez de riscar o card do Cronograma. */
+porFase = (function(orig){
+  return function(p, k){
+    if(k === 'postado' && !S._confirmaPostagem){
+      if(typeof faseDe === 'function' && faseDe(p) === 'agendado') return;   /* segue agendado */
+    }
+    return orig.apply(this, arguments);
+  };
+})(porFase);
+
+const ptPassouDaHora = p => {
+  if(!p || p.tarefa || typeof faseDe !== 'function' || faseDe(p) !== 'agendado' || !p.data) return false;
+  const agora = new Date();
+  const hoje = hojeISO();
+  const hhmm = `${D2(agora.getHours())}:${D2(agora.getMinutes())}`;
+  return p.data < hoje || (p.data === hoje && (p.hora || '00:00') <= hhmm);
+};
+
+/* no card: o aviso e o botão de confirmar */
+ptItemHtml = (function(orig){
+  return function(p, i){
+    let html = orig.apply(this, arguments);
+    if(!html || !ptPassouDaHora(p) || html.indexOf('ptVenceu') >= 0) return html;
+    const aviso = `<span class="ptVenceu">${ic('clock', 11)}
+      <span><b>era para ter ido ao ar</b> — confirme quando publicar</span></span>`;
+    html = html.replace(/(<button class="ptRow"[\s\S]*?)(<\/button>)/, '$1' + aviso + '$2');
+    const bt = `<button class="ptConfirma" data-ptpostou="${p.id}"
+      title="Confirmar que foi publicado">${ic('checkc', 13)} Publiquei</button>`;
+    return html.replace(/(<button class="ptFeito")/, bt + '$1');
+  };
+})(ptItemHtml);
+
+/* o ✓ de sempre, num card agendado, é a mesma confirmação: registra
+   quem e quando, em vez de só riscar o card */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-ptfeito]');
+  if(!t) return;
+  const p = S.pauta.find(x => x.id === +t.dataset.ptfeito);
+  if(!p || p.feito || typeof faseDe !== 'function' || faseDe(p) !== 'agendado') return;
+  setTimeout(() => {
+    if(!p.feito) return;
+    /* feito e agendado ao mesmo tempo era o que confundia: se está feito,
+       é porque foi ao ar */
+    if(typeof porFase === 'function' && faseDe(p) === 'agendado'){
+      S._confirmaPostagem = true;
+      try { porFase(p, 'postado'); } finally { S._confirmaPostagem = false; }
+    }
+    p.postadoEm = p.postadoEm || Date.now();
+    p.postadoPor = p.postadoPor || ((S.usuario && S.usuario.tipo === 'agencia' && typeof membro === 'function'
+      && membro(S.usuario.id) || {}).nome || 'a agência');
+    if(typeof sbAgendar === 'function') sbAgendar();
+  }, 4);
+}, true);
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-ptpostou]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const p = S.pauta.find(x => x.id === +t.dataset.ptpostou);
+  if(!p) return;
+  S._confirmaPostagem = true;
+  try { if(typeof porFase === 'function') porFase(p, 'postado'); else { p.feito = true; p.st = 'SCHEDULED'; } }
+  finally { S._confirmaPostagem = false; }
+  p.postadoEm = Date.now();
+  p.postadoPor = (S.usuario && S.usuario.tipo === 'agencia' && typeof membro === 'function'
+    && membro(S.usuario.id) || {}).nome || 'a agência';
+  if(typeof somAgendar === 'function') somAgendar(); else if(typeof som === 'function') som('toque');
+  if(typeof sbAgendar === 'function') sbAgendar();
+  render();
+  toast(`"${p.t}" confirmada no ar.`);
+}, true);
+
+/* o card aberto conta a mesma coisa, para quem chega por ele */
+modalVer = (function(orig){
+  return function(id){
+    let html = orig.apply(this, arguments);
+    const p = S.pauta.find(x => x.id === id);
+    if(!html || !p || html.indexOf('ptVenceu') >= 0) return html;
+    if(p.postadoEm){
+      const quando = new Date(p.postadoEm);
+      const linha = `<div class="ptVenceu" style="background:rgba(53,184,122,.12);
+        border-color:rgba(53,184,122,.4); color:var(--encore)">${ic('checkc', 11)}
+        <span>no ar · confirmado por <b>${esc(p.postadoPor || 'alguém')}</b> em
+        ${D2(quando.getDate())}/${D2(quando.getMonth() + 1)} às ${D2(quando.getHours())}:${D2(quando.getMinutes())}</span></div>`;
+      return html.replace('<div class="vzTopo">', linha + '<div class="vzTopo">');
+    }
+    if(!ptPassouDaHora(p)) return html;
+    const linha = `<div class="ptVenceu">${ic('clock', 11)}
+      <span><b>era para ter ido ao ar</b> — a Maestro não publica sozinha.
+      Confirme quando estiver no ar.</span></div>
+      <div style="margin:8px 0 2px"><button class="b gho sm" data-ptpostou="${p.id}"
+        style="color:var(--brass-300);border-color:rgba(200,150,58,.45)">${ic('checkc', 13)}
+        Publiquei — marcar como no ar</button></div>`;
+    return html.replace('<div class="vzTopo">', linha + '<div class="vzTopo">');
+  };
+})(modalVer);
+</script>
