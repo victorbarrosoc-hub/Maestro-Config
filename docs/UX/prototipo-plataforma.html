@@ -6409,8 +6409,8 @@ function modalPauta(id){
       <button class="b gho" data-modalno="1">Cancelar</button>
       ${p?`<button class="b gho" data-ptdel="${p.id}"
         style="color:var(--danger);border-color:rgba(229,72,77,.4)">Apagar</button>`:''}
-      <button class="b gho" data-ptok="${p?p.id:0}">Salvar rascunho</button>
-      <button class="b pri" data-ptok="${p?p.id:0}" data-agendar="1">${ic('zap',13)} Salvar e agendar</button>
+      <button class="b gho" data-ptok="${p?p.id:0}">Salvar</button>
+      <button class="b pri" data-ptok="${p?p.id:0}" data-agendar="1">${ic('zap',13)} Próxima etapa</button>
     </div></div></div>`;
 }
 
@@ -15812,7 +15812,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v140 · 4 set · lixeira do Ensaio, revisão geral';
+const VERSAO_PROTOTIPO = 'v141 · 4 set · Salvar e Próxima etapa na pauta';
 
 menuSheet = (function(orig){
   return function(){
@@ -29963,12 +29963,16 @@ renderLayer = (function(orig){
    de clientes e a régua da pauta no celular, atalhos no Hoje.
    ================================================================== */
 /* --- alvos de toque: nada abaixo de 34px quando o dedo é o ponteiro --- */
-@media (pointer:coarse){
+@media (pointer:coarse), (max-width:860px){
   .enCard .acoes{ gap:7px }
   .enCard .acoes button, body.emEnsaio .enCard .acoes button{ width:34px; height:34px }
   .enCard .acoes .cyBtn, body.emEnsaio .enCard .acoes .cyBtn{ width:auto; height:34px; padding:0 12px }
-  .cliAcoes button{ width:36px !important; height:36px !important }
   .rfX{ width:34px; height:34px }
+}
+/* a largura decide junto com o ponteiro: numa janela estreita o alvo é
+   pequeno do mesmo jeito, e nem todo aparelho de toque se anuncia */
+@media (pointer:coarse), (max-width:520px){
+  .cliAcoes button{ width:36px !important; height:36px !important }
 }
 /* --- caixas de número: cada uma com a própria altura ------------------ */
 .tiles{ align-items:start }
