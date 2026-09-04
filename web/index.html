@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-04 16:13 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-04 16:32 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15907,7 +15907,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v148 · 4 set · filtro por rede na pauta';
+const VERSAO_PROTOTIPO = 'v149 · 4 set · a casa se atualiza sozinha';
 
 menuSheet = (function(orig){
   return function(){
@@ -31828,5 +31828,53 @@ addEventListener('click', e => {
   addEventListener('keydown', e => {
     if(e.key === 'Escape' && S.ptFiltroAberto){ S.ptFiltroAberto = false; render(); }
   });
+})();
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v149 — A CASA SE ATUALIZA SOZINHA.
+
+   O relato veio com print: endereço em /ensaio, tela do Estúdio. Não é
+   o roteamento — é que o navegador ainda servia o arquivo VELHO, de
+   antes de existir roteamento. O caminho novo já chegava ao servidor
+   (a reescrita é de lá), mas o HTML vinha do cache do Safari.
+
+   O botão redondo já resolvia isso, mas exige alguém lembrar de tocar
+   nele. Agora a checagem acontece sozinha, uma vez por sessão, alguns
+   segundos depois de abrir: pergunta ao servidor qual versão está
+   publicada e, se for outra, recarrega nela — na mesma tela, com o
+   cache de arquivos limpo.
+
+   Três travas, porque recarregar sozinho é coisa séria:
+   · uma vez por aba (sessionStorage), então não existe laço;
+   · só quando a resposta do servidor é boa e a versão realmente difere;
+   · nunca durante um formulário aberto, um arrasto ou uma gravação
+     pendente — a espera custa nada, perder o que a pessoa digitou custa
+     tudo.
+   ================================================================== */
+(function(){
+  const MARCA = 'maestro-versao-checada';
+  const ocupada = () => !!(S.modal || S.full || S.pal
+    || document.querySelector('#layer .modalbox, .estArrastando, .arrastando')
+    || (document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)));
+
+  async function checar(){
+    if(typeof versaoLaFora !== 'function' || typeof VERSAO_PROTOTIPO !== 'string') return;
+    try { if(sessionStorage.getItem(MARCA)) return; } catch(e){}
+    if(/[?&](ver|aprovar)=/.test(location.search)) return;      /* leitura por link */
+    const la = await versaoLaFora();
+    if(!la || la === VERSAO_PROTOTIPO) return;
+    try { sessionStorage.setItem(MARCA, '1'); } catch(e){}
+    if(typeof limparCacheDoSite === 'function') await limparCacheDoSite();
+    const recarrega = () => {
+      if(ocupada()) return setTimeout(recarrega, 4000);          /* espera a pessoa terminar */
+      if(typeof toast === 'function') toast('Versão nova — atualizando.');
+      setTimeout(() => { if(typeof recarregarLimpo === 'function') recarregarLimpo();
+        else location.reload(); }, 600);
+    };
+    recarrega();
+  }
+  setTimeout(checar, 5200);
 })();
 </script>
