@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-04 16:32 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-04 18:10 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15907,7 +15907,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v149 · 4 set · a casa se atualiza sozinha';
+const VERSAO_PROTOTIPO = 'v150 · 4 set · o salvar acredita na tela';
 
 menuSheet = (function(orig){
   return function(){
@@ -31876,5 +31876,63 @@ addEventListener('click', e => {
     recarrega();
   }
   setTimeout(checar, 5200);
+})();
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v150 — "ESCOLHA AO MENOS UMA PLATAFORMA" COM AS PLATAFORMAS ESCOLHIDAS.
+
+   O relato veio em vídeo: Instagram, TikTok e YouTube acesos na tela, e
+   o aviso dizendo que não havia nenhuma. O salvar não lia a tela — lia
+   `S.ptPlats`, e as duas coisas podem discordar. O editor é remontado a
+   cada tecla (para não perder o que foi digitado) e, em certos
+   caminhos, a remontagem semeia o estado do REGISTRO por cima do que a
+   pessoa acabou de marcar; noutros, a caixa fica na tela com os chips
+   de um card e o estado já é de outro. Em qualquer um dos casos quem
+   perde é quem está trabalhando — o post não salva e não há o que
+   fazer, a não ser fechar e recomeçar.
+
+   A correção não persegue cada caminho: inverte a regra. O que está
+   ACESO NA TELA passa a ser a verdade na hora de salvar — é o que a
+   pessoa vê e escolheu. O estado só decide quando não há chip nenhum
+   desenhado (a tela do formato "Livre", por exemplo, nem mostra
+   plataforma). Vale para as plataformas e para os formatos.
+   ================================================================== */
+(function(){
+  const chipsLigados = attr => [...document.querySelectorAll(`#layer [data-${attr}].on`)]
+    .map(b => b.dataset[attr]).filter(Boolean);
+  const temChips = attr => document.querySelector(`#layer [data-${attr}]`);
+
+  function alinharComATela(){
+    if(!document.querySelector('#layer .modalbox [data-ptok]')) return;
+
+    /* plataformas */
+    if(temChips('plat98')){
+      const naTela = chipsLigados('plat98');
+      if(naTela.length) S.ptPlats = new Set(naTela);
+      else if(!(S.ptPlats instanceof Set)) S.ptPlats = new Set();
+    } else if(!(S.ptPlats instanceof Set)){
+      S.ptPlats = new Set();                     /* veio do banco como objeto */
+    }
+
+    /* formatos, pelo mesmo motivo */
+    if(temChips('fmt98')){
+      const naTela = chipsLigados('fmt98');
+      if(naTela.length){
+        S.ptFmts = new Set(naTela);
+        if(!naTela.includes(S.ptFmt)) S.ptFmt = naTela[0];
+      }
+    }
+    if(!(S.ptFmts instanceof Set)) S.ptFmts = new Set(S.ptFmt ? [S.ptFmt] : []);
+  }
+
+  /* roda antes do salvar da casa (ele escuta no borbulho; este, na
+     captura da janela, chega primeiro) */
+  addEventListener('click', e => {
+    if(!e.target.closest) return;
+    if(!e.target.closest('[data-ptok],[data-livreok]')) return;
+    try { alinharComATela(); } catch(err){}
+  }, true);
 })();
 </script>
