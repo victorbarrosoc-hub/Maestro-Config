@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-04 15:40 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-04 16:13 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15907,7 +15907,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v147 · 4 set · a abertura só na primeira visita';
+const VERSAO_PROTOTIPO = 'v148 · 4 set · filtro por rede na pauta';
 
 menuSheet = (function(orig){
   return function(){
@@ -31650,4 +31650,183 @@ addEventListener('click', e => {
   if(!t) return;
   setTimeout(atualizarDeVerdade, 400);
 }, true);
+</script>
+<style>
+/* v148 — UM filtro só, com as duas perguntas dentro.
+   A abinha de tipo continua no código (os toques dela é que fazem o
+   filtro funcionar), mas some da barra: no lugar das duas entra uma. */
+.ptTipo{ display:none !important }
+.ptFiltro{ position:relative; margin-left:9px }
+.ptFiltro>button{ display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
+  padding:5px 9px; border-radius:8px; border:1px solid var(--ink-700);
+  color:var(--ink-300); background:var(--ink-900); white-space:nowrap;
+  transition:border-color var(--fast) var(--eo), color var(--fast) var(--eo) }
+.ptFiltro>button:hover{ border-color:var(--ink-600); color:var(--ink-100) }
+.ptFiltro>button.on{ color:var(--brass-300); border-color:var(--brass-600);
+  background:rgba(255,200,87,.09) }
+.ptFiltro>button svg{ width:12px; height:12px }
+.ptFiltro>button b{ color:var(--brass-300); font-weight:700 }
+.ptFiltroPainel{ position:absolute; top:calc(100% + 7px); right:0; z-index:60;
+  width:236px; max-width:80vw; max-height:min(70vh, 460px); overflow-y:auto;
+  padding:7px; border-radius:13px; background:var(--ink-850);
+  border:1px solid var(--ink-700); box-shadow:0 18px 44px rgba(0,0,0,.55);
+  animation:ptTipoAbre .18s var(--eo) both }
+.ptFiltroPainel .hd{ font-family:var(--mono); font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-400); padding:6px 8px 7px }
+.ptFiltroPainel button{ display:flex; align-items:center; gap:9px; width:100%;
+  text-align:left; padding:8px 9px; border-radius:9px; font-size:13.5px;
+  color:var(--ink-200); transition:background var(--fast) var(--eo) }
+.ptFiltroPainel button:hover{ background:var(--ink-800); color:var(--ink-50) }
+.ptFiltroPainel button .cx{ width:15px; height:15px; border-radius:5px; flex:0 0 auto;
+  border:1.5px solid var(--ink-600); display:inline-flex; align-items:center;
+  justify-content:center; color:var(--ink-950) }
+.ptFiltroPainel button.on .cx{ background:var(--brass-500); border-color:var(--brass-500) }
+.ptFiltroPainel button .cx svg{ width:10px; height:10px; stroke-width:3 }
+.ptFiltroPainel button .qt{ margin-left:auto; font-family:var(--mono); font-size:10px;
+  color:var(--ink-400) }
+.ptFiltroPainel .pl{ width:9px; height:9px; border-radius:50%; flex:0 0 auto; font-style:normal }
+.ptFiltroPainel .risca{ height:1px; background:var(--ink-700); margin:8px 4px }
+.ptFiltroPainel .nada{ padding:10px 9px 12px; font-size:12.5px; color:var(--ink-400);
+  line-height:1.5 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v148 — FILTRAR A PAUTA POR REDE, E UM FILTRO SÓ
+
+   A pauta já separava por TIPO (Reels, Carrossel, Artigo). Faltava a
+   outra pergunta que se faz o tempo todo: "o que vai no Instagram esta
+   semana?".
+
+   Duas abinhas lado a lado não cabiam: no desktop, com o cliente de 70
+   postagens, a barra de controles quebrava em duas linhas. Então as
+   duas viram UMA — "Filtros" —, com as duas perguntas dentro, uma
+   embaixo da outra. Menos ruído na barra, e um lugar só para procurar.
+
+   O filtro de tipo continua sendo o mesmo código de antes: este painel
+   usa os mesmos toques (`data-pttipo`), então nada do que já funcionava
+   precisou ser reescrito. O de rede é novo e segue as mesmas regras:
+   a lista vem dos dados com a contagem de cada uma, dá para marcar mais
+   de uma, e o filtro não viaja entre aparelhos — é jeito de olhar, não
+   é dado.
+
+   Uma diferença entre os dois: um post pode estar em várias redes.
+   Marcar "Instagram" mostra tudo que passa por lá, mesmo o que também
+   vai para o LinkedIn.
+   ================================================================== */
+(function(){
+  if(typeof corpoPauta !== 'function') return;
+
+  try{ PASSAGEIRO.add('ptRedes'); PASSAGEIRO.add('ptFiltroAberto'); }catch(e){}
+  if(!Array.isArray(S.ptRedes)) S.ptRedes = [];
+  if(!Array.isArray(S.ptTipos)) S.ptTipos = [];
+  S.ptFiltroAberto = false;
+
+  const SEM = '__sem';
+  const SEM_TIPO = '— sem tipo —';
+  const redesDe = p => { const r = (p && p.plats) || []; return r.length ? r : [SEM]; };
+  const tipoDe = p => (p && p.fmt ? String(p.fmt).trim() : '') || SEM_TIPO;
+  const nomeRede = k => k === SEM ? '— sem rede —' : ((PLATS[k] || {}).n || k);
+  const corRede = k => k === SEM ? 'var(--ink-600)' : ((PLATS[k] || {}).c || '#888');
+  const check = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'
+              + '<path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+
+  function painel(lista){
+    const contaR = new Map(), contaT = new Map();
+    for(const p of lista){
+      for(const k of redesDe(p)) contaR.set(k, (contaR.get(k) || 0) + 1);
+      const t = tipoDe(p); contaT.set(t, (contaT.get(t) || 0) + 1);
+    }
+    const redes = [...Object.keys(PLATS).filter(k => contaR.has(k)),
+                   ...(contaR.has(SEM) ? [SEM] : [])];
+    const tipos = [...contaT.keys()].sort((a, b) =>
+      a === SEM_TIPO ? 1 : b === SEM_TIPO ? -1 : a.localeCompare(b, 'pt'));
+    const selR = new Set(S.ptRedes), selT = new Set(S.ptTipos);
+    if(!lista.length)
+      return `<div class="ptFiltroPainel"><p class="nada">Não há postagem nenhuma
+        para separar ainda.</p></div>`;
+    return `<div class="ptFiltroPainel" role="group" aria-label="Filtrar a pauta">
+      <div class="hd">Onde vai ao ar</div>
+      <button data-ptredetodos="1" class="${selR.size ? '' : 'on'}">
+        <span class="cx">${selR.size ? '' : check}</span>Todas as redes
+        <span class="qt">${lista.length}</span></button>
+      ${redes.map(k => `<button data-ptrede="${esc(k)}" class="${selR.has(k) ? 'on' : ''}">
+        <span class="cx">${selR.has(k) ? check : ''}</span>
+        <i class="pl" style="background:${corRede(k)}"></i>${esc(nomeRede(k))}
+        <span class="qt">${contaR.get(k)}</span></button>`).join('')}
+      <div class="risca"></div>
+      <div class="hd">Tipo de postagem</div>
+      <button data-pttipotodos="1" class="${selT.size ? '' : 'on'}">
+        <span class="cx">${selT.size ? '' : check}</span>Todos os tipos
+        <span class="qt">${lista.length}</span></button>
+      ${tipos.map(t => `<button data-pttipo="${esc(t)}" class="${selT.has(t) ? 'on' : ''}">
+        <span class="cx">${selT.has(t) ? check : ''}</span>${esc(t)}
+        <span class="qt">${contaT.get(t)}</span></button>`).join('')}
+    </div>`;
+  }
+
+  function abinha(lista){
+    const presentes = new Set();
+    lista.forEach(p => redesDe(p).forEach(k => presentes.add(k)));
+    const selR = S.ptRedes.filter(k => presentes.has(k));
+    const selT = S.ptTipos.filter(t => lista.some(p => tipoDe(p) === t));
+    const n = selR.length + selT.length;
+    const rotulo = !n ? 'Filtros'
+      : n === 1 ? esc(selR.length ? nomeRede(selR[0]) : selT[0])
+      : `Filtros <b>${n}</b>`;
+    return `<div class="ptFiltro">
+      <button type="button" data-ptfiltroabre="1" class="${n ? 'on' : ''}"
+        aria-expanded="${S.ptFiltroAberto ? 'true' : 'false'}"
+        aria-label="Filtrar a pauta por rede e por tipo">${ic('funil')}${rotulo}</button>
+      ${S.ptFiltroAberto ? painel(lista) : ''}</div>`;
+  }
+
+  corpoPauta = (function(orig){
+    return function(){
+      const inteira = S.pauta || [];
+      const presentes = new Set();
+      inteira.forEach(p => redesDe(p).forEach(k => presentes.add(k)));
+      const sel = new Set(S.ptRedes.filter(k => presentes.has(k)));
+
+      let html;
+      if(!sel.size){ html = orig.apply(this, arguments); }
+      else {
+        const cli = cliAtual().id, guardado = S.pautas[cli];
+        S.pautas[cli] = inteira.filter(p => redesDe(p).some(k => sel.has(k)));
+        try{ html = orig.apply(this, arguments); }
+        finally{ S.pautas[cli] = guardado; }
+      }
+      if(!html) return html;
+      /* no lugar onde a abinha de tipo estava */
+      if(html.includes('<div class="ptTipo">'))
+        return html.replace('<div class="ptTipo">', abinha(inteira) + '<div class="ptTipo">');
+      if(html.includes('data-ptvista='))
+        return html.replace(/(<div style="display:flex;align-items:center">[\s\S]*?)(<\/div>\s*<div class="ptFiltros")/,
+          (_, antes, depois) => antes + abinha(inteira) + depois);
+      return html;
+    };
+  })(corpoPauta);
+
+  addEventListener('click', e => {
+    if(!e.target.closest) return;
+    const abre = e.target.closest('[data-ptfiltroabre]');
+    if(abre){ e.stopImmediatePropagation();
+      S.ptFiltroAberto = !S.ptFiltroAberto; render(); return; }
+    const todos = e.target.closest('[data-ptredetodos]');
+    if(todos){ e.stopImmediatePropagation();
+      S.ptRedes = []; if(typeof som === 'function') som('toque'); render(); return; }
+    const uma = e.target.closest('[data-ptrede]');
+    if(uma){ e.stopImmediatePropagation();
+      const k = uma.dataset.ptrede, i = S.ptRedes.indexOf(k);
+      if(i < 0) S.ptRedes.push(k); else S.ptRedes.splice(i, 1);
+      if(typeof som === 'function') som('toque');
+      render(); return; }
+    if(S.ptFiltroAberto && !e.target.closest('.ptFiltro')){ S.ptFiltroAberto = false; render(); }
+  }, true);
+
+  addEventListener('keydown', e => {
+    if(e.key === 'Escape' && S.ptFiltroAberto){ S.ptFiltroAberto = false; render(); }
+  });
+})();
 </script>
