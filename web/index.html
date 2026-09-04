@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-04 14:37 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-04 15:14 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15877,7 +15877,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v144 · 4 set · tempo e ritmo no Resultados';
+const VERSAO_PROTOTIPO = 'v146 · 4 set · endereço por tela e refresh de verdade';
 
 menuSheet = (function(orig){
   return function(){
@@ -31392,5 +31392,232 @@ addEventListener('click', e => {
   else S.rtJornada = +t.dataset.rtjornada;
   if(typeof som === 'function') som('toque');
   render();
+}, true);
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v145 — o botão que sobrou.
+
+   Na v142 o "Abrir o card completo" saiu do CARTÃO do quadro, mas
+   continuava dentro da JANELA do card — que é justamente onde o
+   conteúdo do card já passou a viver. Duas portas para a mesma sala.
+   Ele sai; a ficha do card fica.
+   ================================================================== */
+modalTarefa = (function(orig){
+  return function(id){
+    let html = orig.apply(this, arguments);
+    if(!html) return html;
+    return html.replace(/\s*<button class="b gho sm" data-hjabre="[^"]*"[^>]*>[\s\S]*?<\/button>/g, '');
+  };
+})(modalTarefa);
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   v146 — cada tela com o seu endereço, e um refresh que atualiza mesmo.
+
+   1. ENDEREÇO POR TELA. Até aqui a casa inteira morava em "/": recarregar
+      a página devolvia o começo — abertura, login, Hoje. Agora cada tela
+      tem o seu caminho (/ensaio, /clientes, /cliente/loja-norte…), o
+      endereço muda junto com a navegação, e recarregar volta EXATAMENTE
+      onde a pessoa estava. O voltar do navegador também funciona.
+
+      O `vercel.json` reescreve esses caminhos para a mesma página — o
+      protótipo é um arquivo só, quem decide a tela é o endereço.
+
+   2. REFRESH DE VERDADE. O botão redondo buscava o que mudou no banco,
+      mas não trocava a VERSÃO do site: com o arquivo em cache, o
+      fundador via a tela antiga e achava que nada tinha subido. Agora
+      ele também procura versão nova: limpa o cache de arquivos, e se
+      houver versão nova, recarrega nela. Os dados do aparelho (login,
+      tema, chave da IA, o que ainda não foi ao banco) NÃO são tocados.
+   ================================================================== */
+
+/* ---------- 1. o endereço de cada tela ------------------------------ */
+const URL_AG = {
+  dash:'hoje', clientes:'clientes', clientedet:'cliente', producao:'ensaio',
+  feed:'feed', resultados:'resultados', conversas:'conversas', mandala:'mandala',
+  estudio:'estudio', equipe:'equipe', planos:'planos', conta:'conta',
+  pauta:'pauta', agenda:'agenda', projeto:'projeto', conteudos:'conteudos',
+  lote:'lotes', aprovacoes:'aprovacoes', peca:'peca'
+};
+const URL_CL = {
+  inicio:'', lote:'publicacoes', feed:'feed', agenda:'agenda', projeto:'projeto',
+  resultados:'resultados', conta:'conta', capa:'capa', peca:'peca', termo:'termo',
+  lotetexto:'texto', pecatexto:'texto-peca', termotexto:'texto-termo',
+  clpauta:'pauta', clcard:'card'
+};
+const URL_BASE = '/painel';                    /* o lado do cliente mora aqui */
+const urlCliSlug = c => String((c && (c.slug || c.id)) || '').toLowerCase();
+
+function urlDoEstado(){
+  if(S.view === 'site') return S.route === 'entrar' ? '/entrar' : '/';
+  if(S.view === 'client'){
+    const r = URL_CL[S.route];
+    return URL_BASE + (r ? '/' + r : '');
+  }
+  const r = URL_AG[S.route];
+  if(!r) return '/hoje';
+  if(S.route === 'clientedet' && S.cli){
+    const aba = S.tab && S.tab !== 'pauta' ? '/' + S.tab : '';
+    return '/cliente/' + urlCliSlug(CLIS().find(c => c.id === S.cli) || { id:S.cli }) + aba;
+  }
+  return '/' + r;
+}
+/* o caminho vira estado. Devolve false quando o endereço não é de tela
+   nenhuma — aí quem manda é o começo de sempre. */
+function estadoDaUrl(caminho){
+  const p = String(caminho || '').replace(/\/+$/, '');
+  if(!p || p === '') return false;
+  const partes = p.split('/').filter(Boolean);
+  if(!partes.length) return false;
+  if(partes[0] === 'entrar'){ S.view = 'site'; S.route = 'entrar'; return true; }
+  if('/' + partes[0] === URL_BASE){
+    const alvo = partes[1] || '';
+    const rota = Object.keys(URL_CL).find(k => URL_CL[k] === alvo);
+    if(!rota && alvo) return false;
+    S.view = 'client'; S.route = rota || 'inicio';
+    return true;
+  }
+  if(partes[0] === 'cliente'){
+    const c = CLIS().find(x => urlCliSlug(x) === partes[1]);
+    if(!c) return false;
+    S.view = 'agency'; S.route = 'clientedet'; S.cli = c.id;
+    S.tab = partes[2] || 'pauta';
+    return true;
+  }
+  const rota = Object.keys(URL_AG).find(k => URL_AG[k] === partes[0]);
+  if(!rota) return false;
+  S.view = 'agency'; S.route = rota;
+  return true;
+}
+/* o endereço acompanha a navegação, sem encher o histórico de repetição.
+
+   A troca de tela pelo menu é uma ENTRADA nova (o voltar do navegador
+   tem de funcionar); redesenhar a mesma tela apenas corrige o endereço.
+   Quem avisa qual é o caso é o `go`, com uma bandeira que o desenho
+   seguinte consome — o `go` desenha por dentro, então esperar o fim
+   dele para empurrar chegaria tarde. */
+let _urlUltima = null, _urlPush = false;
+function urlAcompanhar(){
+  if(S.soVer || S.viaLink){ _urlPush = false; return; }   /* link de leitura tem o seu */
+  const alvo = urlDoEstado();
+  const empurra = _urlPush; _urlPush = false;
+  if(alvo === _urlUltima) return;
+  _urlUltima = alvo;
+  const busca = location.search || '';
+  try {
+    if(empurra) history.pushState({ maestro:1 }, '', alvo + busca);
+    else history.replaceState({ maestro:1 }, '', alvo + busca);
+  } catch(e){}
+}
+render = (function(orig){
+  return function(){
+    const r = orig.apply(this, arguments);
+    urlAcompanhar();
+    return r;
+  };
+})(render);
+go = (function(orig){
+  return function(){
+    _urlPush = true;
+    try { return orig.apply(this, arguments); }
+    finally { urlAcompanhar(); }
+  };
+})(go);
+addEventListener('popstate', () => {
+  if(!estadoDaUrl(location.pathname)) return;
+  _urlUltima = urlDoEstado();
+  S.modal = null; S.pal = false;
+  render();
+});
+/* na abertura: o endereço decide a tela, quando ele diz alguma coisa */
+(function(){
+  if(/[?&](ver|aprovar)=/.test(location.search)) return;   /* leitura por link */
+  if(!estadoDaUrl(location.pathname)) return;
+  S.seen = { ...(S.seen || {}), [S.view]: true };           /* sem esqueleto ao voltar */
+  _urlUltima = urlDoEstado();
+  const pintar = () => { try { render(); } catch(e){} };
+  pintar();
+  setTimeout(pintar, 60);
+  setTimeout(pintar, 2800);        /* depois do banco chegar, a tela é a mesma */
+})();
+
+/* ---------- 2. o refresh que atualiza mesmo ------------------------- */
+async function limparCacheDoSite(){
+  /* o que sai: o cache de ARQUIVOS do site. O que fica: tudo o que é
+     seu — login, tema, chave da IA, o que ainda não subiu ao banco. */
+  try {
+    if(window.caches && caches.keys){
+      const nomes = await caches.keys();
+      await Promise.all(nomes.map(n => caches.delete(n)));
+    }
+  } catch(e){}
+  try {
+    if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+  } catch(e){}
+}
+function versaoDoTexto(txt){
+  const m = String(txt || '').match(/VERSAO_PROTOTIPO\s*=\s*'([^']+)'/);
+  return m ? m[1] : null;
+}
+async function versaoLaFora(){
+  try {
+    const r = await fetch(location.pathname + (location.search ? location.search + '&' : '?')
+      + '_v=' + Date.now(), { cache:'reload' });
+    if(!r.ok) return null;
+    return versaoDoTexto(await r.text());
+  } catch(e){ return null; }
+}
+function recarregarLimpo(){
+  const u = new URL(location.href);
+  u.searchParams.set('_v', String(Date.now()));
+  location.replace(u.toString());
+}
+/* o `_v` cumpriu o papel de furar o cache; sai da barra de endereço */
+(function(){
+  try {
+    if(!/[?&]_v=/.test(location.search)) return;
+    const u = new URL(location.href);
+    u.searchParams.delete('_v');
+    history.replaceState(history.state, '', u.pathname + (u.search || '') + u.hash);
+  } catch(e){}
+})();
+
+async function atualizarDeVerdade(){
+  const daqui = typeof VERSAO_PROTOTIPO === 'string' ? VERSAO_PROTOTIPO : '';
+  const b = document.getElementById('btAtualizar');
+  if(b) b.classList.add('girando');
+  await limparCacheDoSite();
+  const la = await versaoLaFora();
+  if(b) b.classList.remove('girando');
+  if(la && daqui && la !== daqui){
+    toast(`Versão nova (${esc(la.split(' · ')[0])}) — recarregando.`);
+    setTimeout(recarregarLimpo, 700);
+    return true;
+  }
+  return false;
+}
+/* o botão redondo: primeiro o banco (como já fazia), depois a versão */
+if(typeof atualizarAgora === 'function') atualizarAgora = (function(orig){
+  return function(){
+    const p = orig.apply(this, arguments);
+    return Promise.resolve(p).then(async r => {
+      const trocou = await atualizarDeVerdade();
+      if(!trocou && typeof VERSAO_PROTOTIPO === 'string')
+        toast(`Tudo em dia — ${esc(VERSAO_PROTOTIPO.split(' · ')[0])}, a versão mais nova.`);
+      return r;
+    });
+  };
+})(atualizarAgora);
+/* e o ⟳ da pauta faz o mesmo caminho */
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-ptrefresh]');
+  if(!t) return;
+  setTimeout(atualizarDeVerdade, 400);
 }, true);
 </script>

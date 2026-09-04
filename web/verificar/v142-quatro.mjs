@@ -178,6 +178,10 @@ async function abrir(vp, rota, prep){
         abriu.hist && abriu.resp, abriu);
   checa('3.4b continua no quadro — não pula para a ficha do cliente',
         await pag.evaluate(() => S.route) === 'producao');
+  /* v145: nem no cartão nem na janela sobra um segundo caminho */
+  checa('3.4c não há mais "abrir o card completo" em lugar nenhum',
+        await pag.locator('[data-hjabre]').count() === 0
+        && !/Abrir o card completo/.test(await pag.locator('#layer').innerHTML()));
   /* tarefa da casa segue com a visão curta */
   await pag.evaluate(() => {
     S.modal = null; renderLayer();
