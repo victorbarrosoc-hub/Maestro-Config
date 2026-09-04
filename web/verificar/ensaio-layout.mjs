@@ -76,9 +76,10 @@ for(const [rotulo, largura, altura] of [['celular', 390, 844], ['desktop', 1440,
   console.log(`\n  — ${rotulo} (${largura}px) — página com ${m.pagina}px`);
 
   /* os filtros: três fileiras, cada uma numa linha só */
-  checa(`${rotulo}: os três filtros entram numa barra`, m.linhas.length === 3, m.linhas);
-  checa(`${rotulo}: nomeados frente, pessoa e cliente`,
-        m.linhas.map(l => l.rot).join(',') === 'frente,pessoa,cliente', m.linhas.map(l => l.rot));
+  /* v139: a ordem do quadro entra na mesma barra, como quarta fileira */
+  checa(`${rotulo}: os quatro filtros entram numa barra`, m.linhas.length === 4, m.linhas);
+  checa(`${rotulo}: nomeados frente, pessoa, cliente e ordem`,
+        m.linhas.map(l => l.rot).join(',') === 'frente,pessoa,cliente,ordem', m.linhas.map(l => l.rot));
   checa(`${rotulo}: nenhuma fileira quebra em duas linhas`, m.linhas.every(l => l.linhas === 1), m.linhas);
   checa(`${rotulo}: e cada uma cabe em pouca altura`, m.linhas.every(l => l.h <= 42), m.linhas.map(l => l.h));
 

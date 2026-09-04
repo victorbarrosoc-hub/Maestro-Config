@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-03 18:07 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-04 01:05 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15870,7 +15870,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v138 · 3 set · link de visualização do card';
+const VERSAO_PROTOTIPO = 'v139 · 4 set · Ensaio por movimento, janela no lugar, sem zoom';
 
 menuSheet = (function(orig){
   return function(){
@@ -29757,4 +29757,254 @@ addEventListener('click', e => {
              : url);
   });
 }, true);
+</script>
+
+<style>
+/* =====================================================================
+   v139 — o quadro na ordem do movimento, a janela no lugar, e o
+   celular sem o zoom que ninguém pediu.
+   ================================================================== */
+/* a fileira "ordem" entra na barra de filtros do Ensaio (v121) */
+.enOrdem{ display:flex; gap:7px; overflow-x:auto; padding:0 2px 10px; align-items:center;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none }
+.enOrdem::-webkit-scrollbar{ display:none }
+.enOrdem .enCat{ flex:0 0 auto; padding:6px 12px }
+.enFiltros .enOrdem{ margin:0 !important; padding:0 !important }   /* na barra (v121), mesma altura das outras */
+.enOrdem .enCat.on{ border-color:var(--brass-500); color:var(--brass-200) }
+/* no card: quando foi mexido pela última vez */
+.enCard .enMov{ font-family:var(--mono); font-size:9.5px; letter-spacing:.04em;
+  color:var(--ink-500); white-space:nowrap }
+.enCard.recem .enMov{ color:var(--brass-300) }
+.enCard.recem{ box-shadow:inset 3px 0 0 var(--brass-500) }
+.estWrap .enCard.recem{ box-shadow:none }
+
+/* --- celular: nada de zoom sozinho ---------------------------------
+   O iPhone aproxima a tela ao focar qualquer campo com letra menor que
+   16px, e aproxima de novo num toque duplo. Aqui os campos passam a ter
+   16px quando o dedo é o ponteiro, e o toque duplo deixa de ser zoom.
+   Beliscar continua funcionando: acessibilidade não se tira. */
+@media (pointer:coarse){
+  *{ touch-action:manipulation }
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),
+  select, textarea:not(.estWrap textarea){ font-size:16px !important }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v139 — o quadro na ordem do movimento, a janela no lugar, e o
+   celular sem o zoom que ninguém pediu.
+
+   1. ORDEM. Um card mexido caía no fim da coluna, fora da tela. Cada
+      card guarda quando foi mexido pela última vez (`movidoEm`) e a
+      coluna se ordena por isso: o mais recente no topo. O carimbo vem
+      de qualquer caminho — seta, arrasto, fase da pauta — porque é o
+      próprio desenho que compara a coluna de antes com a de agora.
+      Quem prefere, troca a ordem na barra (por prazo, por chegada).
+
+   2. ROLAGEM. Todo clique redesenha a tela inteira (`innerHTML`), e a
+      janela voltava ao topo — e as colunas do Ensaio, ao começo. Agora
+      o desenho guarda onde a janela e cada caixa rolável estavam e
+      devolve, desde que a tela seja a mesma. Trocar de tela continua
+      subindo ao topo (é o `go`).
+
+   3. ZOOM. Só CSS, acima.
+   ================================================================== */
+
+/* ---------- 1. a ordem ------------------------------------------------ */
+const EN_ORDENS = [
+  ['movimento', 'Mexidos primeiro', 'o que acabou de andar fica no topo'],
+  ['prazo',     'Por prazo',        'o que vence antes fica no topo'],
+  ['chegada',   'Por chegada',      'na ordem em que os cards nasceram']
+];
+if(!EN_ORDENS.some(([k]) => k === S.enOrdem)) S.enOrdem = 'movimento';
+
+/* quando o card andou pela última vez: o carimbo, ou o histórico (v11x)
+   de quem mudou a coluna, ou nada — card que nunca andou fica sem data. */
+function enMovidoEm(t){
+  if(t.movidoEm) return t.movidoEm;
+  const h = t.hist;
+  if(h) for(let i = h.length - 1; i >= 0; i--){
+    const e = h[i];
+    if(e && e.tipo === 'campo' && e.campo === 'col' && e.ts) return e.ts;
+  }
+  return 0;
+}
+const enChaveMov = t => enMovidoEm(t) || t.criada || 0;
+
+function enOrdenar(lista){
+  const o = S.enOrdem;
+  if(o === 'chegada') return lista.slice();
+  const c = lista.map((t, i) => ({ t, i }));
+  if(o === 'prazo'){
+    c.sort((a, b) => {
+      const pa = a.t.prazo || '9999-99-99', pb = b.t.prazo || '9999-99-99';
+      return pa < pb ? -1 : pa > pb ? 1 : a.i - b.i;
+    });
+  } else {
+    c.sort((a, b) => (enChaveMov(b.t) - enChaveMov(a.t)) || (a.i - b.i));
+  }
+  return c.map(x => x.t);
+}
+
+/* "mexido há 3 min" — curto, para caber no cartão */
+function enHaQuanto(ts){
+  const d = Date.now() - ts;
+  if(d < 60000) return 'agora';
+  if(d < 3600000) return `há ${Math.round(d/60000)} min`;
+  if(d < 86400000) return `há ${Math.round(d/3600000)} h`;
+  const dd = new Date(ts);
+  const ontem = new Date(); ontem.setDate(ontem.getDate() - 1);
+  if(dd.toDateString() === ontem.toDateString()) return 'ontem';
+  return `${D2(dd.getDate())}/${D2(dd.getMonth()+1)}`;
+}
+
+/* --- o carimbo: quem mudou de coluna desde o último desenho ----------
+   O handler da seta corta a propagação e o arrasto nem passa por
+   clique; comparar no desenho pega todos os caminhos de uma vez. Se o
+   carimbo já veio diferente (outra pessoa mexeu, e o banco trouxe),
+   ele fica — o retrato só serve para o que mudou AQUI. */
+const enRetratoCols = new Map();
+function enCarimbarMovidos(){
+  if(!S.ensaio || !Array.isArray(S.ensaio.tarefas)) return 0;
+  let n = 0;
+  const vistos = new Set();
+  S.ensaio.tarefas.forEach(t => {
+    if(!t || t.id == null) return;
+    vistos.add(t.id);
+    const a = enRetratoCols.get(t.id);
+    if(a && a.col !== t.col && a.mov === (t.movidoEm || 0)){
+      t.movidoEm = Date.now(); n++;
+    }
+    enRetratoCols.set(t.id, { col: t.col, mov: t.movidoEm || 0 });
+  });
+  enRetratoCols.forEach((_, id) => { if(!vistos.has(id)) enRetratoCols.delete(id); });
+  return n;
+}
+
+/* --- o quadro desenhado na ordem escolhida ---------------------------
+   No mesmo padrão do filtro por cliente (v11x): a lista é trocada só
+   durante a chamada e devolvida inteira depois. O `sincronizarJobs`
+   roda ANTES da troca, para o que ele criar cair na lista de verdade. */
+agEnsaio = (function(orig){
+  return function(){
+    if(!S.ensaio && typeof kbSemente === 'function') S.ensaio = kbSemente();
+    if(!S.ensaio || !Array.isArray(S.ensaio.tarefas)) return orig.apply(this, arguments);
+    const sync = typeof sincronizarJobs === 'function' ? sincronizarJobs : null;
+    if(sync) sync();
+    enCarimbarMovidos();
+    const todas = S.ensaio.tarefas;
+    S.ensaio.tarefas = enOrdenar(todas);
+    if(sync) sincronizarJobs = () => {};
+    let html;
+    try { html = orig.apply(this, arguments); }
+    finally { S.ensaio.tarefas = todas; if(sync) sincronizarJobs = sync; }
+    if(!html || html.indexOf('<div class="enRolo">') < 0) return html;
+
+    /* a fileira "ordem", que a barra de filtros (v121) recolhe */
+    const fila = `<div class="enOrdem">${EN_ORDENS.map(([k, nome, dica]) =>
+      `<button class="enCat ${S.enOrdem === k ? 'on' : ''}" data-enordem="${k}"
+        title="${esc(dica)}">${esc(nome)}</button>`).join('')}</div>`;
+    html = html.replace('<div class="enRolo">', fila + '<div class="enRolo">');
+
+    /* no card: "mexido há…" e o destaque de quem andou há pouco */
+    const agora = Date.now();
+    html = html.replace(/<div class="enCard([^"]*)" data-entar="(\d+)"([\s\S]*?)<div class="meta">/g,
+      (m, cls, id, meio) => {
+        const t = todas.find(x => x.id === +id);
+        const mv = t ? enMovidoEm(t) : 0;
+        if(!mv) return m;
+        const recem = agora - mv < 15 * 60000 ? ' recem' : '';
+        return `<div class="enCard${cls}${recem}" data-entar="${id}"${meio}<div class="meta">` +
+          `<span class="enMov" title="${esc(new Date(mv).toLocaleString('pt-BR'))}">↕ ${esc(enHaQuanto(mv))}</span>`;
+      });
+    return html;
+  };
+})(agEnsaio);
+
+if(Array.isArray(EN_ROTULOS)) EN_ROTULOS.push(['enOrdem', 'ordem']);
+
+addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-enordem]');
+  if(!b) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const k = b.dataset.enordem;
+  if(!EN_ORDENS.some(([x]) => x === k) || S.enOrdem === k) return;
+  S.enOrdem = k;
+  if(typeof som === 'function') som('toque');
+  render();
+}, true);
+
+/* ---------- 2. a janela fica onde estava --------------------------- */
+function rlChave(){
+  return [S.view, S.route, S.tab || '', S.cli || '', S.sel || '', S.pcSel || ''].join('/');
+}
+/* um endereço estável para a caixa rolável: id, ou tag + primeira classe
+   + posição entre as iguais */
+function rlEndereco(el, raiz){
+  if(el.id) return { sel: '#' + CSS.escape(el.id), n: 0 };
+  const cls = typeof el.className === 'string' ? el.className.trim().split(/\s+/)[0] : '';
+  const sel = el.tagName.toLowerCase() + (cls ? '.' + CSS.escape(cls) : '');
+  const iguais = raiz.querySelectorAll(sel);
+  let n = 0; for(; n < iguais.length; n++) if(iguais[n] === el) break;
+  return { sel, n };
+}
+function rlFoto(raiz){
+  const out = [];
+  if(!raiz) return out;
+  raiz.querySelectorAll('*').forEach(el => {
+    if(el.scrollTop > 0 || el.scrollLeft > 0){
+      const { sel, n } = rlEndereco(el, raiz);
+      out.push({ sel, n, t: el.scrollTop, l: el.scrollLeft });
+    }
+  });
+  return out;
+}
+function rlDevolver(raiz, foto){
+  if(!raiz || !foto || !foto.length) return;
+  foto.forEach(({ sel, n, t, l }) => {
+    let el; try { el = raiz.querySelectorAll(sel)[n]; } catch(_) { el = null; }
+    if(!el) return;
+    if(t) el.scrollTop = t;
+    if(l) el.scrollLeft = l;
+  });
+}
+let rlUltimaChave = '';
+render = (function(orig){
+  return function(){
+    const chave = rlChave();
+    const mesma = chave === rlUltimaChave;
+    const y = window.scrollY, x = window.scrollX;
+    const raiz = document.getElementById('root');
+    const camada = document.getElementById('layer');
+    const fRaiz = mesma ? rlFoto(raiz) : [];
+    const fCamada = S.modal ? rlFoto(camada) : [];
+    const r = orig.apply(this, arguments);
+    rlUltimaChave = rlChave();
+    if(mesma && rlUltimaChave === chave){
+      rlDevolver(raiz, fRaiz);
+      if(window.scrollY !== y || window.scrollX !== x){
+        window.scrollTo(x, y);
+        /* a altura do quadro é medida depois do desenho: se ainda não
+           coube, tenta mais uma vez no próximo quadro */
+        if(window.scrollY !== y) requestAnimationFrame(() => {
+          if(rlUltimaChave === chave) window.scrollTo(x, y); });
+      }
+    }
+    if(S.modal) rlDevolver(document.getElementById('layer'), fCamada);
+    return r;
+  };
+})(render);
+
+/* o modal também é redesenhado a cada tecla ("gravar sem redesenhar" não
+   cobre tudo): a caixa que rola dentro dele fica onde estava */
+renderLayer = (function(orig){
+  return function(){
+    const camada = document.getElementById('layer');
+    const foto = S.modal ? rlFoto(camada) : [];
+    const r = orig.apply(this, arguments);
+    if(S.modal) rlDevolver(document.getElementById('layer'), foto);
+    return r;
+  };
+})(renderLayer);
 </script>
