@@ -1,6 +1,24 @@
 # Fechar a brecha do Supabase — passo a passo
 
-**Status:** aberta · **Registrada em:** 2026-08-31 · **Quem executa:** o founder (parte 1) e o Claude (parte 2)
+**Status:** FECHADA · **Registrada em:** 2026-08-31 · **Fechada em:** 2026-09-04
+**Quem executou:** o founder (parte 1, o SQL) e o Claude (parte 2, o app)
+
+> ## ✅ Fechada — 4 de setembro de 2026
+>
+> O founder rodou o SQL e conferiu dos dois lados, que é o que prova o fechamento:
+>
+> · **sem estar logado** a API responde `[]` — ninguém mais lê a tabela pela chave
+>   publicável, que continua (e deve continuar) escrita na página;
+> · **logado na plataforma**, os clientes e as pautas carregam normalmente — as
+>   políticas de `authenticated` estão valendo.
+>
+> O que ainda não foi conferido, e leva cinco segundos: a GRAVAÇÃO. Mude qualquer
+> coisa numa pauta e olhe o selo no alto do Cronograma. `salvo 14:32` quer dizer
+> que a política de `insert`/`update` está de pé; `sem salvar` quer dizer que só a
+> leitura passou, e aí falta rodar a parte de escrita do SQL abaixo.
+>
+> Continua aberto, num degrau bem mais baixo: as políticas do **bucket `midia`**
+> (o Storage) — o SQL está no fim deste documento, em "8. O que sobrou".
 
 ---
 
@@ -252,3 +270,49 @@ ficar dito:
 
 **Antes da rodada 3 com clientes, faça.** No minuto em que uma pauta de cliente de verdade
 entrar ali, isso deixa de ser dívida sua e passa a ser dado de terceiro.
+
+---
+
+## 8. O que sobrou — o bucket `midia` (Storage)
+
+A tabela está fechada; o Storage não. Hoje o bucket `midia` aceita gravação com a
+chave publicável, e o caminho dos arquivos é previsível
+(`mat/<id do card>/<chave>_<nome>`). Quem souber disso pode **sobrescrever** uma
+peça já aprovada — trocar a arte depois do aceite, sem passar por ninguém.
+
+O app já manda o token de quem está logado no upload desde a v140; falta o outro
+lado, que é a política. No `SQL Editor`:
+
+```sql
+-- fora o que estiver aberto no bucket
+do $$
+declare p record;
+begin
+  for p in select policyname from pg_policies
+           where schemaname = 'storage' and tablename = 'objects'
+             and qual like '%midia%'
+  loop execute format('drop policy %I on storage.objects', p.policyname); end loop;
+end $$;
+
+-- ler: quem está logado
+create policy "midia_ler_autenticado" on storage.objects
+  for select to authenticated using (bucket_id = 'midia');
+
+-- subir: quem está logado
+create policy "midia_subir_autenticado" on storage.objects
+  for insert to authenticated with check (bucket_id = 'midia');
+
+-- trocar um arquivo já existente: só quem o subiu
+create policy "midia_trocar_dono" on storage.objects
+  for update to authenticated using (bucket_id = 'midia' and owner = auth.uid());
+```
+
+> **Antes de rodar:** o cliente que abre pelo link de aprovação NÃO está logado, e
+> precisa VER a arte. Se as peças forem servidas por URL pública do bucket, a
+> política de `select` acima corta a visão dele. Duas saídas: manter o `select`
+> aberto (só a leitura) e fechar apenas a escrita — que já resolve o
+> sobrescrever —, ou passar a servir a arte por URL assinada. A primeira é uma
+> linha; a segunda é trabalho de app e ainda não está feita.
+>
+> Enquanto não decidir, rode só as políticas de `insert` e `update`: o buraco que
+> importa é o de escrita.

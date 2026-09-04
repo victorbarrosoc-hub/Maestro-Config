@@ -278,8 +278,9 @@ com clientes reais
 enfileiradas não existe (o protótipo tem aviso dentro do produto, nada de e-mail).
 
 **Aberto e bloqueante:** D-024 — INPI e domínio. Rodada 3 do teste com clientes.
-**Aberto e do founder:** fechar a RLS do Supabase — passo a passo em
-`docs/ENGINEERING/SUPABASE_FECHAR_A_BRECHA.md`. Hoje quem tem o link lê e escreve tudo.
+**Fechado (4 set):** a RLS do Supabase. Sem login a API responde `[]`; logado, a
+plataforma carrega. Falta confirmar a gravação pelo selo do Cronograma.
+**Aberto e do founder:** as políticas do bucket `midia` (Storage).
 Revisão de segurança de setembro (o que já foi fechado no código e o que falta):
 `docs/ENGINEERING/SEGURANCA_REVISAO_2026-09.md`.
 
