@@ -280,6 +280,8 @@ enfileiradas não existe (o protótipo tem aviso dentro do produto, nada de e-ma
 **Aberto e bloqueante:** D-024 — INPI e domínio. Rodada 3 do teste com clientes.
 **Aberto e do founder:** fechar a RLS do Supabase — passo a passo em
 `docs/ENGINEERING/SUPABASE_FECHAR_A_BRECHA.md`. Hoje quem tem o link lê e escreve tudo.
+Revisão de segurança de setembro (o que já foi fechado no código e o que falta):
+`docs/ENGINEERING/SEGURANCA_REVISAO_2026-09.md`.
 
 **Próximos passos:** blocos 4, 6, 7 e 8 → servidor MCP (D-061) → `apps/web`.
 

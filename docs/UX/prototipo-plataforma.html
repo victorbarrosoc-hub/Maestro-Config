@@ -776,6 +776,15 @@ const CC = { AWAITING_APPROVAL:'Esperando você', APPROVED:'Aprovado',
   PUBLISHED:'No ar', SCHEDULED:'Vai ao ar', DRAFT:'Rascunho', CANCELLED:'Cancelada' };
 
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* v140 — endereço que pode ir num src/href: só http(s), blob e mídia em data:.
+   O que vem do banco é escrito por outra pessoa; javascript: e data:text/html
+   não passam, e o esc fecha a aspa. */
+const urlSegura = u => { const v = String(u == null ? '' : u).trim();
+  return /^(https?:|blob:|data:(image|video|audio)\/)/i.test(v) ? esc(v) : ''; };
+/* v140 — token de link com entropia de verdade (crypto), não Math.random */
+const tokenForte = (n = 22) => { const a = 'abcdefghijklmnopqrstuvwxyz0123456789'; let out = '';
+  try { const b = new Uint8Array(n); crypto.getRandomValues(b); for(const x of b) out += a[x % a.length]; return out; }
+  catch(_) { while(out.length < n) out += Math.random().toString(36).slice(2); return out.slice(0, n); } };
 /* O avatar do cliente: a logo quando existe, as iniciais quando não.
    Mora aqui, cedo, porque render() roda algumas vezes durante a carga —
    e mora num lugar só para que a logo apareça em toda tela de uma vez,
@@ -783,7 +792,7 @@ const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 function avCliente(c, cls){
   const classe = cls || 'av';
   if(c && c.logo)
-    return `<span class="${classe} comLogo"><img src="${c.logo}" alt="" aria-hidden="true"></span>`;
+    return `<span class="${classe} comLogo"><img src="${urlSegura(c.logo)}" alt="" aria-hidden="true"></span>`;
   const cor = c && c.cor
     ? ` style="background:linear-gradient(150deg,${c.cor},#111);color:#fff"` : '';
   return `<span class="${classe}"${cor}>${esc((c && c.ini) || '?')}</span>`;
@@ -2048,7 +2057,7 @@ Object.assign(S,{feedview:'depois',novos:[],ncCor:'#4A6C52',mflash:null});
 function svgLine(vals,labels,o){
   const {w=320,h=132,cor='#D9AC4C',grid='#23272E',txt='#6B7280'} = o||{};
   const max=Math.max(...vals)*1.15, min=Math.min(...vals)*.82;
-  const X=i=>26+i*((w-38)/(vals.length-1)), Y=v=>14+(h-46)*(1-(v-min)/(max-min));
+  const X=i=>26+i*((w-38)/(vals.length-1)), Y=v=>14+(h-46)*(1-(v-min)/((max-min)||1));   /* sete zeros davam NaN e o gráfico sumia */
   const pts=vals.map((v,i)=>[X(i),Y(v)]);
   const path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
   const area=`${path} L${X(vals.length-1).toFixed(1)} ${h-30} L${X(0).toFixed(1)} ${h-30} Z`;
@@ -4731,7 +4740,7 @@ const MENU_AG = [
    it:[['peca','Peça · detalhe','doc']]},
   {g:'Conta', it:[
     ['equipe','Equipe','users'], ['planos','Planos','stack'],
-    ['conta','Plano e equipe','sliders']]}
+    ['conta','Conta','sliders']]}
 ];
 const MENU_CL = [
   {g:'Home', it:[['inicio','Início','home']]},
@@ -11980,7 +11989,7 @@ function avMembro(m, cls, estilo){
   const classe = cls || 'av';
   const st = estilo ? ` style="${estilo}"` : '';
   return (m && m.foto)
-    ? `<span class="${classe} comFoto"${st}><img src="${m.foto}" alt="" aria-hidden="true"></span>`
+    ? `<span class="${classe} comFoto"${st}><img src="${urlSegura(m.foto)}" alt="" aria-hidden="true"></span>`
     : `<span class="${classe}"${st}>${m ? membroIni(m) : '?'}</span>`;
 }
 /* `membro(id)` devolve um resumo, não o registro — e para desenhar a foto é
@@ -12595,7 +12604,8 @@ subirNuvem = function(caminho, file, aoProgredir){
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `${SB.url}/storage/v1/object/midia/${caminho}`);
     xhr.setRequestHeader('apikey', SB.key);
-    xhr.setRequestHeader('Authorization', 'Bearer '+SB.key);
+    const _tokUp = (window.MaestroPorta && window.MaestroPorta.quem && window.MaestroPorta.quem()) || null;
+    xhr.setRequestHeader('Authorization', 'Bearer ' + ((_tokUp && _tokUp.access) || SB.key));
     xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
     xhr.setRequestHeader('x-upsert', 'true');
     xhr.upload.onprogress = ev => {
@@ -15547,10 +15557,10 @@ function vLightbox(){
   const p = S.pauta.find(x => x.id === S.mtId);
 
   const midia = x => x.tipo === 'video'
-    ? `<video src="${x.url}" controls playsinline preload="metadata"
-         ${x.poster?`poster="${x.poster}"`:''}></video>`
+    ? `<video src="${urlSegura(x.url)}" controls playsinline preload="metadata"
+         ${x.poster?`poster="${urlSegura(x.poster)}"`:''}></video>`
     : x.tipo === 'imagem'
-      ? `<img src="${x.url}" alt="${esc(x.nome)}">`
+      ? `<img src="${urlSegura(x.url)}" alt="${esc(x.nome)}">`
       : `<div class="lbSemPrev">${ic(ICONE_TIPO[x.tipo]||'doc',40)}<span>${esc(x.nome)}</span>
            <span class="peso">${pesoLegivel(x.peso)}</span></div>`;
 
@@ -15802,7 +15812,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v139 · 4 set · Ensaio por movimento, janela no lugar, sem zoom';
+const VERSAO_PROTOTIPO = 'v140 · 4 set · lixeira do Ensaio, revisão geral';
 
 menuSheet = (function(orig){
   return function(){
@@ -19731,6 +19741,11 @@ telaConversas = (function(orig){
   }
 
   function sair(){
+    /* v140: o refresh token deixa de valer no servidor, não só aqui */
+    if(sessao && sessao.access){
+      try{ fetch(`${SB.url}/auth/v1/logout`, { method:'POST',
+        headers:{ apikey: SB.key, Authorization: 'Bearer ' + sessao.access } }).catch(()=>{}); }catch(e){}
+    }
     gravar(null);
     try{ localStorage.removeItem(CHAVE_USR); }catch(e){}
     S.usuario = null;
@@ -21515,7 +21530,7 @@ td .ptResp{ max-width:130px }
 /* o rosto (foto ou iniciais), no tamanho do selo */
 function rostoDe(m){
   return (m && m.foto)
-    ? `<span class="respFoto comFoto"><img src="${m.foto}" alt="" aria-hidden="true"></span>`
+    ? `<span class="respFoto comFoto"><img src="${urlSegura(m.foto)}" alt="" aria-hidden="true"></span>`
     : `<span class="respFoto">${m ? esc(membroIni(m)) : '?'}</span>`;
 }
 /* acha a pessoa pelo nome que o próprio selo já carrega no title */
@@ -21601,7 +21616,7 @@ pintarResponsaveis();
 
 function rostoCli(c){
   return (c && c.logo)
-    ? `<span class="cliFoto comLogo"><img src="${c.logo}" alt="" aria-hidden="true"></span>`
+    ? `<span class="cliFoto comLogo"><img src="${urlSegura(c.logo)}" alt="" aria-hidden="true"></span>`
     : `<span class="cliFoto"${c && c.cor
         ? ` style="background:linear-gradient(150deg,${c.cor},#111);color:#fff"` : ''
       }>${esc((c && c.ini) || '?')}</span>`;
@@ -22956,7 +22971,7 @@ if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clcard = () => clCard()
 function chaveDoCliente(id){
   S.cliEdit[id] = S.cliEdit[id] || {};
   if(!S.cliEdit[id].chave){
-    S.cliEdit[id].chave = Math.random().toString(36).slice(2, 10);
+    S.cliEdit[id].chave = tokenForte(22);
     if(typeof sbGravarConfig === 'function') sbGravarConfig();
   }
   return S.cliEdit[id].chave;
@@ -23622,7 +23637,7 @@ function clArteHtml(p){
       ${vis.length > 1 ? `<span class="ord">${i + 1}</span>` : ''}
       ${m.url && m.tipo === 'imagem' ? `<img src="${m.url}" alt="${esc(m.nome || 'imagem da publicação')}">`
         : (m.url || m.poster) && m.tipo === 'video'
-          ? `<video ${m.url ? `src="${m.url}"` : ''} ${m.poster ? `poster="${m.poster}"` : ''}
+          ? `<video ${m.url ? `src="${urlSegura(m.url)}"` : ''} ${m.poster ? `poster="${urlSegura(m.poster)}"` : ''}
                muted playsinline preload="metadata"></video>`
           : `<span class="tipo">${ic('img', 18)}</span>`}
     </span>`;
@@ -23693,9 +23708,9 @@ clPauta = (function(orig){
       if(!vis.length || f === 'texto_cli') continue;
       const m = vis[0];
       const thumb = `<span class="clThumb">${
-        m.url && m.tipo === 'imagem' ? `<img src="${m.url}" alt="">`
+        m.url && m.tipo === 'imagem' ? `<img src="${urlSegura(m.url)}" alt="">`
         : (m.url || m.poster) && m.tipo === 'video'
-          ? `<video ${m.url ? `src="${m.url}"` : ''} ${m.poster ? `poster="${m.poster}"` : ''}
+          ? `<video ${m.url ? `src="${urlSegura(m.url)}"` : ''} ${m.poster ? `poster="${urlSegura(m.poster)}"` : ''}
                muted playsinline preload="metadata"></video>`
           : ic('img', 14)}</span>`;
       html = html.replace(new RegExp(`(<button class="clrow[^"]*" data-clcard="${p.id}"[^>]*>)`), '$1' + thumb);
@@ -23824,7 +23839,7 @@ function clAnexosHtml(p){
       <button class="bt" data-clbaixa="${p.id}|${i}">${ic('baixar', 12)} Baixar</button>`;
     return som
       ? `<div class="clAnexo som"><div class="topo">${corpo}</div>
-          ${m.url ? `<audio src="${m.url}" controls preload="metadata"></audio>` : ''}</div>`
+          ${m.url ? `<audio src="${urlSegura(m.url)}" controls preload="metadata"></audio>` : ''}</div>`
       : `<div class="clAnexo">${corpo}</div>`;
   };
   const linkLinha = m => `<div class="clAnexo"><span class="ic">${ic('linkic', 15)}</span>
@@ -26697,7 +26712,7 @@ function mdModalIA(){
     <p class="aviso">A chave fica guardada <b>só neste aparelho</b> (nunca no banco compartilhado, que hoje qualquer um com o link lê). Cada pedido custa centavos: modelo <code>${MD_MODELO}</code>.</p>
     ${cfg.chave ? `<p class="aviso">Para parar de gastar sem perder a chave, use o <b>interruptor IA</b> no topo da Mandala. "Esquecer a chave" é só se quiser tirá-la deste aparelho.</p>` : ''}
     <div class="fld"><label for="md-chave">Chave da API (sk-ant-…)</label>
-      <input id="md-chave" type="password" value="${esc(cfg.chave || '')}" placeholder="sk-ant-api03-…" autocomplete="off"></div>
+      <input id="md-chave" type="password" value="" placeholder="${cfg.chave ? 'chave guardada neste aparelho — cole outra só para trocar' : 'sk-ant-api03-…'}" autocomplete="off"></div>
     <div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end">
       ${cfg.chave ? `<button class="b gho sm" data-mdchavex="1">Esquecer a chave</button>` : ''}
       <button class="b gho sm" data-mdfechar="1">Fechar</button>
@@ -26812,6 +26827,7 @@ addEventListener('click', e => {
   if(d.mdchavex !== undefined){ mdIaGuardar(''); S.modal = null; render(); toast('Chave esquecida.'); return; }
   if(d.mdchaveok !== undefined){
     const v = (document.getElementById('md-chave')?.value || '').trim();
+    if(!v && mdIaCfg().chave){ S.modal = null; render(); return; }   /* vazio = manter a que já está */
     if(!/^sk-ant-/.test(v)){ const el = document.getElementById('md-chave'); if(el){ el.style.borderColor = 'var(--danger)'; el.focus(); } return; }
     mdIaGuardar(v); S.modal = null; render();
     toast('IA ligada neste aparelho. "Desenvolver com IA" já funciona.');
@@ -29502,7 +29518,7 @@ body.soVer .cltab{ display:none !important }
 /* =====================================================================
    v138 — o link de visualização de um card.
    ================================================================== */
-const verTokenNovo = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+const verTokenNovo = () => tokenForte(18);
 /* o token mora no próprio card: viaja com a pauta para o banco, e some
    com ela. Gerar outro invalida o que já foi mandado. */
 function verToken(cliId, p, forcar){
@@ -29561,7 +29577,7 @@ function verFolhaHtml(c, p){
       ${vfBloco('CTA', p.cta ? par(p.cta) : '', p.cta ? 'cta' : '')}
       ${p.sticker ? vfBloco('Interação', par(p.sticker)) : ''}
       ${ms.length ? vfBloco(`Arte (${ms.length})`, `<div class="vfArtes">${ms.slice(0, 8).map(m => `<div class="vfArte">${
-        m.url && m.tipo === 'imagem' ? `<img src="${m.url}" alt="${esc(m.nome || 'arte')}">`
+        m.url && m.tipo === 'imagem' ? `<img src="${urlSegura(m.url)}" alt="${esc(m.nome || 'arte')}">`
         : m.url && m.tipo === 'video' ? `<video src="${m.url}" ${m.poster ? `poster="${m.poster}"` : ''} controls playsinline preload="metadata"></video>`
         : `<span class="semArte"><b>${esc(m.nome || 'arquivo')}</b>a arte está no aparelho de quem montou o card</span>`
       }</div>`).join('')}</div>`) : ''}
@@ -29939,4 +29955,376 @@ renderLayer = (function(orig){
     return r;
   };
 })(renderLayer);
+</script>
+
+<style>
+/* =====================================================================
+   v140 — a revisão geral: lixeira do Ensaio, alvos de toque, a lista
+   de clientes e a régua da pauta no celular, atalhos no Hoje.
+   ================================================================== */
+/* --- alvos de toque: nada abaixo de 34px quando o dedo é o ponteiro --- */
+@media (pointer:coarse){
+  .enCard .acoes{ gap:7px }
+  .enCard .acoes button, body.emEnsaio .enCard .acoes button{ width:34px; height:34px }
+  .enCard .acoes .cyBtn, body.emEnsaio .enCard .acoes .cyBtn{ width:auto; height:34px; padding:0 12px }
+  .cliAcoes button{ width:36px !important; height:36px !important }
+  .rfX{ width:34px; height:34px }
+}
+/* --- caixas de número: cada uma com a própria altura ------------------ */
+.tiles{ align-items:start }
+
+/* --- a lista de clientes no celular: nome inteiro, selo embaixo ------- */
+@media (max-width:520px){
+  .cliLinha .row{ display:grid !important; grid-template-columns:auto 1fr; column-gap:10px; row-gap:3px; align-items:center }
+  .cliLinha .row > :first-child{ grid-row:1 / span 2 }
+  .cliLinha .row .t{ min-width:0 }
+  .cliLinha .row .t b, .cliLinha .row .t > span{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .cliLinha .row .tipoCli{ grid-column:2; justify-self:start; margin:0 }
+  .cliLinha .row .chev, .cliLinha .row .pill{ display:none }
+}
+
+/* --- a régua da pauta: no celular só o que se usa, o resto em "mais" --- */
+.ptAcoesTopo{ display:flex; gap:9px; flex-wrap:wrap; position:relative; align-items:center }
+.ptMaisMenu{ display:contents }
+.ptMaisBt{ display:none }
+@media (max-width:860px){
+  .ptMaisBt{ display:inline-flex }
+  .ptMaisMenu{ display:none; position:absolute; right:0; top:calc(100% + 6px); z-index:30;
+    flex-direction:column; gap:4px; padding:6px; min-width:210px;
+    background:var(--ink-850); border:1px solid var(--ink-700); border-radius:12px;
+    box-shadow:0 18px 40px rgba(0,0,0,.45) }
+  .ptAcoesTopo.aberto .ptMaisMenu{ display:flex }
+  .ptMaisMenu .b{ justify-content:flex-start; width:100% }
+}
+
+/* --- atalhos no Hoje ---------------------------------------------------- */
+.atalhos{ display:flex; gap:8px; overflow-x:auto; padding:0 2px 6px; margin:-6px 0 16px;
+  scrollbar-width:none; -webkit-overflow-scrolling:touch }
+.atalhos::-webkit-scrollbar{ display:none }
+.atalhos button{ flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; padding:9px 13px;
+  border-radius:11px; border:1px solid var(--ink-700); background:var(--ink-900); color:var(--ink-200);
+  font-size:12.5px; font-weight:600; transition:border-color var(--fast) var(--eo), color var(--fast) var(--eo) }
+.atalhos button svg{ color:var(--brass-400) }
+.atalhos button:hover{ border-color:var(--brass-600); color:var(--ink-50) }
+.atalhos button.pri{ background:var(--brass-500); border-color:var(--brass-500); color:#1a1405 }
+.atalhos button.pri svg{ color:#1a1405 }
+.atalhos .rot{ align-self:center; font-family:var(--mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-500); padding-right:4px; flex:0 0 auto }
+
+/* --- a lixeira do Ensaio ------------------------------------------------ */
+.enLxLista{ display:flex; flex-direction:column; gap:7px; max-height:48vh; overflow:auto }
+.enLxItem{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:11px;
+  background:var(--ink-900); border:1px solid var(--ink-800) }
+.enLxItem .ic{ width:28px; height:28px; border-radius:8px; display:grid; place-items:center;
+  background:var(--ink-850); color:var(--ink-400); flex:0 0 auto }
+.enLxItem .nome{ flex:1; min-width:0; font-size:13px; color:var(--ink-50) }
+.enLxItem .nome b{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600 }
+.enLxItem .nome small{ display:block; margin-top:2px; font-size:11px; color:var(--ink-400) }
+.enLxItem .nome small i{ font-style:normal; color:var(--brass-300) }
+.enLxItem .b{ flex:0 0 auto; white-space:nowrap }
+.enLxSec{ font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-500); margin:12px 0 6px }
+.enLxSec:first-child{ margin-top:0 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v140 — a revisão geral.
+
+   1. LIXEIRA DO ENSAIO. Excluir um card no quadro só tinha os oito
+      segundos do "desfazer": a tarefa da casa ficava guardada em
+      `S.ensaio.lixo` sem nenhuma tela para vê-la, e o card da pauta
+      ia para a lixeira do cliente — longe de quem estava no quadro.
+      Agora o quadro tem a sua lixeira: mostra os dois tipos, devolve
+      cada um ao lugar de onde saiu, e esvazia com confirmação. Quem
+      volta sobe ao topo da coluna (v139).
+
+   2. A RÉGUA DA PAUTA no celular: "Nova postagem" era o botão mais
+      usado e ficava escondido à direita, atrás de Importar e Exportar.
+      No celular ele fica na frente, e o resto vai para "mais".
+
+   3. ATALHOS no Hoje: o que se faz toda hora a um toque da abertura.
+
+   4. Alvos de toque de 34px, lista de clientes em grade e as caixas de
+      número sem esticar — só CSS, acima.
+   ================================================================== */
+
+/* ---------- 1. a lixeira do Ensaio ---------------------------------- */
+const enLxHa = ts => typeof enHaQuanto === 'function' ? enHaQuanto(ts) : '';
+
+/* tudo que foi excluído pelo quadro ou pela pauta, numa lista só */
+function enLxItens(){
+  const itens = [];
+  if(S.ensaio && Array.isArray(S.ensaio.lixo))
+    S.ensaio.lixo.forEach((e, i) => { if(e && e.tarefa) itens.push({ tipo:'casa', i, t:e.tarefa, quando:e.quando||0 }); });
+  if(S.lixeira) Object.keys(S.lixeira).forEach(cliId => {
+    (S.lixeira[cliId] || []).forEach(e => {
+      if(e && e.item) itens.push({ tipo:'pauta', cliId, p:e.item, quando:e.quando||0 });
+    });
+  });
+  return itens.sort((a, b) => b.quando - a.quando);
+}
+const enLxTotal = () => enLxItens().length;
+
+function enModalLixeira(){
+  const itens = enLxItens();
+  const casa = itens.filter(x => x.tipo === 'casa');
+  const pauta = itens.filter(x => x.tipo === 'pauta');
+  const nomeCli = id => (CLIS().find(c => c.id === id) || {}).nome || 'cliente';
+  const linhaCasa = x => {
+    const cat = typeof catDe === 'function' ? catDe(x.t) : null;
+    return `<div class="enLxItem">
+      <span class="ic" style="${cat ? `color:${cat.cor}` : ''}">${ic('kanban', 13)}</span>
+      <span class="nome"><b>${esc(x.t.titulo || 'sem título')}</b>
+        <small>${cat ? esc(cat.nome) + ' · ' : ''}${x.t.cli ? esc(nomeCli(x.t.cli)) + ' · ' : ''}
+          <i>excluída ${esc(enLxHa(x.quando))}</i></small></span>
+      <button class="b gho sm" data-enlxvolta="casa:${x.t.id}">Voltar ao quadro</button></div>`;
+  };
+  const linhaPauta = x => `<div class="enLxItem">
+      <span class="ic">${ic('doc', 13)}</span>
+      <span class="nome"><b>${esc(x.p.t || 'sem título')}</b>
+        <small>${esc(nomeCli(x.cliId))}${x.p.data ? ' · ' + rotuloData(x.p.data) : ''}${x.p.fmt ? ' · ' + esc(x.p.fmt) : ''} ·
+          <i>excluído ${esc(enLxHa(x.quando))}</i></small></span>
+      <button class="b gho sm" data-enlxvolta="pauta:${esc(x.cliId)}:${x.p.id}">Voltar à pauta</button></div>`;
+  return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
+    <h3>Lixeira do Ensaio${itens.length ? ` · ${itens.length}` : ''}</h3>
+    <p>O que foi excluído no quadro ou na pauta fica aqui e volta com um toque —
+      para o lugar de onde saiu, com tempo, material e histórico. Esvaziar é que não tem volta.</p>
+    ${itens.length ? `<div class="enLxLista">
+      ${casa.length ? `<div class="enLxSec">tarefas da casa</div>${casa.map(linhaCasa).join('')}` : ''}
+      ${pauta.length ? `<div class="enLxSec">cards da pauta</div>${pauta.map(linhaPauta).join('')}` : ''}
+    </div>` : `<p class="mtAviso">A lixeira está vazia. Nada foi excluído por aqui.</p>`}
+    <div class="modalrow" style="margin-top:14px">
+      <button class="b gho" data-modalno="1">Fechar</button>
+      ${itens.length ? `<button class="b gho sm" data-enlxfim="1"
+        style="flex:0 0 auto;min-width:0;white-space:nowrap;color:var(--danger);
+        border-color:rgba(229,72,77,.28)">${ic('x', 12)} Esvaziar a lixeira</button>` : ''}
+    </div></div></div>`;
+}
+
+function enLxVoltar(chave){
+  const [tipo, a, b] = String(chave).split(':');
+  if(tipo === 'casa'){
+    const lixo = (S.ensaio && S.ensaio.lixo) || [];
+    const j = lixo.findIndex(e => e && e.tarefa && String(e.tarefa.id) === a);
+    if(j < 0) return false;
+    const [e] = lixo.splice(j, 1);
+    const t = e.tarefa;
+    if(S.ensaio.tarefas.some(x => x.id === t.id)) t.id = S.ensaio.prox++;   /* id já reaproveitado */
+    if(t.col === 'cliente') t.col = 'check';
+    t.movidoEm = Date.now();
+    S.ensaio.tarefas.push(t);
+    if(typeof ligarTarefaAoCard === 'function') ligarTarefaAoCard(t);
+    toast(`"${t.titulo}" de volta ao quadro.`);
+    return true;
+  }
+  if(tipo === 'pauta'){
+    const lx = (S.lixeira && S.lixeira[a]) || [];
+    const j = lx.findIndex(e => e && e.item && String(e.item.id) === b);
+    if(j < 0) return false;
+    const [e] = lx.splice(j, 1);
+    const arr = S.pautas[a] = S.pautas[a] || [];
+    arr.splice(Math.min(e.idx == null ? arr.length : e.idx, arr.length), 0, e.item);
+    if(typeof ultimoPtDel !== 'undefined' && ultimoPtDel && ultimoPtDel.item === e.item) ultimoPtDel = null;
+    let t = S.ensaio && S.ensaio.tarefas.find(x => x.cli === a && x.cardId === e.item.id);
+    if(!t && e.tarefa && S.ensaio){
+      t = { ...e.tarefa };
+      if(S.ensaio.tarefas.some(x => x.id === t.id)) t.id = S.ensaio.prox++;
+      S.ensaio.tarefas.push(t);
+      if(typeof ligarTarefaAoCard === 'function') ligarTarefaAoCard(t);
+    }
+    if(typeof sincronizarJobs === 'function') try { sincronizarJobs(); } catch(_) {}
+    if(!t) t = S.ensaio && S.ensaio.tarefas.find(x => x.cli === a && x.cardId === e.item.id);
+    if(t) t.movidoEm = Date.now();
+    if(typeof sbAgendar === 'function') sbAgendar();
+    toast(`"${e.item.t}" de volta à pauta${t ? ' e ao quadro' : ''}.`);
+    return true;
+  }
+  return false;
+}
+
+function enLxEsvaziar(){
+  let n = 0;
+  if(S.ensaio && Array.isArray(S.ensaio.lixo)){ n += S.ensaio.lixo.length; S.ensaio.lixo = []; }
+  if(S.lixeira) Object.keys(S.lixeira).forEach(k => { n += (S.lixeira[k] || []).length; S.lixeira[k] = []; });
+  if(typeof ultimoPtDel !== 'undefined' && ultimoPtDel && ultimoPtDel.daLixeira) ultimoPtDel = null;
+  if(typeof sbAgendar === 'function') sbAgendar();
+  return n;
+}
+
+/* o card da pauta excluído pelo quadro leva a tarefa junto para a
+   lixeira do cliente: assim "voltar" devolve os dois — a pauta sozinha
+   não recria tarefa de card em rascunho, e o tempo contado se perderia */
+excluirTarefa = (function(orig){
+  return function(tid){
+    const t = S.ensaio && S.ensaio.tarefas.find(x => x.id === +tid);
+    const p = t && typeof cardDaTarefa === 'function' ? cardDaTarefa(t) : null;
+    const ok = orig.apply(this, arguments);
+    if(ok && t && p && S.lixeira && S.lixeira[t.cli]){
+      const e = S.lixeira[t.cli].find(x => x && x.item === p);
+      if(e && !e.tarefa) e.tarefa = { ...t, col: t.col };
+    }
+    return ok;
+  };
+})(excluirTarefa);
+
+/* o botão entra ao lado do Ranking */
+agEnsaio = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    if(!html || html.indexOf('data-enranking="1"') < 0) return html;
+    const n = enLxTotal();
+    return html.replace('<button class="b gho sm" data-enranking="1">',
+      `<button class="b gho sm" data-enlixeira="1" title="Lixeira do Ensaio">${ic('lixo', 13)} Lixeira${n ? ` (${n})` : ''}</button>
+      <button class="b gho sm" data-enranking="1">`);
+  };
+})(agEnsaio);
+
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-enlixeira],[data-enlxvolta],[data-enlxfim],[data-enlxfimok],[data-enlxnao]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  const d = t.dataset;
+  if(d.enlixeira){ S.modal = enModalLixeira(); renderLayer(); return; }
+  if(d.enlxvolta){
+    if(!enLxVoltar(d.enlxvolta)) return;
+    if(typeof som === 'function') som('toque');
+    S.modal = enLxTotal() ? enModalLixeira() : null;
+    render();
+    return;
+  }
+  if(d.enlxfim){
+    const n = enLxTotal();
+    S.modal = `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+      <h3>Esvaziar a lixeira do Ensaio?</h3>
+      <p>${n} ${n === 1 ? 'item some' : 'itens somem'} de vez — tarefas da casa e cards da pauta.
+        Não tem como voltar depois.</p>
+      <div class="modalrow"><button class="b gho" data-enlxnao="1">Voltar</button>
+        <button class="b pri" data-enlxfimok="1" style="background:var(--danger);border-color:var(--danger);color:#fff">Esvaziar</button></div>
+      </div></div>`;
+    renderLayer(); return;
+  }
+  if(d.enlxnao){ S.modal = enModalLixeira(); renderLayer(); return; }
+  if(d.enlxfimok){
+    const n = enLxEsvaziar();
+    S.modal = null; render();
+    toast(`Lixeira esvaziada — ${n} ${n === 1 ? 'item' : 'itens'}.`);
+  }
+}, true);
+
+/* ---------- 2. a régua da pauta no celular -------------------------- */
+S.ptMais = false;
+agClienteDet = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    if(!html || S.tab !== 'pauta' || html.indexOf('data-ptexport') < 0) return html;
+    const re = /<div style="display:flex;gap:9px;flex-wrap:wrap">((?:\s*<button[^>]*data-pt(?:imp|export|new|lixeira|reset)[^>]*>[\s\S]*?<\/button>)+)\s*<\/div>/;
+    const m = html.match(re);
+    if(!m) return html;
+    const botoes = m[1].match(/<button[^>]*>[\s\S]*?<\/button>/g) || [];
+    const novo = botoes.find(b => b.indexOf('data-ptnew') >= 0);
+    const resto = botoes.filter(b => b !== novo);
+    if(!novo) return html;
+    const regua = `<div class="ptAcoesTopo ${S.ptMais ? 'aberto' : ''}">
+      ${novo}
+      <button class="b gho sm ptMaisBt" data-ptmais="1" aria-expanded="${S.ptMais ? 'true' : 'false'}">${ic('sliders', 13)} Mais</button>
+      <div class="ptMaisMenu">${resto.join('\n')}</div></div>`;
+    return html.replace(m[0], regua);
+  };
+})(agClienteDet);
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-ptmais]');
+  if(t){
+    e.stopImmediatePropagation(); e.stopPropagation();
+    S.ptMais = !S.ptMais;
+    const caixa = t.closest('.ptAcoesTopo');
+    if(caixa) caixa.classList.toggle('aberto', S.ptMais);
+    t.setAttribute('aria-expanded', S.ptMais ? 'true' : 'false');
+    return;
+  }
+  if(S.ptMais && !(e.target.closest && e.target.closest('.ptMaisMenu'))){
+    S.ptMais = false;
+    document.querySelectorAll('.ptAcoesTopo.aberto').forEach(x => x.classList.remove('aberto'));
+  }
+}, true);
+/* qualquer botão do menu fecha o menu */
+addEventListener('click', e => {
+  if(e.target.closest && e.target.closest('.ptMaisMenu button')) S.ptMais = false;
+}, true);
+
+/* ---------- 3. atalhos no Hoje -------------------------------------- */
+const ATALHOS = [
+  ['post',    'pencil',  'Nova postagem', true],
+  ['tarefa',  'kanban',  'Nova tarefa'],
+  ['mandala', 'spark',   'Mandala'],
+  ['estudio', 'pencil',  'Estúdio']
+];
+function atalhosHtml(){
+  return `<div class="atalhos" aria-label="Atalhos"><span class="rot">atalhos</span>${ATALHOS.map(([k, icn, rot, pri]) =>
+    `<button type="button" class="${pri ? 'pri' : ''}" data-atalho="${k}">${ic(IC[icn] ? icn : 'pencil', 13)} ${rot}</button>`).join('')}</div>`;
+}
+agDash = (function(orig){
+  return function(){
+    let html = orig.apply(this, arguments);
+    if(!html || html.indexOf('class="atalhos"') >= 0) return html;
+    const marca = html.indexOf('<div class="hjResumo">') >= 0 ? '<div class="hjResumo">' : '<div class="tiles"';
+    if(html.indexOf(marca) < 0) return html;
+    return html.replace(marca, atalhosHtml() + marca);
+  };
+})(agDash);
+
+function atModalCliente(){
+  const cs = CLIS();
+  return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+    <h3>Nova postagem — para qual cliente?</h3>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:50vh;overflow:auto">
+      ${cs.map(c => `<button type="button" class="b gho" data-atcli="${esc(c.id)}"
+        style="justify-content:flex-start">${typeof rostoCli === 'function' ? rostoCli(c) : ''} ${esc(c.nome)}</button>`).join('')}
+    </div>
+    <div class="modalrow" style="margin-top:14px"><button class="b gho" data-modalno="1">Fechar</button></div>
+  </div></div>`;
+}
+function atNovaPostagem(cliId){
+  S.cli = cliId; S.view = 'agency'; S.route = 'clientedet'; S.tab = 'pauta'; S.pal = false;
+  S.modal = modalPauta(null);
+  window.scrollTo(0, 0); render();
+}
+addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-atalho],[data-atcli]');
+  if(!t) return;
+  e.stopImmediatePropagation(); e.stopPropagation();
+  if(typeof som === 'function') som('toque');
+  if(t.dataset.atcli){ atNovaPostagem(t.dataset.atcli); return; }
+  const k = t.dataset.atalho;
+  if(k === 'post'){
+    const cs = CLIS();
+    if(cs.length === 1) atNovaPostagem(cs[0].id);
+    else { S.modal = atModalCliente(); renderLayer(); }
+    return;
+  }
+  if(k === 'tarefa'){ go('agency', 'producao'); S.modal = modalTarefa(null); renderLayer(); return; }
+  if(k === 'mandala'){ go('agency', 'mandala'); return; }
+  if(k === 'estudio'){ go('agency', 'estudio'); return; }
+}, true);
+
+/* ---------- 4. segurança: o aviso não executa, e o link não guarda ----
+   O toast entra no innerHTML sem escape, e o texto dele carrega nome de
+   card, de cliente e de pessoa — escrito por outra gente e sincronizado
+   pelo banco. Nenhum toast usa marcação, então escapar na entrada não
+   muda nada visível, só fecha a porta. */
+toast = (function(orig){
+  return function(msg){
+    const args = [...arguments];
+    args[0] = esc(String(msg == null ? '' : msg));
+    return orig.apply(this, args);
+  };
+})(toast);
+/* quem chega por link de aprovação ou de visualização não é da equipe:
+   o retrato inteiro da agência não fica no aparelho dessa pessoa */
+guardarTudo = (function(orig){
+  return function(){
+    if(S.viaLink || S.soVer || (document.body && document.body.classList.contains('soVer'))) return;
+    return orig.apply(this, arguments);
+  };
+})(guardarTudo);
 </script>
