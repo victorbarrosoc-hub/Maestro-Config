@@ -15843,7 +15843,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v152 · 5 set · o link volta a abrir';
+const VERSAO_PROTOTIPO = 'v153 · 5 set · em Act, o card é o post';
 
 menuSheet = (function(orig){
   return function(){
@@ -32787,5 +32787,154 @@ addEventListener('click', e => {
     }
     mandarFila();
   })();
+})();
+</script>
+
+<style>
+/* v153 — o post inteiro dentro do card do Ensaio, na coluna Act */
+.enPostSelo{ display:flex; align-items:center; gap:7px; margin-bottom:11px;
+  font-family:var(--mono); font-size:9px; letter-spacing:.15em; text-transform:uppercase;
+  color:var(--brass-500) }
+.enPostSelo i{ flex:1; height:1px; background:var(--ink-800); font-style:normal }
+/* em Act o post é a PRIMEIRA coisa do modal: a linha separa dele o
+   formulário que vem abaixo, em vez de separar do que vem acima */
+.enPost{ border-top:0; padding-top:0; margin:2px 0 0;
+  border-bottom:1px solid var(--ink-800); padding-bottom:16px; margin-bottom:18px }
+/* o rodapé do Cronograma não vem junto; o que vem respira igual */
+.enPost .vzTopo{ margin-bottom:11px }
+.enPost .vzBloco:last-child{ margin-bottom:0 }
+.enPost .fxTrilha{ margin-bottom:10px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v153 — EM ACT, O CARD É O POST.
+
+   O pedido do fundador, na letra: "quando o card chegar em Act lá no
+   Ensaio, quero visualizar exatamente como vejo quando o post está
+   agendado lá no Cronograma de Conteúdos".
+
+   Ele cai bem onde o fluxo já estava: a coluna Act guarda justamente as
+   fases `texto_ok`, `aprovado`, `agendado` e `postado` — é o post
+   pronto, esperando ir ao ar. Até aqui o Ensaio mostrava uma ficha
+   resumida (v142), boa para quem ainda vai produzir e curta demais para
+   quem está conferindo o que vai ser publicado.
+
+   A leitura NÃO é reescrita aqui. Este bloco chama o mesmo `modalVer`
+   que o Cronograma chama e tira a casca do modal: assim, o dia em que o
+   Cronograma mudar, esta tela muda junto — que é o que "exatamente
+   igual" tem de significar para durar.
+
+   Duas coisas ficam de fora, e de propósito: o rodapé de botões (o
+   modal da tarefa tem o dele) e os dois "Abrir material / Abrir
+   referências", que abrem outro modal lendo o cliente da TELA — e no
+   Ensaio a tela é de todos os clientes. As miniaturas do material
+   continuam ali, à vista, e o anexo tem casa própria no Ensaio.
+   ================================================================== */
+(function(){
+  if(typeof modalVer !== 'function' || typeof enCardLidoHtml !== 'function') return;
+
+  const ANCORA = 'aria-modal="true">';
+
+  function enPostHtml(t){
+    if(!t || !t.cardId || t.col !== 'act') return '';
+    const p = (typeof cardDaTarefa === 'function') ? cardDaTarefa(t) : null;
+    if(!p) return '';
+    /* `modalVer` lê `S.pauta`, que passa por `cliAtual()`. Aponto o
+       cliente da tarefa só enquanto monto o texto, e devolvo. Se esse
+       cliente não existe mais, não arrisco mostrar o card de outro. */
+    if(!t.cli || typeof CLIS !== 'function' || !CLIS().some(c => c.id === t.cli)) return '';
+    const antes = S.cli;
+    let html = '';
+    try{ S.cli = t.cli; html = modalVer(p.id) || ''; }
+    catch(e){ html = ''; }
+    finally{ S.cli = antes; }
+
+    const i = html.indexOf(ANCORA);
+    if(i < 0) return '';
+    let corpo = html.slice(i + ANCORA.length);
+    const j = corpo.lastIndexOf('<div class="modalrow"');   /* o rodapé é do modal, não do post */
+    if(j >= 0) corpo = corpo.slice(0, j);
+    corpo = corpo.replace(/<button\b[^>]*data-(?:mtabrir|rfabrir)="[^"]*"[^>]*>[\s\S]*?<\/button>/g, '');
+    if(!corpo.trim()) return '';
+
+    /* a fase já vem escrita na trilha, logo abaixo: aqui basta dizer
+       o que esta caixa é */
+    return `<div class="enFicha enPost" data-enpost="${esc(String(t.cli))}|${p.id}">
+      <div class="enPostSelo">${ic('sealic', 11)} como vai ao ar<i></i></div>
+      ${corpo}</div>`;
+  }
+
+  /* dá para saber que é caso de Act sem montar a leitura inteira */
+  const ehAct = t => !!(t && t.col === 'act' && t.cardId
+    && typeof cardDaTarefa === 'function' && cardDaTarefa(t)
+    && t.cli && typeof CLIS === 'function' && CLIS().some(c => c.id === t.cli));
+
+  /* A ficha curta continua sendo a de quem vai produzir, e mora onde
+     sempre morou: perto do histórico. Em Act ela sai de cena — quem
+     olha está conferindo o que vai ao ar, e isso é a primeira coisa
+     que a janela mostra, não a última. */
+  enCardLidoHtml = (function(orig){
+    return function(t){
+      if(ehAct(t)) return '';
+      return orig.apply(this, arguments);
+    };
+  })(enCardLidoHtml);
+
+  /* o post entra no alto, antes do primeiro campo do formulário */
+  modalTarefa = (function(orig){
+    return function(id){
+      const html = orig.apply(this, arguments);
+      if(!html || !id || html.indexOf('enPost') >= 0) return html;
+      const t = S.ensaio && S.ensaio.tarefas.find(x => x.id === id);
+      if(!ehAct(t)) return html;
+      let post = '';
+      try{ post = enPostHtml(t); }catch(e){ post = ''; }
+      if(!post) return html;
+      const i = html.indexOf('<div class="fld"');
+      if(i < 0) return html;
+      /* "Jogue a ideia: o que precisa existir…" é conversa com quem vai
+         estruturar. Este card já está pronto — a frase passa a dizer o
+         que a janela mostra. */
+      const cabeca = html.slice(0, i).replace(
+        /<p>Um job do Ensaio[\s\S]*?<\/p>|<p>Jogue a ideia[\s\S]*?<\/p>/,
+        '<p>Já está pronto. Abaixo, como ele vai ao ar — e depois a tarefa, se precisar mexer.</p>');
+      return cabeca + post + '\n    ' + html.slice(i);
+    };
+  })(modalTarefa);
+
+  /* O "Copiar" de cada caixa é do Cronograma e procura o card no cliente
+     da tela. Aqui a tela é o quadro inteiro, então o card vem pelo id do
+     próprio bloco. Na janela, para passar na frente do handler antigo. */
+  window.addEventListener('click', async e => {
+    const b = e.target.closest && e.target.closest('[data-cpbox]');
+    if(!b) return;
+    const caixa = b.closest('.enPost');
+    if(!caixa) return;                              /* fora do Ensaio, o de sempre */
+    const [cli, cardId] = String(caixa.dataset.enpost || '').split('|');
+    const [id, campo] = String(b.dataset.cpbox || '').split('|');
+    if(+id !== +cardId) return;
+    e.stopImmediatePropagation(); e.stopPropagation();
+    const p = (S.pautas[cli] || []).find(x => x.id === +id);
+    if(!p) return;
+    const txt = campo === 'telas'
+      ? (p.telas || []).map((x, i) => `Tela ${i + 1} — ${x}`).join('\n')
+      : campo === 'corte'
+        ? [((p.corte || {}).ep || ''), ...(((p.corte || {}).tcs) || [])
+            .map(tc => `${tc.ordem}. ${tc.de} → ${tc.ate}`)].filter(Boolean).join('\n')
+        : (p[campo] || '');
+    if(!txt){ toast('Esta caixa está vazia.'); return; }
+    const confirma = () => { const a = b.innerHTML; b.innerHTML = '✓ Copiado';
+      setTimeout(() => { b.innerHTML = a; }, 1400); };
+    try{ await navigator.clipboard.writeText(txt); confirma(); }
+    catch(err){
+      try{
+        const ta = document.createElement('textarea'); ta.value = txt;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); ta.remove(); confirma();
+      }catch(e2){ toast('Não consegui copiar — o navegador bloqueou.'); }
+    }
+  }, true);
 })();
 </script>
