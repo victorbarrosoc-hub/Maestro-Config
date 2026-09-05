@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-05 23:17 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-05 23:37 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -81,13 +81,34 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#161616">
 <style>html,body{background:#161616;margin:0}
-/* E A SEGUNDA PISCADA, a que o fundador chamou de "antes da animação da
-   logo": a cortina é montada no DOMContentLoaded, mas o app pinta ANTES
-   disso — os scripts do fim do corpo rodam e o navegador desenha. Medido
-   em quadro: a tela do site aparecia inteira por ~250 ms e só então a
-   cortina caía por cima. Um corte seco, no meio da abertura.
-   Aqui o palco fica no escuro até a cortina estar pendurada. */
+/* v157 — A PISCADA QUE SOBROU, E A MEDIÇÃO QUE A ACHOU.
+
+   A cortina saiu na v155 e o fundador continuou vendo a tela piscar. A
+   medição, quadro a quadro na abertura, mostrou o que é: quem escolheu o
+   MODO CLARO recebe 240 ms de tela ESCURA e só então o claro entra. Não é
+   animação nenhuma — é a ordem das coisas. Este bloquinho, que existe
+   para matar a piscada BRANCA de quem está no escuro, pintava escuro para
+   todo mundo; e o tema só era aplicado lá embaixo, depois de 13 KB de CSS
+   e de todo o resto do arquivo.
+   A cor da primeira pintura passa a sair da escolha da pessoa, e a
+   escolha é lida no primeiro script do documento, antes de qualquer
+   pintura. Quem está no escuro continua vendo escuro desde o quadro 1. */
+html[data-tema="claro"], html[data-tema="claro"] body{ background:#FBFAF6 }
 html.abrindo #root, html.abrindo .ctx, html.abrindo #layer{ visibility:hidden }</style>
+<script>
+/* Antes de tudo: a luz. Uma leitura de localStorage e um atributo — é o
+   que separa uma abertura limpa de uma tela que pisca. */
+(function(){
+  try{
+    var t = localStorage.getItem('maestro-luz-v1');
+    if(t !== 'claro') return;                       /* escuro é o padrão, e já está pintado */
+    document.documentElement.setAttribute('data-tema', 'claro');
+    var m = document.querySelector('meta[name="theme-color"]');
+    if(m) m.setAttribute('content', '#FBFAF6');
+    var c = document.querySelector('meta[name="color-scheme"]');
+    if(c) c.setAttribute('content', 'light');
+  }catch(e){}
+})();</script>
 <script>
 /* v155 — A CORTINA SAI DE CENA.
 
@@ -15936,7 +15957,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v156 · 5 set · a semente não escreve por cima';
+const VERSAO_PROTOTIPO = 'v157 · 5 set · a abertura já nasce na sua luz';
 
 menuSheet = (function(orig){
   return function(){
@@ -30757,6 +30778,11 @@ function luzAplicar(t){
   document.documentElement.dataset.tema = t;
   const meta = document.querySelector('meta[name="theme-color"]');
   if(meta) meta.setAttribute('content', t === 'claro' ? '#FBFAF6' : '#161616');
+  /* v157: o `color-scheme` acompanha, senão a barra de rolagem e os
+     campos do sistema ficam no tema anterior — e a próxima abertura
+     pinta a cor errada no primeiro quadro */
+  const cs = document.querySelector('meta[name="color-scheme"]');
+  if(cs) cs.setAttribute('content', t === 'claro' ? 'light' : 'dark');
 }
 function luzPor(t){
   if(t !== 'claro' && t !== 'escuro') return;
