@@ -1196,7 +1196,19 @@ classes 9 e 42, e adotar `usemaestro.com` ou `maestro.studio`.
 
 **Rodada 3 do teste** com clientes reais.
 
+**Os links de aprovação (`?ver=`, `?aprovar=`) desde a RLS.** Quem vem pelo
+link é anônimo e recebe `[]`: não vê o card nem a chave. Precisa de uma
+função no servidor que valide o token do link e devolva só aquele card
+(`docs/ENGINEERING/PERSISTENCIA_AUDITORIA_2026-09.md` §5).
+
 ### Produto e engenharia
+
+- **Persistência do protótipo (v151, 5 set): fechada.** Revisão por linha
+  (`dados.rev`, PATCH condicional), mescla de três lados, nenhuma escrita sem
+  leitura, falha com cara. O relatório da auditoria, o gargalo e o que ficou
+  de fora: `docs/ENGINEERING/PERSISTENCIA_AUDITORIA_2026-09.md`. Verificação:
+  `web/verificar/v151-persistencia.mjs` (dois aparelhos contra um PostgREST
+  de mentira).
 
 - **Subir a API de fato** (`npm -w @maestro/api run dev`) e bater nos endpoints.
   Os serviços já rodam contra banco; controller, guard e HTTP ainda não.

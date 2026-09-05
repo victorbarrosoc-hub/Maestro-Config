@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-04 18:10 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-05 04:18 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -10579,10 +10579,13 @@ async function sbCarregar(){
   _sbLigado = true;
   const conhecidos = new Set(CLIS().map(c=>c.id));
   let aplicou = 0;
+  const Sin = window.Sincro;                       // v151: a linha fica à mão mesmo antes de eu saber de quem é
   linhas.forEach(({cliente, dados})=>{
-    if(!conhecidos.has(cliente)) return;          // ignora linha de outro lugar
-    if(sbAplicar(cliente, dados)){
-      sbEspelho[cliente] = JSON.stringify(dados); aplicou++;
+    if(Sin) Sin.brutas[cliente] = dados;
+    if(!conhecidos.has(cliente)) return;          // ainda não sei quem é: entra quando souber (v151)
+    if(Sin ? Sin.aplicarLinha(cliente, dados) : sbAplicar(cliente, dados)){
+      if(!Sin) sbEspelho[cliente] = JSON.stringify(dados);
+      aplicou++;
     }
   });
   if(!aplicou){
@@ -10594,6 +10597,7 @@ async function sbCarregar(){
 }
 
 async function sbGravar(cliId, silencioso){
+  if(window.Sincro) return window.Sincro.gravar(cliId, silencioso);   // v151: com revisão e mescla
   if(!_sbLigado) return false;
   const dados = sbEmpacotar(cliId);
   const corpo = JSON.stringify(dados);
@@ -10659,8 +10663,8 @@ document.addEventListener('click', async e => {
   toast(tudo ? 'Pauta salva no banco.' : 'Não consegui salvar — tente de novo.');
 }, true);
 
-/* e sobe sozinho ao abrir */
-setTimeout(sbCarregar, 400);
+/* e sobe sozinho ao abrir — pelo NOME (v151): a cadeia inteira, não a base */
+setTimeout(() => sbCarregar(), 400);
 </script>
 <style>
 /* =====================================================================
@@ -15907,7 +15911,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v150 · 4 set · o salvar acredita na tela';
+const VERSAO_PROTOTIPO = 'v151 · 4 set · um banco, uma verdade';
 
 menuSheet = (function(orig){
   return function(){
@@ -17616,6 +17620,7 @@ function estadoParaSincronizar(){
 let _espelhoEstado = null;                 // último conteúdo confirmado no banco
 
 async function enviarEstado(){
+  if(window.Sincro) return window.Sincro.enviar();                     // v151: com revisão e mescla
   if(!_sbLigado || !_jaBuscou || _enviando) return false;
   /* o render dispara muito; sem isto seriam dezenas de gravações
      idênticas. Só sobe o que de fato mudou. */
@@ -17637,6 +17642,7 @@ async function enviarEstado(){
 }
 
 async function buscarEstado(){
+  if(window.Sincro) return window.Sincro.buscar();                     // v151: chave por chave, nunca por cima
   if(!_sbLigado) return false;
   try{
     const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.${LINHA_ESTADO}&select=dados`,
@@ -31934,5 +31940,669 @@ addEventListener('click', e => {
     if(!e.target.closest('[data-ptok],[data-livreok]')) return;
     try { alinharComATela(); } catch(err){}
   }, true);
+})();
+</script>
+
+<style>
+/* v151 — o botão de atualizar passa a dizer a verdade sobre o banco:
+   ponto âmbar = há coisa aqui que ainda não subiu; vermelho = não subiu */
+#btAtualizar.pendente .pt{ opacity:1; background:var(--brass-500) }
+#btAtualizar.erro{ color:#E5484D; border-color:#E5484D }
+#btAtualizar.erro .pt{ opacity:1; background:#E5484D }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v151 — UM BANCO, UMA VERDADE.
+
+   O relato: "às vezes salva no banco, às vezes só aqui, às vezes o
+   comportamento muda". A auditoria achou o gargalo, e ele não era uma
+   função — era uma POLÍTICA: "quem grava por último vence", aplicada a
+   pacotes inteiros.
+
+   Três coisas se combinavam:
+
+   1. O pacote inteiro (`__estado__`) era gravado como um bloco e lido
+      como um bloco. A trava da v88 manda RELER antes de gravar quando a
+      aba ficou escondida — e a releitura APLICAVA o pacote do banco por
+      cima do que a pessoa acabou de mudar aqui. A mudança sumia da tela,
+      e o pulso seguinte mandava a versão sem ela para o banco. O dado
+      mais novo perdia para o mais velho, nos dois lados.
+
+   2. A carga da pauta ignorava a linha de um cliente que este aparelho
+      ainda não conhecia. Quando o cliente chegava (pelo `__estado__`,
+      2,6 s depois), a pauta dele aqui era VAZIA — e o primeiro salvar
+      mandava esse vazio por cima da pauta de verdade. Um aparelho novo,
+      ou um cliente criado no outro aparelho, apagava o trabalho.
+
+   3. Quase tudo que falhava, falhava em silêncio: `catch(e){}` em cada
+      gravação lateral, o `__estado__` sem selo nenhum, e "só neste
+      aparelho" decidido na abertura sem tentar de novo.
+
+   O que muda:
+
+   · Cada linha do banco carrega uma revisão (`dados.rev`). Gravar é um
+     PATCH que só passa se a revisão no banco for a que eu li. Se outro
+     aparelho gravou antes, o banco recusa, eu leio, MESCLO e tento de
+     novo. Nunca mais um pacote velho por cima de um novo.
+   · Mesclar é de três lados: o que eu vi por último, o que tenho, o que
+     chegou. Só eu mudei → fica o meu. Só lá mudou → entra o de lá. Os
+     dois mudaram → item por item (cards, tarefas, chaves), e no empate
+     vence o carimbo mais novo.
+   · Uma linha que chega antes de eu saber de quem é fica guardada e
+     entra na hora em que o cliente aparece — ANTES de qualquer escrita.
+     Nenhuma escrita acontece sem leitura da mesma linha.
+   · Toda falha tem cara: o selo do Cronograma, o ponto no botão de
+     atualizar, um aviso com o motivo (sessão vencida, política da tabela,
+     sem rede). "Salvo" só depois do 2xx. Sem rede, tenta de novo sozinho.
+   ================================================================== */
+(function(){
+  if(typeof SB !== 'object' || typeof S !== 'object' || typeof sbCab !== 'function'
+     || typeof estadoParaSincronizar !== 'function' || typeof aplicarEstado !== 'function'
+     || typeof sbAplicar !== 'function' || typeof sbEmpacotar !== 'function') return;
+
+  const CHAVE_SIN   = 'maestro-sincro-v1';
+  const CHAVE_BASES = 'maestro-sincro-bases-v1';
+  const LINHA = (typeof LINHA_ESTADO === 'string') ? LINHA_ESTADO : '__estado__';
+  /* estas chaves também descem de linhas laterais por relógio (v54, v81,
+     v113…): quando uma dessas cargas acabou de chegar, a mudança é do
+     banco, não da pessoa — não ganha carimbo */
+  const LATERAIS = new Set(['cliEdit','cliFora','agencia','ensaio','chat','mandala','cerebro','estudio']);
+  /* o aplicarEstado já sabe unir estas (v81, v88): passam sempre por ele */
+  const UNIAO_PROPRIA = new Set(['equipe','equipeFora','novos']);
+
+  /* estado de TELA não viaja: o mês do calendário, o modal aberto, o filtro,
+     as bandeiras de link. Ler isso do banco mudava a tela do outro aparelho. */
+  const SO_DAQUI = new Set(['viaLink','soVer','stEdit','editArt','estGravarT','estCronoT','cbGravar','mdGravar',
+    'enCatModal','enAnexAlvo','fdAberta','cbAberto','ptTipoAberto','ptFiltroAberto','ptMais','ptExpand','enComoAberto',
+    'pcPedindo','_confirmaPostagem','cvAtivo','mtId','rfId','ptMes','hjVista','hjCli','ptVista','ptVistaAuto','ptFiltro',
+    'ptRedes','ptTipos','envGrupo','enOrdem','enCli','enCli2','enCat','enResp','enSoMinhas','rtPer','cqNova','ncTipo',
+    'cliTipo','pcSel','menu','ptFmt','ptFmts','ptPlats','ptPilar','ptPilarEscolhido','ptDataEscolhida','ptCamp','ptResp',
+    'ptPorPlat','ptPorPlatSalvar','ptPorPlatHora','ptHerdado','ptImport','ptSemear','ptStoryCampos']);
+
+  const json  = v => { try{ return JSON.stringify(v === undefined ? null : v); }catch(e){ return null; } };
+  /* igual em conteúdo, mesmo com as chaves em outra ordem (o jsonb do
+     banco reordena): sem isto, cada abertura reescrevia todas as linhas */
+  const canon = v => {
+    if(Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
+    if(v && typeof v === 'object') return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}';
+    return JSON.stringify(v === undefined ? null : v);
+  };
+  const mesmoConteudo = (a, b) => {
+    if(a === b) return true;
+    if(a == null || b == null) return false;
+    try{ return canon(JSON.parse(a)) === canon(JSON.parse(b)); }catch(e){ return false; }
+  };
+  const clone = v => { try{ return JSON.parse(JSON.stringify(v)); }catch(e){ return v; } };
+  const enc   = s => encodeURIComponent(String(s));
+  const cab   = extra => Object.assign({}, sbCab(), extra || {});
+  const passageiro = k => (typeof PASSAGEIRO === 'object' && PASSAGEIRO.has(k) && k !== 'novos');
+  function hash(s){
+    if(s == null) return null;
+    let a = 0x811c9dc5, b = 0x050c5d1f;
+    for(let i = 0; i < s.length; i++){
+      const c = s.charCodeAt(i);
+      a = Math.imul(a ^ c, 0x01000193) >>> 0;
+      b = Math.imul(b ^ c, 0x01000197) >>> 0;
+    }
+    return a.toString(36) + '.' + b.toString(36);
+  }
+  const semRev = d => { if(!d || typeof d !== 'object') return d; const o = Object.assign({}, d); delete o.rev; return o; };
+  const sessaoAtiva = () => { try{ return !!(window.MaestroPorta && window.MaestroPorta.quem()); }catch(e){ return false; } };
+  const soLeitura = () => !!(S.viaLink || S.soVer);
+
+  /* ---------- 1. o estado da sincronia, num lugar só ---------- */
+  const Sin = {
+    fase:'ligando', motivo:null, quando:null,
+    lido:false,            // já li o __estado__ (ou confirmei que não existe)
+    rev:undefined,         // undefined = nunca li · 0 = linha sem revisão (legado) · n
+    base:null,             // o __estado__ como está no banco, por chave (memória)
+    hashes:{},             // e só o hash de cada chave, que sobrevive ao recarregar
+    carimbos:{},           // chave → quando mudou AQUI pela última vez
+    assin:{},              // assinatura por chave, para saber o que mudou desde a última olhada
+    linhas:{},             // cliente → { rev, hash, base }
+    brutas:{},             // cliente → dados, tudo que a última carga trouxe (mesmo de quem ainda não conheço)
+    carregando:0, cargaAte:0,
+    enviando:false, pendente:false, gravando:{}, pendenteCli:{},
+    tentativas:0, retomando:null, _tmRetoma:0, avisos:{}, _pend:false,
+  };
+  window.Sincro = Sin;
+
+  (function lerGuardado(){
+    try{
+      const g = JSON.parse(localStorage.getItem(CHAVE_SIN) || 'null');
+      if(g && typeof g === 'object'){
+        if(g.hashes && typeof g.hashes === 'object') Sin.hashes = g.hashes;
+        if(g.carimbos && typeof g.carimbos === 'object') Sin.carimbos = g.carimbos;
+        if(g.linhas && typeof g.linhas === 'object')
+          for(const [k, v] of Object.entries(g.linhas))
+            if(v && typeof v === 'object') Sin.linhas[k] = { rev:undefined, hash:v.hash, base:null };
+      }
+      const b = JSON.parse(localStorage.getItem(CHAVE_BASES) || 'null');
+      if(b && typeof b === 'object'){
+        if(b.estado && typeof b.estado === 'object') Sin.base = b.estado;
+        for(const [k, v] of Object.entries(b.linhas || {}))
+          if(v && typeof v === 'object'){ (Sin.linhas[k] || (Sin.linhas[k] = { rev:undefined })).base = v; }
+      }
+    }catch(e){}
+  })();
+
+  function guardar(){
+    try{
+      const linhas = {};
+      for(const [k, v] of Object.entries(Sin.linhas)) linhas[k] = { hash:v.hash };
+      localStorage.setItem(CHAVE_SIN, JSON.stringify({ hashes:Sin.hashes, carimbos:Sin.carimbos, linhas, quando:Date.now() }));
+      const bl = {};
+      for(const [k, v] of Object.entries(Sin.linhas)) if(v.base) bl[k] = v.base;
+      const comEstado = JSON.stringify({ estado:Sin.base || undefined, linhas:bl });
+      /* a base do pacote pode ser grande (fotos da equipe); acima do
+         razoável fica só o hash — que basta para a mescla por chave */
+      localStorage.setItem(CHAVE_BASES, comEstado.length < 1500000 ? comEstado : JSON.stringify({ linhas:bl }));
+    }catch(e){}
+  }
+
+  /* ---------- 2. carimbos: saber o que mudou AQUI, e quando ---------- */
+  function chavesSincro(){
+    try{ const e = estadoParaSincronizar(); for(const k of SO_DAQUI) delete e[k]; return e; }
+    catch(e){ return null; }
+  }
+  function carimbar(){
+    const e = chavesSincro(); if(!e) return;
+    const agora = Date.now();
+    const lateral = agora < Sin.cargaAte;
+    for(const k of new Set([...Object.keys(e), ...Object.keys(Sin.assin)])){
+      const j = json(e[k]);
+      if(Sin.assin[k] === j) continue;
+      const primeira = !(k in Sin.assin);
+      if(!primeira && !Sin.carregando && !(lateral && LATERAIS.has(k))) Sin.carimbos[k] = agora;
+      Sin.assin[k] = j;
+    }
+  }
+  function rebase(){
+    const e = chavesSincro(); if(!e) return;
+    for(const k of new Set([...Object.keys(e), ...Object.keys(Sin.assin)])) Sin.assin[k] = json(e[k]);
+  }
+
+  /* ---------- 3. a mescla de três lados ---------- */
+  const plano = o => !!o && typeof o === 'object' && !Array.isArray(o);
+  const comId = x => plano(x) && x.id !== undefined;
+  const listaComIds = a => Array.isArray(a) && a.length > 0 && a.every(comId);
+  function mescla3(base, local, remoto, prefer){
+    const lj = json(local), rj = json(remoto);
+    if(lj === rj) return local;
+    const bj = json(base);
+    if(rj === bj) return local;                       // só aqui mudou
+    if(lj === bj) return remoto;                      // só lá mudou
+    /* os dois mudaram */
+    if(Array.isArray(local) && Array.isArray(remoto) && (listaComIds(local) || listaComIds(remoto))
+       && local.every(comId) && remoto.every(comId)){
+      const B = new Map((Array.isArray(base) ? base : []).filter(comId).map(x => [x.id, x]));
+      const L = new Map(local.map(x => [x.id, x])), R = new Map(remoto.map(x => [x.id, x]));
+      const out = [];
+      for(const id of new Set([...R.keys(), ...L.keys()])){
+        const b = B.get(id), l = L.get(id), r = R.get(id);
+        if(l && r){
+          const pl = +(l.mod || l.movidoEm || 0), pr = +(r.mod || r.movidoEm || 0);
+          out.push(mescla3(b, l, r, pl === pr ? prefer : (pl > pr ? 'local' : 'remoto')));
+        }
+        else if(l){ if(b && json(b) === json(l)) continue; out.push(l); }   // lá apagou e eu não mexi → some; senão fica
+        else       { if(b && json(b) === json(r)) continue; out.push(r); }   // eu apaguei e lá não mexeu → some; senão volta
+      }
+      return out;
+    }
+    if(plano(local) && plano(remoto)){
+      const out = {};
+      const bb = plano(base) ? base : {};
+      for(const k of new Set([...Object.keys(remoto), ...Object.keys(local)])){
+        const b = bb[k], l = local[k], r = remoto[k];
+        const emL = k in local, emR = k in remoto;
+        if(emL && emR){
+          /* contadores de id nunca podem voltar: o maior vale */
+          if(k === 'prox' && typeof l === 'number' && typeof r === 'number'){ out[k] = Math.max(l, r); continue; }
+          out[k] = mescla3(b, l, r, prefer);
+        }
+        else if(emL){ if((k in bb) && json(b) === json(l)) continue; out[k] = l; }
+        else        { if((k in bb) && json(b) === json(r)) continue; out[k] = r; }
+      }
+      return out;
+    }
+    return prefer === 'local' ? local : remoto;
+  }
+
+  /* ---------- 4. o pacote inteiro (`__estado__`), chave por chave ---------- */
+  function mesclarEstado(linha){
+    const deLa  = (linha && plano(linha.s)) ? linha.s : {};
+    const carLa = (linha && plano(linha.carimbos)) ? linha.carimbos : {};
+    const quandoLa = (linha && +linha.quando) || 0;
+    carimbar();
+    const local = chavesSincro() || {};
+    const so = {};
+    for(const k of new Set([...Object.keys(deLa), ...Object.keys(local)])){
+      if(passageiro(k)) continue;
+      if(UNIAO_PROPRIA.has(k)){ if(k in deLa) so[k] = deLa[k]; continue; }
+      const rl = json(deLa[k]), ll = json(local[k]);
+      if(rl === ll) continue;
+      const temBase = Sin.base ? (k in Sin.base) : (Sin.hashes[k] !== undefined);
+      const igualBase = j => Sin.base ? (j === json(Sin.base[k])) : (hash(j) === Sin.hashes[k]);
+      const rIgual = temBase && igualBase(rl), lIgual = temBase && igualBase(ll);
+      if(rIgual && !lIgual) continue;                                            // só aqui mudou: fica o meu
+      if(lIgual || (!temBase && !Sin.carimbos[k])){ if(k in deLa) so[k] = deLa[k]; continue; }   // só lá mudou (ou nunca vi): entra
+      /* os dois mudaram: item por item quando dá; no empate, o carimbo mais novo */
+      const meu = +Sin.carimbos[k] || 0, dele = +carLa[k] || quandoLa;
+      if(Sin.base && (k in Sin.base) && (k in deLa)) so[k] = mescla3(Sin.base[k], local[k], deLa[k], meu > dele ? 'local' : 'remoto');
+      else if(meu > dele) continue;
+      else if(k in deLa) so[k] = deLa[k];
+    }
+    const chaves = Object.keys(so).filter(k => so[k] !== undefined);
+    if(chaves.length){
+      const sv = {}; chaves.forEach(k => { sv[k] = so[k]; });
+      Sin.carregando++;
+      try{ aplicarEstado(sv); }catch(e){}
+      finally{ Sin.carregando--; }
+      if(S.modal == null && !S.full){ try{ render(); }catch(e){} }
+    }
+    Sin.base = clone(deLa);
+    Sin.hashes = {};
+    for(const k of Object.keys(deLa)) Sin.hashes[k] = hash(json(deLa[k]));
+    Sin.rev = (linha && linha.rev !== undefined && linha.rev !== null && Number.isFinite(+linha.rev)) ? +linha.rev : 0;
+    for(const k of Object.keys(carLa)){
+      if((k in so) || json(local[k]) === json(deLa[k]))
+        Sin.carimbos[k] = Math.max(+Sin.carimbos[k] || 0, +carLa[k] || 0);
+    }
+    rebase();
+    Sin.lido = true;
+    /* o espelho: se agora estamos iguais ao banco, não há o que enviar */
+    const agora = chavesSincro() || {};
+    let igual = true;
+    for(const k of new Set([...Object.keys(agora), ...Object.keys(deLa)])){
+      if(passageiro(k)) continue;
+      if(json(agora[k]) !== json(deLa[k])){ igual = false; break; }
+    }
+    _espelhoEstado = igual ? json(agora) : null;
+    _jaBuscou = true;
+    return true;
+  }
+
+  /* ---------- 5. a linha de um cliente ---------- */
+  function aplicarLinha(cli, dados){
+    if(!plano(dados)) return false;
+    const pack = semRev(dados);
+    const L = Sin.linhas[cli] || (Sin.linhas[cli] = { rev:undefined });
+    let alvo = pack;
+    if(L.base && Array.isArray(S.pautas && S.pautas[cli])){
+      /* três lados: o que eu vi por último, o que tenho, o que chegou */
+      try{ alvo = mescla3(L.base, sbEmpacotar(cli), pack, 'remoto'); }catch(e){ alvo = pack; }
+    }
+    let ok = false;
+    Sin.carregando++;
+    try{ ok = !!sbAplicar(cli, alvo); }catch(e){ ok = false; }
+    finally{ Sin.carregando--; }
+    if(!ok) return false;
+    L.rev  = (dados.rev === undefined || dados.rev === null || !Number.isFinite(+dados.rev)) ? 0 : +dados.rev;
+    L.base = clone(pack);
+    L.hash = hash(json(pack));
+    sbEspelho[cli] = json(pack);
+    return true;
+  }
+  function aplicarLinhasPendentes(){
+    if(typeof CLIS !== 'function') return 0;
+    let n = 0;
+    for(const c of CLIS()){
+      if(sbEspelho[c.id] !== undefined || !Sin.brutas[c.id]) continue;
+      if(aplicarLinha(c.id, Sin.brutas[c.id])) n++;
+    }
+    if(n){ try{ render(); }catch(e){} }
+    return n;
+  }
+  /* um card que mudou desde a última vez que o banco o viu ganha `mod`:
+     é por ele que dois aparelhos que mexeram no mesmo card decidem */
+  function carimbarItens(cli, base){
+    if(!base || !Array.isArray(base.pauta) || Sin.carregando) return;
+    const B = new Map(base.pauta.filter(comId).map(p => [p.id, p]));
+    const sem = x => { const o = Object.assign({}, x); delete o.mod; return json(o); };
+    const agora = Date.now();
+    for(const p of (S.pautas[cli] || [])){
+      if(!comId(p)) continue;
+      const b = B.get(p.id);
+      if(!b){ if(!p.mod) p.mod = agora; continue; }
+      if(sem(b) !== sem(p)) p.mod = agora;
+    }
+  }
+
+  /* ---------- 6. escrever com revisão: só passa se o banco está como eu li ---------- */
+  async function escrever(cliente, dados, revVista){
+    const corpo = { dados, atualizado_em: new Date().toISOString() };
+    if(revVista === undefined){
+      /* nunca li esta linha: antes de qualquer coisa, ela existe? */
+      const g = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.${enc(cliente)}&select=dados`, { headers: cab() });
+      if(!g.ok) return { ok:false, status:g.status };
+      const [l] = await g.json();
+      if(l) return { conflito:true, linha:(l.dados === undefined ? null : l.dados) };
+      const r = await fetch(`${SB.url}/rest/v1/pauta`, { method:'POST',
+        headers: cab({ Prefer:'return=minimal' }), body: JSON.stringify(Object.assign({ cliente }, corpo)) });
+      if(r.status === 409) return { conflito:true };          // outro aparelho criou no meio, ou a v88 pediu leitura
+      return { ok:r.ok, status:r.status };
+    }
+    const filtro = revVista ? `dados->>rev=eq.${enc(revVista)}` : 'dados->>rev=is.null';
+    const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.${enc(cliente)}&${filtro}&select=cliente`, {
+      method:'PATCH', headers: cab({ Prefer:'return=representation' }), body: JSON.stringify(corpo) });
+    if(r.status === 409) return { conflito:true };            // a trava da v88: leia antes — e a leitura diz o motivo real
+    if(!r.ok) return { ok:false, status:r.status };
+    let n = 0;
+    try{ const j = await r.json(); n = Array.isArray(j) ? j.length : 1; }catch(e){ n = 0; }
+    if(n === 0) return { conflito:true };
+    return { ok:true, status:r.status };
+  }
+
+  /* ---------- 7. o que a interface diz ---------- */
+  const TEXTO = {
+    401: 'sua sessão venceu — entre de novo para continuar salvando',
+    403: 'o banco recusou (403): você entrou, mas a política da tabela não deixa gravar',
+    409: 'outro aparelho gravou antes — mesclando',
+  };
+  const motivoDe = status => TEXTO[status] || (status ? `o banco respondeu ${status}` : 'sem rede — vou tentar de novo sozinho');
+  function fase(f, motivo){
+    Sin.fase = f; Sin.motivo = motivo || null;
+    if(f === 'ok'){ Sin.quando = new Date(); Sin.tentativas = 0; }
+    pintar();
+  }
+  function avisar(m, cada){
+    const agora = Date.now();
+    if(cada && Sin.avisos[m] && agora - Sin.avisos[m] < cada) return;
+    Sin.avisos[m] = agora;
+    if(cada !== 0 && typeof toast === 'function') toast('Não salvou no banco: ' + m + '.');
+  }
+  function falhou(status, e){
+    const m = motivoDe(status);
+    fase(status === 401 ? 'semSessao' : (status ? 'erro' : 'semRede'), m);
+    try{ sbSelo('erro', m); }catch(x){}
+    avisar(m, status === 401 ? 0 : 45000);      // no 401 a porta já abre sozinha (v89)
+    if(!status || status >= 500) agendarRetomada();
+  }
+  function temPendencia(){
+    try{
+      if(Sin.lido && _espelhoEstado === null) return true;
+      if(_espelhoEstado !== null && _espelhoEstado !== json(chavesSincro())) return true;
+      if(typeof CLIS === 'function')
+        for(const c of CLIS()){
+          if(sbEspelho[c.id] === undefined) continue;
+          if(!mesmoConteudo(sbEspelho[c.id], json(sbEmpacotar(c.id)))) return true;
+        }
+    }catch(e){}
+    return false;
+  }
+  function pintar(){
+    const b = document.getElementById('btAtualizar'); if(!b) return;
+    const ruim = ['erro','semRede','semSessao'].includes(Sin.fase);
+    b.classList.toggle('erro', ruim);
+    b.classList.toggle('pendente', !ruim && !!Sin._pend);
+    if(ruim) b.title = (b.getAttribute('aria-label') || '') + ' — ' + (Sin.motivo || 'não salvou');
+    else if(Sin._pend) b.title = 'Há mudanças aqui que ainda não subiram para o banco';
+  }
+  setInterval(() => {
+    if(!_sbLigado || soLeitura()) return;
+    Sin._pend = temPendencia();
+    pintar();
+    /* algumas telas saem do render antes de agendar a gravação; o que
+       ficou para trás sobe daqui, sem depender de quem chamou */
+    if(Sin._pend && ['ok','pendente'].includes(Sin.fase) && !Sin.enviando
+       && !Object.values(Sin.gravando).some(Boolean) && Sin.lido){
+      try{ sbAgendar(); }catch(e){}
+      try{ enviarEstado(); }catch(e){}
+    }
+  }, 2000);
+
+  /* ---------- 8. tentar de novo, sozinho ---------- */
+  function agendarRetomada(){
+    if(soLeitura()) return;
+    clearTimeout(Sin._tmRetoma);
+    const espera = Math.min(60000, 4000 * Math.pow(2, Math.min(Sin.tentativas, 4)));
+    Sin.tentativas++;
+    Sin._tmRetoma = setTimeout(() => { retomar(); }, espera);
+  }
+  async function retomar(){
+    if(Sin.retomando) return Sin.retomando;
+    if(soLeitura() || !sessaoAtiva()) return false;
+    Sin.retomando = (async () => {
+      try{
+        if(!_sbLigado){
+          const ok = await sbCarregar();                    // a cadeia inteira, pelo nome
+          if(!ok){ agendarRetomada(); return false; }
+          if(typeof toast === 'function') toast('Reconectado ao banco.');
+        }
+        if(!(await buscarEstado())){ agendarRetomada(); return false; }
+        let tudo = true;
+        if(typeof CLIS === 'function') for(const c of CLIS()) tudo = (await sbGravar(c.id, true)) && tudo;
+        tudo = (await enviarEstado()) && tudo;
+        if(!tudo) agendarRetomada(); else { fase('ok'); try{ sbSelo('salvo'); }catch(e){} }
+        return tudo;
+      }catch(e){ agendarRetomada(); return false; }
+      finally{ Sin.retomando = null; }
+    })();
+    return Sin.retomando;
+  }
+  addEventListener('online', () => { Sin.tentativas = 0; retomar(); });
+  addEventListener('visibilitychange', () => {
+    if(document.visibilityState !== 'visible') return;
+    if(!_sbLigado || ['erro','semRede'].includes(Sin.fase)) retomar();
+  });
+
+  /* ---------- 9. as três operações, agora por aqui ---------- */
+  async function buscar(){
+    if(!_sbLigado) return false;
+    try{
+      /* barato: só a revisão. Se nada mudou lá, não há o que aplicar. */
+      if(Sin.lido && Sin.rev !== undefined){
+        const g = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.${enc(LINHA)}&select=rev:dados->>rev`, { headers: cab() });
+        if(!g.ok){ falhou(g.status); return false; }
+        const [l] = await g.json();
+        if(l){
+          const revLa = (l.rev === null || l.rev === undefined || !Number.isFinite(+l.rev)) ? 0 : +l.rev;
+          if(revLa === Sin.rev) return true;
+        } else Sin.rev = undefined;                        // a linha sumiu: a próxima escrita cria
+      }
+      const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.${enc(LINHA)}&select=dados`, { headers: cab() });
+      if(!r.ok){ falhou(r.status); return false; }
+      const [linha] = await r.json();
+      if(linha && plano(linha.dados) && plano(linha.dados.s)) mesclarEstado(linha.dados);
+      else { Sin.lido = true; Sin.rev = undefined; _jaBuscou = true; }
+      aplicarLinhasPendentes();
+      guardar();
+      if(Sin.pendente){ Sin.pendente = false; setTimeout(() => { try{ enviarEstado(); }catch(e){} }, 100); }
+      return true;
+    }catch(e){ falhou(0, e); return false; }
+  }
+
+  async function enviar(){
+    if(!_sbLigado || soLeitura()) return false;
+    if(!Sin.lido){ Sin.pendente = true; return false; }   // nunca escrevo o que não li
+    carimbar();
+    if(Sin.enviando){ Sin.pendente = true; return false; }
+    let local = chavesSincro(); if(!local) return false;
+    let corpoLocal = json(local);
+    if(corpoLocal === _espelhoEstado) return true;
+    Sin.enviando = true; _enviando = true;
+    fase('salvando');
+    try{
+      for(let t = 0; t < 4; t++){
+        const dados = { s: local, quando: Date.now(), versao: 151, rev: (Sin.rev || 0) + 1, carimbos: Sin.carimbos };
+        const r = await escrever(LINHA, dados, Sin.rev);
+        if(r.ok){
+          Sin.rev = dados.rev; _espelhoEstado = corpoLocal;
+          Sin.base = clone(local); Sin.hashes = {};
+          for(const k of Object.keys(local)) Sin.hashes[k] = hash(json(local[k]));
+          fase('ok'); guardar();
+          return true;
+        }
+        if(r.conflito){
+          if(r.linha && plano(r.linha.s)) mesclarEstado(r.linha);
+          else if(r.linha === null){ Sin.rev = undefined; Sin.lido = true; }
+          else if(!(await buscar())) return false;
+          local = chavesSincro(); corpoLocal = json(local);
+          if(corpoLocal === _espelhoEstado){ fase('ok'); return true; }
+          continue;
+        }
+        falhou(r.status); return false;
+      }
+      falhou(0); return false;
+    }catch(e){ falhou(0, e); return false; }
+    finally{
+      Sin.enviando = false; _enviando = false;
+      if(Sin.pendente){ Sin.pendente = false; setTimeout(() => { try{ enviarEstado(); }catch(e){} }, 80); }
+    }
+  }
+
+  async function gravar(cli, silencioso){
+    if(!_sbLigado || soLeitura()) return false;
+    /* uma linha que chegou antes de eu saber quem era o cliente entra agora — antes de qualquer escrita */
+    if(sbEspelho[cli] === undefined && Sin.brutas[cli]) aplicarLinha(cli, Sin.brutas[cli]);
+    const L = Sin.linhas[cli] || (Sin.linhas[cli] = { rev:undefined });
+    carimbarItens(cli, L.base);
+    let pack = sbEmpacotar(cli), corpo = json(pack);
+    if(mesmoConteudo(sbEspelho[cli], corpo)) return true;    // nada mudou
+    if(Sin.gravando[cli]){ Sin.pendenteCli[cli] = true; return false; }
+    Sin.gravando[cli] = true;
+    if(!silencioso) sbSelo('salvando');
+    fase('salvando');
+    try{
+      for(let t = 0; t < 4; t++){
+        const r = await escrever(cli, Object.assign({}, pack, { rev:(L.rev || 0) + 1 }), L.rev);
+        if(r.ok){
+          L.rev = (L.rev || 0) + 1; L.base = clone(pack); L.hash = hash(corpo); sbEspelho[cli] = corpo;
+          if(!silencioso) sbSelo('salvo');
+          fase('ok'); guardar();
+          return true;
+        }
+        if(r.conflito){
+          let deLa = r.linha;
+          if(deLa === undefined){
+            const g = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.${enc(cli)}&select=dados`, { headers: cab() });
+            if(!g.ok){ falhou(g.status); return false; }
+            const [l] = await g.json(); deLa = l ? (l.dados === undefined ? null : l.dados) : null;
+          }
+          if(deLa) aplicarLinha(cli, deLa); else L.rev = undefined;      // sumiu: a próxima tentativa cria
+          carimbarItens(cli, L.base);
+          pack = sbEmpacotar(cli); corpo = json(pack);
+          if(mesmoConteudo(sbEspelho[cli], corpo)){ if(!silencioso) sbSelo('salvo'); fase('ok'); return true; }
+          continue;
+        }
+        falhou(r.status); return false;
+      }
+      falhou(0); return false;
+    }catch(e){ falhou(0, e); return false; }
+    finally{
+      Sin.gravando[cli] = false;
+      if(Sin.pendenteCli[cli]){ Sin.pendenteCli[cli] = false; setTimeout(() => { try{ sbGravar(cli, true); }catch(e){} }, 80); }
+    }
+  }
+
+  Sin.aplicarLinha = aplicarLinha;
+  Sin.buscar = buscar; Sin.enviar = enviar; Sin.gravar = gravar;
+  Sin.mescla3 = mescla3; Sin.carimbar = carimbar; Sin.retomar = retomar;
+  Sin.temPendencia = temPendencia;
+  Sin.relatorio = () => ({ fase:Sin.fase, motivo:Sin.motivo, lido:Sin.lido, rev:Sin.rev, ligado:_sbLigado,
+    pendente:temPendencia(), linhas:Object.fromEntries(Object.entries(Sin.linhas).map(([k, v]) => [k, v.rev])) });
+
+  /* ---------- 10. a carga: uma cadeia só, e o pacote entra logo depois ---------- */
+  let _carga = null;
+  sbCarregar = (function(orig){
+    return function(){
+      if(_carga) return _carga;                   // duas aberturas ao mesmo tempo viram uma
+      const args = arguments, self = this;
+      carimbar();
+      const antes = chavesSincro();               // o que eu tinha antes de a carga mexer
+      Sin.carregando++;
+      _carga = (async () => {
+        let ok = false;
+        try{
+          try{ ok = await orig.apply(self, args); }
+          catch(e){ ok = false; }
+          /* as cargas laterais (__config__, __chat__…) substituem a chave
+             inteira; o que era meu e ainda não tinha subido voltaria para
+             trás. Três lados aqui também. */
+          if(ok && Sin.base && antes){
+            for(const k of LATERAIS){
+              const a = json(antes[k]), b = json(Sin.base[k]), d = json(S[k]);
+              if(a === b || a === d) continue;
+              try{ S[k] = mescla3(Sin.base[k], antes[k], S[k], 'local'); }catch(e){}
+            }
+          }
+          rebase();                               // o que a cadeia trouxe é do banco, não da pessoa
+          if(ok){
+            const est = Sin.brutas[LINHA];
+            if(est && plano(est.s)) mesclarEstado(est);
+            await buscarEstado();                 // confirma a revisão e marca a leitura (v88)
+            aplicarLinhasPendentes();
+            rebase(); guardar();
+            const pend = temPendencia();
+            fase(pend ? 'pendente' : 'ok');
+            /* a carga original pinta "salvo" por ter LIDO; se há coisa
+               daqui que não subiu, o selo não pode dizer isso */
+            if(pend){ try{ sbSelo('erro', 'há mudanças daqui que ainda não subiram'); }catch(e){} }
+          } else if(sessaoAtiva()) agendarRetomada();
+        }catch(e){}
+        finally{ Sin.carregando--; }
+        return ok;
+      })();
+      _carga.finally(() => { _carga = null; });
+      return _carga;
+    };
+  })(sbCarregar);
+
+  /* o botão redondo dizia "Atualizado com os outros aparelhos" lendo só o
+     pacote; agora relê as linhas por cliente também, e se sobrou coisa
+     sem subir, diz */
+  if(typeof atualizarAgora === 'function'){
+    atualizarAgora = (function(orig){
+      return async function(){
+        const r = await orig.apply(this, arguments);
+        try{
+          if(_sbLigado && !soLeitura()){
+            await sbCarregar();
+            if(['erro','semRede','semSessao'].includes(Sin.fase) && typeof toast === 'function')
+              toast('Ainda há coisa daqui sem subir: ' + (Sin.motivo || 'não salvou') + '.');
+          }
+        }catch(e){}
+        return r;
+      };
+    })(atualizarAgora);
+  }
+
+  /* clientes que chegam pelo pacote trazem a pauta que já estava guardada */
+  aplicarEstado = (function(orig){
+    return function(){
+      const n = orig.apply(this, arguments);
+      try{ aplicarLinhasPendentes(); }catch(e){}
+      return n;
+    };
+  })(aplicarEstado);
+
+  /* uma carga lateral acabou de chegar: o que mudar nessas chaves nos
+     próximos segundos é do banco, não da pessoa */
+  const _fetchV151 = window.fetch.bind(window);
+  window.fetch = async function(u, o){
+    const r = await _fetchV151(u, o);
+    try{
+      const url = String((u && u.url) || u || '');
+      const met = String((o && o.method) || (u && u.method) || 'GET').toUpperCase();
+      if(met === 'GET' && r.ok && /\/rest\/v1\/pauta\?cliente=eq\.__(config|chat|mandala|cerebro|estudio)__/.test(url))
+        Sin.cargaAte = Date.now() + 3000;
+    }catch(e){}
+    return r;
+  };
+
+  /* ids de card nasciam de um contador posicional, igual em todo aparelho:
+     dois cards criados sem sincronizar no meio ganhavam o MESMO id e a
+     mescla os tomava por um só. O contador passa a nascer do relógio —
+     e volta a ele depois de cada carga, para não continuar do mesmo
+     número que o outro aparelho. */
+  const reancorarId = () => { try{ if(typeof _pid === 'number') _pid = Math.max(_pid, Date.now()); }catch(e){} };
+  reancorarId();
+  sbAplicar = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); reancorarId(); return r; };
+  })(sbAplicar);
+
+  carimbar();                                     // a linha de base: daqui em diante, mudança é da pessoa
+  pintar();
 })();
 </script>

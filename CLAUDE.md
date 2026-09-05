@@ -4,7 +4,7 @@ Version: 0.5
 Status: Implementação — blocos 1, 2, 3 e 5 da API prontos, verificados por HTTP
         · D-080 resolvida (a fase substitui o status): blocos 4, 6, 7 e 8 liberados
 Codename: Project Symphony
-Última atualização: 2026-08-30
+Última atualização: 2026-09-05
 
 > **Retomando o projeto? Leia [`docs/HANDOFF.md`](docs/HANDOFF.md) primeiro.**
 > Ele é o mapa: estado do código, o que já foi verificado, o que está aberto
@@ -279,8 +279,14 @@ enfileiradas não existe (o protótipo tem aviso dentro do produto, nada de e-ma
 
 **Aberto e bloqueante:** D-024 — INPI e domínio. Rodada 3 do teste com clientes.
 **Fechado (4 set):** a RLS do Supabase. Sem login a API responde `[]`; logado, a
-plataforma carrega. Falta confirmar a gravação pelo selo do Cronograma.
-**Aberto e do founder:** as políticas do bucket `midia` (Storage).
+plataforma carrega.
+**Fechado (5 set, v151):** a inconsistência de dados entre aparelhos. Cada
+linha do banco tem revisão (`dados.rev`), gravar é PATCH condicional, conflito
+mescla de três lados, falha tem cara. Auditoria e verificação em
+`docs/ENGINEERING/PERSISTENCIA_AUDITORIA_2026-09.md`.
+**Aberto e do founder:** as políticas do bucket `midia` (Storage); os links
+`?ver=`/`?aprovar=` (anônimos) não enxergam o banco desde a RLS — precisa de
+RPC no servidor.
 Revisão de segurança de setembro (o que já foi fechado no código e o que falta):
 `docs/ENGINEERING/SEGURANCA_REVISAO_2026-09.md`.
 
