@@ -21,24 +21,30 @@
    Aqui o palco fica no escuro até a cortina estar pendurada. */
 html.abrindo #root, html.abrindo .ctx, html.abrindo #layer{ visibility:hidden }</style>
 <script>
-/* v147 — A ABERTURA É DE CHEGAR, NÃO DE VOLTAR.
-   A cortina com a logo era a primeira coisa a cada recarregamento — e
-   agora que cada tela tem endereço próprio, recarregar virou rotina.
-   Ela passa a tocar UMA VEZ por aparelho: na primeira visita. Depois
-   disso, quem entra já entra na casa. Para rever, é só abrir com
-   #abertura no fim do endereço. */
+/* v155 — A CORTINA SAI DE CENA.
+
+   Histórico curto: a v18 fez a abertura; a v137 escondeu a casa até a
+   cortina estar pendurada, para não haver corte seco; a v147 passou a
+   tocá-la uma vez por aparelho. Ainda assim o fundador viu a homepage
+   PISCANDO — e o motivo é justamente o que a v137 introduziu: enquanto
+   `abrindo` está no <html>, `#root`, `.ctx` e `#layer` ficam
+   invisíveis. Se a cortina demora, falha, ou o aparelho apagou o
+   `localStorage` (Safari faz isso sozinho, e a navegação privada nasce
+   sempre "primeira visita"), a casa fica escondida e aparece de repente:
+   um piscar, a cada abertura.
+
+   Uma animação que só se vê uma vez não paga uma tela que pisca todo
+   dia. Ela sai do caminho de todo mundo: nada de `abrindo`, nada de
+   cortina, a casa aparece no primeiro quadro.
+
+   O desenho continua no arquivo e continua alcançável de propósito, por
+   quem quiser mostrá-lo: `#abertura` no fim do endereço. Só não acontece
+   mais sozinho. */
 (function(){
-  var vista = false;
-  try{ vista = localStorage.getItem('maestro-abertura-v1') === 'vista'; }catch(e){}
   var forcada = location.hash === '#abertura';
-  window.MAESTRO_ABRE = forcada || !vista;
-  try{
-    if(window.MAESTRO_ABRE && !forcada && !matchMedia('(prefers-reduced-motion: reduce)').matches){
-      document.documentElement.classList.add('abrindo');
-      /* rede de segurança: se a cortina não subir, a casa aparece assim mesmo */
-      setTimeout(function(){ document.documentElement.classList.remove('abrindo'); }, 4000);
-    }
-  }catch(e){}
+  window.MAESTRO_ABRE = forcada;
+  /* a classe que escondia a casa nunca mais entra sozinha */
+  try{ document.documentElement.classList.remove('abrindo'); }catch(e){}
 })();</script>
 <title>Maestro</title>
 <style>
@@ -15843,7 +15849,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v154 · 5 set · a peça final, no tamanho de ver';
+const VERSAO_PROTOTIPO = 'v155 · 5 set · a cortina sai de cena';
 
 menuSheet = (function(orig){
   return function(){
