@@ -1196,15 +1196,14 @@ classes 9 e 42, e adotar `usemaestro.com` ou `maestro.studio`.
 
 **Rodada 3 do teste** com clientes reais.
 
-**Colar um SQL no Supabase: `docs/ENGINEERING/links-anonimos.sql`.** É o que
-faz os links `?aprovar=` e `?ver=` voltarem a abrir depois da RLS, e a decisão
-do cliente voltar ao banco. O código já está pronto e verificado (v152);
-enquanto o SQL não roda, o app não quebra — só não abre pelo link. Porquê e
-como conferir: `docs/ENGINEERING/LINKS_ANONIMOS.md`.
+~~Colar o SQL dos links no Supabase~~ — **feito em 5 de setembro.** As três
+funções estão no banco; os links `?aprovar=` e `?ver=` voltam a abrir e a
+decisão do cliente volta. Porquê e como conferir:
+`docs/ENGINEERING/LINKS_ANONIMOS.md`.
 
 ### Produto e engenharia
 
-- **Links anônimos (v152, 5 set): fechados no código.** Três funções
+- **Links anônimos (v152, 5 set): fechados, e o SQL já rodou no Supabase.** Três funções
   `security definer` (`maestro_link_lote`, `maestro_link_card`,
   `maestro_link_decidir`) substituem a leitura direta da tabela para quem
   chega por link, e a decisão do cliente volta ao banco com revisão e

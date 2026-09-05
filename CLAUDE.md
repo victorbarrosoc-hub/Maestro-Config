@@ -286,11 +286,9 @@ mescla de três lados, falha tem cara. Auditoria e verificação em
 `docs/ENGINEERING/PERSISTENCIA_AUDITORIA_2026-09.md`.
 **Fechado (5 set, v152):** os links `?aprovar=` e `?ver=` (anônimos) voltam a
 abrir por três funções `security definer`, e a decisão do cliente volta ao
-banco. Falta o founder colar `docs/ENGINEERING/links-anonimos.sql` no Supabase
-— até lá o app não quebra, só não abre. Detalhe em
-`docs/ENGINEERING/LINKS_ANONIMOS.md`.
-**Aberto e do founder:** as políticas do bucket `midia` (Storage) e o SQL dos
-links acima.
+banco. **O founder rodou o SQL no Supabase em 5 de setembro** (`Success`), então
+a porta está de pé. Detalhe em `docs/ENGINEERING/LINKS_ANONIMOS.md`.
+**Aberto e do founder:** as políticas do bucket `midia` (Storage).
 Revisão de segurança de setembro (o que já foi fechado no código e o que falta):
 `docs/ENGINEERING/SEGURANCA_REVISAO_2026-09.md`.
 
