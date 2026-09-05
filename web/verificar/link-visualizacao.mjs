@@ -25,7 +25,11 @@ const rotear = async pg => pg.route('https://tgrbmdsootnewjqpmeii.supabase.co/**
   if(u.includes('/auth/v1/token'))
     return r.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ access_token: 'token-teste', refresh_token: 'ref', expires_in: 3600, user: { email: 'victorbarrosoc@gmail.com' } }) });
-  if(r.request().method() === 'POST'){ try{ gravacoes.push(JSON.parse(r.request().postData() || '{}')); }catch(e){} }
+  /* v151: a gravação passou a ser PATCH com o cliente na URL (revisão por linha) */
+  if(r.request().method() === 'POST' || r.request().method() === 'PATCH'){
+    try{ const g = JSON.parse(r.request().postData() || '{}');
+      if(!g.cliente){ const m = /cliente=eq\.([^&]+)/.exec(u); if(m) g.cliente = decodeURIComponent(m[1]); }
+      gravacoes.push(g); }catch(e){} }
   r.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
 });
 
