@@ -1,6 +1,6 @@
 # Os links de aprovação com a RLS fechada
 
-Status: **código pronto e verificado (v152)** · falta o founder rodar um SQL
+Status: **de pé** — código verificado (v152) e o SQL rodado no Supabase
 Data: 5 de setembro de 2026
 
 ---
@@ -63,9 +63,11 @@ Cada gravação **sobe a revisão da linha** (`dados.rev`) e carimba o card
 com a hora (`mod`). É o que faz o motor de sincronia da v151, do lado da
 agência, perceber a decisão e preferi-la a uma edição mais velha.
 
-## 3. O que o founder precisa fazer
+## 3. O que o founder fez (5 de setembro)
 
-Uma vez, no SQL Editor do Supabase:
+Rodou o arquivo abaixo no SQL Editor do Supabase, uma vez, e o editor
+respondeu `Success`. Fica registrado porque é o passo a refazer se o projeto
+do Supabase for recriado do zero:
 
 ```
 cole e rode  docs/ENGINEERING/links-anonimos.sql
@@ -81,9 +83,10 @@ Para conferir que pegou, no mesmo editor:
 select public.maestro_link_lote('n0', 'uma-chave-que-nao-existe');   -- null
 ```
 
-Depois é só abrir um link de aprovação no celular. Antes de rodar o SQL o
-app não quebra: ele bate na porta, vê que ela não existe e segue como
-antes.
+Antes de rodar o SQL o app não quebra: ele bate na porta, vê que ela não
+existe e segue como antes. Foi o que aconteceu na primeira tentativa —
+`ERROR 42883: function does not exist` — porque a conferência foi rodada
+antes do arquivo. Primeiro o arquivo, depois a conferência.
 
 ## 4. Como foi verificado
 

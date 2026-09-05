@@ -32,17 +32,15 @@ O que depende do founder está marcado.
    aquele cliente ou aquele card — em vez de mandar a tabela ao navegador e
    filtrar lá. A decisão do cliente também volta por lá, com fase, campos e
    histórico limitados. Provado contra um PostgreSQL 16 de verdade e no
-   navegador: `docs/ENGINEERING/LINKS_ANONIMOS.md`. **Falta o founder colar
-   `docs/ENGINEERING/links-anonimos.sql` no Supabase.**
+   navegador: `docs/ENGINEERING/LINKS_ANONIMOS.md`. O founder rodou o SQL no
+   Supabase em 5 de setembro — a porta está de pé.
 
 ## Do founder — continua aberto
 1. **Políticas do bucket `midia`**: gravação só para `authenticated`, e sem
    `x-upsert` para quem não é dono do caminho. Enquanto a leitura do bucket
    continuar pública, a arte carrega nos links; ao fechá-la, os links precisam
    de URL assinada (ainda não têm).
-2. **Colar `docs/ENGINEERING/links-anonimos.sql`** no SQL Editor — o código do
-   app já espera por ele e não quebra enquanto não roda.
-3. Limite de tentativas na porta dos links (hoje não há contador; a chave tem
+2. Limite de tentativas na porta dos links (hoje não há contador; a chave tem
    22 caracteres de `crypto`, o que torna a busca inviável, mas um limite por
    IP seria mais honesto).
 
