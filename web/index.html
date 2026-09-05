@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-05 17:08 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-05 23:17 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -7520,11 +7520,30 @@ const PAUTA_EJUP_V2 = [
     'Leia o artigo completo no blog da EJUP.')
 ];
 
-/* substitui a pauta da EJUP pela corrigida */
-S.pautas[ejupId()] = PAUTA_EJUP_V2;
-try{ const g = JSON.parse(localStorage.getItem(CHAVE)||'null');
-  if(g && g.pautas){ g.pautas[ejupId()] = PAUTA_EJUP_V2;
-    localStorage.setItem(CHAVE, JSON.stringify(g)); } }catch(e){}
+/* A SEMENTE SÓ SEMEIA TERRA VAZIA (v156).
+
+   Estas quatro linhas eram, sozinhas, a causa da perda de dados que o
+   fundador relatou duas vezes: elas RESCREVIAM a pauta da EJUP a cada
+   abertura da página — e ainda regravavam o localStorage por cima do
+   trabalho guardado. Tudo que ele tinha marcado como postado voltava a
+   rascunho; tudo que tinha apagado reaparecia; e o motor de sincronia,
+   fazendo o seu papel, subia essa versão de demonstração para o banco.
+   Onze cards de volta ao Plan é exatamente o tamanho desta semente.
+
+   Semente é para aparelho vazio. Se já existe pauta aqui — de uma visita
+   anterior ou do banco —, ela não tem o que fazer. */
+(function(){
+  const id = ejupId();
+  const jaTem = Array.isArray(S.pautas[id]) && S.pautas[id].length > 0;
+  const guardadoTem = (() => {
+    try{
+      const g = JSON.parse(localStorage.getItem(CHAVE) || 'null');
+      return !!(g && g.pautas && Array.isArray(g.pautas[id]) && g.pautas[id].length);
+    }catch(e){ return false; }
+  })();
+  if(jaTem || guardadoTem) return;          /* já há trabalho: a semente não entra */
+  S.pautas[id] = PAUTA_EJUP_V2;
+})();
 </script>
 <script>
 "use strict";
@@ -15917,7 +15936,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v155 · 5 set · a cortina sai de cena';
+const VERSAO_PROTOTIPO = 'v156 · 5 set · a semente não escreve por cima';
 
 menuSheet = (function(orig){
   return function(){
@@ -32007,7 +32026,9 @@ addEventListener('click', e => {
      || typeof estadoParaSincronizar !== 'function' || typeof aplicarEstado !== 'function'
      || typeof sbAplicar !== 'function' || typeof sbEmpacotar !== 'function') return;
 
-  const CHAVE_SIN   = 'maestro-sincro-v1';
+  /* v156: as assinaturas passaram a ser por conteúdo canônico; as antigas,
+     por texto, não valem mais — daí a chave nova */
+  const CHAVE_SIN   = 'maestro-sincro-v2';
   const CHAVE_BASES = 'maestro-sincro-bases-v1';
   const LINHA = (typeof LINHA_ESTADO === 'string') ? LINHA_ESTADO : '__estado__';
   /* estas chaves também descem de linhas laterais por relógio (v54, v81,
@@ -32133,12 +32154,36 @@ addEventListener('click', e => {
   const plano = o => !!o && typeof o === 'object' && !Array.isArray(o);
   const comId = x => plano(x) && x.id !== undefined;
   const listaComIds = a => Array.isArray(a) && a.length > 0 && a.every(comId);
+
+  /* v156 — POR QUE ISTO EXISTE, e é a correção mais importante do motor.
+     A mescla perguntava "mudou?" comparando TEXTO (`JSON.stringify`).
+     Duas coisas quebram essa pergunta:
+     · o jsonb do Postgres devolve as chaves em outra ordem — mesmo
+       conteúdo, texto diferente;
+     · o próprio motor grava um carimbo `mod` nos cards daqui. Depois
+       disso o card local nunca mais é idêntico ao da base.
+     Com a pergunta quebrada, a regra "se eu não mexi, honro a remoção"
+     nunca disparava: TODO card apagado voltava, e um aparelho com dado
+     velho, mas carimbado agora, vencia quem tinha o dado novo. Foi o que
+     o fundador viu: onze cards de volta ao rascunho, e cards apagados
+     ressuscitando.
+     Agora a pergunta é sobre conteúdo, sem o carimbo e sem depender da
+     ordem das chaves. */
+  const semMarca = v => {
+    if(Array.isArray(v)) return v.map(semMarca);
+    if(v && typeof v === 'object'){
+      const o = {};
+      for(const k of Object.keys(v)) if(k !== 'mod') o[k] = semMarca(v[k]);
+      return o;
+    }
+    return v;
+  };
+  const igual = (a, b) => canon(semMarca(a)) === canon(semMarca(b));
+
   function mescla3(base, local, remoto, prefer){
-    const lj = json(local), rj = json(remoto);
-    if(lj === rj) return local;
-    const bj = json(base);
-    if(rj === bj) return local;                       // só aqui mudou
-    if(lj === bj) return remoto;                      // só lá mudou
+    if(igual(local, remoto)) return local;
+    if(igual(remoto, base)) return local;             // só aqui mudou
+    if(igual(local, base)) return remoto;             // só lá mudou
     /* os dois mudaram */
     if(Array.isArray(local) && Array.isArray(remoto) && (listaComIds(local) || listaComIds(remoto))
        && local.every(comId) && remoto.every(comId)){
@@ -32151,14 +32196,22 @@ addEventListener('click', e => {
           const pl = +(l.mod || l.movidoEm || 0), pr = +(r.mod || r.movidoEm || 0);
           out.push(mescla3(b, l, r, pl === pr ? prefer : (pl > pr ? 'local' : 'remoto')));
         }
-        else if(l){ if(b && json(b) === json(l)) continue; out.push(l); }   // lá apagou e eu não mexi → some; senão fica
-        else       { if(b && json(b) === json(r)) continue; out.push(r); }   // eu apaguei e lá não mexeu → some; senão volta
+        else if(l){ if(b && igual(b, l)) continue; out.push(l); }   // lá apagou e eu não mexi → some; senão fica
+        else       { if(b && igual(b, r)) continue; out.push(r); }   // eu apaguei e lá não mexeu → some; senão volta
       }
       return out;
     }
     if(plano(local) && plano(remoto)){
       const out = {};
       const bb = plano(base) ? base : {};
+      /* v156 — quando o objeto é um ITEM (tem id: um card, uma tarefa),
+         apagar um campo "porque o outro lado não tem" é o que fazia a
+         `fase` sumir — e card sem fase lê como rascunho. Num item, a
+         remoção de campo só vale para o lado que a mescla escolheu como
+         mais novo; e estes campos, que dizem em que ponto do fluxo o
+         card está, nunca somem por ausência. */
+      const ehItem = comId(local) || comId(remoto);
+      const DO_CICLO = ['fase','feito','st','postadoEm','postadoPor','agendadoEm','enviadoEm'];
       for(const k of new Set([...Object.keys(remoto), ...Object.keys(local)])){
         const b = bb[k], l = local[k], r = remoto[k];
         const emL = k in local, emR = k in remoto;
@@ -32167,8 +32220,16 @@ addEventListener('click', e => {
           if(k === 'prox' && typeof l === 'number' && typeof r === 'number'){ out[k] = Math.max(l, r); continue; }
           out[k] = mescla3(b, l, r, prefer);
         }
-        else if(emL){ if((k in bb) && json(b) === json(l)) continue; out[k] = l; }
-        else        { if((k in bb) && json(b) === json(r)) continue; out[k] = r; }
+        else if(emL){
+          const somenteSeEuMandar = ehItem && (DO_CICLO.includes(k) || prefer !== 'remoto');
+          if((k in bb) && igual(b, l) && !somenteSeEuMandar) continue;
+          out[k] = l;
+        }
+        else {
+          const somenteSeEleMandar = ehItem && (DO_CICLO.includes(k) || prefer !== 'local');
+          if((k in bb) && igual(b, r) && !somenteSeEleMandar) continue;
+          out[k] = r;
+        }
       }
       return out;
     }
@@ -32239,6 +32300,20 @@ addEventListener('click', e => {
       /* três lados: o que eu vi por último, o que tenho, o que chegou */
       try{ alvo = mescla3(L.base, sbEmpacotar(cli), pack, 'remoto'); }catch(e){ alvo = pack; }
     }
+    /* v156 — QUEM FOI PARA A LIXEIRA NÃO VOLTA.
+       Deduzir "foi apagado" da ausência é frágil: basta um lado estar
+       atrasado para o card reaparecer. A casa já guarda a prova — o card
+       apagado vai inteiro para a lixeira do cliente, e a lixeira viaja
+       na mesma linha. Então a lixeira MESCLADA manda: id que está nela
+       não entra na pauta. Restaurar tira o item da lixeira, e aí ele
+       volta pelo caminho de sempre. */
+    try{
+      const naLixeira = new Set((alvo && Array.isArray(alvo.lixeira) ? alvo.lixeira : [])
+        .map(e => e && e.item && e.item.id).filter(v => v !== undefined && v !== null));
+      if(naLixeira.size && Array.isArray(alvo.pauta))
+        alvo = Object.assign({}, alvo, { pauta: alvo.pauta.filter(p => !naLixeira.has(p.id)) });
+    }catch(e){}
+
     let ok = false;
     Sin.carregando++;
     try{ ok = !!sbAplicar(cli, alvo); }catch(e){ ok = false; }
@@ -32265,13 +32340,15 @@ addEventListener('click', e => {
   function carimbarItens(cli, base){
     if(!base || !Array.isArray(base.pauta) || Sin.carregando) return;
     const B = new Map(base.pauta.filter(comId).map(p => [p.id, p]));
-    const sem = x => { const o = Object.assign({}, x); delete o.mod; return json(o); };
     const agora = Date.now();
     for(const p of (S.pautas[cli] || [])){
       if(!comId(p)) continue;
       const b = B.get(p.id);
       if(!b){ if(!p.mod) p.mod = agora; continue; }
-      if(sem(b) !== sem(p)) p.mod = agora;
+      /* v156: por conteúdo, sem o carimbo e sem a ordem das chaves —
+         senão todo card "mudava" a cada carga e o carimbo virava ruído
+         que fazia dado velho vencer dado novo */
+      if(!igual(b, p)) p.mod = agora;
     }
   }
 
@@ -32607,6 +32684,11 @@ addEventListener('click', e => {
   sbAplicar = (function(orig){
     return function(){ const r = orig.apply(this, arguments); reancorarId(); return r; };
   })(sbAplicar);
+
+  /* v156 — a lixeira é a prova de que um card foi apagado, e prova com
+     dois donos não é prova: ela viajava também no pacote `__estado__`,
+     onde outra regra a mesclava. Agora mora só na linha do cliente. */
+  try{ if(typeof PASSAGEIRO === 'object' && PASSAGEIRO.add) PASSAGEIRO.add('lixeira'); }catch(e){}
 
   carimbar();                                     // a linha de base: daqui em diante, mudança é da pessoa
   pintar();
