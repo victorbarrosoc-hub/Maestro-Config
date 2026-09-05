@@ -83,7 +83,8 @@ const so = h => String(h || '').replace(/\s+/g, ' ').trim();
     const box = d.querySelector('.modalbox');
     box.querySelector('.modalrow')?.remove();
     box.querySelectorAll('[data-mtabrir],[data-rfabrir]').forEach(x => x.remove());
-    return { texto: box.textContent, blocos: box.querySelectorAll('.vzBloco').length };
+    return { texto: box.textContent, blocos: box.querySelectorAll('.vzBloco').length,
+             caixas: [...box.querySelectorAll('.vzBloco')].map(b => b.textContent.replace(/\s+/g, ' ').trim()) };
   }, [cli, id]);
 
   /* o que o Ensaio mostra ao abrir a tarefa */
@@ -91,17 +92,17 @@ const so = h => String(h || '').replace(/\s+/g, ' ').trim();
     S.modal = modalTarefa(tid); renderLayer();
     const el = document.querySelector('.enPost');
     return el ? { texto: el.textContent, blocos: el.querySelectorAll('.vzBloco').length,
-                  temSelo: !!el.querySelector('.enPostSelo') } : null;
+                  temSelo: !!el.querySelector('.enPostSelo'),
+                  caixas: [...el.querySelectorAll('.vzBloco')].map(b => b.textContent.replace(/\s+/g, ' ').trim()) } : null;
   }, tid);
 
   checa('1.1 a tarefa em Act mostra o post, e não a ficha curta', !!noEnsaio, noEnsaio);
   checa('1.2 os mesmos blocos do Cronograma, na mesma quantidade',
         noEnsaio && noEnsaio.blocos === noCronograma.blocos,
         { ensaio: noEnsaio && noEnsaio.blocos, cronograma: noCronograma.blocos });
-  checa('1.3 e o mesmo conteúdo, palavra por palavra',
-        noEnsaio && so(noEnsaio.texto).includes(so(noCronograma.texto).slice(0, 400)),
-        { ensaio: so(noEnsaio && noEnsaio.texto).slice(0, 200),
-          cronograma: so(noCronograma.texto).slice(0, 200) });
+  checa('1.3 e o mesmo conteúdo em cada caixa, palavra por palavra',
+        noEnsaio && JSON.stringify(noEnsaio.caixas) === JSON.stringify(noCronograma.caixas),
+        { ensaio: noEnsaio && noEnsaio.caixas, cronograma: noCronograma.caixas });
   checa('1.4 com a data, a hora e as plataformas do agendamento',
         noEnsaio && /12 de setembro|12\/09/.test(noEnsaio.texto) && noEnsaio.texto.includes('18:00'),
         so(noEnsaio && noEnsaio.texto).slice(0, 160));
@@ -222,6 +223,95 @@ const so = h => String(h || '').replace(/\s+/g, ' ').trim();
   checa('5.3 a janela rola em vez de cortar', medida && medida.rola, medida);
   checa('5.4 e a página não rola de lado', medida && !medida.corpoRolaDeLado, medida);
   checa('5.5 sem erro de página', erros.length === 0, erros);
+  await pag.close();
+}
+
+/* =====================================================================
+   6. a peça final aparece no tamanho de ver — e abre em tela cheia
+   ================================================================== */
+cenarios6: {
+  const { pag, erros } = await abrir({ width: 390, height: 844 });
+  const { id, tid } = await semear(pag);
+  await pag.evaluate(([id, tid]) => {
+    const png = c => 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350">
+        <rect width="1080" height="1350" fill="${c}"/></svg>`);
+    S.mat[id] = [
+      { tipo:'link', url:'https://exemplo.com/brief', nome:'briefing' },
+      { tipo:'imagem', url: png('#2B2B33'), nome:'card 1' },
+      { tipo:'imagem', url: png('#3A3340'), nome:'card 2' }
+    ];
+    S.modal = modalTarefa(tid); renderLayer();
+  }, [id, tid]);
+  await pag.waitForTimeout(500);              /* a janela abre com uma escala; medir depois dela */
+  const arte = await pag.evaluate(() => {
+    const grade = document.querySelector('.enPeca .enPecaGrade');
+    const itens = [...document.querySelectorAll('.enPecaItem')];
+    return {
+      tem: !!grade,
+      quantas: itens.length,
+      /* o índice tem de ser o da lista do visualizador (tudo menos link) */
+      indices: itens.map(b => b.dataset.mtmini),
+      tira: grade && grade.dataset.mttira,
+      largura: itens[0] ? Math.round(itens[0].getBoundingClientRect().width) : 0,
+      aindaTemMaterial: /Material \(/.test(document.querySelector('.enPost').textContent)
+    };
+  });
+  checa('6.1 as duas artes aparecem, e o link não vira arte', arte.tem && arte.quantas === 2, arte);
+  checa('6.2 no índice que o visualizador entende (link fora da conta)',
+        JSON.stringify(arte.indices) === JSON.stringify(['0', '1']), arte.indices);
+  checa('6.3 a peça é grande de verdade, não miniatura de 46px', arte.largura >= 120, arte.largura);
+  checa('6.4 com link no meio, o bloco Material continua abaixo', arte.aindaTemMaterial, arte);
+
+  /* tocar abre o visualizador de tela cheia — o mesmo da casa */
+  await pag.locator('.enPecaItem').first().click();
+  await pag.waitForTimeout(400);
+  const lb = await pag.evaluate(() => ({ aberto: !!S.lb, i: S.lb && S.lb.i, mtId: S.mtId }));
+  checa('6.5 tocar na peça abre o visualizador de tela cheia',
+        lb.aberto && lb.mtId === id && lb.i === 0, lb);
+  checa('6.6 sem erro de página', erros.length === 0, erros);
+  await pag.close();
+}
+
+/* =====================================================================
+   7. só arte: o bloco Material não repete o que já está grande em cima
+   ================================================================== */
+cenarios7: {
+  const { pag, erros } = await abrir();
+  const { id, tid } = await semear(pag);
+  const so = await pag.evaluate(([id, tid]) => {
+    S.mat[id] = [{ tipo:'imagem', url:'data:image/svg+xml;utf8,' +
+      encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>'),
+      nome:'a arte' }];
+    S.modal = modalTarefa(tid); renderLayer();
+    const post = document.querySelector('.enPost');
+    return { temPeca: !!post.querySelector('.enPecaItem'),
+             repeteMaterial: /Material \(/.test(post.textContent),
+             uma: !!post.querySelector('.enPecaGrade.uma') };
+  }, [id, tid]);
+  checa('7.1 a arte única ocupa a largura da janela', so.temPeca && so.uma, so);
+  checa('7.2 e o bloco Material não repete embaixo', !so.repeteMaterial, so);
+  checa('7.3 sem erro de página', erros.length === 0, erros);
+  await pag.close();
+}
+
+/* =====================================================================
+   8. card em Act sem arte nenhuma: a janela diz, em vez de calar
+   ================================================================== */
+cenarios8: {
+  const { pag, erros } = await abrir();
+  const { id, tid } = await semear(pag);
+  const vazio = await pag.evaluate(([id, tid]) => {
+    delete S.mat[id];
+    S.modal = modalTarefa(tid); renderLayer();
+    const post = document.querySelector('.enPost');
+    return { aviso: (post.querySelector('.enPecaSem') || {}).textContent || '',
+             temItem: !!post.querySelector('.enPecaItem') };
+  }, [id, tid]);
+  checa('8.1 sem arte, nada de peça falsa', !vazio.temItem, vazio);
+  checa('8.2 e a janela avisa que o card vai ao ar sem arte',
+        /sem a peça|não tem arte/i.test(vazio.aviso), vazio.aviso);
+  checa('8.3 sem erro de página', erros.length === 0, erros);
   await pag.close();
 }
 

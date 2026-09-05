@@ -15843,7 +15843,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v153 · 5 set · em Act, o card é o post';
+const VERSAO_PROTOTIPO = 'v154 · 5 set · a peça final, no tamanho de ver';
 
 menuSheet = (function(orig){
   return function(){
@@ -32800,6 +32800,36 @@ addEventListener('click', e => {
    formulário que vem abaixo, em vez de separar do que vem acima */
 .enPost{ border-top:0; padding-top:0; margin:2px 0 0;
   border-bottom:1px solid var(--ink-800); padding-bottom:16px; margin-bottom:18px }
+/* v154 — a peça final, no tamanho de ver */
+.enPeca{ margin:2px 0 15px }
+.enPecaHd{ display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; margin-bottom:8px }
+.enPecaHd b{ font-family:var(--mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-500); font-weight:500 }
+.enPecaHd span{ font-size:11.5px; color:var(--ink-500) }
+.enPecaGrade{ display:grid; gap:8px; grid-template-columns:repeat(auto-fill,minmax(116px,1fr)) }
+.enPecaGrade.uma{ grid-template-columns:1fr }
+.enPecaItem{ position:relative; display:block; width:100%; padding:0; overflow:hidden;
+  border:1px solid var(--ink-800); border-radius:12px; background:#0B0C0E;
+  aspect-ratio:4/5; cursor:zoom-in;
+  transition:border-color var(--fast) var(--eo), transform var(--fast) var(--eo) }
+.enPecaGrade.uma .enPecaItem{ aspect-ratio:auto; height:min(56vh, 460px) }
+.enPecaItem:hover{ border-color:var(--brass-600) }
+.enPecaItem:active{ transform:scale(.995) }
+.enPecaItem img, .enPecaItem video{ width:100%; height:100%; object-fit:contain; display:block }
+.enPecaItem .ord{ position:absolute; top:6px; left:6px; z-index:1;
+  font-family:var(--mono); font-size:10px; color:var(--ink-100);
+  background:rgba(8,9,11,.72); border-radius:6px; padding:1px 6px }
+.enPecaItem .lupa{ position:absolute; right:7px; bottom:7px; z-index:1;
+  display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--ink-100);
+  background:rgba(8,9,11,.66); border-radius:7px; padding:3px 8px; backdrop-filter:blur(3px) }
+.enPecaFalta{ display:grid; place-items:center; gap:7px; height:100%; padding:16px;
+  text-align:center; color:var(--ink-400); font-size:12px; line-height:1.5 }
+.enPecaFalta svg{ color:var(--ink-600) }
+.enPecaSem{ display:flex; align-items:center; gap:9px; padding:12px 13px; border-radius:11px;
+  border:1px dashed var(--ink-700); background:var(--ink-900);
+  font-size:12.5px; color:var(--ink-400); line-height:1.45 }
+.enPecaSem svg{ color:var(--coral); flex:0 0 auto }
+
 /* o rodapé do Cronograma não vem junto; o que vem respira igual */
 .enPost .vzTopo{ margin-bottom:11px }
 .enPost .vzBloco:last-child{ margin-bottom:0 }
@@ -32836,6 +32866,67 @@ addEventListener('click', e => {
 
   const ANCORA = 'aria-modal="true">';
 
+  /* v154 — A PEÇA FINAL, NO TAMANHO DE VER.
+
+     "Importante ver a peça final, que nem dá pra ver lá em Cronograma de
+     Postagens." A leitura do Cronograma veio inteira, e junto veio um
+     defeito que ela também tem: a arte é uma miniatura de 46 px num
+     bloco chamado "Material", no fim da lista. Ela ABRE em tela cheia ao
+     toque — mas quem está conferindo o post não adivinha isso, e é
+     justamente a peça o que ele mais precisa ver.
+
+     Aqui ela sobe para o alto, do tamanho que dá para julgar. O toque
+     continua abrindo o visualizador de sempre: são os mesmos
+     `data-mttira`/`data-mtmini` que a casa já entende — o índice tem de
+     ser o da lista DO VISUALIZADOR (tudo menos link), ou o toque abre o
+     arquivo errado.
+
+     Mora aqui dentro, e não num bloco novo, porque `enPostHtml` é desta
+     casa: um invólucro posto de fora nunca entraria no caminho. */
+  const doVisualizador = id => (S.mat[id] || []).filter(m => m.tipo !== 'link');
+  const ehVisual = m => !!m && (m.tipo === 'imagem' || m.tipo === 'video');
+
+  function pecaHtml(p){
+    if(!p) return '';
+    const lista = doVisualizador(p.id);
+    const visuais = lista.map((m, i) => ({ m, i })).filter(x => ehVisual(x.m));
+    if(!visuais.length){
+      /* em Act, um card sem arte é um problema — e a janela fala */
+      const temAlgo = (S.mat[p.id] || []).length > 0;
+      return `<div class="enPeca"><div class="enPecaSem">${ic('warn', 14)}
+        <span>${temAlgo
+          ? 'Nada de arte anexada — só link ou documento. Quem for publicar não tem o que subir.'
+          : 'Sem a peça. Este card está pronto para ir ao ar e não tem arte anexada.'}</span>
+      </div></div>`;
+    }
+    /* o blob morre ao fechar a aba; quem o traz de volta é esta rotina */
+    if(visuais.some(x => !x.m.url && x.m.chave) && typeof rehidratarArquivos === 'function')
+      try{ rehidratarArquivos(); }catch(e){}
+
+    const uma = visuais.length === 1;
+    const item = ({ m, i }, ordem) => `<button type="button" class="enPecaItem" data-mtmini="${i}"
+      title="${esc(m.nome || 'peça')} — toque para ver em tela cheia">
+      ${uma ? '' : `<span class="ord">${ordem + 1}</span>`}
+      ${m.url && m.tipo === 'imagem'
+        ? `<img src="${urlSegura(m.url)}" alt="${esc(m.nome || 'peça da publicação')}">`
+        : (m.url || m.poster) && m.tipo === 'video'
+          ? `<video ${m.url ? `src="${urlSegura(m.url)}"` : ''}
+                    ${m.poster ? `poster="${urlSegura(m.poster)}"` : ''}
+                    muted playsinline preload="metadata"></video>`
+          : `<span class="enPecaFalta">${ic('img', 22)}
+               <span>Este arquivo está noutro aparelho.<br>Buscando de volta…</span></span>`}
+      ${m.url ? `<span class="lupa">${ic('search', 11)} ver inteira</span>` : ''}
+    </button>`;
+
+    return `<div class="enPeca">
+      <div class="enPecaHd"><b>A peça</b><span>${uma
+        ? 'toque para ver em tela cheia'
+        : `${visuais.length} telas, na ordem em que vão ao ar · toque para ver inteira`}</span></div>
+      <div class="enPecaGrade ${uma ? 'uma' : ''}" data-mttira="${p.id}">
+        ${visuais.map((x, k) => item(x, k)).join('')}</div>
+    </div>`;
+  }
+
   function enPostHtml(t){
     if(!t || !t.cardId || t.col !== 'act') return '';
     const p = (typeof cardDaTarefa === 'function') ? cardDaTarefa(t) : null;
@@ -32857,6 +32948,22 @@ addEventListener('click', e => {
     if(j >= 0) corpo = corpo.slice(0, j);
     corpo = corpo.replace(/<button\b[^>]*data-(?:mtabrir|rfabrir)="[^"]*"[^>]*>[\s\S]*?<\/button>/g, '');
     if(!corpo.trim()) return '';
+
+    /* a peça, logo abaixo do título e antes das caixas de texto */
+    const peca = pecaHtml(p);
+    if(peca){
+      const h = /<h3[^>]*>[\s\S]*?<\/h3>/.exec(corpo);
+      corpo = h ? corpo.slice(0, h.index + h[0].length) + '\n      ' + peca
+                    + corpo.slice(h.index + h[0].length)
+                : peca + corpo;
+      /* o bloco "Material" do Cronograma vira repetição quando tudo que
+         ele listaria já está aqui em cima, grande. Com link ou documento
+         no meio, ele fica: ali tem coisa que a peça não mostra. */
+      const mats = S.mat[p.id] || [];
+      if(mats.length && mats.every(ehVisual))
+        corpo = corpo.replace(
+          /<div class="vzBloco"><b>Material \(\d+\)<\/b>[\s\S]*?<\/div>\s*<\/div>/, '');
+    }
 
     /* a fase já vem escrita na trilha, logo abaixo: aqui basta dizer
        o que esta caixa é */
