@@ -15889,7 +15889,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v157 · 5 set · a abertura já nasce na sua luz';
+const VERSAO_PROTOTIPO = 'v158 · 5 set · a versão nova chega mesmo';
 
 menuSheet = (function(orig){
   return function(){
@@ -31844,9 +31844,28 @@ addEventListener('click', e => {
    ================================================================== */
 (function(){
   const MARCA = 'maestro-versao-checada';
+  /* v158 — A GUARDA QUE NUNCA ABRIA.
+
+     Esta linha, na v149, dizia: "não recarregue enquanto houver um campo
+     com foco". A porta de entrar e o "quem está aí?" FOCAM um campo
+     sozinhos assim que abrem — então, no aparelho de quem usa a
+     plataforma logado, `ocupada()` era verdadeira desde o primeiro
+     segundo e nunca mais deixava de ser. A casa descobria que havia
+     versão nova, marcava a sessão como "já checei" e não recarregava
+     nunca. O aparelho ficava preso numa versão antiga, e toda correção
+     publicada depois simplesmente não chegava — o que, do lado de fora,
+     parece que nada nunca é consertado.
+
+     Ocupado é quem está TRABALHANDO: uma janela aberta, um arraste em
+     curso, ou alguém que digitou nos últimos quinze segundos. Um campo
+     com foco, sozinho, não é trabalho — e a porta de entrar muito menos. */
+  let _ultimaTecla = 0;
+  ['keydown','input','paste'].forEach(ev =>
+    addEventListener(ev, () => { _ultimaTecla = Date.now(); }, true));
+  const digitando = () => Date.now() - _ultimaTecla < 15000;
   const ocupada = () => !!(S.modal || S.full || S.pal
     || document.querySelector('#layer .modalbox, .estArrastando, .arrastando')
-    || (document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)));
+    || digitando());
 
   async function checar(){
     if(typeof versaoLaFora !== 'function' || typeof VERSAO_PROTOTIPO !== 'string') return;
@@ -31856,15 +31875,38 @@ addEventListener('click', e => {
     if(!la || la === VERSAO_PROTOTIPO) return;
     try { sessionStorage.setItem(MARCA, '1'); } catch(e){}
     if(typeof limparCacheDoSite === 'function') await limparCacheDoSite();
+    /* e se ela estiver mesmo trabalhando, a espera não é eterna: depois
+       de três minutos a casa desiste de recarregar sozinha e acende o
+       ponto no botão de atualizar, para a pessoa escolher a hora */
+    let esperas = 0;
     const recarrega = () => {
-      if(ocupada()) return setTimeout(recarrega, 4000);          /* espera a pessoa terminar */
+      if(ocupada()){
+        if(++esperas > 45){ avisarVersaoNova(); return; }         /* 45 × 4 s = 3 min */
+        return setTimeout(recarrega, 4000);
+      }
       if(typeof toast === 'function') toast('Versão nova — atualizando.');
       setTimeout(() => { if(typeof recarregarLimpo === 'function') recarregarLimpo();
         else location.reload(); }, 600);
     };
     recarrega();
   }
+  /* quando não dá para recarregar sozinho, o botão avisa */
+  function avisarVersaoNova(){
+    try{
+      const b = document.getElementById('btAtualizar');
+      if(!b) return;
+      b.classList.add('temVersao');
+      b.title = 'Há uma versão nova publicada — toque para atualizar';
+      b.setAttribute('aria-label', b.title);
+      if(typeof toast === 'function')
+        toast('Há uma versão nova. Toque no botão de atualizar quando puder.');
+    }catch(e){}
+  }
+
   setTimeout(checar, 5200);
+  /* e mais uma vez alguns minutos depois: quem deixa a aba aberta o dia
+     inteiro também merece receber a correção do dia */
+  setInterval(() => { try{ sessionStorage.removeItem('maestro-versao-checada'); }catch(e){} checar(); }, 30 * 60 * 1000);
 })();
 </script>
 <script>
@@ -31931,6 +31973,11 @@ addEventListener('click', e => {
    ponto âmbar = há coisa aqui que ainda não subiu; vermelho = não subiu */
 #btAtualizar.pendente .pt{ opacity:1; background:var(--brass-500) }
 #btAtualizar.erro{ color:#E5484D; border-color:#E5484D }
+/* v158 — há versão nova e a casa não pôde recarregar sozinha */
+#btAtualizar.temVersao{ color:var(--brass-500); border-color:var(--brass-600) }
+#btAtualizar.temVersao .pt{ opacity:1; background:var(--brass-500);
+  animation:pulse 1.8s ease-in-out infinite }
+@media (prefers-reduced-motion:reduce){ #btAtualizar.temVersao .pt{ animation:none } }
 #btAtualizar.erro .pt{ opacity:1; background:#E5484D }
 </style>
 <script>
