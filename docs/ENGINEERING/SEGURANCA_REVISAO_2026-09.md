@@ -26,12 +26,25 @@ O que depende do founder está marcado.
    as pautas carregam. Falta confirmar só a gravação, pelo selo do Cronograma
    (`salvo 14:32` = insert/update valendo).
 
+2. **Validação dos links no servidor** ✅ (5 set, v152). Era o item 2 da lista
+   do founder: o link de aprovação e o de visualização passaram a ser resolvidos
+   por três funções `security definer`, que conferem o token e devolvem só
+   aquele cliente ou aquele card — em vez de mandar a tabela ao navegador e
+   filtrar lá. A decisão do cliente também volta por lá, com fase, campos e
+   histórico limitados. Provado contra um PostgreSQL 16 de verdade e no
+   navegador: `docs/ENGINEERING/LINKS_ANONIMOS.md`. **Falta o founder colar
+   `docs/ENGINEERING/links-anonimos.sql` no Supabase.**
+
 ## Do founder — continua aberto
 1. **Políticas do bucket `midia`**: gravação só para `authenticated`, e sem
-   `x-upsert` para quem não é dono do caminho.
-2. Agora que o RLS está de pé: validar o link de aprovação e o de visualização no servidor
-   (uma RPC por token que devolve só aquele cliente/card), em vez de mandar a
-   tabela inteira ao navegador e filtrar lá.
+   `x-upsert` para quem não é dono do caminho. Enquanto a leitura do bucket
+   continuar pública, a arte carrega nos links; ao fechá-la, os links precisam
+   de URL assinada (ainda não têm).
+2. **Colar `docs/ENGINEERING/links-anonimos.sql`** no SQL Editor — o código do
+   app já espera por ele e não quebra enquanto não roda.
+3. Limite de tentativas na porta dos links (hoje não há contador; a chave tem
+   22 caracteres de `crypto`, o que torna a busca inviável, mas um limite por
+   IP seria mais honesto).
 
 ## Como foi verificado
 

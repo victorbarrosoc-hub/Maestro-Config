@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-05 04:18 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-05 05:00 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15911,7 +15911,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v151 · 4 set · um banco, uma verdade';
+const VERSAO_PROTOTIPO = 'v152 · 5 set · o link volta a abrir';
 
 menuSheet = (function(orig){
   return function(){
@@ -32604,5 +32604,256 @@ addEventListener('click', e => {
 
   carimbar();                                     // a linha de base: daqui em diante, mudança é da pessoa
   pintar();
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v152 — O LINK VOLTA A ABRIR.
+
+   Em 4 de setembro a RLS fechou a tabela: só quem entrou lê e grava.
+   Isso consertou a brecha e, sem querer, quebrou as duas portas que
+   existem justamente para quem NÃO tem conta:
+
+     ?aprovar=<cliente>.<chave>   o cliente decide o lote
+     ?ver=<cliente>.<card>.<tok>  qualquer pessoa lê um card
+
+   Para o visitante anônimo o banco respondia `[]`, e `[]` aqui não é
+   "não tem nada": é "você não pode ver". O cliente abria o link e não
+   achava a pauta. Pior: quando achava (dados velhos no aparelho), a
+   decisão dele não voltava para a agência — ficava no celular dele.
+
+   A porta certa não é reabrir a tabela. É uma porta estreita, que só
+   abre com a chave do link e só entrega o que aquele link autoriza:
+   três funções no banco (`security definer`), em
+   `docs/ENGINEERING/links-anonimos.sql`.
+
+     maestro_link_lote(cliente, chave)          → o cliente e a pauta dele
+     maestro_link_card(cliente, card, token)    → um card só
+     maestro_link_decidir(cliente, chave, card, fase, nota) → a decisão volta
+
+   O que este bloco faz:
+   · pede pela porta, em vez da tabela, quando a página é um link;
+   · entrega a decisão do cliente e, se a rede falhar, guarda numa fila
+     e tenta de novo — nunca diz "a agência já sabe" quando não sabe;
+   · se as funções ainda não foram instaladas no banco, não quebra nada:
+     segue o comportamento de antes.
+   ================================================================== */
+(function(){
+  const mAp  = /[?&]aprovar=([^&.]+)\.([^&]+)/.exec(location.search);
+  const mVer = /[?&]ver=([^&.]+)\.(\d+)\.([^&]+)/.exec(location.search);
+  if(!mAp && !mVer) return;
+  if(typeof SB !== 'object' || typeof sbAplicar !== 'function') return;
+
+  const cli   = decodeURIComponent((mAp || mVer)[1]);
+  const chave = mAp ? decodeURIComponent(mAp[2]) : null;
+  const cardId = mVer ? +mVer[2] : null;
+  const tok    = mVer ? decodeURIComponent(mVer[3]) : null;
+  const FILA = 'maestro-decisoes-v1';
+
+  /* a porta não passa pelos invólucros da tabela (v88/v91 olham
+     `/rest/v1/pauta`); aqui é `/rest/v1/rpc/` e vai direto */
+  async function porta(nome, corpo){
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/rpc/${nome}`, {
+        method:'POST',
+        headers:{ apikey:SB.key, Authorization:'Bearer ' + SB.key,
+                  'Content-Type':'application/json' },
+        body: JSON.stringify(corpo)
+      });
+      if(r.status === 404) return { faltando:true };     /* ainda não instalada */
+      if(!r.ok) return { erro:r.status };
+      const t = await r.text();
+      return { dados: t ? JSON.parse(t) : null };
+    }catch(e){ return { erro:0 }; }                       /* sem rede */
+  }
+
+  let avisou = {};
+  const avisar = (m, umaVez) => {
+    if(umaVez && avisou[m]) return;
+    avisou[m] = true;
+    if(typeof toast === 'function') toast(m);
+  };
+
+  /* ---------- 1. o cliente do link existe, mesmo que só ele ---------- */
+  /* O id de um cliente criado no app é POSICIONAL (`n0`, `n1`…) e nasce
+     de `S.novos`. No aparelho de quem só tem o link, `S.novos` é o que o
+     protótipo semeia — então `n0` resolve para o cliente de demonstração,
+     e o visitante veria o nome errado em cima da pauta certa. Quem manda
+     aqui é o registro que veio do banco, pelo link. */
+  let _clisPronto = false;
+  function garantirCliente(reg){
+    if(_clisPronto || typeof CLIS !== 'function') return;
+    if(!reg || typeof reg !== 'object') return;           /* ln, cj: já são do código */
+    _clisPronto = true;
+    const base = CLIS;
+    const doBanco = () => Object.assign({
+      id: cli, nome: reg.nome || 'Cliente', ini: reg.ini || '?',
+      seg: reg.seg || '', cor: reg.cor || null, brief: reg.brief || '—',
+      links: [], refs: '—', tipo: reg.tipo
+    }, (S.cliEdit && S.cliEdit[cli]) || {}, { id: cli });
+    CLIS = function(){
+      const l = base().slice();
+      const i = l.findIndex(c => c.id === cli);
+      if(i >= 0) l[i] = Object.assign({}, l[i], doBanco());
+      else l.push(doBanco());
+      return l;
+    };
+  }
+
+  /* ---------- 2. abrir o lote (?aprovar=) ---------- */
+  async function abrirLote(){
+    const r = await porta('maestro_link_lote', { p_cli: cli, p_chave: chave });
+    if(r.faltando) return false;                          /* banco antigo: segue como antes */
+    if(r.erro !== undefined){
+      avisar('Não consegui falar com a Maestro agora. Tente abrir o link de novo.', true);
+      return false;
+    }
+    if(!r.dados){                                         /* chave não confere */
+      avisar('Este link de aprovação não vale mais. Peça outro à agência.', true);
+      return true;
+    }
+    S.cliEdit = S.cliEdit || {};
+    S.cliEdit[cli] = Object.assign({}, S.cliEdit[cli], r.dados.edit || {}, { chave });
+    garantirCliente(r.dados.cliente);
+    if(r.dados.dados) try{ sbAplicar(cli, r.dados.dados); }catch(e){}
+    try{ render(); }catch(e){}
+    mandarFila();
+    return true;
+  }
+
+  /* ---------- 3. abrir um card (?ver=) ---------- */
+  async function abrirCard(){
+    const r = await porta('maestro_link_card',
+      { p_cli: cli, p_card: String(cardId), p_tok: tok });
+    if(r.faltando) return false;
+    if(r.erro !== undefined) return false;                /* a folha já espera e avisa sozinha */
+    if(!r.dados || !r.dados.card) return true;            /* token não confere: a folha avisa */
+    S.cliEdit = S.cliEdit || {};
+    if(r.dados.edit) S.cliEdit[cli] = Object.assign({}, S.cliEdit[cli], r.dados.edit);
+    garantirCliente(r.dados.cliente);
+    /* o token não volta pela rede — quem tem o link já o tem */
+    const card = Object.assign({}, r.dados.card, { verTok: tok });
+    const dados = { pauta: [card], refs: {}, mats: {} };
+    if(r.dados.refs) dados.refs[cardId] = r.dados.refs;
+    if(r.dados.mats) dados.mats[cardId] = r.dados.mats;
+    try{ sbAplicar(cli, dados); }catch(e){}
+    try{ render(); }catch(e){}
+    return true;
+  }
+
+  /* ---------- 4. a decisão do cliente volta ---------- */
+  const lerFila = () => { try{ return JSON.parse(localStorage.getItem(FILA) || '[]'); }
+                          catch(e){ return []; } };
+  const gravarFila = f => { try{ localStorage.setItem(FILA, JSON.stringify(f.slice(-50))); }
+                            catch(e){} };
+
+  let _seq = 0;
+  function enfileirar(d){
+    /* a última decisão sobre um card é a que vale */
+    const f = lerFila().filter(x => !(x.cli === cli && x.card === d.card));
+    f.push(Object.assign({ cli, chave, quando: Date.now(), n: ++_seq }, d));
+    gravarFila(f);
+    mandarFila();
+  }
+  /* tira da fila exatamente ESTA resposta — se outra, mais nova, chegou
+     enquanto a primeira estava no ar, ela fica e vai em seguida */
+  const tirarDaFila = d => gravarFila(lerFila().filter(
+    x => !(x.cli === d.cli && x.card === d.card && x.quando === d.quando && x.n === d.n)));
+
+  let mandando = false, tmFila = 0;
+  async function mandarFila(){
+    if(!mAp || mandando) return;
+    if(!lerFila().some(x => x.cli === cli)) return;
+    mandando = true;
+    try{
+      for(;;){
+        const d = lerFila().filter(x => x.cli === cli)[0];
+        if(!d) break;
+        const r = await porta('maestro_link_decidir', {
+          p_cli: d.cli, p_chave: d.chave, p_card: String(d.card),
+          p_fase: d.fase, p_nota: d.nota || null });
+        if(r.faltando){
+          avisar('A agência precisa terminar de abrir esta porta no banco. '
+               + 'Sua resposta ficou guardada aqui e vai sozinha quando abrir.', true);
+          break;
+        }
+        if(r.erro !== undefined){
+          avisar('Ainda não consegui avisar a agência. Sua resposta está guardada — '
+               + 'vou tentar de novo.', true);
+          clearTimeout(tmFila); tmFila = setTimeout(mandarFila, 20000);
+          break;
+        }
+        if(r.dados && r.dados.ok === false){
+          /* chave, card ou fase que o banco não aceita: repetir não ajuda,
+             e ficar calado seria mentir para quem acabou de responder */
+          avisar(r.dados.erro === 'chave'
+            ? 'Este link de aprovação não vale mais. Peça outro à agência.'
+            : 'Não consegui registrar esta resposta. Avise a agência, por favor.', true);
+          tirarDaFila(d);
+          continue;
+        }
+        tirarDaFila(d);
+        avisou = {};                                      /* deu certo: o próximo erro fala de novo */
+      }
+    } finally { mandando = false; }
+  }
+
+  /* Todo caminho de decisão do cliente passa por `porFase` — aprovar,
+     pedir alteração e "mudar minha decisão". Escutar aqui pega os três
+     sem depender da ordem dos cliques (o handler do cliente para a
+     propagação, então ouvir o clique depois dele não funcionaria). */
+  /* Um gesto do cliente move a fase MAIS DE UMA VEZ: `decidirCard` põe o
+     card em produção e a camada do ciclo, logo depois, devolve ao Plan.
+     Mandar as duas seria mandar uma decisão pela metade — a segunda
+     chegaria sem o recado e apagaria o "ajuste pendente" da primeira.
+     Então a fila espera o gesto terminar e manda UMA, a final. */
+  if(mAp && typeof porFase === 'function'){
+    const marca = {}, agendados = new Set();
+    porFase = (function(orig){
+      return function(p, k){
+        let meu = false;
+        try{ meu = !!(p && p.id !== undefined
+                      && (S.pautas[cli] || []).some(x => x.id === p.id)); }catch(e){}
+        if(meu && !(p.id in marca)) marca[p.id] = ((p.alteracoes) || []).length;
+        const r = orig.apply(this, arguments);
+        if(meu && !agendados.has(p.id)){
+          agendados.add(p.id);
+          setTimeout(() => {                              /* o gesto inteiro já passou */
+            agendados.delete(p.id);
+            const antes = marca[p.id] || 0; delete marca[p.id];
+            const alts = p.alteracoes || [];
+            const nota = alts.length > antes ? ((alts[alts.length - 1] || {}).oque || '') : null;
+            enfileirar({ card: String(p.id),
+              fase: p.fase || (typeof faseDe === 'function' ? faseDe(p) : k), nota });
+          }, 0);
+        }
+        return r;
+      };
+    })(porFase);
+  }
+
+  addEventListener('online', () => { avisou = {}; mandarFila(); });
+
+  /* a folha de leitura não deixa o card guardado no aparelho de quem
+     abriu: ela é para ler, e o aparelho pode não ser de ninguém */
+  if(mVer && typeof salvarLocal === 'function'){
+    salvarLocal = (function(orig){
+      return function(){ if(S.soVer) return; return orig.apply(this, arguments); };
+    })(salvarLocal);
+  }
+
+  /* ---------- 5. abrir, e insistir enquanto a folha espera ---------- */
+  (async () => {
+    const abrir = mAp ? abrirLote : abrirCard;
+    let ok = await abrir();
+    if(!ok){
+      /* banco sem as funções, ou rede ruim: tenta mais duas vezes, de
+         longe, e depois deixa o caminho antigo seguir */
+      setTimeout(async () => { if(!(await abrir())) setTimeout(abrir, 4000); }, 1200);
+    }
+    mandarFila();
+  })();
 })();
 </script>

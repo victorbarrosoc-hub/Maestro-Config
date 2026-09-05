@@ -98,8 +98,12 @@ checa('copiar dá um link com cliente, card e um token só dele',
 checa('o aviso diz o que a pessoa do outro lado vai ver',
       /vê só este card/.test(gerado.toast) && /sem entrar na Maestro/.test(gerado.toast), gerado.toast);
 checa('e agora existe "gerar outro"', gerado.outro);
-await pg.waitForTimeout(1800);
-const gravou = gravacoes.find(g => g.cliente === 'ln' && (g.dados?.pauta || []).some(p => p.verTok === gerado.tok));
+/* a gravação é debounced e, desde a v151, lê antes de escrever: esperar
+   pela condição em vez de um tempo fixo (era 1,8 s, e sob carga não dava) */
+const achaGravacao = () => gravacoes.find(g => g.cliente === 'ln'
+  && (g.dados?.pauta || []).some(p => p.verTok === gerado.tok));
+for(let i = 0; i < 40 && !achaGravacao(); i++) await pg.waitForTimeout(250);
+const gravou = achaGravacao();
 checa('o token viaja para o banco junto com a pauta — o link vale em qualquer aparelho', !!gravou, gravacoes.map(g => g.cliente));
 
 /* ---------- 2. quem recebe abre, sem conta ----------------------------- */

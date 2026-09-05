@@ -1196,13 +1196,21 @@ classes 9 e 42, e adotar `usemaestro.com` ou `maestro.studio`.
 
 **Rodada 3 do teste** com clientes reais.
 
-**Os links de aprovação (`?ver=`, `?aprovar=`) desde a RLS.** Quem vem pelo
-link é anônimo e recebe `[]`: não vê o card nem a chave. Precisa de uma
-função no servidor que valide o token do link e devolva só aquele card
-(`docs/ENGINEERING/PERSISTENCIA_AUDITORIA_2026-09.md` §5).
+**Colar um SQL no Supabase: `docs/ENGINEERING/links-anonimos.sql`.** É o que
+faz os links `?aprovar=` e `?ver=` voltarem a abrir depois da RLS, e a decisão
+do cliente voltar ao banco. O código já está pronto e verificado (v152);
+enquanto o SQL não roda, o app não quebra — só não abre pelo link. Porquê e
+como conferir: `docs/ENGINEERING/LINKS_ANONIMOS.md`.
 
 ### Produto e engenharia
 
+- **Links anônimos (v152, 5 set): fechados no código.** Três funções
+  `security definer` (`maestro_link_lote`, `maestro_link_card`,
+  `maestro_link_decidir`) substituem a leitura direta da tabela para quem
+  chega por link, e a decisão do cliente volta ao banco com revisão e
+  carimbo. Provado contra um PostgreSQL 16 de verdade
+  (`docs/ENGINEERING/links-anonimos-teste.sql`) e no navegador
+  (`web/verificar/v152-link-rpc.mjs`, 41 checagens).
 - **Persistência do protótipo (v151, 5 set): fechada.** Revisão por linha
   (`dados.rev`, PATCH condicional), mescla de três lados, nenhuma escrita sem
   leitura, falha com cara. O relatório da auditoria, o gargalo e o que ficou
