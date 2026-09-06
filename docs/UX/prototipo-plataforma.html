@@ -15889,7 +15889,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v161 · 6 set · a menção existe, e chega na hora';
+const VERSAO_PROTOTIPO = 'v162 · 6 set · a coluna do que já foi';
 
 menuSheet = (function(orig){
   return function(){
@@ -33656,22 +33656,31 @@ addEventListener('click', e => {
   const ligado = () => { try{ return localStorage.getItem(CHAVE_AVISO) === 'sim'; }catch(e){ return false; } };
   const ligar = v => { try{ localStorage.setItem(CHAVE_AVISO, v ? 'sim' : 'nao'); }catch(e){} };
 
+  /* O service worker só entra em quem PEDIU aviso.
+
+     Não é economia: registrar em todo mundo instala um trabalhador que a
+     esmagadora maioria nunca vai usar, e num endereço que não sirva
+     `/sw.js` o próprio navegador escreve um erro no console de toda
+     visita — barulho que esconde erro de verdade. Quem liga os avisos
+     registra; quem não liga nem fica sabendo que isto existe. */
   let registro = null;
-  if('serviceWorker' in navigator){
-    /* só no site publicado: no arquivo aberto direto não há `/sw.js` */
-    if(location.protocol === 'http:' || location.protocol === 'https:'){
-      navigator.serviceWorker.register('/sw.js')
-        .then(r => { registro = r; })
-        .catch(() => {});                       /* sem ele, o aviso sai pelo caminho antigo */
-      navigator.serviceWorker.addEventListener('message', ev => {
-        const d = ev.data || {};
-        if(d.maestro === 'abrir' && d.url){
-          try{ history.pushState({}, '', d.url); }catch(e){}
-          try{ if(typeof estadoDaUrl === 'function' && estadoDaUrl(location.pathname)) render(); }catch(e){}
-        }
-      });
-    }
+  function ligarOperario(){
+    if(registro || !('serviceWorker' in navigator)) return Promise.resolve(null);
+    if(location.protocol !== 'http:' && location.protocol !== 'https:') return Promise.resolve(null);
+    navigator.serviceWorker.addEventListener('message', ev => {
+      const d = ev.data || {};
+      if(d.maestro === 'abrir' && d.url){
+        try{ history.pushState({}, '', d.url); }catch(e){}
+        try{ if(typeof estadoDaUrl === 'function' && estadoDaUrl(location.pathname)) render(); }catch(e){}
+      }
+    });
+    return navigator.serviceWorker.register('/sw.js')
+      .then(r => { registro = r; return r; })
+      .catch(() => null);                       /* sem ele, o aviso sai pelo caminho antigo */
   }
+
+  /* quem já disse sim continua com o operário de pé a cada abertura */
+  try{ if(ligado() && permitido()) ligarOperario(); }catch(e){}
 
   function avisarNoAparelho({ titulo, corpo, tag, url }){
     if(!permitido() || !ligado()) return false;
@@ -33699,6 +33708,7 @@ addEventListener('click', e => {
       ligar(false); render(); return false;
     }
     ligar(true); render();
+    await ligarOperario();
     avisarNoAparelho({ titulo:'Avisos ligados', corpo:'É assim que a Maestro vai te chamar.',
                        tag:'maestro-teste', url:'/' });
     toast('Avisos ligados neste aparelho.');
@@ -33835,6 +33845,199 @@ addEventListener('click', e => {
   /* deixa alcançável para o teste e para as camadas seguintes */
   window.MaestroAvisos = { mencionados, avisarNoAparelho, pedirPermissao,
                            ligado, permitido, comoApp };
+
+})();
+</script>
+
+<style>
+/* v162 — a coluna do que já foi */
+.enCol.enRecolhida{ min-height:0; height:auto; align-self:start; padding-bottom:12px }
+.enCol.enRecolhida .enColHd{ margin-bottom:0 }
+.enCol.enRecolhida .enCard,
+.enCol.enRecolhida .enVazia,
+.enCol.enRecolhida .enMais{ display:none }
+/* o que já foi cede a cor: continua legível, para de disputar atenção
+   com a coluna onde ainda há trabalho */
+[data-encol="feito"] .enCard{ opacity:.8 }
+/* mover, cronometrar e passar de coluna não valem para o que já foi ao
+   ar — o motor já recusa; mostrar o botão é prometer o que não acontece.
+   Abrir o card e apagar continuam, porque esses ainda fazem sentido. */
+[data-encol="feito"] .enCard .acoes [data-enmove],
+[data-encol="feito"] .enCard .acoes [data-entimer]{ display:none }
+.enDobra{ margin-left:auto; width:26px; height:26px; border-radius:8px; flex:0 0 auto;
+  display:grid; place-items:center; color:var(--ink-400);
+  border:1px solid var(--ink-700); background:var(--ink-850);
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.enDobra:hover{ color:var(--ink-50); border-color:var(--ink-500) }
+/* aberta, a seta aponta para o lado de recolher; fechada, para o de
+   abrir. O ícone diz o que o toque faz, não o estado em que se está. */
+.enDobra svg.i{ font-size:13px; transform:rotate(180deg);
+  transition:transform var(--med) var(--eo) }
+.enCol.enRecolhida .enDobra svg.i{ transform:rotate(0deg) }
+.enCard.enFeito{ opacity:.72 }
+.enCard.enFeito .acoes{ display:none }
+.enCard.enFeito .tit{ color:var(--ink-300) }
+.enMais{ text-align:center; font-size:11.5px; color:var(--ink-500);
+  font-family:var(--mono); padding:6px 0 2px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v162 — A COLUNA DO QUE JÁ FOI
+
+   O pedido: "uma coluna depois de Act com os cards finalizados. Fica em
+   Act agendado; quando clicar em publicado ou finalizado, vai pra essa
+   coluna. E um botão pra recolher e abrir."
+
+   O quadro terminava em Act, e Act guardava três estados de uma vez:
+   aprovado, agendado e no ar. Ou seja, a coluna que devia dizer "falta
+   pouco" também dizia "acabou" — e o que acabou empurra para fora da
+   tela o que ainda espera alguém. Separar não é organização: é devolver
+   a Act o único assunto que ela deveria ter.
+
+   Três coisas, e nenhuma inventa fluxo novo:
+
+   1. A COLUNA. `postado` deixa de morar em Act e passa a morar aqui.
+      Nada mais muda no motor: o `t.col` já era leitura da fase, então
+      publicar um card já o move sozinho.
+
+   2. O QUE A CASA CONCLUIU também aparece aqui. A tarefa concluída sai
+      de `tarefas` e vai para `feitas` — é de lá que o Ranking e os
+      Resultados contam, e mexer nisso quebraria os dois. Então ela não
+      muda de lugar: é EMPRESTADA ao quadro no momento do desenho e
+      devolvida logo depois, como esta casa já faz com `CLIS` na tela de
+      relatório. Contas intactas, coluna cheia.
+
+   3. RECOLHER. O que já foi é história: útil de ter à mão, ruim de ter
+      no caminho. O botão fica no cabeçalho da coluna e a escolha mora
+      neste aparelho — recolher aqui não recolhe no celular de mais
+      ninguém.
+
+   Uma recusa de propósito: arrastar um card para cá NÃO publica. Publicar
+   tem confirmação (v143), e uma confirmação que se pula arrastando não é
+   confirmação. O arrasto ensina onde fica o botão.
+   ================================================================== */
+(function(){
+
+  if(typeof EN_COLS === 'undefined' || typeof FASE_COL === 'undefined') return;
+
+  /* ---------- 1. a coluna, e a fase que passa a morar nela ---------- */
+  if(!EN_COLS.some(([k]) => k === 'feito')){
+    const i = EN_COLS.findIndex(([k]) => k === 'act');
+    EN_COLS.splice(i < 0 ? EN_COLS.length : i + 1, 0,
+      ['feito', 'Concluído', '#6E7B8B', 'o que já foi ao ar e o que a casa fechou']);
+  }
+  FASE_COL.postado = 'feito';
+
+  /* arrastar para cá não publica — o botão publica, e ele pergunta */
+  if(typeof moverJob === 'function'){
+    moverJob = (function(orig){
+      return function(p, col){
+        if(col === 'feito'){
+          const f = typeof faseDe === 'function' ? faseDe(p) : '';
+          toast(f === 'postado' ? 'Esse já está aqui.'
+            : 'Publicar é no card — o botão pergunta antes, e é ele que registra a hora.');
+          return;
+        }
+        return orig.apply(this, arguments);
+      };
+    })(moverJob);
+  }
+
+  /* ---------- 3. recolher, e a escolha fica neste aparelho ---------- */
+  const CHAVE = 'maestro-ensaio-feito-v1';
+  const aberto = () => { try{ return localStorage.getItem(CHAVE) !== 'nao'; }catch(e){ return true; } };
+  const guardar = v => { try{ localStorage.setItem(CHAVE, v ? 'sim' : 'nao'); }catch(e){} };
+
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-endobra]');
+    if(!b) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    guardar(!aberto());
+    if(typeof som === 'function'){ try{ som('toque'); }catch(err){} }
+    render();
+  }, true);
+
+  /* ---------- 2. o que a casa concluiu, emprestado ao quadro -------- */
+  const LIMITE = 30;                       /* o que já foi não vira paredão */
+
+  function emprestadas(){
+    const feitas = (S.ensaio && S.ensaio.feitas) || [];
+    return feitas.slice(-LIMITE).reverse().map(t => {
+      const copia = Object.assign({}, t);
+      copia.desde = null;                  /* história não conta tempo */
+      Object.defineProperty(copia, 'col', {
+        configurable:true, enumerable:true, get(){ return 'feito'; }, set(){} });
+      return copia;
+    });
+  }
+
+  if(typeof agEnsaio === 'function'){
+    agEnsaio = (function(orig){
+      return function(){
+        const tarefas = S.ensaio && S.ensaio.tarefas;
+        let html;
+        if(!Array.isArray(tarefas)) html = orig.apply(this, arguments);
+        else {
+          const extras = emprestadas();
+          S.ensaio.tarefas = tarefas.concat(extras);
+          try{ html = orig.apply(this, arguments); }
+          finally{ S.ensaio.tarefas = tarefas; }
+        }
+        return vestirColuna(html);
+      };
+    })(agEnsaio);
+  }
+
+  /* o cabeçalho da coluna ganha o botão, e a coluna ganha o estado.
+     Se o desenho mudar de forma e o encaixe não achar onde entrar, a
+     tela volta inteira do jeito que veio — a coluna sem o botão é bem
+     melhor do que um quadro quebrado. */
+  function vestirColuna(html){
+    if(typeof html !== 'string') return html;
+    const re = /<div class="enCol([^"]*)" data-encol="feito">(\s*)<div class="enColHd">([\s\S]*?)<\/div>/;
+    if(!re.test(html)) return html;
+    const ab = aberto();
+    const quantas = (S.ensaio && S.ensaio.feitas || []).length;
+    return html.replace(re, (todo, cls, espaco, cabeca) =>
+      `<div class="enCol${cls}${ab ? '' : ' enRecolhida'}" data-encol="feito">${espaco}` +
+      `<div class="enColHd">${cabeca}` +
+      `<button class="enDobra" data-endobra="1" aria-expanded="${ab}"
+         aria-label="${ab ? 'Recolher' : 'Abrir'} a coluna Concluído"
+         title="${ab ? 'Recolher' : 'Abrir'}">${ic('chevr', 13)}</button></div>` +
+      (ab && quantas > LIMITE
+        ? `<div class="enMais">mostrando as ${LIMITE} mais recentes de ${quantas}</div>` : ''));
+  }
+
+  /* ---------- o cartão emprestado não aceita ser mexido ------------- */
+  /* Ele é uma cópia: o id dele já não está em `tarefas`, então editar,
+     mover ou cronometrar mexeria no nada — ou, pior, abriria o modal de
+     "Nova tarefa" achando que é uma tarefa que sumiu. Abrir o card da
+     pauta continua valendo: esse existe. */
+  addEventListener('click', e => {
+    if(!e.target.closest) return;
+    if(e.target.closest('[data-hjabre]') || e.target.closest('[data-endobra]')) return;
+    const cartao = e.target.closest('[data-entar]');
+    if(!cartao) return;
+    const id = +cartao.dataset.entar;
+    const viva = (S.ensaio && S.ensaio.tarefas || []).some(t => t.id === id);
+    if(viva) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    toast('Esta já foi concluída — está aqui como histórico.');
+  }, true);
+
+  /* a marca visual de "isto é história" entra no cartão emprestado */
+  const _renderV162 = render;
+  render = function(){
+    const r = _renderV162.apply(this, arguments);
+    try{
+      const vivas = new Set((S.ensaio && S.ensaio.tarefas || []).map(t => t.id));
+      document.querySelectorAll('[data-encol="feito"] .enCard[data-entar]').forEach(el => {
+        el.classList.toggle('enFeito', !vivas.has(+el.dataset.entar));
+      });
+    }catch(e){}
+    return r;
+  };
 
 })();
 </script>
