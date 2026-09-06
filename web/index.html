@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-06 14:41 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-06 17:33 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15957,7 +15957,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v162 · 6 set · a coluna do que já foi';
+const VERSAO_PROTOTIPO = 'v164 · 6 set · o cliente é avisado de verdade';
 
 menuSheet = (function(orig){
   return function(){
@@ -34110,6 +34110,197 @@ addEventListener('click', e => {
     }catch(e){}
     return r;
   };
+
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v164 — O CLIENTE PASSA A TER CONTATO, E O LOTE AVISA DE VERDADE
+
+   Até hoje o `enviarCards` mostrava um toast dizendo que "Helena foi
+   avisada por e-mail e WhatsApp". Não era. Nenhum e-mail saía, e o
+   cadastro do cliente nem guardava e-mail: nome, iniciais, segmento,
+   briefing, links, referências. Quem aprova era texto fixo na tela.
+
+   Agora existe canal (o domínio, a chave e a função `enviar-avisos`
+   estão de pé desde 6 de setembro), e existe fila no banco. Falta o que
+   este bloco faz:
+
+   1. O CADASTRO GUARDA QUEM APROVA. Nome e e-mail, no mesmo modal de
+      sempre. Sem e-mail, nenhum aviso sai — e a tela diz isso, em vez de
+      prometer.
+
+   2. ENVIAR O LOTE ENFILEIRA UM AVISO. Um, nunca um por peça (D-030). A
+      chave carrega cliente e dia, então mandar o mesmo lote duas vezes
+      no mesmo dia não vira dois e-mails.
+
+   3. A MAESTRO PEDE A ENTREGA. Enfileirar e entregar são coisas
+      separadas de propósito: se a entrega falhar, o aviso continua na
+      fila e sai na próxima. Nada se perde por causa de uma rede ruim.
+
+   O que este bloco NÃO faz, e é decisão, não esquecimento: não manda
+   e-mail para a equipe. A equipe tem o sino e, quem quiser, o aviso no
+   aparelho — e-mail para quem já está com a Maestro aberta é barulho.
+   O e-mail existe para quem NÃO está: o cliente.
+   ================================================================== */
+(function(){
+
+  if(typeof SB === 'undefined' || typeof sbCab !== 'function') return;
+
+  /* ---------- quem aprova ---------- */
+  const aprovadorDe = c => {
+    if(!c) return null;
+    const nome = (c.aprovador || '').trim();
+    const mail = (c.mail || '').trim();
+    return mail ? { nome: nome || null, mail } : null;
+  };
+  const ehEmail = s => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s || '').trim());
+
+  /* ---------- 1. o cadastro ---------- */
+  if(typeof modalCliente === 'function'){
+    modalCliente = (function(orig){
+      return function(id){
+        const html = orig.apply(this, arguments);
+        if(typeof html !== 'string' || !html) return html;
+        const c = CLIS().find(x => x.id === id) || {};
+        const campos = `
+    <div class="fld"><label>Quem aprova, do lado do cliente</label>
+      <p style="font-size:12.5px;color:var(--ink-400);margin:-2px 0 8px;line-height:1.5">
+        É para esta pessoa que a Maestro escreve quando o lote fica pronto.
+        Sem e-mail, o lote é enviado do mesmo jeito — mas ninguém é avisado.</p>
+      <div class="frow">
+        <div class="fld" style="margin:0"><label for="cl-aprov">Nome</label>
+          <input id="cl-aprov" value="${esc(c.aprovador || '')}" placeholder="Ex.: Helena Braga"></div>
+        <div class="fld" style="margin:0"><label for="cl-mail">E-mail</label>
+          <input id="cl-mail" type="email" inputmode="email" autocomplete="off"
+            value="${esc(c.mail || '')}" placeholder="helena@cliente.com.br"></div>
+      </div></div>`;
+        return html.replace('<div class="modalrow" style="margin-top:14px">',
+                            campos + '<div class="modalrow" style="margin-top:14px">');
+      };
+    })(modalCliente);
+  }
+
+  /* O "Salvar" do cliente reescreve `S.cliEdit[id]` inteiro — é de
+     propósito, foi assim que a logo parou de sumir. Então os campos
+     novos entram DEPOIS que ele termina, em vez de disputar a escrita
+     com ele. */
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-cliok]');
+    if(!b) return;
+    const id = b.dataset.cliok;
+    const aprovador = (document.getElementById('cl-aprov') || {}).value || '';
+    const mail = ((document.getElementById('cl-mail') || {}).value || '').trim();
+    if(mail && !ehEmail(mail)){
+      e.stopImmediatePropagation(); e.preventDefault();
+      const el = document.getElementById('cl-mail');
+      if(el){ el.style.borderColor = 'var(--danger)'; el.focus(); }
+      toast('Confira o e-mail de quem aprova.');
+      return;
+    }
+    setTimeout(() => {
+      if(!S.cliEdit || !S.cliEdit[id]) return;
+      S.cliEdit[id].aprovador = aprovador.trim();
+      S.cliEdit[id].mail = mail;
+      try{ salvarLocal(); }catch(err){}
+      try{ enviarEstado(); }catch(err){}
+      render();
+    }, 0);
+  }, true);
+
+  /* ---------- 2 e 3. a fila, e o pedido de entrega ---------- */
+  const FILA = SB.url + '/rest/v1/avisos';
+  const CARTEIRO = SB.url + '/functions/v1/enviar-avisos';
+
+  /* Enfileirar e entregar são separados de propósito. O aviso na fila
+     está salvo; a entrega é uma tentativa. Se a entrega falhar agora,
+     ele sai na próxima vez que alguém abrir a Maestro — e ninguém
+     precisa saber que houve uma tentativa a menos. */
+  async function enfileirar(aviso){
+    try{
+      const r = await fetch(FILA, {
+        method: 'POST',
+        headers: Object.assign({}, sbCab(), { Prefer: 'return=minimal' }),
+        body: JSON.stringify(aviso)
+      });
+      /* 409 é a D-030 funcionando: este assunto já está na fila para
+         esta pessoa. Não é erro, é a regra. */
+      if(r.status === 409) return 'jaEstava';
+      if(!r.ok) return 'falhou';
+      return 'entrou';
+    }catch(err){ return 'falhou'; }
+  }
+
+  let pedindo = false;
+  async function pedirEntrega(){
+    if(pedindo) return;
+    pedindo = true;
+    try{
+      await fetch(CARTEIRO, { method:'POST', headers: sbCab(), body: '{}' });
+    }catch(err){ /* a fila guarda; sai na próxima */ }
+    finally{ pedindo = false; }
+  }
+
+  /* ---------- o lote avisa ---------- */
+  if(typeof enviarCards === 'function'){
+    enviarCards = (function(orig){
+      return function(ids){
+        const antes = new Set(S.pauta.filter(p => typeof podeEnviar === 'function' && podeEnviar(p))
+                                     .map(p => p.id));
+        const r = orig.apply(this, arguments);
+        /* quem realmente saiu: estava pronto e agora está com o cliente */
+        const foram = S.pauta.filter(p => antes.has(p.id) && typeof comCliente === 'function' && comCliente(p));
+        if(!foram.length) return r;
+
+        const c = cliAtual();
+        const quem = aprovadorDe(c);
+        if(!quem){
+          setTimeout(() => toast(`Sem e-mail de quem aprova em ${c.nome}, ninguém foi avisado. `
+                               + `Clientes → Editar cliente.`), 2600);
+          return r;
+        }
+
+        const n = foram.length;
+        const dia = new Date().toISOString().slice(0, 10);
+        enfileirar({
+          tipo: 'lote',
+          chave: 'lote:' + c.id + ':' + dia,
+          para_email: quem.mail,
+          para_nome: quem.nome,
+          canal: 'email',
+          titulo: n === 1 ? 'Uma peça esperando você' : `${n} peças esperando você`,
+          corpo: `A ${S.agencia && S.agencia.nome ? S.agencia.nome : 'agência'} mandou `
+               + (n === 1 ? 'uma peça' : `${n} peças`) + ' para a sua aprovação. '
+               + 'Você abre, lê, comenta no ponto exato e decide — '
+               + (n === 1 ? 'tudo numa tela só.' : 'todas de uma vez, ou uma a uma.'),
+          /* o link do lote é o mesmo que a agência copia hoje: abre sem
+             senha, direto na decisão. Se a camada dele não estiver de
+             pé, o e-mail leva para a casa em vez de para lugar nenhum. */
+          link: (typeof linkDeAprovacao === 'function'
+                   ? linkDeAprovacao(c.id) : location.origin + '/'),
+          dados: {
+            cliente: c.nome,
+            peças: String(n),
+            enviado: new Date().toLocaleDateString('pt-BR')
+          }
+        }).then(estado => {
+          if(estado === 'entrou') pedirEntrega();
+          if(estado === 'falhou')
+            setTimeout(() => toast('O lote foi. O aviso por e-mail ficou para a próxima '
+                                 + 'abertura — a fila guarda.'), 2600);
+        });
+        return r;
+      };
+    })(enviarCards);
+  }
+
+  /* a cada abertura, a casa oferece carona ao que ficou na fila */
+  setTimeout(() => { try{ if(typeof MaestroPorta !== 'undefined'
+    && MaestroPorta.quem && MaestroPorta.quem()) pedirEntrega(); }catch(err){} }, 4000);
+
+  window.MaestroAvisosFila = { enfileirar, pedirEntrega, aprovadorDe, ehEmail };
 
 })();
 </script>
