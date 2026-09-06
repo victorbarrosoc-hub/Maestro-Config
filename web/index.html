@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-06 00:38 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-06 09:37 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15957,7 +15957,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v159 · 6 set · a casa para de piscar';
+const VERSAO_PROTOTIPO = 'v160 · 6 set · o cursor do seletor para quieto';
 
 menuSheet = (function(orig){
   return function(){
@@ -33414,3 +33414,86 @@ addEventListener('click', e => {
 #root.semEntrada .venter,
 #root.semEntrada .slin{ animation:none }
 </style>
+
+<script>
+"use strict";
+/* =====================================================================
+   v160 — O CURSOR DO SELETOR PARA DE ESTICAR
+
+   O vídeo do fundador: ele escolhe "Dia" e o cursor amarelo pousa certo.
+   Aí o banco responde, a tela se redesenha — e o cursor ESTICA por cima
+   de "Semana" e volta. A cada resposta do banco, de novo. Ele chamou de
+   "bug nos botões", e é.
+
+   Medido, com o cursor amostrado a cada 30 ms enquanto o banco responde:
+   o botão "Dia" tem 46 px; a cada redesenho o cursor aparece com 114 px
+   e leva ~150 ms encolhendo até 46. Trinta e três de 131 amostras com o
+   cursor fora do lugar. Acontece igual na v158 — é antigo, não veio da
+   v159.
+
+   A causa são duas, e as duas precisam cair:
+
+   1. O `.thumb` é um elemento NOVO a cada desenho e nasce sem medida
+      nenhuma. O `fixSegs` que dá a medida certa roda num `setTimeout` —
+      ou seja, DEPOIS da pintura. O navegador pinta o cursor no tamanho
+      errado, o `fixSegs` corrige, e o `transition` de 280 ms transforma
+      a correção numa animação de encolhimento bem à vista.
+
+   2. Mesmo com a medida certa, redesenhar a tela não é motivo para o
+      cursor deslizar. Ele desliza quando a PESSOA troca de botão. Voltar
+      para o mesmo lugar tem de ser instantâneo e invisível.
+
+   A cura, na mesma ordem: medir ANTES da pintura (o desenho passa pela
+   escrita de `#root`, e é ali que a medida é tomada, ainda no mesmo
+   quadro), e escrever sem animação quando o destino é o mesmo de antes.
+   ================================================================== */
+(function(){
+
+  if(typeof fixSegs !== 'function') return;
+
+  /* ---------- 1. o cursor só desliza quando o destino muda ---------- */
+  const ultimo = new Map();          /* seletor (por posição) → onde ficou */
+
+  fixSegs = function(){
+    const segs = document.querySelectorAll('[data-autothumb]');
+    segs.forEach((seg, i) => {
+      const on = seg.querySelector('button.on'), th = seg.querySelector('.thumb');
+      if(!on || !th) return;
+      const l = on.offsetLeft, w = on.offsetWidth;
+      /* sem medida ainda (tela escondida, fonte não carregada): não
+         escreve nada — escrever zero é o que pinta o cursor errado */
+      if(!w) return;
+      const chave = (seg.id || '') + '#' + i;
+      const antes = ultimo.get(chave);
+      const mesmoLugar = !!antes && antes.l === l && antes.w === w;
+      if(mesmoLugar) th.style.transition = 'none';
+      th.style.left = l + 'px';
+      th.style.width = w + 'px';
+      if(mesmoLugar){
+        void th.offsetWidth;           /* fecha a conta antes de devolver a animação */
+        th.style.transition = '';
+      }
+      ultimo.set(chave, { l, w });
+    });
+  };
+
+  /* ---------- 2. a medida é tomada antes da pintura ----------------- */
+  /* Toda tela desta casa é escrita em `#root.innerHTML` — há uma dúzia de
+     lugares que escrevem, e camadas antigas guardam referência à `render`
+     original. Então a medida entra onde a escrita passa, e não na
+     `render`: quinta vez que essa lição aparece neste arquivo. */
+  const raiz = document.getElementById('root');
+  const desc = raiz && Object.getOwnPropertyDescriptor(raiz, 'innerHTML');
+  if(!raiz || !desc || typeof desc.set !== 'function') return;
+  Object.defineProperty(raiz, 'innerHTML', {
+    configurable: true,
+    enumerable: false,
+    get(){ return desc.get.call(this); },
+    set(v){
+      desc.set.call(this, v);
+      try{ fixSegs(); }catch(e){}      /* mesmo quadro: o cursor nunca é pintado errado */
+    }
+  });
+
+})();
+</script>
