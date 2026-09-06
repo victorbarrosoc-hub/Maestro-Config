@@ -7018,11 +7018,22 @@ const PAUTA_EJUP = [
    cta:'Salve este post e acompanhe os próximos lançamentos do Podcast EJUP.'}
 ];
 
+/* v170: quem abre um link de aprovação ou de visualização é o CLIENTE.
+   A casa não pode semear nada no aparelho dele — nem a pauta de outro
+   cliente, nem o quadro da agência. É a pergunta mais cedo que existe:
+   antes de qualquer estado, olhando só o endereço. */
+function abertoPorLink(){
+  try{ return /[?&](aprovar|ver)=/.test(location.search || ''); }catch(e){ return false; }
+}
+
 /* ---------- cada cliente com a sua pauta ----------------------------- */
 /* v167: não há mais pauta de semente. A da EJUP é a planilha real do
    founder; as outras nascem vazias, como numa conta recém-criada. */
 S.pautas = {};
-S.pautas[ejupId()] = PAUTA_EJUP;
+/* a pauta da EJUP é a planilha REAL do founder. Ela não entra no
+   aparelho de quem abriu um link de cliente — lá dentro só existe o
+   cliente daquele link, e é o banco que o entrega. */
+if(!abertoPorLink()) S.pautas[ejupId()] = PAUTA_EJUP;
 /* v167: toda pauta existe, mesmo vazia. Antes só quem tinha semente
    nascia com array, e o resto aparecia como `undefined` até alguém
    abrir a tela do cliente — o que obrigava cada leitor a se defender. */
@@ -7102,7 +7113,11 @@ S.refs = S.refs || {};                     // roda antes de onde eles nascem
 try{
   const guardado = JSON.parse(localStorage.getItem(CHAVE) || 'null');
   if(guardado){
-    if(guardado.pautas) Object.assign(S.pautas, guardado.pautas);
+    /* v170: quem abriu um link de cliente não recebe de volta a pauta
+       de ninguém. O mesmo navegador pode ter visitado o site antes e
+       guardado a pauta da agência — e ela não é do cliente. Quem entrega
+       a pauta dele é o banco, pela porta do link. */
+    if(guardado.pautas && !abertoPorLink()) Object.assign(S.pautas, guardado.pautas);
     if(Array.isArray(guardado.novos)){
       guardado.novos.forEach(c=>{
         if(!S.novos.some(x=>x.nome===c.nome)) S.novos.push(c); });
@@ -7544,6 +7559,8 @@ const PAUTA_EJUP_V2 = [
     }catch(e){ return false; }
   })();
   if(jaTem || guardadoTem) return;          /* já há trabalho: a semente não entra */
+  /* v170: e nunca no aparelho de quem abriu um link de cliente */
+  if(typeof abertoPorLink === 'function' && abertoPorLink()) return;
   S.pautas[id] = PAUTA_EJUP_V2;
 })();
 </script>
@@ -10037,6 +10054,7 @@ const STORIES_EJUP = [
 
 /* os stories entram na pauta da EJUP, junto com o que já existia */
 (function(){
+  if(typeof abertoPorLink === 'function' && abertoPorLink()) return;   /* v170 */
   const arr = S.pautas[ejupId()] || [];
   const jaTem = arr.some(p=>p.story);
   if(!jaTem){
@@ -10600,6 +10618,10 @@ function sbSeloHtml(){
 }
 
 async function sbCarregar(){
+  /* v170: quem entrou por link fala com as três funções da porta e mais
+     nada. A RLS já devolveria `[]` — mas pedir o que não se pode ver é
+     ruído, e um dia a RLS pode ser mexida por engano. */
+  if(typeof abertoPorLink === 'function' && abertoPorLink()) return false;
   sbSelo('carregando');
   let linhas;
   try{
@@ -13572,6 +13594,9 @@ const EN_COLS = [
 S.ensaio = S.ensaio || null;
 function kbSemente(){
   // nasce do que é real: as pendências da pauta viram solicitações
+  // v170: e não nasce nada no aparelho de quem entrou por link
+  if(typeof abertoPorLink === 'function' && abertoPorLink())
+    return { prox:1, tarefas:[], feitas:[] };
   const t = [];
   let n = 1;
   for(const c of CLIS()){
@@ -13611,7 +13636,7 @@ sbCarregar = (function(orig){
         try{
           const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__config__&select=dados`,{headers:sbCab()});
           if(r.ok){ const [l] = await r.json();
-            if(l && l.dados && l.dados.estudio) S.ensaio = l.dados.estudio; }
+            if(l && l.dados && l.dados.estudio && !abertoPorLink()) S.ensaio = l.dados.estudio; }
         }catch(e){}
       }
       if(!S.ensaio) S.ensaio = kbSemente();
@@ -16014,7 +16039,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v167 · 6 set · a casa limpa';
+const VERSAO_PROTOTIPO = 'v170 · 6 set · o cliente fica no painel dele';
 
 menuSheet = (function(orig){
   return function(){
@@ -17622,6 +17647,11 @@ function aplicarEstado(sv){
 }
 
 (function restaurarTudo(){
+  /* v170: quem abriu um link de cliente não recebe de volta o estado da
+     agência que este mesmo navegador possa ter guardado — equipe, quadro
+     do Ensaio, plano. O painel dele é só o que a porta do link entrega.
+     (A v140 já não GRAVAVA nesse caso; faltava não LER.) */
+  if(typeof abertoPorLink === 'function' && abertoPorLink()) return;
   let g = null;
   try{ g = JSON.parse(localStorage.getItem(CHAVE_TUDO) || 'null'); }catch(e){}
   /* migração: quem já tinha equipe e plano guardados pela v74 não perde */
@@ -34573,4 +34603,114 @@ addEventListener('click', e => {
 
    Verificado em `web/verificar/v167-casa-limpa.mjs` — 21 provas.
    ================================================================== */
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v170 — O CLIENTE FICA NO PAINEL DELE.
+
+   Pergunta do founder, antes de colocar outras agências para usar: do
+   painel dele, o cliente consegue chegar na parte da agência? A resposta
+   medida, num navegador, entrando pelo link como ele entra, era SIM — e
+   por quatro caminhos:
+
+     1. o interruptor "Agência / Cliente" continuava desenhado no topo;
+     2. digitar /hoje, /clientes ou /ensaio no endereço abria a agência;
+     3. a busca (⌘K) abria, com onze atalhos da agência dentro;
+     4. e o pior: o que ele encontrava lá não estava vazio, porque a
+        pauta de exemplo e o quadro nasciam no próprio arquivo.
+
+   Nada disso é o banco: a RLS de 4 de setembro devolve `[]` para quem é
+   anônimo, e as três funções do link só entregam o cliente do link. O
+   furo era da CASA, não do banco — tela que não devia existir, e dado
+   que não devia estar no aparelho.
+
+   O que esta versão faz:
+
+   · UMA PERGUNTA SÓ, num lugar só: `ehCliente()`. Quem entrou pelo link,
+     ou está identificado como cliente, é cliente — e não vira agência
+     por caminho nenhum.
+   · O `render` passa a ser o portão: se um cliente estiver com a tela da
+     agência, ele volta para o painel antes de a tela ser desenhada.
+     Vale para o endereço digitado, para o voltar do navegador e para
+     qualquer código que tente trocar `S.view` — inclusive o inspetor.
+   · O interruptor e a busca somem do painel do cliente, e o clique em
+     "entrar como agência" é recusado.
+   · A pauta de exemplo da EJUP deixa de nascer no aparelho de quem
+     abre o link: ela é a planilha real do founder e mora no banco.
+     Sem sessão, o painel do cliente já não a carrega.
+
+   Uma ressalva honesta, que fica anotada: enquanto a pauta da EJUP
+   estiver escrita dentro deste arquivo, ela é legível por quem abrir o
+   código-fonte da página. O caminho certo é apagá-la daqui e deixá-la
+   só no banco — e isso se faz depois que o founder confirmar que a
+   linha dela está lá (o SQL de limpeza mostra).
+
+   Verificado em `web/verificar/v170-cliente-nao-entra-na-agencia.mjs`.
+   ================================================================== */
+(function(){
+
+  /* quem é cliente: veio pelo link, ou está identificado como tal */
+  function ehCliente(){
+    try{
+      if(S.viaLink) return true;
+      return !!(S.usuario && S.usuario.tipo === 'cliente');
+    }catch(e){ return false; }
+  }
+  window.MaestroEhCliente = ehCliente;
+
+  /* ---------- 1. o portão: o render devolve o cliente para casa ------ */
+  /* No `render`, e não no roteador: assim vale para todo caminho que
+     leve a tela da agência à tela — endereço, voltar do navegador,
+     código de terceiro. É o mesmo princípio da v159: fechar onde a
+     escrita passa, não onde ela nasce. */
+  const ROTA_CL = (typeof URL_CL === 'object') ? URL_CL : { inicio:'' };
+  render = (function(orig){
+    return function(){
+      try{
+        if(ehCliente()){
+          if(S.view !== 'client'){ S.view = 'client'; S.modal = null; }
+          if(!(S.route in ROTA_CL)) S.route = 'inicio';
+          if(S.pal) S.pal = false;                 /* a busca é da agência */
+        }
+      }catch(e){}
+      return orig.apply(this, arguments);
+    };
+  })(render);
+
+  /* ---------- 2. o interruptor some do painel do cliente ------------- */
+  if(typeof ctxBar === 'function'){
+    ctxBar = (function(orig){
+      return function(){ const r = orig.apply(this, arguments); tirarInterruptor(); return r; };
+    })(ctxBar);
+  }
+  function tirarInterruptor(){
+    if(!ehCliente()) return;
+    document.querySelectorAll('[data-enter="agency"],[data-trocausr],[data-openpal]')
+      .forEach(el => { const seg = el.closest('[data-seg]'); (seg || el).remove(); });
+  }
+  const _obs = new MutationObserver(() => { try{ tirarInterruptor(); }catch(e){} });
+  try{ _obs.observe(document.body, { childList:true, subtree:true }); }catch(e){}
+
+  /* ---------- 3. e o clique é recusado, não só escondido ------------- */
+  addEventListener('click', e => {
+    if(!ehCliente()) return;
+    const t = e.target.closest && e.target.closest(
+      '[data-enter="agency"],[data-qeag],[data-trocausr],[data-openpal]');
+    if(!t) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    document.getElementById('quemEsta')?.remove();
+    try{ toast('Esta é a área da agência. Você está no painel do seu projeto.'); }catch(err){}
+  }, true);
+
+  /* ---------- 4. o atalho da busca também ---------------------------- */
+  addEventListener('keydown', e => {
+    if(!ehCliente()) return;
+    const k = (e.key || '').toLowerCase();
+    if((e.metaKey || e.ctrlKey) && k === 'k'){ e.stopImmediatePropagation(); e.preventDefault(); }
+  }, true);
+
+  try{ render(); }catch(e){}
+})();
 </script>
