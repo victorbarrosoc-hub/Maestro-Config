@@ -32482,7 +32482,14 @@ addEventListener('click', e => {
       avisar('Não consegui falar com a Maestro agora. Tente abrir o link de novo.', true);
       return false;
     }
-    if(!r.dados){                                         /* chave não confere */
+    /* v171: a porta exige a FORMA da resposta, não só a presença dela.
+       Chave errada devolve `null` — mas uma resposta vazia de outro
+       feitio (`[]`, `{}`, um erro que virou 200) também não é
+       autorização, e era aceita como se fosse. Sem o cliente dentro,
+       não entra. */
+    const ehLote = !!(r.dados && !Array.isArray(r.dados)
+                      && typeof r.dados === 'object' && r.dados.cliente);
+    if(!ehLote){                                          /* chave não confere */
       avisar('Este link de aprovação não vale mais. Peça outro à agência.', true);
       return true;
     }
@@ -34168,12 +34175,21 @@ addEventListener('click', e => {
    ================================================================== */
 (function(){
 
-  /* quem é cliente: veio pelo link, ou está identificado como tal */
+  /* Duas perguntas, e não uma — a diferença importa, e me custou uma
+     volta: na primeira versão desta trava um link com a chave ERRADA
+     abria a casca do painel, sem usuário nenhum, porque a trava
+     empurrava para lá antes de a porta responder.
+
+     `clienteEntrou()`: a porta conferiu a chave e disse quem é. Este vai
+     para o painel dele.
+     `ehCliente()`: veio por um link, com chave ainda por conferir ou já
+     recusada. Este não é da agência — mas também não é para ser jogado
+     dentro do painel de ninguém. */
+  function clienteEntrou(){
+    try{ return !!(S.usuario && S.usuario.tipo === 'cliente'); }catch(e){ return false; }
+  }
   function ehCliente(){
-    try{
-      if(S.viaLink) return true;
-      return !!(S.usuario && S.usuario.tipo === 'cliente');
-    }catch(e){ return false; }
+    try{ return clienteEntrou() || !!S.viaLink; }catch(e){ return false; }
   }
   window.MaestroEhCliente = ehCliente;
 
@@ -34186,11 +34202,16 @@ addEventListener('click', e => {
   render = (function(orig){
     return function(){
       try{
-        if(ehCliente()){
+        if(clienteEntrou()){
           if(S.view !== 'client'){ S.view = 'client'; S.modal = null; }
           if(!(S.route in ROTA_CL)) S.route = 'inicio';
-          if(S.pal) S.pal = false;                 /* a busca é da agência */
         }
+        else if(S.viaLink && S.view === 'agency'){
+          /* chave por conferir, ou recusada: fica na folha que a porta
+             desenha, e não vira agência por nenhum caminho */
+          S.view = 'site'; S.route = 'home'; S.modal = null;
+        }
+        if(ehCliente() && S.pal) S.pal = false;     /* a busca é da agência */
       }catch(e){}
       return orig.apply(this, arguments);
     };

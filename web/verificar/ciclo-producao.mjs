@@ -37,6 +37,14 @@ const pg = await b.newPage({ viewport: { width: 1280, height: 900 } });
 await abrirAgencia(pg);
 
 /* ---------- a fonte do cliente no card ---------------------------------- */
+/* v167: o quadro começa vazio — a tarefa com cliente é deste teste */
+await pg.evaluate(() => {
+  S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo:'Tarefa com cliente', cli:'cj',
+    resp:null, col:'plan', cat:'producao', criada: Date.now(), prazo:null,
+    tempoMs:0, desde:null, quemVe:[] });
+  S.view = 'agency'; S.route = 'producao'; S.enCat = 'producao'; render();
+});
+await pg.waitForTimeout(400);
 const fonte = await pg.$$eval('.enCard .cli b', bs => bs.map(x => parseFloat(getComputedStyle(x).fontSize)));
 checa('o nome do cliente no card do Ensaio voltou ao tamanho do selo', fonte.length > 0 && fonte.every(f => f <= 12));
 
@@ -202,6 +210,17 @@ const cl = await b.newPage({ viewport: { width: 390, height: 844 } });
 cl.on('pageerror', e => erros.push('link: ' + String(e)));
 await cl.route(SB, r => {
   const u = r.request().url();
+  /* v152: quem entra por link fala com a função do banco, não com a
+     tabela. É esta a porta de verdade desde 5 de setembro. */
+  if(u.includes('/rpc/maestro_link_lote')){
+    const b2 = JSON.parse(r.request().postData() || '{}');
+    if(b2.p_cli !== 'cj' || b2.p_chave !== chave)
+      return r.fulfill({ status:200, contentType:'application/json', body:'null' });
+    return r.fulfill({ status:200, contentType:'application/json', body: JSON.stringify({
+      cliente: { id:'cj', nome:'Cortez Jurídico', ini:'CJ', seg:'Consultoria jurídica' },
+      edit: { nome:'Cortez Jurídico' },
+      dados: { pauta: [], refs:{}, mats:{}, lixeira:[], versao:48 } }) });
+  }
   if(u.includes('cliente=eq.__config__'))
     return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ dados: { cliEdit: { cj: { chave } }, cliFora: [] } }]) });
   if(r.request().method() === 'GET' && u.includes('select=cliente,dados'))
@@ -222,6 +241,15 @@ checa('e não vê o interruptor Agência/Cliente do protótipo', viaLink.seg && 
 const cl2 = await b.newPage({ viewport: { width: 390, height: 844 } });
 await cl2.route(SB, r => {
   const u = r.request().url();
+  /* a mesma porta, e com a chave errada ela devolve `null` */
+  if(u.includes('/rpc/maestro_link_lote')){
+    const b3 = JSON.parse(r.request().postData() || '{}');
+    if(b3.p_cli !== 'cj' || b3.p_chave !== chave)
+      return r.fulfill({ status:200, contentType:'application/json', body:'null' });
+    return r.fulfill({ status:200, contentType:'application/json', body: JSON.stringify({
+      cliente: { id:'cj', nome:'Cortez Jurídico' }, edit:{},
+      dados: { pauta: [], refs:{}, mats:{}, lixeira:[], versao:48 } }) });
+  }
   if(u.includes('cliente=eq.__config__'))
     return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ dados: { cliEdit: { cj: { chave } }, cliFora: [] } }]) });
   if(r.request().method() === 'GET' && u.includes('select=cliente,dados'))

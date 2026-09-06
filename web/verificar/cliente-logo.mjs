@@ -42,8 +42,13 @@ await pag.waitForTimeout(500);
 const ok = [], falhou = [];
 const checa = (nome, cond) => (cond ? ok : falhou).push(nome);
 
-/* garante que ha card dos dois clientes no quadro */
+/* garante que ha card dos dois clientes no quadro.
+   v167: o quadro comeca vazio — as duas tarefas sao deste teste */
 await pag.evaluate(q => {
+  while(S.ensaio.tarefas.filter(t => catIdDe(t) === 'producao').length < 2)
+    S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo:'Tarefa do teste', cli:null,
+      resp:null, col:'plan', cat:'producao', criada: Date.now(), prazo:null,
+      tempoMs:0, desde:null, quemVe:[] });
   const ts = S.ensaio.tarefas.filter(t => catIdDe(t) === 'producao');
   if(ts[0]) ts[0].cli = q.comLogo;
   if(ts[1]) ts[1].cli = q.semLogo;
