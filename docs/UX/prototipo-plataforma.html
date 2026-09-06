@@ -15889,7 +15889,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v158 · 5 set · a versão nova chega mesmo';
+const VERSAO_PROTOTIPO = 'v159 · 6 set · a casa para de piscar';
 
 menuSheet = (function(orig){
   return function(){
@@ -33206,3 +33206,143 @@ addEventListener('click', e => {
   }, true);
 })();
 </script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v159 — A PISCADA QUE FALTAVA: A CASA SE REDESENHA IGUAL, OITO VEZES
+
+   O relato, pela terceira vez: "ainda pisca, assim que abri o site
+   pisca". A v155 tirou a cortina; a v157 acertou a cor da primeira
+   pintura. Continuou piscando — então desta vez a abertura foi GRAVADA,
+   quadro a quadro, com o screencast do próprio navegador, no caso real
+   dele (já entrou, tema escuro, banco respondendo em ~350 ms).
+
+   O que a gravação mostra, e não é sutil: aos 2,2 s a página inteira
+   SOME e volta a aparecer do zero. E de novo aos 2,6 s. E aos 3,0. E aos
+   3,4. E aos 3,8. Uma piscada a cada resposta que chega do banco.
+
+   A causa, medida com um espião no `render`: a abertura chama `render()`
+   OITO vezes — sbCarregar, buscarEstado, a sessão que renova, o Sincro,
+   a mescla — e as oito produzem EXATAMENTE o mesmo HTML, byte a byte
+   (21.508 caracteres, sempre iguais). Só que cada chamada escreve esse
+   HTML em `innerHTML`, o navegador joga fora todos os nós e constrói
+   outros — e toda entrada (`.fu`, `.venter`, `.slin`, 0,42 s de fadeUp)
+   RECOMEÇA do opacity:0. Do lado de fora: a casa pisca oito vezes.
+
+   A cura é a regra mais simples que existe: SE O DESENHO É IGUAL AO QUE
+   JÁ ESTÁ NA TELA, NÃO MEXA NA TELA. Não é otimização — é a diferença
+   entre uma casa parada e uma casa piscando.
+
+   Fica no ponto onde toda escrita passa, o próprio `innerHTML` das três
+   caixas da casa (`#root`, `#layer`, `#ctx`), e não em `render`: há uma
+   dúzia de lugares que escrevem direto nessas caixas, e camadas antigas
+   guardam referência à `render` original — quarta vez que essa lição
+   aparece neste arquivo.
+
+   A lembrança do último desenho é invalidada por um MutationObserver:
+   se qualquer outra coisa mexer lá dentro (arrastar, uma classe, um
+   nó inserido na mão), a lembrança cai e a próxima escrita passa. Só
+   pulamos a escrita quando temos certeza de que a tela já é aquilo.
+   ================================================================== */
+(function(){
+
+  const desc = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+  if(!desc || typeof desc.set !== 'function' || typeof desc.get !== 'function') return;
+
+  function naoRepintar(el){
+    if(!el || el.__v159) return;
+    el.__v159 = true;
+
+    let ultimo = null;                     /* o último HTML que ESTA camada escreveu */
+    let obs = null;
+    try{
+      obs = new MutationObserver(recs => {
+        /* Só ESTRUTURA invalida a lembrança: um nó que entrou, saiu ou
+           mudou de texto quer dizer que a tela já não é o que desenhamos.
+           Atributo, não: os ajustes que rodam DEPOIS de cada desenho
+           (o `fixSegs` do segmento, a posição do polegar) mexem em
+           `style` e `class` a cada volta — se eles derrubassem a
+           lembrança, ela nunca sobreviveria a um desenho, e a guarda
+           não guardaria nada. Foi exatamente o que a medição mostrou na
+           primeira tentativa. Eles voltam a rodar no desenho seguinte,
+           então pular a escrita não perde nada. */
+        for(let i = 0; i < recs.length; i++)
+          if(recs[i].type !== 'attributes'){ ultimo = null; return; }
+      });
+      obs.observe(el, { childList:true, subtree:true, attributes:true, characterData:true });
+    }catch(e){ obs = null; }
+
+    Object.defineProperty(el, 'innerHTML', {
+      configurable: true,
+      enumerable: false,
+      get(){ return desc.get.call(this); },
+      set(v){
+        const s = (v === null || v === undefined) ? '' : String(v);
+        if(ultimo !== null && s === ultimo) return;    /* a tela já é isto */
+        desc.set.call(this, s);
+        /* as marcas que a NOSSA escrita gerou não valem como "alguém
+           mexeu aqui" — drenar aqui é o que impede o observador de
+           apagar a lembrança que acabamos de criar */
+        try{ if(obs) obs.takeRecords(); }catch(e){}
+        ultimo = s;
+      }
+    });
+  }
+
+  ['root', 'layer', 'ctx'].forEach(id => naoRepintar(document.getElementById(id)));
+
+  /* -------------------------------------------------------------------
+     E a piscada que sobra quando o desenho MUDA de verdade.
+
+     Depois da guarda acima ficou uma piscada só, e ela é honesta: aos
+     1,9 s o desenho volta com QUATRO caracteres diferentes. Ninguém vê
+     esses quatro caracteres — mas a escrita troca todos os nós, e as
+     cinco entradas da tela (`.fu`, 0,42 s de fadeUp) recomeçam do zero.
+     A página inteira some e volta por causa de quatro caracteres.
+
+     A regra que falta é de produto, não de código: a ENTRADA de uma tela
+     acontece quando você CHEGA nela. Ficar na mesma tela e ela se
+     redesenhar não é chegar de novo. Enquanto a tela é a mesma, o
+     desenho troca o conteúdo sem reapresentar a casa.
+     ---------------------------------------------------------------- */
+  (function(){
+    const raiz = document.getElementById('root');
+    if(!raiz) return;
+    const tela = () => {
+      try{ return typeof rlChave === 'function' ? rlChave() : null; }
+      catch(e){ return null; }
+    };
+    /* a tela em que a casa JÁ ESTÁ quando esta guarda entra. Sem isto o
+       primeiro redesenho depois da abertura conta como chegada e
+       reapresenta tudo — foi a piscada que sobrou na primeira medição
+       desta v159. Se a casa ainda não desenhou nada, `children` está
+       vazio e a primeira escrita segue sendo uma chegada de verdade. */
+    let ultimaTela = tela();
+    const desc2 = Object.getOwnPropertyDescriptor(raiz, 'innerHTML');
+    if(!desc2 || typeof desc2.set !== 'function') return;
+    Object.defineProperty(raiz, 'innerHTML', {
+      configurable: true,
+      enumerable: false,
+      get(){ return desc2.get.call(this); },
+      set(v){
+        const agora = tela();
+        const mesma = agora !== null && agora === ultimaTela && this.children.length > 0;
+        this.classList.toggle('semEntrada', !!mesma);
+        desc2.set.call(this, v);
+        ultimaTela = agora;
+      }
+    });
+  })();
+
+})();
+</script>
+
+<style>
+/* v159 — a entrada de uma tela toca quando você CHEGA nela. Redesenhar a
+   tela em que você já está não é chegar de novo: sem isto, cada resposta
+   do banco reapresenta a casa inteira, e do lado de fora isso é piscar. */
+#root.semEntrada .fu,
+#root.semEntrada .venter,
+#root.semEntrada .slin{ animation:none }
+</style>
