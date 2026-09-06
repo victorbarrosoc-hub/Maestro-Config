@@ -48,16 +48,19 @@ async function casa({ filaResponde = 201 } = {}){
   await pag.waitForTimeout(400);
   return { ctx, pag, erros, rede };
 }
-/* guarda quem aprova, pelo modal de sempre */
+/* guarda quem aprova, pelo modal de sempre. v165: o cadastro é o da
+   v53b (`cl-apnome`/`cl-apmail`) — a v164 tinha criado um segundo par,
+   e os dois se atropelavam a cada Salvar. */
 const guardarAprovador = (pag, mail, nome = 'Helena Braga') => pag.evaluate(async d => {
   const c = CLIS()[0];
   S.modal = modalCliente(c.id); renderLayer();
-  document.getElementById('cl-aprov').value = d.nome;
-  document.getElementById('cl-mail').value = d.mail;
+  document.getElementById('cl-apnome').value = d.nome;
+  document.getElementById('cl-apmail').value = d.mail;
   document.querySelector('[data-cliok]').click();
   await new Promise(r => setTimeout(r, 80));
   const dep = CLIS().find(x => x.id === c.id);
-  return { aprovador: dep.aprovador, mail: dep.mail, modal: !!S.modal };
+  const ap = dep.aprovador || {};
+  return { aprovador: ap.nome, mail: ap.mail, modal: !!S.modal };
 }, { mail, nome });
 /* três cards prontos no lote, como ficam depois do Check */
 const mandarLote = pag => pag.evaluate(async () => {
@@ -77,16 +80,22 @@ const mandarLote = pag => pag.evaluate(async () => {
   const { ctx, pag, erros } = await casa();
   const campos = await pag.evaluate(() => {
     S.modal = modalCliente(CLIS()[0].id); renderLayer();
-    return { nome: !!document.getElementById('cl-aprov'), mail: !!document.getElementById('cl-mail') };
+    return { nome: !!document.getElementById('cl-apnome'),
+             mail: !!document.getElementById('cl-apmail'),
+             /* v165: um só par de campos, nunca dois */
+             pares: document.querySelectorAll('[id^="cl-ap"], #cl-aprov, #cl-mail').length };
   });
   checa('1.1 o cadastro do cliente ganhou nome e e-mail de quem aprova',
         campos.nome && campos.mail, campos);
+  checa('1.1b e há um só cadastro de quem aprova, não dois',
+        campos.pares === 2, campos);
 
   const torto = await pag.evaluate(async () => {
-    document.getElementById('cl-mail').value = 'helena arroba lojanorte';
+    document.getElementById('cl-apmail').value = 'helena arroba lojanorte';
     document.querySelector('[data-cliok]').click();
     await new Promise(r => setTimeout(r, 60));
-    return { modalAberto: !!S.modal, guardado: (CLIS()[0].mail || null) };
+    return { modalAberto: !!S.modal,
+             guardado: ((CLIS()[0].aprovador || {}).mail || null) };
   });
   checa('1.2 e-mail torto não é aceito — o modal fica aberto',
         torto.modalAberto === true && !torto.guardado, torto);

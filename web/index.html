@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-06 17:33 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-06 18:22 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -6592,7 +6592,7 @@ document.addEventListener('click', e => {
       st: agendar ? 'SCHEDULED' : 'DRAFT' };
     const p = S.pauta.find(x=>x.id===+d.ptok);
     if(p) Object.assign(p, dados);
-    else S.pauta.push({ id: Math.max(0,...S.pauta.map(x=>x.id))+1, ...dados });
+    else S.pauta.push({ id: novoIdCard(), ...dados });
     S.modal = null;
     agendar ? somAgendar() : som('toque');
     render();
@@ -7130,6 +7130,66 @@ Object.defineProperty(S, 'pauta', {
   set(v){ S.pautas[cliAtual().id] = v; }
 });
 
+/* ---------- v165: o material tem dono -------------------------------- */
+/* O id do card é do CLIENTE, não da casa: na semente a Loja Norte tem
+   cards de 1 a 7 e a EJUP também. `S.mat` e `S.refs` guardavam só por
+   id — então os dois cards 1 dividiam a mesma pilha de anexos. Uma
+   tarefa recém-criada nascia com "10 peças anexadas" (as de outro
+   cliente) e, pior, arte de um cliente podia aparecer no link de
+   aprovação do outro.
+
+   A chave passa a ser `cliente|id`. Quem sabe o dono, diz (`cli`); quem
+   tem o card em mãos, o próprio card responde (a pauta em que ele está);
+   quem só tem o número, a casa procura — e o cliente aberto desempata. */
+S.mtCli = S.mtCli || null;   // dono do card aberto em Material
+S.rfCli = S.rfCli || null;   // dono do card aberto em Referencias
+const _donoDe = new WeakMap();
+function donoDoCard(alvo, cli){
+  if(cli) return cli;
+  if(alvo && typeof alvo === 'object'){
+    /* a lembrança vale enquanto o card ainda estiver naquela pauta */
+    const lembrado = _donoDe.get(alvo);
+    if(lembrado && (S.pautas[lembrado] || []).indexOf(alvo) >= 0) return lembrado;
+    for(const cid in S.pautas)
+      if((S.pautas[cid] || []).indexOf(alvo) >= 0){ _donoDe.set(alvo, cid); return cid; }
+    return (cliAtual() || {}).id;
+  }
+  const id = +alvo;
+  const atual = (cliAtual() || {}).id;
+  if((S.pautas[atual] || []).some(p => +p.id === id)) return atual;
+  for(const cid in S.pautas)
+    if((S.pautas[cid] || []).some(p => +p.id === id)) return cid;
+  return atual;
+}
+const mChave = (alvo, cli) =>
+  donoDoCard(alvo, cli) + '|' + ((alvo && typeof alvo === 'object') ? alvo.id : +alvo);
+/* o card pelo número, na pauta de quem é dono dele */
+const cardDe = (id, cli) =>
+  (S.pautas[donoDoCard(id, cli)] || []).find(p => +p.id === +id) || null;
+/* os botões que abrem material, referências e visualizador passam a
+   carregar o dono junto — `cliente|id` — porque o Ensaio mostra card de
+   qualquer cliente, e um número sozinho não diz de quem é. */
+function lerAlvo(valor){
+  const txt = String(valor == null ? '' : valor);
+  const corte = txt.indexOf('|');
+  return corte > 0 ? { cli: txt.slice(0, corte), id: +txt.slice(corte + 1) }
+                   : { cli: null, id: +txt };
+}
+
+/* id de card novo nunca mais repete. A v151 já ancorou o contador no
+   relógio; dois lugares ficaram de fora e ainda faziam
+   `Math.max(ids DESTA pauta) + 1` — num cliente com onze cards isso
+   devolve 12, e 12 já era de outro cliente. */
+function novoIdCard(){
+  let maior = 0;
+  for(const cid in S.pautas)
+    for(const p of (S.pautas[cid] || [])) if(+p.id > maior) maior = +p.id;
+  try{
+    if(typeof _pid === 'number'){ _pid = Math.max(_pid, maior, Date.now()); return ++_pid; }
+  }catch(e){}
+  return maior + 1;
+}
+
 /* ---------- nada se perde: guarda no navegador ----------------------- */
 const CHAVE = 'maestro-prototipo-v1';
 S.mat = S.mat || {};                       // inicializa aqui — este bloco
@@ -7148,10 +7208,26 @@ try{
        esses dois nunca tinham entrado aqui, e por isso sumiam mesmo sem
        sair do aparelho). Já um item com `nuvem` tem uma url https:// de
        verdade (Supabase Storage, v48) — essa não morre, então fica. */
-    if(guardado.mat) Object.entries(guardado.mat).forEach(([id,arr])=>{
-      S.mat[id] = arr.map(m => (m.tipo==='link'||m.nuvem) ? m : {...m, url:null}); });
-    if(guardado.refs) Object.entries(guardado.refs).forEach(([id,arr])=>{
-      S.refs[id] = arr.map(r => (r.tipo==='link'||r.nuvem) ? r : {...r, url:null}); });
+    /* v165: a chave virou `cliente|id`. O que foi guardado antes disso
+       vem só com o número — e um número podia ser de dois clientes ao
+       mesmo tempo. Vai para todos os donos daquele id (nada some da
+       tela de quem já usava); a primeira carga do banco devolve a cada
+       cliente o que é dele, porque `sbAplicar` grava por cliente. */
+    const _donosDoId = id => {
+      const l = [];
+      for(const cid in S.pautas)
+        if((S.pautas[cid] || []).some(p => +p.id === +id)) l.push(cid);
+      return l.length ? l : [(cliAtual() || {}).id];
+    };
+    const _voltar = (guardadas, destino) => {
+      Object.entries(guardadas || {}).forEach(([k, arr])=>{
+        const lista = arr.map(m => (m.tipo==='link'||m.nuvem) ? m : {...m, url:null});
+        if(String(k).indexOf('|') > 0){ destino[k] = lista; return; }
+        _donosDoId(k).forEach(cid => { destino[cid + '|' + k] = lista; });
+      });
+    };
+    _voltar(guardado.mat, S.mat);
+    _voltar(guardado.refs, S.refs);
   }
 }catch(e){}
 let _tmSalva = 0;
@@ -7918,9 +7994,9 @@ const pesoLegivel = n => n < 1048576
   ? `${Math.max(1,Math.round(n/1024))} KB` : `${(n/1048576).toFixed(1)} MB`;
 
 /* os arquivos vivem em memória — o protótipo não sobe nada para servidor */
-S.mat = S.mat || {};                       // { [idDaPostagem]: [ {nome,tipo,peso,url} ] }
+S.mat = S.mat || {};                       // { 'cliente|idDoCard': [ {nome,tipo,peso,url} ] }
 
-function materiaisDe(id){ return S.mat[id] || []; }
+function materiaisDe(alvo, cli){ return S.mat[mChave(alvo, cli)] || []; }
 
 /* solta a memoria do blob so depois que o desenho novo substituiu o
    <img> antigo — se revogar antes, o navegador reclama de arquivo que
@@ -7932,7 +8008,7 @@ function soltarDepois(urls){
 }
 
 function tiraMaterial(p){
-  const ms = materiaisDe(p.id);
+  const ms = materiaisDe(p);
   if(!ms.length){
     return p.tarefa ? '' : `<span class="mtSemArquivo">${ic('warn',12)} sem arquivo</span>`;
   }
@@ -7963,8 +8039,8 @@ ptItemHtml = (function(orig){
 
 /* o modal de material */
 function modalMaterial(id){
-  const p = S.pauta.find(x=>x.id===id); if(!p) return '';
-  const ms = materiaisDe(id);
+  const p = cardDe(id, S.mtCli); if(!p) return '';
+  const ms = materiaisDe(p);
   const carrossel = /carrossel/i.test(p.fmt);
   return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
     <h3>Material · ${esc(p.t)}</h3>
@@ -8005,10 +8081,11 @@ function modalMaterial(id){
     </div></div></div>`;
 }
 
-function guardarArquivos(id, lista){
-  const p = S.pauta.find(x=>x.id===id); if(!p) return 0;
+function guardarArquivos(id, lista, cli){
+  const p = cardDe(id, cli); if(!p) return 0;
   const carrossel = /carrossel/i.test(p.fmt);
-  const arr = S.mat[id] = S.mat[id] || [];
+  const k = mChave(p);
+  const arr = S.mat[k] = S.mat[k] || [];
   let n = 0;
   [...lista].forEach(f=>{
     // v51: a trava de "peça única substitui" saiu — um Reel também tem
@@ -8040,10 +8117,12 @@ document.addEventListener('click', e => {
   const t = e.target.closest('[data-mtabrir],[data-mtdel],[data-mtlimpa],[data-mtpronto]');
   if(!t) return;
   const d = t.dataset;
-  if(d.mtabrir){ S.mtId = +d.mtabrir; S.modal = modalMaterial(S.mtId); renderLayer();
+  if(d.mtabrir){ const a = lerAlvo(d.mtabrir);
+    S.mtId = a.id; S.mtCli = a.cli;
+    S.modal = modalMaterial(S.mtId); renderLayer();
     setTimeout(ligarSolta, 0); return; }
   if(d.mtdel !== undefined){
-    const arr = S.mat[S.mtId] || [];
+    const arr = S.mat[mChave(S.mtId, S.mtCli)] || [];
     const m = arr[+d.mtdel];
     if(m && m.url) soltarDepois([m.url]);
     if(m && m.chave) idbApagar(m.chave).catch(()=>{});
@@ -8051,15 +8130,16 @@ document.addEventListener('click', e => {
     S.modal = modalMaterial(S.mtId); renderLayer(); setTimeout(ligarSolta, 0);
     render(); return; }
   if(d.mtlimpa){
-    const alvo = S.mat[+d.mtlimpa] || [];
+    const k = mChave(+d.mtlimpa, S.mtCli);
+    const alvo = S.mat[k] || [];
     soltarDepois(alvo.map(m=>m.url));
     alvo.filter(m=>m.chave).forEach(m=>idbApagar(m.chave).catch(()=>{}));
     alvo.filter(m=>m.caminhoNuvem).forEach(m=>apagarNuvem(m.caminhoNuvem));
-    delete S.mat[+d.mtlimpa];
+    delete S.mat[k];
     S.modal = modalMaterial(+d.mtlimpa); renderLayer(); setTimeout(ligarSolta, 0);
     render(); toast('Material removido.'); return; }
   if(d.mtpronto){
-    const p = S.pauta.find(x=>x.id===+d.mtpronto);
+    const p = cardDe(+d.mtpronto, S.mtCli);
     if(p){ p.feito = true; }
     S.modal = null; somMaterial(); render();
     toast(`"${p?p.t:''}" com material e marcada como feita.`);
@@ -8072,7 +8152,7 @@ function ligarSolta(){
   const input = document.getElementById('mt-file');
   if(!zona || !input) return;
   input.addEventListener('change', () => {
-    const n = guardarArquivos(S.mtId, input.files);
+    const n = guardarArquivos(S.mtId, input.files, S.mtCli);
     if(!n) return;
     somMaterial();
     S.modal = modalMaterial(S.mtId); renderLayer(); setTimeout(ligarSolta, 0);
@@ -8085,7 +8165,7 @@ function ligarSolta(){
     e.preventDefault(); zona.classList.remove('sobre'); }));
   zona.addEventListener('drop', e=>{
     const fs = e.dataTransfer?.files; if(!fs || !fs.length) return;
-    const n = guardarArquivos(S.mtId, fs);
+    const n = guardarArquivos(S.mtId, fs, S.mtCli);
     somMaterial();
     S.modal = modalMaterial(S.mtId); renderLayer(); setTimeout(ligarSolta, 0);
     render();
@@ -8111,7 +8191,7 @@ ptItemHtml = (function(orig){
   return function(p, i){
     const html = orig(p, i);
     if(p.tarefa) return html;
-    const ms = materiaisDe(p.id);
+    const ms = materiaisDe(p);
     const btn = `<button class="ptQuick" data-mtabrir="${p.id}"
       style="${ms.length?'color:var(--encore);border-color:rgba(53,184,122,.4)':''}"
       aria-label="${ms.length?`Material (${ms.length} arquivo${ms.length>1?'s':''})`:'Subir material'}"
@@ -8126,7 +8206,7 @@ ptVistaTabela = (function(orig){
     let html = orig(visiveis);
     html = html.replace('<th>Status</th>', '<th>Material</th><th>Status</th>');
     visiveis.forEach(p=>{
-      const ms = materiaisDe(p.id);
+      const ms = materiaisDe(p);
       const cel = `<td class="feitoCel">${p.tarefa ? '—'
         : `<button class="selo ${ms.length?'s':'n'}" data-mtabrir="${p.id}">${
             ms.length? `${ms.length} ARQ.` : 'SUBIR'}</button>`}</td>`;
@@ -10064,8 +10144,8 @@ const STORIES_EJUP = [
 })();
 
 /* ---------- referências: link que abre, arquivo que aparece --------- */
-S.refs = S.refs || {};                      // { [idDaPostagem]: [ {tipo,nome,url,peso} ] }
-function refsDe(id){ return S.refs[id] || []; }
+S.refs = S.refs || {};                      // { 'cliente|idDoCard': [ {tipo,nome,url,peso} ] }
+function refsDe(alvo, cli){ return S.refs[mChave(alvo, cli)] || []; }
 /* aceita como link tanto "https://x.com/y" quanto "x.com/y" colado cru —
    exigir o protocolo recusava exatamente o jeito que a pessoa cola */
 const ehUrl = s => { s = s.trim();
@@ -10075,8 +10155,8 @@ const arrumaUrl = s => { s = s.trim(); return /^https?:\/\//i.test(s) ? s : 'htt
 const dominioDe = u => { try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } };
 
 function modalRefs(id){
-  const p = S.pauta.find(x=>x.id===id); if(!p) return '';
-  const rs = refsDe(id);
+  const p = cardDe(id, S.rfCli); if(!p) return '';
+  const rs = refsDe(p);
   return `<div class="modal"><div class="modalbox wide" role="dialog" aria-modal="true">
     <h3>Referências · ${esc(p.t)}</h3>
     <p>O que sustenta esta postagem: o artigo que ela cita, a imagem aprovada, o
@@ -10120,7 +10200,8 @@ function ligarSoltaRef(){
   const input = document.getElementById('rf-file');
   const campo = document.getElementById('rf-url');
   const guarda = fs => {
-    const arr = S.refs[S.rfId] = S.refs[S.rfId] || [];
+    const kr = mChave(S.rfId, S.rfCli);
+    const arr = S.refs[kr] = S.refs[kr] || [];
     let n = 0;
     [...fs].forEach(f=>{
       const tipo = tipoDoArquivo(f);
@@ -10130,7 +10211,7 @@ function ligarSoltaRef(){
       arr.push(item);
       idbSalvar(chave, f).catch(()=>{});
       if(tipo==='video') gerarPoster(url).then(pst=>{ if(pst){ item.poster = pst; render(); } });
-      if(typeof subirDepois==='function') subirDepois(item, `ref/${S.rfId}`, f);
+      if(typeof subirDepois==='function') subirDepois(item, `ref/${kr.replace('|','/')}`, f);
       n++;
     });
     if(!n) return;
@@ -10160,7 +10241,8 @@ document.addEventListener('click', e => {
   e.stopImmediatePropagation();
   const d = t.dataset;
   if(d.rfabrir){
-    S.rfId = +d.rfabrir; S.modal = modalRefs(S.rfId); renderLayer();
+    const a = lerAlvo(d.rfabrir); S.rfId = a.id; S.rfCli = a.cli;
+    S.modal = modalRefs(S.rfId); renderLayer();
     setTimeout(ligarSoltaRef, 0); return; }
   if(d.rflink){
     const campo = document.getElementById('rf-url');
@@ -10168,12 +10250,13 @@ document.addEventListener('click', e => {
     if(!bruto){ toast('Cole um link primeiro.'); return; }
     if(!ehUrl(bruto)){ toast('Isso não parece um link. Comece com https://'); return; }
     const url = arrumaUrl(bruto);
-    (S.refs[S.rfId] = S.refs[S.rfId] || []).push({ tipo:'link', nome:url, url });
+    const kl = mChave(S.rfId, S.rfCli);
+    (S.refs[kl] = S.refs[kl] || []).push({ tipo:'link', nome:url, url });
     somMaterial();
     S.modal = modalRefs(S.rfId); renderLayer(); setTimeout(ligarSoltaRef, 0);
     render(); toast('Link de referência adicionado.'); return; }
   if(d.rfdel !== undefined){
-    const arr = S.refs[S.rfId] || [];
+    const arr = S.refs[mChave(S.rfId, S.rfCli)] || [];
     const r = arr[+d.rfdel];
     if(r && r.url && r.tipo !== 'link') soltarDepois([r.url]);
     if(r && r.chave) idbApagar(r.chave).catch(()=>{});
@@ -10198,7 +10281,7 @@ modalPauta = (function(orig){
 ptItemHtml = (function(orig){
   return function(p, i){
     const html = orig(p, i);
-    const n = refsDe(p.id).length;
+    const n = refsDe(p).length;
     const btn = `<button class="ptQuick" data-rfabrir="${p.id}"
       style="${n?'color:var(--brass-300);border-color:var(--brass-600)':''}"
       aria-label="${n?`Referências (${n})`:'Adicionar referência'}"
@@ -10212,7 +10295,7 @@ ptVistaTabela = (function(orig){
     let html = orig(visiveis);
     html = html.replace('<th>Status</th>', '<th>Refs</th><th>Status</th>');
     visiveis.forEach(p=>{
-      const n = refsDe(p.id).length;
+      const n = refsDe(p).length;
       const cel = `<td class="refCel"><button class="selo ${n?'s':'n'}"
         data-rfabrir="${p.id}">${n ? `${n} REF.` : '+ REF'}</button></td>`;
       html = html.replace(
@@ -10253,7 +10336,7 @@ function ptVistaStories(visiveis){
 function stCardHtml(p, i){
   const cor = corDoPilar(p.pilar);
   const telas = p.telas || [];
-  const nRef = refsDe(p.id).length;
+  const nRef = refsDe(p).length;
   return `<div class="stCard fu ${p.feito?'ok':''}" data-st="${p.id}"
       style="animation-delay:${Math.min(i*40,300)}ms">
     <div class="stAcoes">
@@ -10495,7 +10578,7 @@ xlsxSheetXml = function(itens){
     add((p.telas || []).map((t,i)=>`Tela ${i+1} — ${t}`).join('\n'), XLSX_ESTILO.corpoWrap);
     add(p.recursos || '', XLSX_ESTILO.corpoWrap);
     add(p.sticker || '', XLSX_ESTILO.corpoWrap);
-    add(refsDe(p.id).map(x=>x.tipo==='link' ? x.url : x.nome).join('\n'), XLSX_ESTILO.corpoWrap);
+    add(refsDe(p).map(x=>x.tipo==='link' ? x.url : x.nome).join('\n'), XLSX_ESTILO.corpoWrap);
     corpo += `<row r="${r}">${cs.join('')}</row>`;
   });
 
@@ -10570,7 +10653,7 @@ function sbEmpacotar(cliId){
   pauta.forEach(p=>{
     // link sempre sincroniza; arquivo só depois de subir pro Storage
     // (m.nuvem) — antes disso ele só existe neste aparelho
-    const rs = (S.refs[p.id] || []).filter(r=>r.tipo==='link' || r.nuvem);
+    const rs = (S.refs[mChave(p.id, cliId)] || []).filter(r=>r.tipo==='link' || r.nuvem);
     if(rs.length) refs[p.id] = rs;
   });
   return { pauta, refs, versao: 48 };
@@ -10581,8 +10664,9 @@ function sbAplicar(cliId, dados){
   Object.entries(dados.refs || {}).forEach(([id, rs])=>{
     // só o que É puramente local (nunca foi link nem terminou de subir)
     // fica de fora do que vem do banco — senão duplica o mesmo item
-    const soLocal = (S.refs[id] || []).filter(r=>r.tipo!=='link' && !r.nuvem);
-    S.refs[id] = [...rs, ...soLocal];     // arquivo local de quem está aqui não se perde
+    const k = mChave(id, cliId);          // a linha é do cliente: o dono é ele
+    const soLocal = (S.refs[k] || []).filter(r=>r.tipo!=='link' && !r.nuvem);
+    S.refs[k] = [...rs, ...soLocal];      // arquivo local de quem está aqui não se perde
   });
   // o proximo id novo tem de passar do maior que veio do banco
   const maior = dados.pauta.reduce((m,p)=>Math.max(m, +p.id||0), 0);
@@ -11252,7 +11336,8 @@ document.addEventListener('click', e => {
   if(!ehUrl(bruto)){ toast('Isso não parece um link. Comece com https://'); return; }
   const url = arrumaUrl(bruto);
   const id = +t.dataset.mtlink;
-  (S.mat[id] = S.mat[id] || []).push({ tipo:'link', nome:url, url, peso:0 });
+  const k = mChave(id, S.mtCli);
+  (S.mat[k] = S.mat[k] || []).push({ tipo:'link', nome:url, url, peso:0 });
   somMaterial();
   S.mtId = id;
   S.modal = modalMaterial(id); renderLayer(); setTimeout(ligarSolta, 0);
@@ -11270,7 +11355,7 @@ document.addEventListener('keydown', e => {
 /* a tirinha na linha da pauta reconhece o link */
 tiraMaterial = (function(orig){
   return function(p){
-    const ms = materiaisDe(p.id);
+    const ms = materiaisDe(p);
     if(!ms.length || !ms.some(m=>m.tipo==='link')) return orig(p);
     let html = orig(p);
     ms.slice(0,4).forEach((m,i)=>{
@@ -11291,7 +11376,7 @@ sbEmpacotar = (function(orig){
     const pac = orig(cliId);
     const mats = {};
     (S.pautas[cliId] || []).forEach(p=>{
-      const so = (S.mat[p.id] || []).filter(m=>m.tipo==='link' || m.nuvem);
+      const so = (S.mat[mChave(p.id, cliId)] || []).filter(m=>m.tipo==='link' || m.nuvem);
       if(so.length) mats[p.id] = so;
     });
     return { ...pac, mats };
@@ -11303,8 +11388,9 @@ sbAplicar = (function(orig){
     const ok = orig(cliId, dados);
     if(!ok) return ok;
     Object.entries((dados && dados.mats) || {}).forEach(([id, ls])=>{
-      const arquivos = (S.mat[id] || []).filter(m=>m.tipo!=='link' && !m.nuvem);
-      S.mat[id] = [...arquivos, ...ls];   // arquivo local de quem está aqui não se perde
+      const k = mChave(id, cliId);        // idem: o dono é o dono da linha
+      const arquivos = (S.mat[k] || []).filter(m=>m.tipo!=='link' && !m.nuvem);
+      S.mat[k] = [...arquivos, ...ls];    // arquivo local de quem está aqui não se perde
     });
     return ok;
   };
@@ -11319,7 +11405,7 @@ ptVistaTabela = (function(orig){
   return function(visiveis){
     let html = orig(visiveis);
     visiveis.forEach(p=>{
-      const ms = materiaisDe(p.id);
+      const ms = materiaisDe(p);
       const rotulo = !ms.length ? '+ MATERIAL'
         : ms.every(m=>m.tipo==='link') ? `${ms.length} LINK${ms.length>1?'S':''}`
         : ms.some(m=>m.tipo==='link')  ? `${ms.length} ITENS`
@@ -11882,13 +11968,14 @@ function subirDepois(item, pasta, file){
    chamada, não uma subtração de tamanho antes/depois — que erraria
    bem na troca de peça única, o caso mais comum. */
 guardarArquivos = (function(orig){
-  return function(id, lista){
+  return function(id, lista, cli){
     const arquivos = [...lista];
-    const n = orig(id, lista);
+    const n = orig(id, lista, cli);
     if(n > 0){
-      const arr = S.mat[id] || [];
+      const k = mChave(id, cli);
+      const arr = S.mat[k] || [];
       const novos = arr.slice(arr.length - n);
-      novos.forEach((item,i)=> subirDepois(item, `mat/${id}`, arquivos[i]));
+      novos.forEach((item,i)=> subirDepois(item, `mat/${k.replace('|','/')}`, arquivos[i]));
     }
     return n;
   };
@@ -11898,7 +11985,8 @@ guardarArquivos = (function(orig){
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-mtdel],[data-rfdel]');
   if(!t) return;
-  const arr = t.dataset.mtdel!==undefined ? (S.mat[S.mtId]||[]) : (S.refs[S.rfId]||[]);
+  const arr = t.dataset.mtdel!==undefined ? (S.mat[mChave(S.mtId, S.mtCli)]||[])
+                                          : (S.refs[mChave(S.rfId, S.rfCli)]||[]);
   const i = +(t.dataset.mtdel ?? t.dataset.rfdel);
   const item = arr[i];
   if(item?.caminhoNuvem) apagarNuvem(item.caminhoNuvem);
@@ -11908,7 +11996,7 @@ document.addEventListener('click', e => {
 tiraMaterial = (function(orig){
   return function(p){
     let html = orig(p);
-    const ms = materiaisDe(p.id);
+    const ms = materiaisDe(p);
     ms.slice(0,4).forEach((m,i)=>{
       if(!m.chave || m.nuvem || m.tipo==='link') return;
       let n = -1;
@@ -12786,7 +12874,7 @@ subirDepois = function(item, pasta, file){
 tiraMaterial = (function(orig){
   return function(p){
     let html = orig(p);
-    const ms = materiaisDe(p.id);
+    const ms = materiaisDe(p);
     ms.slice(0,4).forEach((m,i)=>{
       if(m.progresso === undefined) return;
       let n = -1;
@@ -12820,7 +12908,7 @@ document.addEventListener('click', async e => {
   const t = e.target.closest('[data-mtbaixa]');
   if(!t) return;
   e.stopImmediatePropagation();
-  const m = (S.mat[S.mtId]||[])[+t.dataset.mtbaixa];
+  const m = (S.mat[mChave(S.mtId, S.mtCli)]||[])[+t.dataset.mtbaixa];
   if(!m) return;
   try{
     let blob = null;
@@ -13007,7 +13095,7 @@ agFeed = function(){
       <span>${posts.length} ${posts.length===1?'post':'posts'}</span>
       <span class="chev">${ic('chevr',13)}</span></button>
     ${abertaAqui?`<div class="fdGrade">${posts.slice(0,18).map(p=>{
-      const m = materiaisDe(p.id).find(x=>x.url||x.poster);
+      const m = materiaisDe(p).find(x=>x.url||x.poster);
       return `<button class="fdPost" data-ptedit="${p.id}">
         ${m && m.tipo==='imagem' && m.url ? `<img src="${m.url}" alt="" loading="lazy">`
         : m && m.tipo==='video' && (m.poster||m.url) ? `<video ${m.url?`src="${m.url}"`:''} ${m.poster?`poster="${m.poster}"`:''} muted playsinline preload="none"></video>`
@@ -13252,8 +13340,13 @@ modalCliente = (function(orig){
       <div class="fld"><label for="cl-apnome">Quem aprova (nome)</label>
         <input id="cl-apnome" value="${esc(ap.nome||'')}" placeholder="Ex.: Roberto Prado"></div>
       <div class="fld"><label for="cl-apmail">E-mail do aprovador</label>
-        <input id="cl-apmail" value="${esc(ap.mail||'')}" placeholder="entra por link, sem senha"></div>
-    </div>`;
+        <input id="cl-apmail" type="email" inputmode="email" autocomplete="off"
+          value="${esc(ap.mail||'')}" placeholder="helena@cliente.com.br"></div>
+    </div>
+    <p class="flAjuda" style="font-size:12.5px;color:var(--ink-400);margin:-6px 0 12px;line-height:1.5">
+      É para esta pessoa que a Maestro escreve quando o lote fica pronto — e é
+      por ela que o link de aprovação entra, sem conta e sem senha. Sem e-mail,
+      o lote é enviado do mesmo jeito, mas ninguém é avisado.</p>`;
     return html.replace('<div class="fld"><label for="cl-brief">',
       campos + '\n    <div class="fld"><label for="cl-brief">');
   };
@@ -13270,9 +13363,20 @@ window.addEventListener('click', e => {
   const nome = document.getElementById('cl-apnome')?.value.trim() || '';
   const mail = document.getElementById('cl-apmail')?.value.trim() || '';
   const id = t.dataset.cliok;
+  /* v165: e-mail torto aqui vira aviso que nunca chega, e ninguém fica
+     sabendo. Melhor recusar na hora, com o campo aceso. */
+  if(mail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){
+    e.stopImmediatePropagation(); e.preventDefault();
+    const el = document.getElementById('cl-apmail');
+    if(el){ el.style.borderColor = 'var(--danger)'; el.focus(); }
+    toast('Confira o e-mail de quem aprova.');
+    return;
+  }
   setTimeout(()=>{
     if(!S.cliEdit[id]) return;
     S.cliEdit[id].aprovador = (nome||mail) ? {nome, mail} : null;
+    try{ if(typeof salvarLocal === 'function') salvarLocal(); }catch(err){}
+    try{ if(typeof enviarEstado === 'function') enviarEstado(); }catch(err){}
     render();
   }, 0);
 }, true);
@@ -14117,7 +14221,7 @@ agResultados = function(){
     const f = arr.filter(p=>p.feito).length;
     total += arr.length; feitos += f;
     agendados += arr.filter(p=>faseDe(p)==='agendado').length;
-    comMaterial += arr.filter(p=>materiaisDe(p.id).length).length;
+    comMaterial += arr.filter(p=>materiaisDe(p).length).length;
     pend += arr.filter(p=>p.pend).length;
     if(arr.length) porCli.push({c, n:arr.length, f});
   }
@@ -15650,10 +15754,10 @@ agEnsaio = (function(orig){
 
 S.lb = null;      // { i, modo:'uma'|'lado' }
 
-const lbMateriais = () => (S.mat[S.mtId] || []).filter(m => m.tipo !== 'link');
+const lbMateriais = () => (S.mat[mChave(S.mtId, S.mtCli)] || []).filter(m => m.tipo !== 'link');
 const lbSlides    = () => lbMateriais().filter(m => m.tipo === 'imagem');
 const lbEhCarrossel = () => {
-  const p = S.pauta.find(x => x.id === S.mtId);
+  const p = cardDe(S.mtId, S.mtCli);
   return !!p && /carrossel/i.test(p.fmt || '') && lbSlides().length > 1;
 };
 
@@ -15699,7 +15803,7 @@ function vLightbox(){
   const m = ms[i];
   const carrossel = lbEhCarrossel();
   const lado = S.lb.modo === 'lado' && carrossel;
-  const p = S.pauta.find(x => x.id === S.mtId);
+  const p = cardDe(S.mtId, S.mtCli);
 
   const midia = x => x.tipo === 'video'
     ? `<video src="${urlSegura(x.url)}" controls playsinline preload="metadata"
@@ -15957,7 +16061,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v164 · 6 set · o cliente é avisado de verdade';
+const VERSAO_PROTOTIPO = 'v165 · 6 set · o material tem dono';
 
 menuSheet = (function(orig){
   return function(){
@@ -16922,8 +17026,8 @@ tiraMaterial = (function(orig){
     let html = orig(p);
     if(!html || html.indexOf('mtTira') < 0) return html;
     html = html.replace('<span class="mtTira">',
-      `<span class="mtTira" data-mttira="${p.id}">`);
-    return marcarMinis(html, p.id, materiaisDe(p.id).slice(0,4));
+      `<span class="mtTira" data-mttira="${mChave(p)}">`);
+    return marcarMinis(html, p.id, materiaisDe(p).slice(0,4));
   };
 })(tiraMaterial);
 
@@ -16932,7 +17036,8 @@ modalVer = (function(orig){
   return function(id){
     let html = orig(id);
     if(!html || html.indexOf('vzMats') < 0) return html;
-    html = html.replace('<div class="vzMats">', `<div class="vzMats" data-mttira="${id}">`);
+    html = html.replace('<div class="vzMats">',
+      `<div class="vzMats" data-mttira="${mChave(id)}">`);
     return marcarMinis(html, id, materiaisDe(id).slice(0,6));
   };
 })(modalVer);
@@ -16945,11 +17050,11 @@ addEventListener('click', e => {
   if(!mini || S.lb) return;
   const tira = mini.closest('[data-mttira]');
   if(!tira) return;
-  const id = +tira.dataset.mttira;
-  const ms = (S.mat[id] || []).filter(m => m.tipo !== 'link');
+  const a = lerAlvo(tira.dataset.mttira);
+  const ms = (S.mat[mChave(a.id, a.cli)] || []).filter(m => m.tipo !== 'link');
   if(!ms.length) return;
   e.preventDefault(); e.stopImmediatePropagation();
-  S.mtId = id;
+  S.mtId = a.id; S.mtCli = a.cli;
   abrirLB(+mini.dataset.mtmini || 0);
 }, true);
 
@@ -16959,8 +17064,8 @@ addEventListener('click', e => {
    precisa de uma explicação. Agora abre e diz o que houve.
    De quebra corrige um deslocamento antigo: `data-mtdel` conta os links,
    o visualizador não. Com um link no meio, o toque abria o arquivo errado. */
-const lbIndiceDe = (id, j) => {
-  const lista = S.mat[id] || [];
+const lbIndiceDe = (id, j, cli) => {
+  const lista = S.mat[mChave(id, cli)] || [];
   const m = lista[j];
   if(!m || m.tipo === 'link') return -1;
   return lista.filter(x => x.tipo !== 'link').indexOf(m);
@@ -16970,7 +17075,7 @@ addEventListener('click', e => {
   if(!vis || S.lb || e.target.closest('[data-mtdel]')) return;
   const del = vis.querySelector('[data-mtdel]');
   if(!del) return;
-  const k = lbIndiceDe(S.mtId, +del.dataset.mtdel);
+  const k = lbIndiceDe(S.mtId, +del.dataset.mtdel, S.mtCli);
   if(k < 0) return;
   e.preventDefault(); e.stopImmediatePropagation();
   abrirLB(k);
@@ -17133,7 +17238,7 @@ const PEDE_VIDEO = p => !!p && (/reels|story/i.test(p.fmt||'')
   || !!(p.roteiro && (p.roteiro.hook || p.roteiro.des || p.roteiro.cta)));
 function faltaVideo(p){
   if(!PEDE_VIDEO(p)) return false;
-  const ms = materiaisDe(p.id);
+  const ms = materiaisDe(p);
   if(!ms.length) return false;                       // "sem arquivo" já é dito
   return !ms.some(m => m.tipo === 'video');
 }
@@ -20974,8 +21079,7 @@ addEventListener('click', e => {
     Object.assign(alvo, dados);
     delete alvo.roteiro; delete alvo.corte; delete alvo.story;
   } else {
-    S.pauta.push({ id: Math.max(0, ...S.pauta.map(x => x.id)) + 1,
-                   feito: false, pend: '', ...dados });
+    S.pauta.push({ id: novoIdCard(), feito: false, pend: '', ...dados });
   }
   S.modal = null; S.ptPorPlatSalvar = null;
   if(typeof som === 'function') som('toque');
@@ -22786,7 +22890,7 @@ function definirExecutor(tid, mid){
 /* ---------- 7. Do: subir a peça manda para o Check ------------------ */
 function subiuMaterial(id, n){
   if(!n) return;
-  const p = S.pauta.find(x => x.id === id); if(!p) return;
+  const p = cardDe(id, S.mtCli); if(!p) return;
   if(faseDe(p) !== 'producao') return;
   porFase(p, 'revisao2'); p.ajusteInterno = false;
   setTimeout(() => { render();
@@ -22802,9 +22906,10 @@ guardarArquivos = (function(orig){
 addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('[data-mtlink]');
   if(!b) return;
-  const id = +b.dataset.mtlink;
-  const antes = (S.mat[id] || []).length;
-  setTimeout(() => { if((S.mat[id] || []).length > antes) subiuMaterial(id, 1); }, 0);
+  const k = mChave(+b.dataset.mtlink, S.mtCli);
+  const antes = (S.mat[k] || []).length;
+  setTimeout(() => { if((S.mat[k] || []).length > antes)
+    subiuMaterial(+b.dataset.mtlink, 1); }, 0);
 }, true);
 
 /* ---------- 8. estruturar: a tarefa vira o card da pauta ------------ */
@@ -22852,7 +22957,7 @@ function mandarParaCheck(tid){
 function subirPeca(tid){
   const t = S.ensaio.tarefas.find(x => x.id === +tid); if(!t) return;
   const p = cardDaTarefa(t); if(!p) return;
-  S.cli = t.cli; S.mtId = p.id;
+  S.cli = t.cli; S.mtId = p.id; S.mtCli = t.cli;
   S.modal = modalMaterial(p.id); renderLayer();
   if(typeof ligarSolta === 'function') setTimeout(ligarSolta, 0);
 }
@@ -23760,9 +23865,9 @@ const CL_PASSOS = [
 const clPassoDe = p => CL_PASSOS[clVolta(p) - 1] || CL_PASSOS[0];
 
 /* só imagem e vídeo são "a arte"; o resto é material de apoio */
-const clVisuais = p => (typeof materiaisDe === 'function' ? materiaisDe(p.id) : [])
+const clVisuais = p => (typeof materiaisDe === 'function' ? materiaisDe(p) : [])
   .filter(m => m.tipo === 'imagem' || m.tipo === 'video');
-const clArquivos = p => (typeof materiaisDe === 'function' ? materiaisDe(p.id) : [])
+const clArquivos = p => (typeof materiaisDe === 'function' ? materiaisDe(p) : [])
   .filter(m => m.tipo !== 'imagem' && m.tipo !== 'video');
 /* no passo 1 a imagem não entra: o lote de texto é texto (D-042) */
 const clMostraArte = p => faseDe(p) !== 'texto_cli' && clVisuais(p).length > 0;
@@ -23791,7 +23896,7 @@ function clArteHtml(p){
   return `${vis.length ? `<div class="clArteHd"><b>${vis.length > 1 ? 'A publicação' : 'A publicação'}</b>
       <span>${vis.length > 1 ? `${vis.length} telas · toque para ver inteira`
                              : 'toque para ver em tela cheia'}</span></div>
-    <div class="clArte ${uma ? 'uma' : ''}" data-mttira="${p.id}">
+    <div class="clArte ${uma ? 'uma' : ''}" data-mttira="${mChave(p)}">
       ${vis.map(midia).join('')}</div>` : ''}
     ${arqs.length ? `<div class="clArqs">${arqs.map(m => m.tipo === 'link'
       ? `<a href="${esc(m.url)}" target="_blank" rel="noopener noreferrer">${ic('linkic', 12)} ${esc(m.nome)}</a>`
@@ -23953,10 +24058,10 @@ if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clpauta = () => clPauta
 const CL_NOME_TIPO = { doc:'documento', audio:'áudio', video:'vídeo', imagem:'imagem' };
 
 /* o que não é imagem nem vídeo, e não é link: documento e áudio */
-const clAnexosDe = p => (typeof materiaisDe === 'function' ? materiaisDe(p.id) : [])
+const clAnexosDe = p => (typeof materiaisDe === 'function' ? materiaisDe(p) : [])
   .map((m, i) => ({ m, i }))
   .filter(({ m }) => m.tipo === 'audio' || m.tipo === 'doc');
-const clLinksDe = p => (typeof materiaisDe === 'function' ? materiaisDe(p.id) : [])
+const clLinksDe = p => (typeof materiaisDe === 'function' ? materiaisDe(p) : [])
   .filter(m => m.tipo === 'link');
 
 /* o áudio precisa de endereço para tocar; o documento não — ele é
@@ -24002,7 +24107,7 @@ addEventListener('click', e => {
   if(!t) return;
   e.stopImmediatePropagation(); e.stopPropagation();
   const [id, i] = t.dataset.clbaixa.split('|');
-  const m = (S.mat[+id] || [])[+i];
+  const m = (S.mat[mChave(+id)] || [])[+i];
   if(!m){ toast('Não achei o arquivo.'); return; }
   if(typeof baixarMaterial === 'function') baixarMaterial(m);
 }, true);
@@ -29696,7 +29801,7 @@ function vfBloco(rot, corpo, copiavel){
 }
 function verFolhaHtml(c, p){
   const fmts = p.fmts && p.fmts.length ? p.fmts : [p.fmt];
-  const ms = (typeof materiaisDe === 'function' ? materiaisDe(p.id) : []).filter(m => m.tipo !== 'link');
+  const ms = (typeof materiaisDe === 'function' ? materiaisDe(p) : []).filter(m => m.tipo !== 'link');
   const par = t => `<p>${esc(t)}</p>`;
   const r = p.roteiro || {}, corte = p.corte || {};
   const agencia = (S.agencia && S.agencia.nome) || 'a agência';
@@ -30864,7 +30969,7 @@ function enCardLidoHtml(t){
   const p = typeof cardDaTarefa === 'function' ? cardDaTarefa(t) : null;
   if(!p) return '';
   const fmts = (p.fmts && p.fmts.length ? p.fmts : [p.fmt]).filter(Boolean);
-  const ms = typeof materiaisDe === 'function' ? materiaisDe(p.id) : [];
+  const ms = typeof materiaisDe === 'function' ? materiaisDe(p) : [];
   const fase = typeof rotuloFase === 'function' ? rotuloFase(p) : '';
   const linha = [
     p.data && typeof rotuloData === 'function' ? rotuloData(p.data) : '',
@@ -33116,16 +33221,16 @@ addEventListener('click', e => {
 
      Mora aqui dentro, e não num bloco novo, porque `enPostHtml` é desta
      casa: um invólucro posto de fora nunca entraria no caminho. */
-  const doVisualizador = id => (S.mat[id] || []).filter(m => m.tipo !== 'link');
+  const doVisualizador = p => (S.mat[mChave(p)] || []).filter(m => m.tipo !== 'link');
   const ehVisual = m => !!m && (m.tipo === 'imagem' || m.tipo === 'video');
 
   function pecaHtml(p){
     if(!p) return '';
-    const lista = doVisualizador(p.id);
+    const lista = doVisualizador(p);
     const visuais = lista.map((m, i) => ({ m, i })).filter(x => ehVisual(x.m));
     if(!visuais.length){
       /* em Act, um card sem arte é um problema — e a janela fala */
-      const temAlgo = (S.mat[p.id] || []).length > 0;
+      const temAlgo = (S.mat[mChave(p)] || []).length > 0;
       return `<div class="enPeca"><div class="enPecaSem">${ic('warn', 14)}
         <span>${temAlgo
           ? 'Nada de arte anexada — só link ou documento. Quem for publicar não tem o que subir.'
@@ -33155,7 +33260,7 @@ addEventListener('click', e => {
       <div class="enPecaHd"><b>A peça</b><span>${uma
         ? 'toque para ver em tela cheia'
         : `${visuais.length} telas, na ordem em que vão ao ar · toque para ver inteira`}</span></div>
-      <div class="enPecaGrade ${uma ? 'uma' : ''}" data-mttira="${p.id}">
+      <div class="enPecaGrade ${uma ? 'uma' : ''}" data-mttira="${mChave(p)}">
         ${visuais.map((x, k) => item(x, k)).join('')}</div>
     </div>`;
   }
@@ -33192,7 +33297,7 @@ addEventListener('click', e => {
       /* o bloco "Material" do Cronograma vira repetição quando tudo que
          ele listaria já está aqui em cima, grande. Com link ou documento
          no meio, ele fica: ali tem coisa que a peça não mostra. */
-      const mats = S.mat[p.id] || [];
+      const mats = S.mat[mChave(p)] || [];
       if(mats.length && mats.every(ehVisual))
         corpo = corpo.replace(
           /<div class="vzBloco"><b>Material \(\d+\)<\/b>[\s\S]*?<\/div>\s*<\/div>/, '');
@@ -34150,65 +34255,22 @@ addEventListener('click', e => {
   if(typeof SB === 'undefined' || typeof sbCab !== 'function') return;
 
   /* ---------- quem aprova ---------- */
+  /* v165: quem aprova já morava em `c.aprovador` como {nome, mail}
+     desde a v53b, com campo no editar cliente e painel na aba Equipe.
+     A v164 criou um SEGUNDO par de campos e guardou o nome como texto
+     solto — os dois se atropelavam a cada "Salvar", e o que o founder
+     digitava não aparecia em lugar nenhum. Ficou o registro antigo, que
+     o resto da plataforma já lê; o segundo par saiu. */
   const aprovadorDe = c => {
-    if(!c) return null;
-    const nome = (c.aprovador || '').trim();
-    const mail = (c.mail || '').trim();
+    const ap = (c && c.aprovador) || {};
+    const mail = String(ap.mail || '').trim();
+    const nome = String(ap.nome || '').trim();
     return mail ? { nome: nome || null, mail } : null;
   };
   const ehEmail = s => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s || '').trim());
 
-  /* ---------- 1. o cadastro ---------- */
-  if(typeof modalCliente === 'function'){
-    modalCliente = (function(orig){
-      return function(id){
-        const html = orig.apply(this, arguments);
-        if(typeof html !== 'string' || !html) return html;
-        const c = CLIS().find(x => x.id === id) || {};
-        const campos = `
-    <div class="fld"><label>Quem aprova, do lado do cliente</label>
-      <p style="font-size:12.5px;color:var(--ink-400);margin:-2px 0 8px;line-height:1.5">
-        É para esta pessoa que a Maestro escreve quando o lote fica pronto.
-        Sem e-mail, o lote é enviado do mesmo jeito — mas ninguém é avisado.</p>
-      <div class="frow">
-        <div class="fld" style="margin:0"><label for="cl-aprov">Nome</label>
-          <input id="cl-aprov" value="${esc(c.aprovador || '')}" placeholder="Ex.: Helena Braga"></div>
-        <div class="fld" style="margin:0"><label for="cl-mail">E-mail</label>
-          <input id="cl-mail" type="email" inputmode="email" autocomplete="off"
-            value="${esc(c.mail || '')}" placeholder="helena@cliente.com.br"></div>
-      </div></div>`;
-        return html.replace('<div class="modalrow" style="margin-top:14px">',
-                            campos + '<div class="modalrow" style="margin-top:14px">');
-      };
-    })(modalCliente);
-  }
-
-  /* O "Salvar" do cliente reescreve `S.cliEdit[id]` inteiro — é de
-     propósito, foi assim que a logo parou de sumir. Então os campos
-     novos entram DEPOIS que ele termina, em vez de disputar a escrita
-     com ele. */
-  addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-cliok]');
-    if(!b) return;
-    const id = b.dataset.cliok;
-    const aprovador = (document.getElementById('cl-aprov') || {}).value || '';
-    const mail = ((document.getElementById('cl-mail') || {}).value || '').trim();
-    if(mail && !ehEmail(mail)){
-      e.stopImmediatePropagation(); e.preventDefault();
-      const el = document.getElementById('cl-mail');
-      if(el){ el.style.borderColor = 'var(--danger)'; el.focus(); }
-      toast('Confira o e-mail de quem aprova.');
-      return;
-    }
-    setTimeout(() => {
-      if(!S.cliEdit || !S.cliEdit[id]) return;
-      S.cliEdit[id].aprovador = aprovador.trim();
-      S.cliEdit[id].mail = mail;
-      try{ salvarLocal(); }catch(err){}
-      try{ enviarEstado(); }catch(err){}
-      render();
-    }, 0);
-  }, true);
+  /* O cadastro de quem aprova é o da v53b (`cl-apnome` / `cl-apmail`),
+     logo acima do briefing no editar cliente. Este bloco só o lê. */
 
   /* ---------- 2 e 3. a fila, e o pedido de entrega ---------- */
   const FILA = SB.url + '/rest/v1/avisos';
@@ -34303,4 +34365,70 @@ addEventListener('click', e => {
   window.MaestroAvisosFila = { enfileirar, pedirEntrega, aprovadorDe, ehEmail };
 
 })();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v165 — O MATERIAL TEM DONO.
+
+   O founder abriu uma tarefa recém-criada e ela dizia "10 peças
+   anexadas". Ele já tinha visto um link aparecer do mesmo jeito.
+
+   Não era enfeite da tela. O id do card é do CLIENTE, não da casa: a
+   Loja Norte tem um card 1 e a EJUP tem outro card 1 — na semente os
+   dois têm de 1 a 7. `S.mat` e `S.refs` guardavam por id e mais nada,
+   então os dois cards 1 dividiam a mesma pilha de anexos. Um cliente
+   novo, de pauta vazia, ganhava o card de número 1 na primeira demanda
+   interna — e nascia com o material de outro cliente pendurado.
+
+   Duas coisas estavam erradas, e as duas foram consertadas:
+
+   1. A CHAVE. Passou a ser `cliente|id`. Quem sabe o dono, diz; quem
+      tem o card em mãos, o próprio card responde (a pauta em que ele
+      está); quem só tem o número, a casa procura — e o cliente aberto
+      desempata. Os botões que atravessam clientes (a tira de
+      miniaturas, o visualizador) levam `cliente|id` no atributo,
+      porque o Ensaio mostra card de qualquer cliente e um número
+      sozinho não diz de quem é. Está tudo no bloco da v27, onde a
+      pauta virou por cliente — é lá que a chave nasce.
+
+   2. O ID. A v151 já tinha ancorado o contador de card no relógio,
+      justamente para dois aparelhos não criarem o mesmo id. Dois
+      lugares ficaram de fora e ainda faziam `Math.max(ids DESTA
+      pauta) + 1`: o editor da pauta e a demanda interna. Num cliente
+      com onze cards isso devolve 12 — e 12 já era de outro. Ambos
+      passaram a usar `novoIdCard()`.
+
+   O que já estava guardado no aparelho volta com dono: chave sem `|`
+   vai para todos os clientes que têm aquele número (nada some da tela
+   de quem já usava), e a primeira carga do banco devolve a cada um o
+   que é dele, porque a linha do banco é por cliente e `sbAplicar`
+   agora grava com o dono da linha.
+
+   Isto não era só um susto na tela: com a pilha compartilhada, arte de
+   um cliente podia aparecer no link de aprovação do outro.
+
+   Verificado em `web/verificar/v165-material-por-cliente.mjs` — 21
+   provas, vermelhas na v164 e verdes aqui.
+
+   ---
+
+   NA MESMA VERSAO: O E-MAIL DE QUEM APROVA VOLTOU A SALVAR.
+
+   O founder digitava o e-mail no editar cliente e ele não ficava. Quem
+   aprova já morava em `c.aprovador` como `{nome, mail}` desde a v53b —
+   com campo no editar cliente, painel na aba Equipe e o nome no termo
+   de aprovação. A v164 não viu isso e criou um SEGUNDO par de campos,
+   guardando o nome como texto solto. Os dois gravavam no mesmo lugar em
+   `setTimeout(0)`, um por cima do outro: o antigo zerava o registro
+   (não achava os campos dele na tela) e o novo escrevia numa forma que
+   nenhuma outra tela lê. Resultado: dois cadastros iguais na janela, e
+   nada aparecendo depois.
+
+   Ficou um só — o da v53b, que a plataforma inteira já lê. Ele ganhou o
+   que faltava: a explicação de para que serve aquele e-mail, e a recusa
+   de e-mail torto na hora (endereço errado ali vira aviso que nunca
+   chega, e ninguém fica sabendo).
+   ================================================================== */
 </script>

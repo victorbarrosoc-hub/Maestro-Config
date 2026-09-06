@@ -35,6 +35,23 @@ O que depende do founder está marcado.
    navegador: `docs/ENGINEERING/LINKS_ANONIMOS.md`. O founder rodou o SQL no
    Supabase em 5 de setembro — a porta está de pé.
 
+## Fechado no código — 6 de setembro (v165)
+
+**Material de um cliente aparecia em outro.** O id do card é do cliente, não da
+casa: na semente a Loja Norte tem cards de 1 a 7 e a EJUP também. `S.mat` e
+`S.refs` guardavam por id e mais nada, então os dois cards 1 dividiam a mesma
+pilha de anexos — e a pilha vai para a linha do banco de cada cliente e para o
+link de aprovação dele. Arte de um cliente podia, portanto, aparecer no link do
+outro. O sintoma que denunciou foi mais inocente: uma tarefa recém-criada
+mostrando "10 peças anexadas".
+
+A chave passou a ser `cliente|id`; a sincronia grava com o dono da linha; os
+botões que atravessam clientes levam o dono no atributo; e os dois lugares que
+ainda criavam id com `Math.max(ids desta pauta)+1` passaram a usar o contador
+ancorado no relógio da v151. O que estava guardado no aparelho com a chave
+antiga volta com dono. Provado em `web/verificar/v165-material-por-cliente.mjs`
+— 21 provas, vermelhas na v164 e verdes na v165.
+
 ## Do founder — continua aberto
 1. **Políticas do bucket `midia`**: gravação só para `authenticated`, e sem
    `x-upsert` para quem não é dono do caminho. Enquanto a leitura do bucket

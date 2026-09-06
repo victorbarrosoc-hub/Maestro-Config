@@ -46,7 +46,10 @@ const ids = await pg.evaluate(async () => {
   return { texto, peca };
 });
 await pg.waitForTimeout(500);
-checa('a agência subiu duas imagens no card', await pg.evaluate(id => (S.mat[id] || []).length === 2, ids.peca));
+/* v165: o material passou a morar em `cliente|id` — quem espia o
+   depósito pede a chave à casa */
+checa('a agência subiu duas imagens no card',
+      await pg.evaluate(id => (S.mat[mChave(id)] || []).length === 2, ids.peca));
 
 const abrir = async id => { await pg.evaluate(id => {
     S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'ln' }; S.cli = 'ln';

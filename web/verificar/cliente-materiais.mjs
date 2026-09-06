@@ -56,11 +56,14 @@ const dados = await pg.evaluate(async () => {
 
   guardarArquivos(id, [imagem, video, pdf, som]);
   await new Promise(r => setTimeout(r, 700));
-  /* e um link colado, que é a quinta forma de material */
-  (S.mat[id] = S.mat[id] || []).push({ tipo: 'link', nome: 'drive.google.com/roteiro', url: 'https://drive.google.com/roteiro', peso: 0 });
-  return { id, gravado, tipos: (S.mat[id] || []).map(m => m.tipo),
+  /* e um link colado, que é a quinta forma de material.
+     v165: o material passou a ser guardado por `cliente|id` — o teste
+     mexe no depósito, então pede a chave à casa em vez de inventar. */
+  const k = mChave(id);
+  (S.mat[k] = S.mat[k] || []).push({ tipo: 'link', nome: 'drive.google.com/roteiro', url: 'https://drive.google.com/roteiro', peso: 0 });
+  return { id, gravado, tipos: (S.mat[k] || []).map(m => m.tipo),
     /* o link é um endereço por natureza; a pergunta é sobre ARQUIVO */
-    comEndereco: (S.mat[id] || []).filter(m => m.url && m.tipo !== 'link').map(m => m.tipo) };
+    comEndereco: (S.mat[k] || []).filter(m => m.url && m.tipo !== 'link').map(m => m.tipo) };
 });
 console.log(`\n  — a agência subiu: ${dados.tipos.join(', ')}${dados.gravado ? ' (vídeo gravado de verdade)' : ''} —`);
 checa('os cinco tipos de material entram no card', dados.tipos.join(',') === 'imagem,video,doc,audio,link', dados.tipos);
@@ -102,7 +105,7 @@ checa('sem duas listas dizendo a mesma coisa', tela.portaVelha === 0, tela);
 
 /* baixar de verdade: o arquivo volta do banco do navegador */
 const baixou = await pg.evaluate(async id => {
-  const m = (S.mat[id] || []).find(x => x.tipo === 'doc');
+  const m = (S.mat[mChave(id)] || []).find(x => x.tipo === 'doc');
   if(!m || !m.chave) return { achou: false };
   const blob = await idbLer(m.chave).catch(() => null);
   return { achou: !!blob, tamanho: blob ? blob.size : 0 };
