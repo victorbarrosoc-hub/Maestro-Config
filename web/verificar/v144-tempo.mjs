@@ -59,6 +59,13 @@ async function abrir(vp){
     const eu = membroId(S.equipe.find(m => m.papel === 'Administrador'));
     const outra = membroId(S.equipe.find(m => membroId(m) !== eu));
     const agora = Date.now(), h = 3600000;
+    /* "Hoje" começa à meia-noite do relógio de quem olha. Um recuo em
+       horas cravado sai do dia quando o teste roda de madrugada — foi o
+       que aconteceu às 00h51 e derrubou 2.1 e 2.2 sem nenhum defeito no
+       produto. As contagens de hoje ficam ancoradas DENTRO de hoje; o
+       `ms` de cada sessão é explícito, então as somas não mudam. */
+    const d0 = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); })();
+    const dentro = recuo => Math.max(agora - recuo, d0 + 60000);
     S.ensaio.tarefas.forEach(t => { t.tempoMs = 0; t.desde = null; delete t.sessoes; });
     S.ensaio.feitas = [];
     /* dois cards de pauta com formato conhecido, contados hoje */
@@ -67,7 +74,7 @@ async function abrir(vp){
       const p = cardDaTarefa(t);
       p.fmt = 'Reels'; p.fmts = ['Reels'];
       t.resp = eu;
-      t.sessoes = [{ ini: agora - 2 * h, fim: agora - h, ms: h, quem:'x', quemId: eu }];
+      t.sessoes = [{ ini: dentro(2 * h), fim: dentro(h), ms: h, quem:'x', quemId: eu }];
       t.tempoMs = h;
     });
     /* uma tarefa da casa, de outra pessoa, contada ontem (entra na semana) */
@@ -76,8 +83,8 @@ async function abrir(vp){
     casa.sessoes = [{ ini: agora - 26 * h, fim: agora - 25 * h, ms: 2 * h, quem:'y', quemId: outra }];
     casa.tempoMs = 2 * h;
     /* uma concluída no mês, no prazo */
-    const feita = { ...comCard[0], id: 9911, concluida: agora - 3 * h, noPrazo:true, resp: eu, tempoMs: h,
-      sessoes: [{ ini: agora - 4 * h, fim: agora - 3 * h, ms: h, quem:'x', quemId: eu }] };
+    const feita = { ...comCard[0], id: 9911, concluida: dentro(3 * h), noPrazo:true, resp: eu, tempoMs: h,
+      sessoes: [{ ini: dentro(4 * h), fim: dentro(3 * h), ms: h, quem:'x', quemId: eu }] };
     S.ensaio.feitas.push(feita);
     S.rtPer = 'hoje'; render();
     return { eu, outra, cliDoCard: comCard[0].cli }; });
