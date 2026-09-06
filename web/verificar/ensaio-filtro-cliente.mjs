@@ -1,6 +1,6 @@
 /* v120 — filtro por cliente no Ensaio.
 
-   "O que está de pé para a Loja Norte?" — a pergunta que o atendimento
+   "O que está de pé para este cliente?" — a pergunta que o atendimento
    faz antes de toda reunião. O quadro filtrava por frente e por pessoa;
    faltava por cliente. */
 import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs';
@@ -34,12 +34,18 @@ const base = await pg.evaluate(() => {
       texto: 'Texto.', data: '2026-09-25', fase, st: 'DRAFT' });
     return id;
   };
-  cria('cj', 'Loja Norte · um', 'criado');
-  cria('cj', 'Loja Norte · dois', 'revisao');
+  /* v167: dois clientes de verdade da casa — o Cortez e a EJUP */
+  const OUTRO = (CLIS().find(c => c.nome === 'EJUP') || CLIS()[1] || {}).id;
   cria('cj', 'Cortez · um', 'criado');
+  cria('cj', 'Cortez · dois', 'revisao');
+  cria(OUTRO, 'EJUP · um', 'criado');
   S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo: 'Tarefa da casa, sem cliente',
     cli: null, resp: null, col: 'plan', cat: 'producao', criada: Date.now(),
     prazo: null, tempoMs: 0, desde: null });
+  /* v167: a frente Estratégico começa vazia — o teste põe a sua tarefa */
+  S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo: 'Decisão da casa',
+    cli: null, resp: null, col: 'plan', cat: 'estrategico', criada: Date.now(),
+    prazo: null, tempoMs: 0, desde: null, quemVe: [] });
   render();
   return { total: S.ensaio.tarefas.length };
 });
@@ -56,12 +62,12 @@ checa('a fileira de cliente aparece no quadro', fileira.chips.length >= 3, filei
 checa('anunciada como "cliente"', fileira.rot === 'cliente', fileira);
 checa('começa com Todos aceso', fileira.chips[0].id === '' && fileira.chips[0].on, fileira.chips[0]);
 checa('cada cliente com a marca e a conta',
-      fileira.chips.some(c => /Loja Norte/.test(c.txt) && c.cara) && fileira.chips.some(c => /Cortez/.test(c.txt)),
+      fileira.chips.some(c => /Cortez/.test(c.txt) && c.cara) && fileira.chips.some(c => /EJUP/.test(c.txt)),
       fileira.chips);
 checa('e uma fatia para o que não tem cliente', fileira.chips.some(c => c.id === '__sem' && /Sem cliente\s*1/.test(c.txt)), fileira.chips);
 
 const contaLN = await pg.evaluate(() => {
-  const c = [...document.querySelectorAll('.enClis .enCli2')].find(x => /Loja Norte/.test(x.textContent));
+  const c = [...document.querySelectorAll('.enClis .enCli2')].find(x => /Cortez/.test(x.textContent));
   return { chip: parseInt(c.querySelector('b').textContent, 10),
     real: S.ensaio.tarefas.filter(t => t.cli === 'cj' && catIdDe(t) === 'producao' && podeVerTarefa(t)).length };
 });
@@ -83,7 +89,7 @@ const filtrado = await pg.evaluate(() => {
 checa('escolher um cliente filtra o quadro', filtrado.filtro === 'cj' && filtrado.nCards >= 2, filtrado);
 checa('e nenhum card de outro cliente sobra', filtrado.todosDoMesmo, filtrado);
 checa('as contas das colunas seguem o recorte', filtrado.somaColunas === filtrado.nCards, filtrado);
-checa('um aviso explica o recorte, com saída', /Mostrando só Loja Norte/.test(filtrado.aviso || '') && /ver todos/.test(filtrado.aviso || ''), filtrado.aviso);
+checa('um aviso explica o recorte, com saída', /Mostrando só Cortez/.test(filtrado.aviso || '') && /ver todos/.test(filtrado.aviso || ''), filtrado.aviso);
 checa('a lista de tarefas do quadro continua inteira por baixo',
       filtrado.listaIntacta === base.total, { antes: base.total, agora: filtrado.listaIntacta });
 

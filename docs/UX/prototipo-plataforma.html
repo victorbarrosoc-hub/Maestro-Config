@@ -5742,21 +5742,13 @@ function medidorAgenda(){
    Maestro e o cliente gostar dela — e depoimento de cliente da agencia e
    coisa que nenhum concorrente consegue mostrar.
    ================================================================== */
-const DEPOIMENTOS = [
-  {lado:'agencia', txt:'A reunião de cobrança simplesmente acabou. O cliente decide no celular, o termo encerra a conversa — e ninguém mais discute o que foi aprovado.',
-   n:'Rafael Lima', c:'Sócio · Studio Norte', i:'RL', tag:'social media'},
-  {lado:'agencia', txt:'Roteiro aprovado antes de ligar a câmera salvou duas diárias logo no primeiro ciclo. Isso paga o ano da ferramenta.',
-   n:'Marina Reis', c:'Produtora · Fábrica 21', i:'MR', tag:'audiovisual'},
-  {lado:'agencia', txt:'O que me segurou não foi a aprovação — foi a metodologia virar entidade. O método da casa parou de morar na cabeça de três pessoas.',
-   n:'Camila Duarte', c:'Diretora · Coletivo Sul', i:'CD', tag:'branding'},
-  {lado:'cliente', txt:'Antes eu recebia PDF no WhatsApp e respondia "aprovado" no áudio. Hoje eu abro, comento no ponto exato da arte e assino. Levou seis minutos.',
-   n:'Dr. Paulo Cortez', c:'Cortez Jurídico · aprovador', i:'PC', tag:'consultoria'},
-  {lado:'agencia', txt:'O selo acabou com a discussão de "não foi isso que eu aprovei". Uma vez só já valeu — e essa uma vez custava um cliente.',
-   n:'Bruno Sato', c:'Atendimento · Alta Vista', i:'BS', tag:'performance'}
-];
-const LOGOS_PILOTO = ['Studio Norte','Braga & Co','Coletivo Sul','Fábrica 21','Alta Vista',
-  'Casa Ruído','Norte Filmes','Oficina 9','Prisma','Tempo Bom'];
-
+/* v168: aqui moravam seis depoimentos e dez nomes de agências — todos
+   inventados, com um aviso embaixo dizendo que eram exemplos. O founder
+   pediu para tirar, e ele tem razão: quem vai confiar a operação da
+   agência dele a um sistema não deve ser recebido por gente que não
+   existe. A página volta quando houver depoimento de verdade, com
+   autorização. O que sustenta a seção até lá é o que a Maestro faz —
+   não quem diz que gostou. */
 function provaSocial(){
   const num = (valor, sufixo, rotulo, sub, curva) => `
     <div class="provaNum rv">
@@ -5768,26 +5760,14 @@ function provaSocial(){
 
   const linha = (a, b, nota) => `<div class="adLinha"><b>${a}</b>${b?` ${b}`:''}${nota?`<em>${nota}</em>`:''}</div>`;
 
-  const cards = DEPOIMENTOS.map((d,i)=>`
-    <figure class="dep rv ${d.lado==='cliente'?'doCliente':'daAgencia'}"
-      style="transition-delay:${(i*60)}ms">
-      <span class="lado">${d.lado==='cliente'?'cliente da agência':'agência'}</span>
-      <span class="tag">${esc(d.tag)}</span>
-      <p>“${esc(d.txt)}”</p>
-      <figcaption class="quem"><span class="av">${d.i}</span>
-        <span><b>${esc(d.n)}</b><span>${esc(d.c)}</span></span></figcaption>
-    </figure>`).join('');
-
-  const trem = [...LOGOS_PILOTO, ...LOGOS_PILOTO]
-    .map(l=>`<span>${esc(l)}</span>`).join('');
 
   return `<section class="ssec"><div class="wrapc">
   <div class="provaAviso rv"><i></i>Exemplos ilustrativos · o piloto começa em setembro</div>
   <div class="klabel rv">Os dois lados do balcão</div>
   <h2 class="rv">A reunião de “cadê a aprovação?” acabou</h2>
   <p class="sub rv">Software de agência costuma ser vendido para a agência. A Maestro precisa
-    que <b style="color:var(--ink-100)">o cliente dela também goste</b> — por isso metade
-    destes depoimentos é de quem aprova, não de quem produz.</p>
+    que <b style="color:var(--ink-100)">o cliente dela também goste</b> — por isso o lado de
+    quem aprova recebeu tanto trabalho quanto o lado de quem produz.</p>
 
   <div class="provaNums">
     ${num('9 → 2','','dias até a decisão','Do envio ao aceite, no primeiro mês de uso.',
@@ -5814,16 +5794,10 @@ function provaSocial(){
     </div>
   </div>
 
-  <div class="provaGrid">${cards}</div>
-
-  <div class="faixaLogos rv" aria-label="Agências do programa piloto — exemplos">
-    <div class="trem">${trem}</div>
-  </div>
   <p class="rv" style="margin-top:14px;font-size:11.5px;color:var(--ink-500);line-height:1.6">
-    Estes nomes, números e depoimentos são <b style="color:var(--ink-300)">exemplos de
-    demonstração</b> — o programa piloto ainda não começou. Serão substituídos por
-    depoimentos reais, com autorização, antes de qualquer publicação comercial.
-    Número medido, nunca adjetivo.</p>
+    Os números acima são <b style="color:var(--ink-300)">metas do produto</b>, não resultados
+    medidos em cliente — o programa piloto começa agora. Quando houver medição, ela entra
+    aqui com nome e autorização de quem mediu. Número medido, nunca adjetivo.</p>
 </div></section>`;
 }
 
@@ -32325,6 +32299,23 @@ addEventListener('click', e => {
   };
   const igual = (a, b) => canon(semMarca(a)) === canon(semMarca(b));
 
+  /* v168 — "MEXI NISTO?" NÃO PODE SER "ESTÁ IDÊNTICO?".
+     A decisão de apagar comparava o item inteiro com a base. Só que a
+     base foi gravada por uma versão anterior do empacotador: basta a
+     versão nova acrescentar um campo (a v162 acrescentou fase, a v165
+     mexeu no material, o `pilar` entra por padrão) para TODO card ficar
+     diferente da base — e aí a casa conclui "mexi em todos" e desfaz
+     tudo o que o outro aparelho apagou. Era isto que fazia um navegador
+     mostrar uma coisa e o outro, outra.
+
+     A pergunta certa é mais estreita: o que existia na base continua
+     como estava? Campo que a versão nova acrescentou não é mudança da
+     pessoa. Campo alterado ou removido continua sendo. */
+  function euNaoMexi(b, x){
+    if(!plano(b) || !plano(x)) return igual(b, x);
+    for(const k of Object.keys(b)) if(!igual(b[k], x[k])) return false;
+    return true;
+  }
   function mescla3(base, local, remoto, prefer){
     if(igual(local, remoto)) return local;
     if(igual(remoto, base)) return local;             // só aqui mudou
@@ -32341,8 +32332,8 @@ addEventListener('click', e => {
           const pl = +(l.mod || l.movidoEm || 0), pr = +(r.mod || r.movidoEm || 0);
           out.push(mescla3(b, l, r, pl === pr ? prefer : (pl > pr ? 'local' : 'remoto')));
         }
-        else if(l){ if(b && igual(b, l)) continue; out.push(l); }   // lá apagou e eu não mexi → some; senão fica
-        else       { if(b && igual(b, r)) continue; out.push(r); }   // eu apaguei e lá não mexeu → some; senão volta
+        else if(l){ if(b && euNaoMexi(b, l)) continue; out.push(l); }   // lá apagou e eu não mexi → some; senão fica
+        else       { if(b && euNaoMexi(b, r)) continue; out.push(r); }   // eu apaguei e lá não mexeu → some; senão volta
       }
       return out;
     }

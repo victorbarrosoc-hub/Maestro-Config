@@ -25,6 +25,18 @@ async function entrarComoCliente(pag){
     document.getElementById('entrarMaestro')?.remove();
     const c = CLIS()[0];
     S.usuario = { tipo:'cliente', id:c.id }; S.cli = c.id;
+    /* v167: a casa começa vazia — o teste monta a pauta de que precisa,
+       em vez de depender do cliente de demonstração que saiu */
+    if(!(S.pautas[c.id] || []).length){
+      for(let i = 0; i < 3; i++)
+        S.pautas[c.id].push({ id: novoIdCard(), t:'Publicação ' + (i+1), fmt:'Reels',
+          fmts:['Reels'], plats:['ig'], data: hojeISO(), dia: diaDaSemana(hojeISO()),
+          hora:'18:00', texto:'Texto pronto para o cliente ler.', cta:'', legenda:'',
+          pecaId:null, st:'DRAFT', feito:false, pend:'' });
+      /* uma delas já com o cliente: é isso que a lista dele mostra */
+      porFase(S.pautas[c.id][0], 'texto_cli');
+      S.pautas[c.id][0].enviadoEm = Date.now() - 3600000;
+    }
     S.view = 'client'; S.route = 'inicio'; S.skel = false; S.clVisitou = false;
     render();
     return c.id; });

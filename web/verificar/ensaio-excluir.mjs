@@ -32,6 +32,11 @@ await pg.evaluate(ADMIN + `
   S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo: 'Tarefa nascida errada', cli: 'cj',
     resp: membroId(S.equipe[0]), col: 'plan', cat: 'producao', criada: Date.now(),
     prazo: null, tempoMs: 0, desde: null });
+  /* v167: o quadro começa vazio — a frente Estratégico também precisa de
+     uma tarefa deste teste, e não da vitrine que saiu */
+  S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo: 'Tarefa da frente estratégica', cli: null,
+    resp: null, col: 'plan', cat: 'estrategico', criada: Date.now(),
+    prazo: null, tempoMs: 0, desde: null, quemVe: [] });
   const lista = (S.pautas.cj = S.pautas.cj || []);
   const id = Math.max(0, ...lista.map(x => x.id)) + 1;
   lista.push({ id, t: 'Card da pauta para excluir', fmt: 'Post', plats: ['ig'], dia: 0,
@@ -91,7 +96,7 @@ await pg.click('[data-enrmok]'); await pg.waitForTimeout(400);
 const depois = await pg.evaluate(({ job, cardId }) => ({
   noQuadro: S.ensaio.tarefas.some(t => t.id === job),
   naPauta: (S.pautas.cj || []).some(p => p.id === cardId),
-  naLixeira: (S.lixeira.ln || []).some(e => e.item && e.item.id === cardId) }), ids);
+  naLixeira: (S.lixeira.cj || []).some(e => e.item && e.item.id === cardId) }), ids);
 checa('o card sai do quadro e da pauta', !depois.noQuadro && !depois.naPauta, depois);
 checa('e chega inteiro na lixeira do cliente', depois.naLixeira, depois);
 checa('o quadro não recria a tarefa sozinho no próximo desenho',
@@ -100,7 +105,7 @@ checa('o quadro não recria a tarefa sozinho no próximo desenho',
 await pg.evaluate(() => desfazer()); await pg.waitForTimeout(400);
 const volta = await pg.evaluate(({ cardId }) => ({
   naPauta: (S.pautas.cj || []).some(p => p.id === cardId),
-  naLixeira: (S.lixeira.ln || []).some(e => e.item && e.item.id === cardId),
+  naLixeira: (S.lixeira.cj || []).some(e => e.item && e.item.id === cardId),
   noQuadro: S.ensaio.tarefas.some(t => t.cli === 'cj' && t.cardId === cardId) }), ids);
 checa('desfazer traz o card de volta à pauta e ao quadro, e o tira da lixeira',
       volta.naPauta && volta.noQuadro && !volta.naLixeira, volta);

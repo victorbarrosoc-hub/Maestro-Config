@@ -57,7 +57,7 @@ const destravado = await pg.evaluate(() => S.chat.canais.filter(c => c.tipo === 
 checa('canal de cliente com lista de membros que não existe vira canal de toda a agência', destravado);
 await pg.evaluate(() => { S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Designer')) }; render(); }); await pg.waitForTimeout(200);
 const designerVe = await pg.evaluate(() => [...document.querySelectorAll('.cvCanal')].map(b => b.dataset.cvcanal));
-checa('quem não é administrador vê os canais dos clientes', designerVe.includes(CH) && designerVe.includes('cli_ln'));
+checa('quem não é administrador vê os canais dos clientes', designerVe.includes(CH) && designerVe.includes('cli_cj'));
 checa('e não vê o botão de apagar', await pg.locator('[data-cvapagar]').count() === 0);
 await pg.evaluate(ADMIN + 'render();'); await pg.waitForTimeout(200);
 
@@ -88,7 +88,7 @@ checa('o administrador pode apagar o canal órfão', await pg.locator(`[data-cva
 await pg.click(`[data-cvapagar="${CH}"]`); await pg.waitForTimeout(150);
 await pg.click('[data-cvapagarok]'); await pg.waitForTimeout(300);
 checa('apagado, some da lista', await pg.locator(`.cvCanal[data-cvcanal="${CH}"]`).count() === 0);
-checa('o canal de um cliente VIVO não se apaga', await pg.evaluate(() => !cvPodeApagar(canalPorId('cli_ln'))));
+checa('o canal de um cliente VIVO não se apaga', await pg.evaluate(() => !cvPodeApagar(canalPorId('cli_cj'))));
 checa('o Geral não se apaga', await pg.evaluate(() => !cvPodeApagar(canalPorId('geral'))));
 await pg.click('.cvCanal[data-cvcanal="geral"]'); await pg.waitForTimeout(200);
 checa('e não tem botão de apagar', await pg.locator('[data-cvapagar]').count() === 0);
@@ -100,7 +100,7 @@ checa('cliente resgatado volta a ter o canal, com o histórico', await pg.locato
 /* ---------- 5. o cliente, do lado dele, só vê o canal dele ---------- */
 await pg.evaluate(() => { S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj'; });
 const doCliente = await pg.evaluate(() => canaisVisiveis().map(c => c.id));
-checa('o cliente continua vendo só o canal dele', doCliente.length === 1 && doCliente[0] === 'cli_ln');
+checa('o cliente continua vendo só o canal dele', doCliente.length === 1 && doCliente[0] === 'cli_cj');
 
 checa('nenhum erro de JavaScript', erros.length === 0);
 if(erros.length) console.log(erros.slice(0, 5));
