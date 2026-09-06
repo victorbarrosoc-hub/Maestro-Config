@@ -100,7 +100,7 @@ function banco(){
       const sel = filtra();
       b.escritas.push({ met, url: u.pathname + u.search, n: sel.length });
       sel.forEach(l => { const alvo = linhas.get(l.cliente); Object.assign(alvo, corpo || {});
-        if(l.cliente === 'ln') b.escritas.push({ apos:'ln', rev:(alvo.dados||{}).rev,
+        if(l.cliente === 'cj') b.escritas.push({ apos:'cj', rev:(alvo.dados||{}).rev,
           cards:((alvo.dados||{}).pauta||[]).map(p => p.id).join('/') }); });
       const prefer = req.headers()['prefer'] || '';
       return route.fulfill({ status: prefer.includes('representation') ? 200 : 204,
@@ -135,7 +135,7 @@ async function aparelho(b, nome){
   return { ctx, pag, erros };
 }
 
-const CLI = 'ln';
+const CLI = 'cj';
 const pautaDoBanco = b => ((b.ler(CLI) || {}).dados || {}).pauta || [];
 const fases = b => Object.fromEntries(pautaDoBanco(b).map(p => [p.id, p.fase || (p.feito ? 'postado' : 'rascunho')]));
 

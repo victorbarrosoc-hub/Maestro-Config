@@ -98,7 +98,7 @@ await pg.evaluate(id => { S.cliFora = S.cliFora.filter(x => x !== id); S.chat.fo
 checa('cliente resgatado volta a ter o canal, com o histórico', await pg.locator(`.cvCanal[data-cvcanal="${CH}"]`).count() === 1);
 
 /* ---------- 5. o cliente, do lado dele, só vê o canal dele ---------- */
-await pg.evaluate(() => { S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'ln' }; S.cli = 'ln'; });
+await pg.evaluate(() => { S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj'; });
 const doCliente = await pg.evaluate(() => canaisVisiveis().map(c => c.id));
 checa('o cliente continua vendo só o canal dele', doCliente.length === 1 && doCliente[0] === 'cli_ln');
 

@@ -26,8 +26,8 @@ await pg.goto(URL, { waitUntil: 'load' }); await pg.waitForTimeout(1300);
 const ids = await pg.evaluate(async () => {
   document.getElementById('abertura')?.remove(); document.getElementById('entrarMaestro')?.remove();
   S.usuario = { tipo: 'agencia', id: membroId(S.equipe[0]) }; document.getElementById('quemEsta')?.remove();
-  S.view = 'agency'; S.cli = 'ln'; S.skel = false;
-  const lista = S.pautas.ln;
+  S.view = 'agency'; S.cli = 'cj'; S.skel = false;
+  const lista = (S.pautas.cj = S.pautas.cj || []);
   const novo = (t, fase) => {
     const id = Math.max(0, ...lista.map(x => x.id)) + 1;
     lista.push({ id, t, fmt: 'Carrossel', plats: ['ig'], dia: 0, hora: '18:30',
@@ -52,7 +52,7 @@ checa('a agência subiu duas imagens no card',
       await pg.evaluate(id => (S.mat[mChave(id)] || []).length === 2, ids.peca));
 
 const abrir = async id => { await pg.evaluate(id => {
-    S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'ln' }; S.cli = 'ln';
+    S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj';
     S.route = 'clcard'; S.pcSel = id; S.pcPedindo = false; render();
   }, id); await pg.waitForTimeout(500); };
 
@@ -135,7 +135,7 @@ checa('e o passo conta o que vem a seguir', /calendário/.test(depois.frase || '
 
 /* ---------- o card sem imagem no passo 2 avisa ---------- */
 const semArte = await pg.evaluate(async () => {
-  const lista = S.pautas.ln; const id = Math.max(0, ...lista.map(x => x.id)) + 1;
+  const lista = (S.pautas.cj = S.pautas.cj || []); const id = Math.max(0, ...lista.map(x => x.id)) + 1;
   lista.push({ id, t: 'Publicação sem imagem', fmt: 'Post', plats: ['ig'], dia: 0, hora: '18:30',
     texto: 'Texto qualquer.', data: '2026-09-25', fase: 'post_cli', st: 'DRAFT' });
   S.route = 'clcard'; S.pcSel = id; render();
@@ -150,7 +150,7 @@ checa('no passo 2 sem imagem, a tela avisa em vez de fingir', semArte.aviso, sem
    tocar numa miniatura ligava S.lb e ninguém desenhava. */
 const naAgencia = await pg.evaluate(async id => {
   S.view = 'agency'; S.usuario = { tipo: 'agencia', id: membroId(S.equipe[0]) };
-  S.cli = 'ln'; S.route = 'clientedet'; S.tab = 'pauta'; S.lb = null;
+  S.cli = 'cj'; S.route = 'clientedet'; S.tab = 'pauta'; S.lb = null;
   S.mtId = id; abrirLB(0);
   await new Promise(r => setTimeout(r, 350));
   const aberto = !!document.querySelector('.lb');

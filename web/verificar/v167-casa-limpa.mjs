@@ -191,6 +191,24 @@ async function casa(config){
   await ctx.close();
 }
 
+{
+  /* e o empate vai para o banco: quem entra por link de aprovação grava
+     no aparelho a chave que veio na URL (v152), sem carimbo. Se o empate
+     ficasse com o aparelho, uma chave inventada se validaria sozinha. */
+  const doBanco = { cliEdit: { cj: { chave: 'a-chave-de-verdade' } }, cliFora: [], versao: 54 };
+  const { ctx, pag, erros } = await casa(doBanco);
+  const r = await pag.evaluate(async () => {
+    S.cliEdit.cj = { chave: 'chave-inventada' };      /* sem `em`: veio da URL */
+    await sbCarregar();
+    await new Promise(x => setTimeout(x, 300));
+    return { chave: S.cliEdit.cj.chave };
+  });
+  checa('4.8 chave vinda do link não se sobrepõe à do banco',
+        r.chave === 'a-chave-de-verdade', r);
+  checa('4.9 sem erro de página', erros.length === 0, erros.slice(0, 3));
+  await ctx.close();
+}
+
 await nav.close(); srv.close();
 console.log(`\nv167 — a casa limpa:  ${ok.length} ok, ${falhou.length} falha(s)\n`);
 ok.forEach(t => console.log('  ok    ' + t));

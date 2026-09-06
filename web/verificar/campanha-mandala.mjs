@@ -37,7 +37,7 @@ const abrir = async tela => {
     document.getElementById('abertura')?.remove(); document.getElementById('entrarMaestro')?.remove();
     S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Administrador')) };
     document.getElementById('quemEsta')?.remove();
-    S.view = 'agency'; S.route = 'mandala'; S.skel = false; S.md.cli = 'ln'; render(); window.scrollTo(0, 0);
+    S.view = 'agency'; S.route = 'mandala'; S.skel = false; S.md.cli = 'cj'; render(); window.scrollTo(0, 0);
   });
   await pg.waitForTimeout(600);
   return pg;
@@ -90,23 +90,23 @@ checa('desligar o remarketing avisa o que se perde', /8 Conversão/.test(semRmk)
 await pg.click('[data-mdcrmk]'); await pg.click('[data-mdcritmo="3"]'); await pg.waitForTimeout(150);
 
 /* quem ainda não vende não deveria estar em Descoberta */
-await pg.evaluate(() => { S.mandala.ctx.ln = { ...(S.mandala.ctx.ln || {}), estagio: 'validando' }; });
+await pg.evaluate(() => { S.mandala.ctx.cj = { ...(S.mandala.ctx.cj || {}), estagio: 'validando' }; });
 await pg.click('[data-mdcobj="descoberta"]'); await pg.waitForTimeout(250);
 checa('Descoberta com cliente validando: o resumo avisa que é verba fora de hora',
       /ainda está validando/.test(await pg.evaluate(() => document.getElementById('mdc-prev').innerText)));
-await pg.evaluate(() => { S.mandala.ctx.ln.estagio = 'vendendo'; });
+await pg.evaluate(() => { S.mandala.ctx.cj.estagio = 'vendendo'; });
 
 /* ---------- 2. criar a campanha de conversão --------------------------- */
 console.log('\n  — a campanha na pauta —');
-await pg.evaluate(() => { S.mandala.ctx.ln = { ...S.mandala.ctx.ln, produto: 'o vestido de linho', publico: 'mulheres de escritório',
+await pg.evaluate(() => { S.mandala.ctx.cj = { ...S.mandala.ctx.cj, produto: 'o vestido de linho', publico: 'mulheres de escritório',
   dor: 'roupa que amassa na reunião', desejo: 'chegar arrumada no fim do dia' }; });
 await pg.click('[data-mdcobj="conversao"]'); await pg.waitForTimeout(250);
 await pg.fill('#mdc-inicio', '2026-09-07');
 await pg.fill('#mdc-nome', 'Setembro quente');
-const antes = await pg.evaluate(() => S.pautas.ln.length);
+const antes = await pg.evaluate(() => S.pautas.cj.length);
 await pg.click('[data-mdccriar]'); await pg.waitForTimeout(500);
 const criada = await pg.evaluate(antes => {
-  const novos = S.pautas.ln.slice(antes);
+  const novos = S.pautas.cj.slice(antes);
   return { n: novos.length, route: S.route, tab: S.tab, cli: S.cli, ptCamp: S.ptCamp,
     datas: novos.map(p => p.data), fases: novos.map(p => p.mandala.fase), omt: novos.map(p => p.mandala.omt),
     camp: novos[0]?.camp, fmts: novos.map(p => p.fmt), plats: novos[0]?.plats, st: novos.map(p => p.st),
@@ -128,7 +128,7 @@ checa('formato da lista da pauta, plataforma da mandala, tudo rascunho',
 checa('título e texto vêm do motor, sem buraco de modelo',
       !criada.buraco && criada.titulo.length > 8 && /\n1\. /.test(criada.texto), { t: criada.titulo, texto: criada.texto.slice(0, 80) });
 checa('a tela vai para a pauta do cliente, já na campanha',
-      criada.route === 'clientedet' && criada.tab === 'pauta' && criada.cli === 'ln' && criada.ptCamp === criada.camp.id && !criada.modal, criada);
+      criada.route === 'clientedet' && criada.tab === 'pauta' && criada.cli === 'cj' && criada.ptCamp === criada.camp.id && !criada.modal, criada);
 checa('e o aviso diz o que aconteceu', /"Setembro quente": 8 peças/.test(criada.toast) && /07\/09 a 23\/09/.test(criada.toast), criada.toast);
 
 const naPauta = await pg.evaluate(() => ({
@@ -142,8 +142,11 @@ checa('filtrada, mostra só as oito peças da campanha', naPauta.itens === 8, na
 checa('cada peça leva a etiqueta com o código e a campanha',
       naPauta.chips.length === 8 && /C\.P\.2 · Setembro quente/.test(naPauta.chips[0]), naPauta.chips.slice(0, 2));
 await pg.click('.ptCamps [data-ptcamp=""]'); await pg.waitForTimeout(300);
-const toda = await pg.evaluate(() => ({ ptCamp: S.ptCamp, itens: document.querySelectorAll('.ptItem').length, total: S.pautas.ln.length }));
-checa('"toda a pauta" tira o filtro e a pauta inteira volta', toda.ptCamp === null && toda.itens === toda.total && toda.total > 8, toda);
+const toda = await pg.evaluate(() => ({ ptCamp: S.ptCamp, itens: document.querySelectorAll('.ptItem').length, total: S.pautas.cj.length }));
+/* v167: a pauta do cliente de teste começa vazia — o total é o da
+   campanha, não mais o da semente de demonstração */
+checa('"toda a pauta" tira o filtro e a pauta inteira volta',
+      toda.ptCamp === null && toda.itens === toda.total && toda.total >= 8, toda);
 
 /* grava no banco, com a campanha dentro.
    A gravação é debounced: em máquina carregada 1,8s às vezes não bastava
@@ -151,7 +154,7 @@ checa('"toda a pauta" tira o filtro e a pauta inteira volta', toda.ptCamp === nu
 await pg.waitForFunction(() => true);
 for(let i = 0; i < 40 && !gravouCampanha(); i++) await pg.waitForTimeout(300);
 function gravouCampanha(){
-  return gravacoes.some(g => g.cliente === 'ln' && g.dados
+  return gravacoes.some(g => g.cliente === 'cj' && g.dados
     && (g.dados.pauta || []).some(p => p.camp && p.camp.nome === 'Setembro quente')); }
 const gravou = gravouCampanha();
 checa('a pauta com a campanha vai para o banco, sem passo extra', !!gravou, gravacoes.map(g => g.cliente));
@@ -163,10 +166,10 @@ await pg.waitForTimeout(300);
 await pg.click('[data-mdcampanha]'); await pg.waitForTimeout(250);
 await pg.click('[data-mdcobj="descoberta"]'); await pg.waitForTimeout(200);
 await pg.fill('#mdc-inicio', '2026-10-05'); await pg.fill('#mdc-n', '6');
-const antes2 = await pg.evaluate(() => S.pautas.ln.length);
+const antes2 = await pg.evaluate(() => S.pautas.cj.length);
 await pg.click('[data-mdccriar]'); await pg.waitForTimeout(400);
 const desc = await pg.evaluate(antes => {
-  const novos = S.pautas.ln.slice(antes);
+  const novos = S.pautas.cj.slice(antes);
   return { n: novos.length, fases: [...new Set(novos.map(p => p.mandala.fase))], temps: [...new Set(novos.map(p => p.mandala.temp))],
     ctas: novos.map(p => p.cta), ganchos: novos.map(p => p.mandala.gancho), nome: novos[0]?.camp.nome,
     faixa: document.querySelectorAll('.ptCamps button').length };
@@ -176,7 +179,8 @@ checa('seis peças de Descoberta, sem Prontidão (ela não existe no topo do fun
 checa('nenhuma com link ou compra no CTA — descoberta não tira a pessoa de onde está',
       desc.ctas.every(c => !/link|compra|garanta/i.test(c)), desc.ctas);
 checa('começa pelo "para quem é e para quem não é" (tipo 9) e não repete tipo', desc.ganchos[0] === 9 && new Set(desc.ganchos).size === 6, desc.ganchos);
-checa('sem nome, a campanha se chama pelo objetivo, cliente e mês', desc.nome === 'Descoberta · Loja Norte · out', desc.nome);
+checa('sem nome, a campanha se chama pelo objetivo, cliente e mês',
+      desc.nome === 'Descoberta · Cortez Jurídico · out', desc.nome);
 checa('a faixa agora lista as duas campanhas', desc.faixa === 3, desc.faixa);
 
 await pg.evaluate(() => { S.view = 'agency'; S.route = 'mandala'; render(); });
@@ -187,9 +191,9 @@ await pg.fill('#mdc-n', '7');
 const funilPrev = await pg.evaluate(() => document.getElementById('mdc-prev').innerText);
 checa('o funil inteiro segue a semana do estágio: 2 Descoberta + 2 Relacionamento + 2 Conversão + 1 Remarketing',
       /7 peças · 2 Descoberta \+ 2 Relacionamento \+ 2 Conversão \+ 1 Remarketing/.test(funilPrev), funilPrev);
-const antes3 = await pg.evaluate(() => S.pautas.ln.length);
+const antes3 = await pg.evaluate(() => S.pautas.cj.length);
 await pg.click('[data-mdccriar]'); await pg.waitForTimeout(400);
-const funil = await pg.evaluate(antes => S.pautas.ln.slice(antes).map(p => p.mandala.fase), antes3);
+const funil = await pg.evaluate(antes => S.pautas.cj.slice(antes).map(p => p.mandala.fase), antes3);
 checa('e as sete peças entram nessa ordem', funil.join(',') === MD_SEMANA_VENDENDO, funil);
 await pg.close();
 

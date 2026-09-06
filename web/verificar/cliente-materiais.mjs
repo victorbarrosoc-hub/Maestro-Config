@@ -26,8 +26,8 @@ await pg.goto(URL, { waitUntil: 'load' }); await pg.waitForTimeout(1300);
 const dados = await pg.evaluate(async () => {
   document.getElementById('abertura')?.remove(); document.getElementById('entrarMaestro')?.remove();
   S.usuario = { tipo: 'agencia', id: membroId(S.equipe[0]) }; document.getElementById('quemEsta')?.remove();
-  S.view = 'agency'; S.cli = 'ln'; S.skel = false;
-  const lista = S.pautas.ln;
+  S.view = 'agency'; S.cli = 'cj'; S.skel = false;
+  const lista = (S.pautas.cj = S.pautas.cj || []);
   const id = Math.max(0, ...lista.map(x => x.id)) + 1;
   lista.push({ id, t: 'Reels com locução e roteiro', fmt: 'Reels', plats: ['ig'], dia: 0, hora: '18:30',
     texto: 'O gancho em três segundos.', objetivo: 'Explicar o cuidado com o linho',
@@ -72,7 +72,7 @@ checa('só imagem e vídeo nascem com endereço de arquivo — o resto vive na c
 
 /* o cliente abre o card */
 await pg.evaluate(id => {
-  S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'ln' }; S.cli = 'ln';
+  S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj';
   S.route = 'clcard'; S.pcSel = id; S.pcPedindo = false; render();
 }, dados.id);
 await pg.waitForTimeout(800);
@@ -123,7 +123,7 @@ await pg.evaluate(() => fecharLB()); await pg.waitForTimeout(300);
 
 /* no passo do texto o roteiro em PDF continua chegando: é o que se lê */
 const noTexto = await pg.evaluate(async id => {
-  const p = S.pautas.ln.find(x => x.id === id);
+  const p = S.pautas.cj.find(x => x.id === id);
   porFase(p, 'texto_cli'); render();
   await new Promise(r => setTimeout(r, 500));
   return { anexos: document.querySelectorAll('.clAnexo').length,

@@ -34,8 +34,8 @@ const base = await pg.evaluate(() => {
       texto: 'Texto.', data: '2026-09-25', fase, st: 'DRAFT' });
     return id;
   };
-  cria('ln', 'Loja Norte · um', 'criado');
-  cria('ln', 'Loja Norte · dois', 'revisao');
+  cria('cj', 'Loja Norte · um', 'criado');
+  cria('cj', 'Loja Norte · dois', 'revisao');
   cria('cj', 'Cortez · um', 'criado');
   S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo: 'Tarefa da casa, sem cliente',
     cli: null, resp: null, col: 'plan', cat: 'producao', criada: Date.now(),
@@ -63,7 +63,7 @@ checa('e uma fatia para o que não tem cliente', fileira.chips.some(c => c.id ==
 const contaLN = await pg.evaluate(() => {
   const c = [...document.querySelectorAll('.enClis .enCli2')].find(x => /Loja Norte/.test(x.textContent));
   return { chip: parseInt(c.querySelector('b').textContent, 10),
-    real: S.ensaio.tarefas.filter(t => t.cli === 'ln' && catIdDe(t) === 'producao' && podeVerTarefa(t)).length };
+    real: S.ensaio.tarefas.filter(t => t.cli === 'cj' && catIdDe(t) === 'producao' && podeVerTarefa(t)).length };
 });
 checa('a conta do chip bate com o que existe de verdade', contaLN.chip === contaLN.real && contaLN.chip >= 2, contaLN);
 
@@ -80,7 +80,7 @@ const filtrado = await pg.evaluate(() => {
     somaColunas, aviso: document.querySelector('.enCliAviso')?.textContent.replace(/\s+/g, ' ').trim(),
     listaIntacta: S.ensaio.tarefas.length };
 });
-checa('escolher um cliente filtra o quadro', filtrado.filtro === 'ln' && filtrado.nCards >= 2, filtrado);
+checa('escolher um cliente filtra o quadro', filtrado.filtro === 'cj' && filtrado.nCards >= 2, filtrado);
 checa('e nenhum card de outro cliente sobra', filtrado.todosDoMesmo, filtrado);
 checa('as contas das colunas seguem o recorte', filtrado.somaColunas === filtrado.nCards, filtrado);
 checa('um aviso explica o recorte, com saída', /Mostrando só Loja Norte/.test(filtrado.aviso || '') && /ver todos/.test(filtrado.aviso || ''), filtrado.aviso);
@@ -109,7 +109,7 @@ checa('e a frente também', frente.n === frente.cards, frente);
 await pg.click('[data-ennova]'); await pg.waitForTimeout(400);
 const nova = await pg.evaluate(() => ({ enCli: S.enCli,
   aceso: document.querySelector('[data-enclipick].on')?.dataset.enclipick }));
-checa('criar tarefa com o filtro ligado já vem no cliente certo', nova.enCli === 'ln' && nova.aceso === 'ln', nova);
+checa('criar tarefa com o filtro ligado já vem no cliente certo', nova.enCli === 'cj' && nova.aceso === 'cj', nova);
 await pg.click('[data-modalno]'); await pg.waitForTimeout(300);
 
 /* ---------- 4. tirar o filtro devolve o quadro ---------- */
@@ -145,7 +145,7 @@ const integridade = await pg.evaluate(async () => {
   S.enCat = 'producao'; render();
   await new Promise(r => setTimeout(r, 300));
   const antes = S.ensaio.tarefas.length;
-  for(const c of ['ln', 'cj', '__sem', null]){ S.enCli2 = c; render(); await new Promise(r => setTimeout(r, 250)); }
+  for(const c of ['cj', 'cj', '__sem', null]){ S.enCli2 = c; render(); await new Promise(r => setTimeout(r, 250)); }
   S.enCli2 = null; render();
   await new Promise(r => setTimeout(r, 300));
   return { antes, depois: S.ensaio.tarefas.length,

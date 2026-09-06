@@ -21,7 +21,7 @@ const ABRIR = () => {
   document.getElementById('abertura')?.remove(); document.getElementById('entrarMaestro')?.remove();
   S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Administrador')) };
   document.getElementById('quemEsta')?.remove();
-  S.view = 'agency'; S.cli = (typeof ejupId === 'function') ? ejupId() : 'ln';
+  S.view = 'agency'; S.cli = (typeof ejupId === 'function') ? ejupId() : 'cj';
   S.route = 'clientedet'; S.tab = 'pauta'; S.skel = false; S.ptVista = 'semana';
   render();
 };

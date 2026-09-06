@@ -23,7 +23,7 @@ const MONTAR = () => {
   document.getElementById('quemEsta')?.remove();
   S.view = 'agency'; S.route = 'producao'; S.skel = false; S.enCat = 'producao';
   const dono = membroId(S.equipe[1] || S.equipe[0]);
-  const lista = S.pautas.ln;
+  const lista = (S.pautas.cj = S.pautas.cj || []);
   const mk = (t, fase, extra) => {
     const id = Math.max(0, ...lista.map(x => x.id)) + 1;
     lista.push({ id, t, fmt: 'Post', plats: ['ig', 'li'], dia: 0, hora: '18:30',
@@ -40,10 +40,10 @@ const MONTAR = () => {
   mk('Corte do vídeo de bastidores', 'producao');
   mk('Artigo aprofundado sobre linho no inverno', 'aprovado');
   S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo: 'Vídeo do ateliê com a costureira',
-    cli: 'ln', resp: null, col: 'inbox', cat: 'producao', criada: Date.now(),
+    cli: 'cj', resp: null, col: 'inbox', cat: 'producao', criada: Date.now(),
     prazo: '2026-09-30', tempoMs: 0, desde: null, desc: 'Mostrar o processo', projeto: 'Verão 26' });
   S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo: 'Carrossel: cinco cuidados com o linho',
-    cli: 'ln', resp: dono, col: 'plan', cat: 'producao', criada: Date.now(),
+    cli: 'cj', resp: dono, col: 'plan', cat: 'producao', criada: Date.now(),
     prazo: '2026-09-28', tempoMs: 0, desde: null, projeto: 'Verão 26' });
   render();
 };
@@ -112,7 +112,7 @@ for(const [rotulo, largura, altura] of [['celular', 390, 844], ['desktop', 1280,
   if(rotulo === 'celular'){
     /* o que a v111 desenha com estas regras continua grande, como deve ser */
     const metas = await pg.evaluate(() => {
-      S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'ln' }; S.cli = 'ln'; S.route = 'projeto'; render();
+      S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj'; S.route = 'projeto'; render();
       return [...document.querySelectorAll('.metas .meta b')].map(el => ({
         fs: parseFloat(getComputedStyle(el).fontSize),
         serif: window.__ehSerif(getComputedStyle(el).fontFamily) }));

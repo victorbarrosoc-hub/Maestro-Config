@@ -44,7 +44,7 @@ const daAgencia = async () => {
     document.getElementById('abertura')?.remove(); document.getElementById('entrarMaestro')?.remove();
     S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Administrador')) };
     document.getElementById('quemEsta')?.remove();
-    S.view = 'agency'; S.route = 'clientedet'; S.cli = 'ln'; S.tab = 'pauta'; S.skel = false; render();
+    S.view = 'agency'; S.route = 'clientedet'; S.cli = 'cj'; S.tab = 'pauta'; S.skel = false; render();
   });
   await pg.waitForTimeout(500);
   /* a porta do banco: sem sessão, a v88 não deixa gravar nada */
@@ -66,7 +66,7 @@ const pg = await daAgencia();
 /* ---------- 1. a agência gera o link ---------------------------------- */
 console.log('\n  — a agência gera o link —');
 const card = await pg.evaluate(() => {
-  const p = S.pautas.ln.find(x => !x.tarefa && x.texto) || S.pautas.ln[0];
+  const p = S.pautas.cj.find(x => !x.tarefa && x.texto) || S.pautas.cj[0];
   /* um card com tudo o que a folha sabe mostrar, e com o que ela deve esconder */
   p.t = 'Carrossel · três erros de quem começa tarde';
   p.texto = 'Abre com a queda. Três telas, um erro por tela, e a saída na última.';
@@ -89,7 +89,7 @@ checa('e ainda não oferece "gerar outro" — não existe link', !rodape.gerarOu
 await pg.click('[data-verlink]'); await pg.waitForTimeout(500);
 const gerado = await pg.evaluate(async () => {
   let l = ''; try{ l = await navigator.clipboard.readText(); }catch(e){}
-  const p = S.pautas.ln.find(x => x.t === 'Carrossel · três erros de quem começa tarde');
+  const p = S.pautas.cj.find(x => x.t === 'Carrossel · três erros de quem começa tarde');
   return { link: l, tok: p.verTok, toast: document.querySelector('.toast')?.textContent.trim() || '',
     outro: !!document.querySelector('[data-vernovo]') };
 });
@@ -100,7 +100,7 @@ checa('o aviso diz o que a pessoa do outro lado vai ver',
 checa('e agora existe "gerar outro"', gerado.outro);
 /* a gravação é debounced e, desde a v151, lê antes de escrever: esperar
    pela condição em vez de um tempo fixo (era 1,8 s, e sob carga não dava) */
-const achaGravacao = () => gravacoes.find(g => g.cliente === 'ln'
+const achaGravacao = () => gravacoes.find(g => g.cliente === 'cj'
   && (g.dados?.pauta || []).some(p => p.verTok === gerado.tok));
 for(let i = 0; i < 40 && !achaGravacao(); i++) await pg.waitForTimeout(250);
 const gravou = achaGravacao();
@@ -119,7 +119,7 @@ checa('enquanto o banco não chega, ele espera — não chuta que o link é inv�
       antesDoBanco.carregando && !antesDoBanco.julgou, antesDoBanco);
 /* o que o BANCO entregaria: o mesmo card do outro lado, com o token */
 const comoNoBanco = (pg, tok, card) => pg.evaluate(({ tok, card }) => {
-  const p = S.pautas.ln.find(x => x.id === +location.search.match(/ver=ln\.(\d+)/)[1]);
+  const p = S.pautas.cj.find(x => x.id === +location.search.match(/ver=ln\.(\d+)/)[1]);
   if(!p) return false;
   Object.assign(p, card, { verTok: tok });
   return true;
@@ -178,7 +178,7 @@ await pg.click('[data-vernovo]'); await pg.waitForTimeout(500);
 const novo = await pg.evaluate(async () => {
   let l = ''; try{ l = await navigator.clipboard.readText(); }catch(e){}
   return { link: l, toast: document.querySelector('.toast')?.textContent.trim() || '',
-    tok: S.pautas.ln.find(x => x.t === 'Carrossel · três erros de quem começa tarde').verTok };
+    tok: S.pautas.cj.find(x => x.t === 'Carrossel · três erros de quem começa tarde').verTok };
 });
 checa('"gerar outro" troca o token e avisa que o anterior caiu',
       novo.tok !== gerado.tok && novo.link.includes(novo.tok) && /deixou de valer/.test(novo.toast), { antes: gerado.tok, agora: novo.tok, toast: novo.toast });

@@ -7049,6 +7049,10 @@ const PAUTA_EJUP = [
    founder; as outras nascem vazias, como numa conta recém-criada. */
 S.pautas = {};
 S.pautas[ejupId()] = PAUTA_EJUP;
+/* v167: toda pauta existe, mesmo vazia. Antes só quem tinha semente
+   nascia com array, e o resto aparecia como `undefined` até alguém
+   abrir a tela do cliente — o que obrigava cada leitor a se defender. */
+try{ CLIS().forEach(c => { if(!Array.isArray(S.pautas[c.id])) S.pautas[c.id] = []; }); }catch(e){}
 delete S.pauta;
 Object.defineProperty(S, 'pauta', {
   get(){ const id = cliAtual().id;
@@ -11595,7 +11599,13 @@ sbCarregar = (function(orig){
                 const aqui = (S.cliEdit || {})[id], la = d.cliEdit[id];
                 if(!aqui){ junto[id] = la; continue; }
                 if(!la){ junto[id] = aqui; continue; }
-                junto[id] = (+aqui.em || 0) >= (+la.em || 0) ? aqui : la;
+                /* o empate vai para o BANCO, nunca para o aparelho. Quem
+                   entra por link de aprovação escreve no registro local a
+                   chave que veio na URL (v152) — sem `em`. Se o empate
+                   ficasse com o local, uma chave inventada se validaria
+                   sozinha. Edição de verdade sempre carimba `em`, então
+                   quem editou aqui continua ganhando de quem não tem. */
+                junto[id] = (+aqui.em || 0) > (+la.em || 0) ? aqui : la;
               }
               S.cliEdit = junto;
             }

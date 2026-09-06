@@ -215,8 +215,8 @@ cenarios.push(['2. dois aparelhos, o mesmo cliente: nada se perde', async () => 
 cenarios.push(['3. o pacote inteiro: a releitura não apaga o que acabei de mudar', async () => {
   const banco = bancoFalso();
   banco.semear('__estado__', { s: { novos: [], ensaio: { prox: 3, frentes: true, tarefas: [
-      { id: 1, titulo: 'Tarefa um', cli: 'ln', cat: 'producao', col: 'inbox', criada: 1, tempoMs: 0, desde: null, movidoEm: 1000 },
-      { id: 2, titulo: 'Tarefa dois', cli: 'ln', cat: 'producao', col: 'inbox', criada: 1, tempoMs: 0, desde: null, movidoEm: 1000 }], feitas: [], lixo: [] } },
+      { id: 1, titulo: 'Tarefa um', cli: 'cj', cat: 'producao', col: 'inbox', criada: 1, tempoMs: 0, desde: null, movidoEm: 1000 },
+      { id: 2, titulo: 'Tarefa dois', cli: 'cj', cat: 'producao', col: 'inbox', criada: 1, tempoMs: 0, desde: null, movidoEm: 1000 }], feitas: [], lixo: [] } },
     quando: Date.now(), versao: 76 });
   const A = await aparelho(banco);
   const B = await aparelho(banco);

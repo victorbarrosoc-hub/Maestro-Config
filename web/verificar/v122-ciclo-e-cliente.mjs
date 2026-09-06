@@ -84,7 +84,7 @@ checa('cada cliente da lista tem o botão do link',
 checa('e o botão diz o que faz', /Copiar o link de aprovação/.test(naLista.titulo || ''), naLista.titulo);
 
 for(const aba of ['pauta', 'marca', 'projetos', 'equipe']){
-  await pg.evaluate(t => { S.route = 'clientedet'; S.cli = 'ln'; S.tab = t; render(); window.scrollTo(0, 0); }, aba);
+  await pg.evaluate(t => { S.route = 'clientedet'; S.cli = 'cj'; S.tab = t; render(); window.scrollTo(0, 0); }, aba);
   await pg.waitForTimeout(400);
   const tem = await pg.locator('.mtop [data-cliapr]').count();
   checa(`na ficha do cliente o link aparece na aba "${aba}"`, tem === 1, { aba, tem });
@@ -92,7 +92,7 @@ for(const aba of ['pauta', 'marca', 'projetos', 'equipe']){
 
 /* copiar de verdade */
 await pg.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-await pg.evaluate(() => { S.route = 'clientedet'; S.cli = 'ln'; S.tab = 'pauta'; render(); window.scrollTo(0, 0); });
+await pg.evaluate(() => { S.route = 'clientedet'; S.cli = 'cj'; S.tab = 'pauta'; render(); window.scrollTo(0, 0); });
 await pg.waitForTimeout(400);
 await pg.click('.mtop [data-cliapr]'); await pg.waitForTimeout(600);
 const copiado = await pg.evaluate(async () => {

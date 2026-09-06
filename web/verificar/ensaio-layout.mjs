@@ -30,11 +30,11 @@ const MONTAR = () => {
     lista.push({ id, t, fmt: 'Post', plats: ['ig'], dia: 0, hora: '18:30', texto: 'Texto.',
       data: '2026-09-25', fase, st: 'DRAFT', resp: membroId(S.equipe[0]) });
   };
-  cria('ln', 'Bastidores da coleção', 'criado');
-  cria('ln', 'O linho no inverno', 'revisao');
-  cria('ln', 'Carrossel de cuidados', 'producao');
+  cria('cj', 'Bastidores da coleção', 'criado');
+  cria('cj', 'O linho no inverno', 'revisao');
+  cria('cj', 'Carrossel de cuidados', 'producao');
   cria('cj', 'Artigo sobre contratos', 'criado');
-  cria('ln', 'Reels do ateliê', 'lote_texto');
+  cria('cj', 'Reels do ateliê', 'lote_texto');
   cria('cj', 'Post sobre prazos', 'aprovado');
   render();
 };
@@ -140,7 +140,7 @@ for(const [rotulo, largura, altura] of [['celular', 390, 844], ['desktop', 1440,
     const dentroDaBarra = !!document.querySelector('.enFiltros .enClis');
     S.enCli2 = null; render();
     await new Promise(r => setTimeout(r, 400));
-    return { achou: true, filtrou: cards.length > 0 && cards.every(t => t.cli === 'ln'), dentroDaBarra };
+    return { achou: true, filtrou: cards.length > 0 && cards.every(t => t.cli === 'cj'), dentroDaBarra };
   });
   checa(`${rotulo}: os filtros seguem funcionando dentro da barra nova`,
         filtra.achou && filtra.filtrou && filtra.dentroDaBarra, filtra);

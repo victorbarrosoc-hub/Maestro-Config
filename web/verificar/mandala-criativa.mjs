@@ -143,7 +143,7 @@ checa('a roda não é redesenhada — é o que deixa a agulha animar', depois.me
 
 /* ---------- 2. o motor: ideia sem IA -------------------------------- */
 console.log('\n  — o motor —');
-await pg.evaluate(() => { S.md.fase = 'descoberta'; S.md.temp = 'oportunidade'; S.md.gancho = 12; S.md.cli = 'ln'; render(); });
+await pg.evaluate(() => { S.md.fase = 'descoberta'; S.md.temp = 'oportunidade'; S.md.gancho = 12; S.md.cli = 'cj'; render(); });
 await pg.waitForTimeout(300);
 /* o formulário saiu da frente: cinco campos viraram um painel que se
    abre só para quem quer precisão. Este é o "mais fácil de preencher". */
@@ -159,7 +159,7 @@ await pg.fill('#md-produto', 'o vestido de linho da coleção de inverno');
 await pg.fill('#md-publico', 'mulheres que trabalham em escritório');
 await pg.fill('#md-dor', 'roupa que amassa na reunião das 15h');
 await pg.fill('#md-desejo', 'chegar arrumada no fim do dia');
-const guardouCtx = await pg.evaluate(() => S.mandala.ctx.ln);
+const guardouCtx = await pg.evaluate(() => S.mandala.ctx.cj);
 checa('o contexto grava enquanto se digita, por cliente',
       guardouCtx && guardouCtx.produto === 'o vestido de linho da coleção de inverno' && guardouCtx.dor === 'roupa que amassa na reunião das 15h', guardouCtx);
 checa('sem roubar o foco do campo', await pg.evaluate(() => document.activeElement?.id) === 'md-desejo');
@@ -192,7 +192,7 @@ checa('sem preencher nada, as frases ainda fecham, com o nome do cliente',
       /Cortez Jurídico/.test(semCampo) && !/\{\w+\}/.test(semCampo) && !/undefined/.test(semCampo), semCampo.slice(0, 120));
 
 /* a semana */
-await pg.evaluate(() => { S.md.cli = 'ln'; render(); }); await pg.waitForTimeout(200);
+await pg.evaluate(() => { S.md.cli = 'cj'; render(); }); await pg.waitForTimeout(200);
 await pg.click('[data-mdsemana]'); await pg.waitForTimeout(400);
 const semana = await pg.evaluate(() => S.md.ideias.map(i => ({ dia: i.dia, fase: i.fase, g: i.gancho, temp: i.temp })));
 checa('montar a semana dá sete ideias, uma por dia', semana.length === 7 && semana.map(s => s.dia).join(',') === '0,1,2,3,4,5,6', semana);
@@ -217,7 +217,7 @@ const noInbox = await pg.evaluate(() => {
     toast: document.querySelector('.toast')?.textContent || '' };
 });
 checa('"Mandar para o Inbox" cria a tarefa no Ensaio, na frente de produção, do cliente certo',
-      noInbox.n === (antesInbox < 0 ? noInbox.n : antesInbox + 1) && noInbox.col === 'inbox' && noInbox.cat === 'producao' && noInbox.cli === 'ln', noInbox);
+      noInbox.n === (antesInbox < 0 ? noInbox.n : antesInbox + 1) && noInbox.col === 'inbox' && noInbox.cat === 'producao' && noInbox.cli === 'cj', noInbox);
 checa('com a ideia inteira no contexto: abertura, roteiro, CTA e o ponto da mandala',
       /ABERTURA:/.test(noInbox.desc) && /ROTEIRO:/.test(noInbox.desc) && /CTA:/.test(noInbox.desc) && /Mandala D\.\w+\.\d+: Descoberta/.test(noInbox.desc), noInbox.desc?.slice(0, 80));
 checa('e a coordenada gravada na tarefa', noInbox.mandala && noInbox.mandala.fase === 'descoberta', noInbox.mandala);
@@ -242,7 +242,7 @@ const banco = await pg.evaluate(() => ({ n: S.mandala.banco.length, cli: S.manda
 checa('"Guardar" põe a ideia no banco de ideias, que aparece embaixo', banco.n === 1 && banco.cards === 1 && /Banco de ideias/.test(banco.titulo || ''), banco);
 const gravou = gravacoes.find(g => g.cliente === '__mandala__');
 checa('e o banco viaja para o banco da casa, numa linha própria',
-      !!gravou && Array.isArray(gravou.dados.banco) && gravou.dados.banco.length === 1 && gravou.dados.ctx.ln, gravou && Object.keys(gravou.dados));
+      !!gravou && Array.isArray(gravou.dados.banco) && gravou.dados.banco.length === 1 && gravou.dados.ctx.cj, gravou && Object.keys(gravou.dados));
 await pg.click('.mdBanco [data-mdapagar]'); await pg.waitForTimeout(300);
 checa('apagar do banco tira de lá', await pg.evaluate(() => S.mandala.banco.length) === 0);
 
@@ -304,7 +304,7 @@ checa('e um gancho já usado demais avisa, para a agência não se repetir',
       /já saiu 2× para este cliente/.test(repetido), repetido);
 checa('uma linha torta no banco compartilhado não derruba a tela',
       await pg.evaluate(() => document.querySelectorAll('.mdBanco .mdIdeia').length) === 2);
-await pg.evaluate(() => { S.mandala.banco = []; S.md.cli = 'ln'; render(); });
+await pg.evaluate(() => { S.mandala.banco = []; S.md.cli = 'cj'; render(); });
 await pg.waitForTimeout(300);
 
 /* ---------- 3c. o formato --------------------------------------------
@@ -313,7 +313,7 @@ await pg.waitForTimeout(300);
    formato que melhor serve a ele; um formato escolhido manda em tudo. */
 console.log('\n  — o formato —');
 /* o contexto da Loja Norte fica: o teste da IA, logo abaixo, conta com ele */
-await pg.evaluate(() => { S.md.cli = 'ln'; S.md.fmt = ''; S.md.detalhe = true; render(); });
+await pg.evaluate(() => { S.md.cli = 'cj'; S.md.fmt = ''; S.md.detalhe = true; render(); });
 await pg.waitForTimeout(300);
 const fmts = await pg.evaluate(() => ({
   chips: [...document.querySelectorAll('.mdFmts button')].map(b => b.dataset.mdfmt),
@@ -409,7 +409,7 @@ await pg.route('https://api.anthropic.com/v1/messages', async r => {
     id: 'msg_1', type: 'message', role: 'assistant', model: 'claude-opus-5', stop_reason: 'end_turn',
     content: [{ type: 'text', text: JSON.stringify(resposta) }], usage: { input_tokens: 10, output_tokens: 10 } }) });
 });
-await pg.evaluate(() => { S.md.fase = 'descoberta'; S.md.temp = 'oportunidade'; S.md.gancho = 12; S.md.cli = 'ln'; render(); });
+await pg.evaluate(() => { S.md.fase = 'descoberta'; S.md.temp = 'oportunidade'; S.md.gancho = 12; S.md.cli = 'cj'; render(); });
 await pg.waitForTimeout(200);
 await pg.click('[data-mdia]'); await pg.waitForTimeout(900);
 checa('o pedido vai para a Anthropic com a chave, a versão e a permissão de navegador',

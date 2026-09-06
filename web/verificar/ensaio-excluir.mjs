@@ -29,10 +29,10 @@ await pg.evaluate(ADMIN + `
     (S.equipe = S.equipe || []).push({ n: 'Dani Teste', mail: 'dani@teste.com', papel: 'Designer' });
   S.view = 'agency'; S.route = 'producao'; S.skel = false; S.enCat = 'producao';
   /* uma tarefa da casa e um card da pauta, para as duas naturezas */
-  S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo: 'Tarefa nascida errada', cli: 'ln',
+  S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo: 'Tarefa nascida errada', cli: 'cj',
     resp: membroId(S.equipe[0]), col: 'plan', cat: 'producao', criada: Date.now(),
     prazo: null, tempoMs: 0, desde: null });
-  const lista = S.pautas.ln;
+  const lista = (S.pautas.cj = S.pautas.cj || []);
   const id = Math.max(0, ...lista.map(x => x.id)) + 1;
   lista.push({ id, t: 'Card da pauta para excluir', fmt: 'Post', plats: ['ig'], dia: 0,
     hora: '18:30', texto: 'Um texto qualquer.', data: '2026-09-25', fase: 'criado', st: 'DRAFT' });
@@ -46,7 +46,7 @@ const ids = await pg.evaluate(() => ({
   interna: S.ensaio.tarefas.find(t => t.titulo === 'Tarefa nascida errada').id,
   /* os ids de card são por cliente: 8 da Loja Norte e 8 da EJUP são
      cards diferentes. A busca casa os dois. */
-  job: S.ensaio.tarefas.find(t => t.cli === 'ln' && t.cardId === window.__cardId).id,
+  job: S.ensaio.tarefas.find(t => t.cli === 'cj' && t.cardId === window.__cardId).id,
   cardId: window.__cardId }));
 const sel = id => `.enCard[data-entar="${id}"]`;
 
@@ -90,34 +90,34 @@ checa('para um card da pauta, o aviso diz que ele sai dos dois lugares',
 await pg.click('[data-enrmok]'); await pg.waitForTimeout(400);
 const depois = await pg.evaluate(({ job, cardId }) => ({
   noQuadro: S.ensaio.tarefas.some(t => t.id === job),
-  naPauta: (S.pautas.ln || []).some(p => p.id === cardId),
+  naPauta: (S.pautas.cj || []).some(p => p.id === cardId),
   naLixeira: (S.lixeira.ln || []).some(e => e.item && e.item.id === cardId) }), ids);
 checa('o card sai do quadro e da pauta', !depois.noQuadro && !depois.naPauta, depois);
 checa('e chega inteiro na lixeira do cliente', depois.naLixeira, depois);
 checa('o quadro não recria a tarefa sozinho no próximo desenho',
       await pg.evaluate(async cardId => { render(); await new Promise(r => setTimeout(r, 400));
-        return !S.ensaio.tarefas.some(t => t.cli === 'ln' && t.cardId === cardId); }, ids.cardId));
+        return !S.ensaio.tarefas.some(t => t.cli === 'cj' && t.cardId === cardId); }, ids.cardId));
 await pg.evaluate(() => desfazer()); await pg.waitForTimeout(400);
 const volta = await pg.evaluate(({ cardId }) => ({
-  naPauta: (S.pautas.ln || []).some(p => p.id === cardId),
+  naPauta: (S.pautas.cj || []).some(p => p.id === cardId),
   naLixeira: (S.lixeira.ln || []).some(e => e.item && e.item.id === cardId),
-  noQuadro: S.ensaio.tarefas.some(t => t.cli === 'ln' && t.cardId === cardId) }), ids);
+  noQuadro: S.ensaio.tarefas.some(t => t.cli === 'cj' && t.cardId === cardId) }), ids);
 checa('desfazer traz o card de volta à pauta e ao quadro, e o tira da lixeira',
       volta.naPauta && volta.noQuadro && !volta.naLixeira, volta);
 
 /* ---------- 4. o que está com o cliente não se exclui ---------- */
 const comCli = await pg.evaluate(async cardId => {
-  const p = S.pautas.ln.find(x => x.id === cardId);
+  const p = S.pautas.cj.find(x => x.id === cardId);
   porFase(p, 'texto_cli'); p.enviadoEm = Date.now(); render();
   await new Promise(r => setTimeout(r, 400));
-  const t = S.ensaio.tarefas.find(x => x.cli === 'ln' && x.cardId === cardId);
+  const t = S.ensaio.tarefas.find(x => x.cli === 'cj' && x.cardId === cardId);
   const antes = S.ensaio.tarefas.length;
   const saiu = excluirTarefa(t.id);
   return { saiu, mesmoTanto: S.ensaio.tarefas.length === antes,
-    aindaNaPauta: S.pautas.ln.some(x => x.id === cardId) };
+    aindaNaPauta: S.pautas.cj.some(x => x.id === cardId) };
 }, ids.cardId);
 checa('card com o cliente é recusado, e nada some', !comCli.saiu && comCli.mesmoTanto && comCli.aindaNaPauta, comCli);
-await pg.evaluate(async cardId => { porFase(S.pautas.ln.find(x => x.id === cardId), 'criado'); render();
+await pg.evaluate(async cardId => { porFase(S.pautas.cj.find(x => x.id === cardId), 'criado'); render();
   await new Promise(r => setTimeout(r, 300)); }, ids.cardId);
 
 /* ---------- 5. permissão ---------- */
