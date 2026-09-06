@@ -192,7 +192,7 @@ if(SEM_CHAVE){
   checa('7.2 para quem foi pedido',
         cartas[0].corpo.to[0] === 'victorbarrosoc@gmail.com', cartas[0].corpo.to);
   checa('7.3 com texto FIXO — quem chamar não escolhe o que a Maestro diz',
-        /consegue te mandar e-mail/.test(cartas[0].corpo.subject), cartas[0].corpo.subject);
+        /já sabe falar com o mundo/.test(cartas[0].corpo.subject), cartas[0].corpo.subject);
   checa('7.4 e não mexe na fila', fila.length === 0 && marcados.length === 0);
   resendResponde = () => ({ status: 403, corpo: 'não' });
   const r2 = await chamar({ teste: 'a@b.com' });
