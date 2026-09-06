@@ -142,35 +142,24 @@ A última linha é a mais importante.
 
 ---
 
-## Configuração escolhida pelo founder (6 set)
+## Configuração (6 set)
 
-**Remetente:** `contatosejamaestro@gmail.com`.
+### Remetente: `avisos@sejamaestro.com.br`
 
-Escolha registrada e viável — o envio sai da Edge Function por SMTP
-autenticado do Gmail, então a senha de app fica nos *secrets* do Supabase
-e nunca na página. Duas consequências que vêm junto, para ninguém se
-surpreender depois:
+O founder pediu o passo a passo do domínio, e é o caminho certo: o
+cliente da agência vê o domínio da Maestro, não um Gmail, e o limite
+diário deixa de ser um teto baixo. `contatosejamaestro@gmail.com` fica
+como **reply-to** — quem responder o aviso cai na caixa que ele já lê,
+sem precisar de caixa postal nova.
 
-- **~500 envios por dia.** Suficiente para a agência de hoje; não para
-  dez agências.
-- **O cliente vê um endereço `@gmail.com`** no remetente. Numa
-  plataforma que a agência apresenta ao cliente dela, isso pesa.
+Passo a passo em `docs/ENGINEERING/EMAIL_DOMINIO.md`.
 
-Nada disso é caminho sem volta: a fila é agnóstica de canal, então trocar
-o remetente depois é mudar uma variável de ambiente e reenviar. Quando
-for a hora, `avisos@sejamaestro.com.br` com SPF/DKIM (o domínio já é
-dele, e a configuração é grátis) — de preferência com o Gmail acima como
-*reply-to*, para as respostas continuarem chegando onde ele lê.
+### WhatsApp: parado, de propósito
 
-**Número do WhatsApp:** informado, e **guardado nos secrets do Supabase,
-não neste repositório** — telefone pessoal em git é permanente e vaza
-junto com qualquer clone.
-
-> ⚠ **Confirmar antes de registrar na Meta:** o número que entra na Cloud
-> API **sai do WhatsApp comum**. Se for o número que ele usa no celular,
-> ele perde o WhatsApp pessoal nesse número. Registrar é fácil;
-> desfazer, não. Confirmar que é um chip dedicado antes de qualquer
-> passo na Meta.
+O número que o founder informou é o **pessoal dele**, e o número que
+entra na Cloud API sai do WhatsApp comum. Ele decidiu adiar até ter um
+chip dedicado. **Nenhum número guardado em lugar nenhum** — e quando
+houver, vai para os secrets do Supabase, nunca para este repositório.
 
 ---
 
