@@ -3,6 +3,8 @@
    exatamente como vejo quando o post está agendado lá no Cronograma".
    Aqui a prova é literal: o teste abre o card pelo Cronograma, guarda o
    que aparece, abre a mesma tarefa pelo Ensaio e compara os dois. */
+/* v165: o material passou a ser guardado por `cliente|id`. Este teste
+   escreve direto no depósito, então pede a chave à casa. */
 import { chromium } from 'playwright';
 import http from 'http';
 import fs from 'fs';
@@ -54,7 +56,7 @@ const semear = pag => pag.evaluate(() => {
     cta: 'Salve este post e mande para quem precisa ouvir.',
     obs: 'Conferir o nome da fonte no card 2.'
   });
-  S.mat[id] = [{ tipo:'link', url:'https://exemplo.com/arte.png', nome:'arte final' }];
+  S.mat[mChave(id)] = [{ tipo:'link', url:'https://exemplo.com/arte.png', nome:'arte final' }];
   if(!S.ensaio) S.ensaio = kbSemente();
   S.ensaio.tarefas = S.ensaio.tarefas.filter(t => t.cardId !== id);
   const tid = S.ensaio.prox++;
@@ -236,7 +238,7 @@ cenarios6: {
     const png = c => 'data:image/svg+xml;utf8,' + encodeURIComponent(
       `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350">
         <rect width="1080" height="1350" fill="${c}"/></svg>`);
-    S.mat[id] = [
+    S.mat[mChave(id)] = [
       { tipo:'link', url:'https://exemplo.com/brief', nome:'briefing' },
       { tipo:'imagem', url: png('#2B2B33'), nome:'card 1' },
       { tipo:'imagem', url: png('#3A3340'), nome:'card 2' }
@@ -280,7 +282,7 @@ cenarios7: {
   const { pag, erros } = await abrir();
   const { id, tid } = await semear(pag);
   const so = await pag.evaluate(([id, tid]) => {
-    S.mat[id] = [{ tipo:'imagem', url:'data:image/svg+xml;utf8,' +
+    S.mat[mChave(id)] = [{ tipo:'imagem', url:'data:image/svg+xml;utf8,' +
       encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>'),
       nome:'a arte' }];
     S.modal = modalTarefa(tid); renderLayer();
@@ -302,7 +304,7 @@ cenarios8: {
   const { pag, erros } = await abrir();
   const { id, tid } = await semear(pag);
   const vazio = await pag.evaluate(([id, tid]) => {
-    delete S.mat[id];
+    delete S.mat[mChave(id)];
     S.modal = modalTarefa(tid); renderLayer();
     const post = document.querySelector('.enPost');
     return { aviso: (post.querySelector('.enPecaSem') || {}).textContent || '',
