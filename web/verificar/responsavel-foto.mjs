@@ -4,6 +4,19 @@ import { chromium } from 'playwright';
 import http from 'http';
 import fs from 'fs';
 
+/* v167: a casa começa vazia — todo teste que precisa de pauta monta a
+   sua. Antes vinha de graça, do cliente de demonstração que saiu. */
+const SEMENTE_PAUTA = (pag, n = 3) => pag.evaluate(q => {
+  const c = CLIS()[0]; S.cli = c.id;
+  const lista = (S.pautas[c.id] = S.pautas[c.id] || []);
+  while(lista.length < q)
+    lista.push({ id: novoIdCard(), t:'Publicação ' + (lista.length + 1), fmt:'Reels',
+      fmts:['Reels'], plats:['ig'], porPlat:{}, data: hojeISO(), dia: diaDaSemana(hojeISO()),
+      hora:'18:00', texto:'Texto pronto.', cta:'', legenda:'', pecaId:null, st:'DRAFT',
+      feito:false, pend:'', resp:null });
+  render();
+}, n);
+
 const ALVO = process.argv[2] || 'docs/UX/prototipo-plataforma.html';
 const html = fs.readFileSync(ALVO, 'utf8');
 const srv = http.createServer((q, r) => {
@@ -44,6 +57,12 @@ const checa = (nome, cond) => (cond ? ok : falhou).push(nome);
 
 // ---------- 1. o card do Ensaio ----------
 await pag.evaluate(q => {
+  /* v167: o quadro começa vazio — as duas tarefas são deste teste */
+  if(S.ensaio.tarefas.filter(x => catIdDe(x) === S.enCat).length < 2)
+    for(let i = 0; i < 2; i++)
+      S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo:'Tarefa ' + (i + 1), cli:null,
+        resp:null, col:'plan', cat: S.enCat, criada: Date.now(), prazo:null,
+        tempoMs:0, desde:null, quemVe:[] });
   const t = S.ensaio.tarefas.find(x => catIdDe(x) === S.enCat);
   t.resp = q.comFoto;
   const outro = S.ensaio.tarefas.filter(x => catIdDe(x) === S.enCat)[1];
@@ -98,11 +117,15 @@ checa('"Todos" e "Sem dono" seguem sem rosto',
         return !!a && !!b && !a.querySelector('.respFoto') && !b.querySelector('.respFoto'); }));
 
 // ---------- 4. a pauta: linha e seletor ----------
+await SEMENTE_PAUTA(pag, 1);
 await pag.evaluate(q => {
-  S.route = 'pauta'; S.view = 'agency';
+  S.view = 'agency'; S.route = 'clientedet'; S.tab = 'pauta';
+  S.ptVista = 'lista';                 /* v167: a linha da pauta, não o calendário */
   S.pauta[0].resp = q.comFoto;
   render(); }, quem);
 await pag.waitForTimeout(500);
+await pag.evaluate(() => { S.tab = 'pauta'; render(); });
+await pag.waitForTimeout(400);
 checa('a linha da pauta mostra a foto do responsavel',
       await pag.evaluate(() => !!document.querySelector('.ptResp .respFoto.comFoto img')));
 checa('a linha da pauta mostra o nome junto',

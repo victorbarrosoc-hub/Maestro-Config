@@ -32,6 +32,15 @@ async function abrir(vp, rota, prep){
     S.view = 'agency'; S.route = rota; S.skel = false; S.modal = null;
     S.seen = { agency:true, client:true };
     S.cli = CLIS()[0].id;
+    /* v167: a casa começa vazia — o cenário de cada teste é dele */
+    const lista = (S.pautas[S.cli] = S.pautas[S.cli] || []);
+    while(lista.length < 2)
+      lista.push({ id: novoIdCard(), t:'Publicação ' + (lista.length + 1), fmt:'Reels',
+        fmts:['Reels'], plats:['ig'], data: hojeISO(), dia: diaDaSemana(hojeISO()),
+        hora:'18:00', texto:'Texto pronto.', cta:'', legenda:'', pecaId:null,
+        st:'DRAFT', feito:false, pend:'', resp:null });
+    /* um deles já começou: é assim que o card entra no quadro do Ensaio */
+    try{ porFase(lista[1], 'criado'); }catch(e){}
     if(prep) eval(prep);
     render(); }, [rota, prep || '']);
   await pag.waitForTimeout(400);

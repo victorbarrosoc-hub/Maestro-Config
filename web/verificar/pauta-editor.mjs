@@ -8,6 +8,19 @@ import { chromium } from 'playwright';
 import http from 'http';
 import fs from 'fs';
 
+/* v167: a casa começa vazia — todo teste que precisa de pauta monta a
+   sua. Antes vinha de graça, do cliente de demonstração que saiu. */
+const SEMENTE_PAUTA = (pag, n = 3) => pag.evaluate(q => {
+  const c = CLIS()[0]; S.cli = c.id;
+  const lista = (S.pautas[c.id] = S.pautas[c.id] || []);
+  while(lista.length < q)
+    lista.push({ id: novoIdCard(), t:'Publicação ' + (lista.length + 1), fmt:'Reels',
+      fmts:['Reels'], plats:['ig'], porPlat:{}, data: hojeISO(), dia: diaDaSemana(hojeISO()),
+      hora:'18:00', texto:'Texto pronto.', cta:'', legenda:'', pecaId:null, st:'DRAFT',
+      feito:false, pend:'', resp:null });
+  render();
+}, n);
+
 const ALVO = process.argv[2] || 'docs/UX/prototipo-plataforma.html';
 const html = fs.readFileSync(ALVO, 'utf8');
 const srv = http.createServer((q, r) => {
@@ -100,6 +113,7 @@ await pag.click('[data-plat98="li"]'); await pag.waitForTimeout(300);
 checa('desmarcar a rede tira a caixa dela', await pag.locator('[data-plattxt]').count() === 1);
 
 /* um card que ja tinha texto por rede nao pode perde-lo ao ser salvo */
+await SEMENTE_PAUTA(pag, 1);
 await pag.evaluate(() => { S.modal = null; renderLayer();
   S.pauta[0].porPlat = { ig: 'texto antigo por rede' };
   S.ptSemear = true; S.modal = modalPauta(S.pauta[0].id); renderLayer(); });

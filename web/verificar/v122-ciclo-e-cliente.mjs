@@ -100,7 +100,7 @@ const copiado = await pg.evaluate(async () => {
   try{ texto = await navigator.clipboard.readText(); }catch(e){}
   return { texto, toast: document.querySelector('.toast')?.textContent.replace(/\s+/g, ' ').trim() };
 });
-checa('tocar copia o link daquele cliente', /\?aprovar=ln\./.test(copiado.texto), copiado);
+checa('tocar copia o link daquele cliente', /\?aprovar=cj\./.test(copiado.texto), copiado);
 checa('e o aviso diz que quem aprova entra sem senha',
       /sem senha/.test(copiado.toast || ''), copiado.toast);
 

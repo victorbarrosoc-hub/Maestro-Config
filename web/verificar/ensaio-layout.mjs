@@ -131,7 +131,7 @@ for(const [rotulo, largura, altura] of [['celular', 390, 844], ['desktop', 1440,
 
   /* os filtros continuam funcionando depois da arrumação */
   const filtra = await pg.evaluate(async () => {
-    const chip = document.querySelector('.enFiltros [data-encli2="ln"]');
+    const chip = document.querySelector('.enFiltros [data-encli2="cj"]');
     if(!chip) return { achou: false };
     chip.click();
     await new Promise(r => setTimeout(r, 500));

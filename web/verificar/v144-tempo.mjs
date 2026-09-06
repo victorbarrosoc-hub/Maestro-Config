@@ -55,6 +55,21 @@ async function abrir(vp){
   const { pag, erros } = await abrir({ viewport: { width: 1400, height: 1000 } });
   const cenario = await pag.evaluate(() => {
     if(!S.ensaio) S.ensaio = kbSemente();
+    /* v167: a casa começa vazia — dois cards de pauta já começados (é o
+       que os põe no quadro) e uma tarefa da casa, tudo deste teste */
+    const cli = CLIS()[0].id;
+    const lista = (S.pautas[cli] = S.pautas[cli] || []);
+    while(lista.length < 2){
+      lista.push({ id: novoIdCard(), t:'Publicação ' + (lista.length + 1), fmt:'Reels',
+        fmts:['Reels'], plats:['ig'], data: hojeISO(), dia: diaDaSemana(hojeISO()),
+        hora:'18:00', texto:'Texto pronto.', cta:'', legenda:'', pecaId:null,
+        st:'DRAFT', feito:false, pend:'', resp:null });
+      porFase(lista[lista.length - 1], 'criado');
+    }
+    if(!S.ensaio.tarefas.some(t => !t.cardId))
+      S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo:'Tarefa da casa', cli:null,
+        resp:null, col:'plan', cat:'producao', criada: Date.now(), prazo:null,
+        tempoMs:0, desde:null, quemVe:[] });
     sincronizarJobs();
     const eu = membroId(S.equipe.find(m => m.papel === 'Administrador'));
     const outra = membroId(S.equipe.find(m => membroId(m) !== eu));

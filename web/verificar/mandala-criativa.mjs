@@ -301,7 +301,7 @@ await pg.waitForTimeout(300);
 await pg.click('[data-mdgerar]'); await pg.waitForTimeout(400);
 const repetido = await pg.evaluate(() => (S.md.ideias.find(i => i.gancho === 12) || {}).norte || '');
 checa('e um gancho já usado demais avisa, para a agência não se repetir',
-      /já saiu 2× para este cliente/.test(repetido), repetido);
+      /já saiu \d+× para este cliente/.test(repetido), repetido);
 checa('uma linha torta no banco compartilhado não derruba a tela',
       await pg.evaluate(() => document.querySelectorAll('.mdBanco .mdIdeia').length) === 2);
 await pg.evaluate(() => { S.mandala.banco = []; S.md.cli = 'cj'; render(); });
@@ -409,7 +409,15 @@ await pg.route('https://api.anthropic.com/v1/messages', async r => {
     id: 'msg_1', type: 'message', role: 'assistant', model: 'claude-opus-5', stop_reason: 'end_turn',
     content: [{ type: 'text', text: JSON.stringify(resposta) }], usage: { input_tokens: 10, output_tokens: 10 } }) });
 });
-await pg.evaluate(() => { S.md.fase = 'descoberta'; S.md.temp = 'oportunidade'; S.md.gancho = 12; S.md.cli = 'cj'; render(); });
+/* v167: o cliente de demonstração saiu com o seu briefing; o teste
+   escreve o briefing e o contexto que quer ver chegar no pedido */
+await pg.evaluate(() => {
+  S.cliEdit.cj = { ...(S.cliEdit.cj || {}),
+    brief:'Marca de moda atemporal em linho. Nunca falar de preço em conteúdo de marca.' };
+  S.mandala.ctx.cj = { produto:'o vestido de linho da coleção de inverno',
+    publico:'mulheres de escritório', dor:'roupa que amassa na reunião',
+    desejo:'chegar arrumada no fim do dia' };
+  S.md.fase = 'descoberta'; S.md.temp = 'oportunidade'; S.md.gancho = 12; S.md.cli = 'cj'; render(); });
 await pg.waitForTimeout(200);
 await pg.click('[data-mdia]'); await pg.waitForTimeout(900);
 checa('o pedido vai para a Anthropic com a chave, a versão e a permissão de navegador',

@@ -29741,7 +29741,8 @@ function verFolhaHtml(c, p){
   const ms = (typeof materiaisDe === 'function' ? materiaisDe(p) : []).filter(m => m.tipo !== 'link');
   const par = t => `<p>${esc(t)}</p>`;
   const r = p.roteiro || {}, corte = p.corte || {};
-  const agencia = (S.agencia && S.agencia.nome) || 'a agência';
+  /* v168: sem nome cadastrado, "enviado por a agência" sai torto. */
+  const agencia = String((S.agencia && S.agencia.nome) || '').trim();
   return `<div id="verFolha">
     <div class="vfTopo">
       <div class="vfMarca">${typeof rostoCli === 'function' ? rostoCli(c) : ''}
@@ -29778,7 +29779,7 @@ function verFolhaHtml(c, p){
     <div class="vfPe">
       <span class="lg">${typeof LOGO === 'function' ? LOGO('var(--brass-500)') : ''} Maestro</span>
       <span class="sp"></span>
-      <span>enviado por ${esc(agencia)}</span>
+      <span>${agencia ? 'enviado por ' + esc(agencia) : 'enviado pela agência'}</span>
     </div>
   </div>`;
 }

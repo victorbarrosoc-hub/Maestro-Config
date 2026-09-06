@@ -10,6 +10,19 @@ import { chromium } from 'playwright';
 import http from 'http';
 import fs from 'fs';
 
+/* v167: a casa começa vazia — todo teste que precisa de pauta monta a
+   sua. Antes vinha de graça, do cliente de demonstração que saiu. */
+const SEMENTE_PAUTA = (pag, n = 3) => pag.evaluate(q => {
+  const c = CLIS()[0]; S.cli = c.id;
+  const lista = (S.pautas[c.id] = S.pautas[c.id] || []);
+  while(lista.length < q)
+    lista.push({ id: novoIdCard(), t:'Publicação ' + (lista.length + 1), fmt:'Reels',
+      fmts:['Reels'], plats:['ig'], porPlat:{}, data: hojeISO(), dia: diaDaSemana(hojeISO()),
+      hora:'18:00', texto:'Texto pronto.', cta:'', legenda:'', pecaId:null, st:'DRAFT',
+      feito:false, pend:'', resp:null });
+  render();
+}, n);
+
 const ALVO = process.argv[2] || 'docs/UX/prototipo-plataforma.html';
 const html = fs.readFileSync(ALVO, 'utf8');
 const srv = http.createServer((q, r) => {
@@ -150,8 +163,10 @@ async function abrir(opts, rota){
 /* ================= 3. régua da pauta e atalhos ================= */
 {
   const { pag, erros } = await abrir({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }, 'clientedet');
-  await pag.evaluate(() => { S.cli = CLIS()[0].id; S.tab = 'pauta'; render(); });
-  await pag.waitForTimeout(300);
+  await SEMENTE_PAUTA(pag, 2);
+  await pag.evaluate(() => { S.cli = CLIS()[0].id; S.view = 'agency';
+    S.route = 'clientedet'; S.tab = 'pauta'; render(); });
+  await pag.waitForTimeout(400);
   const regua = await pag.evaluate(() => {
     const topo = document.querySelector('.ptAcoesTopo');
     const novo = topo && topo.querySelector('[data-ptnew]');

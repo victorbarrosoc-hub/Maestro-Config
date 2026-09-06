@@ -37,7 +37,12 @@ const cliente = await pag.evaluate(() => {
   /* o botao da lixeira mora na regua da aba Pauta, e ela so aparece com
      pauta na tela — e onde ele existe de verdade */
   S.view = 'agency'; S.route = 'clientedet'; S.cli = c.id; S.tab = 'pauta';
-  if(!S.pauta.length) S.pauta = [{ id:1, t:'Post de teste', fmt:'Feed' }];
+  /* v167: a casa começa vazia — e um card de mentira precisa ter a
+     forma de um card de verdade, senão a tela quebra desenhando */
+  if(!S.pauta.length) S.pauta = [{ id: novoIdCard(), t:'Post de teste', fmt:'Post',
+    fmts:['Post'], plats:['ig'], data: hojeISO(), dia: diaDaSemana(hojeISO()),
+    hora:'18:00', texto:'Texto.', cta:'', legenda:'', pecaId:null, st:'DRAFT',
+    feito:false, pend:'' }];
   S.lixeira[c.id] = [
     { item:{ t:'Carrossel de bastidores', fmt:'Carrossel' }, idx:0, quando:Date.now() },
     { item:{ t:'Reels do lançamento',     fmt:'Reels' },     idx:1, quando:Date.now() }];

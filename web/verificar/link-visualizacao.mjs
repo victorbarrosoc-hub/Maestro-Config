@@ -66,7 +66,13 @@ const pg = await daAgencia();
 /* ---------- 1. a agência gera o link ---------------------------------- */
 console.log('\n  — a agência gera o link —');
 const card = await pg.evaluate(() => {
-  const p = S.pautas.cj.find(x => !x.tarefa && x.texto) || S.pautas.cj[0];
+  /* v167: a casa começa vazia — o teste cria o card de que precisa */
+  const lista = (S.pautas.cj = S.pautas.cj || []);
+  if(!lista.length) lista.push({ id: novoIdCard(), t:'Card do teste', fmt:'Carrossel',
+    fmts:['Carrossel'], plats:['ig'], data: hojeISO(), dia: diaDaSemana(hojeISO()),
+    hora:'18:00', texto:'Texto.', cta:'', legenda:'', pecaId:null, st:'DRAFT',
+    feito:false, pend:'' });
+  const p = lista.find(x => !x.tarefa && x.texto) || lista[0];
   /* um card com tudo o que a folha sabe mostrar, e com o que ela deve esconder */
   p.t = 'Carrossel · três erros de quem começa tarde';
   p.texto = 'Abre com a queda. Três telas, um erro por tela, e a saída na última.';
@@ -94,7 +100,7 @@ const gerado = await pg.evaluate(async () => {
     outro: !!document.querySelector('[data-vernovo]') };
 });
 checa('copiar dá um link com cliente, card e um token só dele',
-      new RegExp(`\\?ver=ln\\.${card.id}\\.[a-z0-9]{8,}$`).test(gerado.link) && gerado.link.includes(gerado.tok), gerado.link);
+      new RegExp(`\\?ver=cj\\.${card.id}\\.[a-z0-9]{8,}$`).test(gerado.link) && gerado.link.includes(gerado.tok), gerado.link);
 checa('o aviso diz o que a pessoa do outro lado vai ver',
       /vê só este card/.test(gerado.toast) && /sem entrar na Maestro/.test(gerado.toast), gerado.toast);
 checa('e agora existe "gerar outro"', gerado.outro);
@@ -119,8 +125,12 @@ checa('enquanto o banco não chega, ele espera — não chuta que o link é inv�
       antesDoBanco.carregando && !antesDoBanco.julgou, antesDoBanco);
 /* o que o BANCO entregaria: o mesmo card do outro lado, com o token */
 const comoNoBanco = (pg, tok, card) => pg.evaluate(({ tok, card }) => {
-  const p = S.pautas.cj.find(x => x.id === +location.search.match(/ver=ln\.(\d+)/)[1]);
-  if(!p) return false;
+  /* v167: a casa começa vazia, então quem recebe o link não tem a pauta
+     antes de o banco responder. O teste põe a linha que o banco poria. */
+  const id = +location.search.match(/ver=cj\.(\d+)/)[1];
+  const lista = (S.pautas.cj = S.pautas.cj || []);
+  let p = lista.find(x => x.id === id);
+  if(!p){ p = { id, fmt:'Carrossel', plats:[], st:'DRAFT' }; lista.push(p); }
   Object.assign(p, card, { verTok: tok });
   return true;
 }, { tok, card });
@@ -148,8 +158,8 @@ const folha = await vis.evaluate(() => ({
 checa('a folha abre com o card, sem cortina, sem porta e sem "quem está aí"',
       folha.tem && !folha.porta && !folha.quem && !folha.cortina && folha.root === 'none' && /soVer/.test(folha.classe), folha);
 checa('com o título, o cliente e o selo de somente leitura',
-      folha.titulo === card.titulo && folha.cliente === 'Loja Norte' && folha.selo === 'somente leitura', folha);
-checa('a aba do navegador leva o nome do card', /três erros/.test(folha.titulo_aba) && /Loja Norte/.test(folha.titulo_aba), folha.titulo_aba);
+      folha.titulo === card.titulo && folha.cliente === 'Cortez Jurídico' && folha.selo === 'somente leitura', folha);
+checa('a aba do navegador leva o nome do card', /três erros/.test(folha.titulo_aba) && /Cortez/.test(folha.titulo_aba), folha.titulo_aba);
 checa('mostra conteúdo, legenda e CTA', folha.blocos.join('|') === 'Conteúdo|Legenda|CTA', folha.blocos);
 checa('e a data, a hora, o formato e as plataformas',
       folha.meta.some(x => /Carrossel/.test(x)) && folha.meta.some(x => /Instagram/.test(x))
@@ -192,7 +202,7 @@ checa('o link antigo não abre mais o card, e explica o porquê',
 await velho.close();
 
 /* card que não existe */
-const perdido = await deQuemRecebe(`http://127.0.0.1:${PORTA}/?ver=ln.999999.qualquercoisa`);
+const perdido = await deQuemRecebe(`http://127.0.0.1:${PORTA}/?ver=cj.999999.qualquercoisa`);
 await perdido.waitForTimeout(9000);
 const semCard = await perdido.evaluate(() => document.querySelector('.vfAviso h2')?.textContent || '');
 checa('link de um card que não existe avisa, em vez de tela em branco', /Não achei este card/.test(semCard), semCard);

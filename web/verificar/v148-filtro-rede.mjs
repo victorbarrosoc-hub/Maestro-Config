@@ -26,6 +26,20 @@ async function abrir(vp){
     ['abertura', 'entrarMaestro', 'quemEsta'].forEach(i => document.getElementById(i)?.remove());
     S.usuario = { tipo:'agencia', id:'victorbarrosoc' };
     S.view = 'agency'; S.route = 'clientedet'; S.cli = CLIS()[0].id; S.tab = 'pauta';
+    /* v167: a casa começa vazia — o cenário de cada teste é dele */
+    const _l = (S.pautas[S.cli] = S.pautas[S.cli] || []);
+    while(_l.length < 4)
+      _l.push({ id: novoIdCard(), t:'Publicação ' + (_l.length + 1), fmt:'Reels',
+        fmts:['Reels'], plats:[_l.length % 2 ? 'li' : 'ig'], data: hojeISO(),
+        dia: diaDaSemana(hojeISO()), hora:'18:00', texto:'Texto pronto.', cta:'',
+        legenda:'', pecaId:null, st:'DRAFT', feito:false, pend:'', resp:null });
+    /* e uma demanda interna, para o filtro por TIPO ter os dois tipos */
+    if(!_l.some(p => p.tarefa))
+      _l.push({ id: novoIdCard(), t:'Demanda interna do teste', fmt:'Livre', fmts:['Livre'],
+        tarefa:true, plats:[], porPlat:{}, data: hojeISO(), dia: diaDaSemana(hojeISO()),
+        hora:'09:00', texto:'', obs:'', cta:'', legenda:'', pecaId:null, st:'DRAFT',
+        feito:false, pend:'', resp:null });
+
     S.skel = false; S.seen = { agency:true }; S.ptVista = 'semana'; S.ptVistaAuto = false;
     S.ptRedes = []; S.ptTipos = [];
     render(); });
