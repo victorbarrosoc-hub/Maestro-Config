@@ -148,12 +148,14 @@ function carta(a: Record<string, any>) {
 <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
 <title>${esc(a.titulo)}</title>
 <style>
-  /* O leitor de e-mail transforma domínio, e-mail, telefone e data em
-     link sozinho — e pinta de azul sublinhado. Numa ficha da Maestro
-     isso é ruído: o valor vira um link que não leva a lugar nenhum útil
-     e destoa de tudo. Aqui ele volta a ser texto.
-     `x-apple-data-detectors` é o do Apple Mail; o `a` dentro da ficha
-     pega o do Gmail, que usa um <a> comum. */
+  /* O leitor de e-mail transforma dominio, e-mail, telefone e data em
+     link sozinho, e pinta de azul sublinhado. Numa ficha da Maestro isso
+     e ruido: o valor vira um link que nao leva a lugar nenhum util e
+     destoa de tudo em volta. Aqui ele volta a ser texto.
+     O seletor x-apple-data-detectors e o do Apple Mail; o seletor de
+     ancora dentro da ficha pega o do Gmail, que usa um a comum.
+     Sem crase neste comentario: ele mora dentro de um template literal,
+     e uma crase aqui termina a string no meio da carta. */
   .fichaMaestro a,
   .fichaMaestro a[href],
   a[x-apple-data-detectors]{
