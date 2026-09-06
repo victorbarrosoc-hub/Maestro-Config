@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-06 09:37 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-06 14:41 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15957,7 +15957,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v160 · 6 set · o cursor do seletor para quieto';
+const VERSAO_PROTOTIPO = 'v162 · 6 set · a coluna do que já foi';
 
 menuSheet = (function(orig){
   return function(){
@@ -24479,11 +24479,15 @@ modalTarefa = (function(orig){
 .enColCorpo::-webkit-scrollbar-thumb{ background:var(--ink-700); border-radius:3px }
 .enColCorpo > :last-child{ margin-bottom:8px }
 
-/* desktop: as cinco colunas dividem a largura, sem rolagem lateral */
+/* desktop: as colunas dividem a largura, sem rolagem lateral */
 @media(min-width:861px){
-  /* 5 colunas + 4 vãos têm de caber na área útil: o piso baixo deixa o
-     `1fr` esticar até a largura real, em vez de transbordar por 6px */
-  .enRolo{ grid-auto-columns:minmax(180px, 1fr) !important }
+  /* As colunas + os vãos têm de caber na área útil: o piso baixo deixa o
+     `1fr` esticar até a largura real, em vez de transbordar por alguns
+     pixels. O piso desceu de 180 para 168 quando o Concluído entrou
+     (v162): com seis colunas numa tela de 1440 sobram 172 px para cada,
+     e um piso de 180 punha o quadro a rolar de lado num monitor inteiro
+     — rolagem que existe para telas pequenas, não para essa. */
+  .enRolo{ grid-auto-columns:minmax(168px, 1fr) !important }
   .enFiltros{ gap:5px }
 }
 /* celular: uma coluna por vez, com encaixe — desliza como uma tela */
@@ -33494,6 +33498,618 @@ addEventListener('click', e => {
       try{ fixSegs(); }catch(e){}      /* mesmo quadro: o cursor nunca é pintado errado */
     }
   });
+
+})();
+</script>
+
+<style>
+/* v161 — a menção */
+.mencListaWrap{ position:fixed; z-index:965; width:min(280px,86vw);
+  background:var(--ink-900); border:1px solid var(--ink-700); border-radius:12px;
+  box-shadow:0 20px 50px rgba(0,0,0,.6); overflow:hidden; animation:fadeUp .16s var(--eo) both }
+.mencListaWrap .cab{ font-family:var(--mono); font-size:9.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-500); padding:9px 13px 6px }
+.mencItem{ display:flex; align-items:center; gap:10px; width:100%; padding:9px 13px;
+  text-align:left; font-size:13.5px; color:var(--ink-200) }
+.mencItem .av{ width:24px; height:24px; font-size:9.5px }
+.mencItem .pp{ font-size:11px; color:var(--ink-500); margin-left:auto }
+.mencItem.on{ background:var(--ink-800); color:var(--ink-50); box-shadow:inset 2px 0 0 var(--brass-500) }
+.mencVazio{ padding:14px 13px; font-size:12.5px; color:var(--ink-500) }
+/* a menção dentro da mensagem: quem foi chamado se vê de longe */
+.menc{ font-style:normal; color:var(--brass-300); background:rgba(200,150,58,.13);
+  border-radius:5px; padding:0 3px }
+.menc.eu{ color:var(--ink-950); background:var(--brass-500); font-weight:600 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v161 — A MENÇÃO EXISTE, E CHEGA NA HORA
+
+   O pedido do fundador: "notificação de quem marcou quem no card", e a
+   menção em push imediata. Antes disto a palavra "menção" não existia no
+   arquivo — "marcou" era o ponto na arte, não uma pessoa.
+
+   São três peças, e cada uma cai sozinha sem levar as outras:
+
+   1. ESCREVER A MENÇÃO. `@` no campo de mensagem abre a lista da equipe;
+      escolher escreve `@Primeiro`. Setas andam, Enter escolhe (e NÃO
+      manda a mensagem — quem digitou `@` está escolhendo gente, não
+      terminando a frase), Esc fecha.
+
+   2. A MENÇÃO VIRA AVISO. Percebida por comparação a cada desenho, como
+      a v79 faz com as mensagens — e não num gancho do botão de enviar.
+      Assim o aviso também nasce quando a mensagem chega de OUTRO
+      APARELHO pela sincronização, que é justamente quando avisar
+      importa. A chave é determinística (canal + hora da mensagem +
+      pessoa), então a mesma menção percebida por dois aparelhos é UM
+      aviso, nunca dois.
+
+   3. O AVISO VIRA NOTIFICAÇÃO DO APARELHO — na hora, sem espera e sem
+      agrupamento. Ser chamado pelo nome é pessoal: juntar duas menções
+      num aviso só seria o mesmo que não avisar.
+
+   O QUE ISTO NÃO É, para não prometer o que não entrega: sem servidor,
+   a notificação só sai com a Maestro ABERTA (na tela ou em segundo
+   plano). Notificação com o app fechado precisa de push de verdade
+   (VAPID + uma função no Supabase), que é o passo seguinte. O
+   `web/sw.js` já está escrito com o ouvido do `push` pronto.
+
+   E nada disto acontece sem a pessoa pedir: a permissão é pedida por
+   gesto, num botão da Conta. Sem permissão, o sino continua sendo o
+   único aviso — que é exatamente como estava.
+   ================================================================== */
+(function(){
+
+  if(typeof avisar !== 'function' || typeof euAgora !== 'function') return;
+
+  /* ---------- quem pode ser mencionado ---------- */
+  const equipeMenc = () => (S.equipe || []).map(m => ({
+    id: membroId(m), nome: m.n, primeiro: (m.n || '').split(' ')[0], papel: m.papel || '', ini: membroIni(m) }));
+
+  /* sem acento e sem caixa: quem escreve "@joao" chama a Joana? não —
+     chama o João, e a comparação tem de enxergar isso */
+  const chao = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+  /* Acha as pessoas citadas num texto. Nome composto primeiro ("@Anna
+     Clara" antes de "@Anna"), senão duas pessoas do mesmo primeiro nome
+     viravam sempre a primeira da lista. */
+  function mencionados(txt){
+    const t = chao(txt);
+    const gente = equipeMenc();
+    const achados = new Set();
+    gente.slice().sort((a, b) => b.nome.length - a.nome.length).forEach(p => {
+      const alvos = [chao(p.nome), chao(p.primeiro)];
+      for(const a of alvos){
+        if(!a) continue;
+        /* `@nome` seguido de fim, espaço ou pontuação — nunca no meio de outra palavra */
+        const re = new RegExp('@' + a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![a-z0-9])', 'i');
+        if(re.test(t)){ achados.add(p.id); return; }
+      }
+    });
+    return [...achados];
+  }
+
+  /* A menção aparece marcada dentro da mensagem — e a marca entra no
+     HTML que a tela DEVOLVE, não mexendo no que já está na tela.
+
+     A diferença não é estilo: a v159 só deixa de reescrever a tela
+     enquanto o desenho é idêntico ao que já está lá, e uma marcação
+     feita DEPOIS do desenho muda a tela por fora, derruba essa memória
+     e faz cada volta reescrever tudo de novo. Marcando aqui, o desenho
+     já nasce com a marca e continua idêntico a cada volta. */
+  function marcarNoHtml(html){
+    const eu = euAgora();
+    const gente = equipeMenc();
+    if(!gente.length || String(html).indexOf('@') < 0) return html;
+    return String(html).replace(/<span class="balao">([\s\S]*?)<\/span>/g, (todo, dentro) => {
+      if(dentro.indexOf('@') < 0) return todo;
+      let t = dentro;
+      gente.slice().sort((a, b) => b.nome.length - a.nome.length).forEach(p => {
+        [p.nome, p.primeiro].forEach(alvo => {
+          if(!alvo) return;
+          const re = new RegExp('@' + alvo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\w])', 'gi');
+          t = t.replace(re, m => `<i class="menc${p.id === eu ? ' eu' : ''}">${m}</i>`);
+        });
+      });
+      return '<span class="balao">' + t + '</span>';
+    });
+  }
+  if(typeof telaConversas === 'function'){
+    telaConversas = (function(orig){
+      return function(){ return marcarNoHtml(orig.apply(this, arguments)); };
+    })(telaConversas);
+  }
+
+  /* ===================================================================
+     1. o seletor: `@` abre a lista da equipe
+     ================================================================ */
+  let lista = null, itens = [], marcado = 0;
+
+  const fechar = () => { if(lista){ lista.remove(); lista = null; } itens = []; marcado = 0; };
+
+  /* o pedaço `@...` imediatamente antes do cursor */
+  function trechoDoCursor(campo){
+    const fim = campo.selectionStart;
+    const antes = campo.value.slice(0, fim);
+    const m = antes.match(/@([\p{L}\p{N}. ]{0,24})$/u);
+    if(!m) return null;
+    /* "@ana " com espaço só continua valendo enquanto casa com um nome
+       composto — senão qualquer frase depois do @ manteria a lista aberta */
+    const termo = m[1];
+    if(/\s/.test(termo)){
+      const cabe = equipeMenc().some(p => chao(p.nome).startsWith(chao(termo)));
+      if(!cabe) return null;
+    }
+    return { termo, ini: fim - m[0].length, fim };
+  }
+
+  function abrir(campo){
+    const t = trechoDoCursor(campo);
+    if(!t) return fechar();
+    const termo = chao(t.termo);
+    itens = equipeMenc().filter(p => !termo
+      || chao(p.nome).includes(termo) || chao(p.primeiro).startsWith(termo));
+    if(!itens.length) return fechar();
+    if(marcado >= itens.length) marcado = 0;
+    if(!lista){
+      lista = document.createElement('div');
+      lista.className = 'mencListaWrap';
+      document.body.appendChild(lista);
+    }
+    lista.innerHTML = `<div class="cab">Chamar alguém</div>` + itens.map((p, i) =>
+      `<button type="button" class="mencItem${i === marcado ? ' on' : ''}" data-mencpick="${esc(p.id)}">
+         <span class="av">${esc(p.ini)}</span><span>${esc(p.nome)}</span>
+         <span class="pp">${esc(p.papel)}</span></button>`).join('');
+    const r = campo.getBoundingClientRect();
+    const alt = lista.offsetHeight || 180;
+    lista.style.left = Math.max(8, Math.min(r.left, innerWidth - lista.offsetWidth - 8)) + 'px';
+    /* em cima do campo, e embaixo só se em cima não couber */
+    lista.style.top = (r.top - alt - 8 > 8 ? r.top - alt - 8 : r.bottom + 8) + 'px';
+  }
+
+  function escolher(id){
+    const campo = document.getElementById('cv-txt');
+    if(!campo) return fechar();
+    const p = equipeMenc().find(x => x.id === id);
+    const t = trechoDoCursor(campo);
+    if(!p || !t) return fechar();
+    /* o primeiro nome basta, a não ser que outra pessoa tenha o mesmo */
+    const repetido = equipeMenc().filter(x => chao(x.primeiro) === chao(p.primeiro)).length > 1;
+    const escrito = '@' + (repetido ? p.nome : p.primeiro) + ' ';
+    campo.value = campo.value.slice(0, t.ini) + escrito + campo.value.slice(t.fim);
+    const cursor = t.ini + escrito.length;
+    fechar();
+    campo.focus();
+    try{ campo.setSelectionRange(cursor, cursor); }catch(e){}
+  }
+
+  addEventListener('input', e => {
+    if(!e.target || e.target.id !== 'cv-txt') return;
+    abrir(e.target);
+  }, true);
+
+  addEventListener('keydown', e => {
+    if(!lista || !e.target || e.target.id !== 'cv-txt') return;
+    if(e.key === 'Escape'){ e.stopImmediatePropagation(); e.preventDefault(); fechar(); return; }
+    if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+      e.stopImmediatePropagation(); e.preventDefault();
+      marcado = (marcado + (e.key === 'ArrowDown' ? 1 : itens.length - 1)) % itens.length;
+      abrir(e.target); return;
+    }
+    /* Enter com a lista aberta ESCOLHE — não manda a mensagem */
+    if(e.key === 'Enter' || e.key === 'Tab'){
+      e.stopImmediatePropagation(); e.preventDefault();
+      escolher((itens[marcado] || {}).id); return;
+    }
+  }, true);
+
+  /* `mousedown` e não `click`: o clique só chega depois do blur, e o
+     blur já teria fechado a lista debaixo do dedo */
+  addEventListener('mousedown', e => {
+    const b = e.target.closest && e.target.closest('[data-mencpick]');
+    if(b){ e.preventDefault(); e.stopImmediatePropagation(); escolher(b.dataset.mencpick); return; }
+    if(lista && !(e.target.closest && e.target.closest('#cv-txt'))) fechar();
+  }, true);
+  addEventListener('touchstart', e => {
+    const b = e.target.closest && e.target.closest('[data-mencpick]');
+    if(b){ e.preventDefault(); e.stopImmediatePropagation(); escolher(b.dataset.mencpick); }
+  }, { capture:true, passive:false });
+
+  /* ===================================================================
+     2. o aparelho: permissão, service worker, e o aviso na mão
+     ================================================================ */
+  const CHAVE_AVISO = 'maestro-avisos-aparelho-v1';
+  const temNotificacao = () => typeof Notification !== 'undefined';
+  const permitido = () => temNotificacao() && Notification.permission === 'granted';
+  const comoApp = () => {
+    try{ return !!(navigator.standalone
+      || (matchMedia && matchMedia('(display-mode: standalone)').matches)); }catch(e){ return false; }
+  };
+  const ligado = () => { try{ return localStorage.getItem(CHAVE_AVISO) === 'sim'; }catch(e){ return false; } };
+  const ligar = v => { try{ localStorage.setItem(CHAVE_AVISO, v ? 'sim' : 'nao'); }catch(e){} };
+
+  /* O service worker só entra em quem PEDIU aviso.
+
+     Não é economia: registrar em todo mundo instala um trabalhador que a
+     esmagadora maioria nunca vai usar, e num endereço que não sirva
+     `/sw.js` o próprio navegador escreve um erro no console de toda
+     visita — barulho que esconde erro de verdade. Quem liga os avisos
+     registra; quem não liga nem fica sabendo que isto existe. */
+  let registro = null;
+  function ligarOperario(){
+    if(registro || !('serviceWorker' in navigator)) return Promise.resolve(null);
+    if(location.protocol !== 'http:' && location.protocol !== 'https:') return Promise.resolve(null);
+    navigator.serviceWorker.addEventListener('message', ev => {
+      const d = ev.data || {};
+      if(d.maestro === 'abrir' && d.url){
+        try{ history.pushState({}, '', d.url); }catch(e){}
+        try{ if(typeof estadoDaUrl === 'function' && estadoDaUrl(location.pathname)) render(); }catch(e){}
+      }
+    });
+    return navigator.serviceWorker.register('/sw.js')
+      .then(r => { registro = r; return r; })
+      .catch(() => null);                       /* sem ele, o aviso sai pelo caminho antigo */
+  }
+
+  /* quem já disse sim continua com o operário de pé a cada abertura */
+  try{ if(ligado() && permitido()) ligarOperario(); }catch(e){}
+
+  function avisarNoAparelho({ titulo, corpo, tag, url }){
+    if(!permitido() || !ligado()) return false;
+    const opcoes = { body: corpo || '', tag: tag || 'maestro', renotify: false,
+      data: { url: url || '/' }, icon: '/icones/maestro-gesto-192.png',
+      badge: '/icones/maestro-gesto-192.png' };
+    try{
+      if(registro && registro.showNotification){ registro.showNotification(titulo, opcoes); return true; }
+      new Notification(titulo, opcoes);
+      return true;
+    }catch(e){ return false; }
+  }
+
+  async function pedirPermissao(){
+    if(!temNotificacao()){
+      toast(comoApp()
+        ? 'Este aparelho não oferece avisos.'
+        : 'No iPhone, os avisos só existem com a Maestro na tela de início: Compartilhar → Adicionar à Tela de Início.');
+      return false;
+    }
+    let p = Notification.permission;
+    if(p === 'default'){ try{ p = await Notification.requestPermission(); }catch(e){ p = 'denied'; } }
+    if(p !== 'granted'){
+      toast('O navegador negou os avisos. Dá para liberar nos ajustes do site.');
+      ligar(false); render(); return false;
+    }
+    ligar(true); render();
+    await ligarOperario();
+    avisarNoAparelho({ titulo:'Avisos ligados', corpo:'É assim que a Maestro vai te chamar.',
+                       tag:'maestro-teste', url:'/' });
+    toast('Avisos ligados neste aparelho.');
+    return true;
+  }
+
+  /* ---------- a linha na Conta ---------- */
+  if(typeof agConta === 'function'){
+    agConta = (function(orig){
+      return function(){
+        const html = orig();
+        const estado = !temNotificacao()
+          ? (comoApp() ? 'este aparelho não oferece avisos'
+                       : 'adicione à tela de início para receber avisos')
+          : Notification.permission === 'denied' ? 'o navegador negou — libere nos ajustes do site'
+          : ligado() && permitido() ? 'ligados neste aparelho'
+          : 'desligados neste aparelho';
+        const linha = `<button class="row" data-avaparelho="1" style="width:100%">
+          <span class="av">${ic('bell', 13)}</span>
+          <span class="t"><b>Avisos neste aparelho</b><span>${esc(estado)}</span></span>
+          <span class="cnSessao">${ligado() && permitido() ? 'Desligar' : 'Ligar'}</span></button>`;
+        return html.replace('<button class="row" data-r="equipe"',
+                            linha + '<button class="row" data-r="equipe"');
+      };
+    })(agConta);
+  }
+
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-avaparelho]');
+    if(!b) return;
+    e.stopImmediatePropagation();
+    if(ligado() && permitido()){ ligar(false); render(); toast('Avisos desligados neste aparelho.'); return; }
+    pedirPermissao();
+  }, true);
+
+  /* ===================================================================
+     3. a menção vira aviso, e o aviso chega na hora
+     ================================================================ */
+  let vistas = null;             /* quantas mensagens cada canal tinha */
+
+  function olharMencoes(){
+    if(!S.chat || !Array.isArray(S.chat.canais)) return;
+    const eu = euAgora();
+    const agora = {};
+    for(const c of S.chat.canais) agora[c.id] = c.msgs.length;
+    if(vistas === null){ vistas = agora; return; }        /* a primeira vez só fotografa */
+    for(const c of S.chat.canais){
+      const novas = (agora[c.id] || 0) - (vistas[c.id] || 0);
+      if(novas <= 0) continue;
+      c.msgs.slice(-novas).forEach(m => {
+        const alvos = mencionados(m.txt).filter(id => id && id !== m.de);
+        if(!alvos.length) return;
+        const quem = membro(m.de);
+        const nome = quem ? quem.nome.split(' ')[0] : 'Alguém';
+        alvos.forEach(id => {
+          const chave = 'menc:' + c.id + ':' + m.ts + ':' + id;
+          /* a mesma menção vista por dois aparelhos é UM aviso */
+          if((S.avisos || []).some(a => a.chave === chave)) return;
+          avisar({ para:[id], autor:m.de, canal:c.id, chave,
+                   txt: `${nome} mencionou você em ${c.nome}`,
+                   sub: String(m.txt || '').slice(0, 90) });
+          if(id === eu){
+            avisarNoAparelho({ titulo: `${nome} mencionou você`,
+              corpo: String(m.txt || '').slice(0, 140), tag: chave, url: '/conversas' });
+            if(typeof som === 'function') { try{ som('toque'); }catch(e){} }
+            convidar();
+          }
+        });
+      });
+    }
+    vistas = agora;
+  }
+
+  /* ---------- e o card que passou a ser seu ----------
+
+     Quem passou a tarefa não está escrito em lugar nenhum: o `resp` do
+     card guarda o DONO, nunca quem o pôs ali. Sem saber o autor, esta
+     casa avisaria a pessoa dela mesma toda vez que ela destinasse uma
+     tarefa a si própria.
+
+     O que se sabe com certeza é outra coisa, e basta: se a mudança
+     apareceu SEM ninguém tocar neste aparelho, ela veio de fora — pela
+     sincronização — e portanto de outra pessoa. Se veio logo depois de
+     um gesto daqui, quem mexeu fui eu, e o `avisar` já sabe não avisar
+     o próprio autor. */
+  let ultimoGesto = 0;
+  ['pointerdown', 'keydown', 'click'].forEach(ev =>
+    addEventListener(ev, () => { ultimoGesto = Date.now(); }, true));
+  const gestoRecente = () => Date.now() - ultimoGesto < 2000;
+
+  let donos = null;
+  function olharTarefas(){
+    if(!S.ensaio || !Array.isArray(S.ensaio.tarefas)) return;
+    const eu = euAgora();
+    const agora = {};
+    S.ensaio.tarefas.forEach(t => { agora[t.id] = t.resp || ''; });
+    if(donos === null){ donos = agora; return; }
+    S.ensaio.tarefas.forEach(t => {
+      const antes = donos[t.id];
+      const dono = t.resp || '';
+      if(antes === undefined || antes === dono || !dono) return;   /* nova, ou sem dono: não é passagem */
+      const chave = 'tar:' + t.id + ':' + dono + ':' + (t.col || '');
+      if((S.avisos || []).some(a => a.chave === chave)) return;
+      avisar({ para:[dono], chave, autor: gestoRecente() ? euAgora() : '__de_fora__',
+               txt:'Uma tarefa passou a ser sua',
+               sub: String(t.titulo || '').slice(0, 90) });
+      if(dono === eu){
+        avisarNoAparelho({ titulo:'Uma tarefa passou a ser sua',
+          corpo: String(t.titulo || '').slice(0, 140), tag: chave, url:'/ensaio' });
+        convidar();
+      }
+    });
+    donos = agora;
+  }
+
+  /* Quem foi chamado e ainda não ligou os avisos merece saber que dá —
+     uma vez por sessão, no momento em que a falta fica concreta. */
+  let convidou = false;
+  function convidar(){
+    if(convidou || ligado() || !temNotificacao()) return;
+    if(Notification.permission === 'denied') return;
+    convidou = true;
+    setTimeout(() => toast('Quer ser avisado no aparelho quando te chamarem? Conta → Avisos neste aparelho.'), 900);
+  }
+
+  const _renderV161 = render;
+  render = function(){
+    const r = _renderV161.apply(this, arguments);
+    try{ olharMencoes(); }catch(e){}
+    try{ olharTarefas(); }catch(e){}
+    return r;
+  };
+
+  /* deixa alcançável para o teste e para as camadas seguintes */
+  window.MaestroAvisos = { mencionados, avisarNoAparelho, pedirPermissao,
+                           ligado, permitido, comoApp };
+
+})();
+</script>
+
+<style>
+/* v162 — a coluna do que já foi */
+.enCol.enRecolhida{ min-height:0; height:auto; align-self:start; padding-bottom:12px }
+.enCol.enRecolhida .enColHd{ margin-bottom:0 }
+.enCol.enRecolhida .enCard,
+.enCol.enRecolhida .enVazia,
+.enCol.enRecolhida .enMais{ display:none }
+/* o que já foi cede a cor: continua legível, para de disputar atenção
+   com a coluna onde ainda há trabalho */
+[data-encol="feito"] .enCard{ opacity:.8 }
+/* mover, cronometrar e passar de coluna não valem para o que já foi ao
+   ar — o motor já recusa; mostrar o botão é prometer o que não acontece.
+   Abrir o card e apagar continuam, porque esses ainda fazem sentido. */
+[data-encol="feito"] .enCard .acoes [data-enmove],
+[data-encol="feito"] .enCard .acoes [data-entimer]{ display:none }
+.enDobra{ margin-left:auto; width:26px; height:26px; border-radius:8px; flex:0 0 auto;
+  display:grid; place-items:center; color:var(--ink-400);
+  border:1px solid var(--ink-700); background:var(--ink-850);
+  transition:color var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.enDobra:hover{ color:var(--ink-50); border-color:var(--ink-500) }
+/* aberta, a seta aponta para o lado de recolher; fechada, para o de
+   abrir. O ícone diz o que o toque faz, não o estado em que se está. */
+.enDobra svg.i{ font-size:13px; transform:rotate(180deg);
+  transition:transform var(--med) var(--eo) }
+.enCol.enRecolhida .enDobra svg.i{ transform:rotate(0deg) }
+.enCard.enFeito{ opacity:.72 }
+.enCard.enFeito .acoes{ display:none }
+.enCard.enFeito .tit{ color:var(--ink-300) }
+.enMais{ text-align:center; font-size:11.5px; color:var(--ink-500);
+  font-family:var(--mono); padding:6px 0 2px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v162 — A COLUNA DO QUE JÁ FOI
+
+   O pedido: "uma coluna depois de Act com os cards finalizados. Fica em
+   Act agendado; quando clicar em publicado ou finalizado, vai pra essa
+   coluna. E um botão pra recolher e abrir."
+
+   O quadro terminava em Act, e Act guardava três estados de uma vez:
+   aprovado, agendado e no ar. Ou seja, a coluna que devia dizer "falta
+   pouco" também dizia "acabou" — e o que acabou empurra para fora da
+   tela o que ainda espera alguém. Separar não é organização: é devolver
+   a Act o único assunto que ela deveria ter.
+
+   Três coisas, e nenhuma inventa fluxo novo:
+
+   1. A COLUNA. `postado` deixa de morar em Act e passa a morar aqui.
+      Nada mais muda no motor: o `t.col` já era leitura da fase, então
+      publicar um card já o move sozinho.
+
+   2. O QUE A CASA CONCLUIU também aparece aqui. A tarefa concluída sai
+      de `tarefas` e vai para `feitas` — é de lá que o Ranking e os
+      Resultados contam, e mexer nisso quebraria os dois. Então ela não
+      muda de lugar: é EMPRESTADA ao quadro no momento do desenho e
+      devolvida logo depois, como esta casa já faz com `CLIS` na tela de
+      relatório. Contas intactas, coluna cheia.
+
+   3. RECOLHER. O que já foi é história: útil de ter à mão, ruim de ter
+      no caminho. O botão fica no cabeçalho da coluna e a escolha mora
+      neste aparelho — recolher aqui não recolhe no celular de mais
+      ninguém.
+
+   Uma recusa de propósito: arrastar um card para cá NÃO publica. Publicar
+   tem confirmação (v143), e uma confirmação que se pula arrastando não é
+   confirmação. O arrasto ensina onde fica o botão.
+   ================================================================== */
+(function(){
+
+  if(typeof EN_COLS === 'undefined' || typeof FASE_COL === 'undefined') return;
+
+  /* ---------- 1. a coluna, e a fase que passa a morar nela ---------- */
+  if(!EN_COLS.some(([k]) => k === 'feito')){
+    const i = EN_COLS.findIndex(([k]) => k === 'act');
+    EN_COLS.splice(i < 0 ? EN_COLS.length : i + 1, 0,
+      ['feito', 'Concluído', '#6E7B8B', 'o que já foi ao ar e o que a casa fechou']);
+  }
+  FASE_COL.postado = 'feito';
+
+  /* arrastar para cá não publica — o botão publica, e ele pergunta */
+  if(typeof moverJob === 'function'){
+    moverJob = (function(orig){
+      return function(p, col){
+        if(col === 'feito'){
+          const f = typeof faseDe === 'function' ? faseDe(p) : '';
+          toast(f === 'postado' ? 'Esse já está aqui.'
+            : 'Publicar é no card — o botão pergunta antes, e é ele que registra a hora.');
+          return;
+        }
+        return orig.apply(this, arguments);
+      };
+    })(moverJob);
+  }
+
+  /* ---------- 3. recolher, e a escolha fica neste aparelho ---------- */
+  const CHAVE = 'maestro-ensaio-feito-v1';
+  const aberto = () => { try{ return localStorage.getItem(CHAVE) !== 'nao'; }catch(e){ return true; } };
+  const guardar = v => { try{ localStorage.setItem(CHAVE, v ? 'sim' : 'nao'); }catch(e){} };
+
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-endobra]');
+    if(!b) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    guardar(!aberto());
+    if(typeof som === 'function'){ try{ som('toque'); }catch(err){} }
+    render();
+  }, true);
+
+  /* ---------- 2. o que a casa concluiu, emprestado ao quadro -------- */
+  const LIMITE = 30;                       /* o que já foi não vira paredão */
+
+  function emprestadas(){
+    const feitas = (S.ensaio && S.ensaio.feitas) || [];
+    return feitas.slice(-LIMITE).reverse().map(t => {
+      const copia = Object.assign({}, t);
+      copia.desde = null;                  /* história não conta tempo */
+      Object.defineProperty(copia, 'col', {
+        configurable:true, enumerable:true, get(){ return 'feito'; }, set(){} });
+      return copia;
+    });
+  }
+
+  if(typeof agEnsaio === 'function'){
+    agEnsaio = (function(orig){
+      return function(){
+        const tarefas = S.ensaio && S.ensaio.tarefas;
+        let html;
+        if(!Array.isArray(tarefas)) html = orig.apply(this, arguments);
+        else {
+          const extras = emprestadas();
+          S.ensaio.tarefas = tarefas.concat(extras);
+          try{ html = orig.apply(this, arguments); }
+          finally{ S.ensaio.tarefas = tarefas; }
+        }
+        return vestirColuna(html);
+      };
+    })(agEnsaio);
+  }
+
+  /* o cabeçalho da coluna ganha o botão, e a coluna ganha o estado.
+     Se o desenho mudar de forma e o encaixe não achar onde entrar, a
+     tela volta inteira do jeito que veio — a coluna sem o botão é bem
+     melhor do que um quadro quebrado. */
+  function vestirColuna(html){
+    if(typeof html !== 'string') return html;
+    const re = /<div class="enCol([^"]*)" data-encol="feito">(\s*)<div class="enColHd">([\s\S]*?)<\/div>/;
+    if(!re.test(html)) return html;
+    const ab = aberto();
+    const quantas = (S.ensaio && S.ensaio.feitas || []).length;
+    return html.replace(re, (todo, cls, espaco, cabeca) =>
+      `<div class="enCol${cls}${ab ? '' : ' enRecolhida'}" data-encol="feito">${espaco}` +
+      `<div class="enColHd">${cabeca}` +
+      `<button class="enDobra" data-endobra="1" aria-expanded="${ab}"
+         aria-label="${ab ? 'Recolher' : 'Abrir'} a coluna Concluído"
+         title="${ab ? 'Recolher' : 'Abrir'}">${ic('chevr', 13)}</button></div>` +
+      (ab && quantas > LIMITE
+        ? `<div class="enMais">mostrando as ${LIMITE} mais recentes de ${quantas}</div>` : ''));
+  }
+
+  /* ---------- o cartão emprestado não aceita ser mexido ------------- */
+  /* Ele é uma cópia: o id dele já não está em `tarefas`, então editar,
+     mover ou cronometrar mexeria no nada — ou, pior, abriria o modal de
+     "Nova tarefa" achando que é uma tarefa que sumiu. Abrir o card da
+     pauta continua valendo: esse existe. */
+  addEventListener('click', e => {
+    if(!e.target.closest) return;
+    if(e.target.closest('[data-hjabre]') || e.target.closest('[data-endobra]')) return;
+    const cartao = e.target.closest('[data-entar]');
+    if(!cartao) return;
+    const id = +cartao.dataset.entar;
+    const viva = (S.ensaio && S.ensaio.tarefas || []).some(t => t.id === id);
+    if(viva) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    toast('Esta já foi concluída — está aqui como histórico.');
+  }, true);
+
+  /* a marca visual de "isto é história" entra no cartão emprestado */
+  const _renderV162 = render;
+  render = function(){
+    const r = _renderV162.apply(this, arguments);
+    try{
+      const vivas = new Set((S.ensaio && S.ensaio.tarefas || []).map(t => t.id));
+      document.querySelectorAll('[data-encol="feito"] .enCard[data-entar]').forEach(el => {
+        el.classList.toggle('enFeito', !vivas.has(+el.dataset.entar));
+      });
+    }catch(e){}
+    return r;
+  };
 
 })();
 </script>
