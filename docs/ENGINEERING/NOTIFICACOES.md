@@ -16,11 +16,17 @@
 | Menção `@pessoa` na conversa | **de pé** na v161 |
 | Notificação no aparelho (menção e tarefa) | **de pé** na v161, com a Maestro aberta |
 | Tarefa que passou a ser sua | **de pé** na v161 |
-| Contato do cliente (e-mail, WhatsApp, opt-in) | a fazer |
-| Fila no banco + entregador | a fazer |
-| E-mail | a fazer |
+| Domínio `avisos.sejamaestro.com.br` verificado | **de pé** em 6/set, 12h12 |
+| Fila no banco (`avisos` + reserva) | **de pé** em 6/set |
+| Função `enviar-avisos` (o carteiro) | **de pé** em 6/set, 12h42 |
+| Contato de quem aprova, no cadastro do cliente | **de pé** na v164 |
+| Lote para aprovar → e-mail para o cliente | **de pé** na v164 |
+| Decisão do cliente → e-mail para a equipe | a fazer |
 | Push com o app fechado (VAPID) | a fazer |
-| WhatsApp (Cloud API) | a fazer |
+| WhatsApp (Cloud API) | a fazer — falta o chip dedicado |
+
+**O primeiro e-mail saiu em 6 de setembro, 12h42**, para
+`victorbarrosoc@gmail.com`, e caiu na caixa de entrada.
 
 ---
 
