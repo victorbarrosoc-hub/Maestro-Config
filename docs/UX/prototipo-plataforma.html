@@ -24411,11 +24411,15 @@ modalTarefa = (function(orig){
 .enColCorpo::-webkit-scrollbar-thumb{ background:var(--ink-700); border-radius:3px }
 .enColCorpo > :last-child{ margin-bottom:8px }
 
-/* desktop: as cinco colunas dividem a largura, sem rolagem lateral */
+/* desktop: as colunas dividem a largura, sem rolagem lateral */
 @media(min-width:861px){
-  /* 5 colunas + 4 vãos têm de caber na área útil: o piso baixo deixa o
-     `1fr` esticar até a largura real, em vez de transbordar por 6px */
-  .enRolo{ grid-auto-columns:minmax(180px, 1fr) !important }
+  /* As colunas + os vãos têm de caber na área útil: o piso baixo deixa o
+     `1fr` esticar até a largura real, em vez de transbordar por alguns
+     pixels. O piso desceu de 180 para 168 quando o Concluído entrou
+     (v162): com seis colunas numa tela de 1440 sobram 172 px para cada,
+     e um piso de 180 punha o quadro a rolar de lado num monitor inteiro
+     — rolagem que existe para telas pequenas, não para essa. */
+  .enRolo{ grid-auto-columns:minmax(168px, 1fr) !important }
   .enFiltros{ gap:5px }
 }
 /* celular: uma coluna por vez, com encaixe — desliza como uma tela */

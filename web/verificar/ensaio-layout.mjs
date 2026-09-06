@@ -93,9 +93,13 @@ for(const [rotulo, largura, altura] of [['celular', 390, 844], ['desktop', 1440,
   checa(`${rotulo}: nada empurra a página de lado`, m.docW <= m.tela.w + 1, m);
 
   if(rotulo === 'desktop'){
-    checa('desktop: as cinco colunas cabem sem rolagem lateral', m.rolo.sw <= m.rolo.cw + 1, m.rolo);
+    checa('desktop: as colunas cabem sem rolagem lateral', m.rolo.sw <= m.rolo.cw + 1, m.rolo);
+    /* Eram cinco colunas até a v162; com o Concluído são seis, e numa
+       tela de 1440 sobram ~172 px para cada. O que importa continua
+       sendo o mesmo: larguras iguais e nenhuma coluna espremida a
+       ponto de o cartão não caber. */
     checa('desktop: e dividem a largura por igual',
-          new Set(m.cols.map(c => c.w)).size === 1 && m.cols[0].w >= 180, m.cols.map(c => c.w));
+          new Set(m.cols.map(c => c.w)).size === 1 && m.cols[0].w >= 168, m.cols.map(c => c.w));
   } else {
     checa('celular: uma coluna por vez, com encaixe', /mandatory/.test(m.rolo.snap || ''), m.rolo);
     checa('celular: a coluna ocupa quase a tela inteira',
