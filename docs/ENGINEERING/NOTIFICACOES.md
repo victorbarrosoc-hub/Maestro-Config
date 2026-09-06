@@ -142,6 +142,38 @@ A última linha é a mais importante.
 
 ---
 
+## Configuração escolhida pelo founder (6 set)
+
+**Remetente:** `contatosejamaestro@gmail.com`.
+
+Escolha registrada e viável — o envio sai da Edge Function por SMTP
+autenticado do Gmail, então a senha de app fica nos *secrets* do Supabase
+e nunca na página. Duas consequências que vêm junto, para ninguém se
+surpreender depois:
+
+- **~500 envios por dia.** Suficiente para a agência de hoje; não para
+  dez agências.
+- **O cliente vê um endereço `@gmail.com`** no remetente. Numa
+  plataforma que a agência apresenta ao cliente dela, isso pesa.
+
+Nada disso é caminho sem volta: a fila é agnóstica de canal, então trocar
+o remetente depois é mudar uma variável de ambiente e reenviar. Quando
+for a hora, `avisos@sejamaestro.com.br` com SPF/DKIM (o domínio já é
+dele, e a configuração é grátis) — de preferência com o Gmail acima como
+*reply-to*, para as respostas continuarem chegando onde ele lê.
+
+**Número do WhatsApp:** informado, e **guardado nos secrets do Supabase,
+não neste repositório** — telefone pessoal em git é permanente e vaza
+junto com qualquer clone.
+
+> ⚠ **Confirmar antes de registrar na Meta:** o número que entra na Cloud
+> API **sai do WhatsApp comum**. Se for o número que ele usa no celular,
+> ele perde o WhatsApp pessoal nesse número. Registrar é fácil;
+> desfazer, não. Confirmar que é um chip dedicado antes de qualquer
+> passo na Meta.
+
+---
+
 ## Ordem
 
 1. ~~Menção + notificação no aparelho~~ — **v161**
