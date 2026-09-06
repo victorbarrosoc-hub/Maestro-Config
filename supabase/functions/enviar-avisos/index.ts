@@ -112,7 +112,8 @@ function carta(a: Record<string, any>) {
   /* tabela e não divs: é o que faz os valores alinharem numa coluna só,
      que é o que transforma três linhas soltas numa ficha */
   const ficha = fichas.length
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+    ? `<table role="presentation" class="fichaMaestro" cellpadding="0" cellspacing="0"
+              border="0" width="100%"
               style="border-top:1px solid #E7E2D9;margin:26px 0 0;padding:0">
         ${fichas.map(([k, v], i) => `
         <tr>
@@ -144,7 +145,26 @@ function carta(a: Record<string, any>) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
+<meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
 <title>${esc(a.titulo)}</title>
+<style>
+  /* O leitor de e-mail transforma domínio, e-mail, telefone e data em
+     link sozinho — e pinta de azul sublinhado. Numa ficha da Maestro
+     isso é ruído: o valor vira um link que não leva a lugar nenhum útil
+     e destoa de tudo. Aqui ele volta a ser texto.
+     `x-apple-data-detectors` é o do Apple Mail; o `a` dentro da ficha
+     pega o do Gmail, que usa um <a> comum. */
+  .fichaMaestro a,
+  .fichaMaestro a[href],
+  a[x-apple-data-detectors]{
+    color: inherit !important;
+    text-decoration: none !important;
+    font-size: inherit !important;
+    font-family: inherit !important;
+    font-weight: inherit !important;
+    pointer-events: none;
+  }
+</style>
 </head>
 <body style="margin:0;padding:0;background:#EFEBE3;">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;
