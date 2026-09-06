@@ -79,6 +79,16 @@ async function abrir(opts, rota){
   /* um card da pauta, excluído pelo quadro */
   const job = await pag.evaluate(() => {
     S.enCat = 'producao';
+    /* v167: a casa começa vazia — o card de pauta é deste teste */
+    const cli = CLIS()[0].id;
+    const lista = (S.pautas[cli] = S.pautas[cli] || []);
+    if(!lista.some(p => faseDe(p) === 'criado')){
+      lista.push({ id: novoIdCard(), t:'Card para a lixeira', fmt:'Post', fmts:['Post'],
+        plats:['ig'], data: hojeISO(), dia: diaDaSemana(hojeISO()), hora:'18:30',
+        texto:'Texto.', cta:'', legenda:'', pecaId:null, st:'DRAFT', feito:false,
+        pend:'', resp:null });
+      porFase(lista[lista.length - 1], 'criado');
+    }
     sincronizarJobs(); render();
     const t = S.ensaio.tarefas.find(x => x.cardId && catIdDe(x) === 'producao' && !(typeof comCliente === 'function' && comCliente(cardDaTarefa(x))));
     return t ? { id: t.id, cli: t.cli, cardId: t.cardId, titulo: t.titulo } : null; });

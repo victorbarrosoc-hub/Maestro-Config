@@ -37,8 +37,19 @@ const checa = (nome, cond) => (cond ? ok : falhou).push(nome);
 // ---------- 1. O BUG: trocar a frente duplica ----------
 /* pega um card que veio da pauta (tem cardId) e manda para outra frente */
 const dup = await pag.evaluate(async () => {
+  /* v167: a casa começa vazia — o card de pauta é deste teste */
+  if(!S.ensaio.tarefas.some(t => t.cardId && catIdDe(t) === 'producao')){
+    const cli = CLIS()[0].id;
+    const lista = (S.pautas[cli] = S.pautas[cli] || []);
+    lista.push({ id: novoIdCard(), t:'Card do teste', fmt:'Post', fmts:['Post'],
+      plats:['ig'], data: hojeISO(), dia: diaDaSemana(hojeISO()), hora:'18:30',
+      texto:'Texto.', cta:'', legenda:'', pecaId:null, st:'DRAFT', feito:false,
+      pend:'', resp:null });
+    porFase(lista[lista.length - 1], 'criado');
+    sincronizarJobs(); render();
+  }
   const alvo = S.ensaio.tarefas.find(t => t.cardId && catIdDe(t) === 'producao');
-  if(!alvo) return { erro:'sem card de pauta no quadro' };
+  if(!alvo) return { erro:'sem card de pauta no quadro', frentes: [] };
   const antes = S.ensaio.tarefas.filter(t => t.cardId === alvo.cardId
                                           && t.cli === alvo.cli).length;
   /* o mesmo que o salvar do modal faz ao trocar a categoria */

@@ -36,6 +36,9 @@ const MONTAR = () => {
   cria('cj', 'Artigo sobre contratos', 'criado');
   cria('cj', 'Reels do ateliê', 'lote_texto');
   cria('cj', 'Post sobre prazos', 'aprovado');
+  /* v167: a coluna precisa transbordar para dar o que rolar — antes isso
+     vinha de graça, da pauta de demonstração que saiu */
+  for(let i = 0; i < 8; i++) cria('cj', 'Card de encher ' + (i + 1), 'criado');
   render();
 };
 
@@ -106,7 +109,12 @@ for(const [rotulo, largura, altura] of [['celular', 390, 844], ['desktop', 1440,
           m.cols[0].w >= largura * 0.7 && m.cols[0].w <= largura * 0.95, m.cols.map(c => c.w));
     /* o cabeçalho da coluna para de fugir quando se rola atrás de um card */
     const fixo = await pg.evaluate(() => {
-      const col = document.querySelector('.enCol');
+      /* v167: a coluna a medir é a que TEM cards — a primeira do quadro
+         é o Inbox, e card de pauta nunca nasce nele */
+      const cols = [...document.querySelectorAll('.enCol')];
+      const col = cols.slice().sort((a, b) =>
+        b.querySelectorAll('.enCard').length - a.querySelectorAll('.enCard').length)[0]
+        || cols[0];
       const hd = col.querySelector('.enColHd'), corpo = col.querySelector('.enColCorpo');
       const antes = Math.round(hd.getBoundingClientRect().top);
       corpo.scrollTop = 300;

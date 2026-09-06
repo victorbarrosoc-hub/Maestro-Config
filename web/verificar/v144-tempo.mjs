@@ -169,6 +169,11 @@ async function abrir(vp){
     S.ensaio.tarefas.forEach(t => { t.tempoMs = 0; t.desde = null; delete t.sessoes; });
     S.ensaio.feitas = [];
     const eu = membroId(S.equipe.find(m => m.papel === 'Administrador'));
+    /* v167: o quadro começa vazio — a tarefa é deste teste */
+    if(!S.ensaio.tarefas.length)
+      S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo:'Tarefa antiga', cli:null,
+        resp:null, col:'plan', cat:'producao', criada: Date.now(), prazo:null,
+        tempoMs:0, desde:null, quemVe:[] });
     const t = S.ensaio.tarefas[0];
     t.resp = eu; t.tempoMs = 2 * 3600000; t.criada = Date.now() - 3600000;   /* sem sessões */
     S.rtPer = 'mes'; render();
@@ -186,6 +191,11 @@ async function abrir(vp){
   await pag.evaluate(() => {
     const eu = membroId(S.equipe.find(m => m.papel === 'Administrador'));
     if(!S.ensaio) S.ensaio = kbSemente();
+    /* v167: o quadro começa vazio — a tarefa é deste teste */
+    if(!S.ensaio.tarefas.length)
+      S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo:'Tarefa no celular', cli:null,
+        resp:null, col:'plan', cat:'producao', criada: Date.now(), prazo:null,
+        tempoMs:0, desde:null, quemVe:[] });
     S.ensaio.tarefas[0].resp = eu;
     S.ensaio.tarefas[0].sessoes = [{ ini: Date.now() - 3600000, fim: Date.now(), ms: 3600000, quemId: eu }];
     S.ensaio.tarefas[0].tempoMs = 3600000;

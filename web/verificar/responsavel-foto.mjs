@@ -89,7 +89,9 @@ checa('o nome inteiro e o papel continuam no title (para quem passa o mouse)',
 // ---------- 2. o seletor dentro do card do Ensaio ----------
 const idTar = await pag.evaluate(() =>
   S.ensaio.tarefas.find(x => catIdDe(x) === S.enCat).id);
-await pag.click(`[data-entar="${idTar}"]`); await pag.waitForTimeout(450);
+/* v167: abrir o card é o que traz o seletor — e o clique certo é no
+   título, como a pessoa faz */
+await pag.click(`[data-entar="${idTar}"] .tit`); await pag.waitForTimeout(500);
 checa('o seletor de responsavel do Ensaio mostra a foto',
       await pag.evaluate(id => {
         const b = document.querySelector(`[data-enresppick="${id}"]`);

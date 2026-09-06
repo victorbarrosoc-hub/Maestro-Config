@@ -23,6 +23,20 @@ const ABRIR = () => {
   document.getElementById('quemEsta')?.remove();
   S.view = 'agency'; S.cli = (typeof ejupId === 'function') ? ejupId() : 'cj';
   S.route = 'clientedet'; S.tab = 'pauta'; S.skel = false; S.ptVista = 'semana';
+  /* v167: a pauta da EJUP saiu do arquivo (era conteúdo real do founder,
+     legível no código-fonte). O teste monta a semana que precisa medir. */
+  const lista = (S.pautas[S.cli] = S.pautas[S.cli] || []);
+  if(lista.length < 6){
+    const hoje = new Date();
+    for(let i = 0; i < 6; i++){
+      const d = new Date(hoje.getTime() + i * 86400000);
+      const iso = d.toISOString().slice(0, 10);
+      lista.push({ id: novoIdCard(), t:'Publicação ' + (i + 1), fmt:'Reels',
+        fmts:['Reels'], plats:['ig'], data: iso, dia: diaDaSemana(iso), hora:'18:00',
+        texto:'Texto pronto.', cta:'', legenda:'', pecaId:null, st:'DRAFT',
+        feito:false, pend:'', resp:null });
+    }
+  }
   render();
 };
 /* uma faixa é de uma linha só quando os filhos compartilham a mesma faixa
