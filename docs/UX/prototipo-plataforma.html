@@ -15229,9 +15229,16 @@ function enviarCards(ids){
   som('toque'); render();
   /* D-030: UMA notificação por lote, nunca uma por card. Cinco avisos
      separados treinam o cliente a ignorar todos. */
+  /* v166: dizia "Helena" e "WhatsApp" para qualquer cliente — nome de
+     exemplo que ficou, e um canal que não existe. Diz quem é de
+     verdade, e só o que realmente sai. */
+  const _ap = ((cliAtual() || {}).aprovador) || {};
+  const _quem = (_ap.nome || '').trim() || 'o cliente';
+  const _porEmail = _ap.mail ? ' — avisado por e-mail' : '';
   toast(alvo.length === 1
-    ? `"${alvo[0].t}" foi para Helena — avisada por e-mail e WhatsApp.`
-    : `${alvo.length} cards enviados. Helena recebeu UMA notificação, não ${alvo.length}.`);
+    ? `"${alvo[0].t}" foi para ${_quem}${_porEmail}.`
+    : `${alvo.length} cards enviados para ${_quem}. `
+      + (_ap.mail ? `UM aviso, não ${alvo.length}.` : 'Sem e-mail cadastrado, ninguém foi avisado.'));
 }
 
 /* ---------- o cliente decide, e a decisão volta para o card ---------- */
@@ -15993,7 +16000,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v165 · 6 set · o material tem dono';
+const VERSAO_PROTOTIPO = 'v166 · 6 set · a tela diz quem vai ser avisado';
 
 menuSheet = (function(orig){
   return function(){
@@ -34238,56 +34245,138 @@ addEventListener('click', e => {
   }
 
   /* ---------- o lote avisa ---------- */
+  /* v166: o aviso era do BOTÃO "enviar para aprovação". Passa a ser do
+     FATO — sempre que um card entra na mão do cliente, venha de onde
+     vier. Hoje o quadro do Ensaio recusa a ida direta para a coluna
+     Cliente (antes vem o Check), mas amanhã pode não recusar, e um
+     aviso pendurado num botão é um aviso que some quando o caminho
+     muda.
+
+     Quantas peças o e-mail anuncia: as que estão com o cliente AGORA,
+     não as deste clique. É o que a pessoa vai encontrar ao abrir o
+     link — e é o que ela quer saber. */
+  function avisarLote(cliId){
+    const c = (typeof CLIS === 'function' ? CLIS() : []).find(x => x.id === cliId);
+    if(!c) return Promise.resolve('semCliente');
+    const esperando = (S.pautas[cliId] || [])
+      .filter(p => typeof comCliente === 'function' && comCliente(p));
+    if(!esperando.length) return Promise.resolve('nadaLa');
+
+    const quem = aprovadorDe(c);
+    if(!quem){
+      setTimeout(() => toast(`Sem e-mail de quem aprova em ${c.nome}, ninguém foi avisado. `
+                           + `Clientes → Editar cliente.`), 2600);
+      return Promise.resolve('semEmail');
+    }
+
+    const n = esperando.length;
+    const dia = new Date().toISOString().slice(0, 10);
+    return enfileirar({
+      tipo: 'lote',
+      chave: 'lote:' + c.id + ':' + dia,
+      para_email: quem.mail,
+      para_nome: quem.nome,
+      canal: 'email',
+      titulo: n === 1 ? 'Uma peça esperando você' : `${n} peças esperando você`,
+      corpo: `A ${S.agencia && S.agencia.nome ? S.agencia.nome : 'agência'} mandou `
+           + (n === 1 ? 'uma peça' : `${n} peças`) + ' para a sua aprovação. '
+           + 'Você abre, lê, comenta no ponto exato e decide — '
+           + (n === 1 ? 'tudo numa tela só.' : 'todas de uma vez, ou uma a uma.'),
+      /* o link do lote é o mesmo que a agência copia hoje: abre sem
+         senha, direto na decisão. Se a camada dele não estiver de pé,
+         o e-mail leva para a casa em vez de para lugar nenhum. */
+      link: (typeof linkDeAprovacao === 'function'
+               ? linkDeAprovacao(c.id) : location.origin + '/'),
+      dados: {
+        cliente: c.nome,
+        peças: String(n),
+        enviado: new Date().toLocaleDateString('pt-BR')
+      }
+    }).then(estado => {
+      if(estado === 'entrou') pedirEntrega();
+      if(estado === 'falhou')
+        setTimeout(() => toast('O lote foi. O aviso por e-mail ficou para a próxima '
+                             + 'abertura — a fila guarda.'), 2600);
+      return estado;
+    });
+  }
+
+  /* caminho 1: o botão "enviar para aprovação" */
   if(typeof enviarCards === 'function'){
     enviarCards = (function(orig){
       return function(ids){
         const antes = new Set(S.pauta.filter(p => typeof podeEnviar === 'function' && podeEnviar(p))
                                      .map(p => p.id));
+        const cli = (cliAtual() || {}).id;
         const r = orig.apply(this, arguments);
-        /* quem realmente saiu: estava pronto e agora está com o cliente */
-        const foram = S.pauta.filter(p => antes.has(p.id) && typeof comCliente === 'function' && comCliente(p));
-        if(!foram.length) return r;
-
-        const c = cliAtual();
-        const quem = aprovadorDe(c);
-        if(!quem){
-          setTimeout(() => toast(`Sem e-mail de quem aprova em ${c.nome}, ninguém foi avisado. `
-                               + `Clientes → Editar cliente.`), 2600);
-          return r;
-        }
-
-        const n = foram.length;
-        const dia = new Date().toISOString().slice(0, 10);
-        enfileirar({
-          tipo: 'lote',
-          chave: 'lote:' + c.id + ':' + dia,
-          para_email: quem.mail,
-          para_nome: quem.nome,
-          canal: 'email',
-          titulo: n === 1 ? 'Uma peça esperando você' : `${n} peças esperando você`,
-          corpo: `A ${S.agencia && S.agencia.nome ? S.agencia.nome : 'agência'} mandou `
-               + (n === 1 ? 'uma peça' : `${n} peças`) + ' para a sua aprovação. '
-               + 'Você abre, lê, comenta no ponto exato e decide — '
-               + (n === 1 ? 'tudo numa tela só.' : 'todas de uma vez, ou uma a uma.'),
-          /* o link do lote é o mesmo que a agência copia hoje: abre sem
-             senha, direto na decisão. Se a camada dele não estiver de
-             pé, o e-mail leva para a casa em vez de para lugar nenhum. */
-          link: (typeof linkDeAprovacao === 'function'
-                   ? linkDeAprovacao(c.id) : location.origin + '/'),
-          dados: {
-            cliente: c.nome,
-            peças: String(n),
-            enviado: new Date().toLocaleDateString('pt-BR')
-          }
-        }).then(estado => {
-          if(estado === 'entrou') pedirEntrega();
-          if(estado === 'falhou')
-            setTimeout(() => toast('O lote foi. O aviso por e-mail ficou para a próxima '
-                                 + 'abertura — a fila guarda.'), 2600);
-        });
+        const foram = S.pauta.filter(p => antes.has(p.id)
+                              && typeof comCliente === 'function' && comCliente(p));
+        if(foram.length) avisarLote(cli);
         return r;
       };
     })(enviarCards);
+  }
+
+  /* caminho 2: arrastar o card para a coluna Cliente, no quadro */
+  if(typeof moverJob === 'function'){
+    moverJob = (function(orig){
+      return function(p, col){
+        const antes = typeof comCliente === 'function' && comCliente(p);
+        const r = orig.apply(this, arguments);
+        const agora = typeof comCliente === 'function' && comCliente(p);
+        if(!antes && agora) avisarLote(donoDoCard(p));
+        return r;
+      };
+    })(moverJob);
+  }
+
+  /* ---------- e a tela diz, ANTES, quem vai ser avisado ----------
+     O founder mandou um lote para a Rossana e o e-mail não chegou. A
+     janela de confirmação dizia "Enviar 3 cards para Helena?" — Helena
+     é a aprovadora de exemplo da Loja Norte, escrita dura na tela desde
+     o começo, e aparecia para qualquer cliente. Pior: ela prometia a
+     notificação sem olhar se havia para onde mandar.
+
+     Agora a janela diz o nome de quem aprova NAQUELE cliente e o
+     endereço para onde a carta vai — ou avisa, antes do clique, que
+     ninguém será avisado e onde resolver. */
+  const _quemAvisa = () => {
+    const c = cliAtual() || {};
+    const ap = c.aprovador || {};
+    return ap.mail
+      ? `<p class="envQuem">${ic('linkic', 12)} A Maestro escreve para
+           <b style="color:var(--ink-50)">${esc(ap.mail)}</b>${
+             (ap.nome || '').trim() ? ' — ' + esc(ap.nome.trim()) : ''} assim que você enviar.</p>`
+      : `<p class="envQuem falta">${ic('warn', 12)}
+           <b style="color:var(--ink-50)">Ninguém vai ser avisado:</b>
+           ${esc(c.nome || 'este cliente')} não tem e-mail de quem aprova. O lote vai do
+           mesmo jeito — o cliente só não fica sabendo. Clientes → Editar cliente.</p>`;
+  };
+  const _porQuem = html => (typeof html === 'string' && html.indexOf('data-enviook') >= 0)
+    ? html.replace(/(<div class="modalrow")/, _quemAvisa() + '$1')
+    : html;
+
+  /* a janela do seletor (v59) é a que a pessoa vê hoje */
+  if(typeof modalEnvio === 'function'){
+    modalEnvio = (function(orig){
+      return function(){ return _porQuem(orig.apply(this, arguments)); };
+    })(modalEnvio);
+  }
+  /* e a confirmação simples, para quando o seletor não entra no caminho */
+  if(typeof confirmarEnvio === 'function'){
+    confirmarEnvio = (function(orig){
+      return function(){
+        const r = orig.apply(this, arguments);
+        if(typeof S.modal !== 'string' || S.modal.indexOf('envQuem') >= 0) return r;
+        const c = cliAtual() || {};
+        const nome = String((c.aprovador || {}).nome || '').trim();
+        S.modal = _porQuem(S.modal
+          .replace(/para Helena\?/, 'para ' + esc(nome || c.nome || 'o cliente') + '?')
+          .replace(/<p>Ela recebe/, '<p>' + (nome ? 'Ela' : 'O cliente') + ' recebe'));
+        renderLayer();
+        return r;
+      };
+    })(confirmarEnvio);
   }
 
   /* a cada abertura, a casa oferece carona ao que ficou na fila */
@@ -34362,5 +34451,56 @@ addEventListener('click', e => {
    que faltava: a explicação de para que serve aquele e-mail, e a recusa
    de e-mail torto na hora (endereço errado ali vira aviso que nunca
    chega, e ninguém fica sabendo).
+   ================================================================== */
+</script>
+
+<style>
+/* v166 — quem vai ser avisado, dito antes do clique */
+.envQuem{ display:flex; gap:7px; align-items:flex-start; margin:12px 0 2px;
+  padding:10px 12px; border-radius:10px; font-size:12.5px; line-height:1.5;
+  color:var(--ink-300); background:rgba(200,150,58,.07);
+  border:1px solid rgba(200,150,58,.22) }
+.envQuem svg{ flex:0 0 auto; margin-top:2px; color:var(--brass-300) }
+.envQuem.falta{ background:rgba(229,72,77,.07); border-color:rgba(229,72,77,.28) }
+.envQuem.falta svg{ color:var(--danger) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v166 — A TELA DIZ QUEM VAI SER AVISADO.
+
+   O founder mandou um lote para a Rossana e o e-mail não chegou. Ele
+   não tinha como saber por quê: a janela de envio dizia "Enviar 3
+   cards para Helena?" — Helena é a aprovadora de exemplo da Loja
+   Norte, escrita dura na tela desde o começo — e prometia a
+   notificação sem olhar se havia para onde mandar. O aviso na tela,
+   depois, dizia "Helena foi avisada por e-mail e WhatsApp". Para
+   qualquer cliente. Mesmo sem e-mail cadastrado. Mesmo sem WhatsApp
+   existir.
+
+   O envio funcionava. O que faltava era a verdade na tela.
+
+   Agora, ANTES do clique, a janela de envio diz o endereço para onde a
+   carta vai — ou avisa, em vermelho, que ninguém será avisado, quem é
+   o cliente sem e-mail e onde resolver (Clientes → Editar cliente).
+   Depois do clique, o aviso na tela usa o nome de quem aprova naquele
+   cliente e só promete o e-mail quando há e-mail.
+
+   Duas coisas a mais, do mesmo tronco:
+
+   1. O AVISO PASSA A SER DO FATO, NÃO DO BOTÃO. A v164 o pendurou em
+      `enviarCards`. Hoje o quadro do Ensaio recusa a ida direta para a
+      coluna Cliente (antes vem o Check, e de lá o lote sai pelo
+      botão), então não havia buraco — mas um aviso preso a um botão é
+      um aviso que some quando o caminho muda. `avisarLote(cliente)` é
+      chamado sempre que um card entra na mão do cliente, venha de onde
+      vier.
+
+   2. O E-MAIL CONTA O QUE ESTÁ ESPERANDO, não o que foi neste clique.
+      Se três peças estão com o cliente, o assunto diz três — é o que
+      ele encontra ao abrir o link, e é o que ele quer saber.
+
+   Verificado em `web/verificar/v166-quem-vai-ser-avisado.mjs` — 19
+   provas.
    ================================================================== */
 </script>
