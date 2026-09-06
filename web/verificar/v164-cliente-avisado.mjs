@@ -64,7 +64,15 @@ const guardarAprovador = (pag, mail, nome = 'Helena Braga') => pag.evaluate(asyn
 }, { mail, nome });
 /* três cards prontos no lote, como ficam depois do Check */
 const mandarLote = pag => pag.evaluate(async () => {
-  S.cli = CLIS()[0].id; S.route = 'clientedet'; S.tab = 'pauta'; render();
+  S.cli = CLIS()[0].id; S.route = 'clientedet'; S.tab = 'pauta';
+  /* v167: a casa começa vazia — as três peças do lote são deste teste */
+  const lista = (S.pautas[S.cli] = S.pautas[S.cli] || []);
+  while(lista.length < 3)
+    lista.push({ id: novoIdCard(), t:'Publicação ' + (lista.length + 1), fmt:'Reels',
+      fmts:['Reels'], plats:['ig'], data: hojeISO(), dia: diaDaSemana(hojeISO()),
+      hora:'18:00', texto:'Texto pronto.', cta:'', legenda:'', pecaId:null,
+      st:'DRAFT', feito:false, pend:'', resp:null });
+  render();
   S.pauta.slice(0, 3).forEach(p => { p.texto = 'Texto pronto para o cliente ler.';
     porFase(p, 'lote_texto'); });
   const ids = S.pauta.filter(podeEnviar).map(p => p.id).slice(0, 3);

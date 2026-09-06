@@ -74,6 +74,17 @@ const noQuadro = pag => pag.evaluate(() => {
   const { ctx, pag, erros } = await quadro();
   const r = await pag.evaluate(() => {
     /* leva um card até "agendado": é onde ele espera em Act */
+    /* v167: a casa começa vazia — o card de pauta é deste teste */
+    if(!S.ensaio.tarefas.some(x => x.cardId)){
+      const cli = CLIS()[0].id;
+      const lista = (S.pautas[cli] = S.pautas[cli] || []);
+      lista.push({ id: novoIdCard(), t:'Card do teste', fmt:'Reels', fmts:['Reels'],
+        plats:['ig'], data: hojeISO(), dia: diaDaSemana(hojeISO()), hora:'18:00',
+        texto:'Texto.', cta:'', legenda:'', pecaId:null, st:'DRAFT', feito:false,
+        pend:'', resp:null });
+      porFase(lista[lista.length - 1], 'criado');
+      sincronizarJobs(); render();
+    }
     const t = S.ensaio.tarefas.find(x => x.cardId);
     if(!t) return { semCard:true };
     const p = cardDaTarefa(t);
@@ -113,6 +124,11 @@ const noQuadro = pag => pag.evaluate(() => {
   const { ctx, pag, erros } = await quadro();
   const r = await pag.evaluate(() => {
     /* uma tarefa da casa, levada até Act e concluída pelo botão */
+    /* v167: o quadro começa vazio — a tarefa da casa é deste teste */
+    if(!S.ensaio.tarefas.some(x => !x.cardId))
+      S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo:'Tarefa da casa', cli:null,
+        resp:null, col:'plan', cat:'producao', criada: Date.now(), prazo:null,
+        tempoMs:0, desde:null, quemVe:[] });
     const t = S.ensaio.tarefas.find(x => !x.cardId);
     if(!t) return { semTarefa:true };
     t.cat = 'producao';                    /* para estar na frente aberta */
@@ -188,6 +204,17 @@ const noQuadro = pag => pag.evaluate(() => {
 {
   const { ctx, pag, erros } = await quadro();
   const r = await pag.evaluate(() => {
+    /* v167: a casa começa vazia — o card de pauta é deste teste */
+    if(!S.ensaio.tarefas.some(x => x.cardId)){
+      const cli = CLIS()[0].id;
+      const lista = (S.pautas[cli] = S.pautas[cli] || []);
+      lista.push({ id: novoIdCard(), t:'Card do teste', fmt:'Reels', fmts:['Reels'],
+        plats:['ig'], data: hojeISO(), dia: diaDaSemana(hojeISO()), hora:'18:00',
+        texto:'Texto.', cta:'', legenda:'', pecaId:null, st:'DRAFT', feito:false,
+        pend:'', resp:null });
+      porFase(lista[lista.length - 1], 'criado');
+      sincronizarJobs(); render();
+    }
     const t = S.ensaio.tarefas.find(x => x.cardId);
     if(!t) return { semCard:true };
     const p = cardDaTarefa(t);
@@ -208,6 +235,11 @@ const noQuadro = pag => pag.evaluate(() => {
 {
   const { ctx, pag, erros } = await quadro();
   const r = await pag.evaluate(() => {
+    /* v167: o quadro começa vazio — a tarefa da casa é deste teste */
+    if(!S.ensaio.tarefas.some(x => !x.cardId))
+      S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo:'Tarefa da casa', cli:null,
+        resp:null, col:'plan', cat:'producao', criada: Date.now(), prazo:null,
+        tempoMs:0, desde:null, quemVe:[] });
     const t = S.ensaio.tarefas.find(x => !x.cardId);
     t.cat = 'producao'; t.col = 'act'; render();
     document.querySelector(`[data-enfim="${t.id}"]`)?.click();

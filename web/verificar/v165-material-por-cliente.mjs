@@ -50,7 +50,8 @@ async function abrir(guardado){
 /* a pauta de um cliente, pela tela — é onde os botões de material moram */
 const naPautaDe = async (pag, cli) => {
   await pag.evaluate(c => { S.cli = c; S.view = 'agency'; S.route = 'clientedet';
-    S.tab = 'pauta'; render(); }, cli);
+    S.tab = 'pauta'; S.ptVista = 'lista';   /* a lista, não o calendário */
+    render(); }, cli);
   await pag.waitForTimeout(500);
   await pag.evaluate(() => { S.tab = 'pauta'; render(); });
   await pag.waitForTimeout(400);
@@ -73,12 +74,26 @@ const colarLink = async (pag, id, url) => {
 const { pag, erros } = await abrir();
 
 /* ---------- 1. o mesmo número, dois clientes, duas pilhas ---------- */
+/* v171: a casa começa vazia — e o caso que este teste guarda continua
+   existindo no mundo: dois clientes com um card de MESMO NÚMERO. Era a
+   semente que o produzia de graça; agora o teste o produz de propósito,
+   porque é ele que faz o material vazar de um cliente para o outro. */
 const repetidos = await pag.evaluate(() => {
+  const cs = CLIS().slice(0, 2).map(c => c.id);
+  for(const cid of cs){
+    const lista = (S.pautas[cid] = S.pautas[cid] || []);
+    if(!lista.some(p => +p.id === 12))
+      lista.push({ id: 12, t:'Card número 12 de ' + cid, fmt:'Reels', fmts:['Reels'],
+        plats:['ig'], data: hojeISO(), dia: diaDaSemana(hojeISO()), hora:'18:00',
+        texto:'Texto.', cta:'', legenda:'', pecaId:null, st:'DRAFT', feito:false,
+        pend:'', resp:null });
+  }
+  render();
   const conta = {};
   for(const cid in S.pautas) for(const p of S.pautas[cid]) (conta[p.id] = conta[p.id] || []).push(cid);
   return Object.entries(conta).filter(([,l]) => l.length > 1).map(([id,l]) => ({ id:+id, em:l }));
 });
-checa('a semente já tem card com o mesmo número em dois clientes (é o caso real)',
+checa('dois clientes com um card de mesmo número — o caso que faz vazar',
       repetidos.length > 0, repetidos.slice(0,3));
 
 const emComum = repetidos[0];
