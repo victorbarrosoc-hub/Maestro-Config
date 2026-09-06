@@ -80,6 +80,18 @@ returning cliente, (dados -> 'cliEdit') ? 'ln' as ainda_tem_loja_norte;
 
 
 -- ---------------------------------------------------------------------
+-- PASSO 4b — a linha de teste, se você quiser.
+--
+-- A consulta do passo 1 mostrou uma linha `__teste__` de 26 de agosto.
+-- Ela não é usada por nada. Some assim:
+--
+--   delete from public.pauta where cliente = '__teste__';
+--
+-- Opcional. Não muda nada no funcionamento.
+-- ---------------------------------------------------------------------
+
+
+-- ---------------------------------------------------------------------
 -- PASSO 5 — depois, com calma.
 --
 -- Quando a plataforma estiver rodando redonda por alguns dias e você

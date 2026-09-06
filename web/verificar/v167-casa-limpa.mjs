@@ -102,8 +102,11 @@ async function casa(config){
   checa('2.1 a Loja Norte não está na lista de clientes',
         !estado.ids.includes('ln') && !estado.clientes.some(n => /Loja Norte/i.test(n)), estado.clientes);
   checa('2.2 o Cortez continua', estado.ids.includes('cj'), estado.clientes);
-  checa('2.3 a EJUP continua, com a pauta dela',
-        estado.clientes.includes('EJUP') && estado.pautasComCards.length === 1, estado);
+  /* v171: a pauta da EJUP saiu do arquivo — ela é dado real do founder e
+     mora no banco. Aqui não pode nascer pauta nenhuma. */
+  checa('2.3 a EJUP continua como cliente', estado.clientes.includes('EJUP'), estado);
+  checa('2.3b e nenhuma pauta nasce escrita no arquivo',
+        estado.pautasComCards.length === 0, estado.pautasComCards);
   checa('2.4 não sobrou peça de demonstração', estado.pecas === 0, estado);
   checa('2.5 nem projeto de exemplo', estado.projetos === 0, estado);
   checa('2.6 nem tarefa de vitrine no quadro', estado.tarefasSoltas === 0, estado);

@@ -96,30 +96,35 @@ checa('2.1 nenhuma porta do menu leva a uma tela da agência',
 /* ---------- 3. o endereço direto: quem entrou como cliente continua
    no painel; quem nunca entrou não encontra dado nenhum ---------- */
 const porEndereco = [];
+/* navegador LIMPO: nada de link antes, nada guardado. É assim que um
+   estranho chega — e é o que esta seção mede. */
+const ctxLimpo = await nav.newContext({ viewport: { width: 1280, height: 900 } });
+const limpa = await ctxLimpo.newPage();
+await limpa.route(SB + '/**', rota);
 for(const caminho of ['/hoje', '/clientes', '/ensaio', '/equipe', '/planos', '/conta', '/estudio']){
-  await pag.goto(PAGINA.replace(/\/$/, '') + caminho, { waitUntil: 'load' });
-  await pag.waitForTimeout(1200);
-  porEndereco.push(await pag.evaluate(c => ({ caminho: c, view: S.view,
+  await limpa.goto(PAGINA.replace(/\/$/, '') + caminho, { waitUntil: 'load' });
+  await limpa.waitForTimeout(1200);
+  porEndereco.push(await limpa.evaluate(c => ({ caminho: c, view: S.view,
     porta: !!document.getElementById('entrarMaestro'),
     /* o que existe de dado da agência nesta aba */
     cards: Object.values(S.pautas || {}).reduce((n, v) => n + (v || []).length, 0),
     clientes: (typeof CLIS === 'function' ? CLIS() : []).length,
     tarefas: (S.ensaio && S.ensaio.tarefas ? S.ensaio.tarefas.length : 0) }), caminho));
 }
+await ctxLimpo.close();
 /* Nota honesta: um endereço de agência digitado num navegador limpo abre
    a CASCA da agência — é um protótipo de página única, e a porta de
    entrada é a que decide o que se vê. O que se cobra aqui é o que
    importa: que não haja dado nenhum atrás dela, e que a porta apareça. */
-/* ESTE É O ACHADO GRAVE, e fica registrado como falha até ser resolvido:
-   a pauta da EJUP está escrita DENTRO do arquivo que o site serve. Quem
-   abrir /hoje num navegador limpo — sem login, sem link — já tem os
-   cards no aparelho, e basta ver o código-fonte da página. A porta de
-   entrada aparece, mas ela guarda a tela, não o dado.
+/* Esta prova nasceu vermelha: a pauta da EJUP estava escrita DENTRO do
+   arquivo que o site serve, e quem abrisse /hoje num navegador limpo já
+   tinha 71 cards no aparelho — bastava ver o código-fonte. A porta de
+   entrada guarda a tela, não o dado.
 
-   O conserto é apagar a pauta daqui e deixá-la só no banco. Só se faz
-   depois que o founder confirmar que a linha dela está lá — o SQL em
-   `docs/ENGINEERING/limpar-demonstracao.sql` mostra e guarda uma cópia.
-   Enquanto não for feito, este teste fica vermelho de propósito. */
+   O founder confirmou no banco (a linha `n0` com 68 cards, e uma cópia
+   guardada) e a pauta saiu do arquivo na v171. A tela da agência num
+   navegador limpo é uma casca: quem entrega o conteúdo é o banco, para
+   quem tem sessão. */
 checa('3.1 endereço da agência num navegador limpo não traz dado nenhum',
       porEndereco.every(x => x.cards === 0 && x.tarefas === 0),
       porEndereco.map(x => ({ caminho:x.caminho, cards:x.cards, tarefas:x.tarefas }))[0]);
