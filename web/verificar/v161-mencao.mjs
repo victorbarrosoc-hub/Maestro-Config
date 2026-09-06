@@ -235,7 +235,13 @@ const mostrados = pag => pag.evaluate(() => window.__mostrou || []);
 {
   const { ctx, pag, erros } = await casa({ ligado: true });
   const r = await pag.evaluate(() => {
-    S.route = 'ensaio'; render();
+    S.route = 'ensaio';
+    /* v167: o quadro começa vazio — a tarefa que me passam é deste teste */
+    if(!(S.ensaio.tarefas || []).some(x => x.resp !== 'victorbarrosoc'))
+      S.ensaio.tarefas.push({ id: S.ensaio.prox++, titulo:'Tarefa de outra pessoa',
+        cli:null, resp:null, col:'plan', cat:'producao', criada: Date.now(),
+        prazo:null, tempoMs:0, desde:null, quemVe:[] });
+    render();
     const t = (S.ensaio.tarefas || []).find(x => x.resp !== 'victorbarrosoc');
     if(!t) return { semTarefa: true };
     window.__mostrou.length = 0;

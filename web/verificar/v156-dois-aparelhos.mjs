@@ -286,7 +286,13 @@ function comDados(){
 }
 
 /* =====================================================================
-   5. num aparelho vazio a semente ainda semeia (ela não morreu)
+   5. num aparelho vazio NADA nasce do arquivo — e é assim que tem de ser
+
+   Esta prova dizia o contrário até a v171: "aparelho vazio ainda recebe
+   a pauta de demonstração". Ela guardava um comportamento que virou
+   problema — a pauta era a planilha real do founder, escrita dentro do
+   arquivo que o site serve, e por isso legível por qualquer pessoa que
+   abrisse o código-fonte. Agora quem entrega a pauta é o banco.
    ================================================================== */
 {
   const b = banco();
@@ -294,7 +300,10 @@ function comDados(){
     s: { novos: [{ nome:'EJUP', ini:'EJ', seg:'Educação', cor:'#3B5' }] } } });
   const A = await aparelho(b, 'A');
   const n = await A.pag.evaluate(() => (S.pautas[ejupId()] || []).length);
-  checa('5.1 aparelho vazio ainda recebe a pauta de demonstração', n > 0, n);
+  checa('5.1 aparelho vazio não recebe pauta escrita no arquivo', n === 0, n);
+  /* e o cliente continua existindo: some a pauta de mentira, não o cliente */
+  const temCli = await A.pag.evaluate(() => CLIS().some(c => c.nome === 'EJUP'));
+  checa('5.1b mas o cliente que veio do banco continua na lista', temCli, temCli);
   checa('5.2 sem erro de página', A.erros.length === 0, A.erros);
   await A.ctx.close();
 }

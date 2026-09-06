@@ -40,7 +40,16 @@ async function casa(tela){
   return { ctx, pag, erros };
 }
 const noCronograma = pag => pag.evaluate(() => {
-  S.view = 'agency'; S.route = 'clientedet'; S.cli = CLIS()[0].id; S.tab = 'pauta'; render(); });
+  S.view = 'agency'; S.route = 'clientedet'; S.cli = CLIS()[0].id; S.tab = 'pauta';
+  /* v167: o seletor de vista só existe com pauta na tela — e a casa
+     começa vazia. O teste monta a semana que vai medir. */
+  const lista = (S.pautas[S.cli] = S.pautas[S.cli] || []);
+  while(lista.length < 4)
+    lista.push({ id: novoIdCard(), t:'Publicação ' + (lista.length + 1), fmt:'Reels',
+      fmts:['Reels'], plats:['ig'], data: hojeISO(), dia: diaDaSemana(hojeISO()),
+      hora:'18:00', texto:'Texto pronto.', cta:'', legenda:'', pecaId:null,
+      st:'DRAFT', feito:false, pend:'', resp:null });
+  render(); });
 
 /* o cursor está em cima do botão ligado? */
 const conferir = pag => pag.evaluate(() => {
