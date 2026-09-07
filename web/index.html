@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-07 16:59 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-07 17:09 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15818,7 +15818,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v178 · 7 set · o link e do cliente certo';
+const VERSAO_PROTOTIPO = 'v179 · 7 set · o portao tem volta';
 
 menuSheet = (function(orig){
   return function(){
@@ -17312,6 +17312,20 @@ addEventListener('click', e => {
   const t = e.target.closest && e.target.closest('[data-enter="agency"]');
   if(!t) return;
   e.stopImmediatePropagation(); e.preventDefault();
+  /* v178: clicar "Sou a agência" no portão É o ato de trocar de lado —
+     a tela promete isso por escrito. Sem limpar a marcação de cliente,
+     o guarda do render devolve a pessoa a cada desenho e o clique não
+     tem efeito nenhum: o card aparece, responde, e nada acontece.
+
+     Quem chegou por LINK não passa por aqui (o clique é recusado antes,
+     no bloco da v170), então isto só alcança quem escolheu o lado do
+     cliente no próprio portão. */
+  try{
+    if(!S.viaLink && S.usuario && S.usuario.tipo === 'cliente'){
+      S.usuario = null;
+      try{ localStorage.removeItem('maestro-usuario-v1'); }catch(err){}
+    }
+  }catch(err){}
   abrirQuemAgencia();
 }, true);
 
@@ -34522,9 +34536,25 @@ addEventListener('click', e => {
       return function(){ const r = orig.apply(this, arguments); tirarInterruptor(); return r; };
     })(ctxBar);
   }
+  /* v178: o portão "Como você entra?" NÃO é o painel do cliente — é a
+     tela onde se escolhe o lado, e ela promete por escrito que "você
+     troca de lado a qualquer momento".
+
+     Ela estava sendo raspada junto: quem clicasse "Sou o cliente" uma
+     vez perdia o card da agência E o botão de trocar no topo, no mesmo
+     navegador, para sempre. Sem volta pela interface — só limpando o
+     localStorage pelo console. O founder caiu nisso em 7/set.
+
+     Quem chega por LINK continua trancado, que é o ponto da v170: esse
+     é cliente de verdade, e não tem o que fazer na agência. Quem apenas
+     escolheu o lado do cliente no portão pode voltar ao portão. */
   function tirarInterruptor(){
     if(!ehCliente()) return;
-    document.querySelectorAll('[data-enter="agency"],[data-trocausr],[data-openpal]')
+    const preso = !!S.viaLink;          /* chegou por link: sem volta */
+    const alvos = preso
+      ? '[data-enter="agency"],[data-trocausr],[data-openpal]'
+      : '[data-trocausr],[data-openpal]';
+    document.querySelectorAll(alvos)
       .forEach(el => { const seg = el.closest('[data-seg]'); (seg || el).remove(); });
   }
   const _obs = new MutationObserver(() => { try{ tirarInterruptor(); }catch(e){} });
@@ -34533,8 +34563,11 @@ addEventListener('click', e => {
   /* ---------- 3. e o clique é recusado, não só escondido ------------- */
   addEventListener('click', e => {
     if(!ehCliente()) return;
-    const t = e.target.closest && e.target.closest(
-      '[data-enter="agency"],[data-qeag],[data-trocausr],[data-openpal]');
+    /* v178: mesma regra do bloco acima — o card da agência no portão só
+       é recusado para quem chegou por link. */
+    const t = e.target.closest && e.target.closest(S.viaLink
+      ? '[data-enter="agency"],[data-qeag],[data-trocausr],[data-openpal]'
+      : '[data-qeag],[data-trocausr],[data-openpal]');
     if(!t) return;
     e.stopImmediatePropagation(); e.preventDefault();
     document.getElementById('quemEsta')?.remove();
