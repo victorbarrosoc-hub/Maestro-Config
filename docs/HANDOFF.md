@@ -1,7 +1,8 @@
 # HANDOFF — retomando a Maestro
 
 Última atualização: 2026-09-07 · a casa vazia, o painel do cliente auditado,
-o feed que era de outra marca, o menu enxuto e a foto que não morre mais
+o feed que era de outra marca, o menu enxuto, a foto que não morre mais e a
+pergunta que espera a resposta
 
 > **Leia este arquivo primeiro.** Ele é o mapa. A informação completa está nos
 > documentos apontados aqui — não repita conteúdo, vá na fonte.
@@ -1231,6 +1232,32 @@ decisão do cliente volta. Porquê e como conferir:
   tela, não o dado. Só saiu depois que o founder confirmou no banco: a linha
   `n0` com 68 cards, e uma cópia em `pauta_backup_2026_09_06`. O SQL de
   limpeza, em cinco passos: `ENGINEERING/limpar-demonstracao.sql`.
+
+- **A pergunta "Quem está entrando?" espera a resposta (v175, 7 de setembro).**
+  O relato: *"de vez em quando aparece, não sei por quê, mas depois que atualizo
+  volta ao normal"*. Seis cenários medidos num navegador: a tela só abre quando
+  a casa não sabe quem entrou — o que está certo. O errado era **quando** ela
+  decidia que não sabia: um relógio fixo de 3,4 s. Quem já entrou é reconhecido
+  pelo e-mail da sessão guardada, mas isso pode chegar depois — se a sessão
+  expirou, espera a renovação — e a linha que TIRA a pergunta da tela só rodava
+  depois de mais duas idas ao banco. Numa rede de celular isso passa de 3,4 s
+  com folga: a casa perguntava quem você é enquanto descobria, e a pergunta
+  ficava mesmo depois de saber. Atualizar resolvia porque na segunda vez a
+  resposta já estava pronta antes do relógio.
+
+  Correção sem tocar no relógio: havendo sessão guardada, a pergunta espera a
+  identificação (teto de 12 s — travar quem de fato não está identificado seria
+  pior); e se já estiver aberta quando a identificação chegar, sai sozinha.
+
+  **A prova 4.2 nasceu escrita para passar sempre** (`trocou === true || true`).
+  Reescrita honesta, ficou vermelha na hora e expôs uma regressão recém
+  introduzida: a espera engolia também quem tocava em "Trocar de pessoa", que
+  levaria 12 s para responder. O toque passa a cancelar a espera — ela é para a
+  abertura, quando ninguém pediu nada. Fica como lembrete de que uma prova
+  complacente é pior que prova nenhuma: ela dá o verde e some com o defeito.
+
+  Verificação: `web/verificar/v175-quem-esta-entrando.mjs` (12 provas; 3 falham
+  no código anterior).
 
 - **A foto do cliente não morre por desconhecimento (v174, 7 de setembro).**
   O relato: *"cheguei a subir sim, tinha foto de todo mundo e agora não tá mais,

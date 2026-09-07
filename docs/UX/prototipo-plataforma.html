@@ -15656,7 +15656,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v174 · 7 set · a foto do cliente nao morre';
+const VERSAO_PROTOTIPO = 'v175 · 7 set · a pergunta espera a resposta';
 
 menuSheet = (function(orig){
   return function(){
@@ -34566,4 +34566,85 @@ function mesclarCadastros(aqui, la){
    e o Estúdio penduram nela — cada um grava a sua própria linha depois
    de chamar o original. Foi o que este bloco fez na primeira tentativa,
    e a suíte pegou: o Cérebro parou de gravar. */
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v175 — A PERGUNTA "QUEM ESTÁ ENTRANDO?" ESPERA A RESPOSTA.
+
+   Relato do founder: "de vez em quando aparece, não sei por quê, mas
+   depois que atualizo volta ao normal".
+
+   Medido, seis cenários num navegador. A tela só abre quando a casa não
+   sabe quem entrou — o que está certo. O errado é QUANDO ela decide que
+   não sabe: um relógio fixo de 3,4 segundos.
+
+   Quem já entrou tem uma sessão guardada no aparelho, e a casa reconhece
+   a pessoa pelo e-mail dela. Mas esse reconhecimento pode chegar depois
+   do relógio: se a sessão expirou, ele espera a renovação; e a linha que
+   TIRA a pergunta da tela só roda depois de mais duas idas ao banco.
+   Numa rede de celular isso passa de 3,4 s com folga. Resultado: a casa
+   pergunta quem você é enquanto está descobrindo — e a pergunta fica ali
+   mesmo depois de saber. Atualizar resolve porque na segunda vez a
+   resposta já está pronta antes do relógio.
+
+   Duas correções, nenhuma no relógio:
+
+   · Se há sessão guardada, a pergunta ESPERA a identificação em vez de
+     abrir. Espera até 12 segundos; passou disso, pergunta — melhor
+     perguntar do que travar quem realmente não está identificado.
+
+   · Se ela já estiver aberta quando a identificação chegar, sai da
+     frente sozinha. Antes só saía depois de duas idas ao banco.
+
+   Ninguém perde a porta: quem não tem sessão continua sendo perguntado
+   na hora, e o "Trocar de pessoa" do Menu abre na hora, porque aí a casa
+   já sabe quem você é e a espera não se aplica.
+
+   Verificado em `web/verificar/v175-quem-esta-entrando.mjs`.
+   ================================================================== */
+
+const _jaSeiQuemE = () => { try{ return !!(S.usuario && S.usuario.id); }catch(e){ return false; } };
+const _temSessaoGuardada = () => {
+  try{ return !!localStorage.getItem('maestro.sessao.v1'); }catch(e){ return false; }
+};
+
+/* 1. a pergunta aberta sai assim que a casa souber de quem se trata */
+(function(){
+  let n = 0;
+  const olho = setInterval(() => {
+    if(_jaSeiQuemE()){
+      document.getElementById('quemEsta')?.remove();
+      clearInterval(olho); return;
+    }
+    if(++n > 150) clearInterval(olho);           /* 30 s e desisto de vigiar */
+  }, 200);
+})();
+
+/* 2. e não abre enquanto a resposta estiver a caminho */
+if(typeof abrirQuemEsta === 'function'){
+  let _aindaEspero = _temSessaoGuardada();
+  setTimeout(() => { _aindaEspero = false; }, 12000);   /* teto da espera */
+  /* o dedo cancela a espera. Ela existe para a ABERTURA, quando ninguém
+     pediu nada; quem toca em "Trocar de pessoa" pediu — e esperar 12
+     segundos por um toque é pior do que o defeito que estou consertando.
+     Foi a prova 4.2 que cobrou isto: escrita para passar sempre, ela
+     escondia justamente esta regressão. */
+  addEventListener('click', e => {
+    if(e.target.closest && e.target.closest('[data-trocausr]')) _aindaEspero = false;
+  }, true);
+  abrirQuemEsta = (function(orig){
+    return function(){
+      if(_jaSeiQuemE()) return;                  /* já sei: não pergunto */
+      if(!_aindaEspero) return orig.apply(this, arguments);
+      /* há sessão guardada: perguntar agora é perguntar o que a casa
+         está a ponto de saber sozinha */
+      const espera = setInterval(() => {
+        if(_jaSeiQuemE()){ clearInterval(espera); return; }
+        if(!_aindaEspero){ clearInterval(espera); orig(); }
+      }, 200);
+    };
+  })(abrirQuemEsta);
+}
 </script>
