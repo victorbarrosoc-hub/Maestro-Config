@@ -11169,22 +11169,17 @@ sbCarregar = (function(orig){
                não tem `em` é antigo por definição, e perde para quem
                tem — o que é justamente o caso de quem acabou de editar
                aqui contra o que já estava gravado lá. */
+            /* v174: era o REGISTRO mais novo que ganhava — grosso demais
+               para uma linha com dez campos escritos em momentos e
+               aparelhos diferentes. Um aparelho que não sabia da foto
+               apagava a foto. Agora junta por CAMPO: o mais novo manda no
+               que tem, o que ele nunca viu fica de pé. A chave do link
+               segue sendo do vencedor, com o empate para o banco — ver o
+               bloco da v174. */
             if(d.cliEdit && typeof d.cliEdit === 'object'){
-              const junto = {};
-              for(const id of new Set([...Object.keys(S.cliEdit || {}),
-                                       ...Object.keys(d.cliEdit)])){
-                const aqui = (S.cliEdit || {})[id], la = d.cliEdit[id];
-                if(!aqui){ junto[id] = la; continue; }
-                if(!la){ junto[id] = aqui; continue; }
-                /* o empate vai para o BANCO, nunca para o aparelho. Quem
-                   entra por link de aprovação escreve no registro local a
-                   chave que veio na URL (v152) — sem `em`. Se o empate
-                   ficasse com o local, uma chave inventada se validaria
-                   sozinha. Edição de verdade sempre carimba `em`, então
-                   quem editou aqui continua ganhando de quem não tem. */
-                junto[id] = (+aqui.em || 0) > (+la.em || 0) ? aqui : la;
-              }
-              S.cliEdit = junto;
+              S.cliEdit = (typeof mesclarCadastros === 'function')
+                ? mesclarCadastros(S.cliEdit, d.cliEdit)
+                : d.cliEdit;
             }
             /* exclusão é união: um cliente apagado num aparelho não
                volta à vida porque o outro ainda não sabia. Era assim que
@@ -12918,9 +12913,19 @@ window.addEventListener('click', e => {
     toast('Confira o e-mail de quem aprova.');
     return;
   }
+  /* v174: o mesmo mal da foto, num campo sem botão de "Tirar". O modal
+     abre com os campos preenchidos pelo que ESTE aparelho conhece. Num
+     aparelho que nunca soube do aprovador eles nascem vazios, e gravar
+     `null` a partir daí não é "apaguei": é "não sei". Escrever a ausência
+     apagava, no banco, o aprovador que outro aparelho tinha cadastrado.
+     Vazio só vira `null` quando havia alguém para apagar — aí sim é
+     decisão, e a decisão manda. */
+  const tinha = ((S.cliEdit[id] || {}).aprovador) || null;
   setTimeout(()=>{
     if(!S.cliEdit[id]) return;
-    S.cliEdit[id].aprovador = (nome||mail) ? {nome, mail} : null;
+    if(nome || mail) S.cliEdit[id].aprovador = { nome, mail };
+    else if(tinha)   S.cliEdit[id].aprovador = null;      /* apagou de propósito */
+    else             delete S.cliEdit[id].aprovador;      /* nunca soube: não opina */
     S.cliEdit[id].em = Date.now();
     try{ if(typeof salvarLocal === 'function') salvarLocal(); }catch(err){}
     try{ if(typeof enviarEstado === 'function') enviarEstado(); }catch(err){}
@@ -13195,17 +13200,48 @@ sbGravarConfig = (function(){
   let _esp = null;
   return async function(){
     if(!_sbLigado) return;
-    const dados = { cliEdit:S.cliEdit, cliFora:S.cliFora, agencia:(S.agencia||null),
+    const meu = { cliEdit:S.cliEdit, cliFora:S.cliFora, agencia:(S.agencia||null),
       estudio:(S.ensaio||null), versao:54 };
-    const corpo = JSON.stringify(dados);
+    const corpo = JSON.stringify(meu);
     if(_esp === corpo) return;
+
+    /* v174: LER ANTES DE ESCREVER. Antes, esta gravação punha o cadastro
+       DESTE aparelho por cima da linha inteira. Um aparelho que carregou
+       o cadastro antes de a foto de um cliente existir apagava a foto
+       para todos ao salvar qualquer outra coisa — ele não discordava da
+       foto, ele nem sabia dela. Agora junta com o que está lá, campo a
+       campo (`mesclarCadastros`).
+       E se a leitura falhar, não grava: fica para a próxima. Perder uma
+       gravação é adiar; gravar por cima do que não se leu é destruir. */
+    let la = null;
+    try{
+      const q = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__config__&select=dados`,
+                            { headers: sbCab() });
+      if(!q.ok) return;
+      const [linha] = await q.json();
+      la = (linha && linha.dados) || {};
+    }catch(e){ return; }
+
+    const dados = (typeof mesclarCadastros === 'function') ? {
+      cliEdit: mesclarCadastros(S.cliEdit, la.cliEdit),
+      /* exclusão continua sendo união (v167): quem apagou, apagou */
+      cliFora: [...new Set([...(S.cliFora||[]), ...(la.cliFora||[])])],
+      agencia: (+((S.agencia||{}).em) || 0) >= (+((la.agencia||{}).em) || 0)
+                 ? (S.agencia||null) : la.agencia,
+      estudio: (S.ensaio || la.estudio || null),
+      versao: 54
+    } : meu;
+    /* o aparelho passa a enxergar o que juntou — senão a gravação
+       seguinte recomeça do cadastro velho e o conserto dura um ciclo */
+    S.cliEdit = dados.cliEdit; S.cliFora = dados.cliFora;
+
     try{
       const r = await fetch(`${SB.url}/rest/v1/pauta?on_conflict=cliente`, {
         method:'POST',
         headers:{ ...sbCab(), Prefer:'resolution=merge-duplicates,return=minimal' },
         body: JSON.stringify({ cliente:'__config__', dados, atualizado_em:new Date().toISOString() })
       });
-      if(r.ok) _esp = corpo;
+      if(r.ok) _esp = JSON.stringify({ ...dados, estudio:(S.ensaio||null) });
     }catch(e){}
   };
 })();
@@ -15620,7 +15656,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v173 · 7 set · o menu do cliente';
+const VERSAO_PROTOTIPO = 'v174 · 7 set · a foto do cliente nao morre';
 
 menuSheet = (function(orig){
   return function(){
@@ -34443,4 +34479,91 @@ menuSheet = (function(orig){
     return casca.innerHTML;
   };
 })(menuSheet);
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v174 — O QUE UM APARELHO NÃO SABE, ELE NÃO APAGA.
+
+   Relato do founder, com a tela na mão: "cheguei a subir sim, tinha foto
+   de todo mundo e agora não tá mais, só tá aparecendo de Rossana".
+
+   A v167 já tinha diagnosticado esta doença e curado METADE dela. Lá, a
+   carga do banco jogava fora o cadastro inteiro do aparelho; passou a
+   valer o registro mais novo dos dois lados. Só que "registro mais
+   novo" é grosso demais para o que a linha guarda: nome, iniciais, cor,
+   segmento, briefing, links, referências, tipo, chave do link, e-mail de
+   quem aprova — E A FOTO. Um cadastro só, muitos campos, cada um escrito
+   num momento diferente, de um aparelho diferente.
+
+   O caminho da perda, medido:
+
+     1. O celular sobe a foto de seis clientes. Vai para o banco.
+     2. O computador (ou uma aba parada, ou o mesmo celular sem rede na
+        hora de ler) tem o cadastro de ANTES da foto existir.
+     3. Nele, o founder muda qualquer coisa — o nome, o segmento, o
+        e-mail de quem aprova. O registro sai com relógio mais novo e
+        SEM `logo`, porque aquele aparelho nunca soube dela.
+     4. Esse registro, inteiro, substitui o do banco.
+     5. A foto morreu para todo mundo. Sem erro. Sem aviso.
+
+   Não é conflito: ninguém discordou sobre a foto. Um lado tinha opinião,
+   o outro tinha silêncio — e o silêncio ganhou. Duas correções:
+
+   · A mescla passa a ser POR CAMPO. O registro mais novo manda nos
+     campos que ele TEM; os que nunca viu ficam como estavam. Apagar de
+     propósito grava `null`, que é um valor e não uma ausência: quem toca
+     em "Tirar" continua tirando.
+
+   · A gravação passa a LER ANTES DE ESCREVER, e junta do mesmo jeito.
+     Sem isso o passo 4 continua de pé mesmo com a leitura consertada —
+     um aparelho que escreve sem ter lido varre a linha do banco. E se a
+     leitura falhar, ele NÃO grava: fica para a próxima. Perder uma
+     gravação é adiar; gravar por cima do que não se leu é destruir.
+
+   Uma exceção, de propósito: a CHAVE do link continua seguindo o
+   registro vencedor, como na v167. Quem entra por link escreve no
+   cadastro local a chave que veio na URL (v152); se o desconhecimento do
+   banco a deixasse em pé, uma chave inventada se validaria sozinha.
+
+   Verificado em `web/verificar/v174-foto-nao-morre.mjs`.
+   ================================================================== */
+
+/* o mais novo manda no que tem; ausência não apaga presença */
+function juntarCadastro(base, porCima){
+  const fora = Object.assign({}, base || {});
+  const novo = porCima || {};
+  for(const k of Object.keys(novo)){
+    if(novo[k] === undefined) continue;      /* não escrito ≠ apagado */
+    fora[k] = novo[k];
+  }
+  return fora;
+}
+
+/* `aqui` é o aparelho, `la` é o banco */
+function mesclarCadastros(aqui, la){
+  const junto = {};
+  const ids = new Set([...Object.keys(aqui || {}), ...Object.keys(la || {})]);
+  for(const id of ids){
+    const a = (aqui || {})[id], l = (la || {})[id];
+    if(!a){ junto[id] = l; continue; }
+    if(!l){ junto[id] = a; continue; }
+    const daquiEMaisNovo = (+a.em || 0) > (+l.em || 0);
+    junto[id] = daquiEMaisNovo ? juntarCadastro(l, a) : juntarCadastro(a, l);
+    /* a chave do link nunca se junta: ela é do vencedor, e o empate é
+       do banco. Uma chave que veio de uma URL não pode se confirmar */
+    const dono = daquiEMaisNovo ? a : l;
+    if(Object.prototype.hasOwnProperty.call(dono, 'chave')) junto[id].chave = dono.chave;
+    else delete junto[id].chave;
+  }
+  return junto;
+}
+
+/* a gravação lê antes de escrever: o conserto foi feito na BASE
+   (`sbGravarConfig`, bloco v54), e não aqui. Substituir a função neste
+   ponto do arquivo derrubaria os quatro embrulhos que o chat, o Cérebro
+   e o Estúdio penduram nela — cada um grava a sua própria linha depois
+   de chamar o original. Foi o que este bloco fez na primeira tentativa,
+   e a suíte pegou: o Cérebro parou de gravar. */
 </script>

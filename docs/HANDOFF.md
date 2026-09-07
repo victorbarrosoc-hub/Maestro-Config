@@ -1,7 +1,7 @@
 # HANDOFF — retomando a Maestro
 
 Última atualização: 2026-09-07 · a casa vazia, o painel do cliente auditado,
-o feed que era de outra marca e o menu enxuto
+o feed que era de outra marca, o menu enxuto e a foto que não morre mais
 
 > **Leia este arquivo primeiro.** Ele é o mapa. A informação completa está nos
 > documentos apontados aqui — não repita conteúdo, vá na fonte.
@@ -1231,6 +1231,39 @@ decisão do cliente volta. Porquê e como conferir:
   tela, não o dado. Só saiu depois que o founder confirmou no banco: a linha
   `n0` com 68 cards, e uma cópia em `pauta_backup_2026_09_06`. O SQL de
   limpeza, em cinco passos: `ENGINEERING/limpar-demonstracao.sql`.
+
+- **A foto do cliente não morre por desconhecimento (v174, 7 de setembro).**
+  O relato: *"cheguei a subir sim, tinha foto de todo mundo e agora não tá mais,
+  só tá aparecendo de Rossana"*. **Era perda de dado, não falta de upload.**
+
+  A v167 tinha diagnosticado esta doença e curado metade dela: a carga do banco
+  parou de jogar fora o cadastro do aparelho, e passou a valer o registro mais
+  novo. Mas "registro mais novo" é grosso demais para uma linha com dez campos
+  escritos em momentos e aparelhos diferentes. O caminho da perda, medido num
+  navegador: o celular sobe as fotos → outro aparelho (ou o mesmo, sem rede na
+  hora de ler) tem o cadastro de antes → nele o founder muda o nome ou o
+  segmento → o registro sai com relógio mais novo e **sem `logo`**, porque
+  aquele aparelho nunca soube dela → substitui o do banco → a foto morre para
+  todos. Não é conflito: um lado tinha opinião, o outro tinha silêncio, e o
+  silêncio ganhou.
+
+  Três correções: a mescla passa a ser **por campo** (o mais novo manda no que
+  tem; o que nunca viu fica de pé); a gravação passa a **ler antes de
+  escrever**, e não grava se a leitura falhar — perder uma gravação é adiar,
+  gravar por cima do que não se leu é destruir; e o e-mail de quem aprova, que
+  sofria do mesmo mal sem ter botão de "Tirar", só vira `null` quando havia
+  alguém para apagar. Remover de propósito continua removendo — duas provas
+  cobram isso. A chave do link segue sendo do registro vencedor, com o empate
+  para o banco (senão uma chave vinda de URL se validaria sozinha).
+
+  Verificação: `web/verificar/v174-foto-nao-morre.mjs` (15 provas). O teste
+  precisou de um aparelho que **adormece** — o Safari no bolso, que escreve sem
+  ter lido: sem isso a atualização automática ensina a foto ao segundo aparelho
+  antes dele salvar, e o defeito não aparece.
+
+  **Recuperação do que já se perdeu:** `ENGINEERING/recuperar-fotos.sql`, em
+  cinco passos, a partir da cópia `pauta_backup_2026_09_06`. Enxerta de volta
+  só o que está faltando hoje — nada do que existe agora é sobrescrito.
 
 - **O menu do cliente (v173, 7 de setembro).** Relato do celular, entrando pelo
   link: "muita aba não abre e não tem pra que ter aquilo pro cliente, exemplo:
