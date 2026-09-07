@@ -34682,10 +34682,34 @@ function mesclarCadastros(aqui, la){
     if(!l){ junto[id] = a; continue; }
     const daquiEMaisNovo = (+a.em || 0) > (+l.em || 0);
     junto[id] = daquiEMaisNovo ? juntarCadastro(l, a) : juntarCadastro(a, l);
-    /* a chave do link nunca se junta: ela é do vencedor, e o empate é
-       do banco. Uma chave que veio de uma URL não pode se confirmar */
-    const dono = daquiEMaisNovo ? a : l;
-    if(Object.prototype.hasOwnProperty.call(dono, 'chave')) junto[id].chave = dono.chave;
+    /* v178 — A CHAVE DO LINK NÃO SE PERDE NUMA MESCLA.
+
+       Aqui a chave era do vencedor, e do vencedor só: se o registro mais
+       novo não tivesse chave, o `else` APAGAVA a que o outro lado tinha.
+       E "mais novo" é quem foi editado por último — então bastava mexer
+       no cadastro de um cliente, num aparelho que nunca gerou link para
+       ele, para a chave dele sumir do banco. O link que já estava na mão
+       do cliente morria calado: a porta deixava de reconhecer a chave, e
+       o visitante caía no primeiro cliente da lista.
+
+       Foi o que o founder viu em 7/set — Leonardo, Roberto e Jarbas
+       indo para o Cortez, depois de uma rodada de edição de cadastro.
+       Os três estavam sem chave no banco; EJUP e Rossana, com.
+
+       A regra passa a ser: a chave do vencedor quando ele tem uma; a do
+       outro lado quando não tem; e NUNCA apagada por mescla. Só "Gerar
+       outro link" troca uma chave, que é explícito e avisa.
+
+       A intenção do código antigo era boa e continua valendo — o
+       aparelho de quem chega por link recebe a chave pela URL, e ela não
+       pode subir daí para o cadastro da agência. Isso hoje está barrado
+       em dois pontos que não dependem desta linha: `guardarTudo()` não
+       roda em `?aprovar=` nem em `?ver=`, e a RLS do banco recusa
+       gravação de quem não entrou (fechada em 4/set). */
+    const dono  = daquiEMaisNovo ? a : l;
+    const outro = daquiEMaisNovo ? l : a;
+    const chave = (dono && dono.chave) || (outro && outro.chave) || null;
+    if(chave) junto[id].chave = chave;
     else delete junto[id].chave;
   }
   return junto;
