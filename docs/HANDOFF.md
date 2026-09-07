@@ -1,6 +1,7 @@
 # HANDOFF — retomando a Maestro
 
-Última atualização: 2026-09-07 · a casa vazia e a auditoria do painel do cliente
+Última atualização: 2026-09-07 · a casa vazia, o painel do cliente auditado e
+o feed que era de outra marca
 
 > **Leia este arquivo primeiro.** Ele é o mapa. A informação completa está nos
 > documentos apontados aqui — não repita conteúdo, vá na fonte.
@@ -1230,6 +1231,33 @@ decisão do cliente volta. Porquê e como conferir:
   tela, não o dado. Só saiu depois que o founder confirmou no banco: a linha
   `n0` com 68 cards, e uma cópia em `pauta_backup_2026_09_06`. O SQL de
   limpeza, em cinco passos: `ENGINEERING/limpar-demonstracao.sql`.
+
+- **O feed e a capa do cliente (v172, 7 de setembro).** O founder abriu o
+  painel depois da limpeza e achou o que sobrou: "Seu feed" com seis fotos de
+  uma loja de demonstração ("Julho · vitrine", "Junho · loja") e a capa do lote
+  dizendo "Marina enviou as publicações de agosto", com três quadrados
+  "Julho · 1/2/3" sob "O que você já aprovou". Perguntou se aparecia em outro
+  cliente também. Aparecia em todos: **não era dado de ninguém, era texto
+  escrito na tela** — um cliente criado naquele minuto já nascia com o passado
+  de uma marca que nunca existiu. As duas telas passaram a ler a pauta dele: o
+  feed monta os quadrados dos cards (o que já foi ao ar, o aprovado, o que
+  ainda espera, tracejado) e diz o vazio quando não há nada; a capa diz o nome
+  da agência cadastrada, lista o que ele aprovou de verdade, só mostra o
+  objetivo se o projeto tiver um escrito, e tira a estreia da data do card.
+  Junto saíram do arquivo as **seis fotografias de demonstração — 671 KB de
+  base64** que o celular baixava para mostrar o feed de outra marca: o
+  protótipo caiu de 2,9 MB para 2,3 MB. Verificação:
+  `web/verificar/v172-feed-do-cliente.mjs` (27 provas; 20 delas falham no
+  código anterior).
+
+  Tirar o texto inventado da capa deixou à vista o defeito que ele escondia:
+  ela dizia **"0 publicação esperando você" com duas esperando**, porque
+  contava `S.pecas` — o vetor da era anterior à pauta, esvaziado na v167 e
+  nunca mais preenchido. Nenhum caminho vivo leva à capa; o endereço leva, e
+  foi assim que o founder chegou lá (a v146 guarda a rota na barra, então
+  recarregar devolve a tela). Tela sem entrada contando vetor morto não se
+  conserta: `capa` passa a entrar pela pauta, como a v111 já tinha decidido
+  para "Publicações" — uma porta só.
 
 - **O cliente fica no painel dele (v170).** Pergunta do founder antes de
   colocar outras agências para usar. Medido num navegador, entrando pelo link
