@@ -1,9 +1,74 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.21
+Version: 0.5.22
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.22 — 2026-09-07
+
+**Status:** Concluída
+**Objetivo:** o link de aprovação é do cliente que está na tela. Sempre.
+
+### O que o founder viu
+"Link de Jarbas tá indo pra o de Cortez" — e depois que os outros três
+também. Só Rossana, EJUP e Cortez abriam. Testado em aba anônima, que é o
+aparelho de quem recebe.
+
+### Causa raiz — a chave sumia do banco
+`mesclarCadastros` dava a chave do link ao **vencedor** da mescla e, quando
+ele não tinha uma, **apagava a que estava guardada**. Vencedor é quem foi
+editado por último. Então bastava mexer no cadastro de um cliente, num
+aparelho que nunca gerou link para ele, e a chave sumia — o link na mão do
+cliente morria calado, a porta deixava de reconhecer, e o visitante caía no
+primeiro cliente da lista.
+
+Naquele dia o founder tinha acabado de subir as fotos e marcar as
+categorias. Foi essa rodada de edição que matou os links. O banco fechou o
+diagnóstico: de seis clientes, só `n0` (EJUP) e `n3` (Rossana) tinham
+chave — exatamente os dois que abriam.
+
+Agora a chave é do vencedor quando ele tem uma, do outro lado quando não
+tem, e **nunca apagada por mescla**. Só "Gerar outro link" troca uma.
+
+### Segundo defeito — o id era a vaga, não o cliente
+`'n'+i`, a posição em `S.novos`, recalculada a cada render e nunca gravada.
+Apagar um cliente, ou a mescla entre aparelhos anexar numa ordem diferente,
+renumerava todo mundo abaixo. Estava documentado como trabalho de API, para
+depois. Não era.
+
+Cada cliente ganhou `cid` gravado, congelado com o valor que a posição dava
+naquele dia — nada existente se mexeu: links já entregues continuam
+valendo, linhas do banco continuam casando. Cliente novo nasce com id
+ancorado no relógio.
+
+### E o que transformava um no outro
+`cliAtual()` caía em `CLIS()[0]` — o Cortez, por ser o primeiro — quando o
+id não resolvia, em silêncio. 85 lugares chamam essa função, então não era
+só o link: era o nome, a pauta, o material.
+
+Primeira tentativa de conserto foi devolver nulo, e o teste derrubou a tela
+em 43 pontos que acessam o campo direto — tela quebrada, para quem está
+trabalhando, é tão ruim quanto o bug. Agora devolve um cliente que **não é
+ninguém**: campos vazios, id que não pertence a cliente algum. Nada quebra,
+nada vaza, e a tela diz "Cliente não identificado" em vez de mentir um nome.
+
+A trava do link ficou no **gerador**, não em cada botão: id que não resolve
+não vira link nenhum, nos cinco pontos que pedem link.
+
+### Verificado
+`v178-link-do-cliente-certo.mjs` (28 provas) e
+`v178-chave-do-link-nao-some.mjs` (15 provas). O segundo, rodado contra o
+código de antes, reproduz a realidade sozinho — `comChave ["n0","n3"]`,
+`semChave ["n1","n2","n4"]`, que é o que o banco mostrou.
+Bateria inteira: **67 arquivos, 0 falhas**.
+
+### Pendente do founder
+As três chaves já perdidas não voltam sozinhas. Leonardo Pivotto, Roberto
+Pivotto e Jarbas Bezerra precisam de **"Gerar outro link"** e reenvio. Não
+mexer em Rossana nem EJUP — os deles funcionam.
 
 ---
 

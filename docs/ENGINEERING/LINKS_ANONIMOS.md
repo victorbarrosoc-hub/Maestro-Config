@@ -136,6 +136,22 @@ manda **uma**, a final.
   chaves em sequência. São 22 caracteres de `crypto.getRandomValues`, o
   que torna a busca inviável na prática, mas um limite por IP no Supabase
   (ou um `pg_sleep` de 200 ms na recusa) seria mais honesto.
-- **Id posicional.** `n0`, `n1`… vêm da posição em `S.novos`. Dois
-  aparelhos criando clientes sem sincronizar no meio podem trocar os ids.
-  Isso é trabalho de id vindo do servidor — API, não protótipo (D-080).
+- ~~**Id posicional.**~~ **Fechado em 7/set (v178).** Estava aqui como
+  trabalho de API, para depois. Não era: em 7/set o founder viu o link de
+  três clientes abrir a casa do Cortez. O id vinha da posição em
+  `S.novos`, recalculado a cada render e nunca gravado — e `cliAtual()`
+  caía em `CLIS()[0]`, o Cortez, quando o id não resolvia. Em silêncio.
+  Agora cada cliente tem `cid` gravado (congelado com o valor de hoje, de
+  modo que nada existente se mexeu), cliente novo nasce com id ancorado
+  no relógio, e id que não resolve não vira link nenhum.
+  `web/verificar/v178-link-do-cliente-certo.mjs`, 28 provas.
+
+- ~~**A chave sumia do banco.**~~ **Fechado em 7/set (v178).** A causa
+  real do que o founder viu. `mesclarCadastros` dava a chave ao vencedor
+  da mescla e, quando ele não tinha uma, apagava a do outro lado. Vencedor
+  é quem foi editado por último — então mexer no cadastro de um cliente,
+  num aparelho que nunca gerou link para ele, matava o link que já estava
+  na mão dele. O banco confirmou: de seis clientes, só `n0` e `n3` tinham
+  chave, exatamente os dois que abriam.
+  `web/verificar/v178-chave-do-link-nao-some.mjs`, 15 provas — vermelhas
+  no código de antes, onde reproduzem a realidade sozinhas.

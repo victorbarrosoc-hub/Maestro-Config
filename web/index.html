@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-07 13:30 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-07 16:59 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -2652,7 +2652,10 @@ document.addEventListener('click', e => {
     if(nome.length<2){ const el=document.getElementById('nc-nome');
       el.style.borderColor='var(--danger)'; el.focus(); return; }
     const ini=nome.split(/\s+/).slice(0,2).map(w=>w[0].toUpperCase()).join('');
-    S.novos.push({nome,ini,cor:S.ncCor,seg:v('nc-seg')||'—',brief:v('nc-brief')});
+    /* v178: id ancorado no relógio, e não na posição da fila. Dois
+       aparelhos cadastrando ao mesmo tempo não colidem mais. */
+    S.novos.push({nome,ini,cor:S.ncCor,seg:v('nc-seg')||'—',brief:v('nc-brief'),
+                  cid:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)});
     S.modal=null; som('toque'); go('agency','clientes');
     toast(`${nome} criado — com o projeto "Sempre ativo" e as primeiras 12 datas no calendário.`);
     return; }
@@ -2804,12 +2807,77 @@ S.proj = {};
    casa é do founder, e o que aparece aqui são clientes de verdade.
    O Cortez fica, mas limpo — sem o briefing de exemplo e sem a
    aprovadora inventada; quem preenche isso é a agência. */
+/* =====================================================================
+   v178 — O ID DO CLIENTE DEIXA DE SER A POSIÇÃO NA FILA.
+
+   O founder viu o link do Jarbas abrir o do Cortez. Dois defeitos
+   empilhados, e o segundo é que transformava o primeiro em vazamento:
+
+   1. O id vinha de `'n'+i` — a POSIÇÃO em `S.novos`, recalculada a cada
+      render. Ninguém o gravava. Apagar um cliente, ou a mescla entre
+      aparelhos anexar no fim numa ordem diferente, renumerava todo mundo
+      abaixo. O id não era do cliente; era da vaga onde ele estava.
+
+   2. `cliAtual()` caía em `CLIS()[0]` — o Cortez — quando o id não
+      resolvia. Em silêncio. Então um id que escorregou não dava erro:
+      entregava OUTRO CLIENTE, com o nome, a pauta e — pelo link — a
+      CHAVE dele. Era o Cortez porque o Cortez é o primeiro da lista.
+
+   O conserto do id é congelar, não renumerar: cada registro ganha `cid`
+   uma vez, com o valor que a posição dá HOJE. Assim nada que já existe
+   se mexe — os links que já estão na mão dos clientes continuam valendo,
+   as linhas do banco (`pauta.cliente`) continuam casando, e `S.cliEdit`
+   e `S.mat` continuam achando o que é deles. O que muda é o futuro: a
+   partir daqui o id é do cliente, e nenhuma mudança na lista o move.
+
+   Cliente novo nasce com id ancorado no relógio, como a v151 fez com as
+   tarefas: dois aparelhos cadastrando ao mesmo tempo, sem sincronizar no
+   meio, não colidem mais.
+   ================================================================== */
+function congelarIdsDeCliente(){
+  const lista = S.novos || [];
+  const usados = new Set();
+  for(const c of lista) if(c && c.cid) usados.add(c.cid);
+  lista.forEach((c, i) => {
+    if(!c || c.cid) return;
+    /* o valor de hoje, para não mexer em nada que já existe */
+    let id = 'n' + i;
+    /* a não ser que a vaga já seja de outro — id nunca se reusa */
+    if(usados.has(id)){
+      let k = lista.length;
+      while(usados.has('n' + k)) k++;
+      id = 'n' + k;
+    }
+    c.cid = id; usados.add(id);
+  });
+  return lista;
+}
 let CLIS = () => [
   {id:'cj',nome:'Cortez Jurídico',ini:'CJ',seg:'Consultoria jurídica',cor:null,
    brief:'—', links:[], refs:'—'},
-  ...S.novos.map((c,i)=>({id:'n'+i,nome:c.nome,ini:c.ini,seg:c.seg,cor:c.cor,
+  ...congelarIdsDeCliente().map((c,i)=>({id:c.cid,nome:c.nome,ini:c.ini,seg:c.seg,cor:c.cor,
     brief:c.brief||'—',links:[],refs:'—', tipo:c.tipo}))];   /* v108: o tipo viaja junto */
-const cliAtual = () => CLIS().find(c=>c.id===S.cli) || CLIS()[0];
+
+/* v178: sem escolha ainda, o primeiro da lista é um padrão honesto.
+
+   Com escolha que NÃO resolve havia três saídas, e duas são ruins:
+   devolver outro cliente é o vazamento que o founder viu; devolver nulo
+   derruba a tela em 43 pontos que acessam o campo direto — e tela
+   quebrada, para quem está trabalhando, é tão ruim quanto o bug.
+
+   A terceira é esta: devolver um cliente que NÃO É NINGUÉM. Nada
+   quebra, porque ele tem todos os campos. Nada vaza, porque os campos
+   estão vazios e o id não é de cliente nenhum — pauta, material e link
+   procurados por ele não acham nada. E a tela passa a DIZER que não
+   identificou, em vez de mentir um nome. */
+const CLI_SEM_NOME = Object.freeze({
+  id:'__sem_cliente__', nome:'Cliente não identificado', ini:'?',
+  seg:'', cor:null, brief:'—', links:[], refs:'—', semCliente:true });
+const cliAtual = () => {
+  const l = CLIS();
+  if(!S.cli) return l[0];
+  return l.find(c => c.id === S.cli) || CLI_SEM_NOME;
+};
 /* v167: a casa dizia "Helena" — a aprovadora de exemplo da Loja Norte —
    em toda tela de envio, para qualquer cliente. Agora pergunta a quem
    aprova naquele cliente; e quando ninguém foi cadastrado, chama pelo
@@ -15750,7 +15818,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v177 · 7 set · a pauta nao encolhe sozinha';
+const VERSAO_PROTOTIPO = 'v178 · 7 set · o link e do cliente certo';
 
 menuSheet = (function(orig){
   return function(){
@@ -18271,13 +18339,27 @@ aplicarEstado = function(sv){
   /* novos: UNE. Perder um campo editado é aceitável; perder um cliente
      inteiro que alguém cadastrou no celular, não. */
   if(Array.isArray(novosDeLa)){
-    const chave = c => c.id || c.nome;
+    /* v178: casa pelo `cid` quando os dois lados já o têm — é o id de
+       verdade do cliente. Sem ele (registro antigo, de antes da v178),
+       casa pelo nome, como antes. */
+    const chave = c => c.cid || c.id || c.nome;
+    const porNome = new Map((S.novos || []).map(c => [c.nome, c]));
     const tenho = new Map((S.novos || []).map(c => [chave(c), c]));
     for(const c of novosDeLa){
       const k = chave(c);
-      if(tenho.has(k)) Object.assign(tenho.get(k), c);   // o de lá é mais novo
-      else { S.novos.push(c); tenho.set(k, c); }
+      let meu = tenho.get(k) || (c.nome ? porNome.get(c.nome) : null);
+      if(meu){
+        /* o de lá é mais novo — MENOS o id: renumerar um cliente daqui
+           quebraria o link que já está na mão dele e a linha do banco. */
+        const meuCid = meu.cid;
+        Object.assign(meu, c);
+        if(meuCid) meu.cid = meuCid;
+      } else {
+        S.novos.push(c); tenho.set(k, c);
+        if(c.nome) porNome.set(c.nome, c);
+      }
     }
+    congelarIdsDeCliente();          /* quem chegou sem cid ganha o seu */
   }
   return n;
 };
@@ -22915,7 +22997,14 @@ const CASA_HOST = CASA_URL.replace(/^https?:\/\//, '');
 const baseDoLink = () =>
   (/^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname))
     ? location.origin + location.pathname : CASA_URL + '/';
-const linkDeAprovacao = id => `${baseDoLink()}?aprovar=${id}.${chaveDoCliente(id)}`;
+/* v178: a trava fica AQUI, no gerador, e não em cada um dos pontos que
+   pedem link. O link carrega a chave do cliente: emitir um para quem não
+   é ele não mostra a tela errada — entrega a porta da casa de outro. Id
+   que não resolve não vira link nenhum. */
+const linkDeAprovacao = id => {
+  if(!id || !CLIS().some(c => c.id === id)) return null;
+  return `${baseDoLink()}?aprovar=${id}.${chaveDoCliente(id)}`;
+};
 
 /* o salvar do cliente troca o objeto inteiro: a chave sobrevive */
 window.addEventListener('click', e => {
@@ -22931,10 +23020,19 @@ agClienteDet = (function(orig){
   return function(){
     let html = orig.apply(this, arguments);
     if((S.tab || 'pauta') !== 'equipe' || !html) return html;
-    const c = cliAtual(); if(!c) return html;
+    /* v178: sem cliente resolvido, ou sem link para ele, a tela DIZ que
+       não dá — em vez de mostrar o link de quem está em primeiro na
+       lista, que era o Cortez. */
+    const c = cliAtual();
+    const link = c ? linkDeAprovacao(c.id) : null;
+    if(!c || !link) return html + `<div class="card cyLink" style="margin-top:12px">
+      <h4>Link de aprovação</h4>
+      <p><b style="color:var(--danger)">Não consegui identificar este cliente com
+      segurança</b>, então não gero o link. O link é a chave de quem aprova — mandar
+      o de outro cliente daria a ele o acesso errado. Volte à lista de clientes e
+      abra este de novo; se continuar, recarregue a página.</p></div>`;
     const ap = c.aprovador || {};
     const quem = ap.nome ? esc(ap.nome) : 'quem aprova';
-    const link = linkDeAprovacao(c.id);
     const bloco = `<div class="card cyLink" style="margin-top:12px"><h4>Link de aprovação</h4>
       <p>${quem.charAt(0).toUpperCase() + quem.slice(1)} <b style="color:var(--ink-50)">entra por este
       link</b> — sem criar conta, sem senha. O link é a chave de ${esc(c.nome)}: quem o tem,
@@ -22975,6 +23073,10 @@ addEventListener('click', e => {
     return;
   }
   const link = linkDeAprovacao(id);
+  /* v178: sem link, não copia nem compartilha. Copiar "null" faria a
+     pessoa mandar lixo; pior, um link de outro cliente daria acesso
+     errado. Melhor a mão vazia e o motivo. */
+  if(!link){ toast('Não consegui identificar este cliente com segurança, então não gerei o link. Abra o cliente de novo pela lista.'); return; }
   if(d.cycompart && navigator.share){
     const c = CLIS().find(x => x.id === id);
     navigator.share({ title: `Aprovação · ${c ? c.nome : 'Maestro'}`, url: link }).catch(() => {});
@@ -24649,6 +24751,7 @@ addEventListener('click', e => {
   const id = t.dataset.cliapr;
   const c = CLIS().find(x => x.id === id);
   const link = linkDeAprovacao(id);
+  if(!link){ toast('Não consegui identificar este cliente com segurança, então não gerei o link. Abra o cliente de novo pela lista.'); return; }   /* v178 */
   copiarTexto(link).then(ok => toast(ok
     ? `Link de ${c ? c.nome : 'aprovação'} copiado. Quem aprova entra por ele, sem senha.`
     : 'Não deu para copiar — abra "Quem aprova" e copie de lá.'));
@@ -34049,8 +34152,10 @@ addEventListener('click', e => {
       /* o link do lote é o mesmo que a agência copia hoje: abre sem
          senha, direto na decisão. Se a camada dele não estiver de pé,
          o e-mail leva para a casa em vez de para lugar nenhum. */
-      link: (typeof linkDeAprovacao === 'function'
-               ? linkDeAprovacao(c.id) : location.origin + '/'),
+      /* v178: o gerador devolve nulo quando o cliente não resolve. O
+         e-mail leva para a casa — nunca para o link de outro cliente. */
+      link: ((typeof linkDeAprovacao === 'function' && linkDeAprovacao(c.id))
+               || location.origin + '/'),
       dados: {
         cliente: c.nome,
         peças: String(n),
@@ -34645,10 +34750,34 @@ function mesclarCadastros(aqui, la){
     if(!l){ junto[id] = a; continue; }
     const daquiEMaisNovo = (+a.em || 0) > (+l.em || 0);
     junto[id] = daquiEMaisNovo ? juntarCadastro(l, a) : juntarCadastro(a, l);
-    /* a chave do link nunca se junta: ela é do vencedor, e o empate é
-       do banco. Uma chave que veio de uma URL não pode se confirmar */
-    const dono = daquiEMaisNovo ? a : l;
-    if(Object.prototype.hasOwnProperty.call(dono, 'chave')) junto[id].chave = dono.chave;
+    /* v178 — A CHAVE DO LINK NÃO SE PERDE NUMA MESCLA.
+
+       Aqui a chave era do vencedor, e do vencedor só: se o registro mais
+       novo não tivesse chave, o `else` APAGAVA a que o outro lado tinha.
+       E "mais novo" é quem foi editado por último — então bastava mexer
+       no cadastro de um cliente, num aparelho que nunca gerou link para
+       ele, para a chave dele sumir do banco. O link que já estava na mão
+       do cliente morria calado: a porta deixava de reconhecer a chave, e
+       o visitante caía no primeiro cliente da lista.
+
+       Foi o que o founder viu em 7/set — Leonardo, Roberto e Jarbas
+       indo para o Cortez, depois de uma rodada de edição de cadastro.
+       Os três estavam sem chave no banco; EJUP e Rossana, com.
+
+       A regra passa a ser: a chave do vencedor quando ele tem uma; a do
+       outro lado quando não tem; e NUNCA apagada por mescla. Só "Gerar
+       outro link" troca uma chave, que é explícito e avisa.
+
+       A intenção do código antigo era boa e continua valendo — o
+       aparelho de quem chega por link recebe a chave pela URL, e ela não
+       pode subir daí para o cadastro da agência. Isso hoje está barrado
+       em dois pontos que não dependem desta linha: `guardarTudo()` não
+       roda em `?aprovar=` nem em `?ver=`, e a RLS do banco recusa
+       gravação de quem não entrou (fechada em 4/set). */
+    const dono  = daquiEMaisNovo ? a : l;
+    const outro = daquiEMaisNovo ? l : a;
+    const chave = (dono && dono.chave) || (outro && outro.chave) || null;
+    if(chave) junto[id].chave = chave;
     else delete junto[id].chave;
   }
   return junto;
