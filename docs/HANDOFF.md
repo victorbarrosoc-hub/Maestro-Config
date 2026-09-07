@@ -1,8 +1,8 @@
 # HANDOFF — retomando a Maestro
 
 Última atualização: 2026-09-07 · a casa vazia, o painel do cliente auditado,
-o feed que era de outra marca, o menu enxuto, a foto que não morre mais e a
-pergunta que espera a resposta
+o feed que era de outra marca, o menu enxuto, a foto que não morre mais, a
+pergunta que espera a resposta e o Ensaio que para de apagar o outro aparelho
 
 > **Leia este arquivo primeiro.** Ele é o mapa. A informação completa está nos
 > documentos apontados aqui — não repita conteúdo, vá na fonte.
@@ -1232,6 +1232,39 @@ decisão do cliente volta. Porquê e como conferir:
   tela, não o dado. Só saiu depois que o founder confirmou no banco: a linha
   `n0` com 68 cards, e uma cópia em `pauta_backup_2026_09_06`. O SQL de
   limpeza, em cinco passos: `ENGINEERING/limpar-demonstracao.sql`.
+
+- **O Ensaio para de apagar o trabalho do outro aparelho (v176, 7 de setembro).**
+  A leitura foi do founder, e estava certa: *"quando o sistema ficou rodando
+  todo praticamente pelo Ensaio, acho que bugou"*. Era isto a "desorganização
+  dos cards" que ele vinha relatando. Dois furos, os dois medidos:
+
+  1. **`reconciliarAjustes` varria todos os clientes** casando só pelo número do
+     card. Cada cliente numera a partir do próprio começo, então o card 6 da
+     EJUP e o card 6 do Cortez coexistem: concluir a tarefa de um devolvia o
+     card do outro para a fila, sem ninguém ter pedido. Tarefa órfã (cliente
+     que já saiu) mexia no card de todos. Mesma família da v165, num lugar que
+     passou batido.
+  2. **O quadro do Ensaio era gravado inteiro.** O número da tarefa vinha de um
+     contador compartilhado (`prox++`) que cada aparelho incrementava na própria
+     cópia — dois aparelhos criavam a tarefa 6 — e o último a gravar escrevia o
+     quadro dele por cima. Medido: a tarefa do primeiro sumia até da tela dele.
+
+  Correções: a tarefa passa a ser numerada pelo relógio (`novoIdTarefa`), como
+  o card já era; e o quadro se junta na carga e na gravação, com a regra da
+  v174 — **ausência não é exclusão**. Excluir continua excluindo, porque a
+  lixeira registra a decisão; concluída num aparelho não volta a pendente no
+  outro. As três coisas têm prova.
+
+  **Por que só apareceu quando a operação migrou:** a Pauta ganhou revisão por
+  linha e mescla de três lados na v151. O Ensaio nunca ganhou. Enquanto o
+  trabalho vivia na Pauta o furo ficava escondido; quando passou a viver no
+  Ensaio, passou a doer todo dia — e como é o Ensaio que empurra o card de
+  fase, o card acabava num estado que ninguém pediu. **A planilha importada não
+  teve culpa:** o import numera pelo gerador ancorado no relógio.
+
+  Verificação: `web/verificar/v176-tarefa-do-cliente-certo.mjs` (9 provas) e
+  `v176-ensaio-dois-aparelhos.mjs` (12 provas); 6 delas falham no código
+  anterior.
 
 - **A pergunta "Quem está entrando?" espera a resposta (v175, 7 de setembro).**
   O relato: *"de vez em quando aparece, não sei por quê, mas depois que atualizo
