@@ -15760,7 +15760,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v186 · 7 set · a mensagem tambem avisa';
+const VERSAO_PROTOTIPO = 'v187 · 7 set · quem esta online, com nome';
 
 menuSheet = (function(orig){
   return function(){
@@ -34210,9 +34210,18 @@ addEventListener('click', e => {
 .pzFaixa .pzP b{ font-size:12px; font-weight:500; color:var(--ink-300) }
 .pzFaixa .pzP .av{ width:22px; height:22px; font-size:9px }
 .pzFaixa .pzP .av .pz{ width:7px; height:7px; border-width:1.5px }
+/* v187: no celular a faixa ROLA DE LADO, e o nome fica.
+   A primeira versão escondia o nome para caber — mas o recurso existe
+   para responder QUEM está online, e cara sem legenda não responde isso.
+   Quem não cabe, rola. */
 @media (max-width:860px){
-  .pzFaixa{ gap:8px; padding:8px 10px }
-  .pzFaixa .pzP b{ display:none }        /* no celular só as caras cabem */
+  .pzFaixa{ gap:7px; padding:8px 10px; flex-wrap:nowrap; align-items:center }
+  .pzFaixa .pzT{ white-space:nowrap }
+  .pzFaixa .pzGente{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
+    -webkit-overflow-scrolling:touch; padding-bottom:1px }
+  .pzFaixa .pzGente::-webkit-scrollbar{ display:none }
+  .pzFaixa .pzP{ flex:none }
+  .pzFaixa .pzP b{ font-size:11.5px; white-space:nowrap }
 }
 </style>
 
