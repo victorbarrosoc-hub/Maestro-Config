@@ -15760,7 +15760,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v184 · 7 set · o aviso chega por dentro';
+const VERSAO_PROTOTIPO = 'v185 · 7 set · quem esta online';
 
 menuSheet = (function(orig){
   return function(){
@@ -34182,6 +34182,235 @@ addEventListener('click', e => {
   window.MaestroAvisos = { mencionados, avisarNoAparelho, pedirPermissao,
                            ligado, permitido, comoApp,
                            /* v184 */ naTela: avisoNaTela, estouOlhando };
+
+})();
+</script>
+
+<style>
+/* v185 — a bolinha de presença, estilo MSN.
+   Mora DENTRO do avatar, e não ao lado do nome: assim ela viaja com a
+   pessoa por todas as 11 telas que desenham um avatar, sem que nenhuma
+   delas precise saber que presença existe. */
+.av, .avG, .avP{ position:relative }
+.pz{ position:absolute; right:-1px; bottom:-1px; width:9px; height:9px; border-radius:999px;
+  border:2px solid var(--ink-950); box-sizing:content-box; display:block }
+.pz.ativo  { background:var(--encore, #35B87A) }
+.pz.ausente{ background:var(--brass-500, #C8963A) }
+.pz.fora   { background:var(--ink-600, #555) }
+/* num avatar grande a bolinha cresce junto, senão vira poeira */
+.avG .pz{ width:12px; height:12px }
+.pzLinha{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; color:var(--ink-400) }
+.pzLinha .pt{ width:7px; height:7px; border-radius:999px; display:inline-block }
+.pzLinha .pt.ativo{ background:var(--encore, #35B87A) }
+.pzLinha .pt.ausente{ background:var(--brass-500, #C8963A) }
+.pzLinha .pt.fora{ background:var(--ink-600, #555) }
+.pzFaixa{ display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  padding:9px 12px; margin:0 0 12px; border:1px solid var(--ink-800);
+  border-radius:12px; background:var(--ink-950) }
+.pzFaixa .pzT{ font-family:var(--mono); font-size:10.5px; letter-spacing:.04em;
+  text-transform:uppercase; color:var(--ink-500); flex:none }
+.pzFaixa .pzGente{ display:flex; align-items:center; gap:11px; flex-wrap:wrap; min-width:0 }
+.pzFaixa .pzP{ display:inline-flex; align-items:center; gap:6px }
+.pzFaixa .pzP b{ font-size:12px; font-weight:500; color:var(--ink-300) }
+.pzFaixa .pzP .av{ width:22px; height:22px; font-size:9px }
+.pzFaixa .pzP .av .pz{ width:7px; height:7px; border-width:1.5px }
+@media (max-width:860px){
+  .pzFaixa{ gap:8px; padding:8px 10px }
+  .pzFaixa .pzP b{ display:none }        /* no celular só as caras cabem */
+}
+</style>
+
+<script>
+"use strict";
+/* =====================================================================
+   v185 — QUEM ESTÁ ONLINE, DO JEITO MSN.
+
+   Pedido do founder: "o status de quem tá online tbm, quem tá ausente, é
+   interessante. Tipo um MSN na parte de conversas" — e, quando
+   perguntei onde, escolheu a bolinha ao lado do nome em todo lugar.
+
+   COMO A PRESENÇA É GUARDADA, e por que assim: uma linha por pessoa na
+   tabela `presenca`, e cada aparelho escreve SÓ a linha de quem está
+   nele. Presença é a coisa mais escrita da casa — um batimento a cada 30
+   segundos, por pessoa, o dia todo. Se todo mundo escrevesse no mesmo
+   lugar (um objeto com todos dentro), cada batimento teria de ler,
+   mesclar e gravar, e dois aparelhos batendo junto se sobrescreveriam.
+   Foi esse exato defeito que apagou as chaves dos links em 7/set.
+
+   OFFLINE NÃO SE ESCREVE. Ninguém avisa que fechou o navegador — fecha-se
+   navegador no tapa, com a tampa do laptop, com a bateria acabando.
+   Offline é a AUSÊNCIA de batimento recente, e por isso funciona sempre.
+
+   'AUSENTE' É AUTOMÁTICO, como o founder pediu: a pessoa trocou de aba,
+   ou parou de mexer por alguns minutos. Ninguém marca nada à mão.
+   ================================================================== */
+(function(){
+
+  const BATE_CADA   = 30000;    /* de quanto em quanto o coração bate   */
+  const OLHA_CADA   = 30000;    /* de quanto em quanto se lê a casa     */
+  const VIVO_ATE    = 75000;    /* batimento mais novo que isto = vivo  */
+  const AUSENTE_ATE = 360000;   /* até 6 min sem bater = ausente        */
+  const PARADO_APOS = 180000;   /* 3 min sem tocar em nada = ausente    */
+
+  S.presenca = S.presenca || {};        /* {usuario: {estado, visto, nome}} */
+
+  const agora = () => Date.now();
+  let ultimoToque = agora();
+  ['pointerdown','keydown','wheel','touchstart'].forEach(ev =>
+    addEventListener(ev, () => { ultimoToque = agora(); }, { capture:true, passive:true }));
+
+  const euSou = () => {
+    try{
+      if(S.usuario && S.usuario.tipo === 'cliente') return null;   /* cliente não entra na lista */
+      return typeof euAgora === 'function' ? euAgora() : null;
+    }catch(e){ return null; }
+  };
+
+  /* o meu estado é sabido daqui, sem perguntar a ninguém */
+  function meuEstado(){
+    try{
+      if(document.visibilityState !== 'visible') return 'ausente';
+      if(agora() - ultimoToque > PARADO_APOS)    return 'ausente';
+      return 'ativo';
+    }catch(e){ return 'ativo'; }
+  }
+
+  /* ---------- o batimento ---------- */
+  let batendo = false;
+  async function bater(){
+    if(batendo || !_sbLigado) return;
+    const eu = euSou(); if(!eu) return;
+    batendo = true;
+    try{
+      const m = typeof membroCru === 'function' ? membroCru(eu) : null;
+      await fetch(`${SB.url}/rest/v1/presenca?on_conflict=usuario`, {
+        method:'POST',
+        headers: { ...sbCab(), Prefer:'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({ usuario: eu, nome: (m && m.n) || null,
+          estado: meuEstado(), onde: (S.route || '') + (S.cli ? ':' + S.cli : ''),
+          visto_em: new Date().toISOString() })
+      });
+    }catch(e){}
+    finally{ batendo = false; }
+  }
+
+  /* ---------- a leitura ---------- */
+  let olhando = false;
+  async function olhar(){
+    if(olhando || !_sbLigado) return;
+    olhando = true;
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/presenca?select=usuario,nome,estado,visto_em`,
+                            { headers: sbCab() });
+      if(!r.ok) return;
+      const linhas = await r.json();
+      const novo = {};
+      for(const l of (linhas || [])){
+        if(!l || !l.usuario) continue;
+        novo[l.usuario] = { estado: l.estado || 'ativo', nome: l.nome || null,
+                            visto: Date.parse(l.visto_em) || 0 };
+      }
+      const mudou = JSON.stringify(novo) !== JSON.stringify(S.presenca);
+      S.presenca = novo;
+      if(mudou) try{ render(); }catch(e){}
+    }catch(e){}
+    finally{ olhando = false; }
+  }
+
+  /* ---------- o que se sabe de alguém ---------- */
+  function presencaDe(id){
+    if(!id) return null;
+    const eu = euSou();
+    if(eu && id === eu) return meuEstado();          /* de mim eu sei na hora */
+    const p = S.presenca && S.presenca[id];
+    if(!p) return null;                              /* nunca vi: não invento bolinha */
+    const idade = agora() - (p.visto || 0);
+    if(idade > AUSENTE_ATE) return 'fora';
+    if(idade > VIVO_ATE)    return 'ausente';        /* parou de bater há pouco */
+    return p.estado === 'ausente' ? 'ausente' : 'ativo';
+  }
+  const COMO = { ativo:'online agora', ausente:'ausente', fora:'offline' };
+
+  /* ---------- a bolinha no avatar ---------- */
+  if(typeof avMembro === 'function'){
+    avMembro = (function(orig){
+      return function(m, cls, estilo){
+        const html = orig.apply(this, arguments);
+        try{
+          if(!m || typeof membroId !== 'function') return html;
+          const e = presencaDe(membroId(m));
+          if(!e) return html;                        /* sem dado, sem bolinha */
+          const pt = `<i class="pz ${e}" title="${COMO[e] || ''}" aria-label="${COMO[e] || ''}"></i>`;
+          return html.replace(/<\/span>$/, pt + '</span>');
+        }catch(err){ return html; }
+      };
+    })(avMembro);
+  }
+
+  /* ---------- o pulso ---------- */
+  function ligar(){
+    if(!_sbLigado) return;
+    bater(); olhar();
+    setInterval(bater, BATE_CADA);
+    setInterval(olhar, OLHA_CADA);
+    /* sair da aba e voltar muda o estado na hora, sem esperar 30s:
+       é o instante em que a bolinha mais engana se demorar */
+    addEventListener('visibilitychange', () => { bater(); if(document.visibilityState === 'visible') olhar(); });
+    addEventListener('pagehide', () => {
+      /* o último recado, com o navegador já indo embora. `keepalive`
+         existe para isto: um fetch que sobrevive à página. */
+      try{
+        const eu = euSou(); if(!eu) return;
+        fetch(`${SB.url}/rest/v1/presenca?on_conflict=usuario`, {
+          method:'POST', keepalive:true,
+          headers: { ...sbCab(), Prefer:'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify({ usuario: eu, estado:'ausente',
+                                 visto_em: new Date().toISOString() })
+        });
+      }catch(e){}
+    });
+  }
+  /* espera o banco dizer que está de pé */
+  const espera = setInterval(() => { if(_sbLigado){ clearInterval(espera); ligar(); } }, 1500);
+  setTimeout(() => clearInterval(espera), 120000);
+
+  /* ---------- a faixa de quem está na casa, nas Conversas ----------
+     A bolinha no avatar responde "esta pessoa está?" quando você já está
+     olhando para ela. A faixa responde a outra pergunta, que é a do MSN:
+     "quem está aí agora?" — sem ter de procurar pessoa por pessoa.
+     Só nas Conversas, que é onde essa pergunta nasce. */
+  if(typeof telaConversas === 'function'){
+    telaConversas = (function(orig){
+      return function(){
+        const html = orig.apply(this, arguments);
+        try{
+          if(S.usuario && S.usuario.tipo === 'cliente') return html;  /* não é assunto do cliente */
+          const eu = euSou();
+          const gente = (S.equipe || []).map(m => ({ m, id: membroId(m) }))
+            .map(x => ({ ...x, e: presencaDe(x.id) }))
+            .filter(x => x.e);
+          if(!gente.length) return html;
+
+          const ordem = { ativo:0, ausente:1, fora:2 };
+          gente.sort((a, b) => (ordem[a.e] - ordem[b.e])
+                            || String(a.m.n || '').localeCompare(String(b.m.n || '')));
+
+          const online = gente.filter(x => x.e === 'ativo').length;
+          const linha = gente.map(x => `<span class="pzP" title="${esc(x.m.n || '')} · ${COMO[x.e]}">
+            ${avMembro(x.m)}<b>${esc(String(x.m.n || '').split(' ')[0])}${x.id === eu ? ' (você)' : ''}</b>
+            </span>`).join('');
+
+          const faixa = `<div class="pzFaixa">
+            <span class="pzT">${online === 0 ? 'ninguém online agora'
+              : online === 1 ? '1 pessoa online' : `${online} pessoas online`}</span>
+            <div class="pzGente">${linha}</div></div>`;
+          return html.replace('<div class="cvLayout">', faixa + '<div class="cvLayout">');
+        }catch(e){ return html; }
+      };
+    })(telaConversas);
+  }
+
+  window.MaestroPresenca = { presencaDe, meuEstado, bater, olhar, COMO };
 
 })();
 </script>
