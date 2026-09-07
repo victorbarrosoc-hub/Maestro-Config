@@ -288,7 +288,11 @@ mescla de três lados, falha tem cara. Auditoria e verificação em
 abrir por três funções `security definer`, e a decisão do cliente volta ao
 banco. **O founder rodou o SQL no Supabase em 5 de setembro** (`Success`), então
 a porta está de pé. Detalhe em `docs/ENGINEERING/LINKS_ANONIMOS.md`.
-**Aberto e do founder:** as políticas do bucket `midia` (Storage).
+**Fechado (7 set):** as políticas do bucket `midia` (Storage). Subir, apagar e
+trocar exigem login; trocar arquivo existente exige ser o dono. A leitura segue
+pública, que é do que dependem os links de aprovação. O SQL documentado antes
+fechava errado — deixava o upload público vivo e quebrava os links; o defeito
+está preservado como PROVA 0 em `docs/ENGINEERING/bucket-midia-teste.sql`.
 Revisão de segurança de setembro (o que já foi fechado no código e o que falta):
 `docs/ENGINEERING/SEGURANCA_REVISAO_2026-09.md`.
 

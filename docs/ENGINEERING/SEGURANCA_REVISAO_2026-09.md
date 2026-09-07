@@ -52,12 +52,27 @@ ancorado no relógio da v151. O que estava guardado no aparelho com a chave
 antiga volta com dono. Provado em `web/verificar/v165-material-por-cliente.mjs`
 — 21 provas, vermelhas na v164 e verdes na v165.
 
+## Fechado pelo founder — 7 de setembro
+
+3. **Políticas do bucket `midia`** ✅. O bucket tinha três políticas, todas para
+   `public`: subir, apagar e ler. Como a chave publicável está no código da
+   página, à vista, qualquer pessoa podia trocar arte já aprovada depois do
+   aceite, ou apagá-la. Agora subir, apagar e trocar exigem `authenticated`, e
+   trocar um arquivo existente exige ser o dono — que é o que fecha o
+   "sobrescrever a peça depois do aceite". A leitura continua pública de
+   propósito: é dela que dependem os links de aprovação de quem não tem login.
+
+   O rascunho que estava neste projeto **fechava errado**, e falhava parecendo
+   sucesso: o loop de limpeza não encontrava a política de `insert` (a condição
+   dela mora em `with_check`, e o filtro olhava só o `qual`), enquanto a de
+   `select` fechava a leitura. Quem o rodasse ficaria com os links quebrados e
+   o buraco de escrita intacto. Corrigido em `bucket-midia-politicas.sql`, com
+   o defeito preservado como PROVA 0 de `bucket-midia-teste.sql` — 10 provas
+   contra um PostgreSQL 16.13. O founder rodou em 7 de setembro: quatro
+   políticas, `{public}` só no SELECT.
+
 ## Do founder — continua aberto
-1. **Políticas do bucket `midia`**: gravação só para `authenticated`, e sem
-   `x-upsert` para quem não é dono do caminho. Enquanto a leitura do bucket
-   continuar pública, a arte carrega nos links; ao fechá-la, os links precisam
-   de URL assinada (ainda não têm).
-2. Limite de tentativas na porta dos links (hoje não há contador; a chave tem
+1. Limite de tentativas na porta dos links (hoje não há contador; a chave tem
    22 caracteres de `crypto`, o que torna a busca inviável, mas um limite por
    IP seria mais honesto).
 

@@ -127,9 +127,11 @@ manda **uma**, a final.
 
 ## 6. O que continua aberto
 
-- **Storage.** A arte carrega porque o bucket `midia` ainda tem leitura
-  pública. Quando essa política for fechada, os links precisam de URL
-  assinada — hoje não têm. Ver `SUPABASE_FECHAR_A_BRECHA.md` §8.
+- **Storage.** A arte carrega porque o bucket `midia` tem leitura pública, e
+  ela foi mantida assim de propósito em 7/set, quando a escrita foi fechada
+  (`bucket-midia-politicas.sql`): subir, apagar e trocar passaram a exigir
+  login, a leitura não. Fechar também a leitura exige servir por URL assinada,
+  que o app ainda não faz — é o que falta aqui.
 - **Limite de tentativa.** A porta não tem contador: alguém pode tentar
   chaves em sequência. São 22 caracteres de `crypto.getRandomValues`, o
   que torna a busca inviável na prática, mas um limite por IP no Supabase
