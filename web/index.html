@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-07 10:32 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-07 11:00 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -7216,6 +7216,22 @@ function novoIdCard(){
   return maior + 1;
 }
 
+/* v176: o Ensaio numerava tarefa com um contador simples (`prox++`).
+   Cada aparelho incrementava a PRÓPRIA cópia, então dois aparelhos
+   criavam a tarefa 6 ao mesmo tempo — duas tarefas diferentes, um número
+   só. Medido num navegador: a do primeiro sumia. O card já resolvia isso
+   ancorando no relógio (`novoIdCard`); a tarefa passa a fazer igual. */
+let _tid = 0;
+function novoIdTarefa(){
+  let maior = +((S.ensaio || {}).prox || 0) - 1;
+  for(const t of [...((S.ensaio||{}).tarefas || []), ...((S.ensaio||{}).feitas || [])])
+    if(+t.id > maior) maior = +t.id;
+  _tid = Math.max(_tid, maior, Date.now());
+  const id = ++_tid;
+  try{ if(S.ensaio) S.ensaio.prox = id + 1; }catch(e){}
+  return id;
+}
+
 /* ---------- nada se perde: guarda no navegador ----------------------- */
 const CHAVE = 'maestro-prototipo-v1';
 S.mat = S.mat || {};                       // inicializa aqui — este bloco
@@ -13296,7 +13312,11 @@ sbGravarConfig = (function(){
       cliFora: [...new Set([...(S.cliFora||[]), ...(la.cliFora||[])])],
       agencia: (+((S.agencia||{}).em) || 0) >= (+((la.agencia||{}).em) || 0)
                  ? (S.agencia||null) : la.agencia,
-      estudio: (S.ensaio || la.estudio || null),
+      /* v176: mandava só o quadro deste aparelho, e ele substituía o do
+         banco — o último a gravar apagava a tarefa do outro. */
+      estudio: (typeof mesclarEstudio === 'function')
+                 ? mesclarEstudio(S.ensaio, la.estudio)
+                 : (S.ensaio || la.estudio || null),
       versao: 54
     } : meu;
     /* o aparelho passa a enxergar o que juntou — senão a gravação
@@ -13441,7 +13461,7 @@ document.addEventListener('click', e => {
       Object.assign(tr, {titulo, prazo, resp:S.enResp, cli:S.enCli});
       if(tr.col==='inbox' && tr.resp) tr.col = 'plan';
     } else {
-      S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo, cli:S.enCli, resp:S.enResp,
+      S.ensaio.tarefas.push({ id:novoIdTarefa(), titulo, cli:S.enCli, resp:S.enResp,
         col: S.enResp ? 'plan' : 'inbox', criada:Date.now(), prazo, tempoMs:0, desde:null });
     }
     S.modal=null; som('toque'); render();
@@ -14504,7 +14524,7 @@ document.addEventListener('click', e => {
   e.stopImmediatePropagation();
   const p = S.pauta.find(x=>x.id===+t.dataset.ptparaensaio); if(!p) return;
   if(!S.ensaio) S.ensaio = kbSemente();
-  S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo:p.t, cli:cliAtual().id,
+  S.ensaio.tarefas.push({ id:novoIdTarefa(), titulo:p.t, cli:cliAtual().id,
     resp:p.resp||null, col: p.resp?'plan':'inbox', criada:Date.now(),
     prazo:p.data||null, tempoMs:0, desde:null, cat:'producao', cardId:p.id, quemVe:[] });
   som('toque');
@@ -15004,7 +15024,7 @@ function abrirTarefaDeAjuste(p){
   if(jaTem) return;
   const ultimo = p.alteracoes[p.alteracoes.length-1];
   S.ensaio.tarefas.push({
-    id: S.ensaio.prox++, titulo: `Ajustar: ${p.t}`,
+    id: novoIdTarefa(), titulo: `Ajustar: ${p.t}`,
     cli: cliAtual().id, resp: null, col: 'inbox', cat: 'producao',
     criada: Date.now(), prazo: p.data || null, tempoMs: 0, desde: null,
     cardId: p.id, doCliente: true, pedido: ultimo ? ultimo.oque : ''
@@ -15018,10 +15038,16 @@ function reconciliarAjustes(){
   if(!S.ensaio || !S.ensaio.feitas) return;
   for(const t of S.ensaio.feitas){
     if(!t.cardId || !t.doCliente || t.aplicada) continue;
-    for(const lista of Object.values(S.pautas)){
-      const c = lista.find(x => x.id === t.cardId);
-      if(c && c.ajustePendente){ c.ajustePendente = false; c.refeito = true; }
-    }
+    /* v176: isto varria TODOS os clientes e casava só pelo número do card.
+       Cada cliente tem o seu próprio numerador, então o card 6 da EJUP e o
+       card 6 do Cortez existem ao mesmo tempo — e concluir a tarefa de um
+       marcava os dois como refeitos. Medido num navegador: o card do
+       cliente B voltava para a fila de envio sem ninguém ter pedido.
+       A tarefa já sabe de quem é (`t.cli`); é a pauta dele que se mexe.
+       É a mesma família da v165, num lugar que passou batido. */
+    const lista = S.pautas[t.cli] || [];
+    const c = lista.find(x => x.id === t.cardId);
+    if(c && c.ajustePendente){ c.ajustePendente = false; c.refeito = true; }
     t.aplicada = true;
   }
 }
@@ -15724,7 +15750,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v175 · 7 set · a pergunta espera a resposta';
+const VERSAO_PROTOTIPO = 'v176 · 7 set · o Ensaio entre dois aparelhos';
 
 menuSheet = (function(orig){
   return function(){
@@ -16159,7 +16185,7 @@ function sincronizarTarefasDaPauta(){
       if(!p.tarefa || p.feito || jaTem(p.id)) continue;
       const titulo = String(p.t || '').replace(/^\[Tarefa\]\s*/i, '').trim();
       S.ensaio.tarefas.push({
-        id: S.ensaio.prox++, titulo: titulo || 'Tarefa da pauta',
+        id: novoIdTarefa(), titulo: titulo || 'Tarefa da pauta',
         cli: c.id, resp: null, col: 'inbox', cat: 'producao',
         criada: Date.now(), prazo: p.data || null, tempoMs: 0, desde: null,
         cardId: p.id, daPauta: true,
@@ -16178,7 +16204,7 @@ function semearOutrasCategorias(){
   const vazia = cat => !S.ensaio.tarefas.some(t => t.cat === cat)
                     && !(S.ensaio.feitas||[]).some(t => t.cat === cat);
   const nova = (titulo, cat, col, extra) => S.ensaio.tarefas.push({
-    id: S.ensaio.prox++, titulo, cli: null, resp: null, col, cat,
+    id: novoIdTarefa(), titulo, cli: null, resp: null, col, cat,
     criada: Date.now(), prazo: null, tempoMs: 0, desde: null, ...(extra||{}) });
 
   if(vazia('financeiro')){
@@ -16386,7 +16412,7 @@ function sincronizarJobs(){
       const f = faseDe(p);
       if(f==='rascunho' || f==='postado') continue;
       if(tem(c.id, p.id)) continue;
-      S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo:p.t, cli:c.id, resp:p.resp||null,
+      S.ensaio.tarefas.push({ id:novoIdTarefa(), titulo:p.t, cli:c.id, resp:p.resp||null,
         cat:'producao', criada:Date.now(), prazo:p.data||null, tempoMs:0, desde:null,
         cardId:p.id, job:true, col:'do' });
     }
@@ -16401,7 +16427,7 @@ abrirTarefaDeAjuste = function(p){
   const ultimo = (p.alteracoes||[])[p.alteracoes.length-1];
   let t = S.ensaio.tarefas.find(x => x.cardId===p.id && x.cli===cliAtual().id);
   if(!t){
-    t = { id:S.ensaio.prox++, titulo:p.t, cli:cliAtual().id, resp:p.resp||null,
+    t = { id:novoIdTarefa(), titulo:p.t, cli:cliAtual().id, resp:p.resp||null,
       cat:'producao', criada:Date.now(), prazo:p.data||null, tempoMs:0, desde:null,
       cardId:p.id, job:true, col:'do' };
     S.ensaio.tarefas.push(t); ligarTarefaAoCard(t);
@@ -26423,7 +26449,7 @@ function mdParaInbox(id){
   if(!S.ensaio && typeof kbSemente === 'function') S.ensaio = kbSemente();
   if(!S.ensaio) { toast('O Ensaio ainda não abriu nesta sessão. Abra o Ensaio uma vez e tente de novo.'); return; }
   const cli = i.cli || mdCli().id;
-  S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo:i.titulo, cli, resp:null, col:'inbox', cat:'producao',
+  S.ensaio.tarefas.push({ id:novoIdTarefa(), titulo:i.titulo, cli, resp:null, col:'inbox', cat:'producao',
     criada:Date.now(), prazo:null, tempoMs:0, desde:null, desc:mdTextoDaIdeia(i),
     mandala:{ fase:i.fase, temp:i.temp, gancho:i.gancho } });
   i.noInbox = true;
@@ -28592,7 +28618,7 @@ function estEnviarCard(){
   if(!S.ensaio && typeof kbSemente === 'function') S.ensaio = kbSemente();
   if(!S.ensaio){ toast('O Ensaio ainda não abriu nesta sessão. Abra o Ensaio uma vez e tente de novo.'); return; }
   const corpo = [desc, passos.length ? '\nPASSOS:\n' + passos.map((p, i) => `${i + 1}. ${p}`).join('\n') : '', `\nDo Estúdio · quadro "${q.nome}"`].filter(Boolean).join('\n');
-  S.ensaio.tarefas.push({ id:S.ensaio.prox++, titulo, cli, resp:null, col:'inbox', cat:'producao',
+  S.ensaio.tarefas.push({ id:novoIdTarefa(), titulo, cli, resp:null, col:'inbox', cat:'producao',
     criada:Date.now(), prazo:null, tempoMs:0, desde:null, desc:corpo, estudio:{ quadro:q.id, notas:estNotasDoCard().map(n => n.id) } });
   q.enviados = (q.enviados || 0) + 1;
   S.modal = null; S.est.sel = [];
@@ -30023,7 +30049,7 @@ function enLxVoltar(chave){
     if(j < 0) return false;
     const [e] = lixo.splice(j, 1);
     const t = e.tarefa;
-    if(S.ensaio.tarefas.some(x => x.id === t.id)) t.id = S.ensaio.prox++;   /* id já reaproveitado */
+    if(S.ensaio.tarefas.some(x => x.id === t.id)) t.id = novoIdTarefa();   /* id já reaproveitado */
     if(t.col === 'cliente') t.col = 'check';
     t.movidoEm = Date.now();
     S.ensaio.tarefas.push(t);
@@ -30042,7 +30068,7 @@ function enLxVoltar(chave){
     let t = S.ensaio && S.ensaio.tarefas.find(x => x.cli === a && x.cardId === e.item.id);
     if(!t && e.tarefa && S.ensaio){
       t = { ...e.tarefa };
-      if(S.ensaio.tarefas.some(x => x.id === t.id)) t.id = S.ensaio.prox++;
+      if(S.ensaio.tarefas.some(x => x.id === t.id)) t.id = novoIdTarefa();
       S.ensaio.tarefas.push(t);
       if(typeof ligarTarefaAoCard === 'function') ligarTarefaAoCard(t);
     }
@@ -34715,4 +34741,106 @@ if(typeof abrirQuemEsta === 'function'){
     };
   })(abrirQuemEsta);
 }
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v176 — O ENSAIO PARA DE APAGAR O TRABALHO DO OUTRO APARELHO.
+
+   Leitura do founder, e ela estava certa: "quando o sistema ficou
+   rodando todo praticamente pelo Ensaio, acho que bugou".
+
+   A Pauta ganhou tratamento sério na v151 — revisão por linha, gravação
+   condicional, mescla de três lados. O Ensaio nunca ganhou nada disso:
+   o quadro inteiro viaja como um bloco só, e quem grava por último
+   escreve o dele por cima. Enquanto o trabalho vivia na Pauta isso não
+   aparecia. Quando a operação migrou para o Ensaio, ele passou a
+   acontecer o dia inteiro — e como é o Ensaio que empurra o card de
+   fase, o card ficava num estado que ninguém pediu. Era esta a
+   "desorganização dos cards".
+
+   Medido com dois aparelhos: A cria "Gravar o reels da EJUP", B cria
+   "Editar o carrossel do Cortez". Sobrava uma. A outra sumia até da tela
+   de quem a criou.
+
+   Agora o quadro se junta, com a mesma regra da v174: **ausência não é
+   exclusão**. O que um aparelho não conhece, ele não apaga. Apagar é
+   decisão, e decisão fica registrada — o Ensaio já tem lixeira, e é ela
+   que manda quando alguém realmente excluiu.
+
+   Regras, por tarefa:
+     · está na lixeira de qualquer um dos lados  → sai (exclusão é decisão)
+     · está em `feitas` de qualquer lado         → concluída (progresso não volta)
+     · os dois conhecem                          → vale a cópia deste aparelho
+     · só um conhece                             → entra (o outro não sabia)
+
+   Verificado em `web/verificar/v176-tarefa-do-cliente-certo.mjs` e
+   `v176-ensaio-dois-aparelhos.mjs`.
+   ================================================================== */
+
+function mesclarEstudio(aqui, la){
+  if(!aqui) return la || null;
+  if(!la)   return aqui;
+
+  const naLixeira = new Set();
+  for(const lado of [aqui, la])
+    for(const e of (lado.lixo || []))
+      if(e && e.tarefa && e.tarefa.id != null) naLixeira.add(String(e.tarefa.id));
+
+  /* concluída em qualquer lado é concluída: progresso não desanda */
+  const feitas = new Map();
+  for(const lado of [la, aqui])
+    for(const t of (lado.feitas || []))
+      if(t && t.id != null && !naLixeira.has(String(t.id))) feitas.set(String(t.id), t);
+
+  /* ativas: união dos dois, e a cópia DESTE aparelho ganha quando os
+     dois conhecem a mesma tarefa — é aqui que alguém está mexendo */
+  const ativas = new Map();
+  for(const lado of [la, aqui])
+    for(const t of (lado.tarefas || [])){
+      if(!t || t.id == null) continue;
+      const k = String(t.id);
+      if(naLixeira.has(k) || feitas.has(k)) continue;
+      ativas.set(k, t);
+    }
+
+  const lixo = [...(aqui.lixo || []), ...(la.lixo || [])];
+  const vistos = new Set();
+  const lixoUnico = lixo.filter(e => {
+    const k = e && e.tarefa ? String(e.tarefa.id) : Math.random();
+    if(vistos.has(k)) return false;
+    vistos.add(k); return true;
+  }).slice(0, 50);
+
+  const maior = [...ativas.values(), ...feitas.values()]
+    .reduce((m, t) => Math.max(m, +t.id || 0), 0);
+
+  return { ...aqui,
+    prox: Math.max(+aqui.prox || 0, +la.prox || 0, maior + 1),
+    tarefas: [...ativas.values()],
+    feitas:  [...feitas.values()],
+    lixo:    lixoUnico };
+}
+
+/* a carga do banco também junta, em vez de substituir o quadro */
+sbCarregar = (function(orig){
+  return function(){
+    const p = orig.apply(this, arguments);
+    return Promise.resolve(p).then(async ok => {
+      try{
+        if(ok && !(typeof abertoPorLink === 'function' && abertoPorLink())){
+          const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__config__&select=dados`,
+                                { headers: sbCab() });
+          if(r.ok){
+            const [l] = await r.json();
+            const doBanco = l && l.dados && l.dados.estudio;
+            if(doBanco){ S.ensaio = mesclarEstudio(S.ensaio, doBanco); render(); }
+          }
+        }
+      }catch(e){}
+      return ok;
+    });
+  };
+})(sbCarregar);
 </script>
