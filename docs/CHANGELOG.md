@@ -1,9 +1,75 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.23
+Version: 0.5.24
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.24 — 2026-09-07
+
+**Status:** Concluída
+**Objetivo:** o aviso chega — no aparelho, na tela, e com quem está online do lado.
+
+### Push de verdade (v181)
+Até aqui o aviso de aparelho era `showNotification` chamado pela própria
+página, o que exige a Maestro aberta. Fechou o app, acabou o aviso. Era o que
+o founder via como "o push não está funcionando": não estava quebrado, não
+existia. Agora há chaves VAPID, tabela de inscrições, inscrição no app e o
+carteiro `enviar-push`.
+
+**Um pré-requisito que ninguém tinha visto:** a fila não separava os canais.
+Na primeira linha de `canal='push'`, o carteiro do e-mail a pegaria, tentaria
+mandá-la por e-mail, e a reserva de dois minutos garantiria que o carteiro do
+push nunca mais a visse. Aviso perdido, sem erro em lugar nenhum.
+`avisos-pegar-por-canal.sql`, com o parâmetro nascendo em `'email'` para a
+função já publicada não precisar ser republicada.
+
+**Não precisa de `pg_cron`:** a própria página acorda o carteiro, e quem gera o
+evento está com a Maestro aberta por definição. Só o aviso de PRAZO vai
+precisar de agendamento, porque nasce do relógio e não de um gesto.
+
+### O aviso por dentro (v184, v186)
+Cartão no canto que some em cinco segundos, e o do sistema deixa de sair
+quando a Maestro está na frente — banner por cima do que a pessoa está
+fazendo, para contar o que ela veria de qualquer jeito, é ruído.
+
+Na v186 o founder achou o buraco: "a mensagem não chega, só no sininho".
+`avisarNoAparelho` era chamado à mão em dois lugares. O aviso local passou a
+sair do MESMO funil de onde o push já sai — tudo que vira sino vira aviso, sem
+lista para manter. Dois defeitos vieram junto e eram reais: o aviso local
+estava atrás da guarda do banco (se o Supabase caísse, a pessoa deixava de ser
+avisada do que acontecia na frente dela), e a checagem de "sou eu" conferia o
+autor numa lista que já o excluía por construção.
+
+### Quem está online (v185, v187)
+Bolinha no avatar — verde, amarela, cinza — pendurada em `avMembro`, que é onde
+toda pessoa é desenhada: 11 telas ganharam de uma vez. Mais a faixa nas
+Conversas, que responde a outra pergunta ("quem está aí?").
+
+Uma linha por pessoa, e cada aparelho escreve só a sua. Presença é a coisa
+mais escrita da casa, e o desenho de um objeto com todos dentro é exatamente
+o que apagou as chaves dos links horas antes. **Offline não se escreve:** é a
+ausência de batimento recente, e por isso funciona quando o navegador é
+fechado no tapa.
+
+Na v187 o print do founder mostrou o erro: eu escondi os nomes no celular. O
+recurso existe para responder QUEM está online — cara sem legenda não responde
+isso. Passou a rolar de lado, com os nomes inteiros.
+
+### WhatsApp, pronto antes de existir (v181)
+Aba "Meu WhatsApp" na Conta, número guardado no cadastro da pessoa e já
+normalizado com o país. A tela diz a verdade enquanto não há linha, e o estado
+vem de uma constante única. `WHATSAPP_QUANDO_CHEGAR.md` traz os três templates
+prontos para submeter à Meta — que é o caminho crítico do dia do chip, não o
+código.
+
+### Um toast que mentia (v182, v183)
+"O navegador negou os avisos" saía com check verde, e saía também quando o
+navegador não tinha negado nada — a caixa apenas ficara sem resposta. O founder
+foi mandado caçar um bloqueio inexistente nos ajustes do Safari. Agora o toast
+tem tom, e os três estados de permissão dizem coisas diferentes.
 
 ---
 
