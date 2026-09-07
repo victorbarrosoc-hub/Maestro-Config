@@ -281,38 +281,32 @@ chave publicável, e o caminho dos arquivos é previsível
 peça já aprovada — trocar a arte depois do aceite, sem passar por ninguém.
 
 O app já manda o token de quem está logado no upload desde a v140; falta o outro
-lado, que é a política. No `SQL Editor`:
+lado, que é a política.
 
-```sql
--- fora o que estiver aberto no bucket
-do $$
-declare p record;
-begin
-  for p in select policyname from pg_policies
-           where schemaname = 'storage' and tablename = 'objects'
-             and qual like '%midia%'
-  loop execute format('drop policy %I on storage.objects', p.policyname); end loop;
-end $$;
+**O SQL está em `docs/ENGINEERING/bucket-midia-politicas.sql`** — rode aquele
+arquivo, não o rascunho que estava aqui. Ele foi reescrito em 7/set, depois de
+três defeitos encontrados ao conferir contra as políticas que o banco tinha de
+verdade:
 
--- ler: quem está logado
-create policy "midia_ler_autenticado" on storage.objects
-  for select to authenticated using (bucket_id = 'midia');
+1. **O `drop` não pegava a política de upload.** O loop filtrava por
+   `qual like '%midia%'`, mas em política de `insert` a condição mora em
+   `with_check` e o `qual` vem NULO. A `midia upload liberado` sobrevivia ao
+   loop — e o buraco continuava aberto com cara de fechado.
+2. **A política de `select` quebrava os links de aprovação.** Estava escrita
+   `to authenticated`; o cliente que abre pelo link não tem login, e a arte
+   sumiria para ele. O aviso existia logo abaixo do bloco, mas quem copia o SQL
+   copia o bloco. Agora a leitura pública é o que está escrito, e o aviso virou
+   comentário dentro do próprio arquivo.
+3. **Faltava o `delete`.** O bucket tinha uma política `midia apagar liberado`
+   para `public`: qualquer pessoa com a chave publicável apagava arte aprovada.
+   O rascunho daqui não a mencionava.
 
--- subir: quem está logado
-create policy "midia_subir_autenticado" on storage.objects
-  for insert to authenticated with check (bucket_id = 'midia');
+Conferido no código antes de fechar, para não trancar ninguém do lado de fora:
+o upload por XHR (v51e) manda o token da sessão; o apagar usa `fetch` e o
+interceptador da v89 troca o `Authorization` pelo token em toda URL do Supabase;
+e o cliente anônimo só LÊ do bucket — os três pontos de upload são todos do lado
+da agência.
 
--- trocar um arquivo já existente: só quem o subiu
-create policy "midia_trocar_dono" on storage.objects
-  for update to authenticated using (bucket_id = 'midia' and owner = auth.uid());
-```
-
-> **Antes de rodar:** o cliente que abre pelo link de aprovação NÃO está logado, e
-> precisa VER a arte. Se as peças forem servidas por URL pública do bucket, a
-> política de `select` acima corta a visão dele. Duas saídas: manter o `select`
-> aberto (só a leitura) e fechar apenas a escrita — que já resolve o
-> sobrescrever —, ou passar a servir a arte por URL assinada. A primeira é uma
-> linha; a segunda é trabalho de app e ainda não está feita.
->
-> Enquanto não decidir, rode só as políticas de `insert` e `update`: o buraco que
-> importa é o de escrita.
+A leitura continua pública de propósito. Fechá-la exige URL assinada, que o app
+ainda não faz (`LINKS_ANONIMOS.md` §6); enquanto isso, o que importa — subir,
+sobrescrever e apagar — passa a exigir login.

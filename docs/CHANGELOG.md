@@ -1,9 +1,48 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.20
+Version: 0.5.21
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.21 — 2026-09-07
+
+**Status:** Concluída
+**Objetivo:** fechar a escrita no bucket `midia` — e consertar o SQL que fecharia errado.
+
+### Corrigido
+- **O rascunho de política do bucket deixava a escrita aberta.** O loop de limpeza
+  documentado em `SUPABASE_FECHAR_A_BRECHA.md` §8 filtrava por `qual like '%midia%'`.
+  Em política de `insert` a condição mora em `with_check` e o `qual` vem NULO, então a
+  `midia upload liberado` **{public}** sobrevivia ao loop. Como o mesmo rascunho fechava
+  a leitura (`to authenticated`), quem o rodasse teria o pior dos dois mundos: links de
+  aprovação quebrados e o buraco de escrita intacto — com cara de resolvido. Provado na
+  PROVA 0 de `bucket-midia-teste.sql`.
+- **Faltava o `delete`.** O bucket tinha `midia apagar liberado` para `public`: qualquer
+  pessoa com a chave publicável apagava arte aprovada. O rascunho não a mencionava.
+
+### Adicionado
+- `docs/ENGINEERING/bucket-midia-politicas.sql` — leitura pública (os links de aprovação
+  dependem dela; fechá-la exige URL assinada, que o app ainda não faz), subir e apagar só
+  para `authenticated`, e trocar arquivo existente só para o dono, que é o que fecha o
+  "sobrescrever a peça depois do aceite".
+- `docs/ENGINEERING/bucket-midia-teste.sql` — 10 provas contra um PostgreSQL 16 de verdade:
+  o anônimo vê a arte mas não sobe, não apaga e não sobrescreve; o dono troca o próprio
+  arquivo e outro membro não; o time logado sobe e apaga normalmente. Idempotente em três
+  rodadas seguidas.
+
+### Verificado antes de trancar
+Que ninguém do time ficaria do lado de fora: o upload por XHR (v51e) manda o token da
+sessão; o apagar usa `fetch` e o interceptador da v89 troca o `Authorization` pelo token
+em toda URL do Supabase; e o cliente anônimo só **lê** do bucket — os três pontos de
+upload são todos do lado da agência. `novaChave` dá caminho único por arquivo, então o
+`x-upsert` nunca sobrescreve arquivo de outra pessoa na prática.
+
+### Banco
+Limpeza da demonstração (Loja Norte) concluída pelo founder: `cliEdit` sem `ln` em
+`__config__` e em `__estado__`, conferido pelos dois lados.
 
 ---
 
