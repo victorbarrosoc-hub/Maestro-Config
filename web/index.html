@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-06 19:20 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-07 00:00 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -858,24 +858,11 @@ const S = {
   signed:false, signName:'', sound:true, billing:'m',
   pal:false, palq:'', palidx:0, skel:false, seen:{},
   stampShow:false,
-  pecas:[
-    {id:1,t:'Verão sem pressa',i:'Apresentar a coleção sem falar de preço.',f:'Carrossel',d:'quinta, 6 de agosto',art:A.p1,seal:'7F3A2B91',st:'AWAITING_APPROVAL',notes:[],edited:false,
-     c:'O verão não precisa de pressa.\n\nA coleção nova chegou inteira — mas ela não foi feita para ser consumida em uma semana. Foi feita para durar três verões.\n\n#modaconsciente #verao26'},
-    {id:2,t:'Coringas',i:'Provar versatilidade: menos peças, mais combinações.',f:'Carrossel',d:'sábado, 8 de agosto',art:A.p2,seal:'C41D88A0',st:'AWAITING_APPROVAL',notes:[],edited:false,
-     c:'Três peças. Nove looks.\n\nA gente não fez uma coleção grande. Fez uma coleção que conversa entre si.'},
-    {id:3,t:'Bastidores',i:'Mostrar quem faz a roupa, para dar rosto à marca.',f:'Reels',d:'quinta, 13 de agosto',art:A.p3,seal:'19BE5F72',st:'AWAITING_APPROVAL',notes:[],edited:false,
-     c:'Você sabe quem costurou a sua camisa?\n\nDona Rosa costura há 31 anos. Ela faz as golas de todas as camisas da coleção — uma a uma, na mesma máquina desde 1994.'},
-    {id:4,t:'Mito do linho',i:'Quebrar a objeção de que linho amassa demais.',f:'Carrossel',d:'sábado, 15 de agosto',art:A.p4,seal:'A0C21E45',st:'AWAITING_APPROVAL',notes:[],edited:false,
-     c:'Linho amassa. E daí?\n\nAmassar é o que o linho faz. Não é defeito — é como ele respira.'},
-    {id:5,t:'A mala de 5 dias',i:'Provar que a coleção resolve viagem curta.',f:'Carrossel',d:'terça, 11 de agosto',art:A.p5,seal:'5D93B7C1',st:'AWAITING_APPROVAL',notes:[],edited:false,
-     c:'Cinco dias fora, uma mala de mão.\n\nTrês peças da coleção, nove combinações possíveis — e nenhuma delas precisa de ferro.'},
-    {id:6,t:'Fim de tarde',i:'Mostrar a coleção em uso, na luz que ela pede.',f:'Reels',d:'quinta, 20 de agosto',art:A.p6,seal:'B2740FE9',st:'AWAITING_APPROVAL',notes:[],edited:false,
-     c:'A hora certa não é a hora do post.\n\nÉ quando a luz bate de lado e a roupa mostra a textura.'},
-    {id:7,t:'Antipersona',i:'Dizer para quem a marca não é. Filtra e aproxima.',f:'Carrossel',d:'sábado, 22 de agosto',art:A.p7,seal:'E8315CA6',st:'AWAITING_APPROVAL',notes:[],edited:false,
-     c:'A gente não é para quem troca de guarda-roupa todo ano.\n\nSe você compra para durar, a gente conversa.'},
-    {id:8,t:'Teaser de setembro',i:'Abrir curiosidade sem entregar a próxima coleção.',f:'Story',d:'domingo, 30 de agosto',art:A.p8,seal:'4A6D2B83',st:'AWAITING_APPROVAL',notes:[],edited:false,
-     c:'Setembro chega com uma cor que a gente nunca usou.'}
-  ]
+  /* v167: aqui moravam oito peças de demonstração da Loja Norte —
+     "Verão sem pressa", "Coringas", "Mito do linho". Eram a vitrine do
+     protótipo. A casa agora é do founder e dos clientes dele, e começa
+     vazia: quem cria as peças é ele. */
+  pecas:[]
 };
 const FULLPOS = {};
 const CT = { AWAITING_APPROVAL:'Aguardando aprovação', APPROVED:'Aprovado',
@@ -1115,7 +1102,7 @@ function vSite(){ return `<div class="site">
       <div class="who"><span class="av">RL</span><div><b>Rafael Lima</b><span>Sócio · Studio Norte</span></div></div></div>
     <div class="tcard rv"><p>"Eu finalmente sei o que estou aprovando, por que aquilo existe —
       e quantos dias do meu mês o projeto vai custar."</p>
-      <div class="who"><span class="av">HB</span><div><b>Helena Braga</b><span>Loja Norte · cliente aprovadora</span></div></div></div>
+      <div class="who"><span class="av">?</span><div><b>Quem aprova</b><span>do lado do cliente</span></div></div></div>
     <div class="tcard rv"><p>"Roteiro aprovado antes de ligar a câmera salvou duas diárias logo
       no primeiro ciclo. Isso paga o ano da ferramenta."</p>
       <div class="who"><span class="av">MR</span><div><b>Marina Reis</b><span>Produtora · Fábrica 21</span></div></div></div>
@@ -1233,7 +1220,7 @@ function agDash(){
     <span class="pill p-${p.st}">${CT[p.st]}</span><span class="chev">${ic('chevr')}</span></span></button>`;
   return agShell(`
   <div class="mtop"><div><h1>${saudacao()}, Victor</h1>
-    <p>Agência Nova · Loja Norte · Verão 26</p></div>
+    <p>${esc(nomeDaAgencia())}</p></div>
     <button class="b pri sm" data-r="lote">${ic('stack')} Preparar lote</button></div>
   <div class="tiles">
     <button class="tile hot" data-r="aprovacoes"><div class="n" data-count="${espera.length}">${espera.length}</div><div class="l">esperando o cliente</div></button>
@@ -1246,7 +1233,7 @@ function agDash(){
     <button class="b gho sm" data-r="resultados">${ic('chart')} Resultados</button>
     <button class="b gho sm" data-r="agenda">${ic('cal')} Agenda</button></div>
   ${espera.length?`<div class="sechd">Esperando o cliente <i></i></div>
-    <div style="display:grid">${espera.map((p,i)=>linha(p,i,'Helena Braga · enviado há 3 dias','HB')).join('')}</div>`:''}
+    <div style="display:grid">${espera.map((p,i)=>linha(p,i,'com quem aprova · enviado há 3 dias','?')).join('')}</div>`:''}
   ${volta.length?`<div class="sechd">Voltaram para a equipe <i></i></div>
     <div style="display:grid">${volta.map((p,i)=>linha(p,i,`${p.notes.length} nota${p.notes.length>1?'s':''} do cliente`,'HB')).join('')}</div>`:''}
   ${ok.length?`<div class="sechd">Aprovadas e na fila <i></i></div>
@@ -1346,8 +1333,15 @@ function agConteudos(){ return agShell(`
     <p>A grade do perfil com as peças nas posições reais. O cliente já avalia o mês inteiro —
       aqui a agência vê como ele vai ficar antes de mandar.</p></div>`); }
 
+/* v167: com a casa vazia, não existe peça nenhuma para abrir — e a tela
+   quebrava tentando ler uma. Quem chega aqui sem peça recebe um convite,
+   não um erro. */
 function agPeca(){
   const p = S.pecas.find(x=>x.id===S.sel) || S.pecas[0];
+  if(!p) return agShell(`<div class="mtop"><div><h1>Conteúdo</h1>
+    <p>Nada aberto aqui ainda.</p></div></div>
+    <div class="card"><h4>Comece pela pauta do cliente</h4>
+      <p>É de lá que os conteúdos nascem — com data, formato e texto.</p></div>`);
   return agShell(`
   <div class="mtop"><div>
     <button class="b gho sm" data-r="conteudos" style="margin-bottom:13px">${ic('arrowl')} Conteúdos</button>
@@ -1358,7 +1352,7 @@ function agPeca(){
   ${typeof bannerCancelada==='function'?bannerCancelada(p):''}
   ${p.st==='DRAFT'?`<div class="check warn">${ic('warn')}
     <div style="flex:1"><b>Rascunho — o cliente ainda não vê</b>
-      <span>Enviando, ela entra no lote de agosto e Helena é avisada na hora.</span>
+      <span>Enviando, ela entra no lote e quem aprova é avisado na hora.</span>
       <div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="b pri sm" data-sendone="${p.id}">Enviar esta publicação para aprovação</button>
         <button class="b gho sm" data-editpub="${p.id}">${ic('pencil')} Corrigir</button>
@@ -1368,7 +1362,7 @@ function agPeca(){
   ${p.st==='AWAITING_APPROVAL'?`<div class="check">${ic('clock')}
     <div style="flex:1"><b>Com o cliente — ainda sem decisão</b>
       <span>Mandou errado? Corrija com uma versão nova, ou recolha para rascunho.
-        Nos dois casos Helena é avisada — nada acontece em silêncio.</span>
+        Nos dois casos quem aprova é avisado — nada acontece em silêncio.</span>
       <div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="b pri sm" data-editpub="${p.id}">${ic('pencil')} Corrigir · nova versão</button>
         <button class="b gho sm" data-recall="${p.id}">Recolher para rascunho</button>
@@ -1400,7 +1394,7 @@ function agPeca(){
     <span style="font-size:12.5px;color:var(--ink-400)">a impressão digital do conteúdo aprovado</span></div>
   ${p.notes.length?`<div class="sechd">O que o cliente pediu <i></i></div>
     ${p.notes.map((n,i)=>`<div class="check warn fu" style="animation-delay:${i*60}ms">${ic('pencil')}
-      <div><b>${esc(n)}</b><span>marcado por Helena Braga</span></div></div>`).join('')}`:''}
+      <div><b>${esc(n)}</b><span>marcado por quem aprova</span></div></div>`).join('')}`:''}
   ${(p.st==='APPROVED'||p.st==='SCHEDULED')?`<div class="check blk" style="margin-top:14px">${ic('warn')}
     <div style="flex:1"><b>Editar agora derruba a aprovação</b><span>Aprovada com o selo
       ${fmtSeal(p.seal)}. Qualquer mudança gera versão nova, muda o selo, e a peça volta para o
@@ -1428,7 +1422,7 @@ function agLote(){
     <div><b>3 publicações falam do mesmo tema</b><span>Durabilidade aparece em 3 das 8. Aviso não
       impede o envio — só a visão de conjunto revela isso.</span></div></div>
   <div class="sechd">Estado <i></i></div>
-  <div class="card"><p>${enviado?`Lote enviado. Helena Braga foi avisada por e-mail e WhatsApp.
+  <div class="card"><p>${enviado?`Lote enviado. Quem aprova foi avisado por e-mail.
     <b style="color:var(--ink-50)">${decididas()} de ${doLote().length}</b> decididas.`:'Ainda não enviado.'}</p></div>
   ${!esperando()&&tudoDecidido()?`<div class="check" style="margin-top:12px">${ic('sealic')}
     <div><b>Tudo decidido</b><span>${S.signed
@@ -1447,7 +1441,7 @@ function agAprovacoes(){
   ${espera.length?`<div class="sechd">Com o cliente <i></i></div>
     ${espera.map((p,i)=>`<button ${stg(i)} data-peca="${p.id}" style="display:block;width:100%">
       <span class="row" style="margin:0 0 8px"><span class="av">HB</span>
-      <span class="t"><b>${esc(p.t)}</b><span>Helena Braga · ${p.f} · ${p.d}</span></span>
+      <span class="t"><b>${esc(p.t)}</b><span>quem aprova · ${p.f} · ${p.d}</span></span>
       <span class="pill p-${p.st}">Aguardando</span><span class="chev">${ic('chevr')}</span></span></button>`).join('')}`
   :`<div class="empty fu"><div class="eic">${ic('checkc')}</div><b>Nada esperando o cliente</b>
      <p>Todas as ${doLote().length} publicações foram decididas.
@@ -1474,7 +1468,7 @@ function agProducao(){
       <b>${esc(p.t)}</b><span>Loja Norte · ${p.f}</span></button>`).join('')}
     ${!ps.length?`<div class="kghost">${ghost||'vazio por enquanto'}</div>`:''}</div>`;
   return agShell(`
-  <div class="mtop"><div><h1>Produção</h1><p>Agência Nova · ${S.pecas.length} peças no ciclo</p></div></div>
+  <div class="mtop"><div><h1>Produção</h1><p>${esc(nomeDaAgencia())} · ${S.pecas.length} peças no ciclo</p></div></div>
   <div class="kb">
     ${col('Briefing',[],'nada em briefing')}
     ${col('Criação',S.pecas.filter(p=>p.st==='CHANGES_REQUESTED'),'nenhuma volta do cliente')}
@@ -1487,7 +1481,7 @@ function agProducao(){
 }
 
 function agConta(){ return agShell(`
-  <div class="mtop"><div><h1>Plano e equipe</h1><p>Agência Nova · teste de 14 dias</p></div></div>
+  <div class="mtop"><div><h1>Plano e equipe</h1><p>${esc(nomeDaAgencia())} · teste de 14 dias</p></div></div>
   <div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(132px,1fr))">
     <div class="tile hot"><div class="n">11</div><div class="l">dias restantes de teste</div></div>
     <div class="tile"><div class="n">3</div><div class="l">de 3 assentos usados</div></div>
@@ -1495,7 +1489,7 @@ function agConta(){ return agShell(`
   <div class="sechd">Equipe <i></i></div>
   ${[['VC','Victor Cardoso','victor@agencianova.com.br','APPROVED','Administrador'],
      ['MR','Marina Reis','marina@agencianova.com.br','IN_PRODUCTION','Atendimento'],
-     ['HB','Helena Braga','helena@lojanorte.com · Loja Norte','DRAFT','Aprovadora · grátis']]
+     ]
     .map(([av,n,e,st,pp],i)=>`<div class="row fu" style="animation-delay:${i*50}ms">
       <div class="av">${av}</div><div class="t"><b>${n}</b><span>${e}</span></div>
       <span class="pill p-${st}">${pp}</span></div>`).join('')}
@@ -1503,8 +1497,8 @@ function agConta(){ return agShell(`
     <div><b>Você chegou ao limite de assentos</b><span>Convidar mais alguém exige mudar de plano.
       O que já roda continua funcionando — cobrança nunca quebra operação em andamento.</span></div></div>
   <div class="card" style="margin-top:12px"><h4>O aprovador do cliente é grátis</h4>
-    <p>Helena tem todos os recursos — comentário por ponto, tela cheia, edição de copy, selo,
-      termo — e não consome assento em plano nenhum. A experiência dela é a proposta de valor.</p></div>`); }
+    <p>Quem aprova tem todos os recursos — comentário por ponto, tela cheia, edição de copy,
+      selo, termo — e não consome assento em plano nenhum. A experiência dele é a proposta de valor.</p></div>`); }
 </script>
 <script>
 /* =====================================================================
@@ -1521,8 +1515,8 @@ function clShell(inner){
     ${ic(x.icn)}${x.n}${x.bd&&x.bd()>0?`<span class="bd">${x.bd()}</span>`:''}</button>`).join('');
   return `<div class="cl"><div class="clframe">
     <div class="clbar">${LOGO('var(--brass-700)',17)}
-      <div class="who"><b>Agência Nova</b> usa a Maestro</div>
-      <span style="font-size:11px;color:#6E6A61">Helena</span></div>
+      <div class="who"><b>${esc(nomeDaAgencia())}</b> usa a Maestro</div>
+      <span style="font-size:11px;color:#6E6A61">cliente</span></div>
     ${inner}
   </div></div><nav class="cltab">${tabs}</nav>`;
 }
@@ -1543,7 +1537,7 @@ function anel(frac){
 
 function clInicio(){ return clShell(`<div class="clbody venter">
   <div class="kick">Loja Norte</div>
-  <h2>Olá, Helena</h2>
+  <h2>Olá</h2>
   <p>${esperando()?`${esperando()} publicaç${esperando()>1?'ões esperam':'ão espera'} por você.`
     :S.signed?'Tudo decidido e assinado. Nada pendente.':'Tudo decidido — falta só assinar o termo.'}</p>
   <h3>Esperando você</h3>
@@ -1569,7 +1563,7 @@ function clInicio(){ return clShell(`<div class="clbody venter">
 function clCapa(){
   if(!esperando() && tudoDecidido()){
     return clShell(`<div class="clbody venter">
-      <div class="kick">Verão 26 · Lote de agosto</div>
+      <div class="kick">${esc(nomeDoLoteAtual())}</div>
       <h2>${S.signed?'Lote fechado':'Tudo decidido'}</h2>
       <p>${S.signed?`Assinado por ${esc(S.signName)}. A agência já foi avisada.`
         :'Falta só assinar. Isso fecha o lote e libera a produção.'}</p>
@@ -1588,7 +1582,7 @@ function clCapa(){
     </div>`);
   }
   return clShell(`<div class="clbody venter">
-    <div class="kick">Verão 26 · Lote de agosto</div>
+    <div class="kick">${esc(nomeDoLoteAtual())}</div>
     <h2>${esperando()} publicaç${esperando()>1?'ões esperando':'ão esperando'} você</h2>
     <p>Marina enviou as publicações de agosto para você aprovar antes de irem ao ar.</p>
     <h3>O que você vai fazer</h3>
@@ -1615,8 +1609,14 @@ function clCapa(){
   </div>`);
 }
 
+/* v167: com a casa vazia, não existe peça nenhuma para abrir — e a tela
+   quebrava tentando ler uma. Quem chega aqui sem peça recebe um convite,
+   não um erro. */
 function clPeca(){
   const p = S.pecas.find(x=>x.id===S.sel) || proxima() || S.pecas[0];
+  if(!p) return clShell(`<div class="clbody venter">
+    <h2>Nada esperando você</h2>
+    <p>Quando a agência mandar uma publicação para aprovação, ela aparece aqui.</p></div>`);
   const n = p.notes.length;
   const idx = doLote().findIndex(x=>x.id===p.id)+1;
   const decidida = p.st==='APPROVED'||p.st==='CHANGES_REQUESTED';
@@ -1654,12 +1654,12 @@ function clPeca(){
 function clTermo(){ return clShell(`<div class="clbody venter">
   <div class="clprog" style="margin-bottom:16px"><span>${doLote().length} de ${doLote().length}</span>
     <div class="bar"><i style="width:100%"></i></div></div>
-  <div class="kick">Verão 26 · Lote de agosto</div>
+  <div class="kick">${esc(nomeDoLoteAtual())}</div>
   <h2>Tudo decidido</h2>
   <p>Falta só assinar. Isso fecha o lote e libera a produção.</p>
   <div class="termo">
     <div style="font-family:var(--serif);font-size:18px;margin-bottom:3px">Termo de aprovação</div>
-    <div style="font-size:11.5px;color:#6E6A61">Loja Norte · Verão 26 · Lote 01 · Agosto</div>
+    <div style="font-size:11.5px;color:#6E6A61">${esc(nomeDoLoteAtual())}</div>
     <dl>
       <dt>Publicações</dt><dd>${doLote().length}</dd>
       <dt>Aprovadas</dt><dd>${aprovadas()}</dd>
@@ -1699,7 +1699,7 @@ function clProjeto(){ return clShell(`<div class="clbody venter">
 
 function clConta(){ return clShell(`<div class="clbody venter">
   <div class="kick">Sua conta</div>
-  <h2>Helena Braga</h2>
+  <h2>Quem aprova</h2>
   <p>helena@lojanorte.com</p>
   <h3>Acesso</h3>
   <div class="clrow"><span class="t"><b>Entrada por link</b>
@@ -2443,8 +2443,14 @@ function renderLayer(){
   const nt = document.getElementById('nota'); if(nt) nt.focus();
 }
 
+/* v167: com a casa vazia, não existe peça nenhuma para abrir — e a tela
+   quebrava tentando ler uma. Quem chega aqui sem peça recebe um convite,
+   não um erro. */
 function clPeca(){
   const p = S.pecas.find(x=>x.id===S.sel) || proxima() || S.pecas[0];
+  if(!p) return clShell(`<div class="clbody venter">
+    <h2>Nada esperando você</h2>
+    <p>Quando a agência mandar uma publicação para aprovação, ela aparece aqui.</p></div>`);
   const n = p.notes.length;
   const idx = doLote().findIndex(x=>x.id===p.id)+1;
   const decidida = p.st==='APPROVED'||p.st==='CHANGES_REQUESTED';
@@ -2485,7 +2491,7 @@ function clPeca(){
 function clCapa(){
   if(!esperando() && tudoDecidido()){
     return clShell(`<div class="clbody venter">
-      <div class="kick">Verão 26 · Lote de agosto</div>
+      <div class="kick">${esc(nomeDoLoteAtual())}</div>
       <h2>${S.signed?'Lote fechado':'Tudo decidido'}</h2>
       <p>${S.signed?`Assinado por ${esc(S.signName)}. Toque numa publicação para rever — o lote
           está fechado, mas nada some.`
@@ -2507,7 +2513,7 @@ function clCapa(){
     </div>`);
   }
   return clShell(`<div class="clbody venter">
-    <div class="kick">Verão 26 · Lote de agosto</div>
+    <div class="kick">${esc(nomeDoLoteAtual())}</div>
     <h2>${esperando()} publicaç${esperando()>1?'ões esperando':'ão esperando'} você</h2>
     <p>Marina enviou as publicações de agosto para você aprovar antes de irem ao ar.</p>
     <h3>O que você vai fazer</h3>
@@ -2536,7 +2542,7 @@ function clCapa(){
 
 function clInicio(){ return clShell(`<div class="clbody venter">
   <div class="kick">Loja Norte</div>
-  <h2>Olá, Helena</h2>
+  <h2>Olá</h2>
   <p>${esperando()?`${esperando()} publicaç${esperando()>1?'ões esperam':'ão espera'} por você.`
     :S.signed?'Tudo decidido e assinado. Nada pendente.':'Tudo decidido — falta só assinar o termo.'}</p>
   <h3>Esperando você</h3>
@@ -2703,23 +2709,12 @@ document.addEventListener('pointerdown', e => {
 /* =====================================================================
    v4 — clientes separados, textos, kanban, planos, equipe
    ================================================================== */
-Object.assign(S,{cli:'ln', plan:'TRIAL', kb:{}, txsel:null, txnote:false,
+Object.assign(S,{cli:'cj', plan:'TRIAL', kb:{}, txsel:null, txnote:false,
   signedT:false, signTName:'',
-  textos:[
-    {id:1,t:'Chegada da cor nova',i:'Anunciar a cor de setembro sem mostrar tudo.',f:'Legenda',st:'AWAITING_APPROVAL',edited:false,note:'',
-     c:'Setembro chega com uma cor que a gente nunca usou.\n\nEla passou seis meses em teste de tingimento para durar como as outras. Semana que vem você vê.'},
-    {id:2,t:'Dona Rosa · parte 2',i:'Continuar a história que mais engajou em agosto.',f:'Roteiro',st:'AWAITING_APPROVAL',edited:false,note:'',
-     g:'"A Dona Rosa guardou isso por 31 anos."',
-     d:'Ela abre a gaveta da máquina: dentro, a primeira gola que costurou em 1994. Compara com a de hoje — o mesmo ponto.',
-     ch:'"Tem coisa que não muda. A coleção nova está no site."'},
-    {id:3,t:'Linho no outono',i:'Quebrar a ideia de que linho é só verão.',f:'Legenda',st:'AWAITING_APPROVAL',edited:false,note:'',
-     c:'Linho no outono? Sim.\n\nCamadas. A camisa que você usou na praia vira a peça de baixo do casaco. É isso que durabilidade quer dizer.'},
-    {id:4,t:'A prova da mala',i:'Transformar a peça mais salva de agosto em série.',f:'Roteiro',st:'AWAITING_APPROVAL',edited:false,note:'',
-     g:'"Uma mala. Sete dias. Nenhuma repetição óbvia."',
-     d:'Timelapse da mala sendo desfeita: cada peça sai e monta um look no espelho, dia após dia.',
-     ch:'"As nove combinações estão no site. Qual é a sua?"'},
-    {id:5,t:'Bastidor da escolha',i:'Mostrar o critério, não o produto.',f:'Legenda',st:'AWAITING_APPROVAL',edited:false,note:'',
-     c:'De 40 tecidos, escolhemos 3.\n\nO critério: sobreviver a 200 lavagens e continuar bonito amassado. Os outros 37 não passaram.'}],
+  /* v167: aqui moravam cinco textos de demonstração da Loja Norte
+     ("Dona Rosa · parte 2", "Linho no outono"). Eles viravam cinco peças
+     logo abaixo, na v13. Saíram com o resto da vitrine. */
+  textos:[],
   /* A equipe REAL da agencia. Ate 1/9 aqui morava a de demonstracao
      (Victor Cardoso, Marina Reis, Paulo Duarte); ela sobrescreveu a real
      no incidente daquele dia e virou o que estava no banco. Os e-mails
@@ -2758,33 +2753,55 @@ const PERMS = {
   Copywriter:{sim:['copys e roteiros','versões','comentários internos'],nao:['enviar lotes','equipe','aprovar conteúdo']},
   Videomaker:{sim:['vídeos e roteiros','produção','uploads'],nao:['enviar lotes','equipe','aprovar conteúdo']}};
 
-S.proj = {
-  ln:{nome:'Verão 26',per:'3 meses · agosto a outubro',fases:[
-    {n:'Fundação',m:'ago',dias:31,ag:2,q:'Quem é essa marca antes de tentar vender?'},
-    {n:'Coleção',m:'set',dias:30,ag:1,q:'A coleção sustenta um mês inteiro de conversa?'},
-    {n:'Sustentação',m:'out',dias:31,ag:1,q:'O que fica quando a novidade passa?'}]},
-  cj:{nome:'Da marca ao lançamento',per:'6 meses · agosto a janeiro',fases:[
-    {n:'Fundação',m:'ago',dias:31,ag:2,q:'Quem é essa marca antes de tentar vender?'},
-    {n:'Posicionamento',m:'set',dias:30,ag:1,q:'Contra o que a marca se define?'},
-    {n:'Produção',m:'out',dias:31,ag:0,q:'O estoque de conteúdo aguenta o lançamento?'},
-    {n:'Autoridade',m:'nov',dias:30,ag:1,q:'Por que ouvir justamente essa marca?'},
-    {n:'Pré-lançamento',m:'dez',dias:31,ag:1,q:'A audiência sabe o que vem aí?'},
-    {n:'Lançamento',m:'jan',dias:31,ag:3,q:'A promessa dos seis meses se cumpriu?'}]}};
+/* v167: aqui moravam dois projetos de demonstração — "Verão 26" da
+   Loja Norte e "Da marca ao lançamento" do Cortez, com fases e
+   perguntas de exemplo. Saíram com o resto da vitrine. Cliente novo
+   nasce com o projeto "Sempre ativo"; o resto quem monta é a agência,
+   em Metodologia e Cronograma. */
+S.proj = {};
 
 /* `let`, nao `const`: a v45 envolve CLIS para aplicar edicoes e
    exclusoes por cima. Com `const` a reatribuicao lancava
    "Assignment to constant variable" e matava o bloco inteiro em
    silencio — o contador do topo batia por coincidencia e escondia. */
+/* v167: a Loja Norte era o cliente de demonstração do protótipo — com
+   pauta, peças, aprovadora (Helena Braga) e depoimento. Ela saiu: a
+   casa é do founder, e o que aparece aqui são clientes de verdade.
+   O Cortez fica, mas limpo — sem o briefing de exemplo e sem a
+   aprovadora inventada; quem preenche isso é a agência. */
 let CLIS = () => [
-  {id:'ln',nome:'Loja Norte',ini:'LN',seg:'Varejo de moda',cor:null,
-   brief:'Marca de moda atemporal em linho. Tom calmo, nunca urgência de promoção. Nunca falar de preço em conteúdo de marca.',
-   links:['drive.google.com/lojanorte','@lojanorte'],refs:'COS, Toteme, feeds de slow fashion'},
   {id:'cj',nome:'Cortez Jurídico',ini:'CJ',seg:'Consultoria jurídica',cor:null,
-   brief:'Consultoria de marcas e contratos. Autoridade sem juridiquês. O expert é o rosto — Dra. Ana Cortez.',
-   links:['drive.google.com/cortez','@cortezjuridico'],refs:'Conteúdo de autoridade, carrosséis didáticos'},
+   brief:'—', links:[], refs:'—'},
   ...S.novos.map((c,i)=>({id:'n'+i,nome:c.nome,ini:c.ini,seg:c.seg,cor:c.cor,
     brief:c.brief||'—',links:[],refs:'—', tipo:c.tipo}))];   /* v108: o tipo viaja junto */
 const cliAtual = () => CLIS().find(c=>c.id===S.cli) || CLIS()[0];
+/* v167: a casa dizia "Helena" — a aprovadora de exemplo da Loja Norte —
+   em toda tela de envio, para qualquer cliente. Agora pergunta a quem
+   aprova naquele cliente; e quando ninguém foi cadastrado, chama pelo
+   que a pessoa é. */
+/* v167: o termo dizia "Loja Norte · Verão 26 · Lote 01 · Agosto" —
+   cliente e projeto de exemplo, no documento que o cliente assina. Passa
+   a dizer o cliente aberto, o projeto dele quando existe, e o mês. */
+/* v167: "Agência Nova" era o nome de exemplo e aparecia como se fosse o
+   da casa. Enquanto ninguém der um nome à agência, a tela diz o que ela
+   é, sem inventar. */
+const nomeDaAgencia = () => String((S.agencia && S.agencia.nome) || '').trim() || 'Sua agência';
+const iniAprovador = c => {
+  const n = String(((c && c.aprovador) || {}).nome || '').trim();
+  return n ? n.split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase() : '—';
+};
+const nomeDoLoteAtual = (tipo) => {
+  const c = cliAtual() || {};
+  const mes = new Date().toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
+  const proj = (S.proj && S.proj[c.id] && S.proj[c.id].nome) ? S.proj[c.id].nome : '';
+  return [c.nome, proj, tipo === 'texto' ? 'Lote de texto' : 'Lote', mes]
+    .filter(Boolean).join(' · ');
+};
+const nomeDeQuemAprova = () => {
+  const c = cliAtual() || {};
+  const nome = String(((c.aprovador || {}).nome) || '').trim();
+  return nome || c.nome || 'o cliente';
+};
 const txAll  = () => S.pecas.filter(p=>p.fase==='TEXTO' && p.st!=='CANCELLED');
 const txPend = () => txAll().filter(t=>t.st==='AWAITING_APPROVAL').length;
 const txVis  = () => txAll().filter(t=>t.st!=='DRAFT');
@@ -2874,9 +2891,9 @@ function agClienteDet(){
           <span>metodologia de social · 12 datas no calendário</span></span><span class="pill p-DRAFT">novo</span></div>
         <div class="card" style="margin-top:12px"><h4>Próximo passo</h4><p>Criar o primeiro conteúdo —
           ou aplicar outra metodologia com "Novo projeto".</p></div>`,
-    equipe:`<div class="row"><span class="av">${c.id==='ln'?'HB':c.id==='cj'?'AC':'—'}</span>
-      <span class="t"><b>${c.id==='ln'?'Helena Braga':c.id==='cj'?'Dra. Ana Cortez':'Sem aprovador ainda'}</b>
-      <span>${c.id==='n'?'convide quem aprova':'aprovadora · acesso por link, sem senha'}</span></span>
+    equipe:`<div class="row"><span class="av">${esc(iniAprovador(c))}</span>
+      <span class="t"><b>${esc((c.aprovador||{}).nome || 'Sem aprovador ainda')}</b>
+      <span>${(c.aprovador||{}).nome ? 'acesso por link, sem senha' : 'convide quem aprova'}</span></span>
       <span class="pill p-DRAFT">Aprovador · grátis</span></div>
       <div class="card" style="margin-top:12px"><h4>O aprovador nunca conta como assento</h4>
       <p>Acesso completo e gratuito, em qualquer plano.</p></div>`
@@ -3101,7 +3118,7 @@ function agAprovacoes(){
   ${chips()}
   ${txe.length?`<div class="sechd">Lote de texto · Setembro <i></i></div>
     ${txe.map((t,i)=>`<div class="row fu" style="animation-delay:${i*40}ms"><span class="av">${(t.tf||t.f)==='Roteiro'?'▶':'✎'}</span>
-      <span class="t"><b>${esc(t.t)}</b><span>${t.tf||t.f} · Helena Braga</span></span>
+      <span class="t"><b>${esc(t.t)}</b><span>${t.tf||t.f}</span></span>
       <span class="pill p-AWAITING_APPROVAL">Aguardando</span></div>`).join('')}`:''}
   ${espera.length?`<div class="sechd">Lote final · Agosto <i></i></div>
     ${espera.map((p,i)=>`<button ${stg(i)} data-peca="${p.id}" style="display:block;width:100%">
@@ -3155,7 +3172,7 @@ function agPlanos(){
       ${cur===id?`<button class="b gho sm" disabled>Plano atual</button>`
         :`<button class="b pri sm" data-upgrade="${id}">Mudar para ${p.nome}</button>`}</div>`; };
   return agShell(`
-  <div class="mtop"><div><h1>Planos</h1><p>Agência Nova · hoje: ${plano().nome}
+  <div class="mtop"><div><h1>Planos</h1><p>${esc(nomeDaAgencia())} · hoje: ${plano().nome}
     ${S.plan==='TRIAL'?' — 11 dias restantes':''}</p></div></div>
   <div class="planrow">
     ${cartao('ENSAIO',['Selo e termo de aprovação'])}
@@ -3223,8 +3240,8 @@ function clShell(inner){
     ${ic(x.icn)}${x.n}${x.bd&&x.bd()>0?`<span class="bd">${x.bd()}</span>`:''}</button>`).join('');
   return `<div class="cl"><div class="clframe">
     <div class="clbar">${LOGO('var(--brass-700)',17)}
-      <div class="who"><b>Agência Nova</b> usa a Maestro</div>
-      <span style="font-size:11px;color:#6E6A61">Helena</span></div>
+      <div class="who"><b>${esc(nomeDaAgencia())}</b> usa a Maestro</div>
+      <span style="font-size:11px;color:#6E6A61">cliente</span></div>
     ${inner}
   </div></div><nav class="cltab">${tabs}</nav>`;
 }
@@ -3237,7 +3254,7 @@ function clLote(){ // hub: os dois lotes
       <span class="t"><b>${tit}</b><span>${sub}</span></span>
       <span class="clpill ${pcls}">${pill}</span></button>`;
   return clShell(`<div class="clbody venter">
-    <div class="kick">Verão 26</div>
+    <div class="kick">${esc(nomeDoLoteAtual())}</div>
     <h2>Suas publicações</h2>
     <p>Dois lotes com você neste ciclo — o texto de setembro decide antes da produção começar.</p>
     ${cartao('lotetexto','Textos de setembro',
@@ -3261,7 +3278,7 @@ function clLoteTexto(){
   if(txAll().length===0 && S.signedT){
     const emProd = S.pecas.filter(p=>p.fase!=='TEXTO' && p.mes===9).length;
     return clShell(`<div class="clbody venter">
-      <div class="kick">Verão 26 · Lote de texto · Setembro</div>
+      <div class="kick">${esc(nomeDoLoteAtual("texto"))}</div>
       <h2>Textos aprovados</h2>
       <p>Assinado por ${esc(S.signTName)}. Os ${S.termoTx?S.termoTx.ap:''} textos aprovados
         viraram produção — as peças prontas chegam no lote final.</p>
@@ -3276,7 +3293,7 @@ function clLoteTexto(){
   }
   if(!txPend() && txVis().length>0 && txDecid()===txVis().length){
     return clShell(`<div class="clbody venter">
-      <div class="kick">Verão 26 · Lote de texto · Setembro</div>
+      <div class="kick">${esc(nomeDoLoteAtual("texto"))}</div>
       <h2>${S.signedT?'Lote de texto fechado':'Textos decididos'}</h2>
       <p>${S.signedT?`Assinado por ${esc(S.signTName)}. A copy está congelada — a produção pode começar.`
         :'Revise o que quiser — dá para mudar qualquer decisão até assinar.'}</p>
@@ -3294,7 +3311,7 @@ function clLoteTexto(){
     </div>`);
   }
   return clShell(`<div class="clbody venter">
-    <div class="kick">Verão 26 · Lote de texto · Setembro</div>
+    <div class="kick">${esc(nomeDoLoteAtual("texto"))}</div>
     <h2>${txPend()} texto${txPend()>1?'s':''} esperando você</h2>
     <p>Marina enviou ${txVis().length} pe${txVis().length>1?'ças':'ça'} de copy e roteiro de setembro. Aprovar o texto agora evita refazer
       gravação depois — é aqui que a produção fica barata.</p>
@@ -3311,8 +3328,14 @@ function clLoteTexto(){
   </div>`);
 }
 
+/* v167: com a casa vazia, não existe peça nenhuma para abrir — e a tela
+   quebrava tentando ler uma. Quem chega aqui sem peça recebe um convite,
+   não um erro. */
 function clPecaTexto(){
   const t = txAll().find(x=>x.id===S.txsel) || txAll().find(x=>x.st==='AWAITING_APPROVAL') || S.textos[0];
+  if(!t) return clShell(`<div class="clbody venter">
+    <h2>Nenhum texto esperando</h2>
+    <p>Quando a agência mandar a copy para você ler, ela aparece aqui.</p></div>`);
   const idx = txVis().indexOf(t)+1;
   const decidido = t.st!=='AWAITING_APPROVAL' && t.st!=='DRAFT';
   const roteiro = (t.tf||t.f)==='Roteiro';
@@ -3362,12 +3385,12 @@ function clPecaTexto(){
 function clTermoTexto(){ return clShell(`<div class="clbody venter">
   <div class="clprog" style="margin-bottom:16px"><span>${txVis().length} de ${txVis().length}</span>
     <div class="bar"><i style="width:100%"></i></div></div>
-  <div class="kick">Verão 26 · Lote de texto · Setembro</div>
+  <div class="kick">${esc(nomeDoLoteAtual("texto"))}</div>
   <h2>Textos decididos</h2>
   <p>Assinar congela a copy e os roteiros — e libera a produção.</p>
   <div class="termo">
     <div style="font-family:var(--serif);font-size:18px;margin-bottom:3px">Termo do lote de texto</div>
-    <div style="font-size:11.5px;color:#6E6A61">Loja Norte · Verão 26 · Setembro</div>
+    <div style="font-size:11.5px;color:#6E6A61">${esc(nomeDoLoteAtual('texto'))}</div>
     <dl><dt>Textos</dt><dd>${txVis().length}</dd>
       <dt>Aprovados</dt><dd>${txVis().filter(t=>t.st==='APPROVED').length}</dd>
       <dt>Com alterações</dt><dd>${txVis().filter(t=>t.st==='CHANGES_REQUESTED').length}</dd>
@@ -3593,7 +3616,7 @@ render();
 function agConta(){
   const pl = plano();
   return agShell(`
-  <div class="mtop"><div><h1>Plano e conta</h1><p>Agência Nova · ${pl.nome}</p></div>
+  <div class="mtop"><div><h1>Plano e conta</h1><p>${esc(nomeDaAgencia())} · ${pl.nome}</p></div>
     <button class="b pri sm" data-r="planos">Ver planos</button></div>
   <div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(132px,1fr))">
     ${S.plan==='TRIAL'?`<div class="tile hot"><div class="n">11</div><div class="l">dias restantes de teste</div></div>`:''}
@@ -3613,7 +3636,7 @@ function agConta(){
     <span class="t"><b>Planos e upgrade</b><span>hoje: ${pl.nome}</span></span>
     <span class="chev">${ic('chevr')}</span></button>
   <div class="card" style="margin-top:14px"><h4>O aprovador do cliente é grátis</h4>
-    <p>Helena e a Dra. Ana têm tudo — e não consomem assento em plano nenhum.</p></div>`);
+    <p>Quem aprova, do lado do cliente, tem tudo — e não consome assento em plano nenhum.</p></div>`);
 }
 </script>
 <style>
@@ -4005,13 +4028,13 @@ document.addEventListener('click', e => {
       st: d.createpub==='2' ? 'AWAITING_APPROVAL' : 'DRAFT', notes:[], edited:false});
     S.modal=null; som('toque'); S.route='conteudos'; render();
     toast(d.createpub==='2'
-      ? 'Publicação enviada para aprovação — Helena foi avisada por e-mail e WhatsApp.'
+      ? 'Publicação enviada para aprovação — quem aprova foi avisado por e-mail.'
       : 'Rascunho criado — envie quando quiser, aqui mesmo ou em Lotes.');
     return; }
   if(d.sendlote){
     let n=0; S.pecas.forEach(p=>{ if(p.st==='DRAFT'){ p.st='AWAITING_APPROVAL'; p.everSent=true; n++; } });
     som('toque'); render();
-    toast(n+' publicaç'+(n>1?'ões enviadas':'ão enviada')+' — Helena foi avisada por e-mail e WhatsApp.');
+    toast(n+' publicaç'+(n>1?'ões enviadas':'ão enviada')+' — quem aprova foi avisado por e-mail.');
     return; }
 });
 </script>
@@ -4082,13 +4105,13 @@ document.addEventListener('click', e => {
     S.textos.push(novo);
     S.modal=null; som('toque'); S.route='lote'; render();
     toast(d.createtx==='2'
-      ? 'Texto enviado para aprovação — Helena foi avisada.'
+      ? 'Texto enviado para aprovação — quem aprova foi avisado.'
       : 'Rascunho de texto criado — envie quando quiser.');
     return; }
   if(d.sendtxlote){
     let n=0; txAll().forEach(x=>{ if(x.st==='DRAFT'){ x.st='AWAITING_APPROVAL'; x.everSent=true; n++; } });
     som('toque'); render();
-    toast(n+' texto'+(n>1?'s enviados':' enviado')+' para aprovação — Helena foi avisada.'
+    toast(n+' texto'+(n>1?'s enviados':' enviado')+' para aprovação — quem aprova foi avisado.'
       + (S.signedT?' O lote de setembro reabre com a novidade.':''));
     return; }
 });
@@ -4179,7 +4202,7 @@ function modalTextoDet(id){
     ${corpo}
     ${x.st==='DRAFT'?`<div class="check warn" style="margin-top:14px">${ic('warn')}
       <div><b>Rascunho — o cliente ainda não vê</b>
-        <span>Enviando, entra no lote de texto de setembro e Helena é avisada.</span></div></div>`:''}
+        <span>Enviando, entra no lote de texto e quem aprova é avisado.</span></div></div>`:''}
     <div class="modalrow" style="margin-top:14px">
       <button class="b gho" data-modalno="1">Fechar</button>
       <button class="b gho" data-edittx="${x.id}">${ic('pencil')} Editar texto</button>
@@ -4198,13 +4221,13 @@ document.addEventListener('click', e => {
   if(d.sendone){
     const p2 = S.pecas.find(x=>x.id===+d.sendone); if(!p2) return;
     p2.st='AWAITING_APPROVAL'; p2.everSent=true; som('toque'); render();
-    toast(`"${p2.t}" enviada para aprovação — Helena foi avisada.`);
+    toast(`"${p2.t}" enviada para aprovação — quem aprova foi avisado.`);
     return; }
   if(d.txdet){ S.modal=modalTextoDet(+d.txdet); renderLayer(); return; }
   if(d.sendonetx){
     const x = txAll().find(t2=>t2.id===+d.sendonetx); if(!x) return;
     x.st='AWAITING_APPROVAL'; x.everSent=true; S.modal=null; som('toque'); render();
-    toast(`"${x.t}" enviado para aprovação — Helena foi avisada.`);
+    toast(`"${x.t}" enviado para aprovação — quem aprova foi avisado.`);
     return; }
 });
 </script>
@@ -4273,7 +4296,7 @@ function modalEditPub(id){
       <p class="fhint" id="ed-artdica">Mantendo a arte atual.</p></div>
     ${(p2.st==='APPROVED'||p2.st==='SCHEDULED')?`<div class="check blk">${ic('warn')}
       <div><b>Esta peça está aprovada</b><span>Salvar derruba a aprovação e ela volta para
-        Helena decidir de novo — com o selo novo.</span></div></div>`:''}
+        o cliente decidir de novo — com o selo novo.</span></div></div>`:''}
     <div class="modalrow" style="margin-top:14px">
       <button class="b gho" data-modalno="1">Cancelar</button>
       <button class="b pri" data-editok="${p2.id}">Salvar nova versão</button></div>
@@ -4305,13 +4328,13 @@ document.addEventListener('click', e => {
     if(caiu){ p2.st='AWAITING_APPROVAL'; p2.notes=[]; }
     S.modal=null; som('toque'); S.sel=p2.id; S.route='peca'; render();
     toast(caiu
-      ? `Versão ${p2.ver} salva — a aprovação caiu e a peça voltou para Helena. Selo novo: ${fmtSeal(p2.seal)}.`
-      : `Versão ${p2.ver} salva. Selo novo: ${fmtSeal(p2.seal)}${p2.st==='AWAITING_APPROVAL'?' — Helena vê a atualização':''}.`);
+      ? `Versão ${p2.ver} salva — a aprovação caiu e a peça voltou para o cliente. Selo novo: ${fmtSeal(p2.seal)}.`
+      : `Versão ${p2.ver} salva. Selo novo: ${fmtSeal(p2.seal)}${p2.st==='AWAITING_APPROVAL'?' — o cliente vê a atualização':''}.`);
     return; }
   if(d.recall){
     const p2 = S.pecas.find(x=>x.id===+d.recall); if(!p2) return;
     p2.st='DRAFT'; som('toque'); render();
-    toast(`"${p2.t}" recolhida para rascunho — Helena foi avisada de que a peça saiu do lote.`);
+    toast(`"${p2.t}" recolhida para rascunho — quem aprova foi avisado de que a peça saiu do lote.`);
     return; }
 });
 </script>
@@ -4562,7 +4585,7 @@ document.addEventListener('click', e => {
     S.pecas.push(novo);
     S.modal=null; som('toque'); S.route='conteudos'; render();
     toast(enviar
-      ? (pronto?'Peça enviada para aprovação final.':'Texto enviado — Helena decide antes da produção.')
+      ? (pronto?'Peça enviada para aprovação final.':'Texto enviado — o cliente decide antes da produção.')
       : 'Rascunho criado — envie quando quiser.');
     return; }
   if(d.upmat){ S.editArt=null; S.modal=modalUpMat(+d.upmat); renderLayer(); return; }
@@ -4598,16 +4621,16 @@ const val     = id => { const el=document.getElementById(id); return el?el.value
 function custoDaEdicao(p){
   if(p.fase==='PRODUCAO') return {cls:'check blk',
     t:'O texto está congelado pelo termo',
-    s:`Salvar derruba a aprovação: o card volta para o lote de texto e Helena decide de novo.
+    s:`Salvar derruba a aprovação: o card volta para o lote de texto e o cliente decide de novo.
        A produção para até ela responder — é o preço de mudar palavra depois do aceite (I-05).`};
   if(p.st==='APPROVED') return {cls:'check blk',
     t:'Este texto já foi aprovado',
-    s:'Salvar derruba a aprovação e devolve o texto para Helena, com o selo novo.'};
+    s:'Salvar derruba a aprovação e devolve o texto para o cliente, com o selo novo.'};
   if(p.st==='AWAITING_APPROVAL') return {cls:'check',
     t:'Está com o cliente agora',
-    s:'Salvar gera versão nova e Helena vê a atualização — nada acontece em silêncio.'};
+    s:'Salvar gera versão nova e o cliente vê a atualização — nada acontece em silêncio.'};
   if(p.st==='CHANGES_REQUESTED') return {cls:'check',
-    t:'Helena pediu alterações',
+    t:'O cliente pediu alterações',
     s:'Salvar responde o pedido com uma versão nova e devolve a decisão para ela.'};
   return {cls:'check', t:'Rascunho — o cliente ainda não vê',
     s:'Dá para mexer à vontade. Nada é notificado até você enviar.'};
@@ -4663,7 +4686,7 @@ function modalCancelPeca(id){
     <h3>Cancelar "${esc(p.t)}"?</h3>
     <p>A peça sai do calendário, do feed e das contas do lote — mas não some. Fica no
       histórico com o motivo, e dá para reativar depois (Regra #6).
-      ${p.st!=='DRAFT'?' Helena é avisada de que esta peça saiu do lote.':''}</p>
+      ${p.st!=='DRAFT'?' Quem aprova é avisado de que esta peça saiu do lote.':''}</p>
     ${b?`<div class="check warn">${ic('zap')}<div><b>Esta peça tem impulso ativo</b>
       <span>R$ ${b.orc} · ${b.dias} dias. Cancelar a peça remove o impulso junto.</span></div></div>`:''}
     ${p.fase==='PRODUCAO'?`<div class="check warn">${ic('warn')}<div><b>O texto já foi aprovado e congelado</b>
@@ -4724,11 +4747,11 @@ document.addEventListener('click', e => {
 
     S.modal=null; som(caiu?'ajuste':'toque'); S.sel=p.id; S.route='peca'; render();
     toast(congelado
-      ? `Versão ${p.ver} salva — o texto saiu da produção e voltou para Helena decidir. Selo novo: ${fmtSeal(p.seal)}.`
+      ? `Versão ${p.ver} salva — o texto saiu da produção e voltou para o cliente decidir. Selo novo: ${fmtSeal(p.seal)}.`
       : caiu
-      ? `Versão ${p.ver} salva — a aprovação do texto caiu e ele voltou para Helena. Selo novo: ${fmtSeal(p.seal)}.`
+      ? `Versão ${p.ver} salva — a aprovação do texto caiu e ele voltou para o cliente. Selo novo: ${fmtSeal(p.seal)}.`
       : p.st==='AWAITING_APPROVAL'
-      ? `Versão ${p.ver} salva — Helena vê a atualização. Selo novo: ${fmtSeal(p.seal)}.`
+      ? `Versão ${p.ver} salva — o cliente vê a atualização. Selo novo: ${fmtSeal(p.seal)}.`
       : `Versão ${p.ver} salva. O cliente ainda não vê — envie quando quiser.`);
     return; }
 
@@ -4881,7 +4904,7 @@ function preparaRota(r){
     if(!t) return 'lotetexto';
     S.txsel = t.id;
   }
-  if(r==='clientedet' && !S.cli) S.cli = 'ln';
+  if(r==='clientedet' && !S.cli) S.cli = (CLIS()[0] || {}).id || null;
   return r;
 }
 
@@ -5654,7 +5677,7 @@ function ritmoDoCiclo(){
 function medidorAgenda(){
   const previsto = 8, gasto = Math.min(previsto, 2 + Math.floor(decididas()/3));
   return `<div class="agendaBar">
-    <div class="cab"><b>Agenda da Helena neste projeto</b>
+    <div class="cab"><b>Agenda do cliente neste projeto</b>
       <span><em>${gasto}</em> de ${previsto} dias</span></div>
     <div class="diasFila">${Array.from({length:previsto},(_,i)=>
       `<i class="${i<gasto?'gasto':''}" style="--d:${(i*.07).toFixed(2)}s"></i>`).join('')}</div>
@@ -5787,23 +5810,13 @@ function medidorAgenda(){
    Maestro e o cliente gostar dela — e depoimento de cliente da agencia e
    coisa que nenhum concorrente consegue mostrar.
    ================================================================== */
-const DEPOIMENTOS = [
-  {lado:'agencia', txt:'A reunião de cobrança simplesmente acabou. O cliente decide no celular, o termo encerra a conversa — e ninguém mais discute o que foi aprovado.',
-   n:'Rafael Lima', c:'Sócio · Studio Norte', i:'RL', tag:'social media'},
-  {lado:'cliente', txt:'Eu finalmente sei o que estou aprovando, por que aquilo existe — e quantos dias do meu mês o projeto vai custar. Nunca tive isso com nenhuma agência.',
-   n:'Helena Braga', c:'Loja Norte · aprovadora', i:'HB', tag:'varejo de moda'},
-  {lado:'agencia', txt:'Roteiro aprovado antes de ligar a câmera salvou duas diárias logo no primeiro ciclo. Isso paga o ano da ferramenta.',
-   n:'Marina Reis', c:'Produtora · Fábrica 21', i:'MR', tag:'audiovisual'},
-  {lado:'agencia', txt:'O que me segurou não foi a aprovação — foi a metodologia virar entidade. O método da casa parou de morar na cabeça de três pessoas.',
-   n:'Camila Duarte', c:'Diretora · Coletivo Sul', i:'CD', tag:'branding'},
-  {lado:'cliente', txt:'Antes eu recebia PDF no WhatsApp e respondia "aprovado" no áudio. Hoje eu abro, comento no ponto exato da arte e assino. Levou seis minutos.',
-   n:'Dr. Paulo Cortez', c:'Cortez Jurídico · aprovador', i:'PC', tag:'consultoria'},
-  {lado:'agencia', txt:'O selo acabou com a discussão de "não foi isso que eu aprovei". Uma vez só já valeu — e essa uma vez custava um cliente.',
-   n:'Bruno Sato', c:'Atendimento · Alta Vista', i:'BS', tag:'performance'}
-];
-const LOGOS_PILOTO = ['Studio Norte','Braga & Co','Coletivo Sul','Fábrica 21','Alta Vista',
-  'Casa Ruído','Norte Filmes','Oficina 9','Prisma','Tempo Bom'];
-
+/* v168: aqui moravam seis depoimentos e dez nomes de agências — todos
+   inventados, com um aviso embaixo dizendo que eram exemplos. O founder
+   pediu para tirar, e ele tem razão: quem vai confiar a operação da
+   agência dele a um sistema não deve ser recebido por gente que não
+   existe. A página volta quando houver depoimento de verdade, com
+   autorização. O que sustenta a seção até lá é o que a Maestro faz —
+   não quem diz que gostou. */
 function provaSocial(){
   const num = (valor, sufixo, rotulo, sub, curva) => `
     <div class="provaNum rv">
@@ -5815,26 +5828,14 @@ function provaSocial(){
 
   const linha = (a, b, nota) => `<div class="adLinha"><b>${a}</b>${b?` ${b}`:''}${nota?`<em>${nota}</em>`:''}</div>`;
 
-  const cards = DEPOIMENTOS.map((d,i)=>`
-    <figure class="dep rv ${d.lado==='cliente'?'doCliente':'daAgencia'}"
-      style="transition-delay:${(i*60)}ms">
-      <span class="lado">${d.lado==='cliente'?'cliente da agência':'agência'}</span>
-      <span class="tag">${esc(d.tag)}</span>
-      <p>“${esc(d.txt)}”</p>
-      <figcaption class="quem"><span class="av">${d.i}</span>
-        <span><b>${esc(d.n)}</b><span>${esc(d.c)}</span></span></figcaption>
-    </figure>`).join('');
-
-  const trem = [...LOGOS_PILOTO, ...LOGOS_PILOTO]
-    .map(l=>`<span>${esc(l)}</span>`).join('');
 
   return `<section class="ssec"><div class="wrapc">
   <div class="provaAviso rv"><i></i>Exemplos ilustrativos · o piloto começa em setembro</div>
   <div class="klabel rv">Os dois lados do balcão</div>
   <h2 class="rv">A reunião de “cadê a aprovação?” acabou</h2>
   <p class="sub rv">Software de agência costuma ser vendido para a agência. A Maestro precisa
-    que <b style="color:var(--ink-100)">o cliente dela também goste</b> — por isso metade
-    destes depoimentos é de quem aprova, não de quem produz.</p>
+    que <b style="color:var(--ink-100)">o cliente dela também goste</b> — por isso o lado de
+    quem aprova recebeu tanto trabalho quanto o lado de quem produz.</p>
 
   <div class="provaNums">
     ${num('9 → 2','','dias até a decisão','Do envio ao aceite, no primeiro mês de uso.',
@@ -5861,16 +5862,10 @@ function provaSocial(){
     </div>
   </div>
 
-  <div class="provaGrid">${cards}</div>
-
-  <div class="faixaLogos rv" aria-label="Agências do programa piloto — exemplos">
-    <div class="trem">${trem}</div>
-  </div>
   <p class="rv" style="margin-top:14px;font-size:11.5px;color:var(--ink-500);line-height:1.6">
-    Estes nomes, números e depoimentos são <b style="color:var(--ink-300)">exemplos de
-    demonstração</b> — o programa piloto ainda não começou. Serão substituídos por
-    depoimentos reais, com autorização, antes de qualquer publicação comercial.
-    Número medido, nunca adjetivo.</p>
+    Os números acima são <b style="color:var(--ink-300)">metas do produto</b>, não resultados
+    medidos em cliente — o programa piloto começa agora. Quando houver medição, ela entra
+    aqui com nome e autorização de quem mediu. Número medido, nunca adjetivo.</p>
 </div></section>`;
 }
 
@@ -6182,7 +6177,7 @@ function agDash(){
 
   return agShell(`
   <div class="mtop"><div><h1>${saudacao()}, Victor</h1>
-    <p>Agência Nova · Loja Norte · Verão 26</p></div>
+    <p>${esc(nomeDaAgencia())}</p></div>
     <button class="b pri sm" data-r="lote">${ic('stack')} Preparar lote</button></div>
 
   <div class="palcoWrap">
@@ -6207,7 +6202,7 @@ function agDash(){
 
   <div class="tiles">
     ${tile('aprovacoes', espera.length, 'esperando o cliente',
-      espera.length?'com Helena':'', 'neutro', [2,4,3,6,5,espera.length||1], true)}
+      espera.length?'com o cliente':'', 'neutro', [2,4,3,6,5,espera.length||1], true)}
     ${tile('producao', volta.length, 'voltaram com ajuste',
       volta.length?`+${volta.length}`:'zero', volta.length?'desce':'sobe', [3,2,4,1,2,volta.length||0])}
     ${tile('conteudos', ok.length, 'aprovadas',
@@ -6224,7 +6219,7 @@ function agDash(){
     <button class="b gho sm" data-r="agenda">${ic('cal')} Agenda</button></div>
 
   ${espera.length?`<div class="sechd">Esperando o cliente <i></i></div>
-    <div style="display:grid">${espera.map((p,i)=>linha(p,i,'Helena Braga · enviado há 3 dias','HB')).join('')}</div>`:''}
+    <div style="display:grid">${espera.map((p,i)=>linha(p,i,'com quem aprova · enviado há 3 dias','?')).join('')}</div>`:''}
   ${volta.length?`<div class="sechd">Voltaram para a equipe <i></i></div>
     <div style="display:grid">${volta.map((p,i)=>linha(p,i,`${p.notes.length} nota${p.notes.length>1?'s':''} do cliente`,'HB')).join('')}</div>`:''}
   ${ok.length?`<div class="sechd">Aprovadas e na fila <i></i></div>
@@ -6395,37 +6390,9 @@ const PLATS = {
 const FORMATOS = ['Reels','Carrossel','Artigo','Shorts','Story','Post','Vídeo','Podcast'];
 const DIAS = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 
-/* a semana da planilha, adaptada ao cliente do protótipo */
-S.pauta = S.pauta || [
-  {id:1, dia:1, hora:'18:30', fmt:'Reels', plats:['ig','tt','yt'], st:'SCHEDULED', pecaId:3,
-   t:'Corte do vídeo de bastidores',
-   texto:'Trecho de maior impacto da conversa com Dona Rosa, sintetizando o tema central para atrair para o vídeo completo.',
-   cta:'Vídeo completo no perfil — link na bio.'},
-  {id:2, dia:2, hora:'11:00', fmt:'Artigo', plats:['li','ig','sb'], st:'SCHEDULED',
-   t:'Artigo aprofundado · linho no inverno',
-   texto:'Publicação do artigo sobre o linho fora do verão. Artigo nativo no LinkedIn e post editorial no Instagram direcionando tráfego para o blog.',
-   cta:'Leia o artigo completo no blog — link na bio e nos stories.'},
-  {id:3, dia:3, hora:'19:00', fmt:'Carrossel', plats:['ig','li'], st:'DRAFT',
-   t:'Reforço analítico + stories',
-   texto:'Carrossel-resumo com um dado central do artigo. Stories com enquete: "Você já guardou uma peça por mais de três anos?"',
-   cta:'Ainda não leu? O artigo completo está no blog — link na bio.'},
-  {id:4, dia:4, hora:'12:00', fmt:'Story', plats:['ig','str'], st:'DRAFT', pecaId:3,
-   t:'Bastidor / caixa de perguntas',
-   texto:'Bastidores da gravação com Dona Rosa (foto/carrossel de produção). Stories com caixinha sobre cuidado e durabilidade.',
-   cta:'Deixe sua pergunta na caixinha — respondemos nos stories.'},
-  {id:5, dia:5, hora:'10:30', fmt:'Post', plats:['ig'], st:'DRAFT',
-   t:'Post manifesto / aspas',
-   texto:'Citação de destaque sobre consumo consciente — peça de identidade, alinhada ao manifesto da marca.',
-   cta:'Compartilhe com quem compra para durar.'},
-  {id:6, dia:6, hora:'17:00', fmt:'Story', plats:['str'], st:'DRAFT',
-   t:'Curadoria de leituras (2–3 telas)',
-   texto:'Indicação de leitura sobre slow fashion, para preparar a semana.',
-   cta:'Toque no link para acessar a referência.'},
-  {id:7, dia:0, hora:'18:00', fmt:'Carrossel', plats:['ig','li'], st:'DRAFT',
-   t:'Teaser da pauta de setembro',
-   texto:'Abertura da pauta temática do mês: teaser dos três novos conteúdos sob o fio condutor de setembro.',
-   cta:'Salve este post e acompanhe os lançamentos.'}
-];
+/* v167: a semana de demonstração da Loja Norte saiu junto com o
+   cliente de demonstração. Pauta nova nasce vazia. */
+S.pauta = S.pauta || [];
 
 const ptDots = ps => `<span class="ptDots">${ps.map(k=>
   `<i style="background:${(PLATS[k]||{}).c};color:${(PLATS[k]||{}).c}" title="${(PLATS[k]||{}).n}"></i>`).join('')}</span>`;
@@ -7082,46 +7049,41 @@ if(!S.novos.some(c=>c.nome==='EJUP')){
   S.novos.push({ nome:'EJUP', ini:'EJ', seg:'Educação jurídica', cor:'#5B8DEF',
     brief:'Educação jurídica de profundidade. Podcast EJUP e artigos doutrinários — autoridade sem juridiquês. A expert é o rosto.' });
 }
-let pautaLiberada = () => ['ln',
-  ...CLIS().filter(c=>c.nome==='EJUP').map(c=>c.id)];
+/* v167: era uma lista escrita à mão com a Loja Norte dentro. Agora todo
+   cliente tem pauta — que é o que a v139 já fazia mais abaixo. */
+let pautaLiberada = () => CLIS().map(c => c.id);
 const ejupId = () => (CLIS().find(c=>c.nome==='EJUP')||{}).id || 'ej';
 
 /* ---------- a pauta da EJUP: a planilha do founder, ja dentro -------- */
-const PAUTA_EJUP = [
-  {id:1, dia:1, hora:'18:00', fmt:'Reels', plats:['ig','tt','yt'], st:'DRAFT', pecaId:null,
-   t:'Corte do Podcast',
-   texto:'Corte do podcast com Maria Luiza: trecho de maior impacto da conversa, sintetizando o tema central para atrair para o episódio completo.',
-   cta:'Episódio completo no site e no YouTube da EJUP. Link na bio.'},
-  {id:2, dia:2, hora:'11:00', fmt:'Artigo', plats:['ig','li','sb'], st:'DRAFT', pecaId:null,
-   t:'Artigo Aprofundado + Foto Orgânica',
-   texto:'Artigo sobre superendividamento: fundamentos jurídicos, Lei 14.181/2021 e a atuação preventiva do advogado. Nativo no LinkedIn e post editorial no Instagram direcionando tráfego para o blog.',
-   cta:'Leia o artigo completo no blog da EJUP (link na bio e nos stories).'},
-  {id:3, dia:3, hora:'19:00', fmt:'Carrossel', plats:['ig','li'], st:'DRAFT', pecaId:null,
-   t:'Reforço Analítico + Stories',
-   texto:'Carrossel-resumo com um dado central do artigo sobre superendividamento. Stories com enquete de reflexão: "Você já lidou com um caso de superendividamento?"',
-   cta:'Ainda não leu? O artigo completo está no blog da EJUP — link na bio.'},
-  {id:4, dia:4, hora:'12:00', fmt:'Story', plats:['ig','str'], st:'DRAFT', pecaId:null,
-   t:'Bastidor / Caixa de Perguntas',
-   texto:'Bastidores da gravação do podcast com Maria Luiza (foto/carrossel de produção). Stories com caixinha sobre superendividamento e educação financeira no Direito.',
-   cta:'Deixe sua pergunta na caixinha — respondemos nos stories.'},
-  {id:5, dia:5, hora:'10:30', fmt:'Post', plats:['ig'], st:'DRAFT', pecaId:null,
-   t:'Post Manifesto / Aspas',
-   texto:'Citação de destaque de Maria Luiza sobre educação financeira e responsabilidade jurídica — peça de identidade, alinhada ao Manifesto EJUP.',
-   cta:'Compartilhe com quem defende profundidade em tempos de aceleração.'},
-  {id:6, dia:6, hora:'17:00', fmt:'Story', plats:['str'], st:'DRAFT', pecaId:null,
-   t:'Curadoria de Leituras (2–3 telas)',
-   texto:'Indicação de obra doutrinária sobre Direito do Consumidor e superendividamento, para preparar a semana.',
-   cta:'Toque no link para acessar a referência.'},
-  {id:7, dia:0, hora:'18:00', fmt:'Carrossel', plats:['ig','li'], st:'DRAFT', pecaId:null,
-   t:'Carrossel Conceitual + Stories',
-   texto:'Abertura da pauta temática de setembro: teaser dos três novos episódios do Podcast EJUP (Zeca Melo/Sebrae, Marco Bruno e Maria do Perpétuo) sob o fio condutor do mês.',
-   cta:'Salve este post e acompanhe os próximos lançamentos do Podcast EJUP.'}
-];
+/* v171: aqui morava a pauta REAL da EJUP — 30 linhas de conteúdo do
+   founder escritas dentro do arquivo que o site serve. Qualquer pessoa
+   que abrisse o código-fonte da página lia tudo, sem login e sem link.
+   A auditoria da v170 achou; o founder confirmou no banco (a linha `n0`
+   tem 68 cards, com cópia guardada) e ela saiu daqui. Quem entrega a
+   pauta agora é o banco, para quem tem sessão — e mais ninguém.
+   Se aparecer vazia, é carga que não veio, não conteúdo perdido. */
+const PAUTA_EJUP = [];
+
+/* v170: quem abre um link de aprovação ou de visualização é o CLIENTE.
+   A casa não pode semear nada no aparelho dele — nem a pauta de outro
+   cliente, nem o quadro da agência. É a pergunta mais cedo que existe:
+   antes de qualquer estado, olhando só o endereço. */
+function abertoPorLink(){
+  try{ return /[?&](aprovar|ver)=/.test(location.search || ''); }catch(e){ return false; }
+}
 
 /* ---------- cada cliente com a sua pauta ----------------------------- */
-const seedLN = Array.isArray(S.pauta) ? S.pauta : [];
-S.pautas = { ln: seedLN };
-S.pautas[ejupId()] = PAUTA_EJUP;
+/* v167: não há mais pauta de semente. A da EJUP é a planilha real do
+   founder; as outras nascem vazias, como numa conta recém-criada. */
+S.pautas = {};
+/* a pauta da EJUP é a planilha REAL do founder. Ela não entra no
+   aparelho de quem abriu um link de cliente — lá dentro só existe o
+   cliente daquele link, e é o banco que o entrega. */
+if(!abertoPorLink()) S.pautas[ejupId()] = PAUTA_EJUP;
+/* v167: toda pauta existe, mesmo vazia. Antes só quem tinha semente
+   nascia com array, e o resto aparecia como `undefined` até alguém
+   abrir a tela do cliente — o que obrigava cada leitor a se defender. */
+try{ CLIS().forEach(c => { if(!Array.isArray(S.pautas[c.id])) S.pautas[c.id] = []; }); }catch(e){}
 delete S.pauta;
 Object.defineProperty(S, 'pauta', {
   get(){ const id = cliAtual().id;
@@ -7197,7 +7159,11 @@ S.refs = S.refs || {};                     // roda antes de onde eles nascem
 try{
   const guardado = JSON.parse(localStorage.getItem(CHAVE) || 'null');
   if(guardado){
-    if(guardado.pautas) Object.assign(S.pautas, guardado.pautas);
+    /* v170: quem abriu um link de cliente não recebe de volta a pauta
+       de ninguém. O mesmo navegador pode ter visitado o site antes e
+       guardado a pauta da agência — e ela não é do cliente. Quem entrega
+       a pauta dele é o banco, pela porta do link. */
+    if(guardado.pautas && !abertoPorLink()) Object.assign(S.pautas, guardado.pautas);
     if(Array.isArray(guardado.novos)){
       guardado.novos.forEach(c=>{
         if(!S.novos.some(x=>x.nome===c.nome)) S.novos.push(c); });
@@ -7465,157 +7431,14 @@ const P = (data, hora, fmt, plats, t, texto, cta, extra) => ({
 });
 const TAREFA = x => ({ ...x, tarefa:true, plats:[] });
 
-const PAUTA_EJUP_V2 = [
-  /* ---------- agosto: a semana da Maria Luiza ---------------------- */
-  // 25/08 removido — já foi postada outra coisa no dia
-  P('2026-08-26','11:00','Artigo',['ig','li','sb','str'],
-    'Artigo · superendividamento',
-    'Artigo sobre superendividamento (fundamentos jurídicos, Lei 14.181/2021 e a atuação preventiva do advogado). Nativo no LinkedIn e post editorial no Instagram. Divulgação por STORY — não por tráfego pago.',
-    'Leia o artigo completo no blog da EJUP (link na bio e no story).'),
-  P('2026-08-27','18:00','Reels',['ig','tt','yt'],
-    'Corte do podcast · Maria Luiza',
-    'Corte do podcast com Maria Luiza: trecho de maior impacto da conversa, sintetizando o tema central para atrair para o episódio completo.',
-    'Episódio completo no site e no YouTube da EJUP. Link na bio.'),
-  P('2026-08-27','19:30','Carrossel',['ig','li'],
-    'Carrossel sobre o artigo',
-    'Carrossel desdobrando o artigo de superendividamento publicado ontem: os pontos centrais em telas, com o dado principal em destaque. Stories com enquete: "Você já lidou com um caso de superendividamento?"',
-    'Ainda não leu? O artigo completo está no blog da EJUP — link na bio.'),
-  P('2026-08-28','12:00','Story',['ig','str'],
-    'Bastidor / caixa de perguntas',
-    'Bastidores da gravação do podcast com Maria Luiza (foto/carrossel de produção). Stories com caixinha sobre superendividamento e educação financeira no Direito.',
-    'Deixe sua pergunta na caixinha — respondemos nos stories.'),
-  P('2026-08-29','10:30','Post',['ig'],
-    'Post manifesto / aspas',
-    'Citação de destaque de Maria Luiza sobre educação financeira e responsabilidade jurídica — peça de identidade, alinhada ao Manifesto EJUP.',
-    'Compartilhe com quem defende profundidade em tempos de aceleração.'),
-  P('2026-08-30','17:00','Story',['str'],
-    'Curadoria de leituras',
-    'Indicação de obra/artigo doutrinário sobre Direito do Consumidor e superendividamento, para preparar a semana.',
-    'Toque no link para acessar a referência.',
-    { pend:'A referência não veio — sem ela a postagem não sai.' }),
-  P('2026-08-31','18:00','Carrossel',['ig','li','str'],
-    'Empreender no Direito · abertura de setembro',
-    'Carrossel conceitual sobre o eixo temático de setembro: empreendedorismo e Direito. A EJUP planta o tema pela autoridade dela, sem citar episódios. Story com enquete: "Qual dessas dores você sente hoje no seu escritório?"',
-    'Salve este conteúdo — setembro vem denso.',
-    { nota:'Substitui o teaser original: os episódios só serão editados em setembro.' }),
-
-  /* ---------- setembro · semana 1: Zeca Melo (Sebrae) ---------------- */
-  TAREFA(P('2026-09-01','09:00','Vídeo',[],
-    '[Tarefa] Editar o episódio · Zeca Melo',
-    'Edição do episódio com Zeca Melo (Sebrae): corte fino, legendas, thumb institucional, capítulos e descrição. Precisa estar pronto antes do teaser de amanhã.',
-    'Interno — não vai ao ar.')),
-  P('2026-09-02','18:00','Reels',['ig','tt','yt'],
-    'Teaser · Zeca Melo',
-    'Corte/teaser do podcast com Zeca Melo (Sebrae): trecho em que ele conecta empreendedorismo e Direito, provocação reflexiva sobre o papel do jurista na jornada empresarial.',
-    'Episódio completo amanhã no YouTube e no site da EJUP.'),
-  P('2026-09-03','12:00','Vídeo',['yt','sb','ig','str'],
-    'LANÇAMENTO · episódio completo com Zeca Melo',
-    'Lançamento do episódio na íntegra no YouTube e no site da EJUP. Chamada no feed (post com a capa do episódio) e no story com CAIXINHA DE LINK levando direto para o vídeo.',
-    'Assista ao episódio completo — link na caixinha do story e na bio.'),
-  P('2026-09-04','12:00','Story',['ig','str'],
-    'Bastidor + corte · Zeca Melo',
-    'Depois do lançamento: bastidores da gravação com Zeca Melo (equipe EJUP em produção) e 2º corte com outro trecho forte do episódio. Stories com caixinha: "Qual seu maior desafio empreendendo dentro do Direito?"',
-    'Deixe sua pergunta na caixinha de perguntas.'),
-  P('2026-09-05','10:30','Post',['ig'],
-    'Post manifesto / aspas · Zeca Melo',
-    'Frase de destaque de Zeca Melo sobre empreendedorismo e maturidade profissional.',
-    'Compartilhe com um jurista que também empreende.'),
-  P('2026-09-06','17:00','Story',['str'],
-    'Curadoria de leituras',
-    'Indicação de leitura sobre empreendedorismo jurídico e gestão de escritórios/negócios.',
-    'Toque no link para acessar a referência.'),
-  P('2026-09-07','11:00','Artigo',['ig','li','sb','str'],
-    'Artigo · o Sebrae, o empreendedorismo e o Direito',
-    'Artigo desdobrando a conversa com Zeca Melo — publicado DEPOIS do episódio, porque agora o público já assistiu e o texto aprofunda o que ele viu. Divulgação por STORY.',
-    'Leia o artigo completo no blog da EJUP.'),
-  P('2026-09-08','19:30','Carrossel',['ig','li'],
-    'Carrossel sobre o artigo · Zeca Melo',
-    'Carrossel desdobrando o artigo de ontem: os argumentos centrais em telas, com o dado principal em destaque.',
-    'O artigo completo está no blog — link na bio.'),
-
-  /* ---------- setembro · semana 2: Marco Bruno ----------------------- */
-  TAREFA(P('2026-09-08','09:00','Vídeo',[],
-    '[Tarefa] Editar o episódio · Marco Bruno',
-    'Edição do episódio com Marco Bruno: corte fino, legendas, thumb, capítulos e descrição. Pronto antes do teaser de amanhã.',
-    'Interno — não vai ao ar.')),
-  P('2026-09-09','18:00','Reels',['ig','tt','yt'],
-    'Teaser · Marco Bruno',
-    'Corte/teaser do podcast com Marco Bruno: trecho marcante que sintetiza o tema central da conversa.',
-    'Episódio completo amanhã no YouTube e no site da EJUP.'),
-  P('2026-09-10','12:00','Vídeo',['yt','sb','ig','str'],
-    'LANÇAMENTO · episódio completo com Marco Bruno',
-    'Lançamento do episódio na íntegra no YouTube e no site. Chamada no feed e no story com CAIXINHA DE LINK para o vídeo.',
-    'Assista ao debate na íntegra — link na caixinha do story e na bio.'),
-  P('2026-09-11','12:00','Story',['ig','str'],
-    'Bastidor + corte · Marco Bruno',
-    'Depois do lançamento: bastidores da gravação com Marco Bruno e 2º corte provocativo. Stories com caixinha de perguntas sobre o tema do episódio.',
-    'Deixe na caixinha: qual sua dúvida sobre o tema?'),
-  P('2026-09-12','10:30','Post',['ig'],
-    'Post manifesto / aspas · Marco Bruno',
-    'Citação de destaque de Marco Bruno, em design minimalista.',
-    'Compartilhe com um jurista que preza profundidade.'),
-  P('2026-09-13','17:00','Story',['str'],
-    'Curadoria de leituras',
-    'Indicação de livro/paper relacionado ao tema da semana.',
-    'Toque no link para acessar a referência.'),
-  P('2026-09-14','11:00','Artigo',['ig','li','sb','str'],
-    'Artigo · o tema de Marco Bruno',
-    'Artigo desdobrando com rigor doutrinário o tema discutido com Marco Bruno — depois do episódio no ar. Divulgação por STORY.',
-    'Leia o artigo completo no blog da EJUP.'),
-  P('2026-09-15','19:30','Carrossel',['ig','li'],
-    'Carrossel sobre o artigo · Marco Bruno',
-    'Carrossel desdobrando o artigo de ontem em telas, com o argumento central em destaque.',
-    'O artigo completo está no blog — link na bio.'),
-
-  /* ---------- setembro · semana 3: reforço (sem podcast novo) -------- */
-  // Maria do Perpétuo saiu do cronograma a pedido do founder
-  P('2026-09-16','11:00','Artigo',['ig','li','sb','str'],
-    'Artigo institucional · a definir com Roberto',
-    'Artigo doutrinário autoral, não vinculado a episódio, reforçando o posicionamento Sábio & Mago da EJUP. Semana sem podcast novo. Divulgação por STORY.',
-    'Leia o artigo completo no blog da EJUP.',
-    { pend:'Tema ainda não definido com Roberto.' }),
-  P('2026-09-17','19:30','Carrossel',['ig','li'],
-    'Carrossel sobre o artigo institucional',
-    'Carrossel desdobrando o artigo institucional publicado ontem.',
-    'O artigo completo está no blog — link na bio.'),
-  P('2026-09-18','12:00','Story',['ig','str'],
-    'Bastidor da rotina EJUP',
-    'Bastidores da equipe: curadoria, estudo e produção — humanização e autoridade silenciosa. Stories com caixa de perguntas livre.',
-    'Deixe sua sugestão de tema para o próximo episódio.'),
-  P('2026-09-19','10:30','Post',['ig'],
-    'Post manifesto',
-    'Trecho do Manifesto da EJUP ("O Direito está sendo empurrado para a pressa..."), reafirmando a identidade da marca.',
-    'Compartilhe se você também recusa esse mundo.'),
-  P('2026-09-20','17:00','Story',['str'],
-    'Curadoria de leituras',
-    'Indicação de leitura de fechamento da semana.',
-    'Toque no link para acessar a referência.'),
-  P('2026-09-21','18:00','Carrossel',['ig','li'],
-    'Recapitulação do mês',
-    'Notório saber em ação — duas conversas, um só compromisso com a profundidade. Conecta os episódios de Zeca Melo e Marco Bruno.',
-    'Salve este conteúdo e reveja os episódios. Link na bio.'),
-  P('2026-09-22','18:00','Reels',['ig','tt'],
-    'Compilado dos melhores momentos',
-    'Compilado com os melhores momentos dos episódios de setembro (Zeca Melo e Marco Bruno).',
-    'Qual foi seu episódio favorito? Comenta aqui.'),
-  P('2026-09-24','18:00','Reels',['ig','tt','sb'],
-    'Reforço do episódio de maior engajamento',
-    'Repost do episódio do mês com melhor desempenho, com novo recorte de trecho.',
-    'Ainda não assistiu? Está no YouTube e no site da EJUP.'),
-  P('2026-09-27','17:00','Story',['str'],
-    'Curadoria de fechamento',
-    'Indicação de leitura de fechamento do mês.',
-    'Toque no link para acessar a referência.'),
-  P('2026-09-28','18:00','Carrossel',['ig','li'],
-    'Teaser da pauta de outubro',
-    'Abertura da pauta editorial de outubro.',
-    'Salve este post e acompanhe as novidades de outubro.',
-    { pend:'Pauta de outubro a definir com Roberto.' }),
-  P('2026-09-30','11:00','Artigo',['ig','li','sb','str'],
-    'Artigo de fechamento',
-    'Retrospectiva editorial de setembro + prévia da pauta temática de outubro. Divulgação por STORY.',
-    'Leia o artigo completo no blog da EJUP.')
-];
+/* v171: aqui morava a pauta REAL da EJUP — 151 linhas de conteúdo do
+   founder escritas dentro do arquivo que o site serve. Qualquer pessoa
+   que abrisse o código-fonte da página lia tudo, sem login e sem link.
+   A auditoria da v170 achou; o founder confirmou no banco (a linha `n0`
+   tem 68 cards, com cópia guardada) e ela saiu daqui. Quem entrega a
+   pauta agora é o banco, para quem tem sessão — e mais ninguém.
+   Se aparecer vazia, é carga que não veio, não conteúdo perdido. */
+const PAUTA_EJUP_V2 = [];
 
 /* A SEMENTE SÓ SEMEIA TERRA VAZIA (v156).
 
@@ -7639,6 +7462,8 @@ const PAUTA_EJUP_V2 = [
     }catch(e){ return false; }
   })();
   if(jaTem || guardadoTem) return;          /* já há trabalho: a semente não entra */
+  /* v170: e nunca no aparelho de quem abriu um link de cliente */
+  if(typeof abertoPorLink === 'function' && abertoPorLink()) return;
   S.pautas[id] = PAUTA_EJUP_V2;
 })();
 </script>
@@ -9803,335 +9628,18 @@ const ST = (data, hora, pilar, objetivo, telas, recursos, sticker, cta, pend) =>
   pend: pend || '', story:true, pilar, objetivo, telas, recursos, sticker
 });
 
-const STORIES_EJUP = [
-  ST('2026-08-26','11:30','Autoridade',
-    'Distribuir o artigo e gerar leitura qualificada',
-    ['Fundo claro com detalhe de livro/anotação: “Superendividamento não é apenas um problema financeiro. É também uma questão jurídica que exige leitura de contexto.”',
-     'Apresente os três eixos do artigo: fundamentos jurídicos; Lei nº 14.181/2021; atuação preventiva do advogado.',
-     'Mostre a capa do artigo e use o adesivo de link para o blog.'],
-    'Capa do artigo; imagem de apoio com livro ou mesa de estudo; link do artigo revisado pela equipe.',
-    'Enquete na tela 2: “Você já atendeu um caso de superendividamento?” — Sim / Ainda não',
-    'Leia o artigo completo no blog da EJUP; link no Story.',
-    'Confirmar URL final e revisar referências jurídicas.'),
-  ST('2026-08-27','09:30','Aquecimento',
-    'Preparar a audiência para o conteúdo em vídeo do dia',
-    ['Vídeo curto do bastidor ou frame do corte: “Uma conversa jurídica não termina quando a gravação acaba.”',
-     'Apresente a provocação central do corte de Maria Luiza sem entregar a conclusão: “O que se perde quando tratamos problemas complexos como respostas prontas?”',
-     'Avise que o corte estará no feed e convide a audiência a assistir com atenção ao argumento, não apenas à frase de impacto.'],
-    'Corte vertical legendado; capa do episódio; identidade visual do EJUPcast.',
-    'Caixa curta: “Que tema jurídico merece uma conversa mais profunda?”',
-    'Assista ao corte no feed e acompanhe o episódio completo.',
-    'Selecionar trecho e confirmar tema exato da conversa.'),
-  ST('2026-08-28','12:30','Relacionamento',
-    'Humanizar a produção sem perder a autoridade institucional',
-    ['Foto ou vídeo do set: “Antes de um conteúdo chegar até você, existe pesquisa, revisão e escolha.”',
-     'Mostre um detalhe da produção do podcast com Maria Luiza: microfone, roteiro, equipe ou mesa de gravação.',
-     'Reforce que a EJUP valoriza o tempo de preparação e abra espaço para dúvidas sobre superendividamento e educação financeira no Direito.'],
-    'Bastidores da gravação; autorização de uso de imagem; caixa de perguntas.',
-    'Caixa de perguntas: “Qual é sua dúvida sobre superendividamento no Direito?”',
-    'Envie sua pergunta; algumas serão respondidas nos próximos Stories.',
-    'Selecionar bastidores autorizados e definir responsável pelas respostas.'),
-  ST('2026-08-29','10:30','Posicionamento',
-    'Fixar a recusa à superficialidade por meio de uma frase memorável',
-    ['Reproduza a frase aprovada de Maria Luiza em peça minimalista, com bastante respiro visual.',
-     'Acrescente uma linha editorial: “No Direito, responsabilidade também é saber reconhecer a complexidade.”',
-     'Convide o público a compartilhar somente se a frase representar uma convicção profissional real.'],
-    'Arte de aspas; foto autorizada da convidada, se disponível; logo EJUP.',
-    'Slider de reação: “Quanto essa ideia representa sua forma de estudar e atuar?”',
-    'Compartilhe com alguém que valoriza formação consistente.',
-    'Validar a citação literal e o crédito da convidada.'),
-  ST('2026-08-30','17:00','Curadoria',
-    'Criar hábito de estudo e preparar a pauta da semana seguinte',
-    ['Quadro “Leitura de domingo”: apresente uma obra, artigo ou capítulo sobre Direito do Consumidor e superendividamento.',
-     'Explique em uma frase por que a leitura foi escolhida e qual pergunta ela ajuda a investigar.',
-     'Mostre a referência completa e o link, sem prometer conclusões rápidas; finalize com “Leia com tempo.”'],
-    'Referência bibliográfica validada; capa ou imagem de domínio/licenciada; link seguro.',
-    'Enquete: “Você reserva um horário fixo para leitura jurídica?” — Sim / Quero começar',
-    'Acesse a referência pelo link e salve para ler durante a semana.',
-    'Inserir referência bibliográfica e URL antes da publicação.'),
-  ST('2026-08-31','18:30','Aquecimento',
-    'Abrir setembro apresentando o eixo de empreendedorismo e Direito',
-    ['Texto de abertura: “Empreender no Direito exige mais do que iniciativa: exige critério para decidir.”',
-     'Mostre três frentes do mês: negócio; inovação; responsabilidade jurídica.',
-     'Apresente a pergunta que guiará setembro e direcione para o carrossel do feed.'],
-    'Arte de abertura de setembro; carrossel publicado no feed; ícones discretos para as três frentes.',
-    'Enquete: “Qual desafio aparece mais no seu escritório?” — Gestão / Inovação',
-    'Salve o post de abertura e acompanhe a programação de setembro.',
-    'Confirmar redação final do eixo mensal.'),
-  ST('2026-09-01','09:30','Bastidores',
-    'Mostrar o rigor de preparação que antecede um episódio',
-    ['Foto da mesa de edição ou roteiro: “A profundidade também é construída na preparação.”',
-     'Liste discretamente o que está sendo revisado: cortes; legendas; capítulos; descrição.',
-     'Feche com “Amanhã, uma nova conversa sobre empreendedorismo e Direito.” Não divulgar material ainda não aprovado.'],
-    'Foto ou vídeo da ilha de edição; tela desfocada para proteger informações internas.',
-    'Slider de curiosidade: “Quanto você valoriza bastidores de produção?”',
-    'Acompanhe o teaser de amanhã.',
-    'Usar somente material aprovado e sem informações internas sensíveis.'),
-  ST('2026-09-02','09:30','Aquecimento',
-    'Aumentar a expectativa para o episódio com Zeca Melo',
-    ['Corte curto de Zeca Melo com legenda e marcação do EJUPcast.',
-     'Contextualize: “Empreendedorismo e Direito se encontram quando decisões precisam sair do discurso e virar estrutura.”',
-     'Use contagem regressiva para o lançamento do episódio completo no dia seguinte.'],
-    'Teaser vertical; legenda revisada; capa do episódio; adesivo de contagem regressiva.',
-    'Contagem regressiva para o lançamento; pergunta: “O que você quer entender sobre empreender no Direito?”',
-    'Ative o lembrete e assista ao episódio completo amanhã.',
-    'Confirmar horário e links do lançamento.'),
-  ST('2026-09-03','12:30','Conversão',
-    'Levar a audiência ao episódio completo',
-    ['Capa do episódio: “Já está no ar: Zeca Melo no EJUPcast.”',
-     'Destaque uma pergunta-guia da conversa: “Como o jurista pode participar da jornada empresarial sem reduzir o Direito a ferramenta?”',
-     'Adicione o link direto para o YouTube ou site e informe que o episódio pode ser ouvido com calma.'],
-    'Capa oficial; link do episódio; trecho curto opcional; adesivo de link.',
-    'Enquete: “Você prefere assistir ou ouvir o episódio?” — Assistir / Ouvir',
-    'Assista ao episódio completo; link no Story e na bio.',
-    'Inserir URL final do episódio e revisar a pergunta-guia.'),
-  ST('2026-09-04','12:30','Relacionamento',
-    'Estender a conversa do lançamento e coletar dúvidas reais',
-    ['Bastidor da gravação com Zeca Melo: “Uma conversa relevante continua depois do play.”',
-     'Publique um segundo corte, preferencialmente com uma ideia complementar à do teaser.',
-     'Abra a caixinha para mapear dificuldades de quem empreende ou presta assessoria jurídica a negócios.'],
-    'Bastidores autorizados; segundo corte vertical; caixa de perguntas.',
-    'Caixa: “Qual é seu maior desafio empreendendo dentro do Direito?”',
-    'Envie sua pergunta; use as respostas para pautas futuras.',
-    'Separar corte complementar e selecionar respostas para reaproveitamento.'),
-  ST('2026-09-05','10:30','Posicionamento',
-    'Associar empreendedorismo à maturidade profissional',
-    ['Repita a citação aprovada de Zeca Melo em peça de aspas.',
-     'Faça a ponte editorial: “Empreender também é escolher quais riscos merecem ser enfrentados.”',
-     'Mostre o post do feed e convide ao compartilhamento consciente.'],
-    'Arte da citação; crédito; post publicado no feed.',
-    'Slider: “Essa frase conversa com o momento do seu escritório?”',
-    'Compartilhe com um jurista que também empreende.',
-    'Validar citação e crédito.'),
-  ST('2026-09-06','17:00','Curadoria',
-    'Oferecer referência para aprofundar o eixo de empreendedorismo jurídico',
-    ['“Leitura de domingo: empreendedorismo jurídico sem fórmulas prontas.”',
-     'Apresente a referência escolhida e uma pergunta de leitura: “Qual decisão de gestão exige compreensão jurídica antes de velocidade?”',
-     'Link para a leitura e lembrete para anotar uma ideia aplicável à própria realidade.'],
-    'Referência bibliográfica; capa autorizada; link validado.',
-    'Enquete: “Você lê sobre gestão do escritório?” — Regularmente / Quero incluir na rotina',
-    'Acesse a referência e salve o Story.',
-    'Inserir referência bibliográfica e URL.'),
-  ST('2026-09-07','11:30','Autoridade',
-    'Levar o artigo sobre Sebrae, empreendedorismo e Direito para o blog',
-    ['Capa do artigo e frase: “A conversa sobre empreendedorismo continua na Coluna Jurídica.”',
-     'Resuma os três blocos do texto: contexto empresarial; papel do Sebrae; atuação jurídica estratégica. Ajustar ao conteúdo final do artigo.',
-     'Link para a íntegra e convite para leitura pausada.'],
-    'Capa do artigo; link do blog; texto final revisado.',
-    'Quiz: “O que sustenta uma decisão empreendedora?” — Pressa / Critério / Improviso. Resposta: Critério.',
-    'Leia o artigo completo no blog da EJUP.',
-    'Confirmar estrutura final do artigo e alternativa correta do quiz.'),
-  ST('2026-09-08','09:30','Bastidores',
-    'Criar continuidade entre o artigo e o próximo episódio',
-    ['Foto da equipe em curadoria: “Enquanto uma conversa vai ao ar, outra começa a ser preparada.”',
-     'Mostre roteiro, microfone ou seleção de referências, sem revelar o conteúdo ainda não publicado.',
-     'Avise que o próximo episódio será apresentado em teaser amanhã.'],
-    'Bastidor autorizado; detalhe de roteiro sem dados sensíveis; arte simples de continuidade.',
-    'Caixa: “Qual competência além do conhecimento técnico mais desafia sua atuação?”',
-    'Volte amanhã para conhecer o novo convidado.',
-    'Evitar spoilers e validar material de bastidor.'),
-  ST('2026-09-09','09:30','Aquecimento',
-    'Gerar atenção qualificada para o episódio com Marco Bruno',
-    ['Teaser com o trecho mais claro e instigante do episódio.',
-     'Enquadre a tensão da conversa em uma pergunta: “Como atualizar a prática sem abandonar o critério?”',
-     'Contagem regressiva para o lançamento e convite para compartilhar com alguém que vive esse desafio.'],
-    'Teaser vertical; legendas; capa; contagem regressiva.',
-    'Quiz: “Atualização responsável pressupõe…” — Mais ruído / Mais repertório. Resposta: Mais repertório.',
-    'Ative o lembrete para o episódio completo amanhã.',
-    'Confirmar trecho e horário do lançamento.'),
-  ST('2026-09-10','12:30','Conversão',
-    'Direcionar tráfego para o episódio completo com Marco Bruno',
-    ['Capa oficial: “Novo episódio no ar.”',
-     'Apresente o tema central em uma linha e inclua uma frase de contexto, sem transformar a conversa em promessa rápida.',
-     'Link para o vídeo no YouTube/site; informe a duração e sugira assistir ao argumento completo.'],
-    'Capa; link direto; trecho de apoio; adesivo de link.',
-    'Enquete: “Você vai assistir hoje?” — Sim / Vou salvar para depois',
-    'Assista ao debate na íntegra; link no Story e na bio.',
-    'Inserir URL e duração final do episódio.'),
-  ST('2026-09-11','12:30','Relacionamento',
-    'Transformar o lançamento em conversa com a comunidade',
-    ['Bastidor do episódio: “O conhecimento ganha força quando pode ser debatido.”',
-     'Publique um corte provocativo complementar e escreva uma pergunta de interpretação.',
-     'Abra a caixa para dúvidas sobre o tema do episódio e avise que as melhores perguntas podem virar pauta.'],
-    'Bastidor; segundo corte; caixa de perguntas.',
-    'Caixa: “Qual dúvida ficou depois de assistir ao episódio?”',
-    'Envie sua pergunta e continue a conversa.',
-    'Escolher corte e definir fluxo de triagem das respostas.'),
-  ST('2026-09-12','10:30','Posicionamento',
-    'Reforçar a autoridade silenciosa associada ao episódio',
-    ['Citação literal de Marco Bruno em layout minimalista.',
-     'Interpretação editorial da equipe em uma frase: “A autoridade que permanece é construída com estudo, contexto e responsabilidade.”',
-     'Mostre a peça do feed e convide o público a encaminhar para um colega, sem tom de apelo.'],
-    'Arte de aspas; crédito; post do feed.',
-    'Slider de identificação com a frase.',
-    'Compartilhe com um jurista que preza profundidade.',
-    'Validar citação e texto de apoio.'),
-  ST('2026-09-13','17:00','Curadoria',
-    'Manter o hábito de estudo no intervalo entre conteúdos principais',
-    ['“Uma leitura para atravessar o domingo com mais repertório.”',
-     'Indique livro, paper ou texto relacionado ao tema da semana e explique por que ele merece atenção.',
-     'Inclua referência e link, com a frase: “Aprofundar é também aprender a fazer melhores perguntas.”'],
-    'Referência validada; imagem licenciada; link.',
-    'Enquete: “Você prefere começar por livro ou artigo?” — Livro / Artigo',
-    'Acesse a leitura e salve para retomar.',
-    'Definir e validar a referência.'),
-  ST('2026-09-14','11:30','Autoridade',
-    'Aprofundar o tema do episódio por meio do artigo da Coluna',
-    ['Capa do artigo: “Do episódio à reflexão escrita.”',
-     'Destaque a tese central e dois pontos que o leitor encontrará no texto; não reduzir o artigo a uma lista de dicas.',
-     'Link para a íntegra e convite para comentar qual argumento provocou mais reflexão.'],
-    'Capa; link do artigo; resumo aprovado pelo autor.',
-    'Slider: “Quanto esse tema aparece nas suas decisões profissionais?”',
-    'Leia o artigo completo no blog da EJUP.',
-    'Confirmar título, tese central e link.'),
-  ST('2026-09-15','19:45','Engajamento',
-    'Desdobrar o artigo em uma interação simples e qualificada',
-    ['Mostre a capa do carrossel publicado e convide: “Passe pelas telas antes de responder.”',
-     'Transforme o argumento principal em uma pergunta de múltipla escolha, mantendo as alternativas conceitualmente honestas.',
-     'Revele a resposta com uma breve justificativa e direcione para o artigo completo.'],
-    'Carrossel; arte da pergunta; link do artigo.',
-    'Quiz baseado no argumento central do artigo.',
-    'Leia o texto completo para ver a fundamentação.',
-    'Definir pergunta e resposta com o autor/editor.'),
-  ST('2026-09-16','11:30','Posicionamento',
-    'Comunicar a proposta institucional sem depender de lançamento',
-    ['“Profundidade não é excesso. É método para decidir melhor.”',
-     'Explique em três linhas que a EJUP conecta tradição jurídica, repertório contemporâneo e aplicação responsável.',
-     'Direcione para o artigo institucional do dia, sem antecipar um tema que ainda não foi validado.'],
-    'Arte institucional; link do artigo; logo EJUP.',
-    'Enquete: “Você tem reservado tempo para aprofundar um tema?” — Sim / Preciso retomar',
-    'Leia o artigo institucional e acompanhe a reflexão.',
-    'Definir tema e link do artigo com Roberto.'),
-  ST('2026-09-17','19:45','Engajamento',
-    'Reforçar a leitura do artigo institucional pelo feed',
-    ['Apresente a primeira tela do carrossel: “Uma ideia para levar para a prática.”',
-     'Destaque o argumento que melhor traduz o posicionamento EJUP, com texto legível e sem excesso de elementos.',
-     'Convide a audiência a responder à pergunta final do carrossel e a visitar o artigo.'],
-    'Carrossel; frame do argumento central; link do blog.',
-    'Caixa curta: “Qual parte desse argumento você levaria para sua rotina?”',
-    'Comente no post e leia o artigo completo.',
-    'Selecionar argumento final após aprovação do artigo.'),
-  ST('2026-09-18','12:30','Bastidores',
-    'Mostrar a rotina de curadoria e convidar a comunidade a participar',
-    ['Foto da equipe em estudo, revisão ou reunião: “A autoridade também nasce do que ninguém vê.”',
-     'Mostre uma etapa real da rotina: leitura de referência, pauta, gravação ou revisão.',
-     'Abra espaço para sugestões de temas, reforçando que a curadoria segue critérios.'],
-    'Bastidores autorizados; caixa de perguntas; material de estudo sem dados pessoais.',
-    'Caixa: “Que tema deveria entrar na próxima conversa da EJUP?”',
-    'Envie sua sugestão de pauta.',
-    'Selecionar fotos e definir quem fará a triagem das sugestões.'),
-  ST('2026-09-19','10:30','Posicionamento',
-    'Reafirmar o manifesto e a identidade da marca',
-    ['Trecho aprovado do Manifesto: “O Direito está sendo empurrado para a pressa…”',
-     'Complete com a contraposição EJUP: “Aqui, o tempo do estudo e o rigor não são obstáculos; são parte da formação.”',
-     'Mostre o post manifesto e convide a audiência a reagir com uma frase própria sobre profundidade.'],
-    'Trecho final aprovado do Manifesto EJUP; arte do post; tipografia institucional.',
-    'Caixa: “O que a profundidade permite enxergar?”',
-    'Compartilhe se você também recusa a superficialidade como método.',
-    'Confirmar trecho exato do Manifesto e revisão jurídica/editorial.'),
-  ST('2026-09-20','17:00','Curadoria',
-    'Fechar a semana com uma referência e uma pergunta de reflexão',
-    ['“Leitura de fechamento: menos volume, mais critério.”',
-     'Indique uma referência coerente com o artigo institucional da semana e explique a conexão em uma frase.',
-     'Link e pergunta final: “Que ideia você levará para a próxima semana?”'],
-    'Referência validada; capa ou imagem licenciada; link.',
-    'Caixa de resposta: “Uma ideia que ficou da semana:”',
-    'Acesse a leitura e responda à pergunta.',
-    'Definir referência e conferir direitos de uso da imagem.'),
-  ST('2026-09-21','18:30','Recapitulação',
-    'Organizar os aprendizados do mês e estimular revisita aos episódios',
-    ['“Duas conversas. Um compromisso: ampliar o repertório.”',
-     'Faça um resumo visual dos episódios de Zeca Melo e Marco Bruno, com uma ideia-chave de cada um.',
-     'Direcione para os episódios e peça que o público escolha por qual pretende começar ou qual deseja rever.'],
-    'Capas dos dois episódios; links; frases-chave aprovadas.',
-    'Enquete: “Qual conversa você quer rever?” — Zeca Melo / Marco Bruno',
-    'Reveja os episódios; links nos Stories e na bio.',
-    'Confirmar frases-chave e links.'),
-  ST('2026-09-22','18:30','Engajamento',
-    'Aproveitar o compilado para entender preferências da audiência',
-    ['Compartilhe o compilado dos melhores momentos e explique o critério: ideias que permanecem depois do vídeo.',
-     'Inclua um frame de cada convidado com a pergunta “Qual argumento ficou com você?”',
-     'Convide a comentar no Reels e a enviar o Story para outro profissional.'],
-    'Reels compilado; frames dos convidados; legenda e créditos.',
-    'Enquete: “Qual episódio foi mais útil para você?” — Zeca / Marco',
-    'Assista ao compilado e comente seu momento favorito.',
-    'Confirmar cortes, créditos e ordem do compilado.'),
-  ST('2026-09-23','12:30','Posicionamento',
-    'Preencher o intervalo do calendário com uma apresentação clara da tese da marca',
-    ['“Alma clássica. Repertório contemporâneo.” Use a assinatura institucional da EJUP.',
-     'Traduza a assinatura em três movimentos: respeitar fundamentos; compreender o presente; agir com visão de futuro.',
-     'Convide a audiência a escolher qual movimento está mais presente em sua trajetória profissional.'],
-    'Arte institucional; assinatura oficial; elementos de arquitetura gráfica da marca.',
-    'Enquete: “O que você busca hoje?” — Aprofundar / Atualizar',
-    'Conheça as formações, o EJUPcast e a Coluna Jurídica pelo site.',
-    'Usar assinatura oficial e link da página inicial.'),
-  ST('2026-09-24','18:30','Conversão',
-    'Reforçar o episódio que teve melhor desempenho sem parecer repetitivo',
-    ['Apresente o novo recorte e diga por que ele continua relevante para a audiência.',
-     'Faça uma pergunta de contexto relacionada ao trecho, evitando repetir a legenda do Reels.',
-     'Adicione o link para o episódio completo e convide quem já assistiu a compartilhar com um colega.'],
-    'Novo recorte vertical; link do episódio; dados de desempenho apenas se aprovados.',
-    'Quiz de compreensão sobre a ideia do trecho.',
-    'Ainda não assistiu? Veja o episódio completo no YouTube e no site.',
-    'Definir episódio de maior engajamento com base nos dados internos.'),
-  ST('2026-09-25','12:30','Conversão',
-    'Apresentar as formações da EJUP de forma educativa',
-    ['“Formação não é consumo de conteúdo: é percurso.”',
-     'Mostre como a EJUP estrutura suas formações: profundidade técnica, aplicação prática, acesso online/presencial conforme o curso e certificado quando aplicável.',
-     'Apresente a página de Formações e convide o público a escolher uma área para conhecer melhor.'],
-    'Capturas ou capas atuais das formações no site; link da página de Formações; informações atualizadas.',
-    'Enquete: “O que você quer aprofundar?” — Direito / Negócios e inovação',
-    'Conheça as formações disponíveis em ejup.com.br/formacoes.',
-    'Atualizar cursos, preços, status e links antes de publicar.'),
-  ST('2026-09-26','10:30','Curadoria',
-    'Propor uma rotina de leitura curta, mas intelectualmente consistente',
-    ['“Leitura guiada de sábado: escolha uma referência e reserve 15 minutos sem notificações.”',
-     'Apresente três perguntas para acompanhar a leitura: qual problema o texto enfrenta; qual fundamento mobiliza; que consequência prática sugere.',
-     'Convide a audiência a salvar o roteiro e usar a mesma estrutura em uma leitura futura.'],
-    'Arte com as três perguntas; imagem de livro ou caderno; sem necessidade de link externo.',
-    'Slider: “Você consegue reservar 15 minutos para uma leitura hoje?”',
-    'Salve o roteiro de leitura e pratique ainda hoje.',
-    'Revisar a redação e adaptar ao padrão visual de Stories.'),
-  ST('2026-09-27','17:00','Curadoria',
-    'Encerrar o mês de leituras com síntese e continuidade',
-    ['“Leitura de fechamento do mês: o que merece permanecer?”',
-     'Retome uma referência que dialogou com os temas de setembro e resuma sua contribuição em duas linhas.',
-     'Link para o texto e convite a responder com a próxima leitura que a comunidade gostaria de ver na curadoria.'],
-    'Referência e link validados; capa licenciada ou composição tipográfica.',
-    'Caixa: “Qual tema você quer ver na curadoria de outubro?”',
-    'Acesse a referência e envie sua sugestão para outubro.',
-    'Definir a leitura e garantir URL acessível.'),
-  ST('2026-09-28','18:30','Aquecimento',
-    'Apresentar a pauta de outubro e coletar sinais da audiência',
-    ['“Outubro começa com uma nova pergunta.” Use a arte teaser da pauta.',
-     'Apresente o eixo temático em linguagem provisória, somente após validação editorial, e explique por que ele importa para o jurista contemporâneo.',
-     'Mostre o carrossel do feed e peça uma resposta que ajude a priorizar desdobramentos.'],
-    'Arte teaser; carrossel; texto validado da pauta de outubro.',
-    'Caixa: “Qual recorte desse tema você quer ver primeiro?”',
-    'Salve o post e acompanhe a pauta de outubro.',
-    'Definir pauta com Roberto antes de publicar.'),
-  ST('2026-09-29','12:30','Bastidores',
-    'Tornar visível o processo de planejamento editorial',
-    ['Foto de calendário, quadro ou reunião: “Conteúdo consistente começa antes da publicação.”',
-     'Mostre como uma pauta é escolhida: relevância; aderência à marca; qualidade da referência; utilidade para o jurista.',
-     'Convide a comunidade a sugerir uma questão que mereça estudo em outubro.'],
-    'Foto de planejamento; elementos do calendário sem dados confidenciais; caixa de perguntas.',
-    'Caixa: “Que pergunta você levaria para a próxima pauta?”',
-    'Envie sua pergunta e acompanhe os próximos conteúdos.',
-    'Fotografar material de planejamento sem expor informações internas.'),
-  ST('2026-09-30','11:30','Recapitulação',
-    'Fechar setembro, levar ao artigo e preparar a transição para outubro',
-    ['Capa do artigo de fechamento: “Setembro em perspectiva.”',
-     'Resuma o mês em três ideias: empreendedorismo com critério; inovação sem vulgarização; formação como percurso.',
-     'Link para o artigo e teaser do próximo mês, com convite para acompanhar a continuidade da pauta.'],
-    'Capa do artigo; link do blog; arte da prévia de outubro.',
-    'Enquete: “O que você quer levar para outubro?” — Mais repertório / Mais aplicação',
-    'Leia o artigo de fechamento e acompanhe a pauta de outubro.',
-    'Finalizar artigo, link e teaser da próxima pauta.')
-];
+/* v171: aqui morava a pauta REAL da EJUP — 326 linhas de conteúdo do
+   founder escritas dentro do arquivo que o site serve. Qualquer pessoa
+   que abrisse o código-fonte da página lia tudo, sem login e sem link.
+   A auditoria da v170 achou; o founder confirmou no banco (a linha `n0`
+   tem 68 cards, com cópia guardada) e ela saiu daqui. Quem entrega a
+   pauta agora é o banco, para quem tem sessão — e mais ninguém.
+   Se aparecer vazia, é carga que não veio, não conteúdo perdido. */
+const STORIES_EJUP = [];
 
 /* os stories entram na pauta da EJUP, junto com o que já existia */
 (function(){
+  if(typeof abertoPorLink === 'function' && abertoPorLink()) return;   /* v170 */
   const arr = S.pautas[ejupId()] || [];
   const jaTem = arr.some(p=>p.story);
   if(!jaTem){
@@ -10695,6 +10203,10 @@ function sbSeloHtml(){
 }
 
 async function sbCarregar(){
+  /* v170: quem entrou por link fala com as três funções da porta e mais
+     nada. A RLS já devolveria `[]` — mas pedir o que não se pode ver é
+     ruído, e um dia a RLS pode ser mexida por engano. */
+  if(typeof abertoPorLink === 'function' && abertoPorLink()) return false;
   sbSelo('carregando');
   let linhas;
   try{
@@ -11476,14 +10988,11 @@ CLIS = () => _CLIS_BASE()
 projetosAtivos = () => CLIS().length;
 
 /* ---------- a lista, agora sem contar com posições fixas ----------- */
-const SUBTITULO_FIXO = {
-  ln: 'Varejo de moda · Verão 26',
-  cj: 'Consultoria jurídica · Da marca ao lançamento'
-};
-const SELO_FIXO = {
-  ln: () => [esperando()+' esperando', 'p-AWAITING_APPROVAL'],
-  cj: () => ['Em produção', 'p-IN_PRODUCTION']
-};
+/* v167: eram legendas e selos de demonstração, escritos à mão para os
+   dois clientes de exemplo. Cada cliente passa a falar por si — o
+   segmento que a agência cadastrou, e o selo que o estado dele dá. */
+const SUBTITULO_FIXO = {};
+const SELO_FIXO = {};
 
 agClientes = function(){
   const cs = CLIS();
@@ -11573,6 +11082,8 @@ document.addEventListener('click', e => {
     if(nome.length < 2){ const el = document.getElementById('cl-nome');
       el.style.borderColor = 'var(--danger)'; el.focus(); return; }
     S.cliEdit[d.cliok] = {
+      ...(S.cliEdit[d.cliok] || {}),        /* v167: chave, aprovador, tipo, manual */
+      em: Date.now(),                       /* v167: quem é mais novo ganha na mescla */
       /* o registro é reescrito inteiro: sem isto a logo sumiria a cada
          "Salvar", e o founder culparia o upload */
       logo: S.cliLogo !== undefined ? S.cliLogo : (S.cliEdit[d.cliok] || {}).logo,
@@ -11648,9 +11159,44 @@ sbCarregar = (function(orig){
           const [linha] = await r.json();
           const d = linha && linha.dados;
           if(d){
-            if(d.cliEdit) S.cliEdit = d.cliEdit;
-            if(Array.isArray(d.cliFora)) S.cliFora = d.cliFora;
-            if(d.agencia) S.agencia = d.agencia;
+            /* v167 — A FOTO QUE SUMIA.
+               Isto era `S.cliEdit = d.cliEdit`: a carga do banco jogava
+               fora, inteiro, o cadastro que estava no aparelho. Quem
+               tinha acabado de subir a logo de um cliente ou de escrever
+               o e-mail de quem aprova via aquilo desaparecer sozinho na
+               carga seguinte — sem erro, sem aviso, sem entender por quê.
+               (Era a mesma doença que a v151 curou nas linhas de pauta,
+               e que esta linha, de configuração, não tinha recebido.)
+
+               Agora a mescla é por cliente e por relógio: cada registro
+               carrega `em`, e vale o mais recente dos dois lados. Quem
+               não tem `em` é antigo por definição, e perde para quem
+               tem — o que é justamente o caso de quem acabou de editar
+               aqui contra o que já estava gravado lá. */
+            if(d.cliEdit && typeof d.cliEdit === 'object'){
+              const junto = {};
+              for(const id of new Set([...Object.keys(S.cliEdit || {}),
+                                       ...Object.keys(d.cliEdit)])){
+                const aqui = (S.cliEdit || {})[id], la = d.cliEdit[id];
+                if(!aqui){ junto[id] = la; continue; }
+                if(!la){ junto[id] = aqui; continue; }
+                /* o empate vai para o BANCO, nunca para o aparelho. Quem
+                   entra por link de aprovação escreve no registro local a
+                   chave que veio na URL (v152) — sem `em`. Se o empate
+                   ficasse com o local, uma chave inventada se validaria
+                   sozinha. Edição de verdade sempre carimba `em`, então
+                   quem editou aqui continua ganhando de quem não tem. */
+                junto[id] = (+aqui.em || 0) > (+la.em || 0) ? aqui : la;
+              }
+              S.cliEdit = junto;
+            }
+            /* exclusão é união: um cliente apagado num aparelho não
+               volta à vida porque o outro ainda não sabia. Era assim que
+               a Loja Norte reaparecia. */
+            if(Array.isArray(d.cliFora))
+              S.cliFora = [...new Set([...(S.cliFora || []), ...d.cliFora])];
+            if(d.agencia && (+d.agencia.em || 0) >= (+((S.agencia||{}).em) || 0))
+              S.agencia = d.agencia;
             render();
           }
         }
@@ -13276,7 +12822,10 @@ agEquipe = (function(orig){
 })(agEquipe);
 
 /* ---------- perfil da agência --------------------------------------- */
-S.agencia = S.agencia || { nome:'Agência Nova', site:'', mail:'' };
+/* v167: "Agência Nova" era o nome de exemplo, e aparecia na conta e
+   nos e-mails como se fosse o da casa. Começa vazio: quem nomeia a
+   agência é o dono dela, em Conta. */
+S.agencia = S.agencia || { nome:'', site:'', mail:'' };
 function modalAgencia(){
   const a = S.agencia;
   return `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
@@ -13300,7 +12849,8 @@ document.addEventListener('click', e => {
     if(!ehAdmin() && S.usuario){ toast('Só o administrador edita o perfil da agência.'); return; }
     S.modal = modalAgencia(); renderLayer(); return; }
   const v = id => document.getElementById(id)?.value.trim() || '';
-  S.agencia = { nome: v('agp-nome')||'Agência', site: v('agp-site'), mail: v('agp-mail') };
+  S.agencia = { nome: v('agp-nome')||'', site: v('agp-site'), mail: v('agp-mail'),
+                em: Date.now() };
   S.modal = null; som('toque'); render();
   toast('Perfil da agência salvo.');
 }, true);
@@ -13375,6 +12925,7 @@ window.addEventListener('click', e => {
   setTimeout(()=>{
     if(!S.cliEdit[id]) return;
     S.cliEdit[id].aprovador = (nome||mail) ? {nome, mail} : null;
+    S.cliEdit[id].em = Date.now();
     try{ if(typeof salvarLocal === 'function') salvarLocal(); }catch(err){}
     try{ if(typeof enviarEstado === 'function') enviarEstado(); }catch(err){}
     render();
@@ -13628,6 +13179,9 @@ const EN_COLS = [
 S.ensaio = S.ensaio || null;
 function kbSemente(){
   // nasce do que é real: as pendências da pauta viram solicitações
+  // v170: e não nasce nada no aparelho de quem entrou por link
+  if(typeof abertoPorLink === 'function' && abertoPorLink())
+    return { prox:1, tarefas:[], feitas:[] };
   const t = [];
   let n = 1;
   for(const c of CLIS()){
@@ -13667,7 +13221,7 @@ sbCarregar = (function(orig){
         try{
           const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__config__&select=dados`,{headers:sbCab()});
           if(r.ok){ const [l] = await r.json();
-            if(l && l.dados && l.dados.estudio) S.ensaio = l.dados.estudio; }
+            if(l && l.dados && l.dados.estudio && !abertoPorLink()) S.ensaio = l.dados.estudio; }
         }catch(e){}
       }
       if(!S.ensaio) S.ensaio = kbSemente();
@@ -14967,6 +14521,7 @@ clPeca = (function(orig){
   return function(){
     const html = orig();
     const p = S.pecas.find(x=>x.id===S.sel) || proxima() || S.pecas[0];
+    if(!p) return html;                 /* v167: casa vazia, nada a contar */
     const idx = doLote().findIndex(x=>x.id===p.id) + 1;
     return html.replace(/<span>\d+ de \d+<\/span>/,
       `<span>${idx||1} de ${doLote().length}</span>`);
@@ -14979,6 +14534,7 @@ clPeca = (function(orig){
     let html = orig();
     if(html.includes('data-next=')) return html;
     const p = S.pecas.find(x=>x.id===S.sel) || proxima() || S.pecas[0];
+    if(!p) return html;                 /* v167: casa vazia, nada a decidir */
     const decidida = p.st==='APPROVED' || p.st==='CHANGES_REQUESTED';
     if(!decidida) return html;
     const prox = proxima();
@@ -15323,7 +14879,7 @@ function decidirCard(id, decisao, nota){
        escrito, postagem reprovada volta para a produção. */
     porFase(p, eraTexto ? 'criado' : 'producao');
     p.alteracoes = [...(p.alteracoes||[]), {
-      por: 'Helena Braga', quando: new Date().toLocaleDateString('pt-BR'),
+      por: nomeDeQuemAprova(), quando: new Date().toLocaleDateString('pt-BR'),
       oque: (nota||'').trim(), fase: eraTexto ? 'texto' : 'postagem'
     }];
     p.ajustePendente = true;
@@ -15385,7 +14941,7 @@ ptItemHtml = (function(orig){
     if(ultimo && ultimo.oque){
       const feito = !p.ajustePendente;
       const bloco = `<span class="apNota ${feito?'feito':''}">${ic(feito?'checkc':'warn',12)}
-        <span><b>${feito?'Ajustado':'Helena pediu'}:</b> ${esc(ultimo.oque)}</span></span>`;
+        <span><b>${feito?'Ajustado':esc((ultimo.por||'O cliente').split(' ')[0])+' pediu'}:</b> ${esc(ultimo.oque)}</span></span>`;
       html = html.replace(/(<\/button>\s*<button class="ptQuick" data-mtabrir=)/, bloco + '$1');
     }
 
@@ -15474,7 +15030,7 @@ addEventListener('click', e => {
 function confirmarEnvio(){
   const lista = cardsProntos();
   S.modal = `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
-    <h3>Enviar ${lista.length} card${lista.length>1?'s':''} para Helena?</h3>
+    <h3>Enviar ${lista.length} card${lista.length>1?'s':''} para ${esc(nomeDeQuemAprova())}?</h3>
     <p>Ela recebe <b style="color:var(--ink-50)">uma</b> notificação com o conjunto — não uma por
       card — e decide cada um: aprovar ou pedir alteração.</p>
     <div class="envioLista">
@@ -16068,7 +15624,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v166 · 6 set · a tela diz quem vai ser avisado';
+const VERSAO_PROTOTIPO = 'v171 · 6 set · a pauta sai do arquivo';
 
 menuSheet = (function(orig){
   return function(){
@@ -16804,7 +16360,7 @@ agEnsaio = function(){
         <span class="kbTempo ${t.desde?'rodando':''}" data-kbtempo="${t.id}">${kbFmt(kbTempoTotal(t))}</span>
       </div>
       ${pedido && pedido.oque ? `<div class="enPedido">${ic('warn',12)}
-        <span><b>Helena pediu:</b> ${esc(pedido.oque)}</span></div>`:''}
+        <span><b>${esc((pedido.por||'O cliente').split(' ')[0])} pediu:</b> ${esc(pedido.oque)}</span></div>`:''}
       ${job?`<div class="enBola">${ic('linkic',11)} <span>é o card da pauta ·
         <b>${esc(rotuloFase(job))}</b></span></div>
       <div class="enTrilho">${FASES.map((_,j)=>
@@ -16908,33 +16464,17 @@ function migrarCategorias(){
    e as quatro frentes da casa nascem inteiras. A bandeira garante que
    isso aconteça uma vez só e nunca apague tarefa de ninguém. */
 function semearAsFrentes(){
+  /* v167: aqui nasciam doze tarefas de demonstração — "Decidir se
+     abrimos a vertical de vídeo", "Relatório de resultados · Loja
+     Norte". Enchiam o quadro de coisa que nunca foi de ninguém. O
+     quadro passa a começar vazio: o que aparece nele são os cards dos
+     clientes de verdade e as tarefas que a casa criar.
+
+     A marca `frentes` continua sendo gravada para que o quadro de quem
+     já usava não volte a semear nada. */
   if(!S.ensaio || S.ensaio.frentes) return;
   S.ensaio.frentes = true;
   S.ensaio.tarefas = S.ensaio.tarefas.filter(t => t.cli || t.cardId);
-  const eq = (S.equipe||[]).map(membroId);
-  const nova = (titulo, cat, col, extra) => S.ensaio.tarefas.push({
-    id:S.ensaio.prox++, titulo, cli:null, resp:null, col, cat,
-    criada:Date.now(), prazo:null, tempoMs:0, desde:null, quemVe:[], ...(extra||{}) });
-
-  nova('Decidir se abrimos a vertical de vídeo',        'estrategico', 'plan');
-  nova('Revisar a divisão de pró-labore do trimestre',  'estrategico', 'do');
-  nova('Definir o posicionamento para 2027',            'estrategico', 'inbox');
-
-  nova('Fechar a proposta do quarto cliente',           'comercial', 'plan');
-  nova('Renovar o contrato da EJUP · setembro',         'comercial', 'do',
-    { valor:'4.800', fin:'receber' });
-  nova('Cobrança em atraso · Cortez Jurídico',          'comercial', 'check',
-    { valor:'3.200', fin:'receber' });
-
-  nova('Fechar as horas do time · agosto',              'acompanhamento', 'check');
-  nova('Revisar os prazos estourados da semana',        'acompanhamento', 'do');
-  nova('Relatório de resultados · Loja Norte',          'acompanhamento', 'plan');
-
-  nova('Documentar o padrão de corte dos Reels',        'pessoas', 'do');
-  nova('Onboarding da nova designer',                   'pessoas', 'plan');
-  /* o cadeado por card, dentro de uma frente aberta */
-  nova('Conversa de desenvolvimento · Rafa',            'pessoas', 'inbox',
-    { quemVe: eq.slice(0,1) });
 }
 migrarCategorias();
 semearAsFrentes();
@@ -17692,6 +17232,11 @@ function aplicarEstado(sv){
 }
 
 (function restaurarTudo(){
+  /* v170: quem abriu um link de cliente não recebe de volta o estado da
+     agência que este mesmo navegador possa ter guardado — equipe, quadro
+     do Ensaio, plano. O painel dele é só o que a porta do link entrega.
+     (A v140 já não GRAVAVA nesse caso; faltava não LER.) */
+  if(typeof abertoPorLink === 'function' && abertoPorLink()) return;
   let g = null;
   try{ g = JSON.parse(localStorage.getItem(CHAVE_TUDO) || 'null'); }catch(e){}
   /* migração: quem já tinha equipe e plano guardados pela v74 não perde */
@@ -27634,7 +27179,7 @@ function cbColher(){
   });
   /* o pedido de alteração vem das peças, onde mora a nota do cliente */
   (S.pecas || []).forEach(p => {
-    const cliId = p.cli || 'ln';
+    const cliId = p.cli || (cliAtual() || {}).id;
     const c = cbDe(cliId), ap = c.aprendizado;
     const notas = (p.notes || []).map(n => (n && (n.nota || n.txt || n)) || '').filter(x => typeof x === 'string' && x.trim());
     if(p.st !== 'CHANGES_REQUESTED' || !notas.length) return;
@@ -29811,7 +29356,8 @@ function verFolhaHtml(c, p){
   const ms = (typeof materiaisDe === 'function' ? materiaisDe(p) : []).filter(m => m.tipo !== 'link');
   const par = t => `<p>${esc(t)}</p>`;
   const r = p.roteiro || {}, corte = p.corte || {};
-  const agencia = (S.agencia && S.agencia.nome) || 'a agência';
+  /* v168: sem nome cadastrado, "enviado por a agência" sai torto. */
+  const agencia = String((S.agencia && S.agencia.nome) || '').trim();
   return `<div id="verFolha">
     <div class="vfTopo">
       <div class="vfMarca">${typeof rostoCli === 'function' ? rostoCli(c) : ''}
@@ -29848,7 +29394,7 @@ function verFolhaHtml(c, p){
     <div class="vfPe">
       <span class="lg">${typeof LOGO === 'function' ? LOGO('var(--brass-500)') : ''} Maestro</span>
       <span class="sp"></span>
-      <span>enviado por ${esc(agencia)}</span>
+      <span>${agencia ? 'enviado por ' + esc(agencia) : 'enviado pela agência'}</span>
     </div>
   </div>`;
 }
@@ -32369,6 +31915,23 @@ addEventListener('click', e => {
   };
   const igual = (a, b) => canon(semMarca(a)) === canon(semMarca(b));
 
+  /* v168 — "MEXI NISTO?" NÃO PODE SER "ESTÁ IDÊNTICO?".
+     A decisão de apagar comparava o item inteiro com a base. Só que a
+     base foi gravada por uma versão anterior do empacotador: basta a
+     versão nova acrescentar um campo (a v162 acrescentou fase, a v165
+     mexeu no material, o `pilar` entra por padrão) para TODO card ficar
+     diferente da base — e aí a casa conclui "mexi em todos" e desfaz
+     tudo o que o outro aparelho apagou. Era isto que fazia um navegador
+     mostrar uma coisa e o outro, outra.
+
+     A pergunta certa é mais estreita: o que existia na base continua
+     como estava? Campo que a versão nova acrescentou não é mudança da
+     pessoa. Campo alterado ou removido continua sendo. */
+  function euNaoMexi(b, x){
+    if(!plano(b) || !plano(x)) return igual(b, x);
+    for(const k of Object.keys(b)) if(!igual(b[k], x[k])) return false;
+    return true;
+  }
   function mescla3(base, local, remoto, prefer){
     if(igual(local, remoto)) return local;
     if(igual(remoto, base)) return local;             // só aqui mudou
@@ -32385,8 +31948,8 @@ addEventListener('click', e => {
           const pl = +(l.mod || l.movidoEm || 0), pr = +(r.mod || r.movidoEm || 0);
           out.push(mescla3(b, l, r, pl === pr ? prefer : (pl > pr ? 'local' : 'remoto')));
         }
-        else if(l){ if(b && igual(b, l)) continue; out.push(l); }   // lá apagou e eu não mexi → some; senão fica
-        else       { if(b && igual(b, r)) continue; out.push(r); }   // eu apaguei e lá não mexeu → some; senão volta
+        else if(l){ if(b && euNaoMexi(b, l)) continue; out.push(l); }   // lá apagou e eu não mexi → some; senão fica
+        else       { if(b && euNaoMexi(b, r)) continue; out.push(r); }   // eu apaguei e lá não mexeu → some; senão volta
       }
       return out;
     }
@@ -32987,7 +32550,14 @@ addEventListener('click', e => {
       avisar('Não consegui falar com a Maestro agora. Tente abrir o link de novo.', true);
       return false;
     }
-    if(!r.dados){                                         /* chave não confere */
+    /* v171: a porta exige a FORMA da resposta, não só a presença dela.
+       Chave errada devolve `null` — mas uma resposta vazia de outro
+       feitio (`[]`, `{}`, um erro que virou 200) também não é
+       autorização, e era aceita como se fosse. Sem o cliente dentro,
+       não entra. */
+    const ehLote = !!(r.dados && !Array.isArray(r.dados)
+                      && typeof r.dados === 'object' && r.dados.cliente);
+    if(!ehLote){                                          /* chave não confere */
       avisar('Este link de aprovação não vale mais. Peça outro à agência.', true);
       return true;
     }
@@ -34570,5 +34140,214 @@ addEventListener('click', e => {
 
    Verificado em `web/verificar/v166-quem-vai-ser-avisado.mjs` — 19
    provas.
+   ================================================================== */
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v167 — A CASA LIMPA.
+
+   O founder abriu a plataforma e ela ainda era, em parte, a vitrine do
+   protótipo: um cliente chamado Loja Norte que ele nunca teve, uma
+   aprovadora chamada Helena Braga que nunca existiu, uma "Agência Nova"
+   no lugar do nome da casa dele, oito peças de uma coleção de linho,
+   cinco textos sobre a Dona Rosa, dois projetos de exemplo e doze
+   tarefas de vitrine no quadro. De vez em quando a Loja Norte voltava
+   sozinha, depois de excluída — e as fotos dos clientes sumiam.
+
+   Esta versão apaga a demonstração e conserta o que a fazia voltar.
+
+   1. O QUE SAIU — na semente, não numa camada por cima; dado apagado é
+      dado apagado:
+        · o cliente `ln` e a pauta dele
+        · as oito peças e os cinco textos de demonstração
+        · os projetos "Verão 26" e "Da marca ao lançamento"
+        · as doze tarefas de vitrine do Ensaio
+        · "Agência Nova" e "Helena" de toda tela da agência e do cliente
+        · o briefing e a aprovadora de exemplo do Cortez, que fica como
+          cliente mas começa em branco
+      Quarenta telas foram varridas num navegador de verdade: nenhuma
+      mostra mais nada disso, e nenhuma quebrou ao desenhar sem ela.
+
+   2. O QUE FICOU: a EJUP com a pauta real, o Cortez, e os clientes que
+      o founder cadastrou. A equipe de verdade. As três telas do fluxo
+      antigo de peças, que dependiam de existir uma peça, agora recebem
+      quem chega com um convite em vez de um erro.
+
+   3. A FOTO QUE SUMIA — e provavelmente o e-mail que não salvava.
+      A linha `__config__` do banco guarda o cadastro dos clientes: nome,
+      logo, cor, quem aprova. A carga fazia `S.cliEdit = d.cliEdit` — ou
+      seja, jogava fora, inteiro, o que estava no aparelho. Quem tinha
+      acabado de subir uma logo ou escrever um e-mail via aquilo sumir
+      na carga seguinte, sem erro e sem aviso. É a mesma doença que a
+      v151 curou nas linhas de pauta, e que esta linha não tinha
+      recebido.
+
+      Agora a mescla é por cliente e por relógio: cada registro carrega
+      `em`, e vale o mais recente dos dois lados. E a lista de excluídos
+      virou união — cliente apagado num aparelho não ressuscita porque o
+      outro ainda não sabia. Era assim que a Loja Norte voltava.
+
+   O que NÃO mudou, e é decisão: os depoimentos do site continuam lá.
+   São a prova social da página de vendas, não dado da plataforma — e
+   mexer neles é decisão de marketing, não faxina de dados.
+
+   Verificado em `web/verificar/v167-casa-limpa.mjs` — 21 provas.
+   ================================================================== */
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v170 — O CLIENTE FICA NO PAINEL DELE.
+
+   Pergunta do founder, antes de colocar outras agências para usar: do
+   painel dele, o cliente consegue chegar na parte da agência? A resposta
+   medida, num navegador, entrando pelo link como ele entra, era SIM — e
+   por quatro caminhos:
+
+     1. o interruptor "Agência / Cliente" continuava desenhado no topo;
+     2. digitar /hoje, /clientes ou /ensaio no endereço abria a agência;
+     3. a busca (⌘K) abria, com onze atalhos da agência dentro;
+     4. e o pior: o que ele encontrava lá não estava vazio, porque a
+        pauta de exemplo e o quadro nasciam no próprio arquivo.
+
+   Nada disso é o banco: a RLS de 4 de setembro devolve `[]` para quem é
+   anônimo, e as três funções do link só entregam o cliente do link. O
+   furo era da CASA, não do banco — tela que não devia existir, e dado
+   que não devia estar no aparelho.
+
+   O que esta versão faz:
+
+   · UMA PERGUNTA SÓ, num lugar só: `ehCliente()`. Quem entrou pelo link,
+     ou está identificado como cliente, é cliente — e não vira agência
+     por caminho nenhum.
+   · O `render` passa a ser o portão: se um cliente estiver com a tela da
+     agência, ele volta para o painel antes de a tela ser desenhada.
+     Vale para o endereço digitado, para o voltar do navegador e para
+     qualquer código que tente trocar `S.view` — inclusive o inspetor.
+   · O interruptor e a busca somem do painel do cliente, e o clique em
+     "entrar como agência" é recusado.
+   · A pauta de exemplo da EJUP deixa de nascer no aparelho de quem
+     abre o link: ela é a planilha real do founder e mora no banco.
+     Sem sessão, o painel do cliente já não a carrega.
+
+   Uma ressalva honesta, que fica anotada: enquanto a pauta da EJUP
+   estiver escrita dentro deste arquivo, ela é legível por quem abrir o
+   código-fonte da página. O caminho certo é apagá-la daqui e deixá-la
+   só no banco — e isso se faz depois que o founder confirmar que a
+   linha dela está lá (o SQL de limpeza mostra).
+
+   Verificado em `web/verificar/v170-cliente-nao-entra-na-agencia.mjs`.
+   ================================================================== */
+(function(){
+
+  /* Duas perguntas, e não uma — a diferença importa, e me custou uma
+     volta: na primeira versão desta trava um link com a chave ERRADA
+     abria a casca do painel, sem usuário nenhum, porque a trava
+     empurrava para lá antes de a porta responder.
+
+     `clienteEntrou()`: a porta conferiu a chave e disse quem é. Este vai
+     para o painel dele.
+     `ehCliente()`: veio por um link, com chave ainda por conferir ou já
+     recusada. Este não é da agência — mas também não é para ser jogado
+     dentro do painel de ninguém. */
+  function clienteEntrou(){
+    try{ return !!(S.usuario && S.usuario.tipo === 'cliente'); }catch(e){ return false; }
+  }
+  function ehCliente(){
+    try{ return clienteEntrou() || !!S.viaLink; }catch(e){ return false; }
+  }
+  window.MaestroEhCliente = ehCliente;
+
+  /* ---------- 1. o portão: o render devolve o cliente para casa ------ */
+  /* No `render`, e não no roteador: assim vale para todo caminho que
+     leve a tela da agência à tela — endereço, voltar do navegador,
+     código de terceiro. É o mesmo princípio da v159: fechar onde a
+     escrita passa, não onde ela nasce. */
+  const ROTA_CL = (typeof URL_CL === 'object') ? URL_CL : { inicio:'' };
+  render = (function(orig){
+    return function(){
+      try{
+        if(clienteEntrou()){
+          if(S.view !== 'client'){ S.view = 'client'; S.modal = null; }
+          if(!(S.route in ROTA_CL)) S.route = 'inicio';
+        }
+        else if(S.viaLink && S.view === 'agency'){
+          /* chave por conferir, ou recusada: fica na folha que a porta
+             desenha, e não vira agência por nenhum caminho */
+          S.view = 'site'; S.route = 'home'; S.modal = null;
+        }
+        if(ehCliente() && S.pal) S.pal = false;     /* a busca é da agência */
+      }catch(e){}
+      return orig.apply(this, arguments);
+    };
+  })(render);
+
+  /* ---------- 2. o interruptor some do painel do cliente ------------- */
+  if(typeof ctxBar === 'function'){
+    ctxBar = (function(orig){
+      return function(){ const r = orig.apply(this, arguments); tirarInterruptor(); return r; };
+    })(ctxBar);
+  }
+  function tirarInterruptor(){
+    if(!ehCliente()) return;
+    document.querySelectorAll('[data-enter="agency"],[data-trocausr],[data-openpal]')
+      .forEach(el => { const seg = el.closest('[data-seg]'); (seg || el).remove(); });
+  }
+  const _obs = new MutationObserver(() => { try{ tirarInterruptor(); }catch(e){} });
+  try{ _obs.observe(document.body, { childList:true, subtree:true }); }catch(e){}
+
+  /* ---------- 3. e o clique é recusado, não só escondido ------------- */
+  addEventListener('click', e => {
+    if(!ehCliente()) return;
+    const t = e.target.closest && e.target.closest(
+      '[data-enter="agency"],[data-qeag],[data-trocausr],[data-openpal]');
+    if(!t) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    document.getElementById('quemEsta')?.remove();
+    try{ toast('Esta é a área da agência. Você está no painel do seu projeto.'); }catch(err){}
+  }, true);
+
+  /* ---------- 4. o atalho da busca também ---------------------------- */
+  addEventListener('keydown', e => {
+    if(!ehCliente()) return;
+    const k = (e.key || '').toLowerCase();
+    if((e.metaKey || e.ctrlKey) && k === 'k'){ e.stopImmediatePropagation(); e.preventDefault(); }
+  }, true);
+
+  try{ render(); }catch(e){}
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v171 — A PAUTA SAI DO ARQUIVO.
+
+   A auditoria da v170 terminou com uma prova vermelha de propósito: a
+   pauta da EJUP — conteúdo real do founder, 501 linhas — estava escrita
+   dentro do arquivo que o site serve. Quem abrisse sejamaestro.com.br
+   /hoje num navegador limpo, sem login e sem link, já tinha 71 cards no
+   aparelho. Bastava ver o código-fonte da página. A porta de entrada
+   guardava a tela; não guardava o dado.
+
+   O founder rodou a consulta no banco em 6 de setembro: a linha `n0`
+   tem 68 cards, atualizada naquela manhã, com cópia guardada em
+   `pauta_backup_2026_09_06`. Com isso confirmado, as três constantes
+   saíram daqui — `PAUTA_EJUP`, `PAUTA_EJUP_V2` e `STORIES_EJUP`.
+
+   De quebra, some uma fonte de discordância entre aparelhos que estava
+   à vista na própria consulta: o arquivo semeava 70 cards e o banco
+   tinha 68. Os dois que sobravam eram cards que o founder havia
+   apagado — e que a semente devolvia a cada navegador novo.
+
+   Quem entrega a pauta agora é o banco, para quem tem sessão. Se ela
+   aparecer vazia, é carga que não veio — e o selo do Cronograma diz
+   isso. Não é conteúdo perdido.
+
+   Verificado em `web/verificar/v170-cliente-nao-entra-na-agencia.mjs`
+   (13 provas, a 3.1 agora verde) e `v167-casa-limpa.mjs` (24).
    ================================================================== */
 </script>
