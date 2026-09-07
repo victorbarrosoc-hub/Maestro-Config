@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-07 17:47 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-07 18:42 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15818,7 +15818,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v180 · 7 set · chave curta se cura';
+const VERSAO_PROTOTIPO = 'v181 · 7 set · push com o app fechado';
 
 menuSheet = (function(orig){
   return function(){
@@ -33703,7 +33703,9 @@ addEventListener('click', e => {
   }
 
   /* quem já disse sim continua com o operário de pé a cada abertura */
-  try{ if(ligado() && permitido()) ligarOperario(); }catch(e){}
+  /* v181: a cada abertura, confere a inscrição também — o navegador
+     pode ter trocado a dele sem avisar ninguém. */
+  try{ if(ligado() && permitido()) ligarOperario().then(r => inscreverPush(r)); }catch(e){}
 
   function avisarNoAparelho({ titulo, corpo, tag, url }){
     if(!permitido() || !ligado()) return false;
@@ -33715,6 +33717,88 @@ addEventListener('click', e => {
       new Notification(titulo, opcoes);
       return true;
     }catch(e){ return false; }
+  }
+
+  /* ===================================================================
+     v181 — PUSH DE VERDADE: o aviso chega com a Maestro FECHADA.
+
+     Até aqui o aviso de aparelho era `showNotification` chamado pela
+     PRÓPRIA PÁGINA. Isso exige a Maestro aberta — na tela ou em segundo
+     plano. Fechou o app, acabou o aviso. Era o que o founder via como
+     "o push não está funcionando": não estava quebrado, não existia.
+
+     Push de verdade é outro caminho: o aparelho se INSCREVE (o navegador
+     devolve um endereço e duas chaves), e depois um servidor bate
+     naquele endereço. O service worker acorda sozinho, sem aba aberta,
+     sem o app rodando. O `web/sw.js` já tinha o ouvido do `push` escrito
+     e comentado "hoje não chega nada aqui" — agora chega.
+
+     A chave pública abaixo é pública por desenho: ela vai no código de
+     toda página, e sozinha não manda nada. Quem assina é a privada, que
+     vive só nos secrets do Supabase e nunca esteve neste repositório.
+     ================================================================ */
+  const VAPID_PUBLICA = 'BIhUtHvMRi3MDTUXFl8fMU5qvVH_q7hJSX27txeQnAlcRc9_s4CiV5xve3ayoSGg4RYGC4Xx9-UkKs6o1oP7k4g';
+
+  /* o navegador quer a chave em bytes, não em base64url */
+  function b64ParaBytes(b64){
+    const resto = '='.repeat((4 - (b64.length % 4)) % 4);
+    const normal = (b64 + resto).replace(/-/g, '+').replace(/_/g, '/');
+    const cru = atob(normal);
+    const saida = new Uint8Array(cru.length);
+    for(let i = 0; i < cru.length; i++) saida[i] = cru.charCodeAt(i);
+    return saida;
+  }
+
+  /* quem é o dono deste aparelho, para o carteiro saber a quem entregar */
+  function euParaAviso(){
+    try{
+      const id = typeof euAgora === 'function' ? euAgora() : null;
+      const m = id && typeof membroCru === 'function' ? membroCru(id) : null;
+      if(m && m.mail) return { mail: m.mail, nome: m.n || null };
+      const p = window.MaestroPorta && window.MaestroPorta.quem && window.MaestroPorta.quem();
+      if(p && p.email) return { mail: p.email, nome: null };
+    }catch(e){}
+    return null;
+  }
+
+  async function guardarInscricao(sub){
+    const eu = euParaAviso();
+    if(!eu || !eu.mail || !_sbLigado) return false;
+    const j = (sub && sub.toJSON) ? sub.toJSON() : null;
+    const chaves = (j && j.keys) || {};
+    if(!j || !j.endpoint || !chaves.p256dh || !chaves.auth) return false;
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/push_inscricoes?on_conflict=endpoint`, {
+        method: 'POST',
+        headers: { ...sbCab(), Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({
+          endpoint: j.endpoint, para_email: eu.mail, para_nome: eu.nome,
+          p256dh: chaves.p256dh, auth: chaves.auth,
+          aparelho: String(navigator.userAgent || '').slice(0, 120),
+          visto_em: new Date().toISOString(), morta_em: null, erro: null
+        })
+      });
+      return r.ok;
+    }catch(e){ return false; }
+  }
+
+  /* O navegador pode TROCAR a inscrição sozinho (o `pushsubscriptionchange`
+     do service worker, ou uma reinstalação). Por isso isto roda a cada
+     abertura, e não só quando a pessoa liga o aviso: uma inscrição velha
+     no banco é um aviso que não chega e ninguém percebe. */
+  async function inscreverPush(reg){
+    if(!reg || !reg.pushManager) return null;
+    try{
+      let sub = await reg.pushManager.getSubscription();
+      if(!sub){
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,                       /* exigido pelo Chrome */
+          applicationServerKey: b64ParaBytes(VAPID_PUBLICA)
+        });
+      }
+      await guardarInscricao(sub);
+      return sub;
+    }catch(e){ return null; }
   }
 
   async function pedirPermissao(){
@@ -33731,7 +33815,8 @@ addEventListener('click', e => {
       ligar(false); render(); return false;
     }
     ligar(true); render();
-    await ligarOperario();
+    const reg = await ligarOperario();
+    await inscreverPush(reg);                 /* v181: e passa a valer com o app fechado */
     avisarNoAparelho({ titulo:'Avisos ligados', corpo:'É assim que a Maestro vai te chamar.',
                        tag:'maestro-teste', url:'/' });
     toast('Avisos ligados neste aparelho.');
