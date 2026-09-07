@@ -1,6 +1,6 @@
 # HANDOFF — retomando a Maestro
 
-Última atualização: 2026-08-04 · 32 commits
+Última atualização: 2026-09-07 · a casa vazia e a auditoria do painel do cliente
 
 > **Leia este arquivo primeiro.** Ele é o mapa. A informação completa está nos
 > documentos apontados aqui — não repita conteúdo, vá na fonte.
@@ -1196,12 +1196,74 @@ classes 9 e 42, e adotar `usemaestro.com` ou `maestro.studio`.
 
 **Rodada 3 do teste** com clientes reais.
 
+**Políticas do bucket `midia`** no Supabase Storage: gravação só para
+`authenticated`. Enquanto a leitura for pública, a arte carrega nos links; ao
+fechá-la, os links precisam de URL assinada (ainda não têm).
+
+**O SQL de limpeza da demonstração** (`ENGINEERING/limpar-demonstracao.sql`),
+passos 2 a 4: guarda a cópia, apaga a linha `ln` e tira a Loja Norte de dentro
+do `__config__`. O passo 1 já foi rodado em 6 de setembro.
+
+**O nome da agência** está vazio de propósito (Menu → Conta). Enquanto não for
+preenchido, a tela diz "Sua agência" e o e-mail ao cliente diz "a agência".
+
 ~~Colar o SQL dos links no Supabase~~ — **feito em 5 de setembro.** As três
 funções estão no banco; os links `?aprovar=` e `?ver=` voltam a abrir e a
 decisão do cliente volta. Porquê e como conferir:
 `docs/ENGINEERING/LINKS_ANONIMOS.md`.
 
 ### Produto e engenharia
+
+- **A casa vazia (v167–v171, 6 e 7 de setembro).** O protótipo nasceu com um
+  cliente de demonstração — a Loja Norte, com pauta, oito peças, cinco textos,
+  projeto "Verão 26", uma aprovadora chamada Helena Braga e doze tarefas de
+  vitrine no quadro — mais a "Agência Nova" no lugar do nome da casa. Servia
+  para mostrar o produto; virou obstáculo assim que a plataforma passou a ser
+  usada de verdade. Tudo apagado **na semente**, não numa camada por cima.
+  Quarenta telas varridas num navegador: nenhuma mostra mais nada disso.
+  Vinte e quatro testes que herdavam esse cenário passaram a montar o seu.
+
+  Junto saiu o achado mais grave da auditoria: **a pauta real do founder (a
+  EJUP, 501 linhas) estava escrita dentro do arquivo que o site serve.** Quem
+  abrisse `/hoje` num navegador limpo — sem login e sem link — já tinha 71
+  cards no aparelho; bastava ver o código-fonte. A porta de entrada guardava a
+  tela, não o dado. Só saiu depois que o founder confirmou no banco: a linha
+  `n0` com 68 cards, e uma cópia em `pauta_backup_2026_09_06`. O SQL de
+  limpeza, em cinco passos: `ENGINEERING/limpar-demonstracao.sql`.
+
+- **O cliente fica no painel dele (v170).** Pergunta do founder antes de
+  colocar outras agências para usar. Medido num navegador, entrando pelo link
+  como o cliente entra: havia quatro caminhos para a área da agência — o
+  interruptor "Agência/Cliente", o endereço digitado, a busca (⌘K) e o que ele
+  encontrava lá, que não estava vazio. Nada disso era o banco (a RLS devolve
+  `[]` para anônimo); o furo era da casa. Fechado com um portão só, no
+  `render`. Verificação: `web/verificar/v170-cliente-nao-entra-na-agencia.mjs`.
+
+- **A discordância entre navegadores (v168), diagnosticada e fechada.** O
+  relato era "entro num browser é uma coisa, no outro é outra, aí tenho que
+  atualizar". A casa guarda em cada aparelho uma BASE — a foto do que ele já
+  combinou com o banco — e decide "eu mexi nisto?" comparando o item INTEIRO
+  com ela. Como a base foi gravada por uma versão anterior do empacotador,
+  bastava a versão nova acrescentar um campo para todo card parecer mexido —
+  e aí a casa desfazia tudo o que o outro aparelho tinha apagado. A pergunta
+  ficou estreita: *o que existia na base continua como estava?* Provas em
+  `web/verificar/v168-dois-navegadores.mjs` e `v169-aparelho-com-guardado.mjs`
+  (este reproduz o caso real: aparelho com semanas de uso contra banco novo).
+
+- **Três falhas de segurança fechadas no caminho, duas delas introduzidas por
+  mim na mesma noite e pegas por testes** — vale como método: a porta do link
+  aceitava resposta vazia do banco como autorização; o empate da mescla do
+  `__config__` dava vitória ao aparelho, e quem entra por link grava ali a
+  chave que veio na URL (ela se auto-validava); e a primeira versão da trava do
+  painel confundia "veio por link" com "é cliente", abrindo a casca do painel
+  para quem chegava com chave errada.
+
+- **O cadastro do cliente parou de sumir (v167).** A carga do `__config__`
+  fazia `S.cliEdit = d.cliEdit`: jogava fora, inteiro, o que estava no
+  aparelho. Quem subia uma logo ou escrevia o e-mail de quem aprova via aquilo
+  desaparecer na carga seguinte. Agora a mescla é por cliente e por relógio
+  (`em`), e a lista de excluídos virou união — era assim que a Loja Norte
+  voltava depois de excluída.
 
 - **Links anônimos (v152, 5 set): fechados, e o SQL já rodou no Supabase.** Três funções
   `security definer` (`maestro_link_lote`, `maestro_link_card`,
