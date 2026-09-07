@@ -63,23 +63,29 @@ returning cliente, jsonb_array_length(coalesce(dados -> 'pauta', '[]'::jsonb)) a
 -- ---------------------------------------------------------------------
 -- PASSO 4 — tirar a Loja Norte de dentro do cadastro.
 --
--- A linha `__config__` guarda o cadastro dos clientes (nome, logo, cor,
--- quem aprova) e a lista de excluídos. Aqui o registro da Loja Norte sai
--- de dentro dela, sem tocar em mais nada.
+-- O cadastro dos clientes (nome, logo, cor, quem aprova) é gravado em
+-- DUAS linhas, não uma: a `__config__` é a oficial, e a `__estado__`
+-- guarda uma segunda cópia. Achado em 7/set, ao testar isto contra um
+-- Postgres de verdade: limpar só a primeira deixava o registro vivo na
+-- segunda, e a carga seguinte o trazia de volta. São dois comandos.
+--
+-- Testado: roda duas vezes sem estrago, e num banco sem Loja Norte
+-- nenhuma não faz nada — não dá erro e não zera as linhas.
 -- ---------------------------------------------------------------------
 update public.pauta
-   set dados = jsonb_set(
-         dados,
-         '{cliEdit}',
-         coalesce(dados -> 'cliEdit', '{}'::jsonb) - 'ln'
-       )
- where cliente = '__config__'
-   and dados ? 'cliEdit'
-returning cliente, (dados -> 'cliEdit') ? 'ln' as ainda_tem_loja_norte;
--- o esperado acima é: ainda_tem_loja_norte = false
+   set dados = jsonb_set(dados, '{cliEdit}',
+         coalesce(dados -> 'cliEdit', '{}'::jsonb) - 'ln')
+ where cliente = '__config__' and (dados -> 'cliEdit') is not null
+returning cliente, (dados -> 'cliEdit' -> 'ln') is not null as ainda_tem_loja_norte;
+
+update public.pauta
+   set dados = jsonb_set(dados, '{s,cliEdit}',
+         coalesce(dados -> 's' -> 'cliEdit', '{}'::jsonb) - 'ln')
+ where cliente = '__estado__' and (dados -> 's' -> 'cliEdit') is not null
+returning cliente, (dados -> 's' -> 'cliEdit' -> 'ln') is not null as ainda_tem_loja_norte;
+-- o esperado nos dois é: ainda_tem_loja_norte = false
 
 
--- ---------------------------------------------------------------------
 -- PASSO 4b — a linha de teste, se você quiser.
 --
 -- A consulta do passo 1 mostrou uma linha `__teste__` de 26 de agosto.
