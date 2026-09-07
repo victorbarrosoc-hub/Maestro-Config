@@ -129,6 +129,60 @@ Contexto / Problema / Alternativas / Decisão / Motivo / Consequências / Próxi
 **Ação:** busca no INPI (classes 9 e 42), avaliação de domínio, e possível qualificador (`Maestro OS`, `usemaestro.com`, `maestro.studio`).
 **Prazo sugerido:** antes de qualquer investimento em marketing pago ou landing page pública.
 
+## Levantamento de 7 de setembro de 2026 — e por que ele NÃO fecha a D-024
+
+**O banco do INPI não foi acessado.** A rede desta sessão bloqueia `busca.inpi.gov.br`,
+`branddb.wipo.int` e `tmdn.org/tmview`. Portanto **não há um único número de processo,
+titular ou data conferido** aqui. O que segue veio de índice de busca, e as próprias
+páginas das empresas citadas também não abriram — trate como pista a confirmar, nunca
+como anterioridade levantada.
+
+**O risco estava mapeado no alvo errado.** As três colisões que este documento listava
+— Mastercard, mobile.dev, Netflix — são as que se nota primeiro e provavelmente **não**
+são as que barram o pedido:
+
+- A bandeira **Maestro da Mastercard é serviço financeiro (classe 36)**, ramo distante de
+  um SaaS de operação para agências, e está sendo **aposentada** (emissores europeus
+  pararam de emitir em julho de 2023). O risco dela é **oposição** por vigilância de
+  portfólio — custa prazo e advogado —, não indeferimento no exame.
+- **Netflix Maestro** e **Maestro da mobile.dev** são projetos open source. Ocupam o nome
+  em SEO e em conversa de mercado; não costumam depositar marca no Brasil.
+
+**O que de fato ameaça o pedido são os "Maestro" brasileiros de software**, que este
+documento não mencionava — mesmo sinal, mesmas classes 9/42, mercado adjacente ou igual:
+
+| Nome | O que é | Por que importa |
+|---|---|---|
+| **Maestro ABM** | SaaS de Account-Based Marketing B2B | **O pior caso.** SaaS, marketing, público comprador quase idêntico ao nosso |
+| **Maestro Tecnologia S.A.** | SaaS de ponto eletrônico (Smartcontrol), 10+ anos | Empresa madura; quem opera uma década quase sempre tem registro |
+| **Maestro BPM** (Make Technology) | Software de BPM/workflow | Workflow e aprovação de processo têm sobreposição funcional real com a Maestro |
+| **Maestro Sistemas** | Gestão pública, 15 anos | Mesmo sinal, provável registro em 9/42 |
+
+Anterioridade concedida em qualquer um desses indefere no exame, sem precisar de
+oposição de ninguém.
+
+**A tese de marca evocativa corta nos dois sentidos.** "Maestro" — quem rege a orquestra —
+é evocativo para um produto que orquestra a operação de uma agência; é literalmente o
+nosso posicionamento. Isso **ajuda**: o STJ tem entendimento consolidado de que a
+exclusividade não alcança termos evocativos, e que o titular "deve suportar o ônus da
+convivência" (leading case Bombril × Tecbril). Anterioridades ficam mais fracas e a
+convivência fica mais provável. E **atrapalha**: a nossa marca nasce igualmente fraca —
+não conseguiremos impedir outro SaaS de usar "Maestro". A opção por **marca mista** já
+prevista aqui é exatamente a mitigação certa: desloca a distintividade para o conjunto
+figurativo, que é o que temos de próprio (o símbolo é decalque do gesto do founder,
+0.5.20).
+
+**Consequência para a ação:** a busca no INPI continua sendo o passo que destrava a
+D-024, e ela precisa ser **por radical** ("MAESTRO*", não palavra exata) nas classes
+**9, 35, 41 e 42**, conferindo nominalmente os quatro titulares acima antes da
+Mastercard. Feita de uma rede com acesso ao pePI, ou contratada de escritório (ordem de
+R$ 300–800, dias). **Não depositar antes disso** — a taxa é perdida se houver
+anterioridade.
+
+**Reforça o qualificador.** Se a busca confirmar registro de algum dos quatro, o nome
+composto deixa de ser preferência e vira caminho: contorna anterioridade e blinda melhor
+do que a palavra solta.
+
 ---
 
 # D-025 · UX / Aprovação · Aprovada
