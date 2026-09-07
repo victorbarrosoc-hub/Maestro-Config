@@ -277,7 +277,19 @@ com clientes reais
 **Não verificado:** `apps/web` não existe; o worker que entrega as notificações
 enfileiradas não existe (o protótipo tem aviso dentro do produto, nada de e-mail).
 
-**Aberto e bloqueante:** D-024 — INPI e domínio. Rodada 3 do teste com clientes.
+**Aberto e bloqueante:** D-024 — INPI. A busca de anterioridade é o que destrava,
+e ela precisa ser feita de uma rede com acesso ao pePI (ou contratada): o risco
+não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
+Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
+Rodada 3 do teste com clientes.
+
+**Fechado (7 set, v178–v180):** os seis links de aprovação. Foram três causas
+empilhadas, e cada uma escondia a seguinte: a mescla de cadastro apagava a chave
+do link ao editar um cliente; o id do cliente era a posição na fila e
+`cliAtual()` caía no primeiro da lista em silêncio; e sobraram uma chave herdada
+de 8 caracteres (a porta exige 12+) e um cliente que nasce no código, que a porta
+não sabia descrever. O founder conferiu os seis, um a um. Detalhe em
+`docs/CHANGELOG.md` 0.5.22 e 0.5.23.
 **Fechado (4 set):** a RLS do Supabase. Sem login a API responde `[]`; logado, a
 plataforma carrega.
 **Fechado (5 set, v151):** a inconsistência de dados entre aparelhos. Cada

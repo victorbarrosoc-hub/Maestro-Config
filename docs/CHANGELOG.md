@@ -1,9 +1,53 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.22
+Version: 0.5.23
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.23 — 2026-09-07
+
+**Status:** Concluída
+**Objetivo:** os seis links de aprovação abrindo. Verificado pelo founder, um a um.
+
+### O que faltava depois da 0.5.22
+Consertada a mescla que apagava chaves, dois clientes continuavam sem abrir.
+O banco mostrou duas causas diferentes, e nenhuma era a chave ausente.
+
+**Leonardo Pivotto — chave de 8 caracteres.** Até a v140 a chave saía de
+`Math.random().toString(36).slice(2)`, que dá 8 a 11. A v140 passou a usar
+`tokenForte(22)`, mas só para chave NOVA — quem já tinha uma curta ficou com
+ela. A porta (v152) recusa qualquer chave com menos de 12, no primeiro portão.
+
+O pior tipo de falha: o link existe, é copiado, é enviado, e não abre. Sem
+erro, sem aviso, sem sintoma do lado de quem mandou. Agora chave curta é
+tratada como ausente e trocada na hora (v180), e
+`consertar-chave-curta.sql` resolve pelo banco quando não dá para esperar o
+aparelho carregar a versão nova.
+
+**Cortez Jurídico — a porta não sabia descrevê-lo.** Ela só resolve id no
+formato `n` + número, buscando pela posição no array `novos`. O `cj` nasce no
+código do app, não está em `novos`, então a resposta voltava sem cliente — e o
+app recusa resposta sem cliente, com razão (v171). `links-anonimos-cj.sql` faz
+a porta descrever, pelo cadastro, o cliente que não está em `novos`. Provado
+contra PostgreSQL 16: `cj` passa a devolver cliente, `n2` continua idêntico, e
+chave errada continua sendo recusada.
+
+### Também nesta rodada (v179)
+**O portão "Como você entra?" prendia quem só espiou.** A v170 varria o botão
+da agência e o de trocar de lado da página inteira quando o aparelho estava
+marcado como cliente. Mas varria o PORTÃO junto — e o portão não é o painel do
+cliente, é a tela onde se escolhe o lado. Quem clicasse "Sou o cliente" uma vez
+perdia a agência para sempre, sem volta pela interface. A separação passou a ser
+por como a pessoa chegou: veio por link segue trancada; só escolheu o lado pode
+voltar.
+
+### Verificado
+71 provas novas hoje, em quatro arquivos, mais a bateria inteira: **67
+arquivos, 0 falhas**. E, o que decide: **o founder abriu os seis links, um a
+um, e todos funcionaram.**
 
 ---
 
