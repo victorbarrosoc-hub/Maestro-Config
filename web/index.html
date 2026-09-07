@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-07 17:09 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-07 17:47 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15818,7 +15818,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v179 · 7 set · o portao tem volta';
+const VERSAO_PROTOTIPO = 'v180 · 7 set · chave curta se cura';
 
 menuSheet = (function(orig){
   return function(){
@@ -22994,9 +22994,27 @@ if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clcard = () => clCard()
    O aprovador não cria conta nem senha: entra pelo link. O link carrega
    a chave do cliente; a chave vive no `cliEdit`, que já viaja no
    __config__. Trocou de mãos, gera outra — e a antiga morre. */
+/* v179 — CHAVE CURTA É CHAVE MORTA, E NINGUÉM AVISAVA.
+
+   Até a v140 a chave saía de `Math.random().toString(36).slice(2)`, que
+   dá 8 a 11 caracteres. A v140 trocou por `tokenForte(22)`, com entropia
+   de verdade — mas só para chave NOVA: quem já tinha uma curta ficou com
+   ela. A porta dos links (v152) recusa qualquer chave com menos de 12
+   caracteres, no primeiro portão, antes de olhar mais nada.
+
+   O resultado é o pior tipo de falha: o link existe, é copiado, é
+   enviado, e não abre. Sem erro, sem aviso, sem sintoma do lado de quem
+   mandou. Em 7/set o Leonardo Pivotto estava assim — chave de 8
+   caracteres (`d8ziyh3p`) contra 22 de todos os outros. Tinha chave,
+   estava na posição certa da lista, não estava excluído. E não abria.
+
+   Agora chave curta é tratada como chave ausente: nasce outra, de 22, e
+   vai para o banco. Isso não custa nada a ninguém — um link com chave
+   curta já estava morto, então não há o que invalidar. */
 function chaveDoCliente(id){
   S.cliEdit[id] = S.cliEdit[id] || {};
-  if(!S.cliEdit[id].chave){
+  const atual = S.cliEdit[id].chave;
+  if(!atual || String(atual).length < 12){
     S.cliEdit[id].chave = tokenForte(22);
     if(typeof sbGravarConfig === 'function') sbGravarConfig();
   }
@@ -32771,16 +32789,24 @@ addEventListener('click', e => {
     if(!reg || typeof reg !== 'object') return;           /* ln, cj: já são do código */
     _clisPronto = true;
     const base = CLIS;
-    const doBanco = () => Object.assign({
-      id: cli, nome: reg.nome || 'Cliente', ini: reg.ini || '?',
-      seg: reg.seg || '', cor: reg.cor || null, brief: reg.brief || '—',
-      links: [], refs: '—', tipo: reg.tipo
-    }, (S.cliEdit && S.cliEdit[cli]) || {}, { id: cli });
+    /* v179: só o que o banco realmente mandou. Antes isto carregava os
+       valores de enchimento ('Cliente', '?', '—') dentro do próprio
+       objeto, e eles atropelavam o cliente que o código já conhece — o
+       Cortez virava "Cliente" com iniciais "?" na tela dele. Agora o
+       enchimento só entra em cliente que NÃO existe na lista. */
+    const doBanco = () => {
+      const veio = {};
+      ['nome','ini','seg','cor','brief','tipo'].forEach(k => {
+        if(reg[k] !== undefined && reg[k] !== null && reg[k] !== '') veio[k] = reg[k];
+      });
+      return Object.assign(veio, (S.cliEdit && S.cliEdit[cli]) || {}, { id: cli });
+    };
     CLIS = function(){
       const l = base().slice();
       const i = l.findIndex(c => c.id === cli);
       if(i >= 0) l[i] = Object.assign({}, l[i], doBanco());
-      else l.push(doBanco());
+      else l.push(Object.assign({ nome:'Cliente', ini:'?', seg:'', cor:null,
+                                  brief:'—', links:[], refs:'—' }, doBanco()));
       return l;
     };
   }
