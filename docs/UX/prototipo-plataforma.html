@@ -15760,7 +15760,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v185 · 7 set · quem esta online';
+const VERSAO_PROTOTIPO = 'v186 · 7 set · a mensagem tambem avisa';
 
 menuSheet = (function(orig){
   return function(){
@@ -34106,12 +34106,10 @@ addEventListener('click', e => {
           avisar({ para:[id], autor:m.de, canal:c.id, chave,
                    txt: `${nome} mencionou você em ${c.nome}`,
                    sub: String(m.txt || '').slice(0, 90) });
-          if(id === eu){
-            avisarNoAparelho({ titulo: `${nome} mencionou você`,
-              corpo: String(m.txt || '').slice(0, 140), tag: chave, url: '/conversas' });
-            if(typeof som === 'function') { try{ som('toque'); }catch(e){} }
-            convidar();
-          }
+          /* v186: o aviso no aparelho saiu daqui — agora ele nasce no
+             funil do `avisar`, junto com o push, e vale para mensagem
+             comum também. Aqui fica só o convite, que é desta tela. */
+          if(id === eu) convidar();
         });
       });
     }
@@ -34151,11 +34149,9 @@ addEventListener('click', e => {
       avisar({ para:[dono], chave, autor: gestoRecente() ? euAgora() : '__de_fora__',
                txt:'Uma tarefa passou a ser sua',
                sub: String(t.titulo || '').slice(0, 90) });
-      if(dono === eu){
-        avisarNoAparelho({ titulo:'Uma tarefa passou a ser sua',
-          corpo: String(t.titulo || '').slice(0, 140), tag: chave, url:'/ensaio' });
-        convidar();
-      }
+      /* v186: o aviso no aparelho saiu daqui também — nasce no funil do
+         `avisar`. Aqui fica só o convite. */
+      if(dono === eu) convidar();
     });
     donos = agora;
   }
@@ -34878,7 +34874,7 @@ addEventListener('click', e => {
       return function(a){
         const r = orig.apply(this, arguments);
         try{
-          if(!a || !_sbLigado) return r;
+          if(!a) return r;
           const dele = a.autor || (typeof euAgora === 'function' ? euAgora() : null);
           const gente = (a.para || []).filter(id => id && id !== dele);
           if(!gente.length) return r;
@@ -34890,6 +34886,52 @@ addEventListener('click', e => {
           /* sem chave o assunto é único: usa uma derivada do texto, para
              o aparelho não empilhar dois avisos idênticos na bandeja */
           const chave  = a.chave || ('sino:' + titulo.slice(0, 60));
+
+          /* ---------------------------------------------------------
+             v186 — O AVISO LOCAL SAI DAQUI, e não de cada evento.
+
+             O founder: "a mensagem não chega, só no sininho". E estava
+             certo: `avisarNoAparelho` era chamado à mão em DOIS lugares
+             — menção e tarefa. Mensagem em canal seu ia para o sino e
+             morria ali, embora o sino seja justamente o lugar de onde
+             ninguém olha sem motivo.
+
+             Acrescentar um terceiro lugar consertaria a mensagem e
+             deixaria o próximo aviso com o mesmo buraco. Então o aviso
+             local passa a sair do MESMO funil de onde o push já sai:
+             tudo que vira sino vira aviso, sem exceção e sem lista.
+
+             Duas coisas que ele NÃO faz, de propósito:
+             · não avisa de conversa que você está lendo agora — banner
+               por cima da mensagem que acabou de aparecer na sua frente
+               é ruído puro;
+             · não avisa duas vezes o que a menção e a tarefa já avisam,
+               porque as chamadas à mão delas saíram junto com isto.
+             --------------------------------------------------------- */
+          try{
+            const eu = typeof euAgora === 'function' ? euAgora() : null;
+            const souEu = !!eu && gente.includes(eu);
+            const olhandoEsta = S.route === 'conversas' && a.canal && S.cvAtivo === a.canal
+                             && (!window.MaestroAvisos || window.MaestroAvisos.estouOlhando());
+            if(souEu && !olhandoEsta && window.MaestroAvisos){
+              /* para onde o clique leva. O `avisar` não carrega destino, e
+                 acrescentar o campo obrigaria a mexer nas seis chamadas
+                 espalhadas. A CHAVE já diz o assunto — ela é montada com
+                 prefixo desde a v79 — e é dela que o destino sai. */
+              const ir = a.ir
+                || (/^(menc|msg):/.test(chave) ? '/conversas'
+                :   /^tar:/.test(chave)        ? '/ensaio'
+                :   /^lote:/.test(chave)       ? '/aprovacoes'
+                :   location.pathname);
+              window.MaestroAvisos.avisarNoAparelho({ titulo, corpo, tag: chave, url: ir });
+              if(typeof som === 'function') som('toque');
+            }
+          }catch(e){}
+
+          /* v186: daqui para baixo é o PUSH, e só ele precisa do banco.
+             O aviso na própria tela, acima, é da casa: se o banco cair, a
+             pessoa continua sendo avisada do que acontece na frente dela. */
+          if(!_sbLigado) return r;
 
           let algum = false;
           Promise.all(gente.map(id => {
