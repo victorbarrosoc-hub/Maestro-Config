@@ -15760,7 +15760,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v183 · 7 set · negado nao e sem resposta';
+const VERSAO_PROTOTIPO = 'v184 · 7 set · o aviso chega por dentro';
 
 menuSheet = (function(orig){
   return function(){
@@ -17885,6 +17885,43 @@ telaConversas = (function(orig){
 .avItem span{ font-size:11.5px; color:var(--ink-400) }
 .avItem .qd{ font-family:var(--mono); font-size:10px; color:var(--ink-500) }
 .avVazio{ padding:26px 12px; text-align:center; font-size:13px; color:var(--ink-400) }
+/* v184 — o aviso por dentro da plataforma.
+   Canto superior direito no desktop, porque é onde o olho já procura
+   notificação. No celular vai para BAIXO: em cima ficaria sob o polegar
+   de ninguém e sobre o cabeçalho, e o alcance do dedo é embaixo. */
+#avisosNaTela{ position:fixed; top:14px; right:14px; z-index:9000;
+  display:flex; flex-direction:column; gap:8px; width:min(340px, calc(100vw - 28px));
+  pointer-events:none }
+#avisosNaTela .avTela{ pointer-events:auto; display:flex; gap:10px; align-items:flex-start;
+  width:100%; text-align:left; padding:12px 12px 12px 13px; cursor:pointer;
+  border:1px solid var(--ink-700); border-radius:13px; background:var(--ink-900);
+  box-shadow:0 12px 34px rgba(0,0,0,.42);
+  animation:avEntra .24s cubic-bezier(.2,.9,.3,1) both }
+#avisosNaTela .avTela:hover{ border-color:var(--brass-700); background:var(--ink-850, var(--ink-900)) }
+#avisosNaTela .avTela .ic{ flex:none; color:var(--brass-500); margin-top:1px }
+#avisosNaTela .avTela .tx{ flex:1; min-width:0 }
+#avisosNaTela .avTela b{ display:block; font-size:13.5px; font-weight:600; color:var(--ink-50);
+  line-height:1.35 }
+#avisosNaTela .avTela span span, #avisosNaTela .avTela .tx span{ display:block; margin-top:2px;
+  font-size:12px; color:var(--ink-400); line-height:1.4;
+  overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical }
+#avisosNaTela .avTela .x{ flex:none; color:var(--ink-500); opacity:0; transition:opacity .15s }
+#avisosNaTela .avTela:hover .x{ opacity:1 }
+#avisosNaTela .avTela.indo{ animation:avSai .2s ease-in both }
+@keyframes avEntra{ from{ opacity:0; transform:translateX(14px) scale(.98) }
+                    to  { opacity:1; transform:none } }
+@keyframes avSai  { from{ opacity:1; transform:none }
+                    to  { opacity:0; transform:translateX(10px) scale(.98) } }
+@media (max-width:860px){
+  #avisosNaTela{ top:auto; bottom:calc(74px + env(safe-area-inset-bottom, 0px));
+    right:10px; left:10px; width:auto }
+  @keyframes avEntra{ from{ opacity:0; transform:translateY(10px) } to{ opacity:1; transform:none } }
+  @keyframes avSai  { from{ opacity:1; transform:none } to{ opacity:0; transform:translateY(8px) } }
+}
+@media (prefers-reduced-motion:reduce){
+  #avisosNaTela .avTela, #avisosNaTela .avTela.indo{ animation:none }
+}
+
 /* v182: recusa não pode ter cara de confirmação */
 .toast.ruim{ border-color:var(--danger, #C4553D) }
 .toast.ruim .i{ color:var(--danger, #C4553D) }
@@ -33652,7 +33689,94 @@ addEventListener('click', e => {
      pode ter trocado a dele sem avisar ninguém. */
   try{ if(ligado() && permitido()) ligarOperario().then(r => inscreverPush(r)); }catch(e){}
 
+  /* ===================================================================
+     v184 — O AVISO POR DENTRO DA PLATAFORMA.
+
+     Pedido do founder, logo depois de o push passar a funcionar: "tem
+     como a notificação chegar por dentro da plataforma também? tipo
+     mostrar e sumir em 5 seg".
+
+     E o par disso é o que ele não pediu mas melhora junto: quando a
+     Maestro está NA FRENTE, a notificação do sistema é redundante e
+     ainda atrapalha — o macOS a desenha por cima do que a pessoa está
+     fazendo, para contar algo que ela veria de qualquer jeito. Os dois
+     passam a se revezar:
+
+       Maestro na frente          → aviso por dentro, aqui
+       escondida, ou app fechado  → notificação do sistema, como antes
+
+     O aviso não usa `render()`: ele vive num canto próprio do documento.
+     Fosse pelo render, sumir depois de cinco segundos exigiria redesenhar
+     a tela inteira duas vezes por aviso, e um clique no meio do caminho
+     perderia o foco do campo em que a pessoa estava escrevendo.
+     ================================================================ */
+  const AVISO_SEGUNDOS = 5;
+
+  function caixaDeAvisos(){
+    let c = document.getElementById('avisosNaTela');
+    if(!c){
+      c = document.createElement('div');
+      c.id = 'avisosNaTela';
+      c.setAttribute('role', 'status');
+      c.setAttribute('aria-live', 'polite');
+      document.body.appendChild(c);
+    }
+    return c;
+  }
+
+  function avisoNaTela({ titulo, corpo, url }){
+    try{
+      const c = caixaDeAvisos();
+      /* três é o teto: acima disso vira parede e ninguém lê nenhum */
+      while(c.children.length >= 3) c.firstElementChild.remove();
+
+      const el = document.createElement('button');
+      el.className = 'avTela';
+      el.type = 'button';
+      el.innerHTML = `<span class="ic">${ic('bell', 14)}</span>
+        <span class="tx"><b>${esc(String(titulo || 'Maestro'))}</b>
+        ${corpo ? `<span>${esc(String(corpo))}</span>` : ''}</span>
+        <span class="x" aria-hidden="true">${ic('x', 12)}</span>`;
+
+      let saiu = false;
+      const sair = () => {
+        if(saiu) return; saiu = true;
+        el.classList.add('indo');
+        setTimeout(() => el.remove(), 220);
+      };
+      const relogio = setTimeout(sair, AVISO_SEGUNDOS * 1000);
+
+      /* quem passa o mouse está lendo: o relógio espera */
+      el.addEventListener('mouseenter', () => clearTimeout(relogio));
+      el.addEventListener('mouseleave', () => setTimeout(sair, 1400));
+
+      el.addEventListener('click', ev => {
+        if(ev.target.closest('.x')){ clearTimeout(relogio); sair(); return; }
+        clearTimeout(relogio); sair();
+        try{
+          if(url && typeof estadoDaUrl === 'function'){
+            history.pushState({}, '', url);
+            if(estadoDaUrl(location.pathname)) render();
+          }
+          if(typeof som === 'function') som('toque');
+        }catch(e){}
+      });
+
+      c.appendChild(el);
+      return true;
+    }catch(e){ return false; }
+  }
+
+  const estouOlhando = () => {
+    try{ return document.visibilityState === 'visible' && document.hasFocus(); }
+    catch(e){ return false; }
+  };
+
   function avisarNoAparelho({ titulo, corpo, tag, url }){
+    /* v184: com a Maestro na frente, o aviso é por dentro. Não depende de
+       permissão do navegador nem de o operário estar de pé — é a nossa
+       própria tela, e ela sempre pode falar. */
+    if(estouOlhando()) return avisoNaTela({ titulo, corpo, url });
     if(!permitido() || !ligado()) return false;
     const opcoes = { body: corpo || '', tag: tag || 'maestro', renotify: false,
       data: { url: url || '/' }, icon: '/icones/maestro-gesto-192.png',
@@ -34056,7 +34180,8 @@ addEventListener('click', e => {
 
   /* deixa alcançável para o teste e para as camadas seguintes */
   window.MaestroAvisos = { mencionados, avisarNoAparelho, pedirPermissao,
-                           ligado, permitido, comoApp };
+                           ligado, permitido, comoApp,
+                           /* v184 */ naTela: avisoNaTela, estouOlhando };
 
 })();
 </script>
