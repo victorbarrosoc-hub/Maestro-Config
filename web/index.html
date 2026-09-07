@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-07 18:54 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-07 19:02 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -942,8 +942,18 @@ function go(view,route,extra){
   }
   window.scrollTo(0,0); render();
 }
-function toast(msg,comUndo){
-  S.toast={msg,undo:!!comUndo};
+/* v182 — o toast passa a ter TOM.
+
+   Ele desenhava um check verde em tudo, inclusive em recusa: "O
+   navegador negou os avisos" saía com a mesma cara de "salvo". O founder
+   viu isso ao tentar ligar o push, e é o tipo de coisa que ensina a
+   pessoa a não ler o aviso — se sucesso e fracasso têm o mesmo símbolo,
+   o símbolo não diz nada.
+
+   `tom` é opcional e o padrão continua sendo o de antes, então nenhuma
+   das ~120 chamadas existentes muda de comportamento. */
+function toast(msg,comUndo,tom){
+  S.toast={msg,undo:!!comUndo,tom:tom||'ok'};
   renderLayer();
   clearTimeout(toast._t);
   toast._t=setTimeout(()=>{ S.toast=null; if(comUndo) ultimo=null; renderLayer(); }, comUndo?8000:3200);
@@ -1790,7 +1800,7 @@ function renderLayer(){
   if(S.modal) h += S.modal;
   if(S.stampShow) h += `<div class="stampover"><div class="stampseal"><div class="in">
       ${ic('sealic',34)}<b>LOTE FECHADO</b><span>SELO A19C·4E30</span></div></div></div>`;
-  if(S.toast) h += `<div class="toast">${ic('checkc')}<span>${S.toast.msg}</span>
+  if(S.toast) h += `<div class="toast ${S.toast.tom === 'erro' ? 'ruim' : ''}">${ic(S.toast.tom === 'erro' ? 'warn' : 'checkc')}<span>${S.toast.msg}</span>
     ${S.toast.undo?`<button data-undo="1">Desfazer</button><span class="drain"></span>`:''}</div>`;
   document.getElementById('layer').innerHTML = h;
   const pq = document.getElementById('palq');
@@ -2471,7 +2481,7 @@ function renderLayer(){
   if(S.pal) h += vPal();
   if(S.modal) h += S.modal;
   if(S.stampShow) h += medalha(S.stampShow);
-  if(S.toast) h += `<div class="toast">${ic('checkc')}<span>${S.toast.msg}</span>
+  if(S.toast) h += `<div class="toast ${S.toast.tom === 'erro' ? 'ruim' : ''}">${ic(S.toast.tom === 'erro' ? 'warn' : 'checkc')}<span>${S.toast.msg}</span>
     ${S.toast.undo?`<button data-undo="1">Desfazer</button><span class="drain"></span>`:''}</div>`;
   document.getElementById('layer').innerHTML = h;
   const pq = document.getElementById('palq');
@@ -15818,7 +15828,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v181 · 7 set · push e o WhatsApp pronto';
+const VERSAO_PROTOTIPO = 'v182 · 7 set · recusa nao tem cara de sucesso';
 
 menuSheet = (function(orig){
   return function(){
@@ -17700,7 +17710,7 @@ botaoAtualizar();
     let topo = '';
     if(S.stampShow) topo += `<div class="stampover"><div class="stampseal"><div class="in">
       ${ic('sealic',34)}<b>LOTE FECHADO</b><span>SELO A19C·4E30</span></div></div></div>`;
-    if(S.toast) topo += `<div class="toast">${ic('checkc')}<span>${S.toast.msg}</span>
+    if(S.toast) topo += `<div class="toast ${S.toast.tom === 'erro' ? 'ruim' : ''}">${ic(S.toast.tom === 'erro' ? 'warn' : 'checkc')}<span>${S.toast.msg}</span>
       ${S.toast.undo?`<button data-undo="1">Desfazer</button><span class="drain"></span>`:''}</div>`;
 
     if(topo !== ultAvisos){ avisos.innerHTML = topo; ultAvisos = topo; }
@@ -17943,6 +17953,9 @@ telaConversas = (function(orig){
 .avItem span{ font-size:11.5px; color:var(--ink-400) }
 .avItem .qd{ font-family:var(--mono); font-size:10px; color:var(--ink-500) }
 .avVazio{ padding:26px 12px; text-align:center; font-size:13px; color:var(--ink-400) }
+/* v182: recusa não pode ter cara de confirmação */
+.toast.ruim{ border-color:var(--danger, #C4553D) }
+.toast.ruim .i{ color:var(--danger, #C4553D) }
 </style>
 <script>
 "use strict";
@@ -33811,7 +33824,8 @@ addEventListener('click', e => {
     let p = Notification.permission;
     if(p === 'default'){ try{ p = await Notification.requestPermission(); }catch(e){ p = 'denied'; } }
     if(p !== 'granted'){
-      toast('O navegador negou os avisos. Dá para liberar nos ajustes do site.');
+      toast('O navegador negou os avisos. Libere em Ajustes do site → Notificações, '
+          + 'recarregue, e ligue de novo aqui.', false, 'erro');
       ligar(false); render(); return false;
     }
     ligar(true); render();
