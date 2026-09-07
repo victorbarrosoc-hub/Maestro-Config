@@ -15760,7 +15760,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v182 · 7 set · recusa nao tem cara de sucesso';
+const VERSAO_PROTOTIPO = 'v183 · 7 set · negado nao e sem resposta';
 
 menuSheet = (function(orig){
   return function(){
@@ -33753,11 +33753,39 @@ addEventListener('click', e => {
         : 'No iPhone, os avisos só existem com a Maestro na tela de início: Compartilhar → Adicionar à Tela de Início.');
       return false;
     }
+    /* v183 — NEGADO E SEM RESPOSTA SÃO COISAS DIFERENTES.
+
+       Aqui todo resultado que não fosse `granted` virava "o navegador
+       negou". Mas fechar a caixinha sem responder devolve `default`, e o
+       conserto disso é clicar de novo e responder — não é ir mexer nos
+       ajustes do site atrás de um bloqueio que não existe. O founder
+       passou por isso: a tela disse que o navegador negou, e o
+       `Notification.permission` dele dizia `"default"`.
+
+       E o Safari antigo só conhece `requestPermission(callback)`, sem
+       promessa: ali o `await` devolvia `undefined`, que também caía no
+       "negou". Agora as duas formas são atendidas. */
     let p = Notification.permission;
-    if(p === 'default'){ try{ p = await Notification.requestPermission(); }catch(e){ p = 'denied'; } }
+    if(p === 'default'){
+      try{
+        const r = Notification.requestPermission();
+        p = (r && typeof r.then === 'function')
+          ? await r
+          : await new Promise(ok => { try{ Notification.requestPermission(ok); }
+                                      catch(e){ ok(Notification.permission); } });
+      }catch(e){ p = Notification.permission; }
+      if(!p) p = Notification.permission;         /* Safari devolvendo vazio */
+    }
+
+    if(p === 'denied'){
+      toast('Este navegador está bloqueando os avisos da Maestro. Libere em '
+          + 'Ajustes do site → Notificações, recarregue, e ligue de novo aqui.',
+            false, 'erro');
+      ligar(false); render(); return false;
+    }
     if(p !== 'granted'){
-      toast('O navegador negou os avisos. Libere em Ajustes do site → Notificações, '
-          + 'recarregue, e ligue de novo aqui.', false, 'erro');
+      toast('A pergunta do navegador ficou sem resposta. Clique em "Ligar" de novo '
+          + 'e escolha Permitir na caixa que aparecer.', false, 'erro');
       ligar(false); render(); return false;
     }
     ligar(true); render();
