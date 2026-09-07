@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-07 11:00 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-07 13:30 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15750,7 +15750,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v176 · 7 set · o Ensaio entre dois aparelhos';
+const VERSAO_PROTOTIPO = 'v177 · 7 set · a pauta nao encolhe sozinha';
 
 menuSheet = (function(orig){
   return function(){
@@ -34843,4 +34843,111 @@ sbCarregar = (function(orig){
     });
   };
 })(sbCarregar);
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v177 — A PAUTA NÃO ENCOLHE SOZINHA.
+
+   Em 7 de setembro a pauta da EJUP foi de 68 para 24 cards. Medido: os
+   que sobraram iam de 26/08 a 06/09, e NENHUM de 07/09 em diante — as 44
+   publicações do resto de setembro, com todos os Stories. Um corte limpo
+   por data. Não é gesto de gente: ninguém apaga um mês de pauta futura
+   numa faixa exata e para no dia de hoje.
+
+   Os cinco filtros da tela de pauta foram descartados por medição — com
+   cada um ligado, a gravação leva a lista inteira. A causa segue em
+   aberto, e é justamente por isso que esta rede existe: ela não depende
+   de saber qual foi.
+
+   A regra é a mesma que atravessa a v174 e a v176: **ausência não é
+   exclusão**. Apagar publicação é decisão, e decisão passa pela lixeira
+   — que registra o que saiu. Uma gravação que faria sumir um pedaço
+   grande da pauta SEM que a lixeira explique o sumiço não é uma decisão:
+   é um acidente. Então ela não acontece.
+
+   O que a rede faz, e o que ela não faz:
+     · não grava, e diz na tela quantas publicações seriam perdidas
+     · recarrega do banco, para a tela voltar a mostrar a verdade em vez
+       de ficar exibindo a lista curta que ninguém pediu
+     · não bloqueia trabalho normal: até um terço da pauta, ou menos de
+       cinco cards, passa sem perguntar
+     · não bloqueia exclusão de verdade: o que está na lixeira está
+       explicado, e "Apagar tudo" continua apagando tudo
+
+   Verificado em `web/verificar/v177-pauta-nao-encolhe.mjs`.
+   ================================================================== */
+
+/* quanto de perda é normal antes de desconfiar */
+const ENCOLHE_MIN   = 5;      /* menos que isto é edição do dia a dia */
+const ENCOLHE_PARTE = 0.34;   /* até um terço da pauta some sem alarde */
+
+function encolhimentoSuspeito(cli){
+  try{
+    const Sin = window.Sincro;
+    const base = Sin && Sin.linhas && Sin.linhas[cli] && Sin.linhas[cli].base;
+    const antes = (base && Array.isArray(base.pauta)) ? base.pauta : null;
+    if(!antes || antes.length < ENCOLHE_MIN * 2) return null;   /* pauta pequena: sem rede */
+
+    const agora = new Set((S.pautas[cli] || []).map(p => String(p.id)));
+    const sumiram = antes.filter(p => !agora.has(String(p.id)));
+    if(sumiram.length < ENCOLHE_MIN) return null;
+    if(sumiram.length / antes.length < ENCOLHE_PARTE) return null;
+
+    /* o que a lixeira explica não é sumiço: é exclusão */
+    const naLixeira = new Set();
+    for(const e of (S.lixeira && S.lixeira[cli]) || [])
+      if(e && e.item && e.item.id != null) naLixeira.add(String(e.item.id));
+    const semExplicacao = sumiram.filter(p => !naLixeira.has(String(p.id)));
+    if(!semExplicacao.length) return null;
+
+    return { antes: antes.length, agora: agora.size, perdidos: semExplicacao.length };
+  }catch(e){ return null; }
+}
+
+let _avisandoEncolhe = false;
+sbGravar = (function(orig){
+  return async function(cli, silencioso){
+    const risco = encolhimentoSuspeito(cli);
+    if(!risco) return orig.apply(this, arguments);
+
+    if(!_avisandoEncolhe){
+      _avisandoEncolhe = true;
+      try{
+        const c = (typeof CLIS === 'function' && CLIS().find(x => x.id === cli)) || {};
+        if(typeof toast === 'function')
+          toast(`Não gravei: isto apagaria ${risco.perdidos} publicaç${
+            risco.perdidos > 1 ? 'ões' : 'ão'} de ${c.nome || 'um cliente'} que ninguém`
+            + ` mandou apagar. Recarregando do banco.`, true);
+        /* A tela precisa voltar à verdade. Recarregar não basta: a mescla
+           da v151 vê a lista curta como "apagado aqui" e mantém o buraco.
+           Então a linha do banco entra inteira, e a base da sincronização
+           passa a ser ela — senão a próxima gravação tenta o mesmo corte.
+           Foi a prova 1.4 que cobrou isto: com a rede só recusando, o
+           founder veria 24 na tela e acharia que perdeu de novo. */
+        const g = await fetch(
+          `${SB.url}/rest/v1/pauta?cliente=eq.${encodeURIComponent(cli)}&select=dados`,
+          { headers: sbCab() });
+        if(g.ok){
+          const [linha] = await g.json();
+          const dados = linha && linha.dados;
+          if(dados && Array.isArray(dados.pauta)){
+            S.pautas[cli] = dados.pauta;
+            const Sin = window.Sincro;
+            const L = Sin && Sin.linhas && Sin.linhas[cli];
+            if(L){
+              L.base = JSON.parse(JSON.stringify(dados));
+              const rev = +dados.rev;
+              if(Number.isFinite(rev)) L.rev = rev;
+            }
+          }
+        }
+        if(typeof render === 'function') render();
+      }catch(e){}
+      setTimeout(() => { _avisandoEncolhe = false; }, 4000);
+    }
+    return false;
+  };
+})(sbGravar);
 </script>
