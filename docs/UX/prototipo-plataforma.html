@@ -15620,7 +15620,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v172 · 7 set · o feed e a capa do cliente';
+const VERSAO_PROTOTIPO = 'v173 · 7 set · o menu do cliente';
 
 menuSheet = (function(orig){
   return function(){
@@ -34374,4 +34374,73 @@ render = (function(orig){
     return orig.apply(this, arguments);
   };
 })(render);
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v173 — O MENU DO CLIENTE SÓ TEM O QUE É DELE.
+
+   Relato do founder, do celular, entrando pelo link como o cliente
+   entra: "muita aba não abre e não tem pra que ter aquilo pro cliente,
+   exemplo: ver como agência".
+
+   Medido antes de mexer, item por item. O menu do cliente tinha um grupo
+   chamado "Dentro do fluxo" com a própria explicação escrita ao lado —
+   "passos de um caminho: no produto o cliente chega por ele, não por
+   menu". Era andaime de protótipo, para demonstrar o fluxo tela a tela.
+   Dos seis itens:
+
+     · "Capa do lote" e "Peça"  → caem na pauta. Porta repetida.
+     · "Termo do lote"          → "0 de 0 · tudo decidido", com uma
+                                   publicação esperando de verdade.
+     · "Capa do texto", "Texto",
+       "Termo do texto"         → "0 texto esperando você", sempre.
+
+   Os quatro últimos não estão quase certos: contam `S.pecas`, o vetor da
+   era anterior à pauta, esvaziado na v167 e nunca mais preenchido. Zero
+   é o único número que sabem dizer. O grupo inteiro sai.
+
+   E o rodapé "Trocar de lugar" — "Ver como agência", "Site", "Tela de
+   entrada" — some para quem é cliente de verdade. Os três levam para
+   fora do painel dele: o primeiro a v170 já recusava (botão que não faz
+   nada é pior que botão nenhum), e o terceiro pede uma senha que ele não
+   tem — a própria tela Conta diz "você entra por link, sem senha".
+
+   Quem NÃO perde nada: a pessoa da agência espiando com "Ver como
+   cliente". Ela precisa do caminho de volta, e continua com ele — a
+   diferença é entre estar no painel e SER o cliente.
+
+   Verificado em `web/verificar/v173-menu-do-cliente.mjs`.
+   ================================================================== */
+
+/* a mesma regra da v170, à mão porque lá ela vive dentro de um fechamento */
+function souOCliente(){
+  try{
+    return !!((S.usuario && S.usuario.tipo === 'cliente') || S.viaLink);
+  }catch(e){ return false; }
+}
+
+menuSheet = (function(orig){
+  return function(){
+    const html = orig.apply(this, arguments);
+    if(!html || !souOCliente()) return html;
+    const casca = document.createElement('div');
+    casca.innerHTML = html;
+    /* o título de um grupo e a grade que vem logo abaixo saem juntos */
+    [...casca.querySelectorAll('.msgrp')].forEach(titulo => {
+      if(!/Dentro do fluxo|Trocar de lugar/i.test(titulo.textContent)) return;
+      const abaixo = titulo.nextElementSibling;
+      if(abaixo && (abaixo.classList.contains('msgrid')
+                 || abaixo.classList.contains('msfoot'))) abaixo.remove();
+      titulo.remove();
+    });
+    /* o cabeçalho contava as telas do menu inteiro; conta as que ficaram.
+       E "lado do cliente" só quer dizer algo para quem tem os dois lados */
+    const n = casca.querySelectorAll('.msit').length;
+    const sub = casca.querySelector('.mshd span');
+    if(sub) sub.textContent = n + (n === 1 ? ' tela' : ' telas');
+    return casca.innerHTML;
+  };
+})(menuSheet);
 </script>

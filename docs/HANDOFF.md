@@ -1,7 +1,7 @@
 # HANDOFF — retomando a Maestro
 
-Última atualização: 2026-09-07 · a casa vazia, o painel do cliente auditado e
-o feed que era de outra marca
+Última atualização: 2026-09-07 · a casa vazia, o painel do cliente auditado,
+o feed que era de outra marca e o menu enxuto
 
 > **Leia este arquivo primeiro.** Ele é o mapa. A informação completa está nos
 > documentos apontados aqui — não repita conteúdo, vá na fonte.
@@ -1231,6 +1231,25 @@ decisão do cliente volta. Porquê e como conferir:
   tela, não o dado. Só saiu depois que o founder confirmou no banco: a linha
   `n0` com 68 cards, e uma cópia em `pauta_backup_2026_09_06`. O SQL de
   limpeza, em cinco passos: `ENGINEERING/limpar-demonstracao.sql`.
+
+- **O menu do cliente (v173, 7 de setembro).** Relato do celular, entrando pelo
+  link: "muita aba não abre e não tem pra que ter aquilo pro cliente, exemplo:
+  ver como agência". Medido item por item antes de mexer. O menu do cliente
+  trazia um grupo chamado **"Dentro do fluxo"** com a própria explicação escrita
+  ao lado — *"passos de um caminho: no produto o cliente chega por ele, não por
+  menu"*. Era andaime de protótipo. Dos seis itens, dois ("Capa do lote",
+  "Peça") caíam na pauta — porta repetida — e quatro ("Termo do lote", "Capa do
+  texto", "Texto", "Termo do texto") diziam **"0 de 0"** com publicação
+  esperando de verdade, porque contam `S.pecas`, o vetor da era anterior à
+  pauta, esvaziado na v167. Zero era o único número que sabiam dizer. O grupo
+  saiu inteiro. Saiu também o rodapé "Trocar de lugar" — "Ver como agência"
+  (que a v170 já recusava: botão que não faz nada é pior que botão nenhum),
+  "Site" e "Tela de entrada" (que pede senha a quem entra por link). O menu do
+  cliente foi de 13 telas para 7. **Quem não perde nada:** a pessoa da agência
+  espiando com "Ver como cliente" continua com o caminho de volta e com o menu
+  inteiro — a diferença é entre *estar* no painel e *ser* o cliente.
+  Verificação: `web/verificar/v173-menu-do-cliente.mjs` (20 provas; 8 falham no
+  código anterior).
 
 - **O feed e a capa do cliente (v172, 7 de setembro).** O founder abriu o
   painel depois da limpeza e achou o que sobrou: "Seu feed" com seis fotos de
