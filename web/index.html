@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-08 19:22 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-08 19:40 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15830,7 +15830,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v190 · 8 set · a planilha entra pelo Ensaio';
+const VERSAO_PROTOTIPO = 'v191 · 8 set · a seta respeita as portas';
 
 menuSheet = (function(orig){
   return function(){
@@ -36168,4 +36168,119 @@ sbGravar = (function(orig){
     return false;
   };
 })(sbGravar);
+</script>
+
+<script>
+/* =====================================================================
+   v191 — A SETA "PRÓXIMA FASE" PULAVA TODAS AS PORTAS.
+
+   O founder: "O texto que tinha sido colocado na hora de estruturar a
+   pauta não está mais lá, sumiu — e o cliente recebeu a demanda de texto
+   sem texto algum. Era pra estar em briefing."
+
+   Duas coisas, e nenhuma delas era perda de dado. O banco tinha tudo.
+
+   1. A SETA. O card tem treze fases e três portas: o Check (o revisor
+      lê), o lote (o conjunto sai junto) e o cliente. Cada porta já tinha
+      a sua regra, escrita e testada — `moverJob` exige texto para entrar
+      no Check, `revisarCard` exige o poder de Revisor, `podeEnviar`
+      exige texto para sair no lote.
+
+      A seta `→` da janela "ver card" não passava por nenhuma delas.
+      Ela é da época em que fase era uma lista rasa: pega o índice, soma
+      um, grava. Medido nesta sessão: nove toques na seta levam um card
+      com texto VAZIO de `rascunho` até `post_cli` — atravessando o
+      Check, o lote e a porta do cliente sem uma única pergunta.
+
+      Era isso que o cliente recebia: um pedido de aprovação de texto
+      sem texto nenhum. Não sumiu — nunca chegou a existir naquele card,
+      e a seta não perguntou.
+
+      A seta continua andando à vontade DENTRO da agência. Nas três
+      portas ela para e diz qual é o botão que abre — porque a porta não
+      é burocracia, é o lugar onde alguém decide.
+
+   2. O BRIEFING. `estruturarTarefa` levava o pedido do Ensaio só para o
+      `objetivo`. O campo Briefing nascia vazio, e o founder — que tinha
+      acabado de escrever o pedido com as palavras dele — abria o card e
+      via um quadro em branco. O pedido agora ABRE o briefing: quem
+      estrutura edita a partir do que foi pedido, não a partir do nada.
+
+   3. E se ainda assim um card sem texto chegar ao cliente (um card
+      antigo, já enviado), a tela dele para de fingir. A arte que falta
+      já dizia isso desde a v128; o texto que falta passa a dizer também.
+   ===================================================================== */
+(function(){
+  /* ---------- 1. a seta respeita as portas ------------------------- */
+  const PORTA = {
+    revisao:   'Check',   revisao2:   'Check',
+    lote_texto:'lote',    lote_post:  'lote',
+    texto_cli: 'cliente', post_cli:   'cliente'
+  };
+  const RECADO = {
+    Check:   p => (p.texto || '').trim()
+      ? 'O Check é do revisor. Mande pelo quadro — arraste para Check, ou use o botão do card.'
+      : 'Falta o texto. O Check precisa de algo para ler.',
+    lote:    () => 'Quem libera para o lote é o revisor, no Check.',
+    cliente: () => 'Para o cliente não se vai de um em um: o lote sai junto, pelo botão Enviar.'
+  };
+
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-fxvai]');
+    if(!t) return;
+    const id = +t.dataset.fxvai;
+    const p = (typeof S !== 'undefined' && S.pauta) ? S.pauta.find(x => x.id === id) : null;
+    if(!p) return;
+    let i, destino;
+    try{ i = faseIdx(p); destino = (FASES[Math.min(i + 1, FASES.length - 1)] || [])[0]; }
+    catch(err){ return; }
+    const porta = PORTA[destino];
+    if(!porta) return;                       /* passo interno da agência: segue */
+    e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault();
+    if(typeof toast === 'function') toast(RECADO[porta](p), false, 'erro');
+  }, true);
+
+  /* ---------- 2. o pedido abre o briefing -------------------------- */
+  if(typeof estruturarTarefa === 'function') estruturarTarefa = (function(orig){
+    return function(tid){
+      const t = S.ensaio && S.ensaio.tarefas.find(x => x.id === +tid);
+      const jaTinha = !!(t && t.cardId);
+      const r = orig.apply(this, arguments);
+      if(!t || jaTinha || !t.cardId) return r;
+      const p = (S.pautas[t.cli] || []).find(x => x.id === t.cardId);
+      /* o pedido só ABRE o briefing — nunca escreve por cima de um que
+         já tenha alguma coisa */
+      if(p && !(p.texto || '').trim() && (t.desc || '').trim()) p.texto = t.desc;
+      return r;
+    };
+  })(estruturarTarefa);
+
+  if(typeof modalTarefa === 'function') modalTarefa = (function(orig){
+    return function(){
+      const html = orig.apply(this, arguments);
+      return typeof html === 'string'
+        ? html.replace('O pedido, com suas palavras — vira o objetivo da pauta',
+                       'O pedido, com suas palavras — vira o objetivo e abre o briefing')
+        : html;
+    };
+  })(modalTarefa);
+
+  /* ---------- 3. a tela do cliente não finge ----------------------- */
+  if(typeof clCard === 'function'){
+    clCard = (function(orig){
+      return function(){
+        let html = orig.apply(this, arguments);
+        const p = S.pauta.find(x => x.id === S.pcSel);
+        if(!html || !p || (p.texto || '').trim()) return html;
+        html = html.replace(
+          /(<div class="clcap leitura"><div class="caplbl">Texto da publicação<\/div>\s*<div class="clleitura">)[^<]*(<\/div>)/,
+          '$1<span style="color:var(--ink-400)">O texto ainda não chegou aqui. ' +
+          'Avise a agência antes de decidir — sem ele não há o que aprovar.</span>$2');
+        /* o botão para de convidar para uma decisão que não existe */
+        return html.replace(/<button class="clbtn" data-claprova="\d+">[^<]*<\/button>\s*/, '');
+      };
+    })(clCard);
+    if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clcard = () => clCard();
+  }
+})();
 </script>

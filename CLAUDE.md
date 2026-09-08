@@ -4,7 +4,7 @@ Version: 0.5
 Status: Implementação — blocos 1, 2, 3 e 5 da API prontos, verificados por HTTP
         · D-080 resolvida (a fase substitui o status): blocos 4, 6, 7 e 8 liberados
 Codename: Project Symphony
-Última atualização: 2026-09-05
+Última atualização: 2026-09-08
 
 > **Retomando o projeto? Leia [`docs/HANDOFF.md`](docs/HANDOFF.md) primeiro.**
 > Ele é o mapa: estado do código, o que já foi verificado, o que está aberto
@@ -283,6 +283,16 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (8 set, v191):** o cliente recebia pedido de aprovação de texto sem
+texto. Não era perda de dado — o banco tinha tudo. A seta "→ próxima fase" da
+janela de ver o card é da época em que fase era lista rasa (índice + 1) e não
+passava por nenhuma das três portas do fluxo: nove toques levavam um card de
+texto vazio de `rascunho` até `post_cli`, atravessando o Check, o lote e a porta
+do cliente sem perguntar nada. Agora a seta anda dentro da agência e para nas
+portas, dizendo qual botão abre cada uma. Junto: o pedido do Ensaio passa a
+abrir o briefing (antes ia só para o objetivo, e o Briefing nascia em branco), e
+a tela do cliente deixa de convidar a aprovar um texto que não existe. 21 provas
+em `web/verificar/v191-a-seta-respeita-as-portas.mjs`.
 **Fechado (7 set, v178–v180):** os seis links de aprovação. Foram três causas
 empilhadas, e cada uma escondia a seguinte: a mescla de cadastro apagava a chave
 do link ao editar um cliente; o id do cliente era a posição na fila e

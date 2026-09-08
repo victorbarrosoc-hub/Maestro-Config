@@ -1,9 +1,62 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.24
+Version: 0.5.25
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.25 — 2026-09-08
+
+**Status:** Concluída
+**Objetivo:** o cliente nunca mais recebe um pedido de aprovação vazio.
+
+### A seta "próxima fase" pulava todas as portas (v191)
+
+O founder: *"O texto que tinha sido colocado na hora de estruturar a pauta não
+está mais lá, sumiu — e o cliente recebeu a demanda de texto sem texto algum.
+Era pra estar em briefing."*
+
+**Nada foi perdido.** O banco tinha tudo. Foram duas coisas, e nenhuma delas
+era perda de dado.
+
+**1. A seta.** O card tem treze fases e três portas — o Check (o revisor lê),
+o lote (o conjunto sai junto) e o cliente. Cada porta já tinha a sua regra,
+escrita e testada: `moverJob` exige texto para entrar no Check, `revisarCard`
+exige o poder de Revisor, `podeEnviar` exige texto para sair no lote.
+
+A seta `→` da janela "ver card" não passava por nenhuma delas. É código da
+época em que fase era uma lista rasa: pega o índice, soma um, grava. Medido
+nesta sessão, com o protótipo num browser de verdade: **nove toques na seta
+levam um card de texto VAZIO de `rascunho` até `post_cli`**, atravessando o
+Check, o lote e a porta do cliente sem uma única pergunta. Era isso que o
+cliente recebia — um pedido de aprovação de texto sem texto nenhum. O texto
+não sumiu: naquele card ele nunca chegou a existir, e a seta não perguntou.
+
+A seta continua andando à vontade dentro da agência (`rascunho → criado`,
+`texto_ok → producao`). Nas três portas ela para e diz qual é o botão que
+abre — porque a porta não é burocracia, é o lugar onde alguém decide.
+
+**2. O briefing.** `estruturarTarefa` levava o pedido do Ensaio só para o
+`objetivo`. O campo Briefing nascia vazio, e quem tinha acabado de escrever o
+pedido com as próprias palavras abria o card e via um quadro em branco. O
+pedido agora **abre** o briefing: quem estrutura edita a partir do que foi
+pedido, não a partir do nada. Nunca escreve por cima de um briefing que já
+tenha alguma coisa. O rótulo do Ensaio passa a dizer a verdade — "vira o
+objetivo e abre o briefing".
+
+**3. A rede de baixo.** Se ainda assim um card sem texto chegar ao cliente (um
+card antigo, já enviado), a tela dele para de fingir: em vez de um travessão
+sob "Texto da publicação" e um botão convidando a aprovar, diz que o texto não
+chegou e que a agência precisa ser avisada — o mesmo que a arte que falta já
+dizia desde a v128. O botão de aprovar só volta quando há o que aprovar.
+
+**Verificado:** `web/verificar/v191-a-seta-respeita-as-portas.mjs`, 21 provas,
+incluindo a prova de que o caminho legítimo (quadro → Check → revisor → lote →
+Enviar) continua inteiro. Regressão verde em `pauta-editor` (52),
+`ciclo-interativo` (57), `ciclo-producao` (55), `cliente-painel` (51),
+`cliente-passo-arte` (27), `v122-ciclo-e-cliente` (28), v188, v189 e v190.
 
 ---
 
