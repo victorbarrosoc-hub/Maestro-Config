@@ -36691,28 +36691,34 @@ sbGravar = (function(orig){
 (function(){
   const TETO = 400;
 
-  const casa = () => {
-    if(!S.ensaio) return null;
-    if(!Array.isArray(S.ensaio.apagadas)) S.ensaio.apagadas = [];
-    return S.ensaio;
+  /* LER NUNCA ESCREVE. Este acessador já criou `apagadas` só de ser
+     chamado — e isso quase custou o Ensaio inteiro. A mescla do pacote
+     pergunta "eu mexi nesta chave aqui?"; criar um campo vazio ao abrir o
+     app respondia SIM, o aparelho recém-aberto passava por dono da
+     verdade e o Ensaio VAZIO dele vencia o do banco. O v151 pegou:
+     o banco com duas tarefas, a tela com zero. Só quem apaga escreve. */
+  const casa = () => S.ensaio || null;
+  const lapides = () => {
+    const E = casa();
+    return (E && Array.isArray(E.apagadas)) ? E.apagadas : [];
   };
 
   function enterrar(id){
     const E = casa(); if(!E || id == null) return;
+    if(!Array.isArray(E.apagadas)) E.apagadas = [];      /* só num gesto de verdade */
     const chave = String(id);
     if(E.apagadas.some(a => a && String(a.id) === chave)) return;
     E.apagadas.push({ id: chave, quando: Date.now() });
     if(E.apagadas.length > TETO) E.apagadas.splice(0, E.apagadas.length - TETO);
   }
   function desenterrar(id){
-    const E = casa(); if(!E || id == null) return;
+    const E = casa(); if(!E || id == null || !Array.isArray(E.apagadas)) return;
     const chave = String(id);
-    E.apagadas = E.apagadas.filter(a => !a || String(a.id) !== chave);
+    const antes = E.apagadas.length;
+    const fica = E.apagadas.filter(a => !a || String(a.id) !== chave);
+    if(fica.length !== antes) E.apagadas = fica;         /* nada muda se nada sai */
   }
-  const temLapide = id => {
-    const E = casa();
-    return !!E && E.apagadas.some(a => a && String(a.id) === String(id));
-  };
+  const temLapide = id => lapides().some(a => a && String(a.id) === String(id));
 
   /* ---------- a faxina: a lápide e a lixeira mandam ------------------ */
   /* Restaurar chama `render()` POR DENTRO, e o desenho do quadro roda a
@@ -36722,7 +36728,7 @@ sbGravar = (function(orig){
   function faxinaDoEnsaio(){
     if(restaurando) return 0;
     const E = casa(); if(!E) return 0;
-    const mortos = new Set(E.apagadas.map(a => a && String(a.id)).filter(Boolean));
+    const mortos = new Set(lapides().map(a => a && String(a.id)).filter(Boolean));
     for(const e of (E.lixo || [])) if(e && e.tarefa && e.tarefa.id != null)
       mortos.add(String(e.tarefa.id));
     if(!mortos.size) return 0;
