@@ -1,9 +1,69 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.25
+Version: 0.5.26
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.26 — 2026-09-08
+
+**Status:** Concluída
+**Objetivo:** a tela em que o cliente decide passa a caber o que se decide.
+
+### O texto estava lá; a coluna é que era estreita, e tinha teto (v192)
+
+O founder: *"não consigo ver o texto do conteúdo gravado no card, bug de tela.
+Alteração pequena, caixa de texto enorme."*
+
+**Medido, num browser de verdade, antes do conserto:** o texto da publicação
+tinha **707px de altura real dentro de uma caixa de 320px de largura com
+`max-height:300px`**. Mais da metade do que o cliente precisava ler estava fora
+da tela — sem barra de rolagem, sem reticências, sem sinal nenhum. Do outro
+lado, o *"o que você pediu"* — uma linha, "Nao tem texto" — ocupava a coluna
+larga inteira, 422 × 238.
+
+**A causa é de origem.** Na v18 a tela de decidir foi desenhada em duas áreas
+com nome — `arte` à esquerda, `lado` à direita — para exatamente dois filhos: a
+arte e uma caixa de texto. Depois vieram o passo 1 de 2, a ficha do card, o
+pedido de alteração, os anexos e uma SEGUNDA caixa (a Chamada). Os que tinham
+nome foram todos para `lado` e passaram a se empilhar no mesmo quadrado — daí o
+`margin-top:96px`, que é um calço, e o `max-height:300px`, que é uma tesoura. Os
+sem nome caíram onde sobrou, e estufaram.
+
+**O conserto não foi mexer no calço, foi dar estrutura à tela.** Três blocos de
+verdade, montados antes de a tela existir (`DOMParser` sobre o HTML devolvido —
+nunca cirurgia no DOM depois do render):
+
+| bloco | o que carrega | onde fica no monitor |
+|---|---|---|
+| `decTopo` | o passo 1 de 2 | largura inteira, no alto |
+| `decMain` | **o que se decide**: arte, texto, chamada, anexos | coluna larga, sem teto e sem calço |
+| `decRail` | o contexto: a ficha e o que foi pedido | coluna estreita, acompanha a rolagem |
+
+No celular os três são `display:contents` — somem da conta do layout e a coluna
+única continua idêntica. A ordem no DOM é a ordem do celular, e ela melhorou de
+graça: **o "o que você pediu" agora chega antes do texto que se vai reler.**
+Antes caía depois de tudo, no fim da página.
+
+**Uma armadilha que custou uma rodada:** o primeiro nome dos blocos era
+`clMain`. Já existe um `clmain` na casca do cliente, e **classe de CSS em HTML
+não distingue maiúscula de minúscula** — `.clMain{display:contents}` pegou os
+dois e derrubou a casca inteira, colapsando a coluna para 0px. Os nomes levam
+`dec` na frente por causa disso, e o comentário no código guarda o motivo.
+
+Também: a tela de decidir passa de 840px para 1040px de largura útil (corpo e
+rodapé juntos, para os botões continuarem alinhados com o texto), por
+`:has()`. Sem `:has()`, fica nos 840 de sempre — mais estreito, nunca quebrado.
+
+**Verificado:** `web/verificar/v192-a-tela-de-decidir.mjs`, 30 provas que medem
+a tela e não o HTML — largura, altura e altura real de cada caixa, no monitor e
+no celular. A prova que vale é `altura === alturaReal`: nada cortado, em lugar
+nenhum. Mais a prova de que nenhuma caixa se sobrepõe a outra. Regressão verde
+em v191 (21), `cliente-painel` (51), `cliente-passo-arte` (27),
+`cliente-materiais` (17), `cliente-logo` (14), `ciclo-interativo` (57),
+`ciclo-producao` (55), `v122-ciclo-e-cliente` (28) e `link-visualizacao` (22).
 
 ---
 

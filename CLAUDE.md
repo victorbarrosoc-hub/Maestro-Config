@@ -283,6 +283,15 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (8 set, v192):** a tela em que o cliente decide. O texto da publicação
+tinha 707px de altura real dentro de uma caixa de 320px com `max-height:300px` —
+mais da metade fora da tela, sem barra e sem sinal — enquanto o pedido de
+alteração de uma linha ocupava a coluna larga. A tela era de duas áreas com nome
+desenhadas para dois filhos; hoje são seis, e os nomeados se empilhavam no mesmo
+quadrado. Agora são três blocos de verdade (`decTopo`, `decMain`, `decRail`):
+o que se decide fica na coluna larga, sem teto; o contexto, na estreita. No
+celular os blocos são `display:contents` e a coluna única continua idêntica.
+30 provas que medem a tela, em `web/verificar/v192-a-tela-de-decidir.mjs`.
 **Fechado (8 set, v191):** o cliente recebia pedido de aprovação de texto sem
 texto. Não era perda de dado — o banco tinha tudo. A seta "→ próxima fase" da
 janela de ver o card é da época em que fase era lista rasa (índice + 1) e não

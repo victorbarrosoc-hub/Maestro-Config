@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-08 19:40 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-08 20:20 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15830,7 +15830,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v191 · 8 set · a seta respeita as portas';
+const VERSAO_PROTOTIPO = 'v192 · 8 set · a tela de decidir tem colunas';
 
 menuSheet = (function(orig){
   return function(){
@@ -36284,3 +36284,114 @@ sbGravar = (function(orig){
   }
 })();
 </script>
+
+<script>
+/* =====================================================================
+   v192 — A TELA DE DECIDIR: O TEXTO ESTAVA LÁ, A COLUNA É QUE ERA
+   ESTREITA. E TINHA TETO.
+
+   O founder: "não consigo ver o texto do conteúdo gravado no card, bug
+   de tela. Alteração pequena, caixa de texto enorme."
+
+   Medido: o texto da publicação tinha 707px de altura real dentro de uma
+   caixa de 320px de largura e `max-height:300px`. Mais da metade do que
+   o cliente precisava ler estava fora da tela — sem barra, sem sinal,
+   sem nada. Do outro lado, o "o que você pediu" (uma linha: "Nao tem
+   texto") ocupava a coluna larga inteira, 422 × 238.
+
+   A causa é de origem. Na v18 a tela de decidir foi desenhada em duas
+   áreas com nome — `arte` à esquerda, `lado` à direita — para exatamente
+   dois filhos: a arte e uma caixa de texto. Depois vieram o passo 1 de 2,
+   a ficha do card, o pedido de alteração, os anexos e uma SEGUNDA caixa
+   (a Chamada). Os que tinham nome foram todos para `lado` e passaram a
+   se empilhar no mesmo quadrado — daí o `margin-top:96px`, que é um
+   calço, e o `max-height:300px`, que é uma tesoura. Os sem nome caíram
+   onde sobrou, e estufaram.
+
+   O conserto não é mexer no calço: é dar estrutura à tela. Três blocos
+   de verdade, montados antes de a tela existir (nunca cirurgia no DOM
+   depois do render):
+
+     decTopo — o passo, largura inteira
+     decMain — O QUE SE DECIDE: a arte, o texto, a chamada, os anexos.
+             A coluna LARGA, sem teto e sem calço.
+     decRail — o contexto: a ficha e o que foi pedido. A coluna estreita,
+             que acompanha a rolagem.
+
+   Os nomes levam `dec` na frente de propósito: já existe um `clmain` na
+   casca do cliente, e classe de CSS em HTML não distingue maiúscula de
+   minúscula — `.clMain` pegaria os dois e derrubaria a casca inteira.
+   Foi o que aconteceu na primeira tentativa desta versão.
+
+   No celular os três blocos são `display:contents` — somem da conta do
+   layout e a ordem de hoje fica exatamente como está.
+   ===================================================================== */
+(function(){
+  const NO_RAIL = '.clficha,.notelist';
+  const NO_TOPO = '.clPasso,.clprog';
+
+  if(typeof clCard !== 'function') return;
+  clCard = (function(orig){
+    return function(){
+      const html = orig.apply(this, arguments);
+      if(typeof html !== 'string' || !html || html.indexOf('class="decMain"') >= 0) return html;
+      let doc;
+      try{ doc = new DOMParser().parseFromString(html, 'text/html'); }catch(e){ return html; }
+      const corpo = doc.querySelector('.clbody.fix');
+      if(!corpo || !corpo.children.length) return html;
+      const faz = cls => { const d = doc.createElement('div'); d.className = cls; return d; };
+      const topo = faz('decTopo'), main = faz('decMain'), rail = faz('decRail');
+      for(const el of [...corpo.children]){
+        (el.matches(NO_TOPO) ? topo : el.matches(NO_RAIL) ? rail : main).appendChild(el);
+      }
+      /* a ordem no DOM é a ordem do CELULAR (no monitor quem manda são as
+         áreas da grade, que não dependem dela): o passo, o contexto, e
+         então o que se lê. Assim o "o que você pediu" chega ANTES do
+         texto que se vai reler — hoje ele caía depois, no fim de tudo. */
+      if(topo.children.length) corpo.appendChild(topo);
+      if(rail.children.length) corpo.appendChild(rail);
+      corpo.appendChild(main);
+      return doc.body.innerHTML;
+    };
+  })(clCard);
+  if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clcard = () => clCard();
+})();
+</script>
+<style>
+/* v192 — no celular os três blocos não existem para o layout: a coluna
+   única de hoje continua idêntica, na mesma ordem. */
+.decTopo, .decMain, .decRail{ display:contents }
+
+@media(min-width:1080px){
+  .clbody.fix{
+    grid-template-columns:minmax(0,1.45fr) minmax(300px,.72fr);
+    grid-template-areas:"prog prog" "topo topo" "main rail";
+    gap:16px 30px;
+  }
+  /* a tela de decidir ganha o espaço que a leitura pede — o corpo e o
+     rodapé juntos, para os botões continuarem alinhados com o texto.
+     Sem `:has`, fica nos 840px de sempre: mais estreito, nunca quebrado. */
+  .clframe:has(.clbody.fix) .clbody,
+  .clframe:has(.clbody.fix) .clfoot{ max-width:1040px }
+  .clbody.fix > .decTopo{ grid-area:topo; display:block }
+  .clbody.fix > .decMain{ grid-area:main; display:flex; flex-direction:column; gap:14px; min-width:0 }
+  .clbody.fix > .decRail{ grid-area:rail; display:flex; flex-direction:column; gap:12px;
+    align-self:start; position:sticky; top:20px }
+
+  /* o calço e a tesoura saem: dentro do bloco, cada caixa tem o tamanho
+     do que ela carrega */
+  .clbody.fix .decMain > .clcap,
+  .clbody.fix .decMain > .clhead,
+  .clbody.fix .decMain > .clart,
+  .clbody.fix .decRail > .clficha,
+  .clbody.fix .decRail > .notelist{
+    grid-area:auto; margin-top:0; margin-bottom:0; max-height:none; width:auto }
+  .clbody.fix .decMain > .clart{ min-height:min(48vh,460px); border-radius:16px }
+  .clbody.fix .decTopo > .clPasso{ margin:0 }
+  /* o texto é o que se decide: ele respira na coluna larga */
+  .clbody.fix .decMain > .clcap.leitura{ padding:16px 18px }
+  .clbody.fix .decMain > .clcap.leitura .clleitura{ font-size:15px; line-height:1.68 }
+  /* o pedido de alteração é uma nota, não um painel */
+  .clbody.fix .decRail > .notelist{ align-self:stretch; overflow:visible }
+}
+</style>
