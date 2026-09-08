@@ -1,9 +1,65 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.28
+Version: 0.5.29
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.29 — 2026-09-08
+
+**Status:** Concluída
+**Objetivo:** o que foi apagado no Ensaio fica apagado.
+
+### "É como se tivesse resetando comandos atrás" (v195)
+
+O founder, com um print de um card que ele já tinha excluído: *"Brotou esse card
+do nada no ensaio, pelo amor de Deus, isso tá voltando pra uns cards que n faz
+sentido aparecer dnovo, eles simplesmente aparecem. É como se tivesse resetando
+comandos atrás. To ficando louco com isso já."*
+
+**Ele não estava ficando louco.** Reproduzido com dois navegadores de verdade
+contra um banco só, antes de tocar em uma linha:
+
+| passo | A | B |
+|---|---|---|
+| A cria a tarefa | 1 | 1 |
+| **A apaga a tarefa** | 0 (lixeira: 1) | 1 |
+| B mexe em qualquer coisa e sobe | 0 | 1 |
+| **A busca** | **1 — voltou** | 1 |
+
+**A causa está na mescla de três lados.** Para item que existe de um lado só, a
+regra é `eu apaguei e lá não mexeu → some; senão volta`. O "senão volta" é
+deliberado e certo — protege o trabalho de quem editou. Mas ele é decidido
+comparando o item INTEIRO com a base: qualquer campo diferente conta como "lá
+mexeu". E tarefa do Ensaio tem campos que mudam sozinhos — o relógio (`tempoMs`),
+o carimbo (`mod`) e, principalmente, **`col`, que é leitura da FASE DO CARD**: ela
+muda quando o card anda, sem ninguém tocar na tarefa.
+
+Resultado: **apagar quase nunca vencia.** E como o outro lado sempre acaba
+mexendo em alguma coisa, o apagado voltava horas depois, sem gesto nenhum. Do
+lado de fora é exatamente "resetando comandos atrás".
+
+**A pauta já tinha a cura, desde a v156:** deduzir "foi apagado" da ausência é
+frágil, então a lixeira manda — id que está nela não entra. O Ensaio nunca ganhou
+a mesma regra. Ganha agora:
+
+- `S.ensaio.apagadas` é a lápide, e viaja no mesmo pacote das tarefas. Cada linha
+  é `{id, quando}` — tem `id`, então **a mescla UNE as lápides dos dois aparelhos**
+  em vez de escolher uma. Apagar em qualquer aparelho vale em todos.
+- A faxina roda depois de toda carga do banco e a cada desenho do quadro: id com
+  lápide não fica em `tarefas` nem em `feitas`.
+- **Restaurar tira a lápide** (desfazer, ou voltar pela lixeira) — senão a tarefa
+  voltaria agora e sumiria no desenho seguinte, que é pior do que o defeito.
+- A lixeira visível continua mandando também: id que está nela não volta sozinho.
+- Teto de 400 lápides, as mais velhas saem primeiro.
+
+**Verificado:** `web/verificar/v195-o-que-apaguei-fica-apagado.mjs`, 19 provas em
+**dois navegadores de verdade contra um banco só** — o caminho que o founder
+percorreu, não uma função isolada. Inclui as duas rodadas de conversa em que ela
+voltava antes, um navegador aberto do zero, o restaurar que devolve de verdade e
+o apagar de novo (a lápide não é de uso único).
 
 ---
 

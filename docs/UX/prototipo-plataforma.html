@@ -15762,7 +15762,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v194 · 8 set · devolver ao cliente em um toque';
+const VERSAO_PROTOTIPO = 'v195 · 8 set · o que apaguei fica apagado';
 
 menuSheet = (function(orig){
   return function(){
@@ -36639,3 +36639,162 @@ sbGravar = (function(orig){
 .enDevolve:disabled{ color:var(--ink-500); border-color:var(--ink-700);
   background:transparent; cursor:not-allowed }
 </style>
+
+<script>
+/* =====================================================================
+   v195 — O QUE FOI APAGADO NO ENSAIO VOLTAVA SOZINHO.
+
+   O founder: "Brotou esse card do nada no ensaio, pelo amor de Deus,
+   isso tá voltando pra uns cards que n faz sentido aparecer dnovo, eles
+   simplesmente aparecem. É como se tivesse resetando comandos atrás."
+
+   Ele não estava ficando louco. Reproduzido com DOIS navegadores de
+   verdade contra um banco só:
+
+     A cria a tarefa      → os dois têm 1
+     A APAGA a tarefa     → A tem 0, a lixeira de A tem 1
+     B mexe em qualquer coisa e sobe (um relógio que andou, um card que
+       mudou de fase)     → B volta a ter 1
+     A busca              → A TEM 1 DE NOVO
+
+   A causa está na mescla de três lados. Para item que existe de um lado
+   só, a regra é: `eu apaguei e lá não mexeu → some; senão volta`. O
+   "senão volta" é deliberado — protege o trabalho de quem editou. Mas
+   ele é decidido comparando o item inteiro com a base: QUALQUER campo
+   diferente conta como "lá mexeu". E tarefa do Ensaio tem campos que
+   mudam sozinhos: o relógio (`tempoMs`), o carimbo (`mod`), e sobretudo
+   `col`, que é LEITURA DA FASE DO CARD — ela muda quando o card anda,
+   sem ninguém tocar na tarefa.
+
+   Resultado: apagar quase nunca vencia. E como o outro lado sempre acaba
+   mexendo em alguma coisa, o apagado voltava horas depois, sem gesto
+   nenhum. Do lado de fora é exatamente "resetando comandos atrás".
+
+   A pauta já tinha a cura, desde a v156: deduzir "foi apagado" da
+   ausência é frágil, então a LIXEIRA manda — id que está nela não entra.
+   O Ensaio nunca ganhou a mesma regra. Ganha agora, e mais forte:
+
+   · `S.ensaio.apagadas` é a lápide, e viaja no mesmo pacote das tarefas.
+     Cada linha é `{id, quando}` — tem `id`, então a mescla UNE as
+     lápides dos dois aparelhos em vez de escolher uma. Apagar em
+     qualquer aparelho vale em todos.
+   · A faxina roda depois de toda carga do banco e a cada desenho do
+     quadro: id com lápide não fica em `tarefas` nem em `feitas`.
+   · Restaurar (desfazer, ou voltar pela lixeira) TIRA a lápide — senão a
+     tarefa voltaria agora e sumiria no desenho seguinte, que é pior do
+     que o defeito.
+   · A lixeira visível continua sendo a lixeira: id que está nela também
+     não volta ao quadro sozinho.
+
+   Teto de 400 lápides, as mais velhas saem primeiro.
+   ===================================================================== */
+(function(){
+  const TETO = 400;
+
+  const casa = () => {
+    if(!S.ensaio) return null;
+    if(!Array.isArray(S.ensaio.apagadas)) S.ensaio.apagadas = [];
+    return S.ensaio;
+  };
+
+  function enterrar(id){
+    const E = casa(); if(!E || id == null) return;
+    const chave = String(id);
+    if(E.apagadas.some(a => a && String(a.id) === chave)) return;
+    E.apagadas.push({ id: chave, quando: Date.now() });
+    if(E.apagadas.length > TETO) E.apagadas.splice(0, E.apagadas.length - TETO);
+  }
+  function desenterrar(id){
+    const E = casa(); if(!E || id == null) return;
+    const chave = String(id);
+    E.apagadas = E.apagadas.filter(a => !a || String(a.id) !== chave);
+  }
+  const temLapide = id => {
+    const E = casa();
+    return !!E && E.apagadas.some(a => a && String(a.id) === String(id));
+  };
+
+  /* ---------- a faxina: a lápide e a lixeira mandam ------------------ */
+  function faxinaDoEnsaio(){
+    const E = casa(); if(!E) return 0;
+    const mortos = new Set(E.apagadas.map(a => a && String(a.id)).filter(Boolean));
+    for(const e of (E.lixo || [])) if(e && e.tarefa && e.tarefa.id != null)
+      mortos.add(String(e.tarefa.id));
+    if(!mortos.size) return 0;
+    let n = 0;
+    const limpa = lista => (lista || []).filter(t => {
+      const fora = t && mortos.has(String(t.id));
+      if(fora) n++;
+      return !fora;
+    });
+    E.tarefas = limpa(E.tarefas);
+    E.feitas  = limpa(E.feitas);
+    return n;
+  }
+  window.MaestroFaxinaEnsaio = { faxinaDoEnsaio, enterrar, desenterrar, temLapide };
+
+  /* ---------- 1. apagar deixa lápide -------------------------------- */
+  if(typeof excluirTarefa === 'function') excluirTarefa = (function(orig){
+    return function(tid){
+      const E = casa();
+      const t = E && E.tarefas.find(x => x.id === +tid);
+      const r = orig.apply(this, arguments);
+      /* só enterra se a exclusão realmente aconteceu (ela pode recusar:
+         card com o cliente, acesso fechado) */
+      if(r && t && !(casa() || { tarefas: [] }).tarefas.some(x => x.id === t.id)) enterrar(t.id);
+      return r;
+    };
+  })(excluirTarefa);
+
+  /* ---------- 2. restaurar tira a lápide ----------------------------- */
+  if(typeof desfazer === 'function') desfazer = (function(orig){
+    return function(){
+      const antes = ((casa() || {}).tarefas || []).map(t => t.id);
+      const r = orig.apply(this, arguments);
+      for(const t of ((casa() || {}).tarefas || []))
+        if(!antes.includes(t.id)) desenterrar(t.id);
+      return r;
+    };
+  })(desfazer);
+
+  if(typeof enLxVoltar === 'function') enLxVoltar = (function(orig){
+    return function(chave){
+      const antes = ((casa() || {}).tarefas || []).map(t => t.id);
+      const r = orig.apply(this, arguments);
+      for(const t of ((casa() || {}).tarefas || []))
+        if(!antes.includes(t.id)) desenterrar(t.id);
+      return r;
+    };
+  })(enLxVoltar);
+
+  /* ---------- 3. a faxina depois de toda carga do banco -------------- */
+  if(typeof aplicarEstado === 'function') aplicarEstado = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      try{ faxinaDoEnsaio(); }catch(e){}
+      return r;
+    };
+  })(aplicarEstado);
+
+  /* ---------- 4. e a cada desenho do quadro -------------------------- */
+  if(typeof sincronizarJobs === 'function') sincronizarJobs = (function(orig){
+    return function(){
+      try{ faxinaDoEnsaio(); }catch(e){}
+      const r = orig.apply(this, arguments);
+      try{ faxinaDoEnsaio(); }catch(e){}   /* nem a reposição fura a lápide */
+      return r;
+    };
+  })(sincronizarJobs);
+
+  if(typeof sincronizarTarefasDaPauta === 'function') sincronizarTarefasDaPauta = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      try{ faxinaDoEnsaio(); }catch(e){}
+      return r;
+    };
+  })(sincronizarTarefasDaPauta);
+
+  /* uma vez agora, para quem já está com a casa suja */
+  try{ faxinaDoEnsaio(); }catch(e){}
+})();
+</script>

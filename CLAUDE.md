@@ -283,6 +283,17 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (8 set, v195):** tarefa apagada no Ensaio voltava sozinha, horas
+depois ("é como se tivesse resetando comandos atrás"). A mescla de três lados
+decide "eu apaguei e lá não mexeu → some; senão volta" comparando o item INTEIRO
+com a base — e tarefa do Ensaio tem campos que mudam sozinhos: o relógio, o
+carimbo e sobretudo `col`, que é leitura da FASE DO CARD. Qualquer card que
+andasse fazia a tarefa apagada ressuscitar. A pauta tinha a cura desde a v156 (a
+lixeira manda); o Ensaio ganhou agora a dele: `S.ensaio.apagadas` é lápide com
+`id`, então a mescla UNE as lápides dos dois aparelhos; a faxina roda depois de
+toda carga e a cada desenho do quadro; restaurar tira a lápide. 19 provas em
+`web/verificar/v195-o-que-apaguei-fica-apagado.mjs`, com DOIS navegadores de
+verdade contra um banco só.
 **Fechado (8 set, v194):** a volta de alteração vira um toque. A v191 fechou o
 atalho da seta (ela mandava card vazio ao cliente) e deixou a devolução em
 quatro passos — Check, revisor, lote, Enviar — para uma troca de abertura.
