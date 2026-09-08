@@ -13408,6 +13408,7 @@ function agEnsaio(){
         style="${S.enSoMinhas?'border-color:var(--brass-500);color:var(--brass-300)':''}">
         ${ic('person',13)} ${S.enSoMinhas?'Só as minhas':'Todas'}</button>
       <button class="b gho sm" data-enranking="1">${ic('chart',13)} Ranking${feitasMes?` (${feitasMes})`:''}</button>
+      <button class="b gho sm" data-enimp="1">${ic('doc',13)} Importar planilha</button>
       <button class="b pri sm" data-ennova="1">${ic('pencil',13)} Nova tarefa</button></div></div>
   <div class="enRolo">${cols}</div>
   <p style="margin:4px 2px 0;font-size:11.5px;color:var(--ink-300)">Arraste um cartão entre
@@ -14358,6 +14359,7 @@ agEnsaio = function(){
         style="${S.enSoMinhas?'border-color:var(--brass-500);color:var(--brass-300)':''}">
         ${ic('person',13)} ${S.enSoMinhas?'Só as minhas':'Todas'}</button>
       <button class="b gho sm" data-enranking="1">${ic('chart',13)} Ranking${feitasMes?` (${feitasMes})`:''}</button>
+      <button class="b gho sm" data-enimp="1">${ic('doc',13)} Importar planilha</button>
       <button class="b pri sm" data-ennova="1">${ic('pencil',13)} Nova tarefa</button></div></div>
   <div class="enCats">${chips}</div>
   <div class="enRolo">${cols}</div>
@@ -15760,7 +15762,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v189 · 8 set · a postagem nasce no Ensaio';
+const VERSAO_PROTOTIPO = 'v190 · 8 set · a planilha entra pelo Ensaio';
 
 menuSheet = (function(orig){
   return function(){
@@ -16634,6 +16636,7 @@ agEnsaio = function(){
   <div class="mtop"><div><h1>Ensaio</h1><p>${esc(catAtiva.dica)}</p></div>
     <div style="display:flex;gap:9px;flex-wrap:wrap">
       <button class="b gho sm" data-enranking="1">${ic('chart',13)} Ranking${feitasMes?` (${feitasMes})`:''}</button>
+      <button class="b gho sm" data-enimp="1">${ic('doc',13)} Importar planilha</button>
       <button class="b pri sm" data-ennova="1">${ic('pencil',13)} Nova tarefa</button></div></div>
   <div class="enCats">${chips}</div>
   <div class="enResps">${respChips}</div>
@@ -34531,7 +34534,10 @@ addEventListener('click', e => {
    ================================================================== */
 (function(){
 
-  const CRIAR = '[data-ptnew],[data-ptnewdia]';
+  /* v190: a importação de planilha sai junto. Pelo mesmo motivo — ela
+     criava postagem direto na pauta, que é a segunda porta que a Regra #1
+     não admite. Ela reaparece no Ensaio, logo abaixo. */
+  const CRIAR = '[data-ptnew],[data-ptnewdia],[data-ptimp]';
 
   function tirarCriarPostagem(){
     try{
@@ -34564,11 +34570,148 @@ addEventListener('click', e => {
     const t = e.target.closest && e.target.closest(CRIAR);
     if(!t) return;
     e.stopImmediatePropagation(); e.preventDefault();
-    try{ toast('A postagem nasce no Ensaio — de lá ela vem com tempo, material e histórico. '
-             + 'Aqui você acompanha, agenda e marca que foi publicado.', false, 'erro'); }catch(err){}
+    try{
+      const ehImportar = !!t.closest('[data-ptimp]');
+      toast(ehImportar
+        ? 'A planilha entra pelo Ensaio — cada linha vira uma tarefa no inbox, '
+          + 'para você estruturar uma a uma.'
+        : 'A postagem nasce no Ensaio — de lá ela vem com tempo, material e histórico. '
+          + 'Aqui você acompanha, agenda e marca que foi publicado.', false, 'erro');
+    }catch(err){}
   }, true);
 
   window.MaestroSoNoEnsaio = { tirarCriarPostagem };
+
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v190 — A PLANILHA ENTRA PELO ENSAIO, LINHA A LINHA.
+
+   O founder: "a parte de importar planilha pode tirar de lá também,
+   quero que vá pra Ensaio, e o que for importado caia tudo em cards
+   separados em inbox, pra ser estruturada a pauta, como se tivesse
+   criando do zero mesmo a tarefa."
+
+   Antes, importar empurrava 34 postagens prontas direto na pauta. Elas
+   nasciam já estruturadas — e por isso nasciam sem nada do que a
+   estruturação dá: sem passar pelo quadro, sem tempo, sem responsável,
+   sem histórico. A produção descobria a existência delas quando a data
+   chegava.
+
+   Agora a planilha entra como o que ela é: uma lista de IDEIAS. Cada
+   linha vira uma tarefa no inbox, e alguém a estrutura — o mesmo gesto
+   de quem cria do zero, com o mesmo resultado.
+
+   O QUE A PLANILHA TRAZIA NÃO SE PERDE. Formato, plataformas, horário,
+   chamada e pilar ficam guardados na tarefa (`daPlanilha`) e são
+   aplicados no momento em que ela vira card. Pedir para o founder
+   redigitar 34 vezes o que já estava na planilha seria trocar um
+   problema por outro pior.
+   ================================================================== */
+(function(){
+
+  /* ---------- o botão do Ensaio abre a mesma janela de sempre ------- */
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-enimp]');
+    if(!b) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    S.ptImport = null;
+    S.enImportando = true;                 /* a confirmação sabe de onde veio */
+    S.modal = modalImportar();
+    renderLayer();
+  }, true);
+
+  /* ---------- a janela diz a verdade sobre o que vai acontecer ------ */
+  if(typeof modalImportar === 'function'){
+    modalImportar = (function(orig){
+      return function(){
+        let html = orig.apply(this, arguments);
+        if(!html || !S.enImportando) return html;
+        const n = (S.ptImport || []).length;
+        return html
+          .replace(/<h3>Importar planilha<\/h3>/,
+            '<h3>Importar planilha para o Ensaio</h3>')
+          .replace(/>Adicionar (\d+) à pauta</,
+            `>Jogar ${n} no inbox<`)
+          .replace(/(<h3>Importar planilha para o Ensaio<\/h3>)/,
+            `$1<p>Cada linha vira uma tarefa no inbox, para ser estruturada uma a uma —
+             o mesmo caminho de quem cria do zero. O que a planilha traz (formato,
+             plataforma, horário, chamada) viaja junto e é aplicado quando a tarefa
+             virar card.</p>`);
+      };
+    })(modalImportar);
+  }
+
+  /* ---------- a confirmação: inbox, e não pauta -------------------- */
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-ptimpok]');
+    if(!b || !S.enImportando) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+
+    const linhas = S.ptImport || [];
+    if(!linhas.length){ S.enImportando = false; return; }
+    if(!S.ensaio) S.ensaio = kbSemente();
+    const cli = S.cli || (CLIS()[0] || {}).id || null;
+
+    let n = 0;
+    for(const l of linhas){
+      S.ensaio.tarefas.push({
+        id: novoIdTarefa(),
+        titulo: String(l.t || 'Ideia da planilha').slice(0, 120),
+        cli, resp: null,
+        col: 'inbox',                       /* onde a ideia espera dono */
+        cat: 'producao',
+        criada: Date.now(),
+        prazo: l.data || null,
+        tempoMs: 0, desde: null,
+        /* o texto da planilha vira "o pedido, com suas palavras" — que é
+           o campo que a estruturação transforma em objetivo da pauta */
+        desc: String(l.texto || '').slice(0, 600),
+        daPlanilha: {
+          fmt: l.fmt || null, plats: l.plats || null, hora: l.hora || null,
+          cta: l.cta || '', pilar: l.pilar || null, dia: l.dia
+        }
+      });
+      n++;
+    }
+
+    S.ptImport = null; S.enImportando = false; S.modal = null;
+    /* leva para o quadro, que é onde o trabalho agora está */
+    S.view = 'agency'; S.route = 'producao';
+    try{ som('toque'); }catch(err){}
+    render();
+    toast(`${n} ${n > 1 ? 'ideias entraram' : 'ideia entrou'} no inbox do Ensaio. `
+        + 'Estruture uma a uma — a pauta nasce daí.');
+  }, true);
+
+  /* ---------- estruturar aplica o que a planilha trouxe ------------- */
+  if(typeof estruturarTarefa === 'function'){
+    estruturarTarefa = (function(orig){
+      return function(tid){
+        const t = S.ensaio && S.ensaio.tarefas.find(x => x.id === +tid);
+        const dp = t && !t.cardId && t.daPlanilha;
+        const r = orig.apply(this, arguments);
+        try{
+          if(!dp || !t || !t.cardId) return r;
+          const p = (S.pautas[t.cli] || []).find(x => x.id === t.cardId);
+          if(!p) return r;
+          if(dp.fmt)                      p.fmt   = dp.fmt;
+          if(dp.plats && dp.plats.length) p.plats = [...dp.plats];
+          if(dp.hora)                     p.hora  = dp.hora;
+          if(dp.cta)                      p.cta   = dp.cta;
+          if(dp.pilar)                    p.pilar = dp.pilar;
+          if(dp.dia !== undefined && dp.dia !== null) p.dia = dp.dia;
+          delete t.daPlanilha;            /* aplicado: não se aplica duas vezes */
+        }catch(err){}
+        return r;
+      };
+    })(estruturarTarefa);
+  }
+
+  window.MaestroPlanilhaNoEnsaio = { };
 
 })();
 </script>
