@@ -15760,7 +15760,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v187 · 7 set · quem esta online, com nome';
+const VERSAO_PROTOTIPO = 'v188 · 7 set · o que apaguei nao volta';
 
 menuSheet = (function(orig){
   return function(){
@@ -16185,14 +16185,66 @@ document.addEventListener('click', e => {
 /* Tarefa interna da pauta vira tarefa do Ensaio, uma vez só. A ligação é
    o `cardId` — o mesmo que o cartão já usa para mostrar "card da pauta ·
    fase" e abrir o card completo. */
+/* v188 — O QUE FOI APAGADO NÃO VOLTA.
+
+   O founder: "esses cards estão aparecendo do nada, já excluí algumas
+   vezes." E voltavam mesmo, por dois caminhos.
+
+   AQUI, o primeiro: esta função roda a CADA DESENHO da tela do Ensaio, e
+   a trava dela só olhava tarefa ativa e tarefa concluída. Apagada, ela
+   não conhecia — então o card da pauta marcado como tarefa recriava a
+   tarefa no desenho seguinte, e o founder apagava de novo, e ela voltava
+   de novo.
+
+   A lixeira sozinha não resolve: ela guarda 50 e pode ser esvaziada.
+   Então quem manda é uma LÁPIDE — a lista do que foi apagado de
+   propósito, que sobrevive à lixeira sendo limpa. Restaurar tira da
+   lista, que é o único jeito de a tarefa poder voltar.
+
+   E o segundo defeito, que eu não teria achado se não estivesse olhando:
+   a trava comparava `t.cardId === id` SEM OLHAR DE QUAL CLIENTE É O
+   CARD. É a mesma família da v165 e da v176 — o id do card é do cliente,
+   não da casa. O card 3 da EJUP e o card 3 do Cortez são cards
+   diferentes com o mesmo número, e um suprimia o outro em silêncio: a
+   tarefa do segundo cliente simplesmente nunca nascia. */
+function chaveDaTarefaDaPauta(cli, cardId){ return String(cli) + '|' + String(cardId); }
+
+function foiApagadaDeProposito(cli, cardId){
+  const l = (S.ensaio && S.ensaio.naoRecriar) || [];
+  return l.includes(chaveDaTarefaDaPauta(cli, cardId));
+}
+
+function marcarComoApagada(cli, cardId){
+  if(!S.ensaio || cli == null || cardId == null) return;
+  const k = chaveDaTarefaDaPauta(cli, cardId);
+  S.ensaio.naoRecriar = S.ensaio.naoRecriar || [];
+  if(!S.ensaio.naoRecriar.includes(k)) S.ensaio.naoRecriar.push(k);
+  if(S.ensaio.naoRecriar.length > 500) S.ensaio.naoRecriar.splice(0, 100);
+}
+
+function podeRecriar(cli, cardId){
+  if(!S.ensaio) return true;
+  const k = chaveDaTarefaDaPauta(cli, cardId);
+  const l = S.ensaio.naoRecriar;
+  if(!Array.isArray(l)) return true;
+  const i = l.indexOf(k);
+  if(i >= 0) l.splice(i, 1);          /* restaurou: pode voltar a nascer */
+  return true;
+}
+
 function sincronizarTarefasDaPauta(){
   if(!S.ensaio) S.ensaio = kbSemente();
-  const jaTem = id => S.ensaio.tarefas.some(t => t.cardId === id && t.daPauta)
-                   || (S.ensaio.feitas||[]).some(t => t.cardId === id && t.daPauta);
+  /* v188: por cliente E por card, e olhando também a lixeira */
+  const igual = (t, cli, id) => t && t.daPauta && t.cardId === id && t.cli === cli;
+  const jaTem = (cli, id) =>
+       S.ensaio.tarefas.some(t => igual(t, cli, id))
+    || (S.ensaio.feitas || []).some(t => igual(t, cli, id))
+    || (S.ensaio.lixo   || []).some(e => igual(e && e.tarefa, cli, id));
 
   for(const c of CLIS()){
     for(const p of (S.pautas[c.id] || [])){
-      if(!p.tarefa || p.feito || jaTem(p.id)) continue;
+      if(!p.tarefa || p.feito || jaTem(c.id, p.id)
+         || foiApagadaDeProposito(c.id, p.id)) continue;
       const titulo = String(p.t || '').replace(/^\[Tarefa\]\s*/i, '').trim();
       S.ensaio.tarefas.push({
         id: novoIdTarefa(), titulo: titulo || 'Tarefa da pauta',
@@ -16209,15 +16261,28 @@ function sincronizarTarefasDaPauta(){
    para ver a aba e não o que ela guarda. Semente mínima, uma vez, só se a
    categoria estiver vazia: o ponto é mostrar que a privacidade separa
    assuntos, não encher o quadro. */
+/* v188 — a semente nasce UMA VEZ NA VIDA, e não toda vez que esvazia.
+
+   A regra era "só se a categoria estiver vazia". Parece cuidadosa e é o
+   contrário: apagar TODAS as tarefas de uma categoria é exatamente o
+   gesto que a esvazia — então apagar virou o gatilho para elas
+   voltarem. O founder apagou "algumas vezes" e elas ressuscitaram todas
+   as vezes, o que de fora parece a plataforma inventando trabalho.
+
+   Agora fica uma marca de que já se semeou. Quem apaga, apagou. */
 function semearOutrasCategorias(){
   if(!S.ensaio) return;
-  const vazia = cat => !S.ensaio.tarefas.some(t => t.cat === cat)
-                    && !(S.ensaio.feitas||[]).some(t => t.cat === cat);
+  S.ensaio.semeadas = S.ensaio.semeadas || {};
+  const vazia = cat => !S.ensaio.semeadas[cat]
+                    && !S.ensaio.tarefas.some(t => t.cat === cat)
+                    && !(S.ensaio.feitas||[]).some(t => t.cat === cat)
+                    && !(S.ensaio.lixo||[]).some(e => e && e.tarefa && e.tarefa.cat === cat);
   const nova = (titulo, cat, col, extra) => S.ensaio.tarefas.push({
     id: novoIdTarefa(), titulo, cli: null, resp: null, col, cat,
     criada: Date.now(), prazo: null, tempoMs: 0, desde: null, ...(extra||{}) });
 
   if(vazia('financeiro')){
+    S.ensaio.semeadas.financeiro = Date.now();
     nova('Emitir a nota da EJUP · agosto', 'financeiro', 'plan',
       { valor:'4.800', fin:'receber' });
     nova('Cobrança em atraso · Cortez Jurídico', 'financeiro', 'do',
@@ -16226,6 +16291,7 @@ function semearOutrasCategorias(){
       { valor:'390', fin:'pagar' });
   }
   if(vazia('socios')){
+    S.ensaio.semeadas.socios = Date.now();
     nova('Fechar a proposta do quarto cliente', 'socios', 'plan');
     nova('Revisar a divisão de pró-labore do trimestre', 'socios', 'inbox');
   }
@@ -23457,6 +23523,11 @@ function excluirTarefa(tid){
   }
   const guardado = { tarefa: t, idxTarefa: i };
   S.ensaio.tarefas.splice(i, 1);
+  /* v188: quem apaga, apagou. Sem esta marca, `sincronizarTarefasDaPauta`
+     recria a tarefa no desenho seguinte da tela — e foi o que o founder
+     viu, "aparecendo do nada" depois de excluir algumas vezes. */
+  if(t && t.daPauta && t.cardId != null && typeof marcarComoApagada === 'function')
+    marcarComoApagada(t.cli, t.cardId);
   if(p){
     /* o card da pauta vai para a lixeira do cliente, igual ao que a
        própria pauta faz — e de lá volta pelo mesmo botão de sempre */
@@ -23497,6 +23568,10 @@ desfazer = (function(base){
         if(j >= 0) S.ensaio.lixo.splice(j, 1);
       }
       S.ensaio.tarefas.splice(Math.min(idxTarefa, S.ensaio.tarefas.length), 0, tarefa);
+      /* v188: desfazer tira a lápide — senão a tarefa volta ao quadro
+         agora e some no desenho seguinte, que seria pior do que o bug. */
+      if(tarefa && tarefa.daPauta && tarefa.cardId != null && typeof podeRecriar === 'function')
+        podeRecriar(tarefa.cli, tarefa.cardId);
       if(typeof ligarTarefaAoCard === 'function') ligarTarefaAoCard(tarefa);
       ultimoEnRm = null; S.toast = null; render();
       toast(`"${tarefa.titulo}" de volta ao quadro.`);
@@ -30166,6 +30241,10 @@ function enLxVoltar(chave){
     if(j < 0) return false;
     const [e] = lixo.splice(j, 1);
     const t = e.tarefa;
+    /* v188: voltar da lixeira tira a lápide, senão a tarefa reaparece no
+       quadro e some no desenho seguinte — pior do que o defeito. */
+    if(t && t.daPauta && t.cardId != null && typeof podeRecriar === 'function')
+      podeRecriar(t.cli, t.cardId);
     if(S.ensaio.tarefas.some(x => x.id === t.id)) t.id = novoIdTarefa();   /* id já reaproveitado */
     if(t.col === 'cliente') t.col = 'check';
     t.movidoEm = Date.now();
@@ -30179,6 +30258,8 @@ function enLxVoltar(chave){
     const j = lx.findIndex(e => e && e.item && String(e.item.id) === b);
     if(j < 0) return false;
     const [e] = lx.splice(j, 1);
+    /* v188: o card volta à pauta, então a tarefa dele pode voltar a nascer */
+    if(typeof podeRecriar === 'function') podeRecriar(a, e.item.id);
     const arr = S.pautas[a] = S.pautas[a] || [];
     arr.splice(Math.min(e.idx == null ? arr.length : e.idx, arr.length), 0, e.item);
     if(typeof ultimoPtDel !== 'undefined' && ultimoPtDel && ultimoPtDel.item === e.item) ultimoPtDel = null;
