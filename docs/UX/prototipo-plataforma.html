@@ -36715,7 +36715,12 @@ sbGravar = (function(orig){
   };
 
   /* ---------- a faxina: a lápide e a lixeira mandam ------------------ */
+  /* Restaurar chama `render()` POR DENTRO, e o desenho do quadro roda a
+     faxina — que ainda veria a lápide e mataria a tarefa no mesmo gesto
+     que a trouxe de volta. Enquanto se restaura, a faxina se cala. */
+  let restaurando = 0;
   function faxinaDoEnsaio(){
+    if(restaurando) return 0;
     const E = casa(); if(!E) return 0;
     const mortos = new Set(E.apagadas.map(a => a && String(a.id)).filter(Boolean));
     for(const e of (E.lixo || [])) if(e && e.tarefa && e.tarefa.id != null)
@@ -36747,25 +36752,20 @@ sbGravar = (function(orig){
   })(excluirTarefa);
 
   /* ---------- 2. restaurar tira a lápide ----------------------------- */
-  if(typeof desfazer === 'function') desfazer = (function(orig){
+  function comRestauracao(orig){
     return function(){
       const antes = ((casa() || {}).tarefas || []).map(t => t.id);
-      const r = orig.apply(this, arguments);
+      restaurando++;
+      let r;
+      try{ r = orig.apply(this, arguments); }
+      finally{ restaurando--; }
       for(const t of ((casa() || {}).tarefas || []))
         if(!antes.includes(t.id)) desenterrar(t.id);
       return r;
     };
-  })(desfazer);
-
-  if(typeof enLxVoltar === 'function') enLxVoltar = (function(orig){
-    return function(chave){
-      const antes = ((casa() || {}).tarefas || []).map(t => t.id);
-      const r = orig.apply(this, arguments);
-      for(const t of ((casa() || {}).tarefas || []))
-        if(!antes.includes(t.id)) desenterrar(t.id);
-      return r;
-    };
-  })(enLxVoltar);
+  }
+  if(typeof desfazer === 'function')   desfazer   = comRestauracao(desfazer);
+  if(typeof enLxVoltar === 'function') enLxVoltar = comRestauracao(enLxVoltar);
 
   /* ---------- 3. a faxina depois de toda carga do banco -------------- */
   if(typeof aplicarEstado === 'function') aplicarEstado = (function(orig){
