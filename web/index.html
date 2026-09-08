@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-08 14:17 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-08 19:18 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15828,7 +15828,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v188 · 7 set · o que apaguei nao volta';
+const VERSAO_PROTOTIPO = 'v189 · 8 set · a postagem nasce no Ensaio';
 
 menuSheet = (function(orig){
   return function(){
@@ -34565,6 +34565,78 @@ addEventListener('click', e => {
   }
 
   window.MaestroPresenca = { presencaDe, meuEstado, bater, olhar, COMO };
+
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v189 — A POSTAGEM NASCE NO ENSAIO, E SÓ LÁ.
+
+   O founder, vendo o "Nova postagem" no Cronograma do cliente: "aqui não
+   é pra ter uma nova postagem, a postagem só se cria a partir do Ensaio.
+   Cronograma de conteúdos é puramente de visualização, e opção pra
+   agendar e falar que publicou."
+
+   É a Regra #1 da casa aplicada ao lugar certo — toda informação tem um
+   lugar só. Duas portas para criar o mesmo job produzem dois jobs: um no
+   quadro com tempo, material e histórico, outro solto na pauta sem nada
+   disso. E quem cria pela pauta descobre depois que a produção não sabe
+   que aquilo existe.
+
+   O que sai: criar postagem, e criar pelo dia vazio do calendário
+   ("Preencher"). A demanda interna sai junto — ela é a mesma janela no
+   formato Livre, e pela mesma regra nasce no Ensaio, que já tem as
+   categorias de financeiro, sócios e acompanhamento.
+
+   O que FICA, porque é do Cronograma: ver, editar o que já existe,
+   agendar, e marcar que foi publicado.
+
+   Some do DOM e recusa o clique — as duas coisas. Só esconder deixaria
+   o atalho de teclado e o clique programático de pé, e o mesmo job
+   nasceria duas vezes por um caminho que ninguém vê.
+   ================================================================== */
+(function(){
+
+  const CRIAR = '[data-ptnew],[data-ptnewdia]';
+
+  function tirarCriarPostagem(){
+    try{
+      document.querySelectorAll(CRIAR).forEach(el => {
+        /* o dia vazio do calendário some inteiro; o botão do topo, só ele */
+        const dia = el.closest('.ptDiaVazio, .cnDiaVazio');
+        (dia || el).remove();
+      });
+    }catch(e){}
+  }
+
+  /* depois de cada desenho, e também quando algo repõe a tela por fora */
+  if(typeof render === 'function'){
+    render = (function(orig){
+      return function(){ const r = orig.apply(this, arguments); tirarCriarPostagem(); return r; };
+    })(render);
+  }
+  if(typeof renderLayer === 'function'){
+    renderLayer = (function(orig){
+      return function(){ const r = orig.apply(this, arguments); tirarCriarPostagem(); return r; };
+    })(renderLayer);
+  }
+  try{
+    new MutationObserver(() => { try{ tirarCriarPostagem(); }catch(e){} })
+      .observe(document.body, { childList:true, subtree:true });
+  }catch(e){}
+
+  /* e o clique é recusado, não só escondido — com o caminho certo dito */
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest(CRIAR);
+    if(!t) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    try{ toast('A postagem nasce no Ensaio — de lá ela vem com tempo, material e histórico. '
+             + 'Aqui você acompanha, agenda e marca que foi publicado.', false, 'erro'); }catch(err){}
+  }, true);
+
+  window.MaestroSoNoEnsaio = { tirarCriarPostagem };
 
 })();
 </script>

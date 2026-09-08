@@ -44,9 +44,19 @@ await pag.evaluate(() => {
 
 const ok = [], falhou = [];
 const checa = (nome, cond) => (cond ? ok : falhou).push(nome);
+/* v189: a postagem deixou de nascer na pauta — ela nasce no Ensaio, e o
+   Cronograma passou a ser de acompanhar. O EDITOR continua existindo e
+   continua sendo o que este teste cobra; o que mudou foi a porta. Abre
+   pelo caminho que restou: `modalPauta` direto, que é o mesmo que o
+   Ensaio usa ao estruturar. */
 const abrirNovo = async () => {
-  await pag.evaluate(() => { S.modal = null; renderLayer(); });
-  await pag.click('[data-ptnew]'); await pag.waitForTimeout(350);
+  await pag.evaluate(() => {
+    S.modal = null;
+    S.ptSemear = true;
+    S.modal = modalPauta(null);
+    renderLayer();
+  });
+  await pag.waitForTimeout(350);
 };
 const marcados = sel => pag.$$eval(sel + '.on', bs => bs.map(b => b.textContent.trim()));
 
