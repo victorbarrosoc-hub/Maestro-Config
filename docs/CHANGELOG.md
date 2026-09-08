@@ -1,9 +1,64 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.27
+Version: 0.5.28
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.28 — 2026-09-08
+
+**Status:** Concluída
+**Objetivo:** a volta de alteração vira um toque — e só sai se o material mudou.
+
+### "Devolver ao cliente" (v194)
+
+O founder, escolhendo entre manter o Check na segunda volta ou abrir um atalho:
+*"O que for melhor, mais rápido pro processo sem atrapalhar o material certo ser
+enviado, com as informações corretas."*
+
+**O problema que a v191 deixou.** Para devolver um texto corrigido eram quatro
+passos — Check, revisor libera, lote, Enviar — para uma troca de abertura. A
+v191 fechou o atalho que existia (a seta), com razão: ela mandava card VAZIO ao
+cliente. Mas fechar sem abrir outra porta é trocar um defeito por atrito diário.
+
+**A porta nova é estreita de propósito.** `Devolver ao cliente` só existe quando
+o card **é uma volta**: o cliente pediu alteração, o pedido está em aberto, e o
+card já foi ao cliente uma vez — o revisor já disse sim àquele card, e o que sai
+agora é a **resposta a um pedido dele**, não peça nova. Primeira ida ao cliente
+continua pelo Check inteiro, e o teste prova isso.
+
+**A trava que o founder pediu com todas as letras:**
+
+> **Nada mudou desde o pedido → não sai.**
+
+No instante em que o cliente pede alteração, o card guarda a **assinatura do que
+ele viu** (texto, chamada, legenda, texto por plataforma e os materiais — um
+hash, não uma cópia: o que viaja no banco é um número). Se a assinatura na hora
+de devolver for a mesma, o botão recusa e diz de quem era o pedido. Devolver o
+mesmo material dizendo "pronto, ajustei" é pior do que demorar: queima a
+confiança de quem aprova, e é o erro que ninguém percebe antes do cliente.
+
+As outras travas seguem valendo no atalho: **texto vazio não passa**, e na
+segunda volta (a peça pronta) **sem arte não passa** — senão o cliente aprovaria
+só o texto de novo.
+
+**Nada se perde.** Quem devolveu, quando, em que volta, e que o Check foi
+pulado ficam escritos no card (`voltaDireta`) e no histórico. O atalho é rápido,
+não é invisível.
+
+**Onde fica:** na janela do card — exatamente onde a seta ficava — e no cartão do
+Ensaio, junto do pedido do cliente, que é onde o trabalho acontece. Quando está
+travado, o botão aparece apagado e o motivo vem escrito, em vez de sumir sem
+explicação.
+
+**Verificado:** `web/verificar/v194-devolver-ao-cliente.mjs`, 35 provas,
+incluindo **o toque de verdade no botão de verdade** (não só a função) e a prova
+que dá nome à versão: com o material intacto, a devolução é recusada — pelo
+botão e pela chamada direta. Regressão verde em v191, v192, v193,
+`ciclo-interativo`, `ciclo-producao`, `v122`, `cartao-ensaio` e as suítes do
+Ensaio.
 
 ---
 

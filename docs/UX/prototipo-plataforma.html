@@ -15762,7 +15762,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v193 · 8 set · o card volta ao quadro';
+const VERSAO_PROTOTIPO = 'v194 · 8 set · devolver ao cliente em um toque';
 
 menuSheet = (function(orig){
   return function(){
@@ -36458,3 +36458,184 @@ sbGravar = (function(orig){
   };
 })();
 </script>
+
+<script>
+/* =====================================================================
+   v194 — DEVOLVER AO CLIENTE: UM TOQUE, MAS SÓ SE MUDOU.
+
+   O founder: "O que for melhor, mais rápido pro processo sem atrapalhar
+   o material certo ser enviado, com as informações corretas."
+
+   O problema que sobrou da v191. Para devolver um texto corrigido eram
+   quatro passos — Check, revisor libera, lote, Enviar — para uma troca
+   de abertura. E a v191 fechou o atalho que existia (a seta), com razão:
+   ela mandava card VAZIO ao cliente. Fechar sem abrir outra porta é
+   trocar um defeito por atrito diário.
+
+   A porta nova é estreita de propósito. `Devolver ao cliente` só existe
+   quando o card É UMA VOLTA: o cliente pediu alteração, o pedido está em
+   aberto, e o card já foi ao cliente uma vez — o revisor já disse sim
+   àquele card, e o que sai agora é a RESPOSTA a um pedido dele, não peça
+   nova. Primeira ida ao cliente continua pelo Check inteiro.
+
+   E vem com a trava que o founder pediu com todas as letras — "sem
+   atrapalhar o material certo ser enviado, com as informações corretas":
+
+     NADA MUDOU DESDE O PEDIDO -> NÃO SAI.
+
+   No instante em que o cliente pede alteração, o card guarda a
+   assinatura do que ele viu (texto, chamada, legenda, texto por
+   plataforma e os materiais). Se a assinatura na hora de devolver for a
+   mesma, o botão recusa e diz de quem era o pedido. Devolver o mesmo
+   material dizendo "pronto, ajustei" é pior do que demorar: queima a
+   confiança de quem aprova, e é o tipo de erro que ninguém percebe
+   antes do cliente.
+
+   Nada se perde: quem devolveu e que o Check foi pulado ficam no card
+   (`voltaDireta`) e no histórico.
+   ===================================================================== */
+(function(){
+  if(typeof decidirCard !== 'function' || typeof enviarCards !== 'function') return;
+
+  /* ---------- 1. a assinatura do que o cliente viu ------------------- */
+  function assinaturaDoMaterial(p){
+    if(!p) return '';
+    const mats = (typeof materiaisDe === 'function' ? materiaisDe(p) : []) || [];
+    const partes = [
+      String(p.texto || ''), String(p.cta || ''), String(p.legenda || ''),
+      JSON.stringify(p.porPlat || {}),
+      mats.map(m => String((m && (m.chave || m.url || m.nome)) || '')).sort().join(',')
+    ].join(' | ');
+    /* hash barato e estável: o que viaja no banco é um número, não o texto */
+    let h = 5381;
+    for(let i = 0; i < partes.length; i++) h = ((h * 33) ^ partes.charCodeAt(i)) >>> 0;
+    return partes.length + ':' + h.toString(36);
+  }
+
+  decidirCard = (function(orig){
+    return function(id, decisao, nota){
+      const r = orig.apply(this, arguments);
+      if(decisao !== 'ALTERACAO') return r;
+      const p = (S.pauta || []).find(x => x.id === id);
+      if(p) p.pedidoAssin = assinaturaDoMaterial(p);
+      return r;
+    };
+  })(decidirCard);
+
+  /* ---------- 2. quando a porta existe, e por que não ---------------- */
+  const ehVolta = p => !!p && !p.tarefa && !!p.ajustePendente
+    && (p.alteracoes || []).length > 0
+    && !(typeof comCliente === 'function' && comCliente(p))
+    && !['aprovado', 'agendado', 'postado'].includes(faseDe(p));
+
+  function porqueNaoDevolve(p){
+    if(!ehVolta(p)) return null;                       /* o botão nem aparece */
+    if(!(p.texto || '').trim()) return 'Falta o texto. O cliente precisa de algo para ler.';
+    if(destinoDoEnvio(p) === 'post_cli'
+       && typeof clVisuais === 'function' && !clVisuais(p).length)
+      return 'A arte ainda não está no card. Sem ela o cliente aprovaria só o texto de novo.';
+    if(p.pedidoAssin && p.pedidoAssin === assinaturaDoMaterial(p)){
+      const u = (p.alteracoes || [])[(p.alteracoes || []).length - 1] || {};
+      return `Nada mudou desde o pedido${u.por ? ' de ' + u.por : ''}. `
+           + 'O cliente receberia exatamente o mesmo material.';
+    }
+    return null;
+  }
+  const podeDevolver = p => ehVolta(p) && !porqueNaoDevolve(p);
+
+  /* ---------- 3. a devolução ---------------------------------------- */
+  function devolverAoCliente(cli, id){
+    const lista = S.pautas[cli] || [];
+    const p = lista.find(x => x.id === +id);
+    if(!p){ toast('Card não encontrado.', false, 'erro'); return false; }
+    if(typeof pode === 'function' && !pode('pauta')){
+      toast('Pauta: seu acesso está fechado. Quem abre é o administrador.', false, 'erro');
+      return false;
+    }
+    if(!ehVolta(p)){
+      toast('Este card não voltou do cliente. A primeira ida passa pelo Check.', false, 'erro');
+      return false;
+    }
+    const nao = porqueNaoDevolve(p);
+    if(nao){ toast(nao, false, 'erro'); return false; }
+
+    const aplicar = () => {
+      porFase(p, destinoDoEnvio(p));
+      p.enviadoEm = Date.now();
+      p.ajustePendente = false;
+      p.refeito = true;
+      p.pedidoAssin = null;
+      /* o Check foi pulado — isso fica escrito, não implícito */
+      p.voltaDireta = { por: (typeof hxQuem === 'function' ? hxQuem() : null),
+                        quando: Date.now(), voltas: (p.alteracoes || []).length };
+    };
+    if(typeof comHistorico === 'function') comHistorico(aplicar); else aplicar();
+
+    if(typeof som === 'function') som('toque');
+    if(typeof render === 'function') render();
+    const ap = ((typeof CLIS === 'function'
+      ? CLIS().find(c => c.id === cli) : null) || {}).nome || 'o cliente';
+    toast(`"${p.t}" voltou para ${ap} — resposta ao pedido, sem passar pelo Check de novo.`);
+    return true;
+  }
+  window.MaestroDevolver = { devolverAoCliente, podeDevolver, porqueNaoDevolve, ehVolta };
+
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-devolve]');
+    if(!b) return;
+    e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault();
+    const [cli, id] = String(b.dataset.devolve).split(':');
+    devolverAoCliente(cli, id);
+    if(S.modal){ S.modal = null; renderLayer(); }
+  }, true);
+
+  /* ---------- 4. onde ela aparece ------------------------------------ */
+  /* na janela do card — exatamente onde a seta ficava */
+  if(typeof modalVer === 'function') modalVer = (function(orig){
+    return function(id){
+      let html = orig.apply(this, arguments);
+      if(typeof html !== 'string' || S.view === 'client') return html;
+      const p = (S.pauta || []).find(x => x.id === id);
+      if(!p || !ehVolta(p)) return html;
+      const trava = porqueNaoDevolve(p);
+      const cli = (typeof cliDoCard === 'function' && cliDoCard(p))
+               || (typeof cliAtual === 'function' ? cliAtual().id : '');
+      const btn = `<button class="b pri" data-devolve="${esc(cli)}:${p.id}"
+        ${trava ? 'disabled' : ''}>${ic('zap', 13)} Devolver ao cliente</button>`
+        + (trava ? `<p class="fhint" style="flex-basis:100%;margin:6px 0 0;color:var(--coral)">${esc(trava)}</p>` : '');
+      return html.replace('<div class="modalrow" style="margin-top:14px">',
+        `<div class="modalrow" style="margin-top:14px">${btn}`);
+    };
+  })(modalVer);
+
+  /* no cartão do Ensaio, junto do pedido — é onde o trabalho acontece */
+  if(typeof agEnsaio === 'function') agEnsaio = (function(orig){
+    return function(){
+      let html = orig.apply(this, arguments);
+      if(!S.ensaio || typeof html !== 'string') return html;
+      for(const t of S.ensaio.tarefas){
+        if(!t || !t.doCliente || !t.cardId) continue;
+        const p = (S.pautas[t.cli] || []).find(x => x.id === t.cardId);
+        if(!p || !ehVolta(p)) continue;
+        const trava = porqueNaoDevolve(p);
+        const btn = `<button class="enDevolve" data-devolve="${esc(t.cli)}:${p.id}"
+          ${trava ? 'disabled' : ''} title="${esc(trava || 'Volta para o cliente como resposta ao pedido')}"
+          >${ic('zap', 11)} ${trava ? 'ainda não dá para devolver' : 'Devolver ao cliente'}</button>`;
+        html = html.replace(new RegExp(`(data-entar="${t.id}"[\\s\\S]*?<div class="tit">[\\s\\S]*?</div>)`),
+          `$1${btn}`);
+      }
+      return html;
+    };
+  })(agEnsaio);
+})();
+</script>
+<style>
+.enDevolve{ display:inline-flex; align-items:center; gap:6px; margin:8px 0 2px;
+  padding:6px 11px; border-radius:9px; font-size:11.5px; font-weight:600;
+  color:var(--brass-300); border:1px solid var(--brass-700);
+  background:rgba(200,150,58,.10); cursor:pointer; line-height:1.2;
+  transition:border-color var(--fast) var(--eo), color var(--fast) var(--eo) }
+.enDevolve:hover:not(:disabled){ color:var(--brass-200); border-color:var(--brass-500) }
+.enDevolve:disabled{ color:var(--ink-500); border-color:var(--ink-700);
+  background:transparent; cursor:not-allowed }
+</style>

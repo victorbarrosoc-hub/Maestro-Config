@@ -283,6 +283,18 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (8 set, v194):** a volta de alteração vira um toque. A v191 fechou o
+atalho da seta (ela mandava card vazio ao cliente) e deixou a devolução em
+quatro passos — Check, revisor, lote, Enviar — para uma troca de abertura.
+`Devolver ao cliente` só existe quando o card É UMA VOLTA (pedido do cliente em
+aberto, card já foi ao cliente uma vez: o revisor já aprovou aquele card, e o
+que sai é a resposta ao pedido dele). A trava central: **nada mudou desde o
+pedido, não sai** — no instante do pedido o card guarda a assinatura do que o
+cliente viu (hash de texto, chamada, legenda, texto por plataforma e materiais),
+e devolver o mesmo material é recusado com o nome de quem pediu. Texto vazio e,
+na segunda volta, arte ausente continuam barrando. Quem devolveu e que o Check
+foi pulado ficam no card (`voltaDireta`) e no histórico. 35 provas em
+`web/verificar/v194-devolver-ao-cliente.mjs`, incluindo o toque no botão real.
 **Fechado (8 set, v193):** depois de uma volta de alteração o card sumia do
 quadro e não voltava nunca mais. `sincronizarJobs` perguntava se o card já tinha
 tarefa olhando também `feitas`, sem perguntar QUANDO ela foi concluída — uma
