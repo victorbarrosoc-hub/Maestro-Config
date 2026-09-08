@@ -283,6 +283,17 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (8 set, v193):** depois de uma volta de alteração o card sumia do
+quadro e não voltava nunca mais. `sincronizarJobs` perguntava se o card já tinha
+tarefa olhando também `feitas`, sem perguntar QUANDO ela foi concluída — uma
+tarefa concluída uma vez dizia "esse card já tem tarefa" para sempre, e o card
+seguia pelo Check, pelo lote e pelo cliente sem aparecer para ninguém. Daí o
+resto: sem tarefa no quadro, cria-se tarefa nova, e tarefa nova estrutura card
+NOVO, em branco — era o "card sem nada estruturado". Agora a tarefa concluída
+carimba fase e volta (`faseFeita`, `voltasFeita`) e só vale enquanto o card não
+andou. Junto: card que já voltou do cliente fica à vista no quadro mesmo em
+rascunho, e a tarefa de ajuste é arquivada sob o dono do CARD, não o da tela.
+24 provas em `web/verificar/v193-o-card-volta-ao-quadro.mjs`.
 **Fechado (8 set, v192):** a tela em que o cliente decide. O texto da publicação
 tinha 707px de altura real dentro de uma caixa de 320px com `max-height:300px` —
 mais da metade fora da tela, sem barra e sem sinal — enquanto o pedido de

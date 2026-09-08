@@ -1,9 +1,69 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.26
+Version: 0.5.27
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.27 — 2026-09-08
+
+**Status:** Concluída
+**Objetivo:** depois de uma volta de alteração, o card continua existindo para a agência.
+
+### O card sumia do quadro e não voltava nunca mais (v193)
+
+O founder: *"Devolvi pra alteração no texto, voltou pra plan como normalmente
+faz. Depois sumiu e apareceu o card sem nada estruturado. em cliente. Não deu
+certo, reveja o processo."*
+
+Reproduzido num browser, passo a passo. **As três partes da frase são três
+defeitos, e o terceiro é consequência dos dois primeiros.**
+
+**1. "voltou pra plan" — certo.** O pedido do cliente devolve o card ao rascunho
+e abre a tarefa de ajuste no Plan. Isso funciona.
+
+**2. "depois sumiu" — certo, e era para sempre.** Concluída a tarefa do ajuste,
+ela vai para `feitas`. E o `sincronizarJobs` — quem repõe o job do card no
+quadro — pergunta se o card já tem tarefa **olhando também `feitas`, sem nunca
+perguntar QUANDO ela foi concluída**. Uma tarefa concluída uma vez passa a dizer
+"esse card já tem tarefa" para o resto da vida. Medido: o card volta ao Check,
+ao lote e ao cliente, e o quadro não mostra mais nada. O trabalho continua
+existindo; a agência é que não o vê.
+
+A regra passa a ser: **tarefa concluída vale enquanto o card não andou.** Ela
+guarda em que fase e em que volta foi concluída (`faseFeita`, `voltasFeita`,
+carimbadas na primeira vez que o quadro a vê — quem já está em `feitas` hoje é
+carimbado onde está, sem ressuscitar nada). Card mudou de fase, ou o cliente
+pediu outra alteração: há trabalho novo, e o quadro mostra de novo.
+
+A fase sozinha não bastava, e o teste cobrou: **o segundo pedido do cliente
+devolve o card ao MESMO rascunho em que o primeiro foi concluído**, e a tarefa
+velha barrava a nova. A conta de voltas desempata.
+
+**3. "apareceu o card sem nada estruturado" — é o que sobra.** Sem tarefa no
+quadro, quem precisa mexer no card cria uma tarefa nova. Tarefa nova estrutura
+card NOVO, em branco. O card com o texto continua lá, invisível, e o que anda no
+fluxo é o vazio — que era exatamente o sintoma da v191, por outra porta.
+
+**Mais duas, do mesmo tecido:**
+
+- Card em rascunho fica fora do quadro de propósito (o calendário é o Plan; a
+  EJUP tem setenta cards de calendário, e setenta cartões em Plan não é quadro,
+  é paredão). Mas **card que já voltou do cliente não é calendário, é trabalho em
+  curso**: fica à vista até ser aprovado. Card que nunca foi ao cliente segue no
+  calendário, como era.
+- `abrirTarefaDeAjuste` arquivava a tarefa em `cliAtual().id` — o cliente da
+  TELA, não o dono do card. É a família da v165/v176: com o `S.cli` fora do
+  lugar a tarefa nasce sob outro cliente, o `cardDaTarefa` não acha o card, e o
+  cartão aparece no quadro sem nada — órfão. Agora o dono sai do card.
+
+**Verificado:** `web/verificar/v193-o-card-volta-ao-quadro.mjs`, 24 provas: a
+volta inteira duas vezes, a tarefa concluída que não ressuscita sozinha, o card
+que reaparece quando anda, o pedido em aberto que se repõe mesmo se a tarefa se
+perder, a tarefa arquivada sob o dono do card com a tela em outro cliente, e o
+calendário de 30 cards que continua com zero cartões no quadro.
 
 ---
 

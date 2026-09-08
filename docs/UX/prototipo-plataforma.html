@@ -15762,7 +15762,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v192 · 8 set · a tela de decidir tem colunas';
+const VERSAO_PROTOTIPO = 'v193 · 8 set · o card volta ao quadro';
 
 menuSheet = (function(orig){
   return function(){
@@ -36327,3 +36327,134 @@ sbGravar = (function(orig){
   .clbody.fix .decRail > .notelist{ align-self:stretch; overflow:visible }
 }
 </style>
+
+<script>
+/* =====================================================================
+   v193 — DEPOIS DE UMA VOLTA DE ALTERAÇÃO, O CARD SUMIA DO QUADRO E NÃO
+   VOLTAVA NUNCA MAIS.
+
+   O founder: "Devolvi pra alteração no texto, voltou pra plan como
+   normalmente faz. Depois sumiu e apareceu o card sem nada estruturado.
+   em cliente. Não deu certo, reveja o processo."
+
+   Reproduzido num browser, passo a passo. As três partes da frase são
+   três defeitos, e o terceiro é consequência dos dois primeiros.
+
+   1. "voltou pra plan" — certo. O pedido do cliente devolve o card ao
+      rascunho e abre a tarefa de ajuste no Plan. Funciona.
+
+   2. "depois sumiu" — CERTO, E ERA PARA SEMPRE. Concluída a tarefa do
+      ajuste, ela vai para `feitas`. E o `sincronizarJobs`, que é quem
+      repõe o job do card no quadro, pergunta se já existe tarefa para
+      aquele card OLHANDO TAMBÉM `feitas` — sem nunca perguntar QUANDO
+      ela foi concluída. Uma tarefa concluída uma vez passa a dizer
+      "esse card já tem tarefa" para o resto da vida. Medido: o card
+      volta ao Check, ao lote e ao cliente, e o quadro não mostra mais
+      nada. O trabalho continua existindo; a agência é que não o vê.
+
+      A regra passa a ser: tarefa concluída vale enquanto o card não
+      andou. Ela guarda em que fase foi concluída (`faseFeita`, carimbada
+      na primeira vez que o quadro a vê — quem já está em `feitas` hoje
+      é carimbado onde está, sem ressuscitar nada). Quando o card muda de
+      fase, há trabalho novo, e o quadro mostra de novo.
+
+   3. "apareceu o card sem nada estruturado" — é o que sobra. Sem tarefa
+      no quadro, quem precisa mexer no card cria uma tarefa nova. Tarefa
+      nova estrutura card NOVO, em branco. O card com o texto continua
+      lá, invisível, e o que anda no fluxo é o vazio.
+
+   Mais duas coisas do mesmo tecido, consertadas aqui:
+
+   · Card em rascunho fica fora do quadro de propósito (o calendário é o
+     Plan, e a EJUP tem setenta cards de calendário — setenta cartões em
+     Plan não é quadro, é paredão). Mas card que JÁ VOLTOU DO CLIENTE não
+     é calendário, é trabalho em curso: fica à vista até ser aprovado.
+     Card que nunca foi ao cliente segue no calendário, como era.
+
+   · `abrirTarefaDeAjuste` arquivava a tarefa em `cliAtual().id` — o
+     cliente da TELA, não o dono do card. É a família da v165/v176: com
+     o `S.cli` fora do lugar, a tarefa nasce sob outro cliente, o
+     `cardDaTarefa` não acha o card e o cartão aparece no quadro sem
+     nada — órfão. Agora o dono sai do card.
+   ===================================================================== */
+(function(){
+  if(typeof sincronizarJobs !== 'function') return;
+
+  const donoDoCard = p => {
+    if(typeof cliDoCard === 'function'){ const c = cliDoCard(p); if(c) return c; }
+    for(const k of Object.keys(S.pautas || {}))
+      if((S.pautas[k] || []).some(x => x === p)) return k;
+    return (typeof cliAtual === 'function' ? cliAtual().id : null);
+  };
+
+  /* ---------- 1. a tarefa concluída vale enquanto o card não andou --- */
+  function carimbarFeitas(){
+    for(const t of (S.ensaio && S.ensaio.feitas) || []){
+      if(!t || !t.cardId || t.faseFeita) continue;
+      const p = (S.pautas[t.cli] || []).find(x => x.id === t.cardId);
+      /* carimba onde o card está AGORA: quem já estava em `feitas` antes
+         desta versão não ressuscita, e a partir daqui a regra vale */
+      t.faseFeita = p ? faseDe(p) : '__sem_card__';
+      t.voltasFeita = p ? (p.alteracoes || []).length : 0;
+    }
+  }
+  /* A fase sozinha não identifica a rodada: o segundo pedido do cliente
+     devolve o card ao MESMO rascunho em que o primeiro foi concluído, e
+     a tarefa velha barrava a nova. A conta de voltas desempata. */
+  const feitaAindaVale = (t, p) => t && t.cardId === p.id
+    && (!t.faseFeita || (t.faseFeita === faseDe(p)
+        && (t.voltasFeita == null || t.voltasFeita === (p.alteracoes || []).length)));
+
+  sincronizarJobs = (function(orig){
+    return function(){
+      if(!S.ensaio) S.ensaio = kbSemente();
+      carimbarFeitas();
+      const r = orig.apply(this, arguments);
+
+      /* o original já criou o que sabia criar. Aqui entra o que a regra
+         antiga barrava: card em voo cuja única tarefa está em `feitas`,
+         de uma fase que já passou — e card em rascunho com pedido do
+         cliente em aberto. */
+      const PARADO = ['postado'];
+      for(const c of CLIS()){
+        for(const p of (S.pautas[c.id] || [])){
+          if(p.tarefa || p.feito) continue;
+          const f = faseDe(p);
+          if(PARADO.includes(f)) continue;
+          /* rascunho fica fora do quadro de propósito — mas card que já
+             voltou do cliente não é calendário, é trabalho em curso, e
+             fica à vista até ser aprovado */
+          if(f === 'rascunho' && !p.ajustePendente && !(p.alteracoes || []).length) continue;
+          const viva = S.ensaio.tarefas.some(t => t.cli === c.id && t.cardId === p.id);
+          if(viva) continue;
+          const presa = ((S.ensaio.feitas) || []).some(t => t.cli === c.id && feitaAindaVale(t, p));
+          if(presa) continue;
+          S.ensaio.tarefas.push({ id: novoIdTarefa(), titulo: p.t, cli: c.id,
+            resp: p.resp || null, cat: 'producao', criada: Date.now(),
+            prazo: p.data || null, tempoMs: 0, desde: null,
+            cardId: p.id, job: true, col: FASE_COL[f] || 'do' });
+        }
+      }
+      S.ensaio.tarefas.forEach(ligarTarefaAoCard);
+      return r;
+    };
+  })(sincronizarJobs);
+
+  /* ---------- 2. o ajuste é arquivado sob o dono do CARD ------------- */
+  if(typeof abrirTarefaDeAjuste === 'function') abrirTarefaDeAjuste = function(p){
+    if(!S.ensaio) S.ensaio = kbSemente();
+    sincronizarJobs();
+    const cli = donoDoCard(p);
+    const ultimo = (p.alteracoes || [])[(p.alteracoes || []).length - 1];
+    let t = S.ensaio.tarefas.find(x => x.cardId === p.id && x.cli === cli);
+    if(!t){
+      t = { id: novoIdTarefa(), titulo: p.t, cli, resp: p.resp || null,
+        cat: 'producao', criada: Date.now(), prazo: p.data || null,
+        tempoMs: 0, desde: null, cardId: p.id, job: true, col: 'do' };
+      S.ensaio.tarefas.push(t); ligarTarefaAoCard(t);
+    }
+    t.pedido = ultimo ? ultimo.oque : '';
+    t.doCliente = true;
+  };
+})();
+</script>
