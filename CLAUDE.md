@@ -283,6 +283,23 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (9 set, v197–v198):** a Maestro passa a caber mais de uma agência, e a
+conta nasce no site. O banco ganhou a coluna `org` (nenhuma linha se moveu: tudo
+o que existia virou a agência `maestro`), a chave (org, cliente), RLS por agência
+e `maestro_membros` — 29 provas num Postgres de verdade em
+`docs/ENGINEERING/agencias-multi-teste.sql`. O SQL vai em DUAS partes porque a
+parte 2 muda a chave e o app manda `on_conflict=cliente` em toda gravação:
+`agencias-1-preparar.sql` é inerte (7 provas disso) e o founder já rodou;
+`agencias-2-virar-a-chave.sql` só depois do app no ar. No app, a agência entra
+num ponto só — o `fetch` embrulhado da v89, por onde os 26 acessos já passam — e
+o comportamento é idêntico nos três estágios do banco. Quem entra sem agência vê
+a porta de criar; quem nunca entrou tem "Criar conta", que só aparece depois da
+fechadura nova (antes disso, conta nova enxergaria a base inteira). 43 provas em
+`web/verificar/v197-mais-de-uma-agencia.mjs`. Uma lição do caminho: a porta de
+criar agência é uma AFIRMAÇÃO, e só se afirma o que o banco afirmou — resposta
+estranha, erro ou função ausente é "não sei", e não sei não abre porta.
+**Aberto:** `roberto.ejup@gmail.com` tem login de agência; se for o cliente, sai
+de `maestro_membros` junto com a parte 2 (ele aprova por link, sem conta).
 **Fechado (9 set, v196):** esvaziar a lixeira não grudava — esvazia 7, atualiza,
 volta 7 — e card apagado ia ao cliente de novo. A v195 curou UMA lista; as outras
 três do mesmo assunto (`S.ensaio.lixo`, `S.lixeira[cli]`, `S.ensaio.naoRecriar`)

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-09 01:57 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-09 13:00 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15830,7 +15830,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v196 · 9 set · esvaziar a lixeira gruda';
+const VERSAO_PROTOTIPO = 'v198 · 9 set · criar conta pela plataforma';
 
 menuSheet = (function(orig){
   return function(){
@@ -37094,5 +37094,404 @@ sbGravar = (function(orig){
 
   /* uma vez agora, para quem abre com a casa suja */
   try{ F.faxinaDoEnsaio(); faxinaDasLixeiras(); }catch(e){}
+})();
+</script>
+
+<script>
+/* =====================================================================
+   v197 — A MAESTRO PASSA A CABER MAIS DE UMA AGÊNCIA.
+
+   O founder: "Eu tenho outra agência com outro e-mail, quero criar um
+   novo perfil de agência com outros clientes."
+
+   O banco já aprendeu isso (`agencias-1-preparar.sql` e
+   `agencias-2-virar-a-chave.sql`, 29 provas num Postgres de verdade).
+   Falta o app saber de qual agência ele é.
+
+   O PONTO ÚNICO. São 26 lugares que falam com a tabela `pauta` — e
+   nenhum deles precisa ser tocado. Todos já passam pelo mesmo `fetch`
+   embrulhado que põe o token da sessão (v89). É ali que a agência entra:
+   um lugar só, em vez de 26, e nenhum lugar novo para esquecer depois.
+
+     leitura  → ganha  &org=eq.<a minha agência>
+     escrita  → ganha  "org": "<a minha>" no corpo
+     upsert   → `on_conflict=cliente` vira `on_conflict=org,cliente`
+
+   ANTES E DEPOIS DO SQL, IGUAL. Esta é a regra que permite publicar hoje
+   sem quebrar a sua equipe:
+
+     · Sem NENHUMA parte do SQL: `maestro_org()` não existe, a sondagem
+       volta vazia, e o embrulho não mexe em nada. O app é o de sempre.
+     · Só com a parte 1: a agência já responde `maestro`, os filtros
+       entram — e como toda linha JÁ é `maestro`, o resultado é
+       exatamente o mesmo. A chave ainda é a antiga, então o upsert
+       continua o antigo.
+     · Com a parte 2: `maestro_pronto()` passa a existir, e só então o
+       upsert muda de forma.
+
+   Nada disso é adivinhado: são duas perguntas ao banco, na entrada.
+
+   E QUEM NÃO TEM AGÊNCIA. Entrar com um e-mail que não pertence a
+   agência nenhuma não mostra uma casa vazia fingindo ser sua: mostra a
+   porta de criar agência. Quem cria vira dono dela, com os próprios
+   clientes, e não enxerga nem é enxergado por ninguém.
+   ===================================================================== */
+(function(){
+  /* `sabemos` é o que separa "o banco disse que você não tem agência" de
+     "não consegui perguntar". Sem essa diferença, qualquer resposta
+     estranha — um erro, uma função que ainda não existe, uma rota de
+     teste devolvendo `[]` — vira "sem agência", e a porta de criar cai
+     por cima de quem TEM uma. Foi o que o `link-visualizacao` pegou.
+     Afirmar só o que o banco afirmou. */
+  const A = { org: null, chave2: false, sabemos: false, sondado: false, sondando: null };
+  window.MaestroAgencia = A;
+
+  const logado = () => {
+    try{ return !!(window.MaestroPorta && window.MaestroPorta.quem()); }
+    catch(e){ return false; }
+  };
+
+  async function rpc(nome, corpo){
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/rpc/${nome}`, {
+        method: 'POST', headers: sbCab(), body: JSON.stringify(corpo || {}) });
+      if(!r.ok) return { faltou: r.status === 404 || r.status === 400, status: r.status };
+      return { valor: await r.json().catch(() => null) };
+    }catch(e){ return { erro: true }; }
+  }
+
+  /* ---------- as duas perguntas ao banco ---------------------------- */
+  A.sondar = function(){
+    if(A.sondando) return A.sondando;
+    A.sondando = (async () => {
+      if(!logado()){ A.org = null; A.chave2 = false; A.sabemos = false; A.sondado = true; return A; }
+      const o = await rpc('maestro_org');
+      /* o banco só respondeu de fato se veio um texto ou um null explícito */
+      const respondeu = !!o && ('valor' in o)
+        && (typeof o.valor === 'string' || o.valor === null);
+      A.sabemos = respondeu;
+      A.org = (respondeu && typeof o.valor === 'string' && o.valor) ? o.valor : null;
+      /* a segunda só interessa se a primeira respondeu */
+      if(A.org){
+        const p = await rpc('maestro_pronto');
+        A.chave2 = !!(p && p.valor === true);
+      } else A.chave2 = false;
+      A.sondado = true;
+      return A;
+    })().finally(() => { A.sondando = null; });
+    return A.sondando;
+  };
+
+  /* ---------- o embrulho: a agência viaja em toda chamada ------------ */
+  const DAPAUTA = SB.url + '/rest/v1/pauta';
+  const _fetchV197 = window.fetch;
+  window.fetch = function(u, o){
+    try{
+      if(A.org && typeof u === 'string' && u.startsWith(DAPAUTA)){
+        const met = String((o && o.method) || 'GET').toUpperCase();
+        let url = u, op = o;
+
+        if(met === 'POST'){
+          /* upsert: a forma do conflito acompanha a chave da tabela */
+          if(A.chave2) url = url.replace(/on_conflict=cliente(?![,\w])/, 'on_conflict=org,cliente');
+          /* e o corpo passa a dizer de quem é a linha */
+          if(o && typeof o.body === 'string'){
+            try{
+              const corpo = JSON.parse(o.body);
+              const marcar = x => (x && typeof x === 'object' && x.cliente !== undefined
+                                   && x.org === undefined) ? Object.assign({ org: A.org }, x) : x;
+              const novo = Array.isArray(corpo) ? corpo.map(marcar) : marcar(corpo);
+              op = Object.assign({}, o, { body: JSON.stringify(novo) });
+            }catch(e){}
+          }
+        } else if(!/[?&]org=/.test(url)){
+          /* leitura e PATCH só alcançam a minha agência. Antes da parte 2
+             isto é redundante (só existe uma); depois, é o que impede uma
+             linha de outra casa de entrar por engano. */
+          url += (url.indexOf('?') >= 0 ? '&' : '?') + 'org=eq.' + encodeURIComponent(A.org);
+        }
+        return _fetchV197(url, op);
+      }
+    }catch(e){}
+    return _fetchV197(u, o);
+  };
+
+  /* ---------- sondar na entrada, e ao entrar ------------------------- */
+  if(window.MaestroPorta && typeof MaestroPorta.entrar === 'function'){
+    MaestroPorta.entrar = (function(orig){
+      return async function(){
+        const r = await orig.apply(this, arguments);
+        A.sondado = false;
+        await A.sondar();
+        setTimeout(() => { try{ conferirAgencia(); }catch(e){} }, 60);
+        return r;
+      };
+    })(MaestroPorta.entrar);
+  }
+
+  /* ---------- a porta de criar agência ------------------------------- */
+  let pedindoAgencia = false;
+  function conferirAgencia(){
+    /* só abre quando o banco AFIRMOU que esta pessoa não tem agência */
+    if(!A.sondado || !A.sabemos || !logado() || A.org || pedindoAgencia) return;
+    if(document.getElementById('criarAgencia')) return;
+    pedirAgencia();
+  }
+
+  function pedirAgencia(){
+    pedindoAgencia = true;
+    const el = document.createElement('div');
+    el.id = 'criarAgencia';
+    el.innerHTML = `<div class="caixa" role="dialog" aria-modal="true" aria-label="Criar uma agência">
+      <div class="marca">${typeof LOGO === 'function' ? LOGO('', 30) : ''}</div>
+      <h3>Sua agência ainda não existe aqui</h3>
+      <p class="sub">Este e-mail entrou, mas não pertence a nenhuma agência.
+        Crie a sua: ela nasce vazia, com os seus clientes, e ninguém mais a enxerga.</p>
+      <label for="ag-nome">Nome da agência</label>
+      <input class="campo" id="ag-nome" placeholder="Ex.: Estúdio Norte" autocomplete="organization">
+      <p class="erro" id="ag-erro"></p>
+      <button class="b pri" id="ag-cria">Criar a minha agência</button>
+      <button type="button" class="fora" id="ag-sair">Entrar com outro e-mail</button>
+    </div>`;
+    document.body.appendChild(el);
+    const caixa = el.querySelector('.caixa');
+    const nome  = el.querySelector('#ag-nome');
+    const erro  = el.querySelector('#ag-erro');
+    const bt    = el.querySelector('#ag-cria');
+    setTimeout(() => nome.focus(), 80);
+
+    const errar = txt => {
+      erro.textContent = txt;
+      caixa.classList.add('erra'); setTimeout(() => caixa.classList.remove('erra'), 420);
+    };
+
+    bt.addEventListener('click', async () => {
+      const n = nome.value.trim();
+      if(n.length < 2) return errar('Dê um nome à agência.');
+      bt.disabled = true; bt.textContent = 'Criando…'; erro.textContent = '';
+      const r = await rpc('maestro_criar_agencia', { p_nome: n });
+      if(!r || !r.valor || typeof r.valor !== 'string'){
+        bt.disabled = false; bt.textContent = 'Criar a minha agência';
+        return errar(r && r.faltou
+          ? 'O banco ainda não sabe criar agências — falta a segunda parte do SQL.'
+          : 'Não consegui criar agora. Tente de novo.');
+      }
+      A.org = r.valor; A.sondado = true;
+      const p = await rpc('maestro_pronto');
+      A.chave2 = !!(p && p.valor === true);
+      /* casa nova: nada do aparelho anterior entra aqui */
+      try{
+        S.pautas = {}; S.cliEdit = {}; S.novos = []; S.cliFora = [];
+        if(S.ensaio) S.ensaio = (typeof kbSemente === 'function') ? kbSemente() : S.ensaio;
+      }catch(e){}
+      el.remove(); pedindoAgencia = false;
+      if(typeof som === 'function') som('conclusao');
+      try{
+        if(typeof sbCarregar === 'function') await sbCarregar();
+        if(typeof buscarEstado === 'function') await buscarEstado();
+      }catch(e){}
+      if(typeof render === 'function') render();
+      if(typeof toast === 'function') toast(`"${n}" está de pé. A casa é sua, e começa vazia.`);
+    });
+
+    el.querySelector('#ag-sair').addEventListener('click', () => {
+      el.remove(); pedindoAgencia = false;
+      A.org = null; A.sondado = false;
+      try{ window.MaestroPorta && MaestroPorta.sair(); }catch(e){}
+    });
+  }
+
+  /* na carga: se já há sessão, pergunta antes de a tela mentir */
+  setTimeout(() => {
+    if(!logado()) return;
+    A.sondar().then(() => { try{ conferirAgencia(); }catch(e){} });
+  }, 900);
+})();
+</script>
+<style>
+/* a porta de criar agência veste a mesma roupa da porta de entrar */
+#criarAgencia{ position:fixed; inset:0; z-index:941; background:rgba(8,9,11,.94);
+  display:grid; place-items:center; padding:20px }
+#criarAgencia .caixa{ width:min(400px,94vw); background:var(--ink-900);
+  border:1px solid var(--ink-800); border-radius:18px; padding:26px 24px 22px }
+#criarAgencia .marca{ display:flex; justify-content:center; margin:0 0 18px }
+#criarAgencia h3{ font-family:var(--serif); font-weight:400; font-size:22px;
+  color:var(--ink-50); margin:0 0 6px; text-align:center }
+#criarAgencia .sub{ font-size:13px; color:var(--ink-300); margin:0 0 20px;
+  text-align:center; line-height:1.5 }
+#criarAgencia label{ display:block; font-family:var(--mono); font-size:9.5px;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--ink-400); margin:0 0 6px }
+#criarAgencia .campo{ width:100%; padding:12px 13px; border-radius:11px; font-size:15px;
+  background:var(--ink-950); border:1px solid var(--ink-700); color:var(--ink-50);
+  margin:0 0 14px }
+#criarAgencia .campo:focus{ outline:none; border-color:var(--brass-500) }
+#criarAgencia .erro{ font-size:12.5px; color:var(--danger); margin:0 0 12px; min-height:17px }
+#criarAgencia .b.pri{ width:100%; justify-content:center }
+#criarAgencia .fora{ display:block; width:100%; margin-top:14px; font-size:12px;
+  color:var(--ink-400); background:none; border:0; cursor:pointer }
+#criarAgencia .caixa.erra{ animation:tremer .4s }
+</style>
+
+<script>
+/* =====================================================================
+   v198 — CRIAR CONTA PELA PLATAFORMA, COMO EM QUALQUER SITE.
+
+   O founder: "Quero saber se toda agência que quiser entrar vou ter que
+   fazer um processo manual assim. Quero que seja a partir de criar a
+   conta lá na plataforma, que nem outros sites fazem isso."
+
+   Não vai. O SQL das agências roda UMA vez, não por agência. O que
+   faltava era a metade de cima: a v197 sabe receber quem entrou sem
+   agência e oferecer a criação dela — mas quem nunca entrou não tinha
+   como. A porta só sabia ENTRAR.
+
+   Agora sabe criar conta. O caminho inteiro, sem ninguém no meio:
+
+     abre o site → Criar conta → e-mail e senha
+                 → dá o nome da agência → está dentro, com a casa dele
+
+   A TRAVA QUE NÃO PODE FALTAR. Conta aberta só é segura DEPOIS que a
+   fechadura nova estiver no banco. Enquanto a regra for a antiga
+   (`quem entrou vê tudo`), uma conta nova enxergaria a base inteira de
+   quem já está lá. Então o botão só aparece quando `maestro_pronto()`
+   responde — a função que só existe depois da segunda parte do SQL.
+   Antes disso a porta é a de sempre, e criar conta nem é oferecido.
+
+   Isso não é zelo abstrato: é a diferença entre um cadastro público e
+   entregar a pauta da EJUP para quem passar pelo site.
+
+   Confirmação de e-mail: se o Supabase estiver pedindo, o `signup` não
+   devolve sessão. Em vez de fingir que deu certo e deixar a pessoa numa
+   tela morta, a porta diz para confirmar no e-mail e voltar.
+   ===================================================================== */
+(function(){
+  if(!window.MaestroPorta || typeof MaestroPorta.pedir !== 'function') return;
+
+  let bancoPronto = null;                      /* null = ainda não perguntei */
+  async function perguntarSePronto(){
+    if(bancoPronto !== null) return bancoPronto;
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/rpc/maestro_pronto`, {
+        method: 'POST', headers: { apikey: SB.key, 'Content-Type': 'application/json' },
+        body: '{}' });
+      bancoPronto = r.ok && (await r.json().catch(() => null)) === true;
+    }catch(e){ bancoPronto = false; }
+    return bancoPronto;
+  }
+
+  async function criarConta(email, senha){
+    const r = await fetch(`${SB.url}/auth/v1/signup`, {
+      method: 'POST',
+      headers: { apikey: SB.key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: senha }) });
+    const j = await r.json().catch(() => null);
+    if(!r.ok){
+      const e = new Error((j && (j.error_description || j.msg || j.message)) || 'não deu');
+      e.status = r.status; e.corpo = j; throw e;
+    }
+    return j;
+  }
+
+  MaestroPorta.pedir = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(() => { try{ enfeitar(); }catch(e){} }, 0);
+      return r;
+    };
+  })(MaestroPorta.pedir);
+
+  async function enfeitar(){
+    const el = document.getElementById('entrarMaestro');
+    if(!el || el.dataset.temCriar) return;
+    if(!(await perguntarSePronto())) return;      /* fechadura antiga: nem oferece */
+    el.dataset.temCriar = '1';
+
+    const caixa = el.querySelector('.caixa');
+    const fora  = el.querySelector('#em-fora');
+    const bt    = el.querySelector('#em-entra');
+    const mail  = el.querySelector('#em-mail');
+    const senha = el.querySelector('#em-senha');
+    const erro  = el.querySelector('#em-erro');
+    const h3    = el.querySelector('h3');
+    const sub   = el.querySelector('.sub');
+    if(!caixa || !bt || !mail || !senha) return;
+
+    const trocar = document.createElement('button');
+    trocar.type = 'button';
+    trocar.className = 'fora';
+    trocar.id = 'em-criar';
+    trocar.textContent = 'Não tem conta? Criar a minha agência';
+    (fora || bt).insertAdjacentElement(fora ? 'beforebegin' : 'afterend', trocar);
+
+    let modo = 'entrar';
+    const errar = txt => {
+      erro.textContent = txt;
+      caixa.classList.add('erra'); setTimeout(() => caixa.classList.remove('erra'), 420);
+    };
+
+    trocar.addEventListener('click', () => {
+      modo = modo === 'entrar' ? 'criar' : 'entrar';
+      erro.textContent = '';
+      if(modo === 'criar'){
+        h3.textContent = 'Criar a sua agência na Maestro';
+        sub.textContent = 'E-mail e senha. Na tela seguinte você dá o nome da agência — '
+                        + 'ela nasce vazia, com os seus clientes, e ninguém mais a enxerga.';
+        bt.textContent = 'Criar conta';
+        senha.setAttribute('autocomplete', 'new-password');
+        senha.placeholder = 'Crie uma senha (mínimo 8)';
+        trocar.textContent = 'Já tenho conta — entrar';
+      } else {
+        h3.textContent = 'Entrar na Maestro';
+        sub.textContent = 'Seu e-mail e sua senha da equipe. É por eles que o banco sabe que a pauta é sua.';
+        bt.textContent = 'Entrar';
+        senha.setAttribute('autocomplete', 'current-password');
+        senha.placeholder = 'Sua senha';
+        trocar.textContent = 'Não tem conta? Criar a minha agência';
+      }
+    });
+
+    /* o clique de criar corre ANTES do ouvinte de entrar, na captura */
+    bt.addEventListener('click', async ev => {
+      if(modo !== 'criar') return;
+      ev.stopImmediatePropagation(); ev.preventDefault();
+      const e = mail.value.trim(), s = senha.value;
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return errar('Confira o e-mail.');
+      if((s || '').length < 8) return errar('A senha precisa de pelo menos 8 caracteres.');
+      bt.disabled = true; bt.textContent = 'Criando…'; erro.textContent = '';
+      try{
+        await criarConta(e, s);
+        /* com sessão ou sem, o caminho é o mesmo: tentar entrar. Se o
+           Supabase estiver pedindo confirmação, isto recusa — e aí a
+           pessoa sabe o que fazer, em vez de olhar para uma tela morta. */
+        try{
+          await MaestroPorta.entrar(e, s);
+        }catch(err){
+          bt.disabled = false; bt.textContent = 'Criar conta';
+          return errar('Conta criada. Confirme o e-mail que enviamos e entre.');
+        }
+        el.remove();
+        document.getElementById('quemEsta')?.remove();
+        if(typeof som === 'function') som('toque');
+        /* a v197 assume daqui: sem agência, ela abre a porta de criar */
+        if(window.MaestroAgencia){
+          window.MaestroAgencia.sondado = false;
+          await window.MaestroAgencia.sondar();
+        }
+        if(typeof render === 'function') render();
+      }catch(err){
+        bt.disabled = false; bt.textContent = 'Criar conta';
+        const j = err && err.corpo;
+        const jaTem = /already|registered|exists/i.test(
+          (j && (j.msg || j.message || j.error_description)) || '');
+        errar(jaTem ? 'Este e-mail já tem conta — entre por ele.'
+            : err.status === 422 ? 'O banco recusou a senha. Tente uma mais longa.'
+            : err.status ? `O banco respondeu ${err.status}.`
+                         : 'Não consegui falar com o banco agora.');
+      }
+    }, true);
+  }
+
+  /* se a porta já estiver aberta quando este bloco carregar */
+  setTimeout(() => { try{ enfeitar(); }catch(e){} }, 400);
 })();
 </script>
