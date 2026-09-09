@@ -31,6 +31,10 @@ await pag.waitForTimeout(1400);
 await pag.evaluate(() => {
   document.getElementById('abertura')?.remove();
   document.getElementById('entrarMaestro')?.remove();
+  document.getElementById('quemEsta')?.remove();
+  /* v200: liberar o Check exige NOME — sem crachá o poder não vem por
+     omissão. Aqui quem trabalha é o administrador, como na vida real. */
+  S.usuario = { tipo: 'agencia', id: 'victorbarrosoc' };
 });
 
 let passou = 0, falhou = 0;
