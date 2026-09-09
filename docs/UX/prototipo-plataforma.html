@@ -15764,7 +15764,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v199 · 9 set · card novo nunca repete numero';
+const VERSAO_PROTOTIPO = 'v200 · 9 set · so o revisor libera o Check';
 
 menuSheet = (function(orig){
   return function(){
@@ -19949,6 +19949,11 @@ telaConversas = (function(orig){
         /* agora com direito: lê o banco de novo, como esta pessoa */
         if(typeof sbCarregar === 'function') await sbCarregar();
         if(typeof buscarEstado === 'function') await buscarEstado();
+        /* v200 — de novo, AGORA que a equipe de verdade chegou. A de
+           antes rodou contra a lista semeada no código: quem a agência
+           cadastrou depois não estava nela, e quem o app não casa com
+           ninguém fica sem crachá — antes isso valia poder por omissão. */
+        assumirPessoa();
         render();
         const m = (S.equipe || []).find(x => membroId(x) === (S.usuario || {}).id);
         toast(m ? `Bem-vindo de volta, ${m.n.split(' ')[0]}.` : 'Você entrou.');
@@ -20009,6 +20014,7 @@ telaConversas = (function(orig){
       assumirPessoa();
       if(typeof sbCarregar === 'function') await sbCarregar();
       if(typeof buscarEstado === 'function') await buscarEstado();
+      assumirPessoa();                       /* v200 — com a equipe do banco */
       document.getElementById('quemEsta')?.remove();
       render();
     })();
@@ -21420,8 +21426,19 @@ function podeMembro(m, chave){
 const membroLogado = () =>
   (S.equipe || []).find(x => membroId(x) === (S.usuario && S.usuario.id)) || null;
 /* sem ninguém identificado o protótipo segue aberto, como sempre foi —
-   trancar quem ainda não entrou não protege nada e só atrapalha o teste */
-const pode = chave => { const m = membroLogado(); return m ? podeMembro(m, chave) : true; };
+   trancar quem ainda não entrou não protege nada e só atrapalha o teste.
+
+   v200 — COM UMA EXCEÇÃO, e ela é a razão desta linha existir. `revisar`
+   é o poder de liberar o Check e mandar o material ao cliente. Esse
+   poder precisa ter NOME: sai no histórico do card ("liberado por"), e
+   é a única coisa que separa o que a agência já conferiu do que ainda
+   não. Concedê-lo por omissão — a quem entrou mas o app não conseguiu
+   casar com ninguém da Equipe — foi o que pôs o botão "liberar ✓" na
+   mão da social media. O resto continua aberto: trancar a tela inteira
+   de quem o app não reconheceu tira a pessoa do produto sem explicar
+   por quê, e isso já custou caro antes. */
+const pode = chave => { const m = membroLogado();
+  return m ? podeMembro(m, chave) : chave !== 'revisar'; };
 const forcado = (m, chave) => m && !m.dono && (m.perms || {})[chave] !== undefined;
 
 /* ---------- no perfil da pessoa ------------------------------------- */
@@ -37593,5 +37610,147 @@ sbGravar = (function(orig){
         : html.replace(/(<\/div>\s*)$/, bloco + '$1');
     };
   })(enCardLidoHtml);
+})();
+</script>
+
+<style>
+/* v200 — a marcação de Revisor, na ficha de cada pessoa da Equipe */
+.rvMarca{ display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  margin-top:10px; padding-top:10px; border-top:1px solid var(--ink-800) }
+.rvMarca .rvTxt{ flex:1; min-width:180px }
+.rvMarca .rvTxt b{ display:block; color:var(--ink-50); font-size:12.5px }
+.rvMarca .rvTxt span{ display:block; font-size:11px; color:var(--ink-400); line-height:1.45 }
+.rvChave{ position:relative; width:42px; height:24px; flex:0 0 auto;
+  border-radius:999px; border:1px solid var(--ink-700); background:var(--ink-900);
+  cursor:pointer; transition:background var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.rvChave::after{ content:''; position:absolute; top:2px; left:2px; width:18px; height:18px;
+  border-radius:50%; background:var(--ink-500);
+  transition:transform var(--fast) var(--eo), background var(--fast) var(--eo) }
+.rvChave.on{ background:var(--verde-900, #12281c); border-color:var(--verde-500, #3fae6b) }
+.rvChave.on::after{ transform:translateX(18px); background:var(--verde-400, #5ecb87) }
+.rvChave.trav{ cursor:default; opacity:.75 }
+.rvSelo{ font-family:var(--mono); font-size:10px; letter-spacing:.06em;
+  padding:3px 7px; border-radius:6px; border:1px solid var(--ink-700); color:var(--ink-400) }
+.rvSelo.on{ border-color:var(--verde-500, #3fae6b); color:var(--verde-400, #5ecb87) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v200 — QUEM LIBERA O CHECK TEM NOME.
+
+   O founder: "LIBERAR NO ENSAIO ESTÁ APARECENDO PRA SOCIAL MEDIA. Só
+   quem pode liberar é o revisor e o administrador, mas coloca como uma
+   função pra marcar lá em Equipe."
+
+   A CAUSA, medida antes de escrever uma linha: `pode()` respondia SIM
+   por omissão.
+
+       const pode = chave => { const m = membroLogado();
+                               return m ? podeMembro(m, chave) : true; };
+
+   `membroLogado()` casa o e-mail de quem entrou com alguém da Equipe.
+   Quando não casa — pessoa cadastrada depois da lista semeada, crachá
+   órfão que o v90 limpa, `assumirPessoa()` correndo ANTES de a equipe
+   chegar do banco — o retorno é `null`, e `null` valia poder total. A
+   social media não tinha a permissão: ela não tinha NOME, e o `true`
+   fez o resto. `ehRevisor()` é literalmente `pode('revisar')`.
+
+   O CONSERTO, em três lugares e nenhum remendo:
+
+   1. `pode()`: `revisar` é a única chave que nunca vem por omissão.
+      Fechar a tela inteira para quem o app não reconheceu tira a pessoa
+      do produto sem dizer por quê — isso já custou caro. Mas liberar o
+      Check é o que separa o material conferido do que ainda não foi, e
+      sai assinado no histórico. Poder assim tem que ter nome.
+
+   2. `assumirPessoa()` roda DE NOVO depois de `sbCarregar()`. A primeira
+      chamada acontecia contra a lista de equipe semeada no código; quem
+      a agência cadastrou depois nunca era reconhecido.
+
+   3. E a marcação que faltava: na Equipe, na ficha de cada pessoa, uma
+      chave de "Revisor · libera o Check". Ela existia — escondida no
+      modal do membro, entre sete outras permissões. O founder foi
+      procurar onde procuraria, e não estava lá.
+   ===================================================================== */
+(function(){
+  if(typeof agEquipe !== 'function' || typeof CAPACIDADES === 'undefined') return;
+
+  const podeLiberar = m => (typeof podeMembro === 'function') && podeMembro(m, 'revisar');
+
+  /* ---------- a chave na ficha de cada pessoa ----------------------- */
+  agEquipe = (function(orig){
+    return function(){
+      const html = orig.apply(this, arguments);
+      if(typeof html !== 'string' || !html) return html;
+      let doc;
+      try{ doc = new DOMParser().parseFromString(html, 'text/html'); }catch(e){ return html; }
+
+      /* as fichas de pessoa são as únicas com chips de permissão, e vêm
+         na ordem de S.equipe — é assim que o v108 já as encontra */
+      const fichas = [...doc.querySelectorAll('.permchips')];
+      (S.equipe || []).forEach((m, i) => {
+        const chips = fichas[i]; if(!chips || !m) return;
+        const on = podeLiberar(m);
+        const linha = doc.createElement('div');
+        linha.className = 'rvMarca';
+        linha.innerHTML =
+          `<span class="rvTxt"><b>Revisor · libera o Check</b>
+             <span>${m.dono
+               ? 'Dono da conta: libera sempre, e isso não se tira.'
+               : on
+                 ? `${esc(m.n.split(' ')[0])} pode liberar o card do Check para o lote do cliente.`
+                 : `${esc(m.n.split(' ')[0])} vê o Check, mas quem libera é outra pessoa.`}</span></span>
+           <span class="rvSelo${on ? ' on' : ''}">${on ? 'LIBERA' : 'NÃO LIBERA'}</span>
+           <button type="button" class="rvChave${on ? ' on' : ''}${m.dono ? ' trav' : ''}"
+             ${m.dono ? 'disabled' : `data-rvmarca="${i}"`}
+             aria-pressed="${on ? 'true' : 'false'}"
+             aria-label="Revisor: ${esc(m.n)}"></button>`;
+        chips.insertAdjacentElement('afterend', linha);
+      });
+      return doc.body.innerHTML;
+    };
+  })(agEquipe);
+
+  /* ---------- marcar e desmarcar ------------------------------------ */
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-rvmarca]');
+    if(!t) return;
+    e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault();
+
+    if(typeof ehAdmin === 'function' && !ehAdmin())
+      return toast('Só o administrador define quem libera o Check.');
+
+    const m = (S.equipe || [])[+t.dataset.rvmarca];
+    if(!m) return;
+    if(m.dono) return toast('O dono da conta libera sempre — não dá para tirar isso dele.');
+
+    const quer = !podeLiberar(m);
+    m.perms = m.perms || {};
+    /* voltou a coincidir com o papel? então não é mais um ajuste — sai,
+       para que trocar o papel depois valha de verdade */
+    if(typeof padraoDoPapel === 'function' && padraoDoPapel(m.papel, 'revisar') === quer)
+      delete m.perms.revisar;
+    else m.perms.revisar = quer;
+    if(!Object.keys(m.perms).length) delete m.perms;
+
+    render();
+    const nome = m.n.split(' ')[0];
+    toast(quer
+      ? `${nome} passa a liberar o Check. As liberações saem com o nome dela no histórico do card.`
+      : `${nome} deixa de liberar o Check. Continua vendo os cards e pedindo ajuste.`);
+    if(typeof som === 'function') som('toque');
+  }, true);
+
+  /* ---------- e o Ensaio diz A QUEM pedir --------------------------- */
+  if(typeof recusaRevisor === 'function') recusaRevisor = (function(orig){
+    return function(){
+      if(typeof ehRevisor === 'function' && ehRevisor()) return false;
+      const nomes = (S.equipe || []).filter(podeLiberar).map(x => x.n.split(' ')[0]);
+      toast(nomes.length
+        ? `Só o revisor libera o Check. Quem pode aqui: ${nomes.join(', ')}.`
+        : 'Só o revisor libera o Check. Ninguém está marcado como revisor — o administrador marca em Equipe.');
+      return true;
+    };
+  })(recusaRevisor);
 })();
 </script>
