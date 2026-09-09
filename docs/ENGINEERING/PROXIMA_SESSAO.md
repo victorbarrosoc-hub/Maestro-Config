@@ -1,9 +1,44 @@
-# Onde parou — 7 de setembro de 2026, fim do dia
+# Onde parou — 9 de setembro de 2026, madrugada
 
 ## O que está de pé e em uso
 A plataforma está sendo usada pela equipe. Push, aviso por dentro, presença e
 os links de aprovação funcionando, todos conferidos pelo founder no aparelho
 dele.
+
+## A ARMADILHA DA NOITE DE 8/9 — leia antes de mexer em qualquer lista
+
+Seis versões numa noite (v191–v196), e **quatro delas foram a mesma doença**,
+por portas diferentes. A regra, escrita para nunca mais ser redescoberta:
+
+> **A mescla de três lados só UNE lista cujos ITENS TÊM `id`.**
+> Lista sem `id` no item ela não une: escolhe **um lado inteiro**, pelo carimbo
+> mais novo. Toda lista de "o que foi apagado" precisa de `id` — senão o lado
+> que ainda tem o item ganha, e o apagado volta.
+
+Foi assim que `S.ensaio.lixo` (`{tarefa, quando}`), `S.lixeira[cli]`
+(`{item, idx, quando}`) e `S.ensaio.naoRecriar` (strings puras) desfaziam
+exclusões horas depois. Hoje a casa tem UMA lápide, com `id`: `S.ensaio.apagadas`
+(não volta ao quadro) e `S.ensaio.varridas` (não volta nem para a lixeira).
+
+Mais duas coisas que custaram uma rodada cada, e que voltam a morder:
+
+1. **Ler nunca escreve.** Um acessador que criava `apagadas = []` só de ser
+   chamado fazia o aparelho recém-aberto passar por dono da verdade — e o Ensaio
+   VAZIO dele vencia o do banco. O `v151` pegou. Nenhuma função de leitura pode
+   tocar em `S.*`.
+
+2. **Restaurar chama `render()` por dentro.** O desenho roda as faxinas, e a
+   faxina mata o que acabou de voltar antes de a lápide sair. Caí nisso DUAS
+   VEZES na mesma noite, em lugares diferentes. Por isso existem as travas
+   `restaurando` (v195) e `voltando` (v196): enquanto se restaura, faxina e
+   filtro se calam.
+
+**Como testar isso:** não dá para provar com uma página só. `v195` e `v196` usam
+o arnês de `v168-dois-navegadores` — banco falso com revisão por linha, dois a
+quatro navegadores de verdade. Qualquer mexida em exclusão, lixeira ou mescla
+roda `v151`, `v156`, `v168`, `v169`, `v195`, `v196` e `ensaio-excluir` antes de ir
+para a `main`. Foram esses que pegaram os três defeitos que eu teria mandado ao
+founder.
 
 ## O que ficou combinado para a próxima sessão
 
