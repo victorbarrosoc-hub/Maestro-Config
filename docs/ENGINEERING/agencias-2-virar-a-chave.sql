@@ -397,6 +397,27 @@ grant execute on function public.maestro_criar_agencia(text) to authenticated;
 
 commit;
 
+-- ---------------------------------------------------------------------
+-- 7b. O SINALIZADOR.
+--     O app precisa saber se ESTA parte já rodou, porque é ela que muda
+--     a chave — e com a chave nova o `on_conflict=cliente` de toda
+--     gravação deixa de valer. Enquanto esta função não existir, o app
+--     grava do jeito antigo. Depois dela, do jeito novo. É o que permite
+--     publicar o app antes de rodar este SQL sem quebrar nada.
+-- ---------------------------------------------------------------------
+create or replace function public.maestro_pronto()
+returns boolean
+language sql
+stable
+as $$ select true; $$;
+
+revoke all on function public.maestro_pronto() from public;
+-- `anon` também: a porta precisa saber, ANTES de alguém entrar, se já é
+-- seguro oferecer "Criar conta". Enquanto a fechadura for a antiga
+-- (`using (true)`), conta nova enxergaria a base inteira — então o botão
+-- não aparece. A função não revela nada: só diz que a migração rodou.
+grant execute on function public.maestro_pronto() to anon, authenticated;
+
 commit;
 
 -- =====================================================================
