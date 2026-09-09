@@ -36900,8 +36900,10 @@ sbGravar = (function(orig){
   })(enLxEsvaziar);
 
   /* ---------- 3. a faxina alcança as duas lixeiras ------------------- */
+  /* (a trava `voltando` é declarada mais abaixo, no bloco 5; `let` no
+     mesmo escopo de função basta porque a faxina só roda em callback) */
   const faxinaDasLixeiras = () => {
-    if(!S.ensaio) return;
+    if(voltando || !S.ensaio) return;
     if(!varridas().length) return;            /* nada foi esvaziado: nada a varrer */
     if(Array.isArray(S.ensaio.lixo)){
       const fica = S.ensaio.lixo.filter(e =>
@@ -36961,7 +36963,7 @@ sbGravar = (function(orig){
       const r = orig.apply(this, arguments);
       /* o repositor do quadro não conhece a lápide de card: tira depois */
       try{
-        if(S.ensaio && Array.isArray(S.ensaio.tarefas))
+        if(!voltando && S.ensaio && Array.isArray(S.ensaio.tarefas))
           S.ensaio.tarefas = S.ensaio.tarefas.filter(t =>
             !(t && t.cardId != null && t.cli != null && temLapide(chaveCard(t.cli, t.cardId))));
       }catch(e){}
@@ -36977,13 +36979,46 @@ sbGravar = (function(orig){
     };
   })(podeRecriar);
 
+  /* Tudo o que VOLTA ao quadro tem de perder as DUAS lápides — a da
+     tarefa e a do card. A da tarefa a v195 já tira; a do card não tinha
+     quem tirasse quando a tarefa não era `daPauta` (o `podeRecriar` só é
+     chamado para essas). Sem isso o repositor filtrava de novo, no
+     desenho seguinte, exatamente o que a pessoa acabou de restaurar —
+     e o `ensaio-excluir` cobrou. */
+  function soltarOsCards(antes){
+    for(const t of ((S.ensaio || {}).tarefas || [])){
+      if(!t || t.cardId == null || t.cli == null) continue;
+      if(antes.includes(t.id)) continue;
+      desenterrar(chaveCard(t.cli, t.cardId));
+    }
+  }
+  /* E, de novo, a armadilha da v195: restaurar chama `render()` POR
+     DENTRO, o desenho roda o filtro, e o filtro mata o que acabou de
+     voltar — antes de `soltarOsCards` ter chance de tirar a lápide.
+     Enquanto se restaura, o filtro e a faxina das lixeiras se calam. */
+  let voltando = 0;
+  function comVolta(orig){
+    return function(){
+      const antes = ((S.ensaio || {}).tarefas || []).map(t => t.id);
+      voltando++;
+      let r;
+      try{ r = orig.apply(this, arguments); }
+      finally{ voltando--; }
+      try{ soltarOsCards(antes); }catch(e){}
+      return r;
+    };
+  }
+  if(typeof desfazer === 'function') desfazer = comVolta(desfazer);
+
   if(typeof enLxVoltar === 'function') enLxVoltar = (function(orig){
     return function(chave){
       const [tipo, a, c] = String(chave).split(':');
+      const antes = ((S.ensaio || {}).tarefas || []).map(t => t.id);
       const r = orig.apply(this, arguments);
       if(r){
         if(tipo === 'casa') desenterrar(a);
-        if(tipo === 'pauta'){ desenterrar(chaveCard(a, c)); }
+        if(tipo === 'pauta') desenterrar(chaveCard(a, c));
+        try{ soltarOsCards(antes); }catch(e){}
       }
       return r;
     };
