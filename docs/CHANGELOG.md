@@ -1,9 +1,46 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.35
+Version: 0.5.36
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.36 — 2026-09-09
+
+**Status:** Concluída
+**Objetivo:** uma mensagem, um aviso.
+
+### Dois banners para o mesmo texto (v203)
+
+O founder, sobre o que a suíte da v161 mostrou: *"mantém uma mensagem só pra esse
+caso dos dois banners."*
+
+Uma mensagem com menção acendia **dois** avisos na tela, um em cima do outro:
+
+```
+Roberto escreveu em Geral          ← chave `msg:geral`
+Roberto mencionou você em Geral    ← chave `menc:geral:<ts>:<id>`
+```
+
+Os dois saem do mesmo funil da v186 (*"tudo que vira sino vira aviso"*), e cada um
+está certo sozinho. O problema é que descrevem **o mesmo texto, no mesmo
+instante**. Dois banners para uma mensagem não é redundância inofensiva: é o
+começo de a pessoa parar de ler os avisos, que é o oposto do que eles existem
+para fazer.
+
+**A regra:** quando os dois falam do mesmo canal na mesma janela (5s), quem fica é
+a **menção** — ela diz tudo que a mensagem diria e mais uma coisa, que era com
+você. Vale nas duas ordens, porque a ordem não é garantida: a mensagem costuma vir
+primeiro (e a menção apaga o banner dela ao entrar), mas se a menção vier antes, a
+mensagem seguinte se cala.
+
+**O sino não muda.** Lá os dois continuam, e devem: o sino é registro, não
+interrupção — e a v186 fez questão de que ele não tivesse lista de exceções. Isto
+é só sobre o que **interrompe**.
+
+12 provas em `web/verificar/v203-um-aviso-so.mjs`.
 
 ---
 

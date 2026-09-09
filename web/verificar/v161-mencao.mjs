@@ -222,11 +222,11 @@ const mostrados = pag => pag.evaluate(() => window.__mostrou || []);
   const r = await pag.evaluate(() => ({
     mostrou: window.__avisados(),
     avisos: S.avisos.filter(a => (a.chave||'').startsWith('menc:')).length }));
-  /* uma mensagem com menção vira DOIS avisos: o da mensagem no canal e o
-     da menção. O sino guarda os dois desde a v186 ("tudo que vira sino
-     vira aviso"), e a tela mostra os dois. Fica anotado como decisão de
-     produto em aberto — dois banners para uma mensagem é ruído —, mas o
-     que este teste cobra é que a MENÇÃO chegue. */
+  /* uma mensagem com menção vira dois avisos no SINO — o da mensagem no
+     canal e o da menção — porque desde a v186 tudo que vira sino vira
+     aviso, sem lista de exceções. Na TELA a v203 deixa só um, e é o da
+     menção: registro não é interrupção. O que este teste cobra é que a
+     menção chegue. */
   const mencao = r.mostrou.find(a => /mencionou/.test(a.titulo || ''));
   checa('5.1 quem foi chamado recebe o aviso — na tela, com a Maestro na frente',
         !!mencao, r.mostrou);

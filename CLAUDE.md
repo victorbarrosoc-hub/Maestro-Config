@@ -283,6 +283,13 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (9 set, v203):** uma mensagem com menção acendia DOIS banners na tela,
+um em cima do outro — o da mensagem no canal e o da menção. Os dois saem do mesmo
+funil da v186 e cada um está certo sozinho; o problema é que descrevem o MESMO
+texto, no mesmo instante. Agora, no mesmo canal e na mesma janela, quem fica é a
+MENÇÃO — ela diz tudo que a mensagem diria e mais uma coisa, que era com você.
+Vale nas duas ordens. O sino não muda: lá os dois continuam, porque sino é
+registro, não interrupção. 12 provas em `web/verificar/v203-um-aviso-so.mjs`.
 **Fechado (9 set, v200–v202):** quatro coisas da mesma leva do founder.
 **v200 — só o revisor e o administrador liberam o Check.** O botão "liberar ✓" do
 Ensaio estava na mão da social media, e a causa não era permissão: era ausência de

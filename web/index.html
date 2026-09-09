@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-09 14:59 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-09 15:35 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15839,7 +15839,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v202 · 9 set · um card so, duas telas';
+const VERSAO_PROTOTIPO = 'v203 · 9 set · uma mensagem, um aviso';
 
 menuSheet = (function(orig){
   return function(){
@@ -38145,5 +38145,94 @@ sbGravar = (function(orig){
   })(render);
 
   window.MaestroUmCardSo = { levarTarefaJunto, soltarOQueVoltou, conciliar, foiAnotada };
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v203 — UMA MENSAGEM, UM AVISO.
+
+   O founder, sobre o que o teste da v161 mostrou: "mantém uma mensagem
+   só pra esse caso dos dois banners."
+
+   Uma mensagem com menção acendia DOIS avisos na tela, um em cima do
+   outro:
+
+       Roberto escreveu em Geral        ← chave `msg:geral`
+       Roberto mencionou você em Geral  ← chave `menc:geral:<ts>:<id>`
+
+   Os dois vêm do mesmo funil da v186 ("tudo que vira sino vira aviso"),
+   e cada um está certo sozinho — o problema é que descrevem o MESMO
+   texto, chegando no mesmo instante. Dois banners para uma mensagem não
+   é redundância inofensiva: é o começo de a pessoa parar de ler os
+   avisos, que é o oposto do que eles existem para fazer.
+
+   A REGRA: quando os dois falam do mesmo canal na mesma janela, quem
+   fica é a MENÇÃO. Ela diz tudo que a mensagem diria e mais uma coisa —
+   que era com você. A genérica é a que sobra.
+
+   Vale nos dois sentidos, porque a ordem não é garantida: a mensagem
+   costuma vir primeiro (e aí a menção apaga o banner dela ao entrar),
+   mas se a menção vier antes, a mensagem seguinte se cala.
+
+   O SINO NÃO MUDA. Lá os dois avisos continuam, e devem: o sino é
+   registro, não interrupção — e a v186 fez questão de que ele não
+   tivesse lista de exceções. Isto aqui é só sobre o que INTERROMPE.
+   ===================================================================== */
+(function(){
+  const A = window.MaestroAvisos;
+  if(!A || typeof A.avisarNoAparelho !== 'function') return;
+
+  const JANELA = 5000;                    /* o mesmo assunto, no mesmo momento */
+  const porCanal = new Map();             /* canal → { menc, msg, msgEl } */
+
+  const canalDa = tag => {
+    const s = String(tag || '');
+    let m = /^menc:([^:]+)/.exec(s);   if(m) return { canal: m[1], tipo: 'menc' };
+    m = /^msg:(.+)$/.exec(s);          if(m) return { canal: m[1], tipo: 'msg' };
+    return null;
+  };
+
+  const ultimoBanner = () => {
+    try{
+      const c = document.getElementById('avisosNaTela');
+      return c ? c.lastElementChild : null;
+    }catch(e){ return null; }
+  };
+
+  A.avisarNoAparelho = (function(orig){
+    return function(aviso){
+      const q = canalDa(aviso && aviso.tag);
+      if(!q) return orig.apply(this, arguments);
+
+      const agora = Date.now();
+      const reg = porCanal.get(q.canal) || {};
+
+      if(q.tipo === 'menc'){
+        /* a menção manda: se a mensagem genérica já está na tela falando
+           do mesmo canal, ela sai agora — o lugar é da menção */
+        if(reg.msg && agora - reg.msg < JANELA && reg.msgEl && reg.msgEl.isConnected){
+          try{ reg.msgEl.remove(); }catch(e){}
+        }
+        reg.msgEl = null;
+        reg.menc = agora;
+        porCanal.set(q.canal, reg);
+        return orig.apply(this, arguments);
+      }
+
+      /* mensagem genérica: se a menção do mesmo canal acabou de falar,
+         cala — ela já disse isto, e melhor */
+      if(reg.menc && agora - reg.menc < JANELA) return false;
+
+      const r = orig.apply(this, arguments);
+      reg.msg = agora;
+      reg.msgEl = ultimoBanner();
+      porCanal.set(q.canal, reg);
+      return r;
+    };
+  })(A.avisarNoAparelho);
+
+  window.MaestroUmAvisoSo = { porCanal, JANELA };
 })();
 </script>
