@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-09 13:31 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-09 14:59 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -7168,8 +7168,15 @@ document.addEventListener('click', async e => {
     S.modal = modalImportar(); renderLayer();
     return; }
   if(d.ptimpok){
+    /* v202 — a terceira e última boca do defeito da v199. `Math.max(ids
+       desta pauta) + 1` dá o MESMO número em dois aparelhos ao mesmo
+       tempo, e a sincronização casa por id: dois cards viram um, com os
+       campos misturados. A v190 já tirou esta porta do caminho (planilha
+       entra pelo Ensaio), mas código morto com defeito vivo é armadilha
+       para quem vier depois. O número sai do relógio. */
     let id = Math.max(0, ...S.pauta.map(x=>x.id));
-    S.ptImport.forEach(p=>S.pauta.push({ id:++id, ...p }));
+    const proximo = () => (typeof novoIdCard === 'function') ? novoIdCard() : ++id;
+    S.ptImport.forEach(p=>S.pauta.push({ id:proximo(), ...p }));
     const n = S.ptImport.length;
     S.ptImport = null; S.modal = null;
     som('toque'); render();
@@ -15832,7 +15839,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v199 · 9 set · card novo nunca repete numero';
+const VERSAO_PROTOTIPO = 'v202 · 9 set · um card so, duas telas';
 
 menuSheet = (function(orig){
   return function(){
@@ -20017,6 +20024,11 @@ telaConversas = (function(orig){
         /* agora com direito: lê o banco de novo, como esta pessoa */
         if(typeof sbCarregar === 'function') await sbCarregar();
         if(typeof buscarEstado === 'function') await buscarEstado();
+        /* v200 — de novo, AGORA que a equipe de verdade chegou. A de
+           antes rodou contra a lista semeada no código: quem a agência
+           cadastrou depois não estava nela, e quem o app não casa com
+           ninguém fica sem crachá — antes isso valia poder por omissão. */
+        assumirPessoa();
         render();
         const m = (S.equipe || []).find(x => membroId(x) === (S.usuario || {}).id);
         toast(m ? `Bem-vindo de volta, ${m.n.split(' ')[0]}.` : 'Você entrou.');
@@ -20077,6 +20089,7 @@ telaConversas = (function(orig){
       assumirPessoa();
       if(typeof sbCarregar === 'function') await sbCarregar();
       if(typeof buscarEstado === 'function') await buscarEstado();
+      assumirPessoa();                       /* v200 — com a equipe do banco */
       document.getElementById('quemEsta')?.remove();
       render();
     })();
@@ -21488,8 +21501,19 @@ function podeMembro(m, chave){
 const membroLogado = () =>
   (S.equipe || []).find(x => membroId(x) === (S.usuario && S.usuario.id)) || null;
 /* sem ninguém identificado o protótipo segue aberto, como sempre foi —
-   trancar quem ainda não entrou não protege nada e só atrapalha o teste */
-const pode = chave => { const m = membroLogado(); return m ? podeMembro(m, chave) : true; };
+   trancar quem ainda não entrou não protege nada e só atrapalha o teste.
+
+   v200 — COM UMA EXCEÇÃO, e ela é a razão desta linha existir. `revisar`
+   é o poder de liberar o Check e mandar o material ao cliente. Esse
+   poder precisa ter NOME: sai no histórico do card ("liberado por"), e
+   é a única coisa que separa o que a agência já conferiu do que ainda
+   não. Concedê-lo por omissão — a quem entrou mas o app não conseguiu
+   casar com ninguém da Equipe — foi o que pôs o botão "liberar ✓" na
+   mão da social media. O resto continua aberto: trancar a tela inteira
+   de quem o app não reconheceu tira a pessoa do produto sem explicar
+   por quê, e isso já custou caro antes. */
+const pode = chave => { const m = membroLogado();
+  return m ? podeMembro(m, chave) : chave !== 'revisar'; };
 const forcado = (m, chave) => m && !m.dono && (m.perms || {})[chave] !== undefined;
 
 /* ---------- no perfil da pessoa ------------------------------------- */
@@ -37661,5 +37685,465 @@ sbGravar = (function(orig){
         : html.replace(/(<\/div>\s*)$/, bloco + '$1');
     };
   })(enCardLidoHtml);
+})();
+</script>
+
+<style>
+/* v200 — a marcação de Revisor, na ficha de cada pessoa da Equipe */
+.rvMarca{ display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  margin-top:10px; padding-top:10px; border-top:1px solid var(--ink-800) }
+.rvMarca .rvTxt{ flex:1; min-width:180px }
+.rvMarca .rvTxt b{ display:block; color:var(--ink-50); font-size:12.5px }
+.rvMarca .rvTxt span{ display:block; font-size:11px; color:var(--ink-400); line-height:1.45 }
+.rvChave{ position:relative; width:42px; height:24px; flex:0 0 auto;
+  border-radius:999px; border:1px solid var(--ink-700); background:var(--ink-900);
+  cursor:pointer; transition:background var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.rvChave::after{ content:''; position:absolute; top:2px; left:2px; width:18px; height:18px;
+  border-radius:50%; background:var(--ink-500);
+  transition:transform var(--fast) var(--eo), background var(--fast) var(--eo) }
+.rvChave.on{ background:var(--verde-900, #12281c); border-color:var(--verde-500, #3fae6b) }
+.rvChave.on::after{ transform:translateX(18px); background:var(--verde-400, #5ecb87) }
+.rvChave.trav{ cursor:default; opacity:.75 }
+.rvSelo{ font-family:var(--mono); font-size:10px; letter-spacing:.06em;
+  padding:3px 7px; border-radius:6px; border:1px solid var(--ink-700); color:var(--ink-400) }
+.rvSelo.on{ border-color:var(--verde-500, #3fae6b); color:var(--verde-400, #5ecb87) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v200 — QUEM LIBERA O CHECK TEM NOME.
+
+   O founder: "LIBERAR NO ENSAIO ESTÁ APARECENDO PRA SOCIAL MEDIA. Só
+   quem pode liberar é o revisor e o administrador, mas coloca como uma
+   função pra marcar lá em Equipe."
+
+   A CAUSA, medida antes de escrever uma linha: `pode()` respondia SIM
+   por omissão.
+
+       const pode = chave => { const m = membroLogado();
+                               return m ? podeMembro(m, chave) : true; };
+
+   `membroLogado()` casa o e-mail de quem entrou com alguém da Equipe.
+   Quando não casa — pessoa cadastrada depois da lista semeada, crachá
+   órfão que o v90 limpa, `assumirPessoa()` correndo ANTES de a equipe
+   chegar do banco — o retorno é `null`, e `null` valia poder total. A
+   social media não tinha a permissão: ela não tinha NOME, e o `true`
+   fez o resto. `ehRevisor()` é literalmente `pode('revisar')`.
+
+   O CONSERTO, em três lugares e nenhum remendo:
+
+   1. `pode()`: `revisar` é a única chave que nunca vem por omissão.
+      Fechar a tela inteira para quem o app não reconheceu tira a pessoa
+      do produto sem dizer por quê — isso já custou caro. Mas liberar o
+      Check é o que separa o material conferido do que ainda não foi, e
+      sai assinado no histórico. Poder assim tem que ter nome.
+
+   2. `assumirPessoa()` roda DE NOVO depois de `sbCarregar()`. A primeira
+      chamada acontecia contra a lista de equipe semeada no código; quem
+      a agência cadastrou depois nunca era reconhecido.
+
+   3. E a marcação que faltava: na Equipe, na ficha de cada pessoa, uma
+      chave de "Revisor · libera o Check". Ela existia — escondida no
+      modal do membro, entre sete outras permissões. O founder foi
+      procurar onde procuraria, e não estava lá.
+   ===================================================================== */
+(function(){
+  if(typeof agEquipe !== 'function' || typeof CAPACIDADES === 'undefined') return;
+
+  const podeLiberar = m => (typeof podeMembro === 'function') && podeMembro(m, 'revisar');
+
+  /* ---------- a chave na ficha de cada pessoa ----------------------- */
+  agEquipe = (function(orig){
+    return function(){
+      const html = orig.apply(this, arguments);
+      if(typeof html !== 'string' || !html) return html;
+      let doc;
+      try{ doc = new DOMParser().parseFromString(html, 'text/html'); }catch(e){ return html; }
+
+      /* as fichas de pessoa são as únicas com chips de permissão, e vêm
+         na ordem de S.equipe — é assim que o v108 já as encontra */
+      const fichas = [...doc.querySelectorAll('.permchips')];
+      (S.equipe || []).forEach((m, i) => {
+        const chips = fichas[i]; if(!chips || !m) return;
+        const on = podeLiberar(m);
+        const linha = doc.createElement('div');
+        linha.className = 'rvMarca';
+        linha.innerHTML =
+          `<span class="rvTxt"><b>Revisor · libera o Check</b>
+             <span>${m.dono
+               ? 'Dono da conta: libera sempre, e isso não se tira.'
+               : on
+                 ? `${esc(m.n.split(' ')[0])} pode liberar o card do Check para o lote do cliente.`
+                 : `${esc(m.n.split(' ')[0])} vê o Check, mas quem libera é outra pessoa.`}</span></span>
+           <span class="rvSelo${on ? ' on' : ''}">${on ? 'LIBERA' : 'NÃO LIBERA'}</span>
+           <button type="button" class="rvChave${on ? ' on' : ''}${m.dono ? ' trav' : ''}"
+             ${m.dono ? 'disabled' : `data-rvmarca="${i}"`}
+             aria-pressed="${on ? 'true' : 'false'}"
+             aria-label="Revisor: ${esc(m.n)}"></button>`;
+        chips.insertAdjacentElement('afterend', linha);
+      });
+      return doc.body.innerHTML;
+    };
+  })(agEquipe);
+
+  /* ---------- marcar e desmarcar ------------------------------------ */
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-rvmarca]');
+    if(!t) return;
+    e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault();
+
+    if(typeof ehAdmin === 'function' && !ehAdmin())
+      return toast('Só o administrador define quem libera o Check.');
+
+    const m = (S.equipe || [])[+t.dataset.rvmarca];
+    if(!m) return;
+    if(m.dono) return toast('O dono da conta libera sempre — não dá para tirar isso dele.');
+
+    const quer = !podeLiberar(m);
+    m.perms = m.perms || {};
+    /* voltou a coincidir com o papel? então não é mais um ajuste — sai,
+       para que trocar o papel depois valha de verdade */
+    if(typeof padraoDoPapel === 'function' && padraoDoPapel(m.papel, 'revisar') === quer)
+      delete m.perms.revisar;
+    else m.perms.revisar = quer;
+    if(!Object.keys(m.perms).length) delete m.perms;
+
+    render();
+    const nome = m.n.split(' ')[0];
+    toast(quer
+      ? `${nome} passa a liberar o Check. As liberações saem com o nome dela no histórico do card.`
+      : `${nome} deixa de liberar o Check. Continua vendo os cards e pedindo ajuste.`);
+    if(typeof som === 'function') som('toque');
+  }, true);
+
+  /* ---------- e o Ensaio diz A QUEM pedir --------------------------- */
+  if(typeof recusaRevisor === 'function') recusaRevisor = (function(orig){
+    return function(){
+      if(typeof ehRevisor === 'function' && ehRevisor()) return false;
+      const nomes = (S.equipe || []).filter(podeLiberar).map(x => x.n.split(' ')[0]);
+      toast(nomes.length
+        ? `Só o revisor libera o Check. Quem pode aqui: ${nomes.join(', ')}.`
+        : 'Só o revisor libera o Check. Ninguém está marcado como revisor — o administrador marca em Equipe.');
+      return true;
+    };
+  })(recusaRevisor);
+})();
+</script>
+
+<style>
+/* v201 — o "Publiquei" no Cronograma, e a legenda na mão do cliente */
+.agPubFaixa{ position:absolute; text-align:right; pointer-events:none; z-index:2 }
+.agPub{ pointer-events:auto; display:inline-flex; align-items:center; gap:5px;
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase;
+  padding:3px 7px; border-radius:7px; cursor:pointer;
+  border:1px solid rgba(200,150,58,.45); color:var(--brass-300); background:var(--ink-900);
+  transition:border-color var(--fast) var(--eo), color var(--fast) var(--eo) }
+.agPub:hover{ border-color:var(--brass-500); color:var(--brass-200) }
+.agCard{ padding-bottom:26px }
+.clcap.leitura.legPub .caplbl{ color:var(--brass-300) }
+.clcap.leitura.legPub .clleitura{ white-space:pre-wrap }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v201 — A LEGENDA CHEGA AO CLIENTE, E O "PUBLIQUEI" APARECE ONDE SE
+          PUBLICA.
+
+   Dois pedidos do founder, na mesma leva, e os dois são sobre a mesma
+   coisa: a tela mostrar o que a pessoa precisa para decidir.
+
+   1) "O cliente não consegue ver a legenda da postagem, só o que está
+       em anexo. Na segunda rodada também."
+
+   Medido: a tela do cliente tem exatamente dois blocos de texto —
+   "Texto da publicação" e "Chamada". O primeiro é `p.texto`, que no
+   editor da pauta se chama BRIEFING / CONTEÚDO / DESCRIÇÃO. A legenda
+   — o texto que de fato vai publicado, `p.legenda` — nunca foi
+   desenhada em lugar nenhum do lado do cliente.
+
+   Ou seja: o cliente vinha aprovando a publicação sem ver a publicação.
+   Aprovava a descrição dela. Isso é o oposto do que a Maestro promete
+   ("toda aprovação registra a versão exata aprovada"), e é sério: o que
+   vai ao ar é a legenda.
+
+   Agora a legenda vem primeiro, com o nome certo, e o bloco de baixo
+   passa a se chamar o que ele é — o briefing. Quando não há legenda
+   escrita, a tela fica como sempre foi: um texto só, sem invenção.
+
+   2) "Coloquei agendado no Ensaio, mas no cronograma de postagens não
+       ficou aparecendo a opção de (Publiquei), e o card ficou com
+       opacidade como se tivesse sido concluído — ele só fica assim
+       depois que for publicado."
+
+   Duas causas, medidas:
+
+   a) O "Publiquei" existia desde a v143, mas só nascia quando a HORA JÁ
+      TINHA PASSADO (`ptPassouDaHora`) e só na lista. A agência publica
+      à mão: publica adiantado, publica atrasado, publica no minuto. Ter
+      o botão só depois do horário é obrigar a esperar para poder contar
+      a verdade. E na vista Dia — que é o Cronograma que o founder usa —
+      ele nunca existiu.
+
+   b) O que restava era o ✓ genérico. Num card agendado, esse ✓ JÁ ERA a
+      confirmação de publicação (v143 o liga ao `postado`) — só que sem
+      dizer. Quem tocasse nele achando que era "feito" postava o card
+      sem saber, e aí sim vinha a opacidade. A opacidade não estava
+      errada: estava contando uma decisão que ninguém sabia ter tomado.
+
+   Agora: o "Publiquei" aparece em QUALQUER card agendado, nas duas
+   vistas; o ✓ do card agendado se chama "Publiquei" no título; e o
+   traço de concluído passa a seguir a FASE (`postado`), não o campo
+   `feito` — que outros caminhos também escrevem.
+   ===================================================================== */
+(function(){
+
+  /* ================= 1. a legenda, na tela do cliente ================ */
+  if(typeof clCard === 'function') clCard = (function(orig){
+    return function(){
+      let html = orig.apply(this, arguments);
+      if(typeof html !== 'string' || !html) return html;
+      const p = (S.pauta || []).find(x => x.id === S.pcSel);
+      const leg = p && String(p.legenda || '').trim();
+      if(!leg || html.indexOf('legPub') >= 0) return html;
+
+      let doc;
+      try{ doc = new DOMParser().parseFromString(html, 'text/html'); }catch(e){ return html; }
+
+      /* o bloco do texto é o âncora — a arte e o passo já entraram antes */
+      const blocos = [...doc.querySelectorAll('.clcap.leitura')];
+      const texto = blocos.find(b => {
+        const l = b.querySelector('.caplbl');
+        return l && /Texto da publica/i.test(l.textContent || ''); });
+      if(!texto) return html;
+
+      /* o de baixo passa a se chamar o que é: o briefing. Dois blocos
+         chamados "texto" na mesma tela não ajudam ninguém a decidir. */
+      const lbl = texto.querySelector('.caplbl');
+      if(lbl) lbl.textContent = 'Sobre esta publicação';
+
+      const bloco = doc.createElement('div');
+      bloco.className = 'clcap leitura legPub';
+      bloco.innerHTML = `<div class="caplbl">Legenda — é isto que vai publicado</div>
+        <div class="clleitura"></div>`;
+      bloco.querySelector('.clleitura').textContent = leg;
+      texto.parentNode.insertBefore(bloco, texto);
+
+      return doc.body.innerHTML;
+    };
+  })(clCard);
+
+  /* ================= 2. o "Publiquei" no Cronograma ================== */
+  const agendado = p => p && !p.tarefa && typeof faseDe === 'function' && faseDe(p) === 'agendado';
+  const postado  = p => p && typeof faseDe === 'function' && faseDe(p) === 'postado';
+
+  /* --- 2a. a lista: o botão sai da espera pelo horário -------------- */
+  if(typeof ptItemHtml === 'function') ptItemHtml = (function(orig){
+    return function(p, i){
+      let html = orig.apply(this, arguments);
+      if(typeof html !== 'string' || !html || !p) return html;
+
+      /* o traço de concluído é da FASE, não do campo `feito` — que a
+         marcação de material e o ✓ antigo também escrevem */
+      if(!p.tarefa && !postado(p))
+        html = html.replace(/(<div class="ptItem[^"]*?)\bok\b/, '$1');
+
+      if(!agendado(p)) return html;
+
+      /* o ✓ de um card agendado JÁ confirmava a publicação (v143). Só
+         não dizia. Passa a dizer. */
+      html = html.replace(/(<button class="ptFeito"[^>]*?)title="[^"]*"/,
+        '$1title="Publiquei — marcar que foi ao ar"');
+      html = html.replace(/(<button class="ptFeito"[^>]*?)aria-label="[^"]*"/,
+        '$1aria-label="Publiquei"');
+
+      if(html.indexOf('data-ptpostou') >= 0) return html;      /* a v143 já pôs */
+      const bt = `<button class="ptConfirma" data-ptpostou="${p.id}"
+        title="Confirmar que foi publicado">${ic('checkc', 13)} Publiquei</button>`;
+      return html.replace(/(<button class="ptFeito")/, bt + '$1');
+    };
+  })(ptItemHtml);
+
+  /* --- 2b. a vista Dia, que é o Cronograma de verdade --------------- */
+  if(typeof agCardHtml === 'function') agCardHtml = (function(orig){
+    return function(c){
+      let html = orig.apply(this, arguments);
+      const p = c && c.p;
+      if(typeof html !== 'string' || !html || !p) return html;
+
+      if(!p.tarefa && !postado(p))
+        html = html.replace(/(<button class="agCard[^"]*?)\bfeito\b/, '$1');
+
+      if(!agendado(p) || html.indexOf('agPub') >= 0) return html;
+
+      /* IRMÃO do card, nunca filho. Duas razões, e a segunda é a que
+         custou uma rodada de teste: botão dentro de botão nenhum
+         navegador honra; e, sobretudo, qualquer coisa DENTRO do card
+         está dentro de `[data-ptedit]` — o ouvinte que abre a postagem
+         corre antes e corta o clique, então o "Publiquei" não chegava a
+         acontecer. Fora do card, o clique é só dele. */
+      const larg = 100 / (c.de || 1), esq = larg * (c.faixa || 0);
+      const topo = (c.topo || 0) + AG_TOPO + AG_MIN - 25;
+      const chip = `<span class="agPubFaixa" aria-hidden="false"
+        style="top:${topo}px;left:calc(5px + ${esq}%);width:calc(${larg}% - 10px)"
+        ><span class="agPub" data-ptpostou="${p.id}" role="button" tabindex="0"
+          title="Confirmar que foi publicado">${ic('checkc', 11)} Publiquei</span></span>`;
+      return html + chip;
+    };
+  })(agCardHtml);
+
+  /* o chip é span: teclado precisa de ajuda para valer como botão */
+  addEventListener('keydown', e => {
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target.closest && e.target.closest('.agPub[data-ptpostou]');
+    if(!t) return;
+    e.preventDefault();
+    t.click();
+  }, true);
+
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v202 — UM CARD SÓ, DUAS TELAS: APAGAR NUM LUGAR APAGA NOS DOIS.
+
+   O founder: "Se o cliente não gostar da ideia e mandar apenas cancelar,
+   quando a social media excluir do ensaio ou do cronograma, os dois têm
+   que sumir, pois são o mesmo card — só que no Ensaio é execução e no
+   cronograma de postagens é visualização/agendar/publiquei."
+
+   Metade disso já existia: excluir a tarefa no Ensaio manda o card para
+   a lixeira do cliente ("Sai do quadro e da pauta"). A outra metade,
+   não. Excluir o card no Cronograma (`data-ptrm`) tirava o card da
+   pauta e deixava a tarefa no quadro — apontando para um card que já
+   não está lá.
+
+   E isso não fica quieto. A tarefa órfã continua no quadro, o repositor
+   (`sincronizarJobs`) enxerga um job sem card, e o que volta não é o
+   card que se apagou: é um card NOVO, em branco. É a mesma família de
+   "brotou do nada" que a v188, a v193, a v195 e a v196 vieram fechando,
+   entrando por uma porta que faltava.
+
+   COMO, e por que assim. O clique do `data-ptrm` corre na captura da
+   janela e corta a propagação — ninguém que se registre depois o
+   alcança. Então em vez de disputar o clique, esta versão CONCILIA
+   depois: onde as outras faxinas da casa já se penduram, um card que
+   está na lixeira do cliente leva a sua tarefa junto — para DENTRO da
+   mesma entrada da lixeira (`e.tarefa`), que é onde a v196 já sabia
+   procurar quando se esvazia.
+
+   E o caminho de volta pelo mesmo lugar: a lápide que se põe aqui fica
+   anotada (`S.ensaio.cardsNaLixeira`). Quando o card volta da lixeira,
+   só ESSA lápide se tira — nunca as outras. Levantar lápide alheia é
+   exatamente como o apagado ressuscita, e isso já custou duas noites.
+   ===================================================================== */
+(function(){
+  const F = window.MaestroFaxinaEnsaio;
+  if(!F) return;                                   /* a v195 não carregou */
+  const { enterrar, desenterrar, temLapide } = F;
+  const chaveCard = (cli, id) => 'c:' + String(cli) + '|' + String(id);
+
+  /* LER NUNCA ESCREVE (lição da v195): a lista só nasce num gesto de
+     verdade. Criar campo ao abrir o app faz o aparelho recém-aberto
+     passar por dono da verdade na mescla. */
+  const anotadas = () => {
+    const E = S.ensaio;
+    return (E && Array.isArray(E.cardsNaLixeira)) ? E.cardsNaLixeira : [];
+  };
+  function anotar(chave){
+    const E = S.ensaio; if(!E || chave == null) return;
+    if(!Array.isArray(E.cardsNaLixeira)) E.cardsNaLixeira = [];
+    const k = String(chave);
+    if(E.cardsNaLixeira.some(a => a && String(a.id) === k)) return;
+    E.cardsNaLixeira.push({ id: k, quando: Date.now() });
+    if(E.cardsNaLixeira.length > 400) E.cardsNaLixeira.splice(0, E.cardsNaLixeira.length - 400);
+  }
+  function desanotar(chave){
+    const E = S.ensaio; if(!E || !Array.isArray(E.cardsNaLixeira)) return;
+    const k = String(chave);
+    const fica = E.cardsNaLixeira.filter(a => !a || String(a.id) !== k);
+    if(fica.length !== E.cardsNaLixeira.length) E.cardsNaLixeira = fica;
+  }
+  const foiAnotada = chave => anotadas().some(a => a && String(a.id) === String(chave));
+
+  const tarefaDoCard = (cli, id) => {
+    const E = S.ensaio; if(!E) return null;
+    const casa = t => t && t.cli === cli && t.cardId === id;
+    const i = (E.tarefas || []).findIndex(casa);
+    if(i >= 0) return { lista: E.tarefas, i };
+    const j = (E.feitas || []).findIndex(casa);
+    if(j >= 0) return { lista: E.feitas, i: j };
+    return null;
+  };
+
+  /* ---------- 1. o card foi para a lixeira: a tarefa vai junto ------- */
+  function levarTarefaJunto(){
+    if(!S.ensaio || !S.lixeira) return 0;
+    let n = 0;
+    for(const cli of Object.keys(S.lixeira)){
+      for(const e of (S.lixeira[cli] || [])){
+        if(!e || !e.item || e.item.id == null || e.tarefa) continue;
+        const achada = tarefaDoCard(cli, e.item.id);
+        if(!achada) continue;
+        const t = achada.lista.splice(achada.i, 1)[0];
+        const k = chaveCard(cli, e.item.id);
+        e.tarefa = t;                            /* a v196 varre por aqui */
+        /* e a tarefa vai para a lixeira DO QUADRO, que é onde ela sabe
+           esperar: guardada, persistida, e com o caminho de volta. Sem
+           isso, resgatar o card devolvia uma tarefa em branco — o tempo
+           contado, o responsável e o histórico ficavam para trás. */
+        (S.ensaio.lixo = S.ensaio.lixo || []).unshift(
+          { tarefa: t, quando: Date.now(), doCard: k });
+        if(S.ensaio.lixo.length > 50) S.ensaio.lixo.length = 50;
+        enterrar(k); anotar(k);                  /* e o repositor não a repõe */
+        n++;
+      }
+    }
+    return n;
+  }
+
+  /* ---------- 2. o card voltou: a lápide DESTA porta se tira -------- */
+  function soltarOQueVoltou(){
+    if(!S.ensaio || !anotadas().length) return 0;
+    let n = 0;
+    for(const a of [...anotadas()]){
+      const k = a && String(a.id);
+      if(!k || k.indexOf('c:') !== 0) continue;
+      const corte = k.indexOf('|');
+      const cli = k.slice(2, corte), id = k.slice(corte + 1);
+      const napauta = (S.pautas[cli] || []).some(p => p && String(p.id) === id);
+      if(!napauta) continue;                     /* segue na lixeira: fica */
+      desenterrar(k); desanotar(k); n++;
+      /* e a MESMA tarefa volta ao quadro — não uma nova. Ela estava
+         guardada na lixeira do quadro com o carimbo de qual card é. */
+      const E = S.ensaio;
+      const j = (E.lixo || []).findIndex(x => x && x.doCard === k && x.tarefa);
+      if(j >= 0){
+        const [guardada] = E.lixo.splice(j, 1);
+        desenterrar(String(guardada.tarefa.id));
+        if(!(E.tarefas || []).some(t => t && t.id === guardada.tarefa.id))
+          (E.tarefas = E.tarefas || []).push(guardada.tarefa);
+      }
+    }
+    return n;
+  }
+
+  function conciliar(){
+    try{ levarTarefaJunto(); soltarOQueVoltou(); }catch(e){}
+  }
+
+  /* nos mesmos pontos onde as faxinas da v195 e da v196 já se penduram */
+  if(typeof sincronizarJobs === 'function') sincronizarJobs = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); conciliar(); return r; };
+  })(sincronizarJobs);
+  if(typeof aplicarEstado === 'function') aplicarEstado = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); conciliar(); return r; };
+  })(aplicarEstado);
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); conciliar(); return r; };
+  })(render);
+
+  window.MaestroUmCardSo = { levarTarefaJunto, soltarOQueVoltou, conciliar, foiAnotada };
 })();
 </script>
