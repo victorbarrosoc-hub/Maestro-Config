@@ -37069,7 +37069,13 @@ sbGravar = (function(orig){
    clientes, e não enxerga nem é enxergado por ninguém.
    ===================================================================== */
 (function(){
-  const A = { org: null, chave2: false, sondado: false, sondando: null };
+  /* `sabemos` é o que separa "o banco disse que você não tem agência" de
+     "não consegui perguntar". Sem essa diferença, qualquer resposta
+     estranha — um erro, uma função que ainda não existe, uma rota de
+     teste devolvendo `[]` — vira "sem agência", e a porta de criar cai
+     por cima de quem TEM uma. Foi o que o `link-visualizacao` pegou.
+     Afirmar só o que o banco afirmou. */
+  const A = { org: null, chave2: false, sabemos: false, sondado: false, sondando: null };
   window.MaestroAgencia = A;
 
   const logado = () => {
@@ -37090,9 +37096,13 @@ sbGravar = (function(orig){
   A.sondar = function(){
     if(A.sondando) return A.sondando;
     A.sondando = (async () => {
-      if(!logado()){ A.org = null; A.chave2 = false; A.sondado = true; return A; }
+      if(!logado()){ A.org = null; A.chave2 = false; A.sabemos = false; A.sondado = true; return A; }
       const o = await rpc('maestro_org');
-      A.org = (o && typeof o.valor === 'string' && o.valor) ? o.valor : null;
+      /* o banco só respondeu de fato se veio um texto ou um null explícito */
+      const respondeu = !!o && ('valor' in o)
+        && (typeof o.valor === 'string' || o.valor === null);
+      A.sabemos = respondeu;
+      A.org = (respondeu && typeof o.valor === 'string' && o.valor) ? o.valor : null;
       /* a segunda só interessa se a primeira respondeu */
       if(A.org){
         const p = await rpc('maestro_pronto');
@@ -37154,7 +37164,8 @@ sbGravar = (function(orig){
   /* ---------- a porta de criar agência ------------------------------- */
   let pedindoAgencia = false;
   function conferirAgencia(){
-    if(!A.sondado || !logado() || A.org || pedindoAgencia) return;
+    /* só abre quando o banco AFIRMOU que esta pessoa não tem agência */
+    if(!A.sondado || !A.sabemos || !logado() || A.org || pedindoAgencia) return;
     if(document.getElementById('criarAgencia')) return;
     pedirAgencia();
   }
