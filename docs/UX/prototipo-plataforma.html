@@ -15762,7 +15762,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v198 · 9 set · criar conta pela plataforma';
+const VERSAO_PROTOTIPO = 'v199 · 9 set · card novo nunca repete numero';
 
 menuSheet = (function(orig){
   return function(){
@@ -37425,5 +37425,197 @@ sbGravar = (function(orig){
 
   /* se a porta já estiver aberta quando este bloco carregar */
   setTimeout(() => { try{ enfeitar(); }catch(e){} }, 400);
+})();
+</script>
+
+<script>
+/* =====================================================================
+   v199 — DOIS CARDS COM O MESMO NÚMERO, E A SINCRONIZAÇÃO JUNTOU OS DOIS.
+
+   O founder: "Tinha dois cards em check, quando dei check em um, foi os
+   dois pra aba do lote." E depois: "Ele conflitou os dois card, misturou
+   os descritivos deles."
+
+   Os dois prints contam a história inteira. Duas tarefas diferentes —
+   uma do Victor ("Teste pro supabase"), outra da Anna Clara ("Carrossel
+   sobre o artigo") — e as DUAS dizem, no campo "o card da pauta deste
+   job", o mesmo card: `Teste pro supabase · 09/09`. Mesmo objetivo,
+   mesmo briefing, mesmo histórico. É um card só.
+
+   A CAUSA. Dois lugares ainda criavam card com
+
+       Math.max(ids DESTA pauta) + 1
+
+   Duas pessoas estruturando a pauta do mesmo cliente ao mesmo tempo
+   calculam o MESMO número. Nascem dois cards com o mesmo id. A
+   sincronização casa item por id (é assim que ela mescla listas), então
+   os dois viram um — com os campos misturados, que é o que o founder
+   viu. E as duas tarefas passam a achar o mesmo card, então mover uma
+   move as duas: a coluna do quadro é LEITURA da fase do card.
+
+   A casa já tinha a cura desde a v151: `novoIdCard()`, ancorado no
+   relógio e único em toda a base. O comentário dela diz, com todas as
+   letras, que "dois lugares ficaram de fora". São estes dois. Um deles é
+   justo o "estruturar a pauta", que é por onde quase todo card nasce.
+
+   O QUE ESTA VERSÃO FAZ
+
+   1. Os dois lugares passam a usar `novoIdCard()`. Fim da colisão.
+
+   2. Conserta o que já colidiu. Dois cards com o mesmo id na mesma pauta
+      são um acidente esperando a próxima sincronização para virar um só:
+      o mais novo ganha número próprio, e nenhum dos dois se perde.
+
+   3. Desfaz o casamento errado. Duas tarefas apontando para o mesmo card
+      é o que faz uma seguir a outra. A mais antiga fica com o card; a
+      outra volta a pedir "estruturar a pauta", com um aviso dizendo o
+      que aconteceu — em vez de sumir em silêncio ou continuar mentindo.
+
+   4. E a ficha do card, no Ensaio, passa a mostrar a LEGENDA. Ela já
+      mostrava objetivo, briefing, CTA e o texto por plataforma; a
+      legenda ficou de fora, e era justo o que o founder foi procurar.
+   ===================================================================== */
+(function(){
+  /* ---------- 1. o número do card sai de um lugar só ---------------- */
+  if(typeof estruturarTarefa === 'function' && typeof novoIdCard === 'function'){
+    estruturarTarefa = (function(orig){
+      return function(tid){
+        const t = S.ensaio && S.ensaio.tarefas.find(x => x.id === +tid);
+        const antes = (t && t.cli) ? ((S.pautas[t.cli] || []).length) : -1;
+        const r = orig.apply(this, arguments);
+        /* o original acabou de empurrar o card com o número frágil;
+           troca por um do relógio antes que alguém mais o alcance */
+        try{
+          if(t && t.cli && antes >= 0){
+            const lista = S.pautas[t.cli] || [];
+            const novo = lista[lista.length - 1];
+            if(novo && lista.length === antes + 1 && t.cardId === novo.id){
+              const id = novoIdCard();
+              novo.id = id; t.cardId = id;
+              if(typeof ligarTarefaAoCard === 'function') ligarTarefaAoCard(t);
+            }
+          }
+        }catch(e){}
+        return r;
+      };
+    })(estruturarTarefa);
+  }
+
+  /* o "criar um card novo na pauta", do modal da tarefa, tem o mesmo
+     defeito e roda por um setTimeout — pega o card recém-nascido */
+  addEventListener('click', e => {
+    if(!e.target.closest || !e.target.closest('[data-enok]')) return;
+    setTimeout(() => {
+      try{
+        if(typeof novoIdCard !== 'function') return;
+        for(const t of ((S.ensaio || {}).tarefas || [])){
+          if(!t || !t.cli || t.cardId == null) continue;
+          const lista = S.pautas[t.cli] || [];
+          const iguais = lista.filter(p => p.id === t.cardId);
+          if(iguais.length > 1) arrumarNumeros(t.cli);
+        }
+      }catch(err){}
+    }, 12);
+  }, true);
+
+  /* ---------- 2. dois cards com o mesmo número não sobrevivem ------- */
+  function arrumarNumeros(cli){
+    const lista = S.pautas[cli];
+    if(!Array.isArray(lista) || typeof novoIdCard !== 'function') return 0;
+    const vistos = new Set();
+    let n = 0;
+    for(const p of lista){
+      if(!p || p.id == null) continue;
+      if(!vistos.has(p.id)){ vistos.add(p.id); continue; }
+      /* repetido: o mais novo ganha número próprio, e as tarefas que
+         apontavam para ele por ORDEM acompanham */
+      const antigo = p.id, novo = novoIdCard();
+      p.id = novo; vistos.add(novo); n++;
+      for(const t of ((S.ensaio || {}).tarefas || []))
+        if(t && t.cli === cli && t.cardId === antigo && t.__jaCasada) t.cardId = novo;
+    }
+    return n;
+  }
+
+  /* ---------- 3. uma tarefa por card ------------------------------- */
+  function desfazerCasamentoDuplo(){
+    const E = S.ensaio;
+    if(!E || !Array.isArray(E.tarefas)) return 0;
+    const porCard = new Map();
+    for(const t of E.tarefas){
+      if(!t || t.cli == null || t.cardId == null) continue;
+      const k = String(t.cli) + '|' + String(t.cardId);
+      (porCard.get(k) || porCard.set(k, []).get(k)).push(t);
+    }
+    let n = 0;
+    for(const [k, lista] of porCard){
+      if(lista.length < 2) continue;
+      /* a mais antiga fica com o card — foi ela que o criou */
+      lista.sort((a, b) => (+a.criada || 0) - (+b.criada || 0));
+      const dona = lista[0];
+      dona.__jaCasada = true;
+      for(const t of lista.slice(1)){
+        const p = (S.pautas[t.cli] || []).find(x => x.id === t.cardId);
+        t.conflitoCard = { quando: Date.now(),
+                           titulo: (p && p.t) || null, com: dona.titulo || null };
+        t.cardId = null; t.job = false;
+        /* `col` era leitura da fase do card; sem card, volta a ser campo */
+        try{
+          const d = Object.getOwnPropertyDescriptor(t, 'col');
+          if(d && d.get){ const v = t.col; delete t.col; t.col = (v === 'cliente' ? 'plan' : v) || 'plan'; }
+        }catch(e){}
+        n++;
+      }
+    }
+    return n;
+  }
+
+  /* roda na carga e a cada desenho do quadro, como as outras faxinas */
+  function arrumarTudo(){
+    try{
+      for(const c of (typeof CLIS === 'function' ? CLIS() : [])) arrumarNumeros(c.id);
+      desfazerCasamentoDuplo();
+    }catch(e){}
+  }
+  if(typeof sincronizarJobs === 'function') sincronizarJobs = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); arrumarTudo(); return r; };
+  })(sincronizarJobs);
+  if(typeof aplicarEstado === 'function') aplicarEstado = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); arrumarTudo(); return r; };
+  })(aplicarEstado);
+  setTimeout(arrumarTudo, 1200);
+
+  /* o aviso no cartão de quem perdeu o card */
+  if(typeof agEnsaio === 'function') agEnsaio = (function(orig){
+    return function(){
+      let html = orig.apply(this, arguments);
+      if(!S.ensaio || typeof html !== 'string') return html;
+      for(const t of S.ensaio.tarefas){
+        if(!t || !t.conflitoCard) continue;
+        const c = t.conflitoCard;
+        const aviso = `<div class="enPedido"><span><b>Este job perdeu o card:</b> ele tinha
+          o mesmo número do card de "${esc(c.com || 'outra tarefa')}", e os dois viraram um.
+          Estruture a pauta de novo — o que estava escrito ficou no outro card.</span></div>`;
+        html = html.replace(new RegExp(`(data-entar="${t.id}"[\\s\\S]*?<div class="tit">[\\s\\S]*?</div>)`),
+          `$1${aviso}`);
+      }
+      return html;
+    };
+  })(agEnsaio);
+
+  /* ---------- 4. a ficha mostra a legenda --------------------------- */
+  if(typeof enCardLidoHtml === 'function') enCardLidoHtml = (function(orig){
+    return function(t){
+      let html = orig.apply(this, arguments);
+      if(typeof html !== 'string' || !html) return html;
+      const p = (typeof cardDaTarefa === 'function') ? cardDaTarefa(t) : null;
+      if(!p || !(p.legenda || '').trim() || html.indexOf('>Legenda<') >= 0) return html;
+      const bloco = `<div class="cx"><span class="lbl">Legenda</span><p>${esc(p.legenda)}</p></div>`;
+      const marca = '<div class="cx"><span class="lbl">CTA</span>';
+      return html.indexOf(marca) >= 0
+        ? html.replace(marca, bloco + marca)
+        : html.replace(/(<\/div>\s*)$/, bloco + '$1');
+    };
+  })(enCardLidoHtml);
 })();
 </script>
