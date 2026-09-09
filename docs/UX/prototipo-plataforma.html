@@ -7100,8 +7100,15 @@ document.addEventListener('click', async e => {
     S.modal = modalImportar(); renderLayer();
     return; }
   if(d.ptimpok){
+    /* v202 — a terceira e última boca do defeito da v199. `Math.max(ids
+       desta pauta) + 1` dá o MESMO número em dois aparelhos ao mesmo
+       tempo, e a sincronização casa por id: dois cards viram um, com os
+       campos misturados. A v190 já tirou esta porta do caminho (planilha
+       entra pelo Ensaio), mas código morto com defeito vivo é armadilha
+       para quem vier depois. O número sai do relógio. */
     let id = Math.max(0, ...S.pauta.map(x=>x.id));
-    S.ptImport.forEach(p=>S.pauta.push({ id:++id, ...p }));
+    const proximo = () => (typeof novoIdCard === 'function') ? novoIdCard() : ++id;
+    S.ptImport.forEach(p=>S.pauta.push({ id:proximo(), ...p }));
     const n = S.ptImport.length;
     S.ptImport = null; S.modal = null;
     som('toque'); render();
@@ -15764,7 +15771,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v201 · 9 set · a legenda chega ao cliente';
+const VERSAO_PROTOTIPO = 'v202 · 9 set · um card so, duas telas';
 
 menuSheet = (function(orig){
   return function(){
@@ -37925,5 +37932,150 @@ sbGravar = (function(orig){
     t.click();
   }, true);
 
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v202 — UM CARD SÓ, DUAS TELAS: APAGAR NUM LUGAR APAGA NOS DOIS.
+
+   O founder: "Se o cliente não gostar da ideia e mandar apenas cancelar,
+   quando a social media excluir do ensaio ou do cronograma, os dois têm
+   que sumir, pois são o mesmo card — só que no Ensaio é execução e no
+   cronograma de postagens é visualização/agendar/publiquei."
+
+   Metade disso já existia: excluir a tarefa no Ensaio manda o card para
+   a lixeira do cliente ("Sai do quadro e da pauta"). A outra metade,
+   não. Excluir o card no Cronograma (`data-ptrm`) tirava o card da
+   pauta e deixava a tarefa no quadro — apontando para um card que já
+   não está lá.
+
+   E isso não fica quieto. A tarefa órfã continua no quadro, o repositor
+   (`sincronizarJobs`) enxerga um job sem card, e o que volta não é o
+   card que se apagou: é um card NOVO, em branco. É a mesma família de
+   "brotou do nada" que a v188, a v193, a v195 e a v196 vieram fechando,
+   entrando por uma porta que faltava.
+
+   COMO, e por que assim. O clique do `data-ptrm` corre na captura da
+   janela e corta a propagação — ninguém que se registre depois o
+   alcança. Então em vez de disputar o clique, esta versão CONCILIA
+   depois: onde as outras faxinas da casa já se penduram, um card que
+   está na lixeira do cliente leva a sua tarefa junto — para DENTRO da
+   mesma entrada da lixeira (`e.tarefa`), que é onde a v196 já sabia
+   procurar quando se esvazia.
+
+   E o caminho de volta pelo mesmo lugar: a lápide que se põe aqui fica
+   anotada (`S.ensaio.cardsNaLixeira`). Quando o card volta da lixeira,
+   só ESSA lápide se tira — nunca as outras. Levantar lápide alheia é
+   exatamente como o apagado ressuscita, e isso já custou duas noites.
+   ===================================================================== */
+(function(){
+  const F = window.MaestroFaxinaEnsaio;
+  if(!F) return;                                   /* a v195 não carregou */
+  const { enterrar, desenterrar, temLapide } = F;
+  const chaveCard = (cli, id) => 'c:' + String(cli) + '|' + String(id);
+
+  /* LER NUNCA ESCREVE (lição da v195): a lista só nasce num gesto de
+     verdade. Criar campo ao abrir o app faz o aparelho recém-aberto
+     passar por dono da verdade na mescla. */
+  const anotadas = () => {
+    const E = S.ensaio;
+    return (E && Array.isArray(E.cardsNaLixeira)) ? E.cardsNaLixeira : [];
+  };
+  function anotar(chave){
+    const E = S.ensaio; if(!E || chave == null) return;
+    if(!Array.isArray(E.cardsNaLixeira)) E.cardsNaLixeira = [];
+    const k = String(chave);
+    if(E.cardsNaLixeira.some(a => a && String(a.id) === k)) return;
+    E.cardsNaLixeira.push({ id: k, quando: Date.now() });
+    if(E.cardsNaLixeira.length > 400) E.cardsNaLixeira.splice(0, E.cardsNaLixeira.length - 400);
+  }
+  function desanotar(chave){
+    const E = S.ensaio; if(!E || !Array.isArray(E.cardsNaLixeira)) return;
+    const k = String(chave);
+    const fica = E.cardsNaLixeira.filter(a => !a || String(a.id) !== k);
+    if(fica.length !== E.cardsNaLixeira.length) E.cardsNaLixeira = fica;
+  }
+  const foiAnotada = chave => anotadas().some(a => a && String(a.id) === String(chave));
+
+  const tarefaDoCard = (cli, id) => {
+    const E = S.ensaio; if(!E) return null;
+    const casa = t => t && t.cli === cli && t.cardId === id;
+    const i = (E.tarefas || []).findIndex(casa);
+    if(i >= 0) return { lista: E.tarefas, i };
+    const j = (E.feitas || []).findIndex(casa);
+    if(j >= 0) return { lista: E.feitas, i: j };
+    return null;
+  };
+
+  /* ---------- 1. o card foi para a lixeira: a tarefa vai junto ------- */
+  function levarTarefaJunto(){
+    if(!S.ensaio || !S.lixeira) return 0;
+    let n = 0;
+    for(const cli of Object.keys(S.lixeira)){
+      for(const e of (S.lixeira[cli] || [])){
+        if(!e || !e.item || e.item.id == null || e.tarefa) continue;
+        const achada = tarefaDoCard(cli, e.item.id);
+        if(!achada) continue;
+        const t = achada.lista.splice(achada.i, 1)[0];
+        const k = chaveCard(cli, e.item.id);
+        e.tarefa = t;                            /* a v196 varre por aqui */
+        /* e a tarefa vai para a lixeira DO QUADRO, que é onde ela sabe
+           esperar: guardada, persistida, e com o caminho de volta. Sem
+           isso, resgatar o card devolvia uma tarefa em branco — o tempo
+           contado, o responsável e o histórico ficavam para trás. */
+        (S.ensaio.lixo = S.ensaio.lixo || []).unshift(
+          { tarefa: t, quando: Date.now(), doCard: k });
+        if(S.ensaio.lixo.length > 50) S.ensaio.lixo.length = 50;
+        enterrar(k); anotar(k);                  /* e o repositor não a repõe */
+        n++;
+      }
+    }
+    return n;
+  }
+
+  /* ---------- 2. o card voltou: a lápide DESTA porta se tira -------- */
+  function soltarOQueVoltou(){
+    if(!S.ensaio || !anotadas().length) return 0;
+    let n = 0;
+    for(const a of [...anotadas()]){
+      const k = a && String(a.id);
+      if(!k || k.indexOf('c:') !== 0) continue;
+      const corte = k.indexOf('|');
+      const cli = k.slice(2, corte), id = k.slice(corte + 1);
+      const napauta = (S.pautas[cli] || []).some(p => p && String(p.id) === id);
+      if(!napauta) continue;                     /* segue na lixeira: fica */
+      desenterrar(k); desanotar(k); n++;
+      /* e a MESMA tarefa volta ao quadro — não uma nova. Ela estava
+         guardada na lixeira do quadro com o carimbo de qual card é. */
+      const E = S.ensaio;
+      const j = (E.lixo || []).findIndex(x => x && x.doCard === k && x.tarefa);
+      if(j >= 0){
+        const [guardada] = E.lixo.splice(j, 1);
+        desenterrar(String(guardada.tarefa.id));
+        if(!(E.tarefas || []).some(t => t && t.id === guardada.tarefa.id))
+          (E.tarefas = E.tarefas || []).push(guardada.tarefa);
+      }
+    }
+    return n;
+  }
+
+  function conciliar(){
+    try{ levarTarefaJunto(); soltarOQueVoltou(); }catch(e){}
+  }
+
+  /* nos mesmos pontos onde as faxinas da v195 e da v196 já se penduram */
+  if(typeof sincronizarJobs === 'function') sincronizarJobs = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); conciliar(); return r; };
+  })(sincronizarJobs);
+  if(typeof aplicarEstado === 'function') aplicarEstado = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); conciliar(); return r; };
+  })(aplicarEstado);
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); conciliar(); return r; };
+  })(render);
+
+  window.MaestroUmCardSo = { levarTarefaJunto, soltarOQueVoltou, conciliar, foiAnotada };
 })();
 </script>
