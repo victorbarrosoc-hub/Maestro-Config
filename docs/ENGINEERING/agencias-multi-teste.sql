@@ -77,7 +77,8 @@ insert into public.pauta(cliente, dados) values
 -- =====================================================================
 -- AQUI ENTRA A MIGRAÇÃO
 -- =====================================================================
-\ir agencias-multi.sql
+\ir agencias-1-preparar.sql
+\ir agencias-2-virar-a-chave.sql
 
 -- =====================================================================
 -- A SEGUNDA AGÊNCIA NASCE, como nasceria pelo app
