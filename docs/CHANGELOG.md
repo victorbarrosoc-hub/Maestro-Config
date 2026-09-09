@@ -1,9 +1,74 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.30
+Version: 0.5.31
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.31 — 2026-09-09
+
+**Status:** Concluída
+**Objetivo:** card novo nunca repete número — e o que já repetiu se conserta.
+
+### Dois cards com o mesmo número, e a sincronização juntou os dois (v199)
+
+O founder: *"Tinha dois cards em check, quando dei check em um, foi os dois pra
+aba do lote."* E depois: *"Ele conflitou os dois card, misturou os descritivos
+deles."*
+
+Os dois prints contam tudo. Duas tarefas diferentes — uma do Victor (*"Teste pro
+supabase"*), outra da Anna Clara (*"Carrossel sobre o artigo"*) — e as **duas**
+dizem, no campo "o card da pauta deste job", **o mesmo card**. Mesmo objetivo,
+mesmo briefing, mesmo histórico.
+
+**Uma causa só.** Dois lugares ainda criavam card com
+`Math.max(ids DESTA pauta) + 1`. Duas pessoas estruturando a pauta do mesmo
+cliente ao mesmo tempo calculam **o mesmo número**. Daí saem as três
+consequências, em ordem:
+
+1. nascem dois cards com o mesmo id;
+2. a mescla casa item por id e **junta os dois num só** — os descritivos
+   misturados;
+3. as duas tarefas passam a achar o mesmo card, e mover uma move as duas —
+   porque a coluna do quadro é **leitura da fase do card**.
+
+A casa tem a cura desde a v151: `novoIdCard()`, ancorado no relógio e único em
+toda a base. O comentário dela diz, com todas as letras, que *"dois lugares
+ficaram de fora"*. **São estes dois** — e um deles é o "estruturar a pauta", por
+onde quase todo card nasce.
+
+**O que entra:**
+
+- As duas funções passam a chamar `novoIdCard()` **na linha em que o card
+  nasce**.
+- **Conserta o que já colidiu:** dois cards com o mesmo id na mesma pauta são um
+  acidente esperando a próxima sincronização. O mais novo ganha número próprio, e
+  **nenhum dos dois se perde**.
+- **Desfaz o casamento duplo:** a tarefa que criou o card fica com ele; a outra
+  volta a pedir "estruturar a pauta", com um aviso dizendo o que aconteceu — em
+  vez de sumir em silêncio ou continuar mentindo.
+- **A ficha do card no Ensaio passa a mostrar a legenda.** Ela já mostrava
+  objetivo, briefing, CTA e texto por plataforma; a legenda ficou de fora, e era
+  o que o founder tinha ido procurar.
+
+**Um erro meu, pego pelo teste.** A primeira versão renumerava o card **depois**,
+por embrulho. Parece equivalente e não é: entre criar e renumerar, o editor já
+tinha aberto com o número velho — o botão Salvar apontava para um card que não
+existia mais, e o `data-ptok` sem alvo cai no ramo de criar. **Salvar criaria um
+terceiro card.** Eu teria trocado a colisão por algo pior. O `ciclo-producao`
+pegou porque faz o caminho de verdade: estrutura a pauta, escreve o texto, clica
+em Salvar. Nenhuma asserção minha teria visto. Conserto de origem, não de
+remendo.
+
+**Verificado:** `web/verificar/v199-card-nao-repete-numero.mjs`, 14 provas,
+incluindo o cenário exato do founder montado à mão (dois cards 500, duas tarefas
+neles) e a prova de que liberar um no Check não leva o outro. Regressão verde em
+18 suítes: `ciclo-producao` (55), `ciclo-interativo` (57), `pauta-editor` (52),
+v197 (43), v194 (35), v122 (28), v193 (24), `ensaio-historico` (23), v196 (21),
+v191 (21), v195 (19), `ensaio-excluir` (19), `cartao-ensaio` (16), v168 (12),
+v151, v189 e v190.
 
 ---
 

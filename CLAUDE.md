@@ -283,6 +283,21 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (9 set, v199):** dois cards com o mesmo número. Duas pessoas
+estruturando a pauta do mesmo cliente ao mesmo tempo calculavam
+`Math.max(ids desta pauta) + 1` e chegavam ao MESMO número — daí a mescla (que
+casa por id) juntava os dois cards num só, com os descritivos misturados, e as
+duas tarefas passavam a achar um card só, então mover uma movia as duas. Os dois
+lugares que ainda faziam isso — `estruturarTarefa` e o "criar card novo" do modal
+— passam a usar `novoIdCard()`, que a v151 criou justo para isso e que o próprio
+comentário dela dizia ter deixado "dois lugares de fora". Junto: repara o que já
+colidiu (o card mais novo ganha número próprio, nenhum se perde), desfaz o
+casamento duplo com aviso na tarefa que perdeu o card, e a ficha do Ensaio passa
+a mostrar a legenda. 14 provas em `web/verificar/v199-card-nao-repete-numero.mjs`.
+A lição: a primeira versão renumerava DEPOIS, por embrulho — e o editor já tinha
+aberto com o número velho, então Salvar criaria um TERCEIRO card. Conserto de
+origem, não de remendo; quem pegou foi o `ciclo-producao`, que faz o caminho de
+verdade.
 **Fechado (9 set, v197–v198):** a Maestro passa a caber mais de uma agência, e a
 conta nasce no site. O banco ganhou a coluna `org` (nenhuma linha se moveu: tudo
 o que existia virou a agência `maestro`), a chave (org, cliente), RLS por agência
