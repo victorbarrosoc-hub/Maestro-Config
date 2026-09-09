@@ -4,7 +4,7 @@ Version: 0.5
 Status: Implementação — blocos 1, 2, 3 e 5 da API prontos, verificados por HTTP
         · D-080 resolvida (a fase substitui o status): blocos 4, 6, 7 e 8 liberados
 Codename: Project Symphony
-Última atualização: 2026-09-08
+Última atualização: 2026-09-09
 
 > **Retomando o projeto? Leia [`docs/HANDOFF.md`](docs/HANDOFF.md) primeiro.**
 > Ele é o mapa: estado do código, o que já foi verificado, o que está aberto
@@ -283,6 +283,44 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (9 set, v200–v202):** quatro coisas da mesma leva do founder.
+**v200 — só o revisor e o administrador liberam o Check.** O botão "liberar ✓" do
+Ensaio estava na mão da social media, e a causa não era permissão: era ausência de
+NOME. `pode()` respondia SIM por omissão — quem entrou mas o app não conseguiu
+casar com ninguém da Equipe ficava sem crachá, e sem crachá valia poder total
+(`ehRevisor()` é literalmente `pode('revisar')`). Agora `revisar` é a única chave
+que nunca vem por omissão (fechar a tela inteira de quem não se reconhece tira a
+pessoa do produto sem dizer por quê — isso já custou caro); `assumirPessoa()` roda
+de novo depois de `sbCarregar()`, porque a primeira chamada era contra a equipe
+semeada no código; e a chave "Revisor · libera o Check" aparece na ficha de cada
+pessoa na Equipe, que é onde o founder foi procurar. 26 provas em
+`web/verificar/v200-so-o-revisor-libera.mjs`.
+**v201 — a legenda chega ao cliente.** A tela do cliente tinha dois blocos:
+"Texto da publicação" (que é o BRIEFING) e "Chamada". A legenda, que é o texto que
+de fato vai publicado, nunca foi desenhada do lado do cliente — ele vinha
+aprovando a descrição da publicação, não a publicação. Junto: o "Publiquei" só
+nascia depois de a hora passar e só na lista; na vista Dia nunca existiu, e o que
+restava era um ✓ que JÁ postava sem dizer — daí a opacidade que ninguém pediu.
+Agora o botão existe em qualquer card agendado, nas duas vistas, e o traço de
+concluído segue a FASE, não o campo `feito`. 18 provas em
+`web/verificar/v201-legenda-e-publiquei.mjs`.
+**v202 — um card só, duas telas.** Excluir a tarefa no Ensaio já mandava o card
+para a lixeira; excluir o card no Cronograma deixava a tarefa viva, apontando para
+um card que não está mais lá — e o repositor devolvia um card NOVO, em branco.
+Como o clique do `data-ptrm` corta a propagação, a v202 concilia depois: a tarefa
+vai para a lixeira do quadro com o carimbo de qual card é, e resgatar traz de
+volta A MESMA tarefa, com tempo, responsável e histórico. A lápide que ela põe
+fica anotada e só ESSA se levanta — levantar lápide alheia é como o apagado
+ressuscita. Junto, a terceira e última boca do defeito da v199 (a importação de
+planilha). 16 provas em `web/verificar/v202-um-card-so.mjs`.
+**E as seis suítes que já estavam vermelhas antes desta leva voltaram ao verde** —
+nenhuma era regressão: eram testes que ficaram para trás da v184, v186, v189 e
+v190. Suíte permanentemente vermelha é como uma quebra de verdade passa
+despercebida.
+**Aberto desta leva:** o card do Marco Bruno que apareceu no Ensaio como aprovado
+não foi reproduzido aqui — falta o estado do banco do founder. As três bocas do
+número frágil estão fechadas e a assimetria do apagar também; se voltar a
+acontecer, é por uma quarta porta.
 **Fechado (9 set, v199):** dois cards com o mesmo número. Duas pessoas
 estruturando a pauta do mesmo cliente ao mesmo tempo calculavam
 `Math.max(ids desta pauta) + 1` e chegavam ao MESMO número — daí a mescla (que

@@ -1,9 +1,175 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.31
+Version: 0.5.35
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.35 — 2026-09-09
+
+**Status:** Concluída
+**Objetivo:** as seis suítes que já estavam vermelhas antes desta leva voltam ao verde.
+
+Nenhuma era regressão. Eram testes que ficaram para trás de decisões de produto
+tomadas depois — e uma suíte permanentemente vermelha é exatamente como uma
+quebra de verdade passa despercebida.
+
+| suíte | o que cobrava | a decisão que a deixou para trás |
+|---|---|---|
+| `v142`, `v150`, `responsavel-foto` | clicar em "Nova postagem" | v189: a postagem nasce no Ensaio |
+| `revisao-geral` 3.1/3.2/3.5 | "Nova postagem" na régua e 4 itens em "Mais" | v189 e v190: criar postagem e importar planilha saíram do Cronograma; são 3 |
+| `campanha-mandala` | contava `.ptItem` sem abrir os **dias passados**, que a pauta recolhe | a campanha começa em 07/09 e o dia já passou |
+| `v161` | o aviso do **sistema**, medido **de dentro da conversa** | v184: com a Maestro na frente o aviso é na própria tela; v186: não se avisa da conversa que se está lendo |
+
+**Anotado, sem mexer no comportamento:** uma mensagem com menção gera **dois**
+avisos na tela — o da mensagem e o da menção. Dois banners para uma mensagem é
+ruído, mas suprimir um é decisão de produto, não conserto de teste.
+
+---
+
+## 0.5.34 — 2026-09-09
+
+**Status:** Concluída
+**Objetivo:** um card só, duas telas — apagar num lugar apaga nos dois.
+
+### O Cronograma apagava pela metade (v202)
+
+O founder: *"Se o cliente não gostar da ideia e mandar apenas cancelar, quando a
+social media excluir do ensaio ou do cronograma, os dois têm que sumir, pois são
+o mesmo card — só que no Ensaio é execução e no cronograma de postagens é
+visualização/agendar/publiquei."*
+
+Metade já existia: excluir a tarefa no Ensaio manda o card para a lixeira do
+cliente. A outra metade, não. Excluir o card no Cronograma (`data-ptrm`) tirava o
+card da pauta e **deixava a tarefa no quadro**, apontando para um card que já não
+está lá.
+
+E isso não fica quieto. A tarefa órfã segue no quadro, o repositor
+(`sincronizarJobs`) enxerga um job sem card, e o que volta **não é o card que se
+apagou: é um card novo, em branco**. É a mesma família de "brotou do nada" que a
+v188, a v193, a v195 e a v196 vieram fechando, entrando por uma porta que faltava.
+
+**Como.** O clique do `data-ptrm` corre na captura da janela e corta a
+propagação — ninguém que se registre depois o alcança. Em vez de disputar o
+clique, a v202 **concilia depois**, onde as outras faxinas da casa já se penduram:
+a tarefa vai para a lixeira **do quadro** com o carimbo de qual card é (`doCard`),
+e a entrada da lixeira do cliente ganha `e.tarefa` — que é onde a v196 já sabia
+procurar quando se esvazia.
+
+Resgatar o card traz de volta **a mesma tarefa**, com o tempo contado, o
+responsável e o histórico. Uma tarefa nova em branco seria outra perda.
+
+A lápide que se põe aqui fica anotada (`cardsNaLixeira`), e **só essa** se levanta
+quando o card volta. Levantar lápide alheia é exatamente como o apagado
+ressuscita, e isso já custou duas noites.
+
+**Junto:** a terceira e última boca do defeito da v199 — a importação de planilha
+ainda numerava card com `Math.max(ids desta pauta) + 1`. A v190 tirou essa porta
+do caminho, mas código morto com defeito vivo é armadilha para quem vier depois.
+
+16 provas em `web/verificar/v202-um-card-so.mjs`.
+
+---
+
+## 0.5.33 — 2026-09-09
+
+**Status:** Concluída
+**Objetivo:** a legenda chega ao cliente, e o "Publiquei" aparece onde se publica.
+
+### O cliente aprovava a publicação sem ver a publicação (v201)
+
+O founder: *"O cliente não consegue ver a legenda da postagem, só o que está em
+anexo. Na segunda rodada também."*
+
+Medido antes de escrever: a tela do cliente tinha exatamente **dois** blocos de
+texto — "Texto da publicação" e "Chamada". O primeiro é `p.texto`, que no editor
+da pauta se chama **Briefing / Conteúdo / Descrição**. A legenda — `p.legenda`, o
+texto que de fato vai publicado — **nunca foi desenhada em lugar nenhum do lado do
+cliente**.
+
+Ou seja: o cliente vinha aprovando a *descrição* da publicação. Isso é o oposto do
+que a Maestro promete ("toda aprovação registra a versão exata aprovada"), e é
+sério: o que vai ao ar é a legenda.
+
+Agora a legenda vem primeiro, com o nome certo ("Legenda — é isto que vai
+publicado"), e o bloco de baixo passa a se chamar o que é ("Sobre esta
+publicação"). Sem legenda escrita, a tela fica exatamente como sempre foi — nada
+de bloco inventado.
+
+### O "Publiquei" que não aparecia, e a opacidade que ninguém pediu (v201)
+
+O founder: *"Coloquei agendado no ensaio, mas quando fui pro cronograma de
+postagens, não ficou aparecendo a opção de (Publiquei) pra eu marcar quando for
+pro ar e o card ficou com opacidade como se tivesse sido concluído — ele só fica
+assim depois que for publicado."*
+
+Duas causas, medidas:
+
+1. O "Publiquei" existia desde a v143, mas **só nascia depois de a hora ter
+   passado** (`ptPassouDaHora`), e **só na lista**. Na vista Dia — que é o
+   Cronograma que o founder usa — nunca existiu. A agência publica à mão: publica
+   adiantado, atrasado, no minuto. Ter o botão só depois do horário é obrigar a
+   esperar para poder contar a verdade.
+2. O que restava era o ✓ genérico. Num card agendado, esse ✓ **já era** a
+   confirmação de publicação (a v143 o liga ao `postado`) — só que sem dizer. Quem
+   tocasse nele achando que era "feito" postava o card sem saber. **A opacidade não
+   estava errada: contava uma decisão que ninguém sabia ter tomado.**
+
+Agora o "Publiquei" aparece em qualquer card agendado, nas duas vistas; o ✓ do
+card agendado diz que é publicação; e o traço de concluído segue a **fase**
+(`postado`), não o campo `feito`, que outros caminhos também escrevem.
+
+O chip da vista Dia é **irmão** do card, nunca filho: qualquer coisa dentro do
+card está dentro de `[data-ptedit]`, e o ouvinte que abre a postagem corta o
+clique antes. Custou uma rodada de teste para aparecer.
+
+18 provas em `web/verificar/v201-legenda-e-publiquei.mjs`.
+
+---
+
+## 0.5.32 — 2026-09-09
+
+**Status:** Concluída
+**Objetivo:** só o revisor e o administrador liberam o Check.
+
+### O botão "liberar" na mão de quem não podia (v200)
+
+O founder: *"LIBERAR NO ENSAIO ESTÁ APARECENDO PRA SOCIAL MEDIA. Só quem pode
+liberar é o revisor e o administrador, mas coloca como uma função pra marcar lá
+em equipe."*
+
+**A causa, medida antes de escrever qualquer linha:**
+
+```js
+const pode = chave => { const m = membroLogado(); return m ? podeMembro(m, chave) : true; };
+```
+
+`membroLogado()` casa o e-mail de quem entrou com alguém da Equipe. Quando não
+casa — pessoa cadastrada **depois** da lista semeada no código, crachá órfão que a
+v90 limpa, `assumirPessoa()` correndo **antes** de a equipe chegar do banco — o
+retorno é `null`, e `null` valia **poder total**. A social media não tinha a
+permissão: ela não tinha **nome**, e o `true` fez o resto. `ehRevisor()` é
+literalmente `pode('revisar')`.
+
+**Três consertos, nenhum remendo:**
+
+1. `revisar` é a única chave que **nunca** vem por omissão. Fechar a tela inteira
+   para quem o app não reconheceu tira a pessoa do produto sem dizer por quê, e
+   isso já custou caro. Mas liberar o Check é o que separa o material conferido do
+   que ainda não foi, e sai assinado no histórico. **Poder assim tem que ter nome.**
+2. `assumirPessoa()` roda **de novo** depois de `sbCarregar()`. A primeira chamada
+   acontecia contra a lista de equipe semeada no código.
+3. A marcação que faltava: na Equipe, na ficha de cada pessoa, a chave **"Revisor ·
+   libera o Check"**. Ela existia — escondida no modal do membro, entre sete outras
+   permissões. O founder foi procurar onde procuraria e não estava lá. O dono da
+   conta não tem chave para desligar; só o administrador distribui.
+
+E a recusa passa a dizer **a quem pedir**, pelo nome: *"Só o revisor libera o
+Check. Quem pode aqui: Victor, Roberto."*
+
+26 provas em `web/verificar/v200-so-o-revisor-libera.mjs`.
 
 ---
 
