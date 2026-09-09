@@ -131,6 +131,15 @@ checa('a tela vai para a pauta do cliente, já na campanha',
       criada.route === 'clientedet' && criada.tab === 'pauta' && criada.cli === 'cj' && criada.ptCamp === criada.camp.id && !criada.modal, criada);
 checa('e o aviso diz o que aconteceu', /"Setembro quente": 8 peças/.test(criada.toast) && /07\/09 a 23\/09/.test(criada.toast), criada.toast);
 
+/* a pauta recolhe os DIAS PASSADOS (a campanha começa em 07/09, e o dia
+   já passou): abrir todos antes de contar, senão conta-se a tela, não a
+   pauta. */
+const abrirDiasPassados = () => pg.evaluate(() => {
+  S.ptExpand = S.ptExpand || {};
+  for(const p of S.pautas.cj) if(p.data) S.ptExpand[p.data] = true;
+  render(); });
+await abrirDiasPassados(); await pg.waitForTimeout(300);
+
 const naPauta = await pg.evaluate(() => ({
   faixa: [...document.querySelectorAll('.ptCamps button')].map(x => x.textContent.trim()),
   on: document.querySelector('.ptCamps button.on')?.textContent.trim(),
@@ -142,6 +151,7 @@ checa('filtrada, mostra só as oito peças da campanha', naPauta.itens === 8, na
 checa('cada peça leva a etiqueta com o código e a campanha',
       naPauta.chips.length === 8 && /C\.P\.2 · Setembro quente/.test(naPauta.chips[0]), naPauta.chips.slice(0, 2));
 await pg.click('.ptCamps [data-ptcamp=""]'); await pg.waitForTimeout(300);
+await abrirDiasPassados(); await pg.waitForTimeout(300);
 const toda = await pg.evaluate(() => ({ ptCamp: S.ptCamp, itens: document.querySelectorAll('.ptItem').length, total: S.pautas.cj.length }));
 /* v167: a pauta do cliente de teste começa vazia — o total é o da
    campanha, não mais o da semente de demonstração */

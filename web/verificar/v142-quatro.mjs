@@ -7,6 +7,11 @@ import { chromium } from 'playwright';
 import http from 'http';
 import fs from 'fs';
 
+/* v189 tirou "Nova postagem" do Cronograma: a postagem nasce no Ensaio.
+   O formulário de card novo continua de pé — abre-se por ele. */
+const abrirCardNovo = pag => pag.evaluate(() => {
+  S.modal = modalPauta(null); renderLayer(); });
+
 const ALVO = process.argv[2] || 'docs/UX/prototipo-plataforma.html';
 const html = fs.readFileSync(ALVO, 'utf8');
 const srv = http.createServer((q, r) => {
@@ -50,7 +55,7 @@ async function abrir(vp, rota, prep){
 /* ========== 1. texto por plataforma ========== */
 {
   const { pag, erros } = await abrir({ viewport: { width: 1400, height: 1000 } }, 'clientedet', "S.tab='pauta'");
-  await pag.locator('[data-ptnew]').first().click(); await pag.waitForTimeout(400);
+  await abrirCardNovo(pag); await pag.waitForTimeout(400);
   checa('1.1 o formulário tem a seção de texto por plataforma', await pag.locator('[data-ppsec]').count() === 1);
   const vis = async () => pag.evaluate(() => [...document.querySelectorAll('[data-ppplat]')]
     .map(el => el.dataset.ppplat));

@@ -44,6 +44,16 @@ async function casa({ ligado = false, tela } = {}){
         window.__mostrou.push({ titulo: t, corpo: (o||{}).body, tag: (o||{}).tag });
         return Promise.resolve();
       };
+    /* v184: com a Maestro NA FRENTE o aviso é por dentro — a nossa
+       própria tela, que não depende de permissão do navegador. O
+       caderninho precisa enxergar esse caminho também, senão o teste
+       cobra o aviso do sistema numa situação em que o produto,
+       deliberadamente, não o usa. */
+    window.__avisosNaTela = () => [...document.querySelectorAll('#avisosNaTela .avTela')]
+      .map(el => ({ titulo: (el.querySelector('.tx b') || {}).textContent || '',
+                    corpo: (el.querySelector('.tx span') || {}).textContent || '',
+                    tag: null, naTela: true }));
+    window.__avisados = () => [...(window.__mostrou || []), ...window.__avisosNaTela()];
     if(l) try{ localStorage.setItem('maestro-avisos-aparelho-v1', 'sim'); }catch(e){}
   }, ligado);
   await pag.goto(PAGINA, { waitUntil: 'load' });
@@ -199,16 +209,29 @@ const mostrados = pag => pag.evaluate(() => window.__mostrou || []);
 {
   /* com os avisos LIGADOS: eu sou chamado e o aparelho me chama */
   const { ctx, pag, erros } = await casa({ ligado: true });
-  const r = await pag.evaluate(() => {
+  await pag.evaluate(() => {
     const canal = S.chat.canais.find(c => c.id === S.cvAtivo) || S.chat.canais[0];
+    /* v186: a Maestro NÃO avisa da conversa que você está lendo agora —
+       banner por cima da mensagem que acabou de chegar na sua frente é
+       ruído. Para medir o aviso, é preciso não estar nela. */
+    S.route = 'dash';
     canal.msgs.push({ de:'roberto.ejup', txt:'@Victor a EJUP respondeu, dá uma olhada', ts: 1757000000002 });
     render();
-    return { mostrou: window.__mostrou || [],
-             avisos: S.avisos.filter(a => (a.chave||'').startsWith('menc:')).length };
   });
-  checa('5.1 quem foi chamado recebe o aviso no aparelho', r.mostrou.length === 1, r.mostrou);
+  await pag.waitForTimeout(400);          /* o aviso na tela entra no tique seguinte */
+  const r = await pag.evaluate(() => ({
+    mostrou: window.__avisados(),
+    avisos: S.avisos.filter(a => (a.chave||'').startsWith('menc:')).length }));
+  /* uma mensagem com menção vira DOIS avisos: o da mensagem no canal e o
+     da menção. O sino guarda os dois desde a v186 ("tudo que vira sino
+     vira aviso"), e a tela mostra os dois. Fica anotado como decisão de
+     produto em aberto — dois banners para uma mensagem é ruído —, mas o
+     que este teste cobra é que a MENÇÃO chegue. */
+  const mencao = r.mostrou.find(a => /mencionou/.test(a.titulo || ''));
+  checa('5.1 quem foi chamado recebe o aviso — na tela, com a Maestro na frente',
+        !!mencao, r.mostrou);
   checa('5.2 com o nome de quem chamou e o texto',
-        r.mostrou[0] && /Roberto/.test(r.mostrou[0].titulo) && /EJUP/.test(r.mostrou[0].corpo || ''), r.mostrou);
+        mencao && /Roberto/.test(mencao.titulo) && /EJUP/.test(mencao.corpo || ''), r.mostrou);
   checa('5.3 e o sino também guarda', r.avisos === 1, r);
   checa('5.4 sem erro de página', erros.length === 0, erros);
   await ctx.close();
@@ -245,15 +268,17 @@ const mostrados = pag => pag.evaluate(() => window.__mostrou || []);
     const t = (S.ensaio.tarefas || []).find(x => x.resp !== 'victorbarrosoc');
     if(!t) return { semTarefa: true };
     window.__mostrou.length = 0;
+    document.querySelectorAll('#avisosNaTela .avTela').forEach(el => el.remove());
     t.resp = 'victorbarrosoc';                       /* outra pessoa passou para mim */
     render();
-    return { mostrou: window.__mostrou.slice(),
+    return { mostrou: window.__avisados(),
              avisos: S.avisos.filter(a => (a.chave||'').startsWith('tar:')).length,
              titulo: t.titulo };
   });
   checa('6.1 há tarefa para passar', !r.semTarefa, r);
   checa('6.2 receber uma tarefa vira aviso', r.avisos === 1, r);
-  checa('6.3 e chega no aparelho', r.mostrou && r.mostrou.length === 1, r.mostrou);
+  checa('6.3 e chega — na tela, com a Maestro na frente',
+        r.mostrou && r.mostrou.length === 1, r.mostrou);
   checa('6.4 sem erro de página', erros.length === 0, erros);
   await ctx.close();
 }

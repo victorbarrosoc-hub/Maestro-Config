@@ -186,10 +186,13 @@ async function abrir(opts, rota){
     return { topo: !!topo, novoVisivel: vis(novo), novoDentro: novo && novo.getBoundingClientRect().right <= innerWidth,
       maisVisivel: vis(mais), menuFechado: menu && getComputedStyle(menu).display === 'none',
       dentro: menu ? menu.querySelectorAll('[data-ptimp],[data-ptexport],[data-ptlixeira],[data-ptreset]').length : 0 }; });
-  checa('3.1 no celular "Nova postagem" fica na frente, visível e dentro da tela',
-        regua.topo && regua.novoVisivel && regua.novoDentro, regua);
-  checa('3.2 Importar, Exportar, Lixeira e Resetar ficam em "Mais", fechado',
-        regua.maisVisivel && regua.menuFechado && regua.dentro === 4, regua);
+  /* v189/v190: "Nova postagem" e "Importar planilha" saíram do Cronograma
+     — a postagem nasce no Ensaio, e a planilha entra por lá, linha a
+     linha. O que fica na régua é ver, editar, agendar e publicar. */
+  checa('3.1 no celular "Nova postagem" não está mais aqui — nasce no Ensaio',
+        regua.topo && !regua.novoVisivel, regua);
+  checa('3.2 Exportar, Lixeira e Resetar ficam em "Mais", fechado',
+        regua.maisVisivel && regua.menuFechado && regua.dentro === 3, regua);
   await pag.locator('[data-ptmais]').click(); await pag.waitForTimeout(200);
   checa('3.3 "Mais" abre o menu', await pag.evaluate(() => getComputedStyle(document.querySelector('.ptMaisMenu')).display !== 'none'));
   await pag.locator('h1').first().click(); await pag.waitForTimeout(200);
@@ -198,9 +201,11 @@ async function abrir(opts, rota){
   await pag.evaluate(() => render()); await pag.waitForTimeout(300);
   const desk = await pag.evaluate(() => ({
     mais: getComputedStyle(document.querySelector('[data-ptmais]')).display,
-    todos: [...document.querySelectorAll('.ptAcoesTopo [data-ptimp],.ptAcoesTopo [data-ptexport],.ptAcoesTopo [data-ptnew],.ptAcoesTopo [data-ptlixeira],.ptAcoesTopo [data-ptreset]')]
-      .every(b => b.getBoundingClientRect().width > 0) }));
-  checa('3.5 no desktop os cinco botões seguem à vista e "Mais" some', desk.mais === 'none' && desk.todos, desk);
+    todos: [...document.querySelectorAll('.ptAcoesTopo [data-ptexport],.ptAcoesTopo [data-ptlixeira],.ptAcoesTopo [data-ptreset]')]
+      .every(b => b.getBoundingClientRect().width > 0),
+    quantos: document.querySelectorAll('.ptAcoesTopo [data-ptexport],.ptAcoesTopo [data-ptlixeira],.ptAcoesTopo [data-ptreset]').length }));
+  checa('3.5 no desktop os três botões seguem à vista e "Mais" some',
+        desk.mais === 'none' && desk.todos && desk.quantos === 3, desk);
 
   /* atalhos no Hoje */
   await pag.evaluate(() => go('agency', 'dash')); await pag.waitForTimeout(300);

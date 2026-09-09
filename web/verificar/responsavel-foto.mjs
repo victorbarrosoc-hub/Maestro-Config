@@ -134,7 +134,10 @@ checa('a linha da pauta mostra o nome junto',
       await pag.evaluate(n => [...document.querySelectorAll('.ptResp b')]
         .some(b => b.textContent.trim() === n.split(' ')[0]), quem.nomeComFoto));
 
-await pag.click('[data-ptnew]'); await pag.waitForTimeout(450);
+/* v189 tirou "Nova postagem" do Cronograma: a postagem nasce no Ensaio.
+   O formulário de card novo continua de pé — abre-se por ele. */
+await pag.evaluate(() => { S.modal = modalPauta(null); renderLayer(); });
+await pag.waitForTimeout(450);
 checa('o seletor de responsavel da pauta mostra a foto',
       await pag.evaluate(id => {
         const b = document.querySelector(`[data-resppick="${id}"]`);

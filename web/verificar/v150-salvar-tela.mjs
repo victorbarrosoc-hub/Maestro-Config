@@ -6,6 +6,11 @@ import { chromium } from 'playwright';
 import http from 'http';
 import fs from 'fs';
 
+/* v189 tirou "Nova postagem" do Cronograma: a postagem nasce no Ensaio.
+   O formulário de card novo continua de pé — abre-se por ele. */
+const abrirCardNovo = pag => pag.evaluate(() => {
+  S.modal = modalPauta(null); renderLayer(); });
+
 const ALVO = process.argv[2] || 'docs/UX/prototipo-plataforma.html';
 const html = fs.readFileSync(ALVO, 'utf8');
 const srv = http.createServer((q, r) => {
@@ -38,7 +43,7 @@ async function abrir(){
 /* ---------- 1. o defeito do vídeo: tela e estado discordando ---------- */
 {
   const { pag, erros, avisos } = await abrir();
-  await pag.locator('[data-ptnew]').first().click(); await pag.waitForTimeout(500);
+  await abrirCardNovo(pag); await pag.waitForTimeout(500);
   for(const k of ['tt', 'yt']){ await pag.locator(`#layer [data-plat98="${k}"]`).click(); await pag.waitForTimeout(300); }
   const antes = await pag.evaluate(() => ({
     naTela: [...document.querySelectorAll('#layer [data-plat98].on')].map(b => b.dataset.plat98),
@@ -65,7 +70,7 @@ async function abrir(){
 /* ---------- 2. o caminho normal continua igual ---------- */
 {
   const { pag, erros, avisos } = await abrir();
-  await pag.locator('[data-ptnew]').first().click(); await pag.waitForTimeout(500);
+  await abrirCardNovo(pag); await pag.waitForTimeout(500);
   await pag.locator('#layer [data-plat98="li"]').click(); await pag.waitForTimeout(300);
   await pag.fill('#pt-t', 'Post normal');
   await pag.locator('#layer [data-ptok]').first().click(); await pag.waitForTimeout(800);
@@ -77,7 +82,7 @@ async function abrir(){
   checa('2.2 e como rascunho, pelo botão Salvar', salvo.st === 'DRAFT', salvo);
 
   /* de fato sem nenhuma marcada, o aviso continua — ele é legítimo */
-  await pag.locator('[data-ptnew]').first().click(); await pag.waitForTimeout(500);
+  await abrirCardNovo(pag); await pag.waitForTimeout(500);
   await pag.evaluate(() => { document.querySelectorAll('#layer [data-plat98].on')
     .forEach(b => b.classList.remove('on')); S.ptPlats = new Set(); });
   await pag.fill('#pt-t', 'Sem rede nenhuma');
@@ -93,7 +98,7 @@ async function abrir(){
 /* ---------- 3. o formato também segue a tela ---------- */
 {
   const { pag, erros } = await abrir();
-  await pag.locator('[data-ptnew]').first().click(); await pag.waitForTimeout(500);
+  await abrirCardNovo(pag); await pag.waitForTimeout(500);
   await pag.locator('#layer [data-fmt98="Carrossel"]').click(); await pag.waitForTimeout(350);
   await pag.evaluate(() => { S.ptFmt = 'Reels'; S.ptFmts = new Set(['Reels']); });  /* estado desencontrado */
   await pag.fill('#pt-t', 'Segue o formato da tela');
@@ -110,7 +115,7 @@ async function abrir(){
 /* ---------- 4. a demanda interna (Livre) não pede plataforma ---------- */
 {
   const { pag, erros, avisos } = await abrir();
-  await pag.locator('[data-ptnew]').first().click(); await pag.waitForTimeout(500);
+  await abrirCardNovo(pag); await pag.waitForTimeout(500);
   await pag.locator('#layer [data-fmt98="Livre"]').click(); await pag.waitForTimeout(500);
   await pag.fill('#pt-t', 'Fechar o financeiro');
   await pag.locator('#layer [data-livreok]').click(); await pag.waitForTimeout(800);
