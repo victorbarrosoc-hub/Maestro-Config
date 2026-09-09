@@ -15764,7 +15764,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v200 · 9 set · so o revisor libera o Check';
+const VERSAO_PROTOTIPO = 'v201 · 9 set · a legenda chega ao cliente';
 
 menuSheet = (function(orig){
   return function(){
@@ -37752,5 +37752,178 @@ sbGravar = (function(orig){
       return true;
     };
   })(recusaRevisor);
+})();
+</script>
+
+<style>
+/* v201 — o "Publiquei" no Cronograma, e a legenda na mão do cliente */
+.agPubFaixa{ position:absolute; text-align:right; pointer-events:none; z-index:2 }
+.agPub{ pointer-events:auto; display:inline-flex; align-items:center; gap:5px;
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase;
+  padding:3px 7px; border-radius:7px; cursor:pointer;
+  border:1px solid rgba(200,150,58,.45); color:var(--brass-300); background:var(--ink-900);
+  transition:border-color var(--fast) var(--eo), color var(--fast) var(--eo) }
+.agPub:hover{ border-color:var(--brass-500); color:var(--brass-200) }
+.agCard{ padding-bottom:26px }
+.clcap.leitura.legPub .caplbl{ color:var(--brass-300) }
+.clcap.leitura.legPub .clleitura{ white-space:pre-wrap }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v201 — A LEGENDA CHEGA AO CLIENTE, E O "PUBLIQUEI" APARECE ONDE SE
+          PUBLICA.
+
+   Dois pedidos do founder, na mesma leva, e os dois são sobre a mesma
+   coisa: a tela mostrar o que a pessoa precisa para decidir.
+
+   1) "O cliente não consegue ver a legenda da postagem, só o que está
+       em anexo. Na segunda rodada também."
+
+   Medido: a tela do cliente tem exatamente dois blocos de texto —
+   "Texto da publicação" e "Chamada". O primeiro é `p.texto`, que no
+   editor da pauta se chama BRIEFING / CONTEÚDO / DESCRIÇÃO. A legenda
+   — o texto que de fato vai publicado, `p.legenda` — nunca foi
+   desenhada em lugar nenhum do lado do cliente.
+
+   Ou seja: o cliente vinha aprovando a publicação sem ver a publicação.
+   Aprovava a descrição dela. Isso é o oposto do que a Maestro promete
+   ("toda aprovação registra a versão exata aprovada"), e é sério: o que
+   vai ao ar é a legenda.
+
+   Agora a legenda vem primeiro, com o nome certo, e o bloco de baixo
+   passa a se chamar o que ele é — o briefing. Quando não há legenda
+   escrita, a tela fica como sempre foi: um texto só, sem invenção.
+
+   2) "Coloquei agendado no Ensaio, mas no cronograma de postagens não
+       ficou aparecendo a opção de (Publiquei), e o card ficou com
+       opacidade como se tivesse sido concluído — ele só fica assim
+       depois que for publicado."
+
+   Duas causas, medidas:
+
+   a) O "Publiquei" existia desde a v143, mas só nascia quando a HORA JÁ
+      TINHA PASSADO (`ptPassouDaHora`) e só na lista. A agência publica
+      à mão: publica adiantado, publica atrasado, publica no minuto. Ter
+      o botão só depois do horário é obrigar a esperar para poder contar
+      a verdade. E na vista Dia — que é o Cronograma que o founder usa —
+      ele nunca existiu.
+
+   b) O que restava era o ✓ genérico. Num card agendado, esse ✓ JÁ ERA a
+      confirmação de publicação (v143 o liga ao `postado`) — só que sem
+      dizer. Quem tocasse nele achando que era "feito" postava o card
+      sem saber, e aí sim vinha a opacidade. A opacidade não estava
+      errada: estava contando uma decisão que ninguém sabia ter tomado.
+
+   Agora: o "Publiquei" aparece em QUALQUER card agendado, nas duas
+   vistas; o ✓ do card agendado se chama "Publiquei" no título; e o
+   traço de concluído passa a seguir a FASE (`postado`), não o campo
+   `feito` — que outros caminhos também escrevem.
+   ===================================================================== */
+(function(){
+
+  /* ================= 1. a legenda, na tela do cliente ================ */
+  if(typeof clCard === 'function') clCard = (function(orig){
+    return function(){
+      let html = orig.apply(this, arguments);
+      if(typeof html !== 'string' || !html) return html;
+      const p = (S.pauta || []).find(x => x.id === S.pcSel);
+      const leg = p && String(p.legenda || '').trim();
+      if(!leg || html.indexOf('legPub') >= 0) return html;
+
+      let doc;
+      try{ doc = new DOMParser().parseFromString(html, 'text/html'); }catch(e){ return html; }
+
+      /* o bloco do texto é o âncora — a arte e o passo já entraram antes */
+      const blocos = [...doc.querySelectorAll('.clcap.leitura')];
+      const texto = blocos.find(b => {
+        const l = b.querySelector('.caplbl');
+        return l && /Texto da publica/i.test(l.textContent || ''); });
+      if(!texto) return html;
+
+      /* o de baixo passa a se chamar o que é: o briefing. Dois blocos
+         chamados "texto" na mesma tela não ajudam ninguém a decidir. */
+      const lbl = texto.querySelector('.caplbl');
+      if(lbl) lbl.textContent = 'Sobre esta publicação';
+
+      const bloco = doc.createElement('div');
+      bloco.className = 'clcap leitura legPub';
+      bloco.innerHTML = `<div class="caplbl">Legenda — é isto que vai publicado</div>
+        <div class="clleitura"></div>`;
+      bloco.querySelector('.clleitura').textContent = leg;
+      texto.parentNode.insertBefore(bloco, texto);
+
+      return doc.body.innerHTML;
+    };
+  })(clCard);
+
+  /* ================= 2. o "Publiquei" no Cronograma ================== */
+  const agendado = p => p && !p.tarefa && typeof faseDe === 'function' && faseDe(p) === 'agendado';
+  const postado  = p => p && typeof faseDe === 'function' && faseDe(p) === 'postado';
+
+  /* --- 2a. a lista: o botão sai da espera pelo horário -------------- */
+  if(typeof ptItemHtml === 'function') ptItemHtml = (function(orig){
+    return function(p, i){
+      let html = orig.apply(this, arguments);
+      if(typeof html !== 'string' || !html || !p) return html;
+
+      /* o traço de concluído é da FASE, não do campo `feito` — que a
+         marcação de material e o ✓ antigo também escrevem */
+      if(!p.tarefa && !postado(p))
+        html = html.replace(/(<div class="ptItem[^"]*?)\bok\b/, '$1');
+
+      if(!agendado(p)) return html;
+
+      /* o ✓ de um card agendado JÁ confirmava a publicação (v143). Só
+         não dizia. Passa a dizer. */
+      html = html.replace(/(<button class="ptFeito"[^>]*?)title="[^"]*"/,
+        '$1title="Publiquei — marcar que foi ao ar"');
+      html = html.replace(/(<button class="ptFeito"[^>]*?)aria-label="[^"]*"/,
+        '$1aria-label="Publiquei"');
+
+      if(html.indexOf('data-ptpostou') >= 0) return html;      /* a v143 já pôs */
+      const bt = `<button class="ptConfirma" data-ptpostou="${p.id}"
+        title="Confirmar que foi publicado">${ic('checkc', 13)} Publiquei</button>`;
+      return html.replace(/(<button class="ptFeito")/, bt + '$1');
+    };
+  })(ptItemHtml);
+
+  /* --- 2b. a vista Dia, que é o Cronograma de verdade --------------- */
+  if(typeof agCardHtml === 'function') agCardHtml = (function(orig){
+    return function(c){
+      let html = orig.apply(this, arguments);
+      const p = c && c.p;
+      if(typeof html !== 'string' || !html || !p) return html;
+
+      if(!p.tarefa && !postado(p))
+        html = html.replace(/(<button class="agCard[^"]*?)\bfeito\b/, '$1');
+
+      if(!agendado(p) || html.indexOf('agPub') >= 0) return html;
+
+      /* IRMÃO do card, nunca filho. Duas razões, e a segunda é a que
+         custou uma rodada de teste: botão dentro de botão nenhum
+         navegador honra; e, sobretudo, qualquer coisa DENTRO do card
+         está dentro de `[data-ptedit]` — o ouvinte que abre a postagem
+         corre antes e corta o clique, então o "Publiquei" não chegava a
+         acontecer. Fora do card, o clique é só dele. */
+      const larg = 100 / (c.de || 1), esq = larg * (c.faixa || 0);
+      const topo = (c.topo || 0) + AG_TOPO + AG_MIN - 25;
+      const chip = `<span class="agPubFaixa" aria-hidden="false"
+        style="top:${topo}px;left:calc(5px + ${esq}%);width:calc(${larg}% - 10px)"
+        ><span class="agPub" data-ptpostou="${p.id}" role="button" tabindex="0"
+          title="Confirmar que foi publicado">${ic('checkc', 11)} Publiquei</span></span>`;
+      return html + chip;
+    };
+  })(agCardHtml);
+
+  /* o chip é span: teclado precisa de ajuda para valer como botão */
+  addEventListener('keydown', e => {
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target.closest && e.target.closest('.agPub[data-ptpostou]');
+    if(!t) return;
+    e.preventDefault();
+    t.click();
+  }, true);
+
 })();
 </script>
