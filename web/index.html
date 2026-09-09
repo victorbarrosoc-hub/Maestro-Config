@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-08 23:16 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-09 01:57 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15830,7 +15830,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v195 · 8 set · o que apaguei fica apagado';
+const VERSAO_PROTOTIPO = 'v196 · 9 set · esvaziar a lixeira gruda';
 
 menuSheet = (function(orig){
   return function(){
@@ -36870,5 +36870,229 @@ sbGravar = (function(orig){
 
   /* uma vez agora, para quem já está com a casa suja */
   try{ faxinaDoEnsaio(); }catch(e){}
+})();
+</script>
+
+<script>
+/* =====================================================================
+   v196 — ESVAZIAR A LIXEIRA TEM QUE GRUDAR.
+
+   O founder, num vídeo de 18 segundos: esvazia a lixeira ("Lixeira
+   esvaziada — 7 itens"), toca em atualizar ("Tudo em dia — v195"), abre
+   a lixeira: 7 itens. Loop. E junto: "já tinha uma tarefa dnovo enviada
+   pra o cliente que joguei pra lixeira".
+
+   A v195 curou UMA lista — `S.ensaio.tarefas` — e eu escrevi ali que a
+   mescla só UNE lista cujos itens têm `id`. O que não vi é que as OUTRAS
+   três listas do mesmo assunto não têm:
+
+     S.ensaio.lixo        guarda { tarefa, quando }
+     S.lixeira[cli]       guarda { item, idx, quando }
+     S.ensaio.naoRecriar  guarda STRINGS
+
+   Nenhuma tem `id` no topo. Então a mescla não une: escolhe um lado
+   inteiro. O lado que ainda tem lixo ganha, e a lixeira volta cheia —
+   inclusive num navegador aberto do zero, que é o caso que o teste
+   pegou. E `naoRecriar`, a lápide da v188, some do mesmo jeito: por isso
+   um card apagado voltava e era enviado ao cliente outra vez.
+
+   Em vez de dar `id` a três listas e rezar para a quarta não aparecer, a
+   casa passa a ter UMA lápide só, `S.ensaio.apagadas`, com `id` — que a
+   mescla une por construção. Ela guarda duas espécies de chave:
+
+     "<id da tarefa>"      uma tarefa da casa
+     "c:<cliente>|<card>"  um card da pauta
+
+   E ela manda em tudo: no quadro, nas duas lixeiras e na recriação.
+   Esvaziar não é mais "limpar um array" — é enterrar o que estava lá.
+   Restaurar continua tirando a lápide.
+   ===================================================================== */
+(function(){
+  const F = window.MaestroFaxinaEnsaio;
+  if(!F) return;                                   /* a v195 não carregou */
+  const { enterrar, desenterrar, temLapide } = F;
+  const chaveCard = (cli, id) => 'c:' + String(cli) + '|' + String(id);
+
+  /* DUAS MORTES DIFERENTES, E CONFUNDI-LAS APAGA A LIXEIRA.
+     `apagadas` (v195) quer dizer "não volta ao QUADRO" — e o item segue
+     vivo na lixeira, que é o ponto dela. Esvaziar é outra coisa: "não
+     volta NEM PARA A LIXEIRA". Precisa da própria marca, senão excluir
+     uma tarefa a apagaria da lixeira no mesmo gesto — foi o que o teste
+     cobrou na primeira tentativa desta versão.
+     `varridas` também é lista de {id}, então a mescla a une igual. */
+  const TETO = 400;
+  const varridas = () => {
+    const E = S.ensaio;
+    return (E && Array.isArray(E.varridas)) ? E.varridas : [];
+  };
+  function varrer(chave){
+    const E = S.ensaio; if(!E || chave == null) return;
+    if(!Array.isArray(E.varridas)) E.varridas = [];   /* só num gesto de verdade */
+    const k = String(chave);
+    if(E.varridas.some(a => a && String(a.id) === k)) return;
+    E.varridas.push({ id: k, quando: Date.now() });
+    if(E.varridas.length > TETO) E.varridas.splice(0, E.varridas.length - TETO);
+  }
+  const foiVarrida = chave => varridas().some(a => a && String(a.id) === String(chave));
+
+  /* ---------- 1. apagar enterra também o CARD ------------------------ */
+  /* a lápide da v195 é por id de tarefa; `sincronizarJobs` repõe o card
+     com uma tarefa NOVA, de id novo, e a lápide velha não a alcançava —
+     era assim que o card voltava e ia ao cliente outra vez */
+  if(typeof excluirTarefa === 'function') excluirTarefa = (function(orig){
+    return function(tid){
+      const t = S.ensaio && S.ensaio.tarefas.find(x => x.id === +tid);
+      const cli = t && t.cli, card = t && t.cardId;
+      const r = orig.apply(this, arguments);
+      if(r && cli != null && card != null) enterrar(chaveCard(cli, card));
+      return r;
+    };
+  })(excluirTarefa);
+
+  /* ---------- 2. esvaziar é enterrar, não limpar array --------------- */
+  if(typeof enLxEsvaziar === 'function') enLxEsvaziar = (function(orig){
+    return function(){
+      const mortos = [];
+      for(const e of ((S.ensaio || {}).lixo || []))
+        if(e && e.tarefa && e.tarefa.id != null) mortos.push(String(e.tarefa.id));
+      for(const cli of Object.keys(S.lixeira || {}))
+        for(const e of (S.lixeira[cli] || []))
+          if(e && e.item && e.item.id != null){
+            mortos.push(chaveCard(cli, e.item.id));
+            if(e.tarefa && e.tarefa.id != null) mortos.push(String(e.tarefa.id));
+          }
+      const n = orig.apply(this, arguments);
+      mortos.forEach(k => { varrer(k); enterrar(k); });
+      return n;
+    };
+  })(enLxEsvaziar);
+
+  /* ---------- 3. a faxina alcança as duas lixeiras ------------------- */
+  /* (a trava `voltando` é declarada mais abaixo, no bloco 5; `let` no
+     mesmo escopo de função basta porque a faxina só roda em callback) */
+  const faxinaDasLixeiras = () => {
+    if(voltando || !S.ensaio) return;
+    if(!varridas().length) return;            /* nada foi esvaziado: nada a varrer */
+    if(Array.isArray(S.ensaio.lixo)){
+      const fica = S.ensaio.lixo.filter(e =>
+        !(e && e.tarefa && e.tarefa.id != null && foiVarrida(e.tarefa.id)));
+      if(fica.length !== S.ensaio.lixo.length) S.ensaio.lixo = fica;
+    }
+    for(const cli of Object.keys(S.lixeira || {})){
+      const l = S.lixeira[cli];
+      if(!Array.isArray(l)) continue;
+      const fica = l.filter(e =>
+        !(e && e.item && e.item.id != null && foiVarrida(chaveCard(cli, e.item.id))));
+      if(fica.length !== l.length) S.lixeira[cli] = fica;
+    }
+  };
+
+  if(typeof faxinaDoEnsaio === 'undefined' && F.faxinaDoEnsaio){
+    /* embrulha a faxina da v195 para ela varrer as lixeiras também */
+    const antiga = F.faxinaDoEnsaio;
+    F.faxinaDoEnsaio = function(){
+      const n = antiga.apply(this, arguments);
+      try{ faxinaDasLixeiras(); }catch(e){}
+      return n;
+    };
+  }
+  /* e nos mesmos pontos em que a v195 já se pendura */
+  if(typeof aplicarEstado === 'function') aplicarEstado = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      try{ F.faxinaDoEnsaio(); faxinaDasLixeiras(); }catch(e){}
+      return r;
+    };
+  })(aplicarEstado);
+  if(typeof sincronizarJobs === 'function') sincronizarJobs = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      try{ faxinaDasLixeiras(); }catch(e){}
+      return r;
+    };
+  })(sincronizarJobs);
+  if(typeof sbAplicar === 'function') sbAplicar = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      try{ faxinaDasLixeiras(); }catch(e){}
+      return r;
+    };
+  })(sbAplicar);
+
+  /* ---------- 4. card enterrado não volta a nascer ------------------- */
+  if(typeof foiApagadaDeProposito === 'function') foiApagadaDeProposito = (function(orig){
+    return function(cli, cardId){
+      return temLapide(chaveCard(cli, cardId)) || orig.apply(this, arguments);
+    };
+  })(foiApagadaDeProposito);
+
+  if(typeof sincronizarJobs === 'function') sincronizarJobs = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      /* o repositor do quadro não conhece a lápide de card: tira depois */
+      try{
+        if(!voltando && S.ensaio && Array.isArray(S.ensaio.tarefas))
+          S.ensaio.tarefas = S.ensaio.tarefas.filter(t =>
+            !(t && t.cardId != null && t.cli != null && temLapide(chaveCard(t.cli, t.cardId))));
+      }catch(e){}
+      return r;
+    };
+  })(sincronizarJobs);
+
+  /* ---------- 5. restaurar desenterra os dois ------------------------ */
+  if(typeof podeRecriar === 'function') podeRecriar = (function(orig){
+    return function(cli, cardId){
+      desenterrar(chaveCard(cli, cardId));
+      return orig.apply(this, arguments);
+    };
+  })(podeRecriar);
+
+  /* Tudo o que VOLTA ao quadro tem de perder as DUAS lápides — a da
+     tarefa e a do card. A da tarefa a v195 já tira; a do card não tinha
+     quem tirasse quando a tarefa não era `daPauta` (o `podeRecriar` só é
+     chamado para essas). Sem isso o repositor filtrava de novo, no
+     desenho seguinte, exatamente o que a pessoa acabou de restaurar —
+     e o `ensaio-excluir` cobrou. */
+  function soltarOsCards(antes){
+    for(const t of ((S.ensaio || {}).tarefas || [])){
+      if(!t || t.cardId == null || t.cli == null) continue;
+      if(antes.includes(t.id)) continue;
+      desenterrar(chaveCard(t.cli, t.cardId));
+    }
+  }
+  /* E, de novo, a armadilha da v195: restaurar chama `render()` POR
+     DENTRO, o desenho roda o filtro, e o filtro mata o que acabou de
+     voltar — antes de `soltarOsCards` ter chance de tirar a lápide.
+     Enquanto se restaura, o filtro e a faxina das lixeiras se calam. */
+  let voltando = 0;
+  function comVolta(orig){
+    return function(){
+      const antes = ((S.ensaio || {}).tarefas || []).map(t => t.id);
+      voltando++;
+      let r;
+      try{ r = orig.apply(this, arguments); }
+      finally{ voltando--; }
+      try{ soltarOsCards(antes); }catch(e){}
+      return r;
+    };
+  }
+  if(typeof desfazer === 'function') desfazer = comVolta(desfazer);
+
+  if(typeof enLxVoltar === 'function') enLxVoltar = (function(orig){
+    return function(chave){
+      const [tipo, a, c] = String(chave).split(':');
+      const antes = ((S.ensaio || {}).tarefas || []).map(t => t.id);
+      const r = orig.apply(this, arguments);
+      if(r){
+        if(tipo === 'casa') desenterrar(a);
+        if(tipo === 'pauta') desenterrar(chaveCard(a, c));
+        try{ soltarOsCards(antes); }catch(e){}
+      }
+      return r;
+    };
+  })(enLxVoltar);
+
+  /* uma vez agora, para quem abre com a casa suja */
+  try{ F.faxinaDoEnsaio(); faxinaDasLixeiras(); }catch(e){}
 })();
 </script>

@@ -283,6 +283,16 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (9 set, v196):** esvaziar a lixeira não grudava — esvazia 7, atualiza,
+volta 7 — e card apagado ia ao cliente de novo. A v195 curou UMA lista; as outras
+três do mesmo assunto (`S.ensaio.lixo`, `S.lixeira[cli]`, `S.ensaio.naoRecriar`)
+não têm `id` nos itens, então a mescla não as une: escolhe um lado inteiro, e o
+lado com lixo ganha. Agora a casa tem UMA lápide só, com `id`, que une por
+construção: guarda tarefa (`<id>`) e card (`c:<cli>|<card>`) e manda no quadro,
+nas duas lixeiras e na recriação. Duas marcas, porque são duas mortes:
+`apagadas` (não volta ao quadro, segue na lixeira) e `varridas` (não volta nem
+para a lixeira). 21 provas em `web/verificar/v196-esvaziar-a-lixeira-gruda.mjs`,
+em quatro navegadores contra um banco só.
 **Fechado (8 set, v195):** tarefa apagada no Ensaio voltava sozinha, horas
 depois ("é como se tivesse resetando comandos atrás"). A mescla de três lados
 decide "eu apaguei e lá não mexeu → some; senão volta" comparando o item INTEIRO

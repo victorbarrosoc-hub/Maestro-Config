@@ -1,9 +1,66 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.29
+Version: 0.5.30
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.30 — 2026-09-09
+
+**Status:** Concluída
+**Objetivo:** esvaziar a lixeira gruda, e o card apagado não vai ao cliente de novo.
+
+### Uma lápide só, e ela une na mescla (v196)
+
+O founder, num vídeo de 18 segundos: esvazia a lixeira (*"Lixeira esvaziada — 7
+itens"*), toca em atualizar (*"Tudo em dia — v195"*), abre a lixeira: **7 itens**.
+Loop. E junto: *"já tinha uma tarefa dnovo enviada pra o cliente que joguei pra
+lixeira"*.
+
+**A v195 curou UMA lista** — `S.ensaio.tarefas` — e eu escrevi no comentário dela
+que a mescla só UNE lista cujos itens têm `id`. Não fui olhar as outras três do
+mesmo assunto:
+
+| lista | o que guarda | tem `id`? |
+|---|---|---|
+| `S.ensaio.lixo` | `{tarefa, quando}` | **não** |
+| `S.lixeira[cli]` | `{item, idx, quando}` | **não** |
+| `S.ensaio.naoRecriar` | strings | **não** |
+
+Sem `id`, a mescla não une: **escolhe um lado inteiro.** O lado que ainda tem
+lixo ganha, e a lixeira volta cheia — inclusive num navegador aberto do zero, que
+foi o caso que o teste pegou. E `naoRecriar`, a lápide da v188, some do mesmo
+jeito: por isso um card apagado voltava e era enviado ao cliente outra vez.
+
+Em vez de dar `id` a três listas e rezar para a quarta não aparecer, a casa passa
+a ter **uma lápide só, com `id`**, que a mescla une por construção. Ela guarda
+duas espécies de chave — `"<id da tarefa>"` e `"c:<cliente>|<card>"` — e manda no
+quadro, nas duas lixeiras e na recriação.
+
+**Duas mortes diferentes, e confundi-las apaga a lixeira.** `apagadas` quer dizer
+"não volta ao QUADRO", e o item segue vivo na lixeira — que é o ponto dela.
+Esvaziar quer dizer "não volta NEM PARA A LIXEIRA". Na primeira versão eu
+confundi as duas e **excluir uma tarefa a apagava da lixeira no mesmo gesto**. O
+teste cobrou. Agora são duas marcas, `apagadas` e `varridas`, as duas com `id`.
+
+**A armadilha que construí duas vezes na mesma noite.** Restaurar chama
+`render()` por dentro; o desenho roda o filtro; e o filtro matava o que acabou de
+voltar, antes de a lápide ser retirada. A v195 já documentava isso e eu caí de
+novo, num lugar novo. Agora há trava nos dois pontos (`restaurando`, `voltando`),
+e o `ensaio-excluir` guarda os dois casos. Junto: `desfazer` limpava a lápide da
+**tarefa** e não a do **card** — quem limpava a do card só era chamado para
+tarefa `daPauta`, então um job comum ficava filtrado para sempre.
+
+**Verificado:** `web/verificar/v196-esvaziar-a-lixeira-gruda.mjs`, **21 provas em
+quatro navegadores contra um banco só**: esvaziar e atualizar sem a lixeira
+voltar, navegador aberto do zero abrindo limpo, excluir a tarefa de um card e ele
+não voltar nos desenhos seguintes, e restaurar ainda devolvendo card e tarefa.
+Regressão verde em 20 suítes — v151, v156, v168, v169 (as de dois navegadores),
+v188, v193, v194, v195, `ensaio-excluir` (19), `lixeira-esvaziar`, `ensaio-ordem`
+(27), `ensaio-anexos`, `ensaio-filtro-cliente`, `ciclo-producao`, `cartao-ensaio`,
+`ensaio-mover`, `ensaio-historico`.
 
 ---
 
