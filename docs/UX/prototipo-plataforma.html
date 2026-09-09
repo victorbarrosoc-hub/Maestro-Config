@@ -14493,7 +14493,9 @@ window.addEventListener('click', e => {
       if(extras.cardSel==='novo'){
         // o job nasce nos dois lugares de uma vez
         const arr = S.pautas[tr.cli] = S.pautas[tr.cli] || [];
-        const novo = { id: Math.max(0,...arr.map(x=>x.id))+1, data:tr.prazo||hojeISO(),
+        const novo = { id: (typeof novoIdCard === 'function'
+                             ? novoIdCard() : Math.max(0,...arr.map(x=>x.id))+1),
+          data:tr.prazo||hojeISO(),
           dia: diaDaSemana(tr.prazo||hojeISO()), hora:'12:00', fmt:'Post',
           plats:['ig'], t: tr.titulo, texto: tr.desc||'', cta:'', st:'DRAFT',
           pecaId:null, feito:false, tarefa:false, pend:'', pilar:'Pauta principal',
@@ -22759,7 +22761,13 @@ function estruturarTarefa(tid){
   if(!t.cli){ toast('Escolha o cliente da tarefa primeiro.'); return; }
   S.cli = t.cli;
   const lista = S.pautas[t.cli] = S.pautas[t.cli] || [];
-  const id = Math.max(0, ...lista.map(x => x.id)) + 1;
+  /* v199 — o numero sai do RELOGIO, nunca do maior desta pauta.
+     `Math.max(ids desta pauta) + 1` da o MESMO numero para duas pessoas
+     estruturando ao mesmo tempo: nascem dois cards com o mesmo id, a
+     mescla casa por id e junta os dois, e as duas tarefas passam a achar
+     um card so. Foi o que o founder viu, com a Anna Clara. */
+  const id = typeof novoIdCard === 'function'
+    ? novoIdCard() : Math.max(0, ...lista.map(x => x.id)) + 1;
   const dia = t.prazo ? (new Date(t.prazo + 'T12:00:00').getDay() + 6) % 7 : 0;
   const p = { id, t: t.titulo, fmt: 'Post', plats: ['ig'], dia, hora: '18:30', texto: '', cta: '',
     data: t.prazo || null, resp: t.resp || null, projeto: t.projeto || null,
@@ -37476,47 +37484,15 @@ sbGravar = (function(orig){
       legenda ficou de fora, e era justo o que o founder foi procurar.
    ===================================================================== */
 (function(){
-  /* ---------- 1. o número do card sai de um lugar só ---------------- */
-  if(typeof estruturarTarefa === 'function' && typeof novoIdCard === 'function'){
-    estruturarTarefa = (function(orig){
-      return function(tid){
-        const t = S.ensaio && S.ensaio.tarefas.find(x => x.id === +tid);
-        const antes = (t && t.cli) ? ((S.pautas[t.cli] || []).length) : -1;
-        const r = orig.apply(this, arguments);
-        /* o original acabou de empurrar o card com o número frágil;
-           troca por um do relógio antes que alguém mais o alcance */
-        try{
-          if(t && t.cli && antes >= 0){
-            const lista = S.pautas[t.cli] || [];
-            const novo = lista[lista.length - 1];
-            if(novo && lista.length === antes + 1 && t.cardId === novo.id){
-              const id = novoIdCard();
-              novo.id = id; t.cardId = id;
-              if(typeof ligarTarefaAoCard === 'function') ligarTarefaAoCard(t);
-            }
-          }
-        }catch(e){}
-        return r;
-      };
-    })(estruturarTarefa);
-  }
+  /* O conserto da ORIGEM esta la em cima, nas duas funcoes que criavam
+     card: as duas passaram a usar `novoIdCard()`. A primeira versao
+     disto renumerava DEPOIS, por embrulho — e o `ciclo-producao` pegou:
+     o editor ja tinha aberto com o numero velho, o botao Salvar
+     apontava para um card que nao existia mais, e o salvar criaria um
+     TERCEIRO card. Conserto de origem, nao de remendo.
 
-  /* o "criar um card novo na pauta", do modal da tarefa, tem o mesmo
-     defeito e roda por um setTimeout — pega o card recém-nascido */
-  addEventListener('click', e => {
-    if(!e.target.closest || !e.target.closest('[data-enok]')) return;
-    setTimeout(() => {
-      try{
-        if(typeof novoIdCard !== 'function') return;
-        for(const t of ((S.ensaio || {}).tarefas || [])){
-          if(!t || !t.cli || t.cardId == null) continue;
-          const lista = S.pautas[t.cli] || [];
-          const iguais = lista.filter(p => p.id === t.cardId);
-          if(iguais.length > 1) arrumarNumeros(t.cli);
-        }
-      }catch(err){}
-    }, 12);
-  }, true);
+     O que sobra aqui e o que o embrulho nao alcanca: o estrago que ja
+     esta no banco de quem usou a versao antiga. */
 
   /* ---------- 2. dois cards com o mesmo número não sobrevivem ------- */
   function arrumarNumeros(cli){
