@@ -15771,7 +15771,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v208 · 10 set · a casa nao viaja com o aparelho';
+const VERSAO_PROTOTIPO = 'v210 · 10 set · nao consegui ler nao e nao tem';
 
 menuSheet = (function(orig){
   return function(){
@@ -37150,7 +37150,22 @@ sbGravar = (function(orig){
         return { faltou: r.status === 404 || r.status === 400,
                  status: r.status, corpo: txt };
       }
-      return { valor: await r.json().catch(() => null) };
+      /* v210 — "NÃO CONSEGUI LER" NÃO É "NÃO TEM".
+
+         Aqui morava `await r.json().catch(() => null)`. Um corpo vazio,
+         um 204, uma resposta cortada no meio — tudo virava `null`. E
+         `null` é a resposta que significa "esta pessoa não pertence a
+         agência nenhuma": a Maestro fechava o portão contra o próprio
+         dono da casa e oferecia a ele a porta de criar agência.
+
+         Um `null` de verdade e um erro de leitura não podem chegar
+         iguais. O corpo é lido como TEXTO, e só o texto `null` é null. */
+      let cru = '';
+      try{ cru = (await r.text() || '').trim(); }
+      catch(e){ return { ilegivel: true, status: r.status }; }
+      if(cru === '') return { ilegivel: true, status: r.status, vazio: true };
+      try{ return { valor: JSON.parse(cru) }; }
+      catch(e){ return { ilegivel: true, status: r.status, corpo: cru.slice(0, 200) }; }
     }catch(e){ return { erro: true, corpo: String(e && e.message || e) }; }
   }
 
