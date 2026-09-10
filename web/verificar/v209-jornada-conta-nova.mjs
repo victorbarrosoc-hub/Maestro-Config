@@ -173,19 +173,41 @@ console.log('\n3. ela cria a agência dela, clicando');
      'e não é a agência de outra pessoa');
 }
 
-console.log('\n4. e a casa nasce VAZIA');
+console.log('\n4. e a casa nasce VAZIA — nas telas, não só na que está aberta');
 {
-  const t = await naTela(pag);
-  ok(!/Cortez Jurídico/.test(t), 'nenhum cliente herdado');
-  ok(!/Gabi Domingues|Victor Barroso/.test(t), 'nenhuma pessoa herdada');
+  /* A primeira versão desta prova olhava o texto da tela que por acaso
+     estava na frente, e deixou passar que a agência nova nascia com a
+     equipe e o cliente do founder. Agora ABRE cada tela e pergunta a
+     ela. Olhar onde a luz está acesa não é procurar. */
+  const abrir = rota => pag.evaluate(r => {
+    S.view = 'agency'; S.route = r; render();
+    document.getElementById('quemEsta')?.remove();
+  }, rota);
+
+  ok(await pag.evaluate(() => (typeof CLIS === 'function' ? CLIS() : []).length === 0),
+     'a lista de clientes está vazia');
+  ok(await pag.evaluate(() => ((S.equipe || []).length === 0)),
+     'a equipe está vazia');
+
+  await abrir('clientes'); await pag.waitForTimeout(700);
+  const tc = await naTela(pag);
+  ok(!/Cortez Jurídico/.test(tc), 'a tela Clientes não mostra o cliente do founder');
+
+  await abrir('equipe'); await pag.waitForTimeout(700);
+  const te = await naTela(pag);
+  ok(!/Victor Barroso|Anna Clara|Roberto Pivotto|Gabi Domingues/.test(te),
+     'a tela Equipe não mostra ninguém da outra agência');
+
+  await abrir('producao'); await pag.waitForTimeout(700);
+  ok(await pag.evaluate(() => {
+       const e = (S.ensaio && S.ensaio.tarefas) || [];
+       return !e.some(t => t && t.cli); }),
+     'o Ensaio não tem tarefa de cliente nenhum');
+
   ok(await pag.evaluate(() => {
        const p = S.pautas || {};
        return !Object.keys(p).some(k => (p[k] || []).length); }),
-     'nenhum card herdado');
-  ok(await pag.evaluate(() => {
-       const e = (S.ensaio && S.ensaio.tarefas) || [];
-       return !e.some(t => t && t.cli && t.cli !== null); }),
-     'e nenhuma tarefa de cliente herdada no Ensaio');
+     'e nenhum card herdado');
 }
 
 console.log('\n5. o founder volta, e a casa dele volta inteira');
@@ -198,6 +220,21 @@ console.log('\n5. o founder volta, e a casa dele volta inteira');
      'e o Cortez está de volta, vindo do banco');
   ok(banco.linhas.some(l => l.org === 'maestro' && l.cliente === 'cj'),
      'nada dele foi apagado do banco em nenhum momento');
+
+  /* e a casa DELE continua com gente e cliente dentro — o conserto da
+     agência nova não pode ter esvaziado a do founder */
+  await pag.evaluate(() => { S.view='agency'; S.route='clientes'; render();
+    document.getElementById('quemEsta')?.remove(); });
+  await pag.waitForTimeout(800);
+  ok(/Cortez Jurídico/.test(await naTela(pag)),
+     'a tela Clientes dele mostra o Cortez, como sempre');
+  ok(await pag.evaluate(() => (typeof CLIS === 'function' ? CLIS() : []).length > 0),
+     'a lista de clientes dele não está vazia');
+  await pag.evaluate(() => { S.route='equipe'; render();
+    document.getElementById('quemEsta')?.remove(); });
+  await pag.waitForTimeout(800);
+  ok(await pag.evaluate(() => ((S.equipe || []).length > 0)),
+     'e a equipe dele continua de pé');
 }
 
 ok(erros.length === 0, 'nenhum erro de página em toda a jornada'
