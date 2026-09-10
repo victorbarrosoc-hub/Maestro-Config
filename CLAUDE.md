@@ -312,8 +312,13 @@ sucesso). **Lições:** (1) todo dado que sincroniza precisa dizer de que dono �
 `blob:` foi a v218, agência é esta; (2) limpar cache não fecha vazamento: a trava
 tem de estar na ESCRITA; (3) a suíte gravou o estado falso no formato errado e o
 caso principal passou POR VACUIDADE — quem denunciou foi o caso que cobrava o
-contrário. **Se os clientes errados continuarem na ZRO depois desta versão**, já
-estão gravados no banco dela e precisam sair pela lista de Clientes ou por SQL.
+contrário. **O que a v220 NÃO desfaz:** o que já subiu antes dela está no banco carimbado
+`org=zro` e continua lá. Para tirar:
+`docs/ENGINEERING/agencias-4-tirar-o-que-vazou.sql` — em três passos (cópia de
+segurança · inspeção · remoção), tirando só o que tem a assinatura da cópia
+(mesmo id E mesmo nome em outra agência), preservando a EQUIPE da ZRO e o que só
+existe nela. 35 provas num Postgres que reproduz o banco dele, rodando o arquivo
+de verdade, em `docs/ENGINEERING/agencias-4-teste.sql`.
 15 provas em `web/verificar/v220-o-aparelho-sabe-de-quem.mjs`.
 **Fechado (10 set, v219):** "Entrei como ZRO e apareceu isso de cara" — a tela
 "Quem está entrando?" com a Gabi e sem ele. A ZRO foi criada antes da v215 e o
