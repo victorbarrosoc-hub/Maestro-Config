@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-10 01:15 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-10 01:22 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15839,7 +15839,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v205 · 10 set · sem agencia, nenhuma identidade';
+const VERSAO_PROTOTIPO = 'v206 · 10 set · painel de diagnostico com ?diag';
 
 menuSheet = (function(orig){
   return function(){
@@ -38448,5 +38448,94 @@ sbGravar = (function(orig){
   })(renderLayer);
 
   window.MaestroPortao = { semAgencia, reporTela };
+})();
+</script>
+
+<style>
+#diagMaestro{ position:fixed; inset:auto 12px 12px 12px; z-index:999999;
+  background:#101010; border:1px solid #333; border-radius:12px; padding:14px 16px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; line-height:1.65;
+  color:#EDEDED; max-height:70vh; overflow:auto; white-space:pre-wrap; word-break:break-word }
+#diagMaestro b{ color:#FFC857 }
+#diagMaestro .fecha{ position:absolute; top:8px; right:10px; color:#888; cursor:pointer }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v206 — O PAINEL QUE DIZ O QUE O BANCO RESPONDEU.
+
+   Três versões seguidas eu consertei a porta errada porque estava
+   supondo o que o banco responde, e o meu banco de teste respondia o
+   que eu esperava. O founder está em v205 e o portão não segura — logo
+   `semAgencia()` devolve falso, e eu não sei por quê.
+
+   Isto não conserta nada: mostra. Abre só com `?diag` na URL, mostra só
+   o estado de quem está olhando, e some ao tocar. Um print responde o
+   que três rodadas de suposição não responderam.
+   ===================================================================== */
+(function(){
+  if(!/[?&]diag\b/.test(location.search)) return;
+
+  const linha = (r, v) => `<b>${r}</b>: ${v}\n`;
+  const seguro = f => { try{ return f(); }catch(e){ return 'ERRO: ' + e.message; } };
+
+  async function montar(){
+    let txt = '';
+    txt += linha('versão', seguro(() => VERSAO_PROTOTIPO));
+
+    txt += linha('sessão', seguro(() => {
+      const q = window.MaestroPorta && MaestroPorta.quem();
+      return q ? (q.email || 'sem e-mail no token') : 'NENHUMA';
+    }));
+
+    const A = window.MaestroAgencia;
+    txt += linha('MaestroAgencia', A
+      ? `sondado=${A.sondado} sabemos=${A.sabemos} org=${JSON.stringify(A.org)} chave2=${A.chave2}`
+      : 'NÃO EXISTE');
+
+    txt += linha('portão v205', seguro(() =>
+      window.MaestroPortao ? ('semAgencia() = ' + MaestroPortao.semAgencia()) : 'NÃO EXISTE'));
+
+    txt += linha('S.usuario', seguro(() => JSON.stringify(S.usuario)));
+
+    /* a pergunta crua ao banco, com o token de quem está aqui */
+    txt += linha('maestro_org (cru)', await (async () => {
+      try{
+        const r = await fetch(`${SB.url}/rest/v1/rpc/maestro_org`, {
+          method: 'POST',
+          headers: { apikey: SB.key, Authorization: 'Bearer ' + SB.key,
+                     'Content-Type': 'application/json' },
+          body: '{}' });
+        const corpo = await r.text();
+        return `HTTP ${r.status} · corpo: ${corpo.slice(0, 160) || '(vazio)'}`;
+      }catch(e){ return 'ERRO: ' + e.message; }
+    })());
+
+    txt += linha('maestro_pronto (cru)', await (async () => {
+      try{
+        const r = await fetch(`${SB.url}/rest/v1/rpc/maestro_pronto`, {
+          method: 'POST',
+          headers: { apikey: SB.key, Authorization: 'Bearer ' + SB.key,
+                     'Content-Type': 'application/json' },
+          body: '{}' });
+        return `HTTP ${r.status} · corpo: ${(await r.text()).slice(0, 80)}`;
+      }catch(e){ return 'ERRO: ' + e.message; }
+    })());
+
+    const el = document.getElementById('diagMaestro') || (() => {
+      const d = document.createElement('div');
+      d.id = 'diagMaestro';
+      d.addEventListener('click', ev => {
+        if(ev.target.classList.contains('fecha')) d.remove();
+      });
+      document.body.appendChild(d);
+      return d;
+    })();
+    el.innerHTML = '<span class="fecha">×</span>' + txt;
+  }
+
+  /* depois de a sondagem ter tido tempo de acontecer, e de novo adiante */
+  setTimeout(montar, 2500);
+  setTimeout(montar, 6000);
 })();
 </script>
