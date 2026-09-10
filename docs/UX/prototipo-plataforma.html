@@ -15771,7 +15771,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v204 · 10 set · conta nova nao ve equipe alheia';
+const VERSAO_PROTOTIPO = 'v205 · 10 set · sem agencia, nenhuma identidade';
 
 menuSheet = (function(orig){
   return function(){
@@ -38283,5 +38283,102 @@ sbGravar = (function(orig){
   }
 
   window.MaestroSemAgencia = { semAgencia, naoPodeEscolher, varrerQuemEsta };
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v205 — SEM AGÊNCIA, NENHUMA IDENTIDADE. UM PORTÃO, NÃO SETE PORTAS.
+
+   A v204 fechou UMA tela e o founder achou a segunda em dois minutos:
+   entrou com uma conta nova, clicou "Sou o cliente" no portão e caiu
+   DENTRO do painel do Cortez Jurídico — cliente real de outra agência,
+   com nome, projeto, feed e conta. Antes disso, "Sou a agência" tinha
+   aberto a lista com Victor, Anna Clara e Roberto.
+
+   POR QUE A v204 NÃO BASTOU, e a lição que fica. Eu embrulhei
+   `abrirQuemEsta` e bloqueei o clique em `[data-qeag]`. Mas assumir
+   identidade tem SETE caminhos: o portão (`data-enter="agency"` e
+   `="client"`), o alternador Agência/Cliente do topo, os dois
+   seletores, "Ver o lado do cliente" em duas telas. E nenhum deles é
+   alcançável por um ouvinte novo: todos correm na captura da janela e
+   cortam a propagação antes — quem se registra depois nunca chega.
+
+   Tapar porta, nesta casa, é o mesmo erro da v196 ("curei UMA lista, as
+   outras três não") e da v199 ("dois lugares ficaram de fora"). Some
+   uma porta, sobra a próxima.
+
+   O PORTÃO. Identidade mora num lugar só: `S.usuario`. Então é ELE que
+   passa a recusar. Enquanto o banco AFIRMA que esta conta não pertence
+   a agência nenhuma, escrever `S.usuario` não tem efeito — venha o
+   clique de onde vier, do teclado, do console ou de um caminho que
+   ninguém previu. Não é preciso conhecer as sete portas para fechar as
+   sete.
+
+   E "afirma" é a palavra exata, herdada da v197: enquanto o banco não
+   respondeu, não se conclui nada. Resposta estranha, erro ou função
+   ausente é "não sei" — e não sei não tranca ninguém para fora. Quem
+   nunca entrou (o protótipo aberto, sem sessão) segue como sempre foi.
+   ===================================================================== */
+(function(){
+  const A = () => window.MaestroAgencia || null;
+
+  function semAgencia(){
+    const a = A();
+    if(!a || !a.sondado || !a.sabemos) return false;   /* não sei ≠ não tem */
+    if(a.org) return false;
+    try{ if(!(window.MaestroPorta && MaestroPorta.quem())) return false; }
+    catch(e){ return false; }                          /* sem sessão: aberto */
+    return true;
+  }
+
+  /* ---------- o portão: S.usuario recusa enquanto não há agência ----- */
+  let _usuario = S.usuario;
+  try{
+    Object.defineProperty(S, 'usuario', {
+      configurable: true, enumerable: true,
+      get(){ return _usuario; },
+      set(v){
+        if(v && semAgencia()){
+          /* alguém tentou virar alguém. Não é erro de quem clicou — é
+             uma porta que ninguém fechou. Some com o rastro e chama a
+             tela que deveria estar na frente. */
+          try{ localStorage.removeItem(CHAVE_USR); }catch(e){}
+          _usuario = null;
+          setTimeout(reporTela, 0);
+          return;
+        }
+        _usuario = v;
+      }
+    });
+  }catch(e){}
+
+  /* ---------- e o que já estiver escrito também sai ------------------ */
+  function reporTela(){
+    if(!semAgencia()) return;
+    if(_usuario){
+      _usuario = null;
+      try{ localStorage.removeItem(CHAVE_USR); }catch(e){}
+      try{ S.view = 'site'; S.route = 'home'; }catch(e){}
+    }
+    document.getElementById('quemEsta')?.remove();
+    /* a porta de criar agência é da v197; aqui só se garante que ela
+       esteja na frente, já que é a única coisa que faz sentido agora */
+    const a = A();
+    if(a && !document.getElementById('criarAgencia') && typeof a.sondar === 'function'){
+      try{ a.sondado = false; a.sondar().then(() => {}); }catch(e){}
+    }
+  }
+
+  setInterval(reporTela, 600);
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); reporTela(); return r; };
+  })(render);
+  if(typeof renderLayer === 'function') renderLayer = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); reporTela(); return r; };
+  })(renderLayer);
+
+  window.MaestroPortao = { semAgencia, reporTela };
 })();
 </script>
