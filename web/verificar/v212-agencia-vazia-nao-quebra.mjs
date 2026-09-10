@@ -79,10 +79,16 @@ console.log('\n1. o estado: uma agência que existe e está vazia');
   const r = await pag.evaluate(() => ({
     org: (window.MaestroAgencia || {}).org,
     clientes: (typeof CLIS === 'function' ? CLIS() : []).length,
-    equipe: (S.equipe || []).length }));
+    equipe: (S.equipe || []).length,
+    equipeMails: (S.equipe || []).map(m => String(m.mail || '').toLowerCase()) }));
   ok(r.org === 'ag_nova', 'a agência é a nova: ' + r.org);
   ok(r.clientes === 0, 'zero clientes');
-  ok(r.equipe === 0, 'zero pessoas na equipe');
+  /* v219: "vazia" é de cliente e de card. De gente, a casa tem quem tem
+     conta nela — o banco afirmou que esta conta é desta agência, então
+     a pessoa é da equipe por definição. Zero pessoas seria uma casa sem
+     ninguém para entrar. */
+  ok(r.equipe === 1 && r.equipeMails[0] === 'nova@agencia.com.br',
+     'na equipe, só quem entrou pela conta (' + JSON.stringify(r.equipeMails) + ')');
 }
 
 console.log('\n2. TODAS as telas da agência abrem sem quebrar');

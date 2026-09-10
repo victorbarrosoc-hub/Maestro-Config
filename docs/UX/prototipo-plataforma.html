@@ -12786,6 +12786,8 @@ modalVer = (function(orig){
    deixava a porta esticada de ponta a ponta; ela volta ao tamanho de um
    cartão e ao meio. */
 .gatebox.gate1{ max-width:520px }
+.msfoot .msSair{ color:var(--coral); border-color:rgba(240,120,76,.4) }
+.msfoot .msSair:hover{ background:rgba(240,120,76,.10); border-color:var(--coral) }
 .doors.doors1{ grid-template-columns:1fr; max-width:400px; margin:0 auto }
 .gateCli{ display:flex; gap:14px; align-items:flex-start; margin:22px auto 0; max-width:400px;
   padding:16px 18px; border:1px dashed var(--ink-700); border-radius:14px;
@@ -14045,21 +14047,67 @@ function cvHora(ts){ const d = new Date(ts || 0);
 /* a mídia de uma mensagem. `m.midia` é uma lista de
    {tipo, url, nome, mime, dur, tam} — o arquivo mora no bucket `midia`,
    aqui viaja só a url. */
+/* v218 — A MÍDIA TEM TRÊS ESTADOS, E O DESENHO DIZ QUAL É.
+
+   O founder: "fica aparecendo e desaparecendo a imagem que enviei", e o
+   vídeo saía como uma caixa preta. As duas coisas eram a MESMA causa: a
+   v217 guardava em `S.chat` — que vai para o banco — o endereço `blob:`
+   do arquivo, que só vale nesta aba até a página recarregar. O iPhone
+   recarrega o app ao voltar para ele; a partir daí, foto sem fonte e
+   `<video>` sem fonte, que é a caixa escura do print.
+
+   Agora `url` só recebe endereço de verdade (https, do bucket). Enquanto
+   o arquivo sobe, a prévia mora FORA do estado, num mapa por id desta
+   aba (`MaestroConversas.previa`). Três estados:
+
+     · url https    → a mídia, como é em qualquer aparelho;
+     · prévia local → a mídia com o progresso por cima (só aqui);
+     · nenhum       → um cartão que DIZ o que houve: "enviando de outro
+                       aparelho…" ou "não subiu · motivo".
+
+   Uma caixa preta não diz nada; um cartão diz. E baixar: foto, vídeo e
+   arquivo ganham o botão — "precisa ter a opção de baixar". */
 function cvMidiaHtml(m){
   const mid = (m && m.midia) || [];
   if(!mid.length) return '';
-  return '<div class="cvMid">' + mid.map((a, i) => {
-    const u = esc(a.url || ''), nome = esc(a.nome || 'arquivo');
+  const previa = id => { try{ return (window.MaestroConversas && MaestroConversas.previa(id)) || null; }catch(e){ return null; } };
+  const ehHttp = u => /^https?:\/\//.test(String(u || ''));
+  const baixar = (u, nome) => u ? `<a class="cvBaixar" href="${u}" download="${nome}" target="_blank"
+      rel="noopener" aria-label="Baixar ${nome}" title="Baixar">${ic('down',14)}</a>` : '';
+  return '<div class="cvMid">' + mid.map(a => {
+    const nome = esc(a.nome || 'arquivo');
+    const oficial = ehHttp(a.url) ? esc(a.url) : '';
+    const local = oficial ? '' : (a.id ? esc(previa(a.id) || '') : '');
+    const u = oficial || local;
+    const prog = (!oficial && !a.erro && a.prog != null && a.prog < 100)
+      ? `<span class="cvProg"><i style="width:${Math.max(3, +a.prog)}%"></i></span>` : '';
+    /* falhou AQUI, com a prévia ainda viva: a mídia aparece (o arquivo
+       está neste aparelho), mas o aviso fica embaixo dela — senão quem
+       mandou acha que foi. */
+    const falhou = (!oficial && a.erro)
+      ? `<small class="cvFalhou">não subiu${a.motivo ? ' · ' + esc(String(a.motivo).slice(0, 80)) : ''} — só neste aparelho</small>` : '';
+
+    /* sem endereço nenhum: o cartão explica */
+    if(!u){
+      const motivo = a.erro
+        ? `não subiu${a.motivo ? ' · ' + esc(String(a.motivo).slice(0, 80)) : ''} — ficou só no aparelho de quem mandou`
+        : 'enviando de outro aparelho…';
+      return `<div class="cvArq semFonte">${ic(a.tipo === 'audio' ? 'mic' : a.tipo === 'video' ? 'play' : 'doc', 15)}
+        <span><b>${nome}</b><small>${motivo}</small></span></div>`;
+    }
     if(a.tipo === 'imagem')
-      return `<button class="cvFoto" data-cvver="${u}" data-cvvertipo="imagem"
-        aria-label="Abrir ${nome}"><img src="${u}" alt="${nome}" loading="lazy"></button>`;
+      return `<div class="cvMidBox"><button class="cvFoto" data-cvver="${u}" data-cvvertipo="imagem"
+        data-cvnome="${nome}" aria-label="Abrir ${nome}"><img src="${u}" alt="${nome}" loading="lazy"></button>
+        ${prog}${baixar(oficial, nome)}${falhou}</div>`;
     if(a.tipo === 'video')
-      return `<video class="cvVideo" src="${u}" controls preload="metadata" playsinline></video>`;
+      return `<div class="cvMidBox"><video class="cvVideo" src="${u}" controls preload="metadata" playsinline
+        data-cvnome="${nome}"></video>${prog}${baixar(oficial, nome)}${falhou}</div>`;
     if(a.tipo === 'audio')
-      return `<div class="cvAudio"><audio src="${u}" controls preload="metadata"></audio>
-        ${a.dur ? `<span class="dur">${esc(a.dur)}</span>` : ''}</div>`;
-    return `<a class="cvArq" href="${u}" target="_blank" rel="noopener">
-      ${ic('doc',15)}<span><b>${nome}</b>${a.tam ? `<small>${esc(a.tam)}</small>` : ''}</span></a>`;
+      /* a duração fica no nome ("Áudio · 0:12"): o player nativo já mostra a
+         dele, e duas contagens que não batem (0:04 vs 0:05) confundem */
+      return `<div class="cvMidBox"><div class="cvAudio"><audio src="${u}" controls preload="metadata"></audio></div>${prog}${falhou}</div>`;
+    return `<div class="cvMidBox"><a class="cvArq" href="${u}" target="_blank" rel="noopener">
+      ${ic('doc',15)}<span><b>${nome}</b>${a.tam ? `<small>${esc(a.tam)}</small>` : ''}</span></a>${prog}${baixar(oficial, nome)}${falhou}</div>`;
   }).join('') + '</div>';
 }
 
@@ -15887,7 +15935,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v217 · 10 set · conversas com voz, foto e video';
+const VERSAO_PROTOTIPO = 'v219 · 10 set · quem tem conta entra na equipe';
 
 menuSheet = (function(orig){
   return function(){
@@ -39327,9 +39375,26 @@ sbGravar = (function(orig){
            .replace(/<button[^>]*data-mgo2="entrar"[^>]*>[\s\S]*?<\/button>\s*/g, '')
            .replace(/<div class="msgrp">Trocar de lugar\s*<i><\/i><\/div>\s*/g, '')
            .replace(/(\d+) telas · lado (?:da agência|do cliente)/g, '$1 telas');
+      /* v218 — "Preciso de um botão fácil no menu de logout." No lugar
+         onde ficava a "Tela de entrada" (que saiu na v216), e só para
+         quem ENTROU: quem chegou por link não tem de onde sair. Chama o
+         `sair()` da porta (v170), que já existe — um caminho só. */
+      try{
+        const logado = !!(window.MaestroPorta && MaestroPorta.quem && MaestroPorta.quem());
+        if(logado && !S.viaLink && h.indexOf('data-sairmaestro') < 0)
+          h = h.replace(/(<div class="msfoot">)/,
+            `$1<button class="b gho sm msSair" data-sairmaestro="1">${ic('arrowl',13)} Sair da conta</button>`);
+      }catch(e){}
       return h;
     };
   })(menuSheet);
+  /* o Sair fecha o Menu antes de sair: o clique é da porta (v170), que
+     corta a propagação na janela — então o fechar vai no pointerdown,
+     que chega antes */
+  addEventListener('pointerdown', e => {
+    if(!(e.target.closest && e.target.closest('.msfoot [data-sairmaestro]'))) return;
+    try{ S.menu = false; }catch(err){}
+  }, true);
   /* e o clique, caso alguém chegue nele por teclado ou por um caminho
      que ninguém previu: some a porta, some o efeito */
   addEventListener('click', e => {
@@ -39602,6 +39667,28 @@ html[data-tema="claro"] .cvArq b{ color:#17181C }
 .cvMsg .balao a{ color:var(--brass-300) }
 html[data-tema="claro"] .cvMsg .balao a{ color:#855F22 }
 
+/* a caixa da mídia: o progresso e o "baixar" moram no canto dela */
+.cvMidBox{ position:relative; display:inline-block; max-width:100% }
+.cvProg{ position:absolute; left:10px; right:10px; bottom:8px; height:4px; border-radius:2px;
+  background:rgba(255,255,255,.18); overflow:hidden; pointer-events:none }
+.cvProg i{ display:block; height:100%; background:var(--brass-500); border-radius:2px;
+  transition:width .3s var(--eo) }
+.cvBaixar{ position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:999px;
+  display:grid; place-items:center; color:#fff; text-decoration:none;
+  background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.22);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  opacity:.85; transition:opacity var(--fast) var(--eo), transform var(--fast) var(--eo) }
+.cvBaixar:hover{ opacity:1; transform:scale(1.06) }
+.cvMidBox > .cvArq + .cvBaixar{ position:static; margin-left:8px; vertical-align:middle;
+  background:var(--vidro-forte); color:var(--ink-100); border-color:var(--vidro-borda) }
+.cvArq.semFonte{ border-style:dashed; opacity:.85 }
+.cvFalhou{ display:block; margin-top:4px; font-size:11px; color:var(--coral); line-height:1.4 }
+.cvArq.semFonte small{ white-space:normal; color:var(--coral) }
+.cvLupa .baixar{ position:absolute; top:calc(16px + env(safe-area-inset-top)); right:70px;
+  width:42px; height:42px; border-radius:999px; display:grid; place-items:center;
+  color:#fff; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.2);
+  -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px) }
+
 /* ---------- o compositor -------------------------------------------- */
 .cvEscreve{ border-top:0; padding:10px 12px 12px; gap:8px; align-items:center }
 .cvBarraEsc{ display:flex; align-items:center; gap:7px; flex:1; min-width:0;
@@ -39616,12 +39703,23 @@ html[data-tema="claro"] .cvMsg .balao a{ color:#855F22 }
 .cvEscreve input#cv-txt{ flex:1; min-width:0; border:0; background:none; outline:none;
   color:var(--ink-50); font-size:15px; padding:8px 4px }
 html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
-.cvEscreve input#cv-txt::placeholder{ color:var(--ink-500) }
+/* v218 — "Não consigo ler o texto que aparece sugerido pra escrever."
+   O placeholder estava em ink-500, que sobre vidro escuro é cinza sobre
+   cinza. Sobe dois degraus. E o resto do que ele chamou de "destaques":
+   nome de quem fala, hora, prévia do canal. */
+.cvEscreve input#cv-txt::placeholder{ color:var(--ink-300); opacity:1 }
+html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
+.cvMsg .quem{ font-size:12px; color:var(--brass-300) }
+.cvMsg .balao{ font-size:14.5px }
+.cvMsg .hr{ font-size:10px; color:var(--ink-300) }
+.cvCanal .cvPrev{ color:var(--ink-300) }
+.cvCanal .cvQuando{ color:var(--ink-400); font-size:9.5px }
+.cvDia span{ color:var(--ink-300) }
 .cvIcone{ width:36px; height:36px; border-radius:999px; display:grid; place-items:center;
   color:var(--ink-300); flex:0 0 auto;
   transition:background var(--fast) var(--eo), color var(--fast) var(--eo) }
 .cvIcone:hover{ background:var(--vidro-forte); color:var(--ink-50) }
-.cvIcone.grav{ color:var(--danger); animation:pulse 1.1s ease-in-out infinite }
+.cvIcone.grav{ color:var(--danger) }
 .cvEnviar{ width:40px; height:40px; border-radius:999px; display:grid; place-items:center;
   flex:0 0 auto; color:var(--ink-950);
   background:linear-gradient(180deg,#D2A24A,var(--brass-500));
@@ -39646,8 +39744,14 @@ html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
 .cvGravando{ display:flex; align-items:center; gap:10px; flex:1; padding:9px 14px;
   border-radius:999px; border:1px solid rgba(229,72,77,.4);
   background:rgba(229,72,77,.10); font-size:13px; color:var(--ink-100) }
-.cvGravando .pt{ width:9px; height:9px; border-radius:50%; background:var(--danger);
-  animation:pulse 1s ease-in-out infinite; flex:0 0 auto }
+.cvGravando .pt{ width:9px; height:9px; border-radius:50%; background:var(--danger); flex:0 0 auto }
+/* o medidor: 14 barras que acendem com a voz. O que se mexe aqui é o
+   microfone, não o desenho. */
+.cvNivel{ display:inline-flex; align-items:center; gap:2px; height:18px; flex:0 0 auto }
+.cvNivel i{ display:block; width:3px; height:6px; border-radius:2px; background:var(--ink-600);
+  transition:background 80ms linear, height 80ms linear }
+.cvNivel i.on{ background:var(--encore); height:16px }
+.cvNivel i:nth-child(n+11).on{ background:var(--brass-500) }
 .cvGravando .t{ font-family:var(--mono); font-size:13px; color:var(--danger) }
 .cvGravando .sp{ flex:1 }
 
@@ -39682,7 +39786,7 @@ html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
   .cvMsg{ max-width:86% }
 }
 @media (prefers-reduced-motion:reduce){
-  .cvIcone.grav, .cvGravando .pt{ animation:none }
+  .cvNivel i{ transition:none }
 }
 </style>
 <script>
@@ -39732,6 +39836,8 @@ html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
       if(!IC.mic)   IC.mic   = '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/>';
       if(!IC.envia) IC.envia = '<path d="M4.5 12 20 4.5 15.5 20l-3.6-5.9z"/><path d="m11.9 14.1 8.1-9.6"/>';
       if(!IC.x)     IC.x     = '<path d="M6 6l12 12M18 6 6 18"/>';
+      if(!IC.down)  IC.down  = '<path d="M12 4v12M6.5 10.5 12 16l5.5-5.5M4.5 20h15"/>';
+      if(!IC.play)  IC.play  = '<path d="M7 4.5v15l12-7.5z"/>';
     }
   }catch(e){}
 
@@ -39769,7 +39875,9 @@ html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
 
       const linha = gravador
         ? `<div class="cvGravando"><span class="pt"></span>
-             <span>Gravando…</span><span class="t" id="cv-relogio">0:00</span>
+             <span>Gravando…</span>
+             <span class="cvNivel" id="cv-nivel" aria-hidden="true">${'<i></i>'.repeat(14)}</span>
+             <span class="t" id="cv-relogio">${seg((Date.now() - gravDesde) / 1000)}</span>
              <span class="sp"></span>
              <button class="cvIcone" data-cvgravcancel="1" aria-label="Descartar">${ic('x',16)}</button>
              <button class="cvEnviar" data-cvgravpara="1" aria-label="Enviar áudio">${ic('checkc',17)}</button>
@@ -39934,7 +40042,7 @@ html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
     if(d.cvgravar !== undefined){ gravarComeca(); return; }
     if(d.cvgravpara !== undefined){ gravarTermina(true); return; }
     if(d.cvgravcancel !== undefined){ gravarTermina(false); return; }
-    if(d.cvver){ lupa(d.cvver, d.cvvertipo); return; }
+    if(d.cvver){ lupa(d.cvver, d.cvvertipo, d.cvnome); return; }
   }, true);
 
   async function gravarComeca(){
@@ -39946,6 +40054,7 @@ html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
       mr.ondataavailable = ev => { if(ev.data && ev.data.size) pedacos.push(ev.data); };
       mr.onstop = () => {
         try{ stream.getTracks().forEach(t => t.stop()); }catch(e){}
+        try{ if(mr._ac) mr._ac.close(); }catch(e){}
         const guardar_ = mr._guardar;
         if(guardar_ && pedacos.length){
           const dur = Math.max(1, Math.round((Date.now() - gravDesde) / 1000));
@@ -39963,13 +40072,40 @@ html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
       gravador = mr; gravDesde = Date.now();
       mr.start();
       desenhar();
+
+      /* O MEDIDOR. "A gravação fica oscilando, como se o microfone fosse
+         ruim": o que oscilava era o DESENHO — cada redesenho da tela (e
+         há vários por minuto: presença, faxina, sincronização) recriava a
+         barra com o relógio em 0:00 até o tique seguinte, e o ponto
+         vermelho pulsava por cima. Parecia sinal caindo. Agora o relógio
+         nasce certo em qualquer desenho, o ponto é fixo, e o que se mexe
+         é um medidor de VERDADE, lendo o microfone: se ele oscila, é
+         porque a voz oscila — e isso é informação, não defeito. */
+      let analisador = null, dados = null;
+      try{
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if(AC){
+          const ac = new AC(); const fonte = ac.createMediaStreamSource(stream);
+          analisador = ac.createAnalyser(); analisador.fftSize = 256;
+          fonte.connect(analisador); dados = new Uint8Array(analisador.frequencyBinCount);
+          mr._ac = ac;
+        }
+      }catch(e){}
       gravRelogio = setInterval(() => {
         const el = document.getElementById('cv-relogio');
         if(el) el.textContent = seg((Date.now() - gravDesde) / 1000);
+        if(analisador && dados){
+          analisador.getByteTimeDomainData(dados);
+          let soma = 0; for(let i = 0; i < dados.length; i++){ const d = (dados[i] - 128) / 128; soma += d * d; }
+          const rms = Math.sqrt(soma / dados.length);          /* 0 (silêncio) … ~0.5 (alto) */
+          const acesas = Math.min(14, Math.round(rms * 40));
+          const barras = document.querySelectorAll('#cv-nivel i');
+          barras.forEach((b, i) => b.classList.toggle('on', i < acesas));
+        }
         /* teto de 5 min: um áudio maior que isso ninguém ouve, e ele
            encosta no teto de 50 MB sem avisar */
         if(Date.now() - gravDesde > 5 * 60 * 1000) gravarTermina(true);
-      }, 250);
+      }, 100);
     }catch(err){
       if(typeof toast === 'function')
         toast('O navegador não liberou o microfone. Autorize nas permissões do site.', false, 'erro');
@@ -39996,6 +40132,20 @@ html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
     enviarComAnexos();
   }, true);
 
+  /* ---------- a prévia local: FORA do estado ------------------------ */
+  const _previas = {};                        /* id da mídia → objectURL, só nesta aba */
+  function previa(id){ return _previas[id] || null; }
+
+  /* acha a mídia na mensagem que está em `S.chat` AGORA. A v217 segurava
+     o objeto da mensagem numa closure — e a sincronização troca `S.chat`
+     por baixo, então o upload terminava num objeto órfão e a url da
+     nuvem nunca chegava à mensagem de verdade. Por id, chega. */
+  function acharMidia(canalId, msgId, midId){
+    const c = (S.chat && S.chat.canais || []).find(x => x.id === canalId); if(!c) return null;
+    const m = (c.msgs || []).find(x => x && x.id === msgId); if(!m) return null;
+    return (m.midia || []).find(x => x && x.id === midId) || null;
+  }
+
   function enviarComAnexos(){
     const campo = document.getElementById('cv-txt');
     const txt = (campo && campo.value || '').trim();
@@ -40007,40 +40157,64 @@ html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
 
     const vao = anexos.slice();
     anexos = [];
-    const msg = { de: eu, txt, ts: Date.now(),
-      midia: vao.map(a => ({ tipo:a.tipo, url:a.url, nome:a.nome, mime:a.mime,
-                             tam: kb(a.tam), dur: a.dur || null, subindo: true })) };
+    const msgId = 'm' + Date.now() + Math.round(Math.random() * 1e6);
+    const msg = { id: msgId, de: eu, txt, ts: Date.now(),
+      /* `url` nasce vazia: só endereço de verdade entra aqui */
+      midia: vao.map(a => ({ id: a.id, tipo:a.tipo, url:null, nome:a.nome, mime:a.mime,
+                             tam: kb(a.tam), dur: a.dur || null, subindo: true, prog: 0 })) };
+    vao.forEach(a => { if(a.url) _previas[a.id] = a.url; });
     canal.msgs.push(msg);
     if(campo) campo.value = '';
     try{ if(typeof som === 'function') som('toque'); }catch(e){}
     desenhar(); rolarFim();
 
-    /* e agora sobe, trocando a url local pela da nuvem quando chegar */
-    vao.forEach((a, i) => subirAnexo(msg, i, a));
+    vao.forEach(a => subirAnexo(canal.id, msgId, a));
   }
 
-  function subirAnexo(msg, i, a){
-    if(typeof subirNuvem !== 'function'){ msg.midia[i].subindo = false; return; }
-    const caminho = `conversas/${(S.cvAtivo || 'canal')}/${Date.now()}_${
+  function subirAnexo(canalId, msgId, a){
+    const marcar = f => { const x = acharMidia(canalId, msgId, a.id); if(x) f(x); };
+    if(typeof subirNuvem !== 'function' || !window._sbLigado && typeof _sbLigado === 'undefined'){
+      marcar(x => { x.subindo = false; x.erro = true; x.motivo = 'sem banco'; }); desenhar(); return;
+    }
+    const caminho = `conversas/${canalId}/${Date.now()}_${
       (typeof nomeSeguro === 'function' ? nomeSeguro(a.nome) : 'arquivo')}`;
     let ultimo = 0;
     subirNuvem(caminho, a.file, p => {
-      msg.midia[i].prog = p;
+      marcar(x => { x.prog = p; });
       if(Date.now() - ultimo > 400){ ultimo = Date.now(); desenhar(); }
     }).then(url => {
-      msg.midia[i].url = url; msg.midia[i].subindo = false; msg.midia[i].caminho = caminho;
+      marcar(x => { x.url = url; x.subindo = false; x.prog = 100; x.caminho = caminho; delete x.erro; });
       desenhar();
-      try{ if(typeof sbGravar === 'function') sbGravar(); }catch(e){}
+      try{ if(typeof sbGravarConfig === 'function') sbGravarConfig(); }catch(e){}
     }).catch(err => {
-      /* NÃO some com a mensagem: ela DIZ o que houve. O arquivo continua
-         neste aparelho, e quem mandou sabe que precisa mandar de novo. */
-      msg.midia[i].subindo = false; msg.midia[i].erro = true;
-      msg.midia[i].nome = a.nome + ' · não subiu';
+      /* NÃO some com a mensagem: ela DIZ o que houve, com o motivo que o
+         servidor deu — "recusado (413)" ensina mais que "falhou". */
+      const motivo = (err && err.message) || 'sem conexão';
+      marcar(x => { x.subindo = false; x.erro = true; x.motivo = motivo; });
       desenhar();
       if(typeof toast === 'function')
-        toast(`"${a.nome}" não subiu (${(err && err.message) || 'sem conexão'}). Ele está só neste aparelho.`, false, 'erro');
+        toast(`"${a.nome}" não subiu (${motivo}). Ele está só neste aparelho.`, false, 'erro');
     });
   }
+
+  /* ---------- o que ficou "subindo" de uma sessão anterior ----------
+     Recarregou no meio do upload: a prévia local morreu com a aba e a
+     nuvem não recebeu. Fica "subindo" para sempre — e "para sempre" é
+     mentira. Marca como não-subida, para a mensagem dizer a verdade. */
+  function varrerSubindo(){
+    try{
+      for(const c of (S.chat && S.chat.canais || []))
+        for(const m of (c.msgs || []))
+          for(const x of (m && m.midia || [])){
+            if(!x || !x.subindo) continue;
+            if(/^https?:\/\//.test(x.url || '')){ x.subindo = false; continue; }
+            if(x.id && _previas[x.id]) continue;          /* está subindo AQUI, agora */
+            if(Date.now() - (m.ts || 0) < 3 * 60 * 1000) continue;  /* pode ser outro aparelho */
+            x.subindo = false; x.erro = true; x.motivo = x.motivo || 'a página recarregou no meio';
+          }
+    }catch(e){}
+  }
+  setInterval(varrerSubindo, 5000);
 
   function rolarFim(){
     setTimeout(() => {
@@ -40054,13 +40228,18 @@ html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
   function lupa(url, tipo){
     const el = document.createElement('div');
     el.className = 'cvLupa';
+    const nome = (arguments[2] || 'arquivo');
     el.innerHTML = `<button class="fechar" aria-label="Fechar">${ic('x',18)}</button>
+      ${/^https?:\/\//.test(url) ? `<a class="baixar" href="${esc(url)}" download="${esc(nome)}" target="_blank"
+        rel="noopener" aria-label="Baixar">${ic('down',18)}</a>` : ''}
       ${tipo === 'video'
         ? `<video src="${esc(url)}" controls autoplay playsinline></video>`
         : `<img src="${esc(url)}" alt="">`}`;
     const sai = () => { el.remove(); document.removeEventListener('keydown', tecla); };
     const tecla = ev => { if(ev.key === 'Escape') sai(); };
-    el.addEventListener('click', ev => { if(ev.target === el || ev.target.closest('.fechar')) sai(); });
+    el.addEventListener('click', ev => {
+      if(ev.target.closest('.baixar')) return;              /* baixar não fecha */
+      if(ev.target === el || ev.target.closest('.fechar')) sai(); });
     document.addEventListener('keydown', tecla);
     document.body.appendChild(el);
   }
@@ -40109,7 +40288,114 @@ html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
 
   window.MaestroConversas = {
     anexos: () => anexos.slice(),
-    guardar, enviarComAnexos, lupa, marcarLido, temMic
+    guardar, enviarComAnexos, lupa, marcarLido, temMic, previa, varrerSubindo,
+    _previas
   };
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v219 — QUEM TEM CONTA NA AGÊNCIA É DA EQUIPE. NA ENTRADA, NÃO SÓ NA CRIAÇÃO.
+
+   O founder: "Entrei como ZRO e apareceu isso de cara" — a tela "Quem
+   está entrando?" oferecendo a Gabi Domingues, e ele fora da lista.
+
+   A v215 fez quem CRIA a agência ser o primeiro membro. Mas a ZRO foi
+   criada antes da v215, e o banco dela guardou a equipe que estava na
+   memória do navegador naquele momento (a Gabi, da outra agência), sem
+   ele. Ao entrar, `assumirPessoa()` não acha o e-mail dele na equipe e
+   a casa pergunta "quem é você?" — oferecendo quem está lá.
+
+   A REGRA, que a v215 aplicou só à criação e vale para toda entrada: o
+   banco AFIRMOU (`maestro_org`) que esta conta pertence a esta agência.
+   Logo esta pessoa é da equipe — por definição, não por lista. Se a
+   lista não a tem, a lista está incompleta, e quem se corrige é a lista.
+
+   · sem dono na equipe → entra como Administrador e dono (a casa
+     precisa de um);
+   · com dono → entra como "Equipe", papel neutro, e o dono ajusta.
+   Quem chegou por LINK não passa por aqui: não tem conta.
+
+   Isto não apaga ninguém. Se a Gabi não é da ZRO, quem decide é o dono
+   — que agora existe e tem o botão Remover na Equipe.
+   ===================================================================== */
+(function(){
+  const CHAVE = (typeof CHAVE_USR !== 'undefined') ? CHAVE_USR : 'maestro-usuario-v1';
+  const emailDaSessao = () => {
+    try{ const q = window.MaestroPorta && MaestroPorta.quem();
+         return (q && q.email) ? String(q.email).trim().toLowerCase() : null; }catch(e){ return null; }
+  };
+  const agenciaAfirmada = () => {
+    try{ const a = window.MaestroAgencia; return !!(a && a.sondado && a.sabemos && a.org); }
+    catch(e){ return false; }
+  };
+  /* SÓ DEPOIS DE TER LIDO O BANCO UMA VEZ. A primeira versão deste bloco
+     punha a pessoa na equipe assim que a sessão existia — antes de a
+     equipe do banco chegar. A mescla (equipe é lista sem `id`, a mesma
+     classe da v196) escolhia o lado local inteiro, apagava quem estava
+     no banco (a Gabi — ou uma dona de verdade) e GRAVAVA isso. A prova
+     pegou. Editar uma lista que ainda não se leu é apagar sem saber. */
+  const jaLeuOBanco = () => {
+    try{
+      if(window.Sincro) return !!window.Sincro.lido;
+      return (typeof _jaBuscou !== 'undefined') ? !!_jaBuscou : false;
+    }catch(e){ return false; }
+  };
+  function entrarNaCasa(){
+    try{
+      if(S.viaLink || S.soVer || S.soFluxo) return;
+      const eu = emailDaSessao(); if(!eu) return;
+      if(!agenciaAfirmada()) return;                 /* "não sei" não põe ninguém em lugar nenhum */
+      if(!jaLeuOBanco()) return;                     /* a equipe que se edita é a do banco */
+      if(!Array.isArray(S.equipe)) S.equipe = [];
+      let m = S.equipe.find(x => String((x && x.mail) || '').trim().toLowerCase() === eu);
+      /* SÓ ASSUME A IDENTIDADE NO INSTANTE EM QUE PÕE A PESSOA NA EQUIPE.
+         A primeira versão re-assumia a cada tique — e brigaria com o
+         seletor "Quem está entrando?": quem escolhesse outro nome da
+         equipe (uma conta compartilhada, que é caso real) seria
+         devolvido ao dono da conta 900ms depois. Depois de entrar, quem
+         manda na identidade é a porta (v200/v207) e o seletor. */
+      let acabouDeEntrar = false;
+      if(!m){
+        const temDono = S.equipe.some(x => x && x.dono);
+        const nome = eu.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        m = { n: nome, mail: eu, papel: temDono ? 'Equipe' : 'Administrador', dono: !temDono,
+              emDesde: Date.now(), entrouPelaConta: true };
+        S.equipe.push(m); acabouDeEntrar = true;
+        if(typeof toast === 'function')
+          toast(temDono ? `Você entrou como ${nome}. O dono da conta ajusta o seu papel na Equipe.`
+                        : `Você entrou como ${nome}, dono desta agência.`);
+      }
+      /* A EQUIPE CHEGA EM DUAS LINHAS (`__estado__` e `__config__`), em
+         momentos diferentes — então "não há dono" pode ser verdade por
+         um segundo e mentira no seguinte. Em vez de apostar na ordem, a
+         regra se corrige: dois donos, e um deles entrou pela conta →
+         esse cede. A prova pegou o caso: a dona chegou depois, e ele já
+         tinha sido feito dono. */
+      const donos = S.equipe.filter(x => x && x.dono);
+      if(donos.length > 1){
+        for(const x of donos) if(x.entrouPelaConta && donos.some(y => y !== x && !y.entrouPelaConta)){
+          x.dono = false; if(x.papel === 'Administrador') x.papel = 'Equipe';
+        }
+      }
+      if(!acabouDeEntrar) return;
+      const id = membroId(m);
+      if(!(S.usuario && S.usuario.tipo === 'agencia' && S.usuario.id === id)){
+        S.usuario = { tipo:'agencia', id };
+        try{ localStorage.setItem(CHAVE, JSON.stringify(S.usuario)); }catch(e){}
+        document.getElementById('quemEsta')?.remove();
+        if(typeof render === 'function') render();
+      }
+    }catch(e){}
+  }
+  /* idempotente, então pode rodar sempre: a equipe do banco chega depois
+     da abertura, e a mescla pode repô-la sem esta pessoa */
+  setInterval(entrarNaCasa, 900);
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); entrarNaCasa(); return r; };
+  })(render);
+  window.MaestroEntrarNaCasa = { entrarNaCasa };
 })();
 </script>

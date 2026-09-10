@@ -96,8 +96,19 @@ console.log('\n1. o caminho do founder: entrar com um e-mail de fora');
   await entrar(pag, 'zro.contato@gmail.com');
   await pag.waitForTimeout(1200);
   const depois = await cracha(pag);
-  ok(!depois.usuario, 'entrar com o e-mail de fora apaga o crachá anterior');
-  ok(!depois.guardado, 'e o aparelho não guarda o crachá velho para o próximo carregamento');
+  /* v219: o banco falso desta suíte AFIRMA (`maestro_org`) que este
+     e-mail pertence à agência — e quem o banco afirma é da equipe, por
+     definição. Então a pessoa não fica sem crachá: entra como ELA. O que
+     esta prova sempre protegeu continua inteiro e é o de baixo: o crachá
+     do Victor não sobrevive à troca de e-mail, nem na memória nem no
+     aparelho. Quem de fato é de fora (o banco responde null) está na
+     v205 e na v209. */
+  ok(!(depois.usuario && depois.usuario.id === 'victorbarrosoc'),
+     'entrar com outro e-mail apaga o crachá anterior (' + JSON.stringify(depois.usuario) + ')');
+  ok(!!depois.usuario && depois.usuario.id === 'zro.contato',
+     'e, como o banco afirma que a conta é desta agência, entra como ela mesma');
+  ok(!(depois.guardado && /victorbarrosoc/.test(JSON.stringify(depois.guardado))),
+     'e o aparelho não guarda o crachá velho para o próximo carregamento');
   ok(erros.length === 0, 'nenhum erro de página' + (erros.length ? ': ' + erros[0] : ''));
   await ctx.close();
 }

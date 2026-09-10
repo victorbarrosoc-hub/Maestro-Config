@@ -1,9 +1,81 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.38
+Version: 0.5.39
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.39 — 2026-09-10
+
+**Status:** Concluída
+**Objetivo:** a mídia das Conversas que fica, o áudio que não oscila, o Sair — e quem tem conta entra na equipe.
+
+### v218 — o que o founder viu no celular
+
+*"fica aparecendo e desaparecendo a imagem que enviei"* · *"não to conseguindo
+enviar vídeo"* · *"precisa ter a opção de baixar"* · *"a gravação do áudio fica
+oscilando, como se o microfone fosse ruim"* · *"não consigo ler o texto que
+aparece sugerido pra escrever"* · *"preciso de um botão fácil no menu de
+logout"*.
+
+**As duas primeiras eram a mesma causa, e era de estado.** A v217 guardava em
+`S.chat` — que vai para o banco — o endereço `blob:` do arquivo, que só vale
+naquela aba até a página recarregar. O iPhone recarrega o app ao voltar para
+ele; a partir daí, foto sem fonte e `<video>` sem fonte — a caixa escura do
+print. E o upload terminava num **objeto órfão**: a sincronização troca `S.chat`
+por baixo, e o código segurava a referência velha, então a URL da nuvem nunca
+chegava à mensagem de verdade.
+
+Agora `url` só recebe endereço https. Enquanto o arquivo sobe, a prévia mora
+**fora** do estado, num mapa por id desta aba. A mídia tem três estados e o
+desenho diz qual é: a mídia (https) · a mídia com o progresso por cima (prévia
+local) · um cartão que **diz** o que houve ("enviando de outro aparelho…" /
+"não subiu · motivo"). Uma caixa preta não diz nada. O upload acha a mensagem
+**por id** em `S.chat` como está agora, não por referência. E o que ficou
+"subindo" de uma sessão anterior vira não-subido — "para sempre" era mentira.
+
+**Baixar:** foto, vídeo e arquivo ganham o botão, no fio e na tela cheia.
+
+**O áudio que "oscilava"** era o desenho: cada redesenho da tela (presença,
+faxina, sincronização — vários por minuto) recriava a barra com o relógio em
+0:00 até o tique seguinte, e o ponto vermelho pulsava por cima. Parecia sinal
+caindo. Agora o relógio nasce certo em qualquer desenho, o ponto é fixo, e o que
+se mexe é um **medidor de verdade** lendo o microfone — se oscila, é a voz. Saiu
+também a segunda duração ao lado do player nativo (0:04 vs 0:05 confundia).
+
+**Contraste:** o placeholder estava em ink-500 sobre vidro escuro — cinza sobre
+cinza. Subiu dois degraus; nome, hora e prévia do canal também.
+
+**Sair da conta:** no rodapé do Menu, onde ficava a "Tela de entrada"; só para
+quem entrou (quem chegou por link não tem de onde sair); chama o `sair()` da
+porta que já existia.
+
+**31 provas** em `web/verificar/v218-midia-que-fica.mjs` — reproduzindo o
+recarregar e a troca de `S.chat` no meio do upload, em vez de só conferir o
+caminho feliz.
+
+### v219 — quem tem conta na agência é da equipe, na entrada
+
+*"Entrei como ZRO e apareceu isso de cara"* — "Quem está entrando?" oferecendo a
+Gabi Domingues, e ele fora da lista. A ZRO foi criada antes da v215, e o banco
+dela guardou a equipe que estava na memória do navegador, sem ele.
+
+A v215 fez quem **cria** ser o primeiro membro. A regra vale para toda
+**entrada**: o banco afirmou (`maestro_org`) que esta conta pertence a esta
+agência — logo a pessoa é da equipe por definição, não por lista. Sem dono →
+entra como Administrador e dono; com dono → entra como "Equipe" e o dono ajusta.
+Não apaga ninguém: se a Gabi não é da ZRO, quem decide é o dono, que agora
+existe e tem o Remover.
+
+**Duas coisas que a prova pegou antes de ir ao ar.** A primeira versão punha a
+pessoa na equipe **antes** de ler o banco — e a mescla (equipe é lista sem `id`,
+a classe da v196) escolhia o lado local inteiro, apagava quem estava no banco
+e **gravava isso**. Agora só depois da primeira leitura. E a equipe chega em duas
+linhas (`__estado__`, `__config__`) em momentos diferentes: "não há dono" podia
+ser verdade por um segundo — a regra se corrige (dois donos, o que entrou pela
+conta cede). 14 provas em `web/verificar/v219-quem-tem-conta-entra.mjs`.
 
 ---
 

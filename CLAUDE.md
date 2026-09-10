@@ -299,6 +299,33 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (10 set, v219):** "Entrei como ZRO e apareceu isso de cara" — a tela
+"Quem está entrando?" com a Gabi e sem ele. A ZRO foi criada antes da v215 e o
+banco dela guardou a equipe da memória do navegador. A regra da v215 (quem cria é
+membro) passa a valer em toda ENTRADA: o banco afirmou que a conta pertence à
+agência, logo a pessoa é da equipe por definição — sem dono, entra como dono; com
+dono, como "Equipe". Não apaga ninguém. **Duas lições que a prova pegou antes do
+ar:** (1) nunca editar uma lista que ainda não se leu do banco — a mescla de lista
+sem `id` escolhe um lado inteiro e teria apagado a dona de verdade E gravado;
+(2) a equipe chega em duas linhas em momentos diferentes, então regra de "não há
+X" tem de se corrigir sozinha no tique seguinte. 14 provas em
+`web/verificar/v219-quem-tem-conta-entra.mjs`.
+**Fechado (10 set, v218):** o que o founder viu ao testar a v217 no celular.
+**"Fica aparecendo e desaparecendo a imagem" e "não consigo enviar vídeo" eram a
+MESMA causa, de estado:** a v217 guardava em `S.chat` (que vai para o banco) o
+endereço `blob:` do arquivo, que só vale naquela aba até recarregar — e o iPhone
+recarrega o app ao voltar. Daí foto sem fonte e `<video>` sem fonte (a caixa
+escura do print). E o upload terminava num OBJETO ÓRFÃO: a sincronização troca
+`S.chat` por baixo e o código segurava a referência velha. Agora `url` só recebe
+https; a prévia mora FORA do estado, num mapa por id desta aba; a mídia tem três
+estados e o desenho diz qual é (mídia · mídia com progresso · cartão que DIZ o que
+houve); o upload acha a mensagem POR ID. **Lição que vale para todo o produto:
+nunca guardar `blob:` em nada que sincroniza, e nunca segurar referência a um
+objeto que a mescla substitui — achar por id, sempre.** O áudio "oscilando" era o
+DESENHO (cada redesenho zerava o relógio e o ponto pulsava); agora o relógio
+nasce certo e o que se mexe é um medidor de verdade do microfone. Baixar em
+foto, vídeo e arquivo. Placeholder legível. "Sair da conta" no rodapé do Menu.
+31 provas em `web/verificar/v218-midia-que-fica.mjs`.
 **Fechado (10 set, v216–v217):** a leva do founder sobre entrada e menus.
 **A entrada é uma só.** "A Maestro é uma plataforma pra agência, que quem loga é
 a agência. O cliente ele apenas tem um link que ele acessa e tem o painel dele."

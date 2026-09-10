@@ -188,7 +188,10 @@ console.log('\n4. o que acontece quando o arquivo NÃO sobe');
   });
   ok(m.existe && m.mid, 'a mensagem NÃO some — sumir seria pior do que falhar');
   ok(m.mid && m.mid.erro === true, 'ela fica marcada como não-subida');
-  ok(m.mid && /não subiu/.test(m.mid.nome || ''), 'e diz isso no nome do arquivo');
+  /* v218: o aviso saiu do NOME do arquivo (que precisa continuar sendo o
+     nome, para baixar) e foi para baixo da mídia, com o motivo */
+  ok(await pag.evaluate(() => { const c = [...document.querySelectorAll('#cv-msgs .cvFalhou')].pop();
+       return !!c && /não subiu/.test(c.textContent); }), 'e a tela diz isso embaixo da mídia');
   recusar = false;
 }
 
