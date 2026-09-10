@@ -324,10 +324,15 @@ planilha). 16 provas em `web/verificar/v202-um-card-so.mjs`.
 nenhuma era regressão: eram testes que ficaram para trás da v184, v186, v189 e
 v190. Suíte permanentemente vermelha é como uma quebra de verdade passa
 despercebida.
-**Aberto desta leva:** o card do Marco Bruno que apareceu no Ensaio como aprovado
-não foi reproduzido aqui — falta o estado do banco do founder. As três bocas do
-número frágil estão fechadas e a assimetria do apagar também; se voltar a
-acontecer, é por uma quarta porta.
+**Encerrado sem reprodução (9 set):** o card do Marco Bruno, que apareceu no
+Ensaio como se o cliente tivesse aprovado. O founder apagou o card, então o estado
+que o explicaria não existe mais. A hipótese que melhor casa com o que ele viu é a
+da v199 — um card importado com número frágil colidiu com um card já aprovado, a
+mescla (que casa por id) fundiu os dois, e o fundido herdou a aprovação; sem tarefa
+no quadro, o repositor criou uma, e ele "brotou". As três bocas do número frágil
+estão fechadas e a assimetria do apagar também. **Se acontecer de novo, NÃO apague
+o card**: é a única evidência, e sem ela a próxima investigação começa do zero. Um
+print da ficha e do histórico já bastam.
 **Fechado (9 set, v199):** dois cards com o mesmo número. Duas pessoas
 estruturando a pauta do mesmo cliente ao mesmo tempo calculavam
 `Math.max(ids desta pauta) + 1` e chegavam ao MESMO número — daí a mescla (que
