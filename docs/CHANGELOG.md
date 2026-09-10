@@ -1,9 +1,103 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.37
+Version: 0.5.38
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.38 — 2026-09-10
+
+**Status:** Concluída
+**Objetivo:** uma entrada só, o menu pelo uso, e Conversas virando um
+mensageiro de verdade.
+
+### v216 — a entrada é uma só
+
+O founder, fechando o assunto: *"A Maestro é uma plataforma pra agência, que
+quem loga é a agência. O cliente ele apenas tem um link que ele acessa e tem o
+painel dele. Mas não precisa de login assim como a agência."*
+
+O portão dizia *"Como você entra?"* com **duas portas iguais**, e o rodapé
+prometia por escrito: *"Você troca de lado a qualquer momento, na barra do
+topo"*. Isso é a arquitetura de um produto com dois logins — e não é este
+produto.
+
+- o portão passa a ter **uma** porta, e explica o cliente em vez de oferecê-lo;
+- o alternador Agência/Cliente sai da barra do topo;
+- o rodapé do Menu perde "Ver como agência/cliente" e "Tela de entrada";
+- os quatro botões "ver o lado do cliente" continuam fazendo o que prometiam —
+  só que abrindo **o link do cliente** em outra aba, que é o que ele recebe.
+
+Fecha no **estado**, não nas telas: `go()` é o funil por onde passam o portão,
+o alternador, a paleta de comandos e os botões — então é ele que recusa.
+
+**O que quase escapou, e é o mais caro desta versão.** Tirar o alternador
+reabriu o buraco da v178, que custou um dia em 7/set: um aparelho com crachá de
+cliente guardado ficava **preso** no painel do cliente, porque o guarda do
+render devolve a pessoa a cada desenho e as três saídas antigas não apareciam
+nesse estado. A regra que substitui as três: **crachá de cliente só nasce de
+link**, então crachá sem link é sobra — e sobra se varre.
+
+A suíte da v178 pegou isso, mas **pelo motivo errado**: ela media os dois botões
+do alternador e os chamava de "os dois cards do portão". Quase me convenceu de
+que era só expectativa velha. E a primeira versão da cura foi longe demais —
+expulsava qualquer `S.view === 'client'` sem link, e derrubou seis suítes de uma
+vez. Isso era sinal, não ruído.
+
+### v216 — o menu segue o uso
+
+Medido no menu **montado**, não no código-fonte (vinte pontos mexem nele ao
+longo do arquivo, e só o resultado importa):
+
+| o que estava | o que ficou |
+|---|---|
+| Conversas dentro de "Produção", ao lado do Ensaio | no topo, junto de Hoje, com contagem de não lidas e na barra do polegar |
+| Cronograma fora da lateral (só pelo Menu) | de volta à lateral |
+| "Conta" com Equipe, Planos **e** "Plano e equipe" | os dois que são de verdade |
+| menu do cliente com "Dentro do fluxo" (andaime de protótipo) | fora |
+
+O ícone de Conversas era o de **som**. Um print do produto rodando mostrou isso;
+nenhuma prova de menu mostraria, porque nenhuma olhava o desenho. Agora olha.
+
+### v217 — Conversas: o fio, a mídia e o vidro
+
+*"Queria ela com mais cara de MSN ou WhatsApp. Quero que essa aba seja mais bem
+aproveitada, podendo mandar áudios, fotos, vídeos, links. Que tenha um estilo
+bem moderno em Liquid Glass."*
+
+**O fio.** A lista de mensagens era um `map` de uma linha: nome em cima, balão
+embaixo, sem hora, sem data e sem agrupamento. Agora: separador de dia (Hoje,
+Ontem, a data por extenso), mensagens seguidas da mesma pessoa em até 5 min
+viram um bloco, hora dentro de cada balão. Está no **núcleo** — seis camadas já
+embrulham `telaConversas`, e uma delas marca menções por dentro do
+`<span class="balao">`; mudando ali, todas seguem valendo.
+
+**A mídia.** Anexar foto, vídeo, áudio ou arquivo, e **gravar áudio** no próprio
+compositor. O arquivo sobe pela mesma `subirNuvem` dos materiais do card (v51e),
+com token de sessão e barra de progresso. O arquivo aparece **antes** de subir;
+se o upload falhar, a mensagem **diz** que falhou em vez de sumir. Link vira
+cartão — sem buscar nada fora: o cartão diz só o que a própria url já diz.
+
+**O trilho de canais** deixa de ser nome + um número solto: prévia da última
+fala, hora e quantas não lidas.
+
+**Liquid Glass**: superfície translúcida com desfoque, fio de luz no topo,
+brilho especular diagonal, cápsulas. Com o par de cada peça no **tema claro**, e
+um `@supports` que deixa fundo sólido para quem não tem `backdrop-filter` —
+texto sobre transparência sem desfoque é o que fica ilegível.
+
+**Duas coisas que só um print mostrou:** o ícone de som, e a conversa começando
+a 40% da tela no celular (título, subtítulo de duas linhas, botão e faixa de
+presença antes dela). As duas com prova agora.
+
+**57 provas** em `web/verificar/v217-conversas.mjs` (mídia com arquivo de
+verdade, upload recusado, gravação real, vidro medido nos dois temas) e **35**
+em `web/verificar/v216-uma-entrada-so.mjs`, começando pelo caminho do cliente,
+que era o que mais tinha a perder.
+
+Onze suítes atualizadas: ser cliente agora quer dizer **ter vindo por link**.
 
 ---
 

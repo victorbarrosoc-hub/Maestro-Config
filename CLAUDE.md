@@ -299,6 +299,42 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (10 set, v216–v217):** a leva do founder sobre entrada e menus.
+**A entrada é uma só.** "A Maestro é uma plataforma pra agência, que quem loga é
+a agência. O cliente ele apenas tem um link que ele acessa e tem o painel dele."
+O portão tinha DUAS portas iguais e prometia por escrito "você troca de lado a
+qualquer momento, na barra do topo" — arquitetura de um produto com dois logins,
+que não é este. Agora: uma porta; o alternador sai da barra do topo; o rodapé do
+Menu perde "Ver como agência/cliente" e "Tela de entrada"; e os quatro botões
+"ver o lado do cliente" passam a abrir O LINK do cliente em outra aba, que é o
+que ele mesmo recebe. Fecha no ESTADO (`go()` é o funil), não nas telas.
+**O que quase escapou:** tirar o alternador REABRIU o buraco da v178 (um dia
+perdido em 7/set) — aparelho com crachá de cliente ficava PRESO no painel do
+cliente, porque o guarda do render devolve a pessoa a cada desenho e as três
+saídas antigas não apareciam nesse estado. Regra nova: crachá de cliente só
+nasce de LINK; crachá sem link é sobra, e sobra se varre. **A suíte da v178
+pegou isso pelo motivo ERRADO** (media os dois botões do alternador chamando-os
+de "os dois cards do portão") — quase me convenceu de que era expectativa velha.
+E a primeira cura foi longe demais (expulsava qualquer `S.view==='client'` sem
+link) e derrubou seis suítes: isso era sinal, não ruído.
+**O menu segue o uso.** Conversas estava em "Produção", ao lado do Ensaio — daí
+"um pouco inacessível". Sobe para o topo, junto de Hoje, com contagem de não
+lidas, e entra na barra do polegar no lugar do Feed. Cronograma volta para a
+lateral (só existia dentro do Menu). "Plano e equipe", que repetia Equipe +
+Planos, sai. O menu do cliente perde "Dentro do fluxo", que era andaime de
+protótipo à vista de cliente de verdade.
+**Conversas vira mensageiro (v217).** Fio com separador de dia, bloco por pessoa
+e hora no balão; foto, vídeo, áudio e arquivo (upload pela mesma `subirNuvem`
+dos materiais, com o arquivo à vista ANTES de subir, e mensagem que DIZ quando
+não subiu em vez de sumir); gravação de áudio no compositor; link vira cartão
+sem buscar nada fora; trilho de canais com prévia, hora e não lidas; e Liquid
+Glass com o par de cada peça no tema claro e `@supports` para quem não tem
+`backdrop-filter`. 57 provas em `web/verificar/v217-conversas.mjs`, 35 em
+`web/verificar/v216-uma-entrada-so.mjs`.
+**Duas coisas que só um PRINT mostrou** (nenhuma prova pegaria): o ícone de
+Conversas era o de SOM, e no celular a conversa começava a 40% da tela. As duas
+com prova agora — quando o pedido é de aparência, olhar o desenho é parte do
+teste.
 **Fechado (10 set, v215):** duas coisas da mesma sentada do founder.
 **Quem cria a agência entra nela.** Ele criou a agência dele e a tela "Quem está
 entrando?" ofereceu a Gabi Domingues — que é da agência ANTERIOR e estava na

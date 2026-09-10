@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-10 12:04 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-10 12:56 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -14071,6 +14071,93 @@ function canaisVisiveis(){
   const eu = S.usuario && S.usuario.id;
   return S.chat.canais.filter(c=>!c.membros || !eu || c.membros.includes(eu) || ehAdmin());
 }
+/* =====================================================================
+   v217 — O FIO DA CONVERSA.
+
+   A lista de mensagens era um `map` de uma linha: nome em cima, balão
+   embaixo, um atrás do outro, sem hora, sem data e sem agrupamento. Numa
+   conversa de trinta mensagens não dá para saber se algo foi dito hoje
+   ou na semana passada, e o nome de quem fala se repete a cada linha
+   como se cada frase fosse de outra pessoa.
+
+   Isto é o mínimo que qualquer mensageiro faz há vinte anos, e é o que o
+   founder pediu ao dizer "com mais cara de MSN ou WhatsApp":
+
+   · separador de DIA — Hoje, Ontem, ou a data por extenso;
+   · mensagens seguidas da mesma pessoa em até 5 min viram um BLOCO:
+     o nome aparece uma vez, os balões se encostam;
+   · HORA em cada balão, discreta, dentro dele;
+   · MÍDIA (foto, vídeo, áudio, arquivo) acima do texto.
+
+   Está no NÚCLEO, e não numa camada por cima, por uma razão prática:
+   seis camadas já embrulham `telaConversas`, e uma delas marca as
+   menções por dentro do `<span class="balao">`. Mudando aqui, o balão
+   continua sendo um `<span class="balao">` com o texto dentro, e todas
+   elas seguem valendo sem saber que algo mudou.
+   ================================================================== */
+function cvDiaChave(ts){ const d = new Date(ts || 0);
+  return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); }
+function cvRotuloDia(ts){
+  const d = new Date(ts || 0), hoje = new Date();
+  const ontem = new Date(); ontem.setDate(hoje.getDate() - 1);
+  if(cvDiaChave(d) === cvDiaChave(hoje)) return 'Hoje';
+  if(cvDiaChave(d) === cvDiaChave(ontem)) return 'Ontem';
+  const MES = ['janeiro','fevereiro','março','abril','maio','junho','julho',
+               'agosto','setembro','outubro','novembro','dezembro'];
+  const mesmoAno = d.getFullYear() === hoje.getFullYear();
+  return d.getDate() + ' de ' + MES[d.getMonth()] + (mesmoAno ? '' : ' de ' + d.getFullYear());
+}
+function cvHora(ts){ const d = new Date(ts || 0);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+
+/* a mídia de uma mensagem. `m.midia` é uma lista de
+   {tipo, url, nome, mime, dur, tam} — o arquivo mora no bucket `midia`,
+   aqui viaja só a url. */
+function cvMidiaHtml(m){
+  const mid = (m && m.midia) || [];
+  if(!mid.length) return '';
+  return '<div class="cvMid">' + mid.map((a, i) => {
+    const u = esc(a.url || ''), nome = esc(a.nome || 'arquivo');
+    if(a.tipo === 'imagem')
+      return `<button class="cvFoto" data-cvver="${u}" data-cvvertipo="imagem"
+        aria-label="Abrir ${nome}"><img src="${u}" alt="${nome}" loading="lazy"></button>`;
+    if(a.tipo === 'video')
+      return `<video class="cvVideo" src="${u}" controls preload="metadata" playsinline></video>`;
+    if(a.tipo === 'audio')
+      return `<div class="cvAudio"><audio src="${u}" controls preload="metadata"></audio>
+        ${a.dur ? `<span class="dur">${esc(a.dur)}</span>` : ''}</div>`;
+    return `<a class="cvArq" href="${u}" target="_blank" rel="noopener">
+      ${ic('doc',15)}<span><b>${nome}</b>${a.tam ? `<small>${esc(a.tam)}</small>` : ''}</span></a>`;
+  }).join('') + '</div>';
+}
+
+function cvFio(msgs, eu, nomeDe){
+  const JUNTA = 5 * 60 * 1000;          /* 5 min: o mesmo respiro do WhatsApp */
+  let out = '', diaAtual = null, antes = null;
+  for(const m of msgs){
+    if(!m) continue;
+    const ts = m.ts || 0;
+    const chave = cvDiaChave(ts);
+    if(chave !== diaAtual){
+      out += `<div class="cvDia"><span>${esc(cvRotuloDia(ts))}</span></div>`;
+      diaAtual = chave; antes = null;
+    }
+    const junta = !!(antes && antes.de === m.de && (ts - (antes.ts || 0)) < JUNTA);
+    const minha = m.de === eu;
+    const txt = (m.txt || '').trim();
+    /* na própria fala o nome é ruído — e some do HTML, não por CSS:
+       esconder deixa o nó lá, e leitor de tela e busca continuam lendo. */
+    out += `<div class="cvMsg ${minha ? 'minha' : ''}${junta ? ' junta' : ''}">
+      ${(junta || minha) ? '' : `<div class="quem">${esc(nomeDe(m.de))}</div>`}
+      ${cvMidiaHtml(m)}
+      ${txt || !(m.midia || []).length
+        ? `<span class="balao">${esc(txt)}<i class="hr">${esc(cvHora(ts))}</i></span>`
+        : `<i class="hr solta">${esc(cvHora(ts))}</i>`}</div>`;
+    antes = m;
+  }
+  return out;
+}
+
 function telaConversas(shell){
   if(!S.chat) S.chat = chatSemente();
   const canais = canaisVisiveis();
@@ -14088,10 +14175,8 @@ function telaConversas(shell){
       data-cvcanal="${c.id}"><b>${esc(c.nome)}</b>
       <small>${c.msgs.length||''}</small></button>`).join('')}</div>
     <div class="cvJanela">
-      <div class="cvMsgs" id="cv-msgs">${ativo ? (ativo.msgs.length ? ativo.msgs.map(m=>`
-        <div class="cvMsg ${m.de===eu?'minha':''}">
-          <div class="quem">${esc(nomeDe(m.de))}</div>
-          <span class="balao">${esc(m.txt)}</span></div>`).join('')
+      <div class="cvMsgs" id="cv-msgs">${ativo ? (ativo.msgs.length
+        ? cvFio(ativo.msgs, eu, nomeDe)
         : `<div class="hjVazio" style="margin:auto">Canal aberto. A primeira palavra é sua.</div>`)
         : '<div class="hjVazio" style="margin:auto">Nenhum canal.</div>'}</div>
       <div class="cvEscreve">
@@ -15870,7 +15955,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v216 · 10 set · uma entrada so, menu pelo uso';
+const VERSAO_PROTOTIPO = 'v217 · 10 set · conversas com voz, foto e video';
 
 menuSheet = (function(orig){
   return function(){
@@ -39354,6 +39439,11 @@ sbGravar = (function(orig){
     const item = iCv >= 0 ? AGNAV.splice(iCv, 1)[0]
                           : { r:'conversas', n:'Conversas', icn:'chat' };
     item.bd = porLer;
+    /* v217: o ícone também. Só trocá-lo no item criado do zero deixava o
+       item que JÁ existia com o desenho antigo — e o antigo era o de SOM.
+       Um print do produto rodando mostrou isso; nenhuma prova de menu
+       mostraria, porque nenhuma delas olha o desenho. */
+    item.icn = 'chat';
     const iDash = AGNAV.findIndex(x => x.r === 'dash');
     if(iDash >= 0) AGNAV.splice(iDash + 1, 0, item);
     else AGNAV.push(item);
@@ -39385,7 +39475,7 @@ sbGravar = (function(orig){
     const cv = { r:'conversas', n:'Conversas', icn:'chat', bd: porLer };
     if(AGTABS.some(x => x.r === 'conversas')){
       const j = AGTABS.findIndex(x => x.r === 'conversas');
-      AGTABS[j].bd = porLer;
+      AGTABS[j].bd = porLer; AGTABS[j].icn = 'chat';
     } else if(iFeed >= 0) AGTABS.splice(iFeed, 1, cv);
     else AGTABS.push(cv);
   }
@@ -39412,5 +39502,682 @@ sbGravar = (function(orig){
   }
 
   try{ if(typeof render === 'function') render(); }catch(e){}
+})();
+</script>
+<style>
+/* =====================================================================
+   v217 — CONVERSAS EM LIQUID GLASS.
+
+   O founder: "Queria ela com mais cara de MSN ou WhatsApp. Quero que
+   essa aba seja mais bem aproveitada, podendo mandar áudios, fotos,
+   vídeos, links. Que tenha um estilo bem moderno em Liquid Glass."
+
+   O que Liquid Glass quer dizer aqui, em CSS, e por quê:
+
+   · A superfície é TRANSLÚCIDA e desfoca o que está atrás
+     (`backdrop-filter: blur() saturate()`), então ela pega a cor do que
+     tem embaixo em vez de ser mais uma caixa opaca empilhada.
+   · A borda tem um FIO DE LUZ no topo e sombra embaixo
+     (`inset 0 1px 0 rgba(255,255,255,.14)`), que é o que dá a leitura de
+     espessura — vidro tem canto, papel não.
+   · Um BRILHO ESPECULAR diagonal, muito fraco, atravessa a peça. É o que
+     separa "vidro" de "cinza transparente".
+   · Raios grandes e formas de cápsula.
+
+   Duas regras que a casa impõe e que o efeito não pode quebrar:
+
+   1. TEMA CLARO. A casa tem modo claro desde a v157, e vidro escuro em
+      cima de fundo claro fica sujo. Toda peça tem o par dela em
+      `html[data-tema="claro"]`.
+   2. QUEM NÃO TEM `backdrop-filter` continua lendo. O `@supports` deixa
+      um fundo sólido de verdade como base, e o vidro entra por cima só
+      onde o navegador sabe fazer. Nunca o contrário — texto sobre
+      transparência sem desfoque é o que fica ilegível.
+   ================================================================== */
+:root{
+  --vidro:        rgba(255,255,255,.055);
+  --vidro-forte:  rgba(255,255,255,.085);
+  --vidro-borda:  rgba(255,255,255,.10);
+  --vidro-luz:    rgba(255,255,255,.16);
+  --vidro-base:   #1F1F21;                /* o sólido de quem não tem blur */
+}
+html[data-tema="claro"]{
+  --vidro:        rgba(255,255,255,.55);
+  --vidro-forte:  rgba(255,255,255,.72);
+  --vidro-borda:  rgba(23,24,28,.10);
+  --vidro-luz:    rgba(255,255,255,.85);
+  --vidro-base:   #F4F1EA;
+}
+
+/* O QUE HAVIA ANTES SAI PRIMEIRO. Esta ordem não é gosto: `.cvJanela` e
+   `.cvVidro` têm a MESMA especificidade, então quem vem depois vence. Com
+   o reset embaixo, ele apagava o fundo do vidro que eu tinha acabado de
+   pintar — e a janela ficava transparente de verdade, sem nada atrás.
+   Medido, não deduzido: a prova 8 lia `rgba(0, 0, 0, 0)`. */
+.cvJanela{ border:0; background:none; box-shadow:none }
+
+.cvVidro{
+  position:relative; background:var(--vidro-base);
+  border:1px solid var(--vidro-borda); border-radius:20px;
+  box-shadow:inset 0 1px 0 var(--vidro-luz), 0 18px 44px -28px rgba(0,0,0,.75);
+}
+/* o brilho especular: uma faixa diagonal fraquíssima atravessando */
+.cvVidro::before{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:linear-gradient(126deg, rgba(255,255,255,.09) 0%, rgba(255,255,255,0) 34%,
+    rgba(255,255,255,0) 66%, rgba(255,255,255,.045) 100%);
+}
+html[data-tema="claro"] .cvVidro::before{
+  background:linear-gradient(126deg, rgba(255,255,255,.75) 0%, rgba(255,255,255,0) 38%,
+    rgba(255,255,255,0) 68%, rgba(255,255,255,.5) 100%);
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)){
+  .cvVidro{ background:var(--vidro);
+    -webkit-backdrop-filter:blur(26px) saturate(180%);
+    backdrop-filter:blur(26px) saturate(180%) }
+}
+
+/* ---------- a planta: trilho de canais + janela ---------------------- */
+.cvLayout{ grid-template-columns:264px minmax(0,1fr); gap:16px; align-items:stretch }
+.cvCanais{ gap:5px; padding:9px; border-radius:20px; align-self:stretch;
+  max-height:calc(100vh - 190px); overflow-y:auto }
+.cvJanela{ overflow:hidden; min-height:min(74vh, 720px) }
+.cvJanela > .cvMsgs, .cvJanela > .cvEscreve{ position:relative; z-index:1 }
+
+/* ---------- o canal, com prévia e não lidas (era só nome + número) --- */
+.cvCanal{ border:1px solid transparent; background:transparent; border-radius:14px;
+  padding:9px 11px; gap:11px; align-items:center;
+  transition:background var(--fast) var(--eo), border-color var(--fast) var(--eo) }
+.cvCanal:hover{ background:var(--vidro-forte) }
+.cvCanal.on{ background:var(--vidro-forte); border-color:var(--vidro-borda) }
+.cvCanal .txt{ font-size:13px }
+.cvCanal .cvLinha{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px }
+.cvCanal .cvPrev{ font-size:11.5px; color:var(--ink-400); overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap; max-width:100%; font-weight:400 }
+html[data-tema="claro"] .cvCanal .cvPrev{ color:#6E6A61 }
+.cvCanal .cvLado{ display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex:0 0 auto }
+.cvCanal .cvQuando{ font-family:var(--mono); font-size:9px; color:var(--ink-500) }
+.cvCanal .cvNaoLi{ min-width:18px; height:18px; padding:0 5px; border-radius:999px;
+  background:var(--brass-500); color:var(--ink-950); font-family:var(--mono);
+  font-size:9.5px; font-weight:700; display:grid; place-items:center }
+
+/* ---------- o fio: dia, blocos, balões ------------------------------ */
+.cvMsgs{ gap:2px; padding:16px 16px 10px; scroll-behavior:smooth }
+.cvDia{ display:flex; align-items:center; justify-content:center; margin:14px 0 10px }
+.cvDia span{ font-family:var(--mono); font-size:9.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-400); padding:4px 12px; border-radius:999px;
+  background:var(--vidro-forte); border:1px solid var(--vidro-borda) }
+.cvMsg{ max-width:min(78%, 560px); margin-top:9px }
+.cvMsg.junta{ margin-top:2px }
+.cvMsg .quem{ font-family:var(--sans); font-size:11px; font-weight:600;
+  color:var(--brass-400); letter-spacing:0; margin:0 0 4px 3px; text-transform:none }
+.cvMsg.minha .quem{ display:none }        /* na minha própria fala, o nome é ruído */
+.cvMsg .balao{ position:relative; padding:9px 13px 9px 13px; border-radius:16px;
+  font-size:14px; line-height:1.5; word-break:break-word;
+  border:1px solid var(--vidro-borda); background:var(--vidro-base);
+  box-shadow:inset 0 1px 0 var(--vidro-luz) }
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)){
+  .cvMsg .balao{ background:var(--vidro-forte);
+    -webkit-backdrop-filter:blur(18px) saturate(170%);
+    backdrop-filter:blur(18px) saturate(170%) }
+}
+.cvMsg .balao{ border-radius:16px 16px 16px 5px }
+.cvMsg.junta .balao{ border-radius:16px }
+.cvMsg.minha .balao{ border-radius:16px 16px 5px 16px;
+  background:linear-gradient(180deg, rgba(210,162,74,.30), rgba(200,150,58,.20));
+  border-color:rgba(200,150,58,.34); color:var(--ink-50) }
+.cvMsg.minha.junta .balao{ border-radius:16px }
+html[data-tema="claro"] .cvMsg.minha .balao{
+  background:linear-gradient(180deg, rgba(210,162,74,.40), rgba(200,150,58,.28));
+  color:#17181C }
+
+/* a hora, dentro do balão e fora do caminho da leitura */
+.cvMsg .hr{ font-family:var(--mono); font-style:normal; font-size:9px;
+  color:var(--ink-400); margin-left:9px; float:right; margin-top:6px }
+html[data-tema="claro"] .cvMsg .hr{ color:#8A857A }
+.cvMsg.minha .hr{ color:rgba(28,28,28,.62) }
+html[data-tema="claro"] .cvMsg.minha .hr{ color:rgba(23,24,28,.55) }
+.cvMsg .hr.solta{ display:block; margin:3px 4px 0 }
+
+/* ---------- mídia --------------------------------------------------- */
+.cvMid{ display:flex; flex-direction:column; gap:6px; margin-bottom:5px }
+.cvFoto{ display:block; padding:0; border-radius:15px; overflow:hidden; line-height:0;
+  border:1px solid var(--vidro-borda); background:var(--vidro-base);
+  transition:transform var(--fast) var(--eo) }
+.cvFoto:hover{ transform:scale(1.01) }
+.cvFoto img{ display:block; max-width:100%; max-height:320px; object-fit:cover }
+.cvVideo{ max-width:100%; max-height:340px; border-radius:15px; display:block;
+  background:#000; border:1px solid var(--vidro-borda) }
+.cvAudio{ display:flex; align-items:center; gap:9px; padding:8px 11px; border-radius:999px;
+  border:1px solid var(--vidro-borda); background:var(--vidro-forte) }
+.cvAudio audio{ height:34px; max-width:230px }
+.cvAudio .dur{ font-family:var(--mono); font-size:10px; color:var(--ink-400) }
+.cvArq{ display:flex; align-items:center; gap:10px; padding:10px 13px; border-radius:14px;
+  text-decoration:none; color:inherit;
+  border:1px solid var(--vidro-borda); background:var(--vidro-forte) }
+.cvArq:hover{ border-color:var(--brass-600) }
+.cvArq b{ display:block; font-size:13px; color:var(--ink-50); font-weight:500;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:230px }
+html[data-tema="claro"] .cvArq b{ color:#17181C }
+.cvArq small{ font-family:var(--mono); font-size:10px; color:var(--ink-400) }
+/* o cartão de link: sem buscar nada fora, só o que a própria url diz */
+.cvLink{ display:flex; flex-direction:column; gap:2px; padding:10px 13px; border-radius:14px;
+  text-decoration:none; border:1px solid var(--vidro-borda); background:var(--vidro-forte);
+  border-left:2px solid var(--brass-500) }
+.cvLink b{ font-size:12.5px; color:var(--brass-300); font-weight:600 }
+.cvLink span{ font-size:11.5px; color:var(--ink-400); overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap; max-width:100% }
+.cvMsg .balao a{ color:var(--brass-300) }
+html[data-tema="claro"] .cvMsg .balao a{ color:#855F22 }
+
+/* ---------- o compositor -------------------------------------------- */
+.cvEscreve{ border-top:0; padding:10px 12px 12px; gap:8px; align-items:center }
+.cvBarraEsc{ display:flex; align-items:center; gap:7px; flex:1; min-width:0;
+  padding:5px 6px 5px 8px; border-radius:999px;
+  border:1px solid var(--vidro-borda); background:var(--vidro-base);
+  box-shadow:inset 0 1px 0 var(--vidro-luz) }
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)){
+  .cvBarraEsc{ background:var(--vidro-forte);
+    -webkit-backdrop-filter:blur(22px) saturate(175%);
+    backdrop-filter:blur(22px) saturate(175%) }
+}
+.cvEscreve input#cv-txt{ flex:1; min-width:0; border:0; background:none; outline:none;
+  color:var(--ink-50); font-size:15px; padding:8px 4px }
+html[data-tema="claro"] .cvEscreve input#cv-txt{ color:#17181C }
+.cvEscreve input#cv-txt::placeholder{ color:var(--ink-500) }
+.cvIcone{ width:36px; height:36px; border-radius:999px; display:grid; place-items:center;
+  color:var(--ink-300); flex:0 0 auto;
+  transition:background var(--fast) var(--eo), color var(--fast) var(--eo) }
+.cvIcone:hover{ background:var(--vidro-forte); color:var(--ink-50) }
+.cvIcone.grav{ color:var(--danger); animation:pulse 1.1s ease-in-out infinite }
+.cvEnviar{ width:40px; height:40px; border-radius:999px; display:grid; place-items:center;
+  flex:0 0 auto; color:var(--ink-950);
+  background:linear-gradient(180deg,#D2A24A,var(--brass-500));
+  box-shadow:0 1px 0 rgba(255,255,255,.22) inset, 0 8px 20px -10px rgba(200,150,58,.6);
+  transition:filter var(--fast) var(--eo), transform var(--fast) var(--eo) }
+.cvEnviar:hover{ filter:brightness(1.07) }
+.cvEnviar:active{ transform:scale(.94) }
+
+/* o que está para ir junto, antes de enviar */
+.cvAnexos{ display:flex; gap:8px; flex-wrap:wrap; padding:0 12px 8px }
+.cvAnexo{ display:flex; align-items:center; gap:8px; padding:6px 9px; border-radius:12px;
+  font-size:11.5px; color:var(--ink-200);
+  border:1px solid var(--vidro-borda); background:var(--vidro-forte) }
+.cvAnexo img{ width:30px; height:30px; border-radius:8px; object-fit:cover }
+.cvAnexo b{ font-weight:500; max-width:150px; overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap }
+.cvAnexo .x{ color:var(--ink-400); font-size:15px; line-height:1; padding:0 2px }
+.cvAnexo .x:hover{ color:var(--danger) }
+.cvAnexo .pr{ font-family:var(--mono); font-size:9.5px; color:var(--brass-400) }
+
+/* gravando: a barra vira contador */
+.cvGravando{ display:flex; align-items:center; gap:10px; flex:1; padding:9px 14px;
+  border-radius:999px; border:1px solid rgba(229,72,77,.4);
+  background:rgba(229,72,77,.10); font-size:13px; color:var(--ink-100) }
+.cvGravando .pt{ width:9px; height:9px; border-radius:50%; background:var(--danger);
+  animation:pulse 1s ease-in-out infinite; flex:0 0 auto }
+.cvGravando .t{ font-family:var(--mono); font-size:13px; color:var(--danger) }
+.cvGravando .sp{ flex:1 }
+
+/* ---------- a foto em tela cheia ------------------------------------ */
+.cvLupa{ position:fixed; inset:0; z-index:980; background:rgba(6,7,9,.86);
+  display:grid; place-items:center; padding:24px; animation:fadeIn .18s ease;
+  -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px) }
+.cvLupa img, .cvLupa video{ max-width:min(94vw,1100px); max-height:86vh;
+  border-radius:16px; box-shadow:0 40px 90px rgba(0,0,0,.6) }
+.cvLupa .fechar{ position:absolute; top:calc(16px + env(safe-area-inset-top)); right:18px;
+  width:42px; height:42px; border-radius:999px; display:grid; place-items:center;
+  color:#fff; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.2);
+  -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px) }
+
+/* ---------- no celular: uma coluna, e o trilho vira rolagem ---------- */
+@media(max-width:860px){
+  /* o cabeçalho encolhe para a conversa começar perto do topo */
+  .cvTopo{ margin-bottom:10px }
+  .cvTopo p{ display:none }
+  .cvTopo h1{ font-size:22px }
+  .cvTopo .b{ padding:7px 13px; font-size:12.5px }
+  .pzFaixa{ padding:7px 11px; margin-bottom:9px }
+  .pzFaixa .pzT{ font-size:9.5px }
+  .cvLayout{ grid-template-columns:1fr; gap:11px }
+  .cvCanais{ flex-direction:row; overflow-x:auto; overflow-y:hidden; max-height:none;
+    padding:8px; gap:7px; scrollbar-width:none }
+  .cvCanais::-webkit-scrollbar{ display:none }
+  .cvCanal{ flex:0 0 auto; max-width:190px }
+  .cvCanal .cvPrev, .cvCanal .cvQuando{ display:none }
+  .cvGrupo{ display:none }
+  .cvJanela{ min-height:66vh }
+  .cvMsg{ max-width:86% }
+}
+@media (prefers-reduced-motion:reduce){
+  .cvIcone.grav, .cvGravando .pt{ animation:none }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v217 — CONVERSAS: MANDAR COISA, NÃO SÓ TEXTO.
+
+   O founder: "Quero que essa aba seja mais bem aproveitada, podendo
+   mandar áudios, fotos, vídeos, links."
+
+   O que entra:
+
+   · ANEXAR foto, vídeo, áudio ou arquivo qualquer. O arquivo sobe para o
+     bucket `midia` pela mesma `subirNuvem` que os materiais do card já
+     usam desde a v51e — com token de sessão, com barra de progresso e
+     com o mesmo teto do Supabase. Nada de caminho novo para a mesma
+     coisa (Princípio #1).
+   · GRAVAR ÁUDIO no próprio compositor (MediaRecorder). Onde o navegador
+     não tem, ou a pessoa nega o microfone, o botão simplesmente não
+     existe — em vez de existir e falhar quando tocado.
+   · LINK vira cartão: quem mandou, o domínio, e o endereço. Sem buscar
+     nada fora — o cartão diz só o que a própria url já diz. Buscar o
+     título significaria a Maestro visitar um endereço que alguém colou
+     aqui dentro, e isso é uma porta que não vale o enfeite.
+
+   DUAS DECISÕES QUE VALE REGISTRAR.
+
+   1. O ARQUIVO APARECE ANTES DE SUBIR. Quem manda uma foto vê a foto na
+      hora, com a barra de progresso por cima — não um vazio de dez
+      segundos. É a mesma escolha da v51e para os materiais. Se o upload
+      falhar, a mensagem DIZ que falhou e o arquivo continua neste
+      aparelho: melhor uma mensagem que se explica do que uma que some.
+
+   2. O ENVIO CONTINUA SENDO O MESMO BOTÃO. `[data-cvenvia]` e `#cv-txt`
+      seguem existindo com os mesmos nomes, e o envio só de texto segue
+      pelo caminho de sempre. Este bloco escuta na JANELA em captura, que
+      chega antes do ouvinte do documento — e só toma a frente quando há
+      anexo. Um caminho novo para "mandar mensagem" seria o segundo lugar
+      da mesma coisa, e é assim que as duas versões divergem em silêncio.
+   ================================================================== */
+(function(){
+
+  /* ---------- ícones que faltavam ----------------------------------- */
+  try{
+    if(typeof IC === 'object' && IC){
+      if(!IC.clipe) IC.clipe = '<path d="M20 11.5 12.2 19.3a4.4 4.4 0 0 1-6.2-6.2l7.8-7.8a2.9 2.9 0 0 1 4.1 4.1l-7.8 7.8a1.5 1.5 0 0 1-2.1-2.1l7.2-7.2"/>';
+      if(!IC.mic)   IC.mic   = '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/>';
+      if(!IC.envia) IC.envia = '<path d="M4.5 12 20 4.5 15.5 20l-3.6-5.9z"/><path d="m11.9 14.1 8.1-9.6"/>';
+      if(!IC.x)     IC.x     = '<path d="M6 6l12 12M18 6 6 18"/>';
+    }
+  }catch(e){}
+
+  const MAX = 50 * 1024 * 1024;                    /* o teto do Supabase */
+  const kb = n => n > 1048576 ? (n/1048576).toFixed(1).replace('.',',') + ' MB'
+                              : Math.max(1, Math.round(n/1024)) + ' KB';
+  const seg = s => Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0');
+
+  /* o que está esperando para ir junto com a próxima mensagem */
+  let anexos = [];            /* {id, tipo, nome, mime, tam, file, url, prog, erro} */
+  let gravador = null, gravDesde = 0, gravRelogio = null;
+
+  const tipoDe = mime => {
+    const m = String(mime || '');
+    if(m.startsWith('image/')) return 'imagem';
+    if(m.startsWith('video/')) return 'video';
+    if(m.startsWith('audio/')) return 'audio';
+    return 'arquivo';
+  };
+
+  /* ---------- 1. o compositor ganha os botões ----------------------- */
+  if(typeof telaConversas === 'function') telaConversas = (function(orig){
+    return function(){
+      let html = orig.apply(this, arguments);
+      if(!html || html.indexOf('data-cvenvia') < 0) return html;
+
+      /* a janela e o trilho viram vidro */
+      html = html.replace('<div class="cvJanela">', '<div class="cvJanela cvVidro">')
+                 .replace('<div class="cvCanais">', '<div class="cvCanais cvVidro">');
+      /* e o cabeçalho ganha nome, para o celular poder encolhê-lo:
+         num print do celular, a conversa só começava a 40% da tela —
+         título, subtítulo de duas linhas, botão e faixa de presença
+         antes dela. Numa aba de conversa, a conversa é que manda. */
+      html = html.replace('<div class="mtop">', '<div class="mtop cvTopo">');
+
+      const linha = gravador
+        ? `<div class="cvGravando"><span class="pt"></span>
+             <span>Gravando…</span><span class="t" id="cv-relogio">0:00</span>
+             <span class="sp"></span>
+             <button class="cvIcone" data-cvgravcancel="1" aria-label="Descartar">${ic('x',16)}</button>
+             <button class="cvEnviar" data-cvgravpara="1" aria-label="Enviar áudio">${ic('checkc',17)}</button>
+           </div>`
+        : `<div class="cvBarraEsc">
+             <button class="cvIcone" data-cvanexar="1" aria-label="Anexar arquivo"
+               title="Foto, vídeo, áudio ou arquivo">${ic('clipe',17)}</button>
+             <input id="cv-txt" placeholder="Escreva aqui… (Enter envia)" autocomplete="off">
+             ${temMic() ? `<button class="cvIcone" data-cvgravar="1" aria-label="Gravar áudio"
+               title="Gravar um áudio">${ic('mic',17)}</button>` : ''}
+           </div>
+           <button class="cvEnviar" data-cvenvia="1" aria-label="Enviar">${ic('envia',17)}</button>`;
+
+      /* `telaConversas` devolve `shell(corpo)` — a casca inteira da
+         agência —, então o compositor não está no fim da string: é
+         preciso achá-lo pelo nome. O `.cvEscreve` original não tem div
+         dentro (é um input e um botão), então o primeiro `</div>` é o
+         dele e o não-guloso acerta. */
+      html = html.replace(/<div class="cvEscreve">[\s\S]*?<\/div>/,
+        `${anexosHtml()}<div class="cvEscreve">${linha}</div>`);
+
+      return listaDeCanais(html);
+    };
+  })(telaConversas);
+
+  function temMic(){
+    try{ return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia
+                   && window.MediaRecorder); }catch(e){ return false; }
+  }
+
+  function anexosHtml(){
+    if(!anexos.length) return '';
+    return '<div class="cvAnexos">' + anexos.map(a => `
+      <span class="cvAnexo">
+        ${a.tipo === 'imagem' && a.url ? `<img src="${esc(a.url)}" alt="">` : ic(a.tipo === 'audio' ? 'mic' : 'doc', 14)}
+        <b>${esc(a.nome)}</b>
+        ${a.prog != null && a.prog < 100 ? `<span class="pr">${a.prog}%</span>` : ''}
+        <button class="x" data-cvtira="${a.id}" aria-label="Tirar ${esc(a.nome)}">×</button>
+      </span>`).join('') + '</div>';
+  }
+
+  /* ---------- 2. o trilho de canais mostra a última fala ------------ */
+  /* era nome + um número solto. Numa lista de dez canais isso não diz
+     qual tem coisa nova nem sobre o quê — é o que faz a pessoa não
+     abrir. Agora: prévia, hora e quantas não lidas. */
+  function listaDeCanais(html){
+    try{
+      const eu = (S.usuario && S.usuario.id) || null;
+      const vistos = (S.cvVistos = S.cvVistos || {});
+      return html.replace(/<button class="cvCanal([^"]*)"\s+data-cvcanal="([^"]+)">([\s\S]*?)<\/button>/g,
+        (todo, cls, id, dentro) => {
+          const c = (S.chat && S.chat.canais || []).find(x => x.id === id);
+          if(!c) return todo;
+          const msgs = c.msgs || [];
+          const ult = msgs[msgs.length - 1];
+          const naoLi = msgs.filter(m => m && m.ts && m.ts > (vistos[id] || 0) && m.de !== eu).length;
+          /* o avatar e o nome que as camadas anteriores já montaram */
+          const av = (dentro.match(/<span class="av[\s\S]*?<\/span>/) || [''])[0];
+          const nome = (dentro.match(/<b class="txt">([\s\S]*?)<\/b>/) || [null, null])[1]
+                    || (dentro.match(/<b>([\s\S]*?)<\/b>/) || [null, esc(c.nome || '')])[1];
+          /* a etiqueta do canal ("novo", "bloqueado", "cliente excluído")
+             é montada pela v113 e tem de sobreviver à remontagem. Ela sai
+             como <em>, não <i> nem <span> — chutar a tag do elemento em
+             vez de olhar foi o que apagou as três de uma vez. Aqui a
+             regra é pela CLASSE, que é o que a v113 promete. */
+          const tag = (dentro.match(/<(\w+)[^>]*class="cvTag[^"]*"[^>]*>[\s\S]*?<\/\1>/) || [''])[0];
+          let prev = '';
+          if(ult){
+            const mid = (ult.midia || [])[0];
+            const quem = ult.de === eu ? 'Você: ' : '';
+            prev = quem + (mid
+              ? ({ imagem:'📷 Foto', video:'🎬 Vídeo', audio:'🎤 Áudio' }[mid.tipo] || '📎 Arquivo')
+              : String(ult.txt || '').replace(/\s+/g, ' ').slice(0, 46));
+          }
+          return `<button class="cvCanal${cls}" data-cvcanal="${id}">${av}
+            <span class="cvLinha"><b class="txt">${nome}</b>
+            ${prev ? `<span class="cvPrev">${esc(prev)}</span>` : ''}</span>
+            ${tag}
+            <span class="cvLado">
+              ${ult && ult.ts ? `<span class="cvQuando">${esc(quando(ult.ts))}</span>` : ''}
+              ${naoLi ? `<span class="cvNaoLi">${naoLi > 99 ? '99+' : naoLi}</span>` : ''}
+            </span></button>`;
+        });
+    }catch(e){ return html; }
+  }
+  function quando(ts){
+    const d = new Date(ts), hoje = new Date();
+    const mesmoDia = d.toDateString() === hoje.toDateString();
+    if(mesmoDia) return (typeof cvHora === 'function') ? cvHora(ts)
+      : String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    const ontem = new Date(); ontem.setDate(hoje.getDate() - 1);
+    if(d.toDateString() === ontem.toDateString()) return 'ontem';
+    return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth() + 1).padStart(2,'0');
+  }
+
+  /* ---------- 3. o link vira cartão --------------------------------- */
+  /* Roda DEPOIS da marcação de menção (v186), sobre o mesmo `.balao`, e
+     só onde não há menção marcada — para não desfazer aquela marca. */
+  const URLRE = /\bhttps?:\/\/[^\s<>"']+/g;
+  if(typeof telaConversas === 'function') telaConversas = (function(orig){
+    return function(){
+      let html = orig.apply(this, arguments);
+      if(!html || html.indexOf('class="balao"') < 0) return html;
+      return html.replace(/<span class="balao">([\s\S]*?)<\/span>/g, (todo, dentro) => {
+        if(dentro.indexOf('http') < 0) return todo;
+        const achados = dentro.match(URLRE);
+        if(!achados) return todo;
+        const cartao = achados.slice(0, 1).map(u => {
+          let host = u;
+          try{ host = new URL(u).hostname.replace(/^www\./, ''); }catch(e){}
+          return `<a class="cvLink" href="${u.replace(/&amp;/g, '&')}" target="_blank" rel="noopener nofollow">
+            <b>${esc(host)}</b><span>${esc(u.slice(0, 90))}</span></a>`;
+        }).join('');
+        /* o texto já veio por `esc()`, então um `&` virou `&amp;` — no
+           TEXTO isso é certo, no HREF levaria a pessoa a outro endereço. */
+        const href = u => u.replace(/&amp;/g, '&');
+        const comLink = dentro.replace(URLRE,
+          u => `<a href="${href(u)}" target="_blank" rel="noopener nofollow">${u.length > 44 ? u.slice(0,44) + '…' : u}</a>`);
+        return cartao + '<span class="balao">' + comLink + '</span>';
+      });
+    };
+  })(telaConversas);
+
+  /* ---------- 4. anexar, tirar, gravar ------------------------------ */
+  function desenhar(){ try{ if(typeof render === 'function') render(); }catch(e){} }
+
+  function guardar(file){
+    if(!file) return;
+    if(file.size > MAX){
+      if(typeof toast === 'function')
+        toast(`"${file.name}" tem ${kb(file.size)} — o teto é 50 MB.`, false, 'erro');
+      return;
+    }
+    const a = { id: 'ax' + Date.now() + Math.round(Math.random()*1e6),
+      tipo: tipoDe(file.type), nome: file.name || 'arquivo',
+      mime: file.type || '', tam: file.size, file, url: null, prog: null, erro: null };
+    try{ a.url = URL.createObjectURL(file); }catch(e){}
+    anexos.push(a); desenhar();
+  }
+
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest(
+      '[data-cvanexar],[data-cvtira],[data-cvgravar],[data-cvgravpara],[data-cvgravcancel],[data-cvver]');
+    if(!t) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    const d = t.dataset;
+
+    if(d.cvanexar !== undefined){
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.multiple = true;
+      inp.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt';
+      inp.onchange = () => { [...(inp.files || [])].forEach(guardar); };
+      inp.click();
+      return;
+    }
+    if(d.cvtira){
+      const i = anexos.findIndex(a => a.id === d.cvtira);
+      if(i >= 0){ try{ if(anexos[i].url) URL.revokeObjectURL(anexos[i].url); }catch(err){}
+                  anexos.splice(i, 1); desenhar(); }
+      return;
+    }
+    if(d.cvgravar !== undefined){ gravarComeca(); return; }
+    if(d.cvgravpara !== undefined){ gravarTermina(true); return; }
+    if(d.cvgravcancel !== undefined){ gravarTermina(false); return; }
+    if(d.cvver){ lupa(d.cvver, d.cvvertipo); return; }
+  }, true);
+
+  async function gravarComeca(){
+    if(gravador) return;
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+      const pedacos = [];
+      const mr = new MediaRecorder(stream);
+      mr.ondataavailable = ev => { if(ev.data && ev.data.size) pedacos.push(ev.data); };
+      mr.onstop = () => {
+        try{ stream.getTracks().forEach(t => t.stop()); }catch(e){}
+        const guardar_ = mr._guardar;
+        if(guardar_ && pedacos.length){
+          const dur = Math.max(1, Math.round((Date.now() - gravDesde) / 1000));
+          const blob = new Blob(pedacos, { type: mr.mimeType || 'audio/webm' });
+          const f = new File([blob], `audio-${seg(dur).replace(':','m')}s.webm`,
+                             { type: blob.type });
+          const a = { id:'ax' + Date.now(), tipo:'audio', nome:'Áudio · ' + seg(dur),
+            mime:f.type, tam:f.size, file:f, url:null, prog:null, dur: seg(dur) };
+          try{ a.url = URL.createObjectURL(f); }catch(e){}
+          anexos.push(a);
+        }
+        gravador = null; clearInterval(gravRelogio); gravRelogio = null; desenhar();
+      };
+      mr._guardar = false;
+      gravador = mr; gravDesde = Date.now();
+      mr.start();
+      desenhar();
+      gravRelogio = setInterval(() => {
+        const el = document.getElementById('cv-relogio');
+        if(el) el.textContent = seg((Date.now() - gravDesde) / 1000);
+        /* teto de 5 min: um áudio maior que isso ninguém ouve, e ele
+           encosta no teto de 50 MB sem avisar */
+        if(Date.now() - gravDesde > 5 * 60 * 1000) gravarTermina(true);
+      }, 250);
+    }catch(err){
+      if(typeof toast === 'function')
+        toast('O navegador não liberou o microfone. Autorize nas permissões do site.', false, 'erro');
+    }
+  }
+  function gravarTermina(guardarIsso){
+    if(!gravador) return;
+    gravador._guardar = !!guardarIsso;
+    try{ gravador.stop(); }catch(e){ gravador = null; desenhar(); }
+  }
+
+  /* ---------- 5. enviar, com o que estiver anexado ------------------ */
+  /* na JANELA, em captura: chega antes do ouvinte do documento. Só toma
+     a frente quando há anexo — sem anexo, o caminho de sempre. */
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-cvenvia]');
+    if(!t || !anexos.length) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    enviarComAnexos();
+  }, true);
+  addEventListener('keydown', e => {
+    if(e.key !== 'Enter' || e.target.id !== 'cv-txt' || !anexos.length) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    enviarComAnexos();
+  }, true);
+
+  function enviarComAnexos(){
+    const campo = document.getElementById('cv-txt');
+    const txt = (campo && campo.value || '').trim();
+    const canal = (S.chat && S.chat.canais || []).find(c => c.id === S.cvAtivo);
+    if(!canal) return;
+    const eu = S.usuario
+      ? (S.usuario.tipo === 'cliente' ? 'cliente_' + S.usuario.id : S.usuario.id)
+      : 'victor';
+
+    const vao = anexos.slice();
+    anexos = [];
+    const msg = { de: eu, txt, ts: Date.now(),
+      midia: vao.map(a => ({ tipo:a.tipo, url:a.url, nome:a.nome, mime:a.mime,
+                             tam: kb(a.tam), dur: a.dur || null, subindo: true })) };
+    canal.msgs.push(msg);
+    if(campo) campo.value = '';
+    try{ if(typeof som === 'function') som('toque'); }catch(e){}
+    desenhar(); rolarFim();
+
+    /* e agora sobe, trocando a url local pela da nuvem quando chegar */
+    vao.forEach((a, i) => subirAnexo(msg, i, a));
+  }
+
+  function subirAnexo(msg, i, a){
+    if(typeof subirNuvem !== 'function'){ msg.midia[i].subindo = false; return; }
+    const caminho = `conversas/${(S.cvAtivo || 'canal')}/${Date.now()}_${
+      (typeof nomeSeguro === 'function' ? nomeSeguro(a.nome) : 'arquivo')}`;
+    let ultimo = 0;
+    subirNuvem(caminho, a.file, p => {
+      msg.midia[i].prog = p;
+      if(Date.now() - ultimo > 400){ ultimo = Date.now(); desenhar(); }
+    }).then(url => {
+      msg.midia[i].url = url; msg.midia[i].subindo = false; msg.midia[i].caminho = caminho;
+      desenhar();
+      try{ if(typeof sbGravar === 'function') sbGravar(); }catch(e){}
+    }).catch(err => {
+      /* NÃO some com a mensagem: ela DIZ o que houve. O arquivo continua
+         neste aparelho, e quem mandou sabe que precisa mandar de novo. */
+      msg.midia[i].subindo = false; msg.midia[i].erro = true;
+      msg.midia[i].nome = a.nome + ' · não subiu';
+      desenhar();
+      if(typeof toast === 'function')
+        toast(`"${a.nome}" não subiu (${(err && err.message) || 'sem conexão'}). Ele está só neste aparelho.`, false, 'erro');
+    });
+  }
+
+  function rolarFim(){
+    setTimeout(() => {
+      const cx = document.getElementById('cv-msgs');
+      if(cx) cx.scrollTop = cx.scrollHeight;
+      document.getElementById('cv-txt')?.focus();
+    }, 60);
+  }
+
+  /* ---------- 6. a foto em tela cheia ------------------------------- */
+  function lupa(url, tipo){
+    const el = document.createElement('div');
+    el.className = 'cvLupa';
+    el.innerHTML = `<button class="fechar" aria-label="Fechar">${ic('x',18)}</button>
+      ${tipo === 'video'
+        ? `<video src="${esc(url)}" controls autoplay playsinline></video>`
+        : `<img src="${esc(url)}" alt="">`}`;
+    const sai = () => { el.remove(); document.removeEventListener('keydown', tecla); };
+    const tecla = ev => { if(ev.key === 'Escape') sai(); };
+    el.addEventListener('click', ev => { if(ev.target === el || ev.target.closest('.fechar')) sai(); });
+    document.addEventListener('keydown', tecla);
+    document.body.appendChild(el);
+  }
+
+  /* ---------- 7. abrir o canal marca como lido ---------------------- */
+  /* a contagem da v216 só serve se ela ZERA ao ler. Sem isto o número
+     fica aceso para sempre e a pessoa aprende a ignorá-lo. */
+  function marcarLido(){
+    try{
+      if(!(S.view === 'agency' && S.route === 'conversas')) return;
+      if(!S.chat || !S.cvAtivo) return;
+      const c = S.chat.canais.find(x => x.id === S.cvAtivo);
+      if(!c) return;
+      const ult = (c.msgs || []).reduce((n, m) => Math.max(n, (m && m.ts) || 0), 0);
+      S.cvVistos = S.cvVistos || {};
+      if((S.cvVistos[c.id] || 0) < ult) S.cvVistos[c.id] = ult;
+    }catch(e){}
+  }
+  /* rolar para o fim: só quando a conversa MUDA ou chega coisa nova.
+
+     A primeira versão rolava a cada desenho — e como o desenho troca o
+     `innerHTML`, o elemento é outro toda vez e a marca de "já rolei"
+     nunca pegava. Resultado: quem subisse para reler era jogado de volta
+     para baixo no desenho seguinte. Um mensageiro que não deixa reler o
+     que passou não serve para o que ele foi pedido. */
+  let _ancora = '';
+  if(typeof render === 'function') render = (function(orig){
+    return function(){
+      marcarLido();                    /* antes de desenhar: o número já sai zerado */
+      const r = orig.apply(this, arguments);
+      try{
+        if(S.route !== 'conversas'){ _ancora = ''; return r; }
+        const c = (S.chat && S.chat.canais || []).find(x => x.id === S.cvAtivo);
+        const msgs = (c && c.msgs) || [];
+        const agora = (S.cvAtivo || '') + '|' + msgs.length + '|' +
+          ((msgs[msgs.length - 1] || {}).ts || 0);
+        if(agora !== _ancora){
+          _ancora = agora;
+          const cx = document.getElementById('cv-msgs');
+          if(cx) cx.scrollTop = cx.scrollHeight;
+        }
+      }catch(e){}
+      return r;
+    };
+  })(render);
+
+  window.MaestroConversas = {
+    anexos: () => anexos.slice(),
+    guardar, enviarComAnexos, lupa, marcarLido, temMic
+  };
 })();
 </script>

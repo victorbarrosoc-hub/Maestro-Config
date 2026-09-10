@@ -199,6 +199,16 @@ console.log('\n6. o menu que ele pediu');
   ok(!m.tabs.includes('feed'), 'no lugar do Feed, que é tela de conferir');
   ok(m.tabs.length <= 5, 'a barra segue com no máximo 5 (' + m.tabs.length + ')');
 
+  /* v217: um print do produto rodando mostrou o item de Conversas com o
+     ícone de SOM na lateral — eu só tinha trocado o desenho no item
+     criado do zero, e o que já existia ficou com o antigo. Nenhuma prova
+     de menu pegaria isso, porque nenhuma olhava o DESENHO. Esta olha. */
+  const icones = await a.pag.evaluate(() => ({
+    nav: (AGNAV.find(x => x.r === 'conversas') || {}).icn,
+    tab: (AGTABS.find(x => x.r === 'conversas') || {}).icn }));
+  ok(icones.nav === 'chat' && icones.tab === 'chat',
+     'Conversas tem ícone de conversa, não o de som (' + JSON.stringify(icones) + ')');
+
   ok(m.nav.includes('pauta'), 'o Cronograma voltou para a lateral');
   ok(!m.nav.includes('conta'), 'e "Plano e equipe", que repetia Equipe + Planos, saiu');
   ok(m.nav.includes('equipe') && m.nav.includes('planos'),
