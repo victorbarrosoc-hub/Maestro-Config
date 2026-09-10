@@ -274,8 +274,24 @@ por HTTP**: convite, ciclo, lote, decisão, termo) · typecheck limpo ·
 migrations e seed executados · 9 protótipos navegáveis · 2 rodadas de teste
 com clientes reais
 
-**Não verificado:** `apps/web` não existe; o worker que entrega as notificações
-enfileiradas não existe (o protótipo tem aviso dentro do produto, nada de e-mail).
+**Não verificado:** `apps/web` não existe.
+
+**E-mail — o que JÁ está de pé** (esta linha dizia o contrário e ficou quatro dias
+desatualizada; conferir sempre `docs/ENGINEERING/NOTIFICACOES.md`, que é a fonte):
+domínio `avisos.sejamaestro.com.br` verificado no Resend em 6/set 12h12 (DNS no
+GoDaddy), fila no banco, Edge Function `enviar-avisos` em
+`supabase/functions/enviar-avisos`, e o primeiro e-mail real saiu em 6/set 12h42,
+na caixa de entrada. Lote para aprovar → e-mail para o cliente entrega desde a
+v164. **Falta:** decisão do cliente → e-mail para a equipe; push com o app fechado
+(VAPID); WhatsApp.
+
+**E-mail de AUTENTICAÇÃO é outro caminho.** Confirmar conta, convite e redefinir
+senha saem do próprio Supabase, não da Edge Function — por isso precisam do SMTP
+do Resend ligado em Authentication → Emails → SMTP Settings. Enquanto isso não
+estiver feito: os e-mails saem em INGLÊS, assinados por "Supabase Auth", com
+rodapé da Supabase — e o painel de templates fica TRANCADO ("Set up custom SMTP to
+edit templates"), então não há conserto parcial. Com "Confirm email" ligado (está,
+desde 10/set), é o primeiro contato de toda agência nova com o produto.
 
 **Aberto e bloqueante:** D-024 — INPI. A busca de anterioridade é o que destrava,
 e ela precisa ser feita de uma rede com acesso ao pePI (ou contratada): o risco
