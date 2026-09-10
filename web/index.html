@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-10 01:38 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-10 02:56 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15839,7 +15839,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v207 · 10 set · entrar troca de pessoa de verdade';
+const VERSAO_PROTOTIPO = 'v210 · 10 set · nao consegui ler nao e nao tem';
 
 menuSheet = (function(orig){
   return function(){
@@ -37218,7 +37218,22 @@ sbGravar = (function(orig){
         return { faltou: r.status === 404 || r.status === 400,
                  status: r.status, corpo: txt };
       }
-      return { valor: await r.json().catch(() => null) };
+      /* v210 — "NÃO CONSEGUI LER" NÃO É "NÃO TEM".
+
+         Aqui morava `await r.json().catch(() => null)`. Um corpo vazio,
+         um 204, uma resposta cortada no meio — tudo virava `null`. E
+         `null` é a resposta que significa "esta pessoa não pertence a
+         agência nenhuma": a Maestro fechava o portão contra o próprio
+         dono da casa e oferecia a ele a porta de criar agência.
+
+         Um `null` de verdade e um erro de leitura não podem chegar
+         iguais. O corpo é lido como TEXTO, e só o texto `null` é null. */
+      let cru = '';
+      try{ cru = (await r.text() || '').trim(); }
+      catch(e){ return { ilegivel: true, status: r.status }; }
+      if(cru === '') return { ilegivel: true, status: r.status, vazio: true };
+      try{ return { valor: JSON.parse(cru) }; }
+      catch(e){ return { ilegivel: true, status: r.status, corpo: cru.slice(0, 200) }; }
     }catch(e){ return { erro: true, corpo: String(e && e.message || e) }; }
   }
 
@@ -38605,5 +38620,89 @@ sbGravar = (function(orig){
   /* depois de a sondagem ter tido tempo de acontecer, e de novo adiante */
   setTimeout(montar, 2500);
   setTimeout(montar, 6000);
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v208 — A CASA NÃO VIAJA COM O APARELHO.
+
+   O founder entrou como a conta nova e viu a equipe da agência dele —
+   com FOTOS, e com a Gabi Domingues, que não existe na semente do
+   código. Isso é a prova: aquela equipe veio do BANCO, e estava
+   guardada NESTE navegador desde quando ele mesmo tinha entrado.
+
+   A v207 tirou o crachá de quem estava antes. Faltava o resto da casa:
+   `maestro-estado-v1` e `maestro-prototipo-v1` guardam pautas, equipe,
+   clientes, Ensaio, conversas — tudo. Entrar com outro e-mail trocava a
+   sessão e deixava a casa inteira no lugar. O banco recusava GRAVAR (a
+   RLS fez o trabalho dela o tempo todo), mas a cópia local já estava
+   ali, e é ela que a tela desenha.
+
+   A REGRA, e ela é uma só: **o que está guardado neste aparelho é de
+   uma conta.** Se quem entrou é outra, não é dela — sai. Não é preciso
+   listar quais chaves do estado são "da agência": listar é o erro que
+   me custou a v204 (fechei uma tela, sobraram seis). Apaga-se o pacote
+   inteiro e recarrega; o que a conta puder ver, o banco devolve.
+
+   DUAS TRAVAS, porque isto apaga coisa:
+
+   1. Só age quando SABE. Sem sessão, ou com o banco mudo, não faz nada
+      — a lição da v197. Quem está sozinho no protótipo nunca perde o
+      que fez.
+   2. Recarrega no máximo uma vez por troca. A marca fica na
+      `sessionStorage`, então um laço de recarregamento é impossível.
+
+   E o dono se anota sozinho: quem entra e é reconhecido carimba o
+   aparelho. Quem herdou um aparelho sem carimbo não perde nada — o
+   carimbo nasce agora e vale da próxima vez.
+   ===================================================================== */
+(function(){
+  const DONO   = 'maestro-dono-do-aparelho-v1';
+  const JAFEZ  = 'maestro-ja-limpei-v1';
+  const PACOTE = ['maestro-estado-v1', 'maestro-prototipo-v1', 'maestro-usuario-v1'];
+
+  const leia  = (k, dep) => { try{ return (dep ? sessionStorage : localStorage).getItem(k); }catch(e){ return null; } };
+  const grave = (k, v, dep) => { try{ (dep ? sessionStorage : localStorage).setItem(k, v); }catch(e){} };
+
+  const doSession = () => {
+    try{
+      const q = window.MaestroPorta && MaestroPorta.quem();
+      const m = q && q.email;
+      return m ? String(m).trim().toLowerCase() : null;
+    }catch(e){ return null; }
+  };
+
+  const A = () => window.MaestroAgencia || null;
+  const bancoRespondeu = () => { const a = A(); return !!(a && a.sondado && a.sabemos); };
+
+  function conferir(){
+    const eu = doSession();
+    if(!eu) return;                       /* sem sessão: o protótipo é de quem está nele */
+    if(!bancoRespondeu()) return;         /* "não sei" nunca apaga nada */
+
+    const dono = leia(DONO);
+
+    /* aparelho sem carimbo: carimba e não mexe em nada. Quem já usava a
+       Maestro antes desta versão não paga por ela. */
+    if(!dono){ grave(DONO, eu); return; }
+
+    if(dono === eu) return;               /* a casa é de quem está aqui */
+
+    /* é outra pessoa. A casa guardada não é dela. */
+    if(leia(JAFEZ, true) === eu) return;  /* já limpei nesta aba, não insisto */
+    grave(JAFEZ, eu, true);
+    for(const k of PACOTE){ try{ localStorage.removeItem(k); }catch(e){} }
+    grave(DONO, eu);
+    try{ location.reload(); }catch(e){}
+  }
+
+  setInterval(conferir, 800);
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); conferir(); return r; };
+  })(render);
+
+  window.MaestroDonoDoAparelho = { conferir, DONO, PACOTE };
 })();
 </script>
