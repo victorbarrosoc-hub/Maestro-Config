@@ -15771,7 +15771,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v203 · 9 set · uma mensagem, um aviso';
+const VERSAO_PROTOTIPO = 'v204 · 10 set · conta nova nao ve equipe alheia';
 
 menuSheet = (function(orig){
   return function(){
@@ -38166,5 +38166,122 @@ sbGravar = (function(orig){
   })(A.avisarNoAparelho);
 
   window.MaestroUmAvisoSo = { porCanal, JANELA };
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v204 — CONTA NOVA NÃO É APRESENTADA À EQUIPE DE OUTRA AGÊNCIA.
+
+   O founder criou uma conta pelo site, confirmou o e-mail e entrou. A
+   Maestro mostrou a ele a tela "Quem está entrando?" com:
+
+       Victor Barroso — Administrador · dono da conta
+       Anna Clara     — Social Media
+       Roberto Pivotto— Administrador
+       Cortez Jurídico · EJUP
+
+   Uma conta que o banco AFIRMA não pertencer a agência nenhuma recebeu a
+   lista da equipe e dos clientes de outra — e um convite para virar o
+   dono da conta. Medido: `abrirQuemEsta` abriu POR CIMA da porta de
+   criar agência, que tinha aberto certo.
+
+   A CAUSA. `S.equipe` e a lista de clientes nascem semeadas no código,
+   não no banco. A RLS protege os DADOS (a conta nova recebe vazio), mas
+   os NOMES estão na memória do app desde o primeiro instante, e
+   `abrirQuemEsta` os desenha sem nunca perguntar de quem são.
+
+   E por que a porta certa não bastou: `abrirQuemEsta` roda por um
+   relógio de 3,4s que só olha `!S.usuario`. Quem entrou mas não é da
+   equipe fica sem crachá — a mesma condição que a v200 encontrou do
+   outro lado — e o relógio dispara.
+
+   O QUE ESTA VERSÃO FAZ
+
+   1. Sem agência, a única tela é a de criar agência. `abrirQuemEsta`
+      recusa abrir, e some se já estiver aberta.
+
+   2. E o clique é RECUSADO, não só escondido. Esconder deixa o atalho
+      de teclado e o clique programático de pé — foi o que a v189 já
+      tinha aprendido. Ninguém vira Victor Barroso por acidente.
+
+   3. Entrar pela porta normal passa a perguntar a agência ao banco. Só
+      o "criar conta" da v198 fazia isso; quem entrava pelo caminho de
+      sempre nunca era perguntado, e a porta de criar agência só
+      aparecia num recarregamento.
+
+   O QUE ESTA VERSÃO NÃO RESOLVE, e precisa de decisão: os nomes da
+   equipe e dos clientes são reais e estão escritos no HTML publicado.
+   Quem abrir o código-fonte os lê, com ou sem conta. Tirar a semente
+   muda como o protótipo nasce, então fica registrado, não escondido.
+   ===================================================================== */
+(function(){
+  const A = () => window.MaestroAgencia || null;
+
+  /* o banco AFIRMOU que esta pessoa não tem agência. Enquanto ele não
+     afirma nada, não se conclui nada — a lição da v197. */
+  function semAgencia(){
+    const a = A();
+    return !!(a && a.sondado && a.sabemos && !a.org);
+  }
+  const portaDeAgenciaAberta = () => !!document.getElementById('criarAgencia');
+
+  const naoPodeEscolher = () => semAgencia() || portaDeAgenciaAberta();
+
+  /* ---------- 1. a tela não abre ------------------------------------ */
+  if(typeof abrirQuemEsta === 'function') abrirQuemEsta = (function(orig){
+    return function(){
+      if(naoPodeEscolher()){
+        document.getElementById('quemEsta')?.remove();
+        return;
+      }
+      return orig.apply(this, arguments);
+    };
+  })(abrirQuemEsta);
+
+  /* e some, se abriu antes de o banco responder */
+  function varrerQuemEsta(){
+    if(naoPodeEscolher()) document.getElementById('quemEsta')?.remove();
+  }
+  setInterval(varrerQuemEsta, 700);
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); varrerQuemEsta(); return r; };
+  })(render);
+
+  /* ---------- 2. e o clique é recusado ------------------------------ */
+  addEventListener('click', e => {
+    if(!e.target.closest) return;
+    if(!e.target.closest('[data-qeag],[data-qecl]')) return;
+    if(!naoPodeEscolher()) return;
+    e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault();
+    document.getElementById('quemEsta')?.remove();
+    if(typeof toast === 'function')
+      toast('Esta equipe é de outra agência. Crie a sua para começar.', false, 'erro');
+  }, true);
+
+  /* ---------- 3. entrar pergunta a agência -------------------------- */
+  if(window.MaestroPorta && typeof MaestroPorta.entrar === 'function'){
+    MaestroPorta.entrar = (function(orig){
+      return async function(){
+        const r = await orig.apply(this, arguments);
+        try{
+          const a = A();
+          if(a && typeof a.sondar === 'function'){
+            a.sondado = false;
+            await a.sondar();
+            varrerQuemEsta();
+            /* a porta de criar agência se abre sozinha no conferir da
+               v197; aqui só garanto que ela seja consultada agora, e não
+               apenas num recarregamento */
+            setTimeout(() => { try{ varrerQuemEsta(); }catch(e){} }, 80);
+          }
+        }catch(e){}
+        return r;
+      };
+    })(MaestroPorta.entrar);
+  }
+
+  window.MaestroSemAgencia = { semAgencia, naoPodeEscolher, varrerQuemEsta };
 })();
 </script>
