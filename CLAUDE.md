@@ -379,6 +379,20 @@ fechadura nova (antes disso, conta nova enxergaria a base inteira). 43 provas em
 `web/verificar/v197-mais-de-uma-agencia.mjs`. Uma lição do caminho: a porta de
 criar agência é uma AFIRMAÇÃO, e só se afirma o que o banco afirmou — resposta
 estranha, erro ou função ausente é "não sei", e não sei não abre porta.
+**Aberto (10 set): a PARTE 3 do SQL das agências.** Criar a segunda agência
+falha com `409 · duplicate key value violates unique constraint
+"pauta_cliente_idx"`. A parte 2 trocou a CHAVE PRIMÁRIA, mas havia além dela um
+índice ÚNICO sobre `cliente` sozinho, criado à mão no banco de verdade meses
+antes e que **não existe em nenhum arquivo deste repositório**. Ele é invisível
+enquanto há uma agência só. `docs/ENGINEERING/agencias-3-tirar-a-chave-velha.sql`
+o derruba — e o procura por INSPEÇÃO, não pelo nome, para que outro com nome
+diferente caia junto. Provado num Postgres que reproduz o banco dele (com o
+índice), recusando antes e aceitando depois.
+**A lição, que vale para toda migração futura deste banco:** as 29 provas da
+parte 2 rodaram contra um Postgres montado a partir DESTES arquivos — ele tinha
+tudo o que os arquivos dizem e nada do que o banco real acumulou fora deles.
+Antes de mexer em chave, índice ou política: listar o que o banco DE VERDADE tem
+(a primeira consulta da parte 3 faz isso) e migrar contra aquilo.
 **Aberto:** `roberto.ejup@gmail.com` tem login de agência; se for o cliente, sai
 de `maestro_membros` junto com a parte 2 (ele aprova por link, sem conta).
 **Fechado (9 set, v196):** esvaziar a lixeira não grudava — esvazia 7, atualiza,
