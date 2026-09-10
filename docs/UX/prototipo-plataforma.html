@@ -38691,8 +38691,23 @@ sbGravar = (function(orig){
     CLIS = function(){
       const lista = _CLIS_v211.apply(this, arguments) || [];
       if(sementeVale()) return lista;
+      /* O QUE O BANCO MANDOU É DESTA AGÊNCIA. `Sincro.brutas` guarda toda
+         linha que chegou, inclusive as de cliente que o app ainda não
+         conhece — é assim que a v151 as segura até saber de quem são.
+         Consultar essa lista é perguntar ao banco, e não adivinhar.
+
+         A primeira versão desta regra não perguntava: filtrava por
+         "foi esta agência que cadastrou?". Uma agência com um cliente
+         de mesmo id que a semente perdia o cliente — e, pior, o
+         carregador deixava de aplicar a linha dele, porque ele só
+         aplica o que CLIS() conhece. A pauta chegava e era descartada. */
+      const doBanco = (() => {
+        try{ return new Set(Object.keys((window.Sincro || {}).brutas || {})); }
+        catch(e){ return new Set(); }
+      })();
       const meus = new Set((S.novos || []).map(c => c && (c.cid || c.id)).filter(Boolean));
-      return lista.filter(c => c && (meus.has(c.id) || (S.cliEdit && S.cliEdit[c.id])));
+      return lista.filter(c => c && (doBanco.has(c.id) || meus.has(c.id)
+                                     || (S.cliEdit && S.cliEdit[c.id])));
     };
   }
 
