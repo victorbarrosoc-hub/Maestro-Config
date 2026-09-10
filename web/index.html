@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-10 01:22 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-10 01:38 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15839,7 +15839,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v206 · 10 set · painel de diagnostico com ?diag';
+const VERSAO_PROTOTIPO = 'v207 · 10 set · entrar troca de pessoa de verdade';
 
 menuSheet = (function(orig){
   return function(){
@@ -19913,9 +19913,31 @@ telaConversas = (function(orig){
     if(!sessao || !sessao.email) return;
     const alvo = sessao.email.trim().toLowerCase();
     const m = (S.equipe || []).find(x => ((x.mail || '').trim().toLowerCase()) === alvo);
-    if(!m) return;                    /* entrou, mas não está na Equipe: não inventa */
-    S.usuario = { tipo:'agencia', id: membroId(m) };
-    try{ localStorage.setItem(CHAVE_USR, JSON.stringify(S.usuario)); }catch(e){}
+    if(m){
+      S.usuario = { tipo:'agencia', id: membroId(m) };
+      try{ localStorage.setItem(CHAVE_USR, JSON.stringify(S.usuario)); }catch(e){}
+      return;
+    }
+    /* v207 — NÃO INVENTAR NÃO BASTA: TEM DE APAGAR.
+
+       Aqui morava `if(!m) return;`, com o comentário "entrou, mas não
+       está na Equipe: não inventa". Não inventava mesmo — e deixava de
+       pé o crachá de QUEM ESTAVA ANTES. Quem digitasse outro e-mail via
+       "Você entrou" e continuava sendo a pessoa anterior, com a equipe e
+       os clientes dela na tela.
+
+       O founder passou por isso: entrou com uma conta nova, viu a
+       própria agência, e só conseguiu trocar de pessoa deslogando por
+       fora. De dentro parecia vazamento; era o crachá velho.
+
+       Se o e-mail desta sessão não casa com ninguém da Equipe, então
+       nenhum crachá em cima da mesa é desta sessão. Sai. Quem decide o
+       que aparece depois é a porta de agência (v197), não a memória do
+       aparelho. */
+    if(S.usuario) S.usuario = null;
+    /* e o do APARELHO sai junto, tenha ou não crachá em memória: é ele
+       que ressuscita no próximo carregamento se ficar para trás. */
+    try{ localStorage.removeItem(CHAVE_USR); }catch(e){}
   }
 
   /* ---------- o token viaja pela rede, em toda chamada ao banco ------ */
@@ -37187,9 +37209,17 @@ sbGravar = (function(orig){
     try{
       const r = await fetch(`${SB.url}/rest/v1/rpc/${nome}`, {
         method: 'POST', headers: sbCab(), body: JSON.stringify(corpo || {}) });
-      if(!r.ok) return { faltou: r.status === 404 || r.status === 400, status: r.status };
+      if(!r.ok){
+        /* v207: o motivo vinha no corpo e ia para o lixo. Sem ele a tela
+           só sabia dizer "não consegui" — que é o mesmo que nada, para
+           quem está travado na porta e para quem vai consertar. */
+        let txt = '';
+        try{ txt = (await r.text() || '').slice(0, 300); }catch(e){}
+        return { faltou: r.status === 404 || r.status === 400,
+                 status: r.status, corpo: txt };
+      }
       return { valor: await r.json().catch(() => null) };
-    }catch(e){ return { erro: true }; }
+    }catch(e){ return { erro: true, corpo: String(e && e.message || e) }; }
   }
 
   /* ---------- as duas perguntas ao banco ---------------------------- */
@@ -37270,6 +37300,10 @@ sbGravar = (function(orig){
     pedirAgencia();
   }
 
+  /* v207: alcançável de fora. A porta só era chamada por dois caminhos
+     internos, e quem entra pelo botão não passa por nenhum dos dois. */
+  A.conferir = conferirAgencia;
+
   function pedirAgencia(){
     pedindoAgencia = true;
     const el = document.createElement('div');
@@ -37304,9 +37338,20 @@ sbGravar = (function(orig){
       const r = await rpc('maestro_criar_agencia', { p_nome: n });
       if(!r || !r.valor || typeof r.valor !== 'string'){
         bt.disabled = false; bt.textContent = 'Criar a minha agência';
-        return errar(r && r.faltou
-          ? 'O banco ainda não sabe criar agências — falta a segunda parte do SQL.'
-          : 'Não consegui criar agora. Tente de novo.');
+        if(r && r.faltou)
+          return errar('O banco ainda não sabe criar agências — falta a segunda parte do SQL.');
+        /* v207: o que o banco disse, dito. Uma mensagem que não nomeia a
+           causa faz a pessoa tentar de novo dez vezes e não leva ninguém
+           a lugar nenhum. */
+        const motivo = (() => {
+          if(!r) return 'sem resposta';
+          if(r.erro) return 'a rede falhou' + (r.corpo ? ' (' + r.corpo + ')' : '');
+          let m = r.corpo || '';
+          try{ const j = JSON.parse(m); m = j.message || j.hint || j.details || m; }catch(e){}
+          return (r.status ? 'HTTP ' + r.status : 'resposta estranha')
+               + (m ? ' · ' + String(m).slice(0, 160) : '');
+        })();
+        return errar('O banco recusou: ' + motivo);
       }
       A.org = r.valor; A.sondado = true;
       const p = await rpc('maestro_pronto');
@@ -38431,17 +38476,40 @@ sbGravar = (function(orig){
       try{ S.view = 'site'; S.route = 'home'; }catch(e){}
     }
     document.getElementById('quemEsta')?.remove();
-    /* a porta de criar agência é da v197; aqui só se garante que ela
-       esteja na frente, já que é a única coisa que faz sentido agora */
+    /* a porta de criar agência é da v197 e agora é alcançável: chamar o
+       conferir dela, em vez de re-sondar em círculo — sondar de novo só
+       zerava a resposta que já tínhamos e a porta nunca aparecia. */
     const a = A();
-    if(a && !document.getElementById('criarAgencia') && typeof a.sondar === 'function'){
-      try{ a.sondado = false; a.sondar().then(() => {}); }catch(e){}
+    if(a && !document.getElementById('criarAgencia') && typeof a.conferir === 'function'){
+      try{ a.conferir(); }catch(e){}
     }
   }
 
-  setInterval(reporTela, 600);
+  /* v207 — E A SONDAGEM SE CONSERTA SOZINHA.
+
+     A v204 pendurou a sondagem num embrulho de `MaestroPorta.entrar`.
+     Mas o botão da porta chama a função INTERNA, não a exportada:
+     embrulhar o que está no `window` não alcança quem chama por dentro.
+     Resultado: quem entrava pelo botão ficava com `sondado=false` para
+     sempre, e "não sei" não tranca — então o portão nunca fechava.
+
+     É o mesmo erro de embrulhar a porta em vez de guardar o estado. A
+     cura é a mesma: não depender de caminho nenhum. Se há sessão e a
+     pergunta não foi feita, faça a pergunta — venha o login de onde
+     vier. */
+  function sondarSePreciso(){
+    try{
+      const a = A();
+      if(!a || a.sondado || a.sondando) return;
+      if(!(window.MaestroPorta && MaestroPorta.quem())) return;
+      a.sondar();
+    }catch(e){}
+  }
+
+  setInterval(() => { sondarSePreciso(); reporTela(); }, 600);
   if(typeof render === 'function') render = (function(orig){
-    return function(){ const r = orig.apply(this, arguments); reporTela(); return r; };
+    return function(){ const r = orig.apply(this, arguments);
+      sondarSePreciso(); reporTela(); return r; };
   })(render);
   if(typeof renderLayer === 'function') renderLayer = (function(orig){
     return function(){ const r = orig.apply(this, arguments); reporTela(); return r; };
