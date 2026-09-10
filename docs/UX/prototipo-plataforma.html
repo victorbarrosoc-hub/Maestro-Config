@@ -15771,7 +15771,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v213 · 10 set · a casa nova consegue trabalhar';
+const VERSAO_PROTOTIPO = 'v214 · 10 set · o diag diz o que depende da semente';
 
 menuSheet = (function(orig){
   return function(){
@@ -38560,6 +38560,43 @@ sbGravar = (function(orig){
         return `HTTP ${r.status} · corpo: ${(await r.text()).slice(0, 80)}`;
       }catch(e){ return 'ERRO: ' + e.message; }
     })());
+
+    /* v214 — O QUE DEPENDE DA SEMENTE, com os dados DESTE banco.
+
+       O founder perguntou o que muda na agência dele se a semente sair.
+       A resposta depende do que o banco DELE já guarda, e disso eu não
+       sei nada daqui. Então o painel responde: mostra quem existe só
+       porque está escrito no código, e some se o código parar de dizer. */
+    txt += '\n';
+    txt += linha('— o que depende da semente —', '');
+    try{
+      const M = window.MaestroSemente;
+      const naBase = new Set([...(M ? M.SEMENTE_CLIENTES : [])].map(String));
+      const gravados = new Set([
+        ...((S.novos || []).map(c => String(c && (c.cid || c.id)))),
+        ...Object.keys(S.cliEdit || {}),
+      ].filter(Boolean));
+      const clientes = (typeof CLIS === 'function' ? CLIS() : []);
+      const soNoCodigo = clientes.filter(c =>
+        naBase.has(String(c.id)) && !((S.novos || []).some(n => String(n.cid || n.id) === String(c.id))));
+      txt += linha('clientes que sumiriam',
+        soNoCodigo.length ? soNoCodigo.map(c => c.nome).join(', ') : 'nenhum');
+
+      const noBanco = (() => {
+        try{
+          const bruta = ((window.Sincro || {}).brutas || {})['__estado__'];
+          const eq = bruta && bruta.s && bruta.s.equipe;
+          return new Set((eq || []).map(m => String((m && m.mail) || '').toLowerCase()));
+        }catch(e){ return null; }
+      })();
+      if(!noBanco) txt += linha('equipe que sumiria', 'não consegui ler a linha do estado');
+      else {
+        const some = (S.equipe || []).filter(m =>
+          !noBanco.has(String((m && m.mail) || '').toLowerCase()));
+        txt += linha('equipe que sumiria',
+          some.length ? some.map(m => m.n).join(', ') : 'ninguém');
+      }
+    }catch(e){ txt += linha('erro na conta', String(e && e.message || e)); }
 
     const el = document.getElementById('diagMaestro') || (() => {
       const d = document.createElement('div');
