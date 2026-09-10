@@ -257,6 +257,10 @@ console.log('\n10. o caminho de verdade do cliente segue de pé');
   await b.pag.evaluate(() => {
     document.getElementById('quemEsta')?.remove();
     const c = (typeof CLIS === 'function' ? CLIS() : [])[0];
+    /* v216: cliente é quem veio por LINK. Montar o crachá sem `viaLink`
+       monta um estado que o produto não produz mais — e que ele desfaz
+       de propósito, para ninguém ficar preso do lado do cliente. */
+    S.viaLink = true;
     S.usuario = { tipo:'cliente', id:c.id };
     S.view = 'client'; S.cli = c.id; S.route = 'inicio';
     render();

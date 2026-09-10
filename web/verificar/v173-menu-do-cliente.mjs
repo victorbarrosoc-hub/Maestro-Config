@@ -4,9 +4,22 @@
    e não tem pra que ter aquilo pro cliente, exemplo: ver como agência".
 
    Este teste mede item por item, como ele fez com o dedo: abre o menu,
-   toca em cada coisa e cobra que ela leve a algum lugar que seja dele —
-   e que a pessoa da agência espiando o painel não perca o caminho de
-   volta, que é outra coisa. */
+   toca em cada coisa e cobra que ela leve a algum lugar que seja dele.
+
+   v216 — DUAS COISAS AQUI MUDARAM DE PREMISSA, e por pedido dele:
+
+   · Não existe mais "a agência espiando o painel do cliente". Quem loga
+     é a agência; o cliente entra por link. Para ver o que ele vê, a
+     agência abre o LINK dele, em outra aba — a seção 3 passa a cobrar
+     isso, que é o que sobrou de verdade daquilo.
+   · O rodapé do Menu perdeu "Ver como agência/cliente" e "Tela de
+     entrada" nos DOIS lados, não só no do cliente.
+
+   E uma correção de método: ser cliente agora quer dizer TER VINDO POR
+   LINK. Pôr `S.usuario.tipo='cliente'` sem `S.viaLink` monta um estado
+   que o produto não produz mais — e, pior, que ele agora desfaz de
+   propósito, para ninguém ficar preso. O `noPainel` acende as duas
+   coisas juntas. */
 import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs';
 
 const ALVO = process.argv[2] || 'docs/UX/prototipo-plataforma.html';
@@ -51,6 +64,8 @@ const noPainel = (pag, comoCliente) => pag.evaluate(souCli => {
     lista.push(p); porFase(p, fase); };
   põe('Uma publicação', 'post_cli', '2026-09-12');
   põe('Outra já no ar', 'postado', '2026-08-03');
+  /* v216: cliente é quem veio por link — as duas coisas andam juntas */
+  S.viaLink = !!souCli;
   S.usuario = souCli ? { tipo:'cliente', id:c.id } : { tipo:'agencia', id:'victorbarrosoc' };
   S.cli = c.id; S.view = 'client'; S.route = 'inicio'; S.modal = null;
   render();
@@ -91,7 +106,7 @@ const itensDoMenu = pag => pag.evaluate(() => ({
         m.telas.map(t => t.rota).join(',') === 'inicio,lote,feed,agenda,projeto,resultados,conta',
         m.telas.map(t => t.rota));
   checa('1.6 e o cabeçalho conta o que ficou, sem falar de "lados"',
-        /^7 telas$/.test(m.cabecalho.trim()), m.cabecalho);
+        /^7 telas$/.test(m.cabecalho.trim()) && !/lado/i.test(m.cabecalho), m.cabecalho);
 
   /* o dedo: toca em cada item e cobra que abra alguma coisa */
   const idas = [];
@@ -138,26 +153,29 @@ const itensDoMenu = pag => pag.evaluate(() => ({
 }
 
 /* =====================================================================
-   3. a agência espiando o painel NÃO perde o caminho de volta
+   3. v216 — a agência não entra no painel do cliente; ela abre o link
    ================================================================== */
 {
   const { ctx, pag, erros } = await celular();
-  await noPainel(pag, false);
-  await abrirMenu(pag);
-  const m = await itensDoMenu(pag);
-  checa('3.1 quem é da agência e está espiando continua com "Ver como agência"',
-        m.rodape.some(b => /como agência/i.test(b)), m.rodape);
-  checa('3.2 e continua vendo o fluxo inteiro — é a tela de trabalho dela',
-        m.telas.some(t => t.rota === 'termotexto'), m.telas.map(t => t.rota));
-
-  const voltou = await pag.evaluate(async () => {
-    S.menu = true; renderLayer();
-    document.querySelector('.msheet [data-menter="agency"]')?.click();
+  const r = await pag.evaluate(async () => {
+    const c = CLIS()[0];
+    S.viaLink = false;
+    S.usuario = { tipo:'agencia', id:'victorbarrosoc' };
+    S.cli = c.id; S.view = 'agency'; S.route = 'dash';
+    S.cliEdit = S.cliEdit || {};
+    S.cliEdit[c.id] = Object.assign({}, S.cliEdit[c.id], { chave:'chave-de-doze-ou-mais' });
+    /* o caminho que os botões "ver o lado do cliente" tomam agora */
+    let url = null;
+    const o = window.open; window.open = u => { url = u; return null; };
+    try{ go('client', 'inicio'); } finally { window.open = o; }
     await new Promise(r => setTimeout(r, 250));
-    return S.view;
+    return { view: S.view, url };
   });
-  checa('3.3 e o botão leva mesmo de volta para a agência', voltou === 'agency', voltou);
-  checa('3.4 sem erro de página', erros.length === 0, erros);
+  checa('3.1 pedir o lado do cliente NÃO leva a agência para dentro dele',
+        r.view === 'agency', r);
+  checa('3.2 leva ao LINK do cliente, que é o que ele mesmo recebe',
+        !!r.url && /[?&]aprovar=/.test(r.url), r);
+  checa('3.3 sem erro de página', erros.length === 0, erros);
   await ctx.close();
 }
 
@@ -177,9 +195,12 @@ const itensDoMenu = pag => pag.evaluate(() => ({
   });
   checa('4.1 o menu da agência segue inteiro — nenhuma tela a menos',
         m.telas === m.deviaTer && m.telas > 10, m);
-  checa('4.2 com o rodapé de sempre',
-        m.rodape.some(b => /como cliente/i.test(b)) && m.rodape.length === 3, m.rodape);
-  checa('4.3 e ainda dizendo de que lado está', /lado da agência/.test(m.cab), m.cab);
+  /* v216: o rodapé perde "Ver como cliente" e "Tela de entrada" — fica
+     "Site", que leva a outro lugar de verdade. */
+  checa('4.2 o rodapé perdeu a troca de lado e a tela de login',
+        !m.rodape.some(b => /como cliente|como agência|Tela de entrada/i.test(b))
+        && m.rodape.length === 1, m.rodape);
+  checa('4.3 e o cabeçalho não fala mais em "lado"', !/lado/i.test(m.cab), m.cab);
   checa('4.4 sem erro de página', erros.length === 0, erros);
   await ctx.close();
 }

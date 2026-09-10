@@ -112,6 +112,10 @@ for(const [rotulo, largura, altura] of [['celular', 390, 844], ['desktop', 1280,
   if(rotulo === 'celular'){
     /* o que a v111 desenha com estas regras continua grande, como deve ser */
     const metas = await pg.evaluate(() => {
+      /* v216: ser cliente é ter vindo por LINK — sem isso o produto
+         desfaz o crachá de propósito, para ninguém ficar preso do lado
+         do cliente agora que o alternador do topo saiu. */
+      S.viaLink = true;
       S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj'; S.route = 'projeto'; render();
       return [...document.querySelectorAll('.metas .meta b')].map(el => ({
         fs: parseFloat(getComputedStyle(el).fontSize),

@@ -155,6 +155,7 @@ async function casa(){
 {
   const { ctx, pag, erros } = await casa();
   const r = await pag.evaluate(() => {
+    S.viaLink = true;
     S.usuario = { tipo:'cliente', id:'n0' };
     S.presenca = { roberto:{ estado:'ativo', visto:Date.now()-3000 } };
     S.view='client'; S.route='inicio';

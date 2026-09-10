@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-10 09:55 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-10 12:04 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -12850,6 +12850,19 @@ modalVer = (function(orig){
 #quemEsta .sub{ font-size:13px; color:var(--ink-300); margin:0 0 18px }
 #quemEsta .grp{ font-family:var(--mono); font-size:9.5px; letter-spacing:.16em;
   text-transform:uppercase; color:var(--ink-400); margin:16px 0 8px }
+/* v216 — o portão de uma porta só. Com um card, a grade de duas colunas
+   deixava a porta esticada de ponta a ponta; ela volta ao tamanho de um
+   cartão e ao meio. */
+.gatebox.gate1{ max-width:520px }
+.doors.doors1{ grid-template-columns:1fr; max-width:400px; margin:0 auto }
+.gateCli{ display:flex; gap:14px; align-items:flex-start; margin:22px auto 0; max-width:400px;
+  padding:16px 18px; border:1px dashed var(--ink-700); border-radius:14px;
+  background:var(--ink-900) }
+.gateCli .ic{ width:34px; height:34px; border-radius:10px; background:var(--ink-850);
+  border:1px solid var(--ink-700); display:grid; place-items:center;
+  color:var(--ink-300); font-size:16px; flex:0 0 auto }
+.gateCli b{ display:block; font-size:14px; color:var(--ink-100); margin-bottom:4px }
+.gateCli span{ font-size:13px; color:var(--ink-400); line-height:1.6 }
 #quemEsta .qeVazio{ font-size:13px; line-height:1.55; color:var(--ink-400);
   margin:4px 0 0; padding:13px; border-radius:12px;
   border:1px dashed var(--ink-800); background:var(--ink-950) }
@@ -15857,7 +15870,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v215 · 10 set · entrar e coisa de agencia';
+const VERSAO_PROTOTIPO = 'v216 · 10 set · uma entrada so, menu pelo uso';
 
 menuSheet = (function(orig){
   return function(){
@@ -39010,3 +39023,394 @@ sbGravar = (function(orig){
 })();
 </script>
 
+<script>
+"use strict";
+/* =====================================================================
+   v216 — A ENTRADA É UMA SÓ, E O MENU SEGUE O USO.
+
+   O founder, fechando o assunto que a v215 abriu:
+
+     "A Maestro é uma plataforma pra agência, que quem loga é a agência.
+      O cliente ele apenas tem um link que ele acessa e tem o painel
+      dele. Mas não precisa de login assim como a agência."
+
+     "Inclusive o toggle lá em cima de ver como agência e como cliente,
+      pode tirar. Assim como no menu... Reveja os dois lados, simplifique
+      a plataforma e organize os menus de acordo com o que tem de
+      usabilidade. Por exemplo, acho que a aba conversas tá um pouco
+      inacessível, e é uma aba importante de comunicação interna."
+
+   ---------------------------------------------------------------------
+   PARTE 1 — O CLIENTE NÃO É UM LADO EM QUE SE ENTRA.
+
+   O portão dizia "Como você entra?" e oferecia DUAS portas iguais, e o
+   rodapé prometia: "Você troca de lado a qualquer momento, na barra do
+   topo". Isso é a arquitetura de um produto com dois logins — e não é
+   este produto. Aqui há UM login, o da agência; o cliente recebe um
+   link com chave própria e não tem conta.
+
+   Enquanto o produto oferecia as duas portas, tudo o mais seguia: o
+   alternador no topo, os quatro botões "ver o lado do cliente", a
+   promessa escrita no portão. Some a premissa e some a família inteira.
+
+   O QUE FICA NO LUGAR. A agência continua precisando ver o que o
+   cliente vê — isso é legítimo e é o que aqueles botões queriam. Só que
+   agora ela vê pelo CAMINHO DE VERDADE: o link do cliente, aberto em
+   outra aba. Um lugar só para a mesma coisa (Princípio #1), e o que
+   aparece ali é literalmente o que ele recebe — não uma imitação que
+   pode divergir sem ninguém notar.
+
+   E como sempre nesta casa: fecha no ESTADO, não nas telas. `go()` é o
+   único lugar por onde se troca de lado, então é ele que recusa — venha
+   o clique de onde vier, do teclado, do console ou de uma tela que
+   ninguém lembrou de mudar. Quem chega por LINK não passa por aqui: o
+   bloco da v170 chama `go('client','inicio')` com `S.viaLink` já de pé,
+   e essa é a única porta que continua aberta.
+
+   ---------------------------------------------------------------------
+   PARTE 2 — O MENU SEGUE O USO.
+
+   Medido no menu montado (não no código-fonte: vinte pontos mexem nele
+   ao longo do arquivo, e só o resultado importa):
+
+   · CONVERSAS ESTAVA EM "PRODUÇÃO", ao lado do Ensaio. Conversa não é
+     produção — é o lugar onde a equipe se fala. Enterrada num grupo que
+     ninguém abre para conversar, ela ficou "um pouco inacessível", nas
+     palavras dele. Vai para o topo, junto de Hoje: é lugar de voltar
+     todo dia, como o Hoje. E ganha contagem de não lidas, que é o que
+     faz alguém abrir.
+
+   · CRONOGRAMA NÃO ESTAVA NA LATERAL. A v151 tirou `pauta` do AGNAV e a
+     v24955 a renomeou para "Cronograma de conteúdos" — resultado: a
+     tela mais central da operação só existia dentro do Menu. Volta.
+
+   · "CONTA" TINHA TRÊS ITENS QUE SÃO DOIS. `equipe · Equipe`,
+     `planos · Planos` e `conta · Plano e equipe` — o terceiro se chama
+     com o nome dos outros dois juntos. Sai da lateral (a rota continua
+     viva pelo Menu, para quem tiver link antigo).
+
+   · A BARRA DO POLEGAR (celular) era Hoje · Clientes · Ensaio · Feed.
+     Conversas entra no lugar do Feed. O Feed é tela de conferir, não de
+     voltar; Conversas é o contrário, e é o que ele pediu para aproximar.
+
+   · O MENU DO CLIENTE mostrava "Dentro do fluxo" — seis telas com o
+     aviso "no produto o cliente chega por ele, não por menu". É andaime
+     de protótipo, e estava à vista de um cliente de verdade, que chega
+     por link. O MENU_AG já tinha se livrado disso na v12644; o do
+     cliente não. Sai.
+   ===================================================================== */
+(function(){
+
+  /* ---------- 0. Conversas ganha um ícone de conversa --------------- */
+  /* estava com `sndon` — o ícone de SOM. Numa barra de cinco itens, o
+     desenho é o que o polegar procura antes da palavra. */
+  try{
+    if(typeof IC === 'object' && IC && !IC.chat)
+      IC.chat = '<path d="M20.5 11.6c0 3.9-3.8 7-8.5 7-1 0-2-.15-2.9-.42L4 20l1.25-3.4C4.2 15.3 3.5 13.6 3.5 11.6c0-3.9 3.8-7 8.5-7s8.5 3.1 8.5 7Z"/>';
+  }catch(e){}
+
+  /* ================= PARTE 1 — uma entrada só ======================= */
+
+  /* ---------- 1.0 O CRACHÁ DE CLIENTE SEM LINK NÃO VALE MAIS --------
+
+     Isto é o que quase me escapou, e é o defeito mais caro desta versão.
+
+     Enquanto dava para escolher "Sou o cliente" no portão, o aparelho
+     ficava marcado com `{tipo:'cliente'}` no localStorage. Havia três
+     saídas: o alternador no topo, o card da agência no portão e o botão
+     "Ver como agência". A v216 tira o alternador — e as outras duas não
+     apareciam nesse estado, porque o guarda do render devolve a pessoa
+     ao painel do cliente a cada desenho. Resultado: quem tivesse essa
+     marca de antes ficava PRESO no painel do cliente, sem volta pela
+     interface. Só limpando o localStorage pelo console.
+
+     Esse é exatamente o buraco da v178, que custou um dia em 7/set. A
+     suíte dela pegou — mas por acidente, medindo os dois botões do
+     ALTERNADOR e chamando-os de "os dois cards do portão". Uma prova que
+     passa pelo motivo errado avisa pelo motivo errado, e quase me
+     convenceu de que era só expectativa velha.
+
+     A REGRA, agora que há um caminho só: crachá de cliente nasce do
+     LINK. Abrir a Maestro sem link e encontrar um crachá de cliente
+     guardado é encontrar sobra de uma porta que não existe mais — então
+     ela cai, e a pessoa entra pela porta que existe. Quem vem por link
+     não passa por aqui: a marca dele nasce depois, no bloco da v170. */
+  try{
+    const temLink = /[?&](aprovar|ver)=/.test(location.search || '');
+    if(!temLink){
+      let guardado = null;
+      try{ guardado = JSON.parse(localStorage.getItem(CHAVE_USR) || 'null'); }catch(e){}
+      const ehCli = u => !!(u && u.tipo === 'cliente');
+      if(ehCli(guardado) || ehCli(S.usuario)){
+        try{ localStorage.removeItem(CHAVE_USR); }catch(e){}
+        if(ehCli(S.usuario)) S.usuario = null;
+        if(S.view === 'client'){ S.view = 'agency'; S.route = 'dash'; }
+      }
+    }
+  }catch(e){}
+
+  /* ---------- 1.1 o portão recusa trocar de lado -------------------- */
+  /* `go` é o funil: portão, alternador, paleta de comandos e os botões
+     de "ver o lado do cliente" todos passam por aqui. Quem não veio por
+     link não vira cliente. */
+  if(typeof go === 'function') go = (function(orig){
+    return function(view, route, extra){
+      if(view === 'client' && !S.viaLink && !S.soVer && !S.soFluxo){
+        try{ verComoOClienteVe(); }catch(e){}
+        return;
+      }
+      return orig.apply(this, arguments);
+    };
+  })(go);
+
+  /* ---------- 1.1b e ninguém fica PRESO do lado do cliente ----------
+
+     A trava de cima recusa a IDA. Esta desfaz o que já estava lá — e é
+     ela que fecha o buraco de verdade, porque a v170 devolve ao painel
+     do cliente A CADA DESENHO quem tiver crachá de cliente. Sem isto,
+     um crachá antigo (ou posto à força) prendia a pessoa numa tela sem
+     nenhuma saída visível, agora que o alternador do topo saiu.
+
+     Onde a escrita passa, não onde ela nasce: no `render`, como a
+     própria v170 escolheu, para valer por endereço, por voltar do
+     navegador e por qualquer caminho que ninguém previu.
+
+     Só o link cria crachá de cliente (é o único `S.usuario.tipo =
+     'cliente'` do arquivo, no bloco da v170, e ele acende `S.viaLink`
+     antes). Então crachá sem link é sobra de uma porta que não existe
+     mais — e sobra a gente varre, não obedece.
+
+     O ALCANCE É DE PROPÓSITO PEQUENO: mexe no CRACHÁ, e só toca na tela
+     como consequência de tê-lo tirado. A primeira versão também expulsava
+     qualquer `S.view === 'client'` sem link — e derrubou seis suítes do
+     lado do cliente de uma vez. Isso era sinal, não ruído: a trava que
+     prende alguém é o crachá (é ele que o guarda da v170 lê a cada
+     desenho); a view sozinha não prende ninguém, porque `go('client')`
+     já é recusado ali em cima. Fechar mais do que o defeito ocupa é
+     como se quebra o que estava de pé. */
+  if(typeof render === 'function') render = (function(orig){
+    return function(){
+      try{
+        const porLink = !!(S.viaLink || S.soVer || S.soFluxo
+          || (document.body && (document.body.classList.contains('soVer')
+                             || document.body.classList.contains('soFluxo'))));
+        if(!porLink && S.usuario && S.usuario.tipo === 'cliente'){
+          try{ localStorage.removeItem(CHAVE_USR); }catch(e){}
+          S.usuario = null;
+          /* e só então a tela: com o crachá fora, o guarda da v170 para
+             de devolver a pessoa, e o portão volta a aparecer. */
+          if(S.view === 'client'){ S.view = 'site'; S.route = 'entrar'; S.modal = null; }
+        }
+      }catch(e){}
+      return orig.apply(this, arguments);
+    };
+  })(render);
+
+  /* ---------- 1.2 e o que aquilo queria, feito pelo caminho certo ---- */
+  /* o link do cliente, em outra aba. É o que ele recebe — não uma
+     imitação que pode divergir sem ninguém perceber. */
+  function verComoOClienteVe(){
+    const c = (typeof cliAtual === 'function' && cliAtual())
+           || (typeof CLIS === 'function' ? CLIS()[0] : null);
+    const link = (c && typeof linkDeAprovacao === 'function')
+      ? linkDeAprovacao(c.id) : null;
+    if(!link){
+      /* "não sei" nunca vira uma tela inventada: diz o que falta. */
+      if(typeof toast === 'function')
+        toast('Cadastre um cliente para ver o painel dele — é o link dele que abre essa tela.', false, 'erro');
+      return;
+    }
+    try{ window.open(link, '_blank', 'noopener'); }
+    catch(e){ if(typeof toast === 'function') toast('Não consegui abrir o link. Copie-o na ficha do cliente.', false, 'erro'); }
+  }
+  window.MaestroVerCliente = { verComoOClienteVe };
+
+  /* ---------- 1.3 o alternador sai da barra do topo ----------------- */
+  if(typeof ctxBar === 'function') ctxBar = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      try{
+        const el = document.getElementById('ctx');
+        if(el) el.querySelectorAll('[data-seg]').forEach(x => x.remove());
+      }catch(e){}
+      return r;
+    };
+  })(ctxBar);
+
+  /* ---------- 1.4 o portão passa a ter uma porta -------------------- */
+  if(typeof vGate === 'function') vGate = (function(orig){
+    return function(){
+      return `<div class="gate"><div class="gatebox gate1">
+  <div class="logo fu" style="justify-content:center;margin-bottom:24px">${LOGO('var(--brass-500)',30)}<b style="font-family:var(--serif);font-size:23px;font-weight:400;color:var(--ink-50)">Maestro</b></div>
+  <h1 class="fu" style="animation-delay:60ms">Entrar na sua agência</h1>
+  <p class="fu" style="animation-delay:120ms">Quem tem conta na Maestro é a agência.
+    O seu cliente não precisa de uma.</p>
+  <div class="doors doors1">
+    <button class="door fu" style="animation-delay:180ms" data-enter="agency">
+      <span class="ic">${ic('building')}</span>
+      <h3>Sou a agência</h3>
+      <p>Painel completo: clientes, cronograma, produção, conversas e envio de lotes.</p>
+      <ul><li>Cada pessoa entra com o nome dela</li><li>Você monta e envia o lote</li>
+        <li>Nunca aprova o próprio conteúdo</li></ul>
+      <span class="go">Entrar como agência ${ic('arrowr')}</span>
+    </button>
+  </div>
+  <div class="gateCli fu" style="animation-delay:250ms">
+    <span class="ic">${ic('person')}</span>
+    <div><b>E o cliente?</b>
+      <span>Ele recebe um link e abre o painel dele no celular — sem conta,
+      sem senha, sem instalar nada. O link sai da ficha do cliente, aqui dentro.</span></div>
+  </div>
+</div></div>`;
+    };
+  })(vGate);
+
+  /* ---------- 1.5 e os botões que diziam "ver o lado do cliente" ----- */
+  /* eles continuam existindo e continuam fazendo o que prometiam — só
+     que pelo link. O `go` acima já os reconduz; aqui só o texto para de
+     mentir. */
+  const TROCAR = [
+    [/Ver como o cliente está vendo/g, 'Abrir o painel do cliente'],
+    [/Ver como o cliente vê/g,         'Abrir o painel do cliente'],
+    [/Ver o lado do cliente/g,         'Abrir o painel do cliente'],
+    [/Entrar como cliente/g,           'Abrir o painel do cliente']
+  ];
+  if(typeof render === 'function') render = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      try{
+        document.querySelectorAll('[data-enter="client"]').forEach(b => {
+          let t = b.innerHTML;
+          for(const [de, para] of TROCAR) t = t.replace(de, para);
+          if(t !== b.innerHTML) b.innerHTML = t;
+        });
+      }catch(e){}
+      return r;
+    };
+  })(render);
+
+  /* ---------- 1.6 e o rodapé do Menu perde a troca de lado ---------- */
+  /* O founder nomeou este também: "Assim como no menu, de ver como
+     agência/cliente ou entrar como agência/cliente."
+
+     Saem três coisas e fica uma:
+     · "Ver como agência/cliente" (`data-menter`) — é o alternador de
+       novo, com outra roupa;
+     · "Tela de entrada" — a tela de login, oferecida a quem já entrou;
+     · o rótulo "Trocar de lugar", que só existia para encabeçar os dois.
+     Fica "Site", que leva ao site e é outra coisa.
+
+     E o cabeçalho para de dizer "lado da agência" / "lado do cliente":
+     lado pressupõe dois, e agora é um. */
+  if(typeof menuSheet === 'function') menuSheet = (function(orig){
+    return function(){
+      let h = orig.apply(this, arguments);
+      if(!h) return h;
+      h = h.replace(/<button[^>]*data-menter=[^>]*>[\s\S]*?<\/button>\s*/g, '')
+           .replace(/<button[^>]*data-mgo2="entrar"[^>]*>[\s\S]*?<\/button>\s*/g, '')
+           .replace(/<div class="msgrp">Trocar de lugar\s*<i><\/i><\/div>\s*/g, '')
+           .replace(/(\d+) telas · lado (?:da agência|do cliente)/g, '$1 telas');
+      return h;
+    };
+  })(menuSheet);
+  /* e o clique, caso alguém chegue nele por teclado ou por um caminho
+     que ninguém previu: some a porta, some o efeito */
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-menter]');
+    if(!t) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    try{ S.menu = false; renderLayer(); }catch(err){}
+  }, true);
+
+  /* ================= PARTE 2 — o menu segue o uso =================== */
+
+  const temNav  = typeof AGNAV  !== 'undefined' && Array.isArray(AGNAV);
+  const temTabs = typeof AGTABS !== 'undefined' && Array.isArray(AGTABS);
+
+  /* quantas conversas têm coisa que eu ainda não vi. É a contagem que
+     faz alguém abrir a aba — sem ela, "Conversas" é só mais uma linha. */
+  function porLer(){
+    try{
+      if(!S.chat || !Array.isArray(S.chat.canais)) return 0;
+      const eu = (S.usuario && S.usuario.id) || null;
+      const vistos = (S.cvVistos = S.cvVistos || {});
+      let n = 0;
+      for(const c of (typeof canaisVisiveis === 'function' ? canaisVisiveis() : S.chat.canais)){
+        const msgs = c.msgs || [];
+        const meuUlt = vistos[c.id] || 0;
+        for(const m of msgs){
+          if(!m || !m.ts) continue;
+          if(m.ts > meuUlt && m.de !== eu) n++;
+        }
+      }
+      return n;
+    }catch(e){ return 0; }
+  }
+  window.MaestroPorLer = porLer;
+
+  if(temNav){
+    /* Conversas sai de Produção e sobe para Home, ao lado de Hoje */
+    const iCv = AGNAV.findIndex(x => x.r === 'conversas');
+    const item = iCv >= 0 ? AGNAV.splice(iCv, 1)[0]
+                          : { r:'conversas', n:'Conversas', icn:'chat' };
+    item.bd = porLer;
+    const iDash = AGNAV.findIndex(x => x.r === 'dash');
+    if(iDash >= 0) AGNAV.splice(iDash + 1, 0, item);
+    else AGNAV.push(item);
+
+    /* o Cronograma volta para a lateral, dentro de Operação */
+    if(!AGNAV.some(x => x.r === 'pauta')){
+      const iCli = AGNAV.findIndex(x => x.r === 'clientes');
+      if(iCli >= 0) AGNAV.splice(iCli + 1, 0, { r:'pauta', n:'Cronograma', icn:'doc' });
+    }
+
+    /* "Plano e equipe" é Equipe + Planos com outro nome. Sai da lateral;
+       a ROTA continua de pé, para quem chegar por link antigo. */
+    const iConta = AGNAV.findIndex(x => x.r === 'conta');
+    if(iConta >= 0 && AGNAV.some(x => x.r === 'equipe') && AGNAV.some(x => x.r === 'planos'))
+      AGNAV.splice(iConta, 1);
+
+    /* grupo vazio é um título sem lista: some */
+    for(let i = AGNAV.length - 1; i >= 0; i--){
+      if(!AGNAV[i].g) continue;
+      const prox = AGNAV[i + 1];
+      if(!prox || prox.g) AGNAV.splice(i, 1);
+    }
+  }
+
+  if(temTabs){
+    /* a barra do polegar: Conversas entra no lugar do Feed. Feed é tela
+       de conferir; Conversas é de voltar — e é a que ele pediu perto. */
+    const iFeed = AGTABS.findIndex(x => x.r === 'feed');
+    const cv = { r:'conversas', n:'Conversas', icn:'chat', bd: porLer };
+    if(AGTABS.some(x => x.r === 'conversas')){
+      const j = AGTABS.findIndex(x => x.r === 'conversas');
+      AGTABS[j].bd = porLer;
+    } else if(iFeed >= 0) AGTABS.splice(iFeed, 1, cv);
+    else AGTABS.push(cv);
+  }
+
+  /* o menu do cliente perde o andaime do protótipo */
+  if(typeof MENU_CL !== 'undefined' && Array.isArray(MENU_CL)){
+    const i = MENU_CL.findIndex(g => g.g === 'Dentro do fluxo');
+    if(i >= 0) MENU_CL.splice(i, 1);
+  }
+
+  /* e o Menu da agência acompanha a lateral: Conversas sobe para Home */
+  if(typeof MENU_AG !== 'undefined' && Array.isArray(MENU_AG)){
+    let achou = null;
+    for(const g of MENU_AG){
+      if(!g.it) continue;
+      const j = g.it.findIndex(it => it[0] === 'conversas');
+      if(j >= 0){ achou = g.it.splice(j, 1)[0]; break; }
+    }
+    const home = MENU_AG.find(g => g.g === 'Home');
+    if(home && home.it) home.it.push(achou || ['conversas','Conversas','chat', porLer]);
+    /* grupo que ficou sem item some do Menu */
+    for(let i = MENU_AG.length - 1; i >= 0; i--)
+      if(MENU_AG[i].it && !MENU_AG[i].it.length) MENU_AG.splice(i, 1);
+  }
+
+  try{ if(typeof render === 'function') render(); }catch(e){}
+})();
+</script>

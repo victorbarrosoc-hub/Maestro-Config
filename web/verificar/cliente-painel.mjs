@@ -24,6 +24,9 @@ async function entrarComoCliente(pag){
     document.getElementById('abertura')?.remove();
     document.getElementById('entrarMaestro')?.remove();
     const c = CLIS()[0];
+    /* v216: ser cliente é ter vindo por LINK — sem isso o produto
+       desfaz o crachá, para ninguém ficar preso do lado do cliente. */
+    S.viaLink = true;
     S.usuario = { tipo:'cliente', id:c.id }; S.cli = c.id;
     /* v167: a casa começa vazia — o teste monta a pauta de que precisa,
        em vez de depender do cliente de demonstração que saiu */

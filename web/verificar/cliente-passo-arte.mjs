@@ -52,6 +52,9 @@ checa('a agência subiu duas imagens no card',
       await pg.evaluate(id => (S.mat[mChave(id)] || []).length === 2, ids.peca));
 
 const abrir = async id => { await pg.evaluate(id => {
+    /* v216: ser cliente é ter vindo por LINK — sem isso o produto
+       desfaz o crachá, para ninguém ficar preso do lado do cliente. */
+    S.viaLink = true;
     S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj';
     S.route = 'clcard'; S.pcSel = id; S.pcPedindo = false; render();
   }, id); await pg.waitForTimeout(500); };

@@ -50,6 +50,7 @@ async function casa(){
 /* põe o navegador dentro do painel de um cliente */
 const comoCliente = (pag, id) => pag.evaluate(cid => {
   const c = cid ? CLIS().find(x => x.id === cid) : CLIS()[0];
+  S.viaLink = true;
   S.usuario = { tipo:'cliente', id: c.id }; S.cli = c.id; S.view = 'client';
   return c.id;
 }, id);
@@ -90,6 +91,7 @@ const textoDaTela = pag => pag.evaluate(() =>
     if(CLIS().some(c => c.id === id)) alvos.push(id);
     for(const cid of alvos){
       const c = CLIS().find(x => x.id === cid); if(!c) continue;
+      S.viaLink = true;
       S.usuario = { tipo:'cliente', id:cid }; S.cli = cid; S.view = 'client';
       for(const rota of Object.keys(URL_CL)){
         S.route = rota; S.modal = null;

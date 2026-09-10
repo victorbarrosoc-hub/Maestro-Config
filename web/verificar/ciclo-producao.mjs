@@ -1,6 +1,13 @@
 /* v112 — o ciclo de produção, ponta a ponta, e o link de quem aprova.
    Inbox → Plan → Check (revisor) → lote → cliente → Plan (amarelo/azul)
    → Do → Check → lote → cliente → Act. Um card, duas voltas. */
+/* v216 — ESTA SUÍTE ALTERNA ENTRE OS DOIS LADOS NA MESMA ABA, e isso
+   passou a exigir `S.viaLink`. Ser cliente agora quer dizer TER VINDO POR
+   LINK: um crachá de cliente sem link é sobra de uma porta que não existe
+   mais, e o produto o desfaz de propósito, para ninguém ficar preso do
+   lado do cliente agora que o alternador do topo saiu. Ao voltar para a
+   agência, `viaLink` apaga junto — senão o guarda da v170 devolveria a
+   pessoa, que é o comportamento certo para quem chegou mesmo por link. */
 import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs';
 
 const html = fs.readFileSync('docs/UX/prototipo-plataforma.html', 'utf8');
@@ -117,14 +124,14 @@ await pg.click('[data-enviook]'); await pg.waitForTimeout(300);
 checa('enviado: o texto está com o cliente', await fase(pg, cardId) === 'texto_cli');
 
 /* ---------- 5. o cliente pede alteração → Plan, amarelo ----------------- */
-await pg.evaluate(id => { S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj'; S.route = 'clcard'; S.pcSel = id; render(); }, cardId);
+await pg.evaluate(id => { S.viaLink = true; S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj'; S.route = 'clcard'; S.pcSel = id; render(); }, cardId);
 await pg.waitForTimeout(300);
 const ficha = await pg.locator('.clficha').textContent().catch(() => '');
 checa('o cliente recebe a ficha: objetivo, quando, projeto e onde vai ao ar',
       /Objetivo/.test(ficha) && /Mostrar o ateliê/.test(ficha) && /Instagram/.test(ficha) && /Projeto/.test(ficha) && /18:30/.test(ficha));
 await pg.evaluate(id => decidirCard(id, 'ALTERACAO', 'Troca a abertura por uma pergunta'), cardId); await pg.waitForTimeout(200);
 checa('o pedido de alteração devolve o card ao Plan (rascunho)', await fase(pg, cardId) === 'rascunho');
-await pg.evaluate(() => { S.view = 'agency'; S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Administrador')) }; document.getElementById('quemEsta')?.remove(); S.route = 'producao'; render(); }); await pg.waitForTimeout(300);
+await pg.evaluate(() => { S.viaLink = false; S.view = 'agency'; S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Administrador')) }; document.getElementById('quemEsta')?.remove(); S.route = 'producao'; render(); }); await pg.waitForTimeout(300);
 checa('no quadro, o card está no Plan, inteiro amarelo, com as palavras do cliente',
       await colDoCard(pg, tid) === 'plan' && await pg.locator(cardSel(tid) + '.pedido').count() === 1
       && /pediu:/.test(await pg.locator(cardSel(tid) + ' .enPedido').textContent()) && /Troca a abertura/.test(await pg.locator(cardSel(tid) + ' .enPedido').textContent()));
@@ -137,8 +144,8 @@ await pg.click(cardSel(tid) + ' [data-cyok]'); await pg.waitForTimeout(200);
 await pg.click('.cyEnvia [data-cyenvia="cj"]'); await pg.waitForTimeout(200);
 await pg.click('[data-enviook]'); await pg.waitForTimeout(200);
 checa('reenviado, o pedido fecha e o texto volta ao cliente', await fase(pg, cardId) === 'texto_cli' && !(await pg.evaluate(id => S.pautas.cj.find(x => x.id === id).ajustePendente, cardId)));
-await pg.evaluate(id => { S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj'; decidirCard(id, 'APROVADO'); }, cardId); await pg.waitForTimeout(200);
-await pg.evaluate(() => { S.view = 'agency'; S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Administrador')) }; document.getElementById('quemEsta')?.remove(); S.route = 'producao'; render(); }); await pg.waitForTimeout(300);
+await pg.evaluate(id => { S.viaLink = true; S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj'; decidirCard(id, 'APROVADO'); }, cardId); await pg.waitForTimeout(200);
+await pg.evaluate(() => { S.viaLink = false; S.view = 'agency'; S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Administrador')) }; document.getElementById('quemEsta')?.remove(); S.route = 'producao'; render(); }); await pg.waitForTimeout(300);
 
 /* ---------- 6. texto aprovado → Plan, azul, quem executa ---------------- */
 checa('texto aprovado: o card volta ao Plan, azul', await fase(pg, cardId) === 'texto_ok' && await colDoCard(pg, tid) === 'plan' && await pg.locator(cardSel(tid) + '.azul').count() === 1);
@@ -159,8 +166,8 @@ checa('liberado, vai para o lote da peça', await fase(pg, cardId) === 'lote_pos
 await pg.click('.cyEnvia [data-cyenvia="cj"]'); await pg.waitForTimeout(200);
 await pg.click('[data-enviook]'); await pg.waitForTimeout(200);
 checa('enviado: a peça está com o cliente', await fase(pg, cardId) === 'post_cli');
-await pg.evaluate(id => { S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj'; decidirCard(id, 'APROVADO'); }, cardId); await pg.waitForTimeout(200);
-await pg.evaluate(() => { S.view = 'agency'; S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Administrador')) }; document.getElementById('quemEsta')?.remove(); S.route = 'producao'; render(); }); await pg.waitForTimeout(300);
+await pg.evaluate(id => { S.viaLink = true; S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj'; decidirCard(id, 'APROVADO'); }, cardId); await pg.waitForTimeout(200);
+await pg.evaluate(() => { S.viaLink = false; S.view = 'agency'; S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Administrador')) }; document.getElementById('quemEsta')?.remove(); S.route = 'producao'; render(); }); await pg.waitForTimeout(300);
 checa('peça aprovada: o card chega ao Act com o agendamento pronto',
       await fase(pg, cardId) === 'aprovado' && await colDoCard(pg, tid) === 'act' && /Instagram/.test(await pg.locator(cardSel(tid) + ' .cyAgenda').textContent()));
 await pg.click(cardSel(tid) + ' [data-jbpasso]'); await pg.waitForTimeout(200);
@@ -175,10 +182,10 @@ await pg.check('[data-cyauto]'); await pg.waitForTimeout(150);
 const auto = await pg.evaluate(() => {
   const lista = (S.pautas.cj = S.pautas.cj || []); const id = Math.max(...lista.map(x => x.id)) + 1;
   lista.push({ id, t: 'Peça de teste automática', fmt: 'Post', plats: ['ig'], dia: 0, hora: '10:00', texto: 'texto', data: '2026-09-25', fase: 'post_cli', st: 'DRAFT' });
-  S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj';
+  S.viaLink = true; S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj';
   decidirCard(id, 'APROVADO');
   const p = lista.find(x => x.id === id);
-  S.view = 'agency'; S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Administrador')) }; document.getElementById('quemEsta')?.remove(); S.route = 'producao'; render();
+  S.viaLink = false; S.view = 'agency'; S.usuario = { tipo: 'agencia', id: membroId(S.equipe.find(m => m.papel === 'Administrador')) }; document.getElementById('quemEsta')?.remove(); S.route = 'producao'; render();
   return { fase: faseDe(p), auto: !!p.agendadoAuto, ligado: !!S.agencia.autoAgendar };
 });
 checa('ligado, a peça aprovada já entra agendada', auto.ligado && auto.fase === 'agendado' && auto.auto);

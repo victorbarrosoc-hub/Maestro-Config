@@ -19,7 +19,14 @@
 
    A separação passa a ser por COMO a pessoa chegou, não por o que ela é
    agora: quem veio por link segue trancado; quem só escolheu o lado no
-   portão pode voltar ao portão. */
+   portão pode voltar ao portão.
+
+   v216 — O PORTÃO PASSA A TER UMA PORTA SÓ, e esta suíte fica MAIS
+   necessária, não menos: sem o alternador do topo, o crachá de cliente
+   guardado num aparelho seria a única coisa na tela, e prenderia a
+   pessoa exatamente como em 7/set. A regra que substitui as três saídas
+   antigas: crachá de cliente só nasce de LINK, então crachá sem link é
+   sobra — e cai no próximo desenho. */
 import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs';
 
 const ALVO = process.argv[2] || 'docs/UX/prototipo-plataforma.html';
@@ -68,9 +75,21 @@ async function aba(){
       temCliente: !!document.querySelector('[data-enter="client"]')
     }), 400));
   });
-  checa('1.1 o portão mostra os DOIS cards', r.portas === 2, r);
+  /* v216: aqui se pedia "os DOIS cards". Não são mais dois — quem loga é
+     a agência, e o cliente entra por link, sem conta. O que esta suíte
+     protege continua inteiro e é o de baixo: quem tem crachá de cliente
+     e chegou SEM link não fica preso; o crachá cai e a porta da agência
+     está lá para ser tocada.
+
+     E vale registrar como estas três estavam passando: `[data-enter]`
+     casava com os dois botões do ALTERNADOR do topo, não com cards de
+     portão nenhum — o guarda do render já devolvia esta pessoa ao painel
+     do cliente antes de o portão existir na tela. Passavam pelo motivo
+     errado, e por isso quase me convenceram de que a v216 só tinha
+     mudado uma expectativa, quando tinha aberto um buraco. */
+  checa('1.1 o portão mostra a porta da agência, e uma só', r.portas === 1, r);
   checa('1.2 o card da agência está lá', r.temAgencia === true, r);
-  checa('1.3 e o do cliente também', r.temCliente === true, r);
+  checa('1.3 e não há porta de cliente: ele entra por link', r.temCliente === false, r);
   checa('1.4 sem erro de página', erros.length === 0, erros.slice(0,3));
   await ctx.close();
 }

@@ -72,6 +72,9 @@ checa('só imagem e vídeo nascem com endereço de arquivo — o resto vive na c
 
 /* o cliente abre o card */
 await pg.evaluate(id => {
+  /* v216: ser cliente é ter vindo por LINK — sem isso o produto
+     desfaz o crachá, para ninguém ficar preso do lado do cliente. */
+  S.viaLink = true;
   S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj';
   S.route = 'clcard'; S.pcSel = id; S.pcPedindo = false; render();
 }, dados.id);
