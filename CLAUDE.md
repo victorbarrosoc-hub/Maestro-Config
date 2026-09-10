@@ -299,6 +299,22 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (10 set, v220) — O MAIS GRAVE ATÉ AQUI:** dado de uma agência dentro da
+sessão de outra. Com a sessão da ZRO aberta, o app mostrava "EJUP · Orquestra", o
+perfil e os SEIS clientes da EJUP. **Causa:** o estado de trabalho vive em cinco
+chaves do `localStorage` e NENHUMA diz de que agência é; a v208 vigiava pelo
+E-MAIL do dono do aparelho, que não responde "de quem é este dado" (a mesma pessoa
+tem duas agências). **Pior que a tela:** a primeira sincronização da ZRO SOBE
+aquilo para o banco dela carimbado `org=zro` — a prova mediu ONZE gravações. Agora
+o aparelho carimba de que AGÊNCIA é o que guarda e confronta com o que o banco
+afirmou; e a ESCRITA espera o carimbo bater (503 honesto, não silêncio com cara de
+sucesso). **Lições:** (1) todo dado que sincroniza precisa dizer de que dono é —
+`blob:` foi a v218, agência é esta; (2) limpar cache não fecha vazamento: a trava
+tem de estar na ESCRITA; (3) a suíte gravou o estado falso no formato errado e o
+caso principal passou POR VACUIDADE — quem denunciou foi o caso que cobrava o
+contrário. **Se os clientes errados continuarem na ZRO depois desta versão**, já
+estão gravados no banco dela e precisam sair pela lista de Clientes ou por SQL.
+15 provas em `web/verificar/v220-o-aparelho-sabe-de-quem.mjs`.
 **Fechado (10 set, v219):** "Entrei como ZRO e apareceu isso de cara" — a tela
 "Quem está entrando?" com a Gabi e sem ele. A ZRO foi criada antes da v215 e o
 banco dela guardou a equipe da memória do navegador. A regra da v215 (quem cria é

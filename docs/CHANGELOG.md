@@ -1,9 +1,76 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.39
+Version: 0.5.40
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.40 — 2026-09-10
+
+**Status:** Concluída
+**Objetivo:** o aparelho passa a saber de que agência é o que ele guarda.
+
+### v220 — dado de uma agência dentro da sessão de outra
+
+O founder, com a sessão da **ZRO** aberta, mandou três telas: "Plano e conta"
+dizendo **EJUP · Orquestra** com o perfil da EJUP no rodapé; "Clientes" com os
+**seis clientes da EJUP**; e o Ensaio com as tarefas delas. *"Não faz muito
+sentido, eu dentro do perfil da ZRO e me mostrar do perfil da agência EJUP."*
+
+É o defeito mais grave que apareceu até aqui.
+
+**A causa.** O estado de trabalho vive em cinco chaves do `localStorage` —
+pautas, clientes, equipe, perfil da agência, revisões e bases da mescla. E
+**nenhuma delas diz de que agência é**. Enquanto havia uma agência só, isso não
+era pergunta; com duas, é *a* pergunta. A v208 já vigiava isto, mas comparando o
+**e-mail** do dono do aparelho — e e-mail não responde "de quem é este dado": a
+mesma pessoa tem duas agências, e o carimbo de dono pode ser gravado numa sessão
+sem que o dado embaixo seja daquela sessão.
+
+**Pior que aparecer na tela.** Com o estado da EJUP na memória, a primeira
+sincronização da ZRO **sobe** aquilo para o banco dela, carimbado `org=zro` pelo
+embrulho da v197. Aí não é mais cache errado: é dado errado, **gravado**. A prova
+mediu: **onze gravações** antes de qualquer limpeza.
+
+**A regra.** O banco afirma de quem é a conta (`maestro_org`), então o aparelho
+passa a carimbar de que **agência** é o que guarda, e a confrontar:
+
+- carimbo == agência afirmada → é nosso, fica;
+- agência afirmada é a `maestro` e não há carimbo → fica (a casa da semente, onde
+  o estado sem carimbo sempre morou);
+- qualquer outro caso → não é nosso: limpa e recarrega.
+
+Limpar é seguro porque **o banco é o dono do dado, não o aparelho** — é a
+arquitetura da v197 em diante. E "não sei" continua não apagando nada.
+
+**A trava da escrita**, que é o que fecha de verdade: enquanto o aparelho não
+estiver carimbado com a agência afirmada, **nada sobe**. A recusa é honesta (503,
+"não gravei"), não um silêncio com cara de sucesso. Correr mais cedo não
+resolveria — `conferir()` depende de uma resposta assíncrona do banco.
+
+**Três coisas que as provas pegaram, e uma delas era minha:**
+
+1. a primeira versão da suíte gravou o estado falso no formato errado
+   (`restaurarTudo` lê `g.s`), então **o estado da EJUP nunca carregava** e o caso
+   principal passava **por vacuidade**. Quem denunciou foi o caso 2, que cobrava o
+   contrário;
+2. `addInitScript` roda a cada navegação — inclusive no `reload()` da limpeza —,
+   então a suíte repunha o estado logo depois de apagá-lo;
+3. a v208 conhecia três chaves; faltavam as duas do Sincro (revisão e bases da
+   mescla). Apagar o estado e deixar as bases é pior que não apagar.
+
+E um exagero corrigido: a primeira versão recarregava também em aparelho **novo**,
+onde não há nada de outra agência a perder — a v197 pegou, com o contexto
+destruído no meio da prova. Agora só limpa quando há trabalho de agência de
+verdade guardado: um perfil com nome, uma pauta com card, clientes cadastrados.
+
+**15 provas** em `web/verificar/v220-o-aparelho-sabe-de-quem.mjs`.
+
+> **Se os clientes errados continuarem na ZRO depois desta versão**, eles já estão
+> gravados no banco dela (das sessões anteriores a esta correção) e a limpeza de
+> aparelho não os alcança — é preciso removê-los pela lista de Clientes ou por SQL.
 
 ---
 

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-10 14:41 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-10 16:37 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -16003,7 +16003,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v219 · 10 set · quem tem conta entra na equipe';
+const VERSAO_PROTOTIPO = 'v220 · 10 set · o aparelho sabe de que agencia e';
 
 menuSheet = (function(orig){
   return function(){
@@ -37576,6 +37576,11 @@ sbGravar = (function(orig){
         return errar('O banco recusou: ' + motivo);
       }
       A.org = r.valor; A.sondado = true;
+      /* v220: o aparelho passa a ser desta agência AGORA, no mesmo gesto.
+         Sem isto a guarda da v220 acharia — com razão — que o estado
+         guardado aqui é de outra casa, e limparia tudo recarregando a
+         página no instante seguinte ao "criar". Quem cria, carimba. */
+      try{ localStorage.setItem('maestro-agencia-do-aparelho-v1', String(r.valor)); }catch(e){}
       const p = await rpc('maestro_pronto');
       A.chave2 = !!(p && p.valor === true);
       /* casa nova: nada do aparelho anterior entra aqui.
@@ -40465,5 +40470,175 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
     return function(){ const r = orig.apply(this, arguments); entrarNaCasa(); return r; };
   })(render);
   window.MaestroEntrarNaCasa = { entrarNaCasa };
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v220 — O QUE ESTÁ GUARDADO NO APARELHO É DE UMA AGÊNCIA. QUAL?
+
+   O founder, com a sessão da ZRO aberta, mandou três telas: "Plano e
+   conta" dizendo **EJUP · Orquestra**, com o perfil da EJUP no rodapé;
+   "Clientes" com os SEIS clientes da EJUP; e o Ensaio com 44 tarefas
+   delas. "Não faz muito sentido, eu dentro do perfil da ZRO e me mostrar
+   do perfil da agência EJUP."
+
+   Ele está certo, e este é o defeito mais grave que apareceu até aqui:
+   dado de uma agência dentro da sessão de outra.
+
+   ── A CAUSA
+
+   O estado de trabalho vive em cinco chaves do `localStorage` — pautas,
+   clientes, equipe, perfil da agência, revisões e bases da mescla. E
+   NENHUMA delas diz de que agência é. Enquanto havia uma agência só,
+   isso não era pergunta. Com duas, é A pergunta.
+
+   A v208 já vigiava isto, mas pelo lado errado: comparava o E-MAIL do
+   dono do aparelho. E-mail não responde "de quem é este dado" — a mesma
+   pessoa tem duas agências, e o carimbo de dono pode ser gravado numa
+   sessão sem que o dado embaixo dele seja daquela sessão. Foi o que
+   aconteceu: o aparelho carimbado com a conta da ZRO, e a EJUP embaixo.
+
+   Pior que aparecer na tela: com o estado da EJUP na memória, a primeira
+   sincronização da ZRO SOBE aquilo para o banco dela, carimbado
+   `org=zro` pelo embrulho da v197. A partir daí não é mais cache — é
+   dado errado gravado. Por isso a limpeza tem de acontecer ANTES da
+   primeira gravação, e por isso ela recarrega a página: recarregar é a
+   única forma honesta de garantir que nada de antes sobreviva na
+   memória.
+
+   ── A REGRA
+
+   O banco AFIRMA de quem é a conta (`maestro_org`). Então o aparelho
+   passa a carimbar de que AGÊNCIA é o que ele guarda, e a confrontar:
+
+     · carimbo == agência afirmada  → é nosso, fica;
+     · agência afirmada é a `maestro` e não há carimbo → fica. É a casa
+       da semente, onde o estado sem carimbo sempre morou; quem já usava
+       a Maestro antes disto não paga por isto;
+     · qualquer outro caso (carimbo de outra agência, ou nenhum carimbo
+       numa agência que não é a semente) → NÃO É NOSSO. Limpa e recarrega.
+
+   Limpar é seguro porque o banco é o dono do dado, não o aparelho: é a
+   arquitetura da v197 em diante. O que se apaga aqui volta pela carga da
+   agência certa, e o que não voltar não era dela.
+
+   E "não sei" continua não apagando nada: sem sessão, ou com o banco
+   mudo, este bloco não faz nada — a lição da v197 e da v210.
+   ===================================================================== */
+(function(){
+  const CARIMBO = 'maestro-agencia-do-aparelho-v1';
+  const JAFEZ   = 'maestro-ja-limpei-agencia-v1';
+  const SEMENTE = (typeof window !== 'undefined' && window.MaestroSemente
+                   && window.MaestroSemente.DONA_DA_SEMENTE) || 'maestro';
+
+  /* AS CINCO CHAVES. A v208 conhecia três: faltavam as duas do Sincro,
+     que guardam a REVISÃO da linha e as BASES da mescla de três lados.
+     Apagar o estado e deixar as bases é pior que não apagar — a mescla
+     seguinte compara o estado novo com a base de outra agência. */
+  const PACOTE = ['maestro-estado-v1', 'maestro-prototipo-v1', 'maestro-usuario-v1',
+                  'maestro-sincro-v2', 'maestro-sincro-bases-v1'];
+
+  const leia  = (k, dep) => { try{ return (dep ? sessionStorage : localStorage).getItem(k); }catch(e){ return null; } };
+  const grave = (k, v, dep) => { try{ (dep ? sessionStorage : localStorage).setItem(k, v); }catch(e){} };
+
+  function agenciaAfirmada(){
+    try{
+      const a = window.MaestroAgencia;
+      if(!a || !a.sondado || !a.sabemos || !a.org) return null;   /* "não sei" */
+      if(!(window.MaestroPorta && MaestroPorta.quem())) return null;
+      return String(a.org);
+    }catch(e){ return null; }
+  }
+  /* SEM CARIMBO, QUEM RESPONDE É A CONTA. A primeira versão perguntava
+     ao CONTEÚDO ("tem perfil com nome? tem pauta com card?") e adivinhar
+     pelo conteúdo dá resposta diferente a cada corrida: a v197 caiu de
+     forma intermitente, com o contexto destruído no meio da prova. O que
+     estava errado não era o limite, era o método.
+
+     O sinal determinístico já existe, e é o carimbo de DONO DO APARELHO
+     da v208: se o estado sem carimbo de agência foi guardado sob OUTRA
+     conta, ele não é desta sessão — venha de que agência vier. Se foi
+     guardado sob a mesma conta (ou o aparelho é novo), fica.
+
+     Isso não adivinha nada: só usa o que o aparelho já sabia dizer. */
+  function contaAnterior(){
+    const dono = leia('maestro-dono-do-aparelho-v1');
+    return dono ? String(dono).trim().toLowerCase() : null;
+  }
+  function contaDeAgora(){
+    try{
+      const q = window.MaestroPorta && MaestroPorta.quem();
+      const m = q && q.email;
+      return m ? String(m).trim().toLowerCase() : null;
+    }catch(e){ return null; }
+  }
+
+  function conferir(){
+    const org = agenciaAfirmada();
+    if(!org) return;
+    const carimbo = leia(CARIMBO);
+    if(carimbo === org) return;                       /* é nosso */
+
+    /* a casa da semente aceita o estado sem carimbo: é onde ele morava */
+    if(!carimbo && org === SEMENTE){ grave(CARIMBO, org); return; }
+
+    /* sem carimbo: só limpa se o guardado é de OUTRA CONTA */
+    if(!carimbo){
+      const antes = contaAnterior(), agora = contaDeAgora();
+      if(!antes || !agora || antes === agora){ grave(CARIMBO, org); return; }
+    }
+
+    if(leia(JAFEZ, true) === org){ grave(CARIMBO, org); return; }  /* já limpei nesta aba */
+    grave(JAFEZ, org, true);
+    for(const k of PACOTE){ try{ localStorage.removeItem(k); }catch(e){} }
+    grave(CARIMBO, org);
+    try{ location.reload(); }catch(e){}
+  }
+
+  /* ---------- A TRAVA DA ESCRITA ------------------------------------
+
+     Limpar o cache não basta, e a prova mostrou por quê: entre o banco
+     AFIRMAR a agência e a limpeza acontecer, a sincronização disparou
+     ONZE gravações — e cada uma levou o estado da EJUP para o banco da
+     ZRO, carimbado `org=zro` pelo embrulho da v197. Aí não é mais cache
+     errado: é dado errado, gravado, que nenhuma limpeza de aparelho
+     desfaz. É essa a corrida, e ela não se ganha correndo mais cedo —
+     `conferir()` depende de uma resposta do banco, que é assíncrona.
+
+     Então a escrita ESPERA. Enquanto o aparelho não estiver carimbado
+     com a agência que o banco afirmou, nada sobe. A recusa é honesta
+     (503, "não gravei"), e não silenciosa com cara de sucesso: quem
+     tenta gravar precisa saber que não gravou, para tentar de novo
+     depois do recarregamento — quando o estado já for o certo.
+
+     Vale só para ESCRITA em `/rest/v1/`. Leitura, storage e as funções
+     do banco seguem livres: ler não corrompe nada. */
+  const _fetchV220 = window.fetch;
+  window.fetch = function(u, o){
+    try{
+      const url = (typeof u === 'string') ? u : ((u && u.url) || '');
+      const met = String((o && o.method) || (u && u.method) || 'GET').toUpperCase();
+      if(met !== 'GET' && met !== 'HEAD' && /\/rest\/v1\//.test(url)){
+        const org = agenciaAfirmada();
+        if(org && leia(CARIMBO) !== org){
+          return Promise.resolve(new Response(
+            JSON.stringify({ message: 'maestro: aparelho ainda não é desta agência' }),
+            { status: 503, headers: { 'Content-Type': 'application/json' } }));
+        }
+      }
+    }catch(e){}
+    return _fetchV220.apply(this, arguments);
+  };
+
+  /* cedo e sempre: a corrida que importa é contra a primeira GRAVAÇÃO */
+  conferir();
+  setInterval(conferir, 400);
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ conferir(); return orig.apply(this, arguments); };
+  })(render);
+
+  window.MaestroAgenciaDoAparelho = { conferir, CARIMBO, PACOTE, agenciaAfirmada };
 })();
 </script>
