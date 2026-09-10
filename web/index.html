@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-10 04:10 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-10 04:48 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15839,7 +15839,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v211 · 10 set · casa nova nasce sem equipe alheia';
+const VERSAO_PROTOTIPO = 'v212 · 10 set · agencia vazia nao quebra tela';
 
 menuSheet = (function(orig){
   return function(){
@@ -26267,7 +26267,10 @@ S.md.abertas = S.md.abertas || {};
 S.md.plats = S.md.plats || ['ig'];
 if(typeof PASSAGEIRO !== 'undefined' && PASSAGEIRO.add){ PASSAGEIRO.add('mdGravar'); }
 
-const mdCli = () => CLIS().find(c => c.id === S.md.cli) || CLIS()[0];
+/* v212: com a agência vazia não há primeiro cliente. Devolver `undefined`
+   derruba quem ler `.id` ou `.nome` — a tela da Mandala já não chega aqui
+   sem cliente, mas o resto do arquivo também chama isto. */
+const mdCli = () => CLIS().find(c => c.id === S.md.cli) || CLIS()[0] || null;
 
 /* ---------- o que este cliente JÁ publica --------------------------
    A queixa foi "quero conteúdo mais perto do que já faço na EJUP". A
@@ -26975,7 +26978,28 @@ function mdModalIA(){
 render = (function(orig){
   return function(){
     if(S.view === 'agency' && S.route === 'mandala' && !S.skel){
-      if(!S.md.cli) S.md.cli = CLIS()[0].id;
+      /* v212 — AGÊNCIA SEM CLIENTE É UM ESTADO DE VERDADE.
+
+         Aqui morava `S.md.cli = CLIS()[0].id`. Enquanto existia um
+         cliente de fábrica, `CLIS()[0]` nunca faltava. Desde que a casa
+         nova nasce vazia — que é o certo —, esta linha quebra a tela
+         inteira nos primeiros minutos de toda agência: `undefined.id`.
+
+         A Mandala trabalha SOBRE um cliente. Sem nenhum, ela não tem o
+         que fazer, e dizer isso é melhor que uma tela em branco. */
+      const primeiro = CLIS()[0];
+      if(!primeiro){
+        document.getElementById('root').innerHTML = agShell(`
+          <div class="mtop"><div><h1>Mandala Criativa</h1>
+            <p>Ela trabalha sobre um cliente — o briefing dele é o que vira ideia</p></div></div>
+          ${vazio('Cadastre um cliente primeiro',
+                  'A Mandala lê o briefing de um cliente para propor a campanha. '
+                + 'Assim que houver um, ela abre aqui.')}
+          <div style="margin-top:14px"><button class="b pri sm" data-r="clientes">Ir para Clientes</button></div>`);
+        renderLayer(); ctxBar(); posRender();
+        return;
+      }
+      if(!S.md.cli) S.md.cli = primeiro.id;
       document.getElementById('root').innerHTML = agMandala();
       renderLayer(); ctxBar(); posRender();
       mdPintarRoda();
@@ -38739,6 +38763,35 @@ sbGravar = (function(orig){
 (function(){
   const DONA_DA_SEMENTE = 'maestro';
 
+  /* A FOTOGRAFIA DA SEMENTE, tirada agora — este bloco roda no fim do
+     arquivo, com tudo já semeado e antes de qualquer gesto de gente.
+
+     A primeira versão perguntava "foi esta agência que cadastrou?" e
+     confiava em `S.novos` para responder. Mas `S.novos` JÁ NASCE com a
+     EJUP dentro: são dois clientes de fábrica, o `cj` escrito na lista
+     e o `n0` semeado aqui. Filtrei um e deixei o irmão — o mesmo erro
+     de enumerar fonte que já me custou quatro versões.
+
+     Semente é o que existe antes de alguém fazer alguma coisa. É isso
+     que se fotografa, e é só isso que se tira. */
+  const SEMENTE_CLIENTES = new Set();
+  try{
+    for(const c of (S.novos || [])){
+      const id = c && (c.cid || c.id);
+      if(id) SEMENTE_CLIENTES.add(String(id));
+    }
+    for(const c of (typeof CLIS === 'function' ? CLIS() : [])){
+      if(c && c.id) SEMENTE_CLIENTES.add(String(c.id));
+    }
+  }catch(e){}
+
+  const SEMENTE_CANAIS = new Set();
+  try{
+    for(const c of ((S.chat || {}).canais || [])){
+      if(c && c.id) SEMENTE_CANAIS.add(String(c.id));
+    }
+  }catch(e){}
+
   /* a semente vale? Só quando não há agência, ou quando a agência é a
      dona dela. "Não sei" conta como "não há": nunca se apaga a tela de
      quem está com o banco mudo — a lição da v197. */
@@ -38773,9 +38826,10 @@ sbGravar = (function(orig){
         try{ return new Set(Object.keys((window.Sincro || {}).brutas || {})); }
         catch(e){ return new Set(); }
       })();
-      const meus = new Set((S.novos || []).map(c => c && (c.cid || c.id)).filter(Boolean));
-      return lista.filter(c => c && (doBanco.has(c.id) || meus.has(c.id)
-                                     || (S.cliEdit && S.cliEdit[c.id])));
+      /* fica quem o banco mandou, e quem nasceu DEPOIS da fotografia —
+         ou seja, quem esta agência criou de verdade. */
+      return lista.filter(c => c && (doBanco.has(String(c.id))
+                                     || !SEMENTE_CLIENTES.has(String(c.id))));
     };
   }
 
@@ -38795,11 +38849,36 @@ sbGravar = (function(orig){
     if(fica.length !== S.equipe.length) S.equipe = fica;
   }
 
-  setInterval(limparEquipe, 700);
+  /* ---------- 3. as conversas de fábrica ---------------------------- */
+  /* o canal do Cortez aparecia na agência nova pela mesma razão: ele é
+     semeado, e semente não é conversa de ninguém. */
+  function limparCanais(){
+    if(sementeVale()) return;
+    const ch = S.chat;
+    if(!ch || !Array.isArray(ch.canais) || !ch.canais.length) return;
+    const doBanco = (() => {
+      try{ return new Set(Object.keys((window.Sincro || {}).brutas || {})); }
+      catch(e){ return new Set(); }
+    })();
+    const fica = ch.canais.filter(c => {
+      if(!c || !c.id) return true;
+      if(!SEMENTE_CANAIS.has(String(c.id))) return true;      /* nasceu aqui */
+      return c.cli ? doBanco.has(String(c.cli)) : false;      /* é de um cliente meu? */
+    });
+    if(fica.length !== ch.canais.length){
+      ch.canais = fica;
+      if(S.cvAtivo && !fica.some(c => c.id === S.cvAtivo))
+        S.cvAtivo = (fica[0] || {}).id || null;
+    }
+  }
+
+  function faxina(){ limparEquipe(); limparCanais(); }
+  setInterval(faxina, 700);
   if(typeof render === 'function') render = (function(orig){
-    return function(){ limparEquipe(); return orig.apply(this, arguments); };
+    return function(){ faxina(); return orig.apply(this, arguments); };
   })(render);
 
-  window.MaestroSemente = { sementeVale, limparEquipe, DONA_DA_SEMENTE };
+  window.MaestroSemente = { sementeVale, limparEquipe, limparCanais,
+                            DONA_DA_SEMENTE, SEMENTE_CLIENTES, SEMENTE_CANAIS };
 })();
 </script>
