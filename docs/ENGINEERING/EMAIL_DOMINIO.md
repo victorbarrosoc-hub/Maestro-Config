@@ -1,6 +1,6 @@
 # E-mail no domínio da Maestro — passo a passo
 
-Objetivo: os avisos saírem de `avisos@sejamaestro.com.br`, chegarem na
+Objetivo: os avisos saírem de `maestro@avisos.sejamaestro.com.br`, chegarem na
 caixa de entrada (e não no spam), e as respostas caírem em
 `contatosejamaestro@gmail.com`, que é onde o founder já lê.
 
@@ -32,6 +32,14 @@ O painel certo é o do que apareceu ali.
 
 1. `resend.com` → criar conta com `contatosejamaestro@gmail.com`.
 2. Confirmar o e-mail.
+
+> **O remetente mora DENTRO do domínio verificado.** O domínio que se
+> verifica aqui é `avisos.sejamaestro.com.br`, então o endereço de envio
+> é `maestro@avisos.sejamaestro.com.br` — com o `avisos` DEPOIS do ponto,
+> não antes do @. `avisos@sejamaestro.com.br` é outro domínio
+> (`sejamaestro.com.br`), que não está verificado: o Resend recusa, e
+> quem chama por SMTP recebe 500 sem explicação. Os dois se parecem o
+> bastante para custar uma hora — custou.
 
 ## 2. Adicionar o domínio
 
@@ -101,7 +109,7 @@ olhe se virou `send.avisos.sejamaestro.com.br.sejamaestro.com.br`.
 ## 6. Como os avisos vão sair
 
 ```
-De:        Maestro <avisos@sejamaestro.com.br>
+De:        Maestro <maestro@avisos.sejamaestro.com.br>
 Responder: contatosejamaestro@gmail.com
 ```
 

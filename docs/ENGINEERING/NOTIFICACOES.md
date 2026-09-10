@@ -150,7 +150,7 @@ A última linha é a mais importante.
 
 ## Configuração (6 set)
 
-### Remetente: `avisos@sejamaestro.com.br`
+### Remetente: `maestro@avisos.sejamaestro.com.br`
 
 O founder pediu o passo a passo do domínio, e é o caminho certo: o
 cliente da agência vê o domínio da Maestro, não um Gmail, e o limite
