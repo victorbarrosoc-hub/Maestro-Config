@@ -186,8 +186,14 @@ console.log('\n4. e a casa nasce VAZIA — nas telas, não só na que está aber
 
   ok(await pag.evaluate(() => (typeof CLIS === 'function' ? CLIS() : []).length === 0),
      'a lista de clientes está vazia');
-  ok(await pag.evaluate(() => ((S.equipe || []).length === 0)),
-     'a equipe está vazia');
+  /* v215: "vazia" aqui queria dizer ZERO pessoas, e estava errado — uma
+     casa sem ninguém dentro não é vazia, é intransitável: a tela "Quem
+     está aí?" não oferece ninguém e não há como entrar. A casa nasce com
+     UMA pessoa, quem a criou. Vazia é de CLIENTE e de CARD. */
+  const eq = await pag.evaluate(() => (S.equipe || [])
+    .map(m => String((m.mail || '')).toLowerCase()));
+  ok(eq.length === 1, 'a equipe tem só uma pessoa (' + JSON.stringify(eq) + ')');
+  ok(eq[0] === 'nova@outraagencia.com.br', 'e essa pessoa é quem criou a agência');
 
   await abrir('clientes'); await pag.waitForTimeout(700);
   const tc = await naTela(pag);

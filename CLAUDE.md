@@ -299,6 +299,34 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (10 set, v215):** duas coisas da mesma sentada do founder.
+**Quem cria a agência entra nela.** Ele criou a agência dele e a tela "Quem está
+entrando?" ofereceu a Gabi Domingues — que é da agência ANTERIOR e estava na
+memória do navegador — e ele mesmo não estava na lista ("não aparece pra eu criar
+um usuário do zero"). Casa nova sem ninguém dentro não é vazia, é INTRANSITÁVEL:
+a tela pergunta quem você é e não oferece resposta possível. Agora quem cria é o
+primeiro membro — administrador e dono, com o e-mail que acabou de entrar — e a
+criação limpa também a equipe e as conversas do aparelho anterior. **O que quase
+foi junto:** `victorbarrosoc@gmail.com` É um dos três e-mails da semente, e a
+faxina da v211 apaga semeados de casa que não é da semente — sem cuidado, ele
+criava a própria agência e era apagado dela 700ms depois. Duas regras novas:
+`limparEquipe()` nunca remove quem está LOGADO (estar na semente é coincidência
+de e-mail; a pessoa sentada aí é a pessoa), e `arrumar()` — que repõe a equipe de
+fábrica e força o dono do código — só roda onde a semente vale (antes reinjetava
+os três a cada `aplicarEstado` e a faxina os varria depois: um pisca, e pisca é
+defeito).
+**Entrar é coisa de agência; o cliente tem link.** A tela "Quem está aí?" listava
+sete clientes reais abaixo da equipe. O founder: "o cliente vai ter um link, então
+não faz sentido ter essa aba de entrada do cliente." Ele está certo — é a Regra #1
+(o cliente entra por `?aprovar=`/`?ver=`, sem conta), a lista era uma escada para
+virar qualquer um deles com um toque, e cada porta de assumir identidade foi um
+vazamento nesta leva. A seção saiu NA ORIGEM (de `abrirQuemEsta` e do handler de
+clique), não escondida por cima. Com um grupo só, o rótulo do grupo saiu junto:
+era o "mais simples" do pedido. O lado do cliente não foi tocado. 38 provas em
+`web/verificar/v215-quem-cria-entra.mjs`.
+**Aberto — a semente sair de vez:** quando ela sair, a EQUIPE tem de ir para o
+banco antes ("a equipe já configurou o perfil deles", disse o founder). O Cortez
+Jurídico pode cair; ele recria.
 **Fechado (9 set, v203):** uma mensagem com menção acendia DOIS banners na tela,
 um em cima do outro — o da mensagem no canal e o da menção. Os dois saem do mesmo
 funil da v186 e cada um está certo sozinho; o problema é que descrevem o MESMO

@@ -1,9 +1,88 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.36
+Version: 0.5.37
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.37 — 2026-09-10
+
+**Status:** Concluída
+**Objetivo:** a Maestro cabe em mais de uma agência — e a casa nova nasce
+com alguém dentro.
+
+### O arco (v204 → v215)
+
+O founder criou uma conta nova e, em dois minutos, achou a porta que eu tinha
+deixado aberta. Depois achou a seguinte. E a seguinte. A lição está escrita na
+v205 e vale para o resto do produto: **tapar porta não fecha porta**. Identidade
+mora num lugar só — `S.usuario` — então é ELE que recusa, venha o clique de onde
+vier. Não é preciso conhecer as sete portas para fechar as sete.
+
+| | |
+|---|---|
+| v205 | o portão: sem agência, escrever `S.usuario` não tem efeito |
+| v207 | entrar com outro e-mail apaga o crachá anterior — não inventar não basta |
+| v208 | a casa guardada no aparelho é de uma conta só |
+| v210 | "não consegui ler" não é "não tem": resposta ilegível nunca vira afirmação |
+| v211 | a semente (equipe e cliente de fábrica) é da agência `maestro`, e só dela |
+| v212 | agência sem cliente nenhum não quebra tela |
+| v213 | o segundo minuto: cadastrar o primeiro cliente e a pauta responder |
+| v214 | o `?diag` responde o que depende da semente |
+
+### v215 — quem cria a agência entra nela
+
+O founder criou a agência dele e a tela *"Quem está entrando?"* ofereceu **Gabi
+Domingues** — que é da agência ANTERIOR e estava na memória do navegador. Ele
+mesmo não estava na lista: *"não aparece pra eu criar um usuário do zero."*
+
+Casa nova sem ninguém dentro não é vazia. É **intransitável**: a tela pergunta
+quem você é e não oferece nenhuma resposta possível.
+
+**Agora:** quem cria a agência é o primeiro membro dela — administrador e dono,
+com o e-mail que acabou de entrar. Os outros vêm por convite. E a criação limpa
+também a equipe e as conversas do aparelho anterior, que faltavam nessa lista.
+
+**O que quase foi junto, e é a parte que interessa:** `victorbarrosoc@gmail.com`
+**é** um dos três e-mails da semente. A faxina da v211 apaga semeados de uma casa
+que não é da semente — então, sem cuidado, o founder criava a própria agência,
+entrava nela, e **700ms depois era apagado dela**. Estar na semente é uma
+coincidência de e-mail; a pessoa sentada aí, com sessão aberta, é a pessoa. Duas
+regras novas:
+
+- `limparEquipe()` nunca remove quem está logado.
+- `arrumar()` — o bloco que repõe a equipe de fábrica e força o dono do código —
+  só roda quando a semente vale ali. Antes ele reinjetava Victor, Anna Clara e
+  Roberto a cada `aplicarEstado` numa agência recém-criada, e a faxina os varria
+  logo depois: um pisca. Pisca é defeito, não conserto.
+
+### v215 — entrar é coisa de agência. O cliente tem link.
+
+O founder, vendo a tela *"Quem está aí?"* com sete clientes reais listados abaixo
+da equipe: *"o cliente vai ter um link, então não faz sentido ter essa aba de
+entrada do cliente. Adapte o painel pra ficar mais simples de entrar só como
+agência."*
+
+Três razões que se somam:
+
+1. É a Regra #1 da casa. O cliente entra por `?aprovar=` e `?ver=`, com chave
+   própria e sem conta. Uma segunda porta para a mesma coisa é a informação em
+   dois lugares.
+2. A lista era uma escada: sete clientes com nome e foto numa tela de escolher
+   quem você é, e um toque virava qualquer um deles.
+3. Cada porta de assumir identidade foi, nesta leva, um lugar por onde algo
+   escapou. Esta some inteira.
+
+A seção saiu **na origem** — de `abrirQuemEsta` e do handler de clique —, não
+escondida por cima, que é o remendo que sempre deixa a próxima porta aberta. Com
+um grupo só, o rótulo do grupo virou ruído e saiu junto: era isso o "mais
+simples" do pedido. O lado do cliente não foi tocado.
+
+**38 provas** em `web/verificar/v215-quem-cria-entra.mjs`, todas pelos botões e
+contra um banco falso com memória — inclusive as que esperam o relógio passar,
+porque a faxina que apagava o founder rodava 700ms depois de tudo parecer certo.
 
 ---
 

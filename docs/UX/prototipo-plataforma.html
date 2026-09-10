@@ -12782,6 +12782,9 @@ modalVer = (function(orig){
 #quemEsta .sub{ font-size:13px; color:var(--ink-300); margin:0 0 18px }
 #quemEsta .grp{ font-family:var(--mono); font-size:9.5px; letter-spacing:.16em;
   text-transform:uppercase; color:var(--ink-400); margin:16px 0 8px }
+#quemEsta .qeVazio{ font-size:13px; line-height:1.55; color:var(--ink-400);
+  margin:4px 0 0; padding:13px; border-radius:12px;
+  border:1px dashed var(--ink-800); background:var(--ink-950) }
 .qePessoa{ display:flex; align-items:center; gap:12px; width:100%; text-align:left;
   padding:11px 13px; border:1px solid var(--ink-800); border-radius:12px;
   background:var(--ink-950); margin-bottom:7px;
@@ -12848,37 +12851,52 @@ const ehPapel = papel => {
   return !!(m && m.papel===papel);
 };
 
+/* v215 — ENTRAR É COISA DE AGÊNCIA. O CLIENTE TEM LINK.
+
+   O founder, vendo esta tela com sete clientes listados abaixo da
+   equipe: "eu acho que pode tirar essa entrar por cliente. O cliente vai
+   ter um link, então não faz sentido ter essa aba de entrada do cliente.
+   Adapte o painel pra ficar mais simples de entrar só como agência."
+
+   Ele está certo, e por três razões que se somam:
+
+   1. É a Regra #1 da casa. O cliente entra por `?aprovar=` e `?ver=`,
+      com chave própria e sem conta. Uma segunda porta para a mesma coisa
+      é a informação em dois lugares.
+   2. A lista era uma escada: sete clientes reais, com nome e foto, numa
+      tela de escolher quem você é — e um toque virava qualquer um deles.
+   3. Cada porta de assumir identidade foi, nesta sessão, um lugar por
+      onde algo escapou. Esta some inteira, na origem — não escondida por
+      cima, que é o remendo que sempre deixa a próxima porta aberta.
+
+   Com um grupo só, o rótulo do grupo virou ruído e saiu junto: era isso
+   o "mais simples" do pedido. Nada do lado do cliente é tocado. */
 function abrirQuemEsta(){
   const el = document.createElement('div');
   el.id = 'quemEsta';
+  const equipe = S.equipe || [];
   el.innerHTML = `<div class="caixa">
     <h3>Quem está aí?</h3>
     <p class="sub">Cada pessoa entra como ela mesma — o que você faz fica no seu nome.</p>
-    <div class="grp">Equipe da agência</div>
-    ${(S.equipe||[]).map(m=>`<button class="qePessoa" data-qeag="${membroId(m)}">
+    ${equipe.map(m=>`<button class="qePessoa" data-qeag="${membroId(m)}">
       ${avMembro(m)}
       <span style="flex:1"><b>${esc(m.n)}</b><span>${esc(m.papel)}${m.dono?' · dono da conta':''}</span></span>
       ${ic('chevr',14)}</button>`).join('')}
-    <div class="grp">Sou cliente</div>
-    ${CLIS().map(c=>`<button class="qePessoa" data-qecl="${c.id}">
-      ${avCliente(c)}
-      <span style="flex:1"><b>${esc(c.nome)}</b><span>vê só o que é seu: pauta, aprovações, resultados</span></span>
-      ${ic('chevr',14)}</button>`).join('')}
+    ${equipe.length ? '' : `<p class="qeVazio">Ninguém na equipe ainda.
+      Quem criou a conta entra por ela e convida o resto em Organização &rsaquo; Equipe.</p>`}
   </div>`;
   document.body.appendChild(el);
 }
 document.addEventListener('click', e => {
   const ag = e.target.closest('[data-qeag]');
-  const cl = e.target.closest('[data-qecl]');
-  if(!ag && !cl) return;
+  if(!ag) return;
   e.stopImmediatePropagation();
-  if(ag){ S.usuario = {tipo:'agencia', id:ag.dataset.qeag}; S.view='agency'; S.route='dash'; }
-  else { S.usuario = {tipo:'cliente', id:cl.dataset.qecl}; S.view='client'; S.cli=cl.dataset.qecl; S.route='inicio'; }
+  S.usuario = {tipo:'agencia', id:ag.dataset.qeag}; S.view='agency'; S.route='dash';
   try{ localStorage.setItem(CHAVE_USR, JSON.stringify(S.usuario)); }catch(err){}
   document.getElementById('quemEsta')?.remove();
   const m = usuarioAtual();
   render();
-  toast(m ? `Bem-vindo de volta, ${m.nome.split(' ')[0]}.` : 'Entrando como cliente.');
+  if(m) toast(`Bem-vindo de volta, ${m.nome.split(' ')[0]}.`);
 }, true);
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-trocausr]');
@@ -15771,7 +15789,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v214 · 10 set · o diag diz o que depende da semente';
+const VERSAO_PROTOTIPO = 'v215 · 10 set · entrar e coisa de agencia';
 
 menuSheet = (function(orig){
   return function(){
@@ -17314,7 +17332,6 @@ function abrirQuemAgencia(){
   el.innerHTML = `<div class="caixa">
     <h3>Quem está entrando?</h3>
     <p class="sub">Escolha o seu nome — o que você fizer fica no seu nome.</p>
-    <div class="grp">Equipe da agência</div>
     ${(S.equipe || []).map(m => {
       const eu = membroId(m) === atual;
       return `<button class="qePessoa${eu ? ' euAgora' : ''}" data-qeag="${membroId(m)}">
@@ -20218,8 +20235,28 @@ telaConversas = (function(orig){
     }, 0);
   }, true);
 
+  /* v215 — A SEMENTE SÓ SE REPÕE NA CASA DA SEMENTE.
+
+     Este bloco existe para curar a equipe de FÁBRICA: força o dono do
+     código e devolve à mesa os três semeados que o navegador tivesse
+     comido. Enquanto havia uma agência só, isso era a cura. Com duas,
+     é a doença: uma agência recém-criada recebia Victor, Anna Clara e
+     Roberto de volta a cada `aplicarEstado`, e o dono dela perdia a
+     marca de dono para o dono da semente.
+
+     A v211 varria isso 700ms depois, então o efeito era um pisca — e
+     pisca é defeito, não conserto. Aqui a semente simplesmente não
+     entra onde não é dela. Quando não se sabe de quem é a casa,
+     `sementeVale()` responde SIM, que é o comportamento de sempre. */
+  const sementeAqui = () => {
+    try{
+      return !window.MaestroSemente || window.MaestroSemente.sementeVale();
+    }catch(e){ return true; }
+  };
+
   function arrumar(){
     if(!Array.isArray(S.equipe)) return;
+    if(!sementeAqui()) return;
     const fora = foraDe();
 
     /* 0. o dono é UM, e é o da semente.
@@ -37327,10 +37364,41 @@ sbGravar = (function(orig){
       A.org = r.valor; A.sondado = true;
       const p = await rpc('maestro_pronto');
       A.chave2 = !!(p && p.valor === true);
-      /* casa nova: nada do aparelho anterior entra aqui */
+      /* casa nova: nada do aparelho anterior entra aqui.
+
+         v215 — A EQUIPE E AS CONVERSAS FALTAVAM NESTA LISTA, e o founder
+         viu: criou a agência dele e a tela "Quem está entrando?" ofereceu
+         a Gabi Domingues, que é da agência ANTERIOR e estava na memória
+         deste navegador. Pior: ele mesmo não estava lá, então não havia
+         como entrar como ninguém.
+
+         Quem cria a agência É o primeiro membro dela — administrador e
+         dono, com o e-mail que acabou de entrar. Os outros vêm por
+         convite. Sem isso a casa nasce sem ninguém dentro, o que não é
+         "vazia", é quebrada. */
       try{
         S.pautas = {}; S.cliEdit = {}; S.novos = []; S.cliFora = [];
         if(S.ensaio) S.ensaio = (typeof kbSemente === 'function') ? kbSemente() : S.ensaio;
+        if(S.chat) S.chat.canais = [];
+        S.cvAtivo = null;
+
+        const eu = (() => {
+          try{
+            const q = window.MaestroPorta && MaestroPorta.quem();
+            return (q && q.email) ? String(q.email).trim() : null;
+          }catch(e){ return null; }
+        })();
+        if(eu){
+          /* `nome` já é a caixa de texto aqui em cima — outro nome, para
+             não sombrar o de fora e confundir quem ler depois. */
+          const nomeDele = eu.split('@')[0].replace(/[._-]+/g, ' ')
+            .replace(/\b\w/g, c => c.toUpperCase());
+          S.equipe = [{ n: nomeDele, mail: eu, papel: 'Administrador', dono: true }];
+          S.usuario = { tipo: 'agencia', id: membroId(S.equipe[0]) };
+          try{ localStorage.setItem(CHAVE_USR, JSON.stringify(S.usuario)); }catch(e){}
+        } else {
+          S.equipe = [];
+        }
       }catch(e){}
       el.remove(); pedindoAgencia = false;
       if(typeof som === 'function') som('conclusao');
@@ -38810,11 +38878,33 @@ sbGravar = (function(orig){
     (typeof EQUIPE_SEMENTE !== 'undefined' ? EQUIPE_SEMENTE : [])
       .map(m => String((m && m.mail) || '').trim().toLowerCase()).filter(Boolean));
 
+  /* QUEM ESTÁ LOGADO NUNCA É SEMENTE.
+
+     v215, e foi por pouco: `victorbarrosoc@gmail.com` É um dos três
+     e-mails semeados. Sem esta linha, o founder criava a própria agência
+     nova, entrava nela como primeiro membro — e 700ms depois esta faxina
+     o apagava da própria casa, deixando a tela "Quem está aí?" sem
+     ninguém e sem jeito de entrar.
+
+     Estar na semente é uma coincidência de e-mail. A pessoa sentada aí,
+     com sessão aberta, é a pessoa — não o estado de fábrica. */
+  const euAgora = () => {
+    try{
+      const q = window.MaestroPorta && MaestroPorta.quem();
+      const m = q && q.email;
+      return m ? String(m).trim().toLowerCase() : null;
+    }catch(e){ return null; }
+  };
+
   function limparEquipe(){
     if(sementeVale()) return;
     if(!Array.isArray(S.equipe) || !S.equipe.length) return;
-    const fica = S.equipe.filter(m =>
-      !daSemente.has(String((m && m.mail) || '').trim().toLowerCase()));
+    const eu = euAgora();
+    const fica = S.equipe.filter(m => {
+      const mail = String((m && m.mail) || '').trim().toLowerCase();
+      if(eu && mail === eu) return true;
+      return !daSemente.has(mail);
+    });
     if(fica.length !== S.equipe.length) S.equipe = fica;
   }
 
@@ -38851,3 +38941,4 @@ sbGravar = (function(orig){
                             DONA_DA_SEMENTE, SEMENTE_CLIENTES, SEMENTE_CANAIS };
 })();
 </script>
+
