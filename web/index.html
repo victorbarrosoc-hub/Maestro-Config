@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-10 02:56 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-10 04:10 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -15839,7 +15839,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v210 · 10 set · nao consegui ler nao e nao tem';
+const VERSAO_PROTOTIPO = 'v211 · 10 set · casa nova nasce sem equipe alheia';
 
 menuSheet = (function(orig){
   return function(){
@@ -38704,5 +38704,102 @@ sbGravar = (function(orig){
   })(render);
 
   window.MaestroDonoDoAparelho = { conferir, DONO, PACOTE };
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v211 — A AGÊNCIA NOVA NÃO NASCE COM A EQUIPE E O CLIENTE DE OUTRA.
+
+   Criada a agência "Estúdio Norte" do zero, ela nascia com:
+
+       equipe:   Victor Barroso · Anna Clara · Roberto Pivotto
+       clientes: Cortez Jurídico
+
+   Não é sincronização e não é a RLS — o banco devolveu vazio, certinho.
+   É que essas pessoas e esse cliente são o ESTADO DE FÁBRICA do app:
+   `EQUIPE_SEMENTE` e o `cj` estão escritos no código como ponto de
+   partida, e todo mundo começa por ali.
+
+   Enquanto havia uma agência só, a semente ERA a agência — ninguém
+   notava. Com duas, a semente vira herança indevida.
+
+   A REGRA. A semente é a casa da `maestro`, então ela vale em dois
+   casos, e só nesses: quando não há agência (o protótipo aberto, sem
+   banco, que precisa de algo na tela) e quando a agência É a `maestro`.
+   Qualquer outra começa com o que o banco tiver — e o banco não tem
+   nada, que é o certo para uma casa nova.
+
+   Isto NÃO é o conserto definitivo. O definitivo é a semente deixar de
+   existir e a casa vir inteira do banco, inclusive a da `maestro` — e
+   isso muda como o protótipo nasce, então é decisão do founder. Fica
+   escrito aqui e no CLAUDE.md, não escondido.
+   ===================================================================== */
+(function(){
+  const DONA_DA_SEMENTE = 'maestro';
+
+  /* a semente vale? Só quando não há agência, ou quando a agência é a
+     dona dela. "Não sei" conta como "não há": nunca se apaga a tela de
+     quem está com o banco mudo — a lição da v197. */
+  function sementeVale(){
+    try{
+      const a = window.MaestroAgencia;
+      if(!a || !a.sondado || !a.sabemos) return true;
+      if(!a.org) return true;
+      return a.org === DONA_DA_SEMENTE;
+    }catch(e){ return true; }
+  }
+
+  /* ---------- 1. os clientes de fábrica ----------------------------- */
+  /* `cj` nasce escrito no código. Os outros vêm de S.novos, que é o que
+     a própria agência cadastrou — esses ficam, sempre. */
+  if(typeof CLIS === 'function'){
+    const _CLIS_v211 = CLIS;
+    CLIS = function(){
+      const lista = _CLIS_v211.apply(this, arguments) || [];
+      if(sementeVale()) return lista;
+      /* O QUE O BANCO MANDOU É DESTA AGÊNCIA. `Sincro.brutas` guarda toda
+         linha que chegou, inclusive as de cliente que o app ainda não
+         conhece — é assim que a v151 as segura até saber de quem são.
+         Consultar essa lista é perguntar ao banco, e não adivinhar.
+
+         A primeira versão desta regra não perguntava: filtrava por
+         "foi esta agência que cadastrou?". Uma agência com um cliente
+         de mesmo id que a semente perdia o cliente — e, pior, o
+         carregador deixava de aplicar a linha dele, porque ele só
+         aplica o que CLIS() conhece. A pauta chegava e era descartada. */
+      const doBanco = (() => {
+        try{ return new Set(Object.keys((window.Sincro || {}).brutas || {})); }
+        catch(e){ return new Set(); }
+      })();
+      const meus = new Set((S.novos || []).map(c => c && (c.cid || c.id)).filter(Boolean));
+      return lista.filter(c => c && (doBanco.has(c.id) || meus.has(c.id)
+                                     || (S.cliEdit && S.cliEdit[c.id])));
+    };
+  }
+
+  /* ---------- 2. a equipe de fábrica -------------------------------- */
+  /* Quem criou a agência é o único membro dela até convidar alguém. A
+     equipe de verdade chega pelo banco (`__config__.equipe`); enquanto
+     não chega, a semente não pode ocupar o lugar. */
+  const daSemente = new Set(
+    (typeof EQUIPE_SEMENTE !== 'undefined' ? EQUIPE_SEMENTE : [])
+      .map(m => String((m && m.mail) || '').trim().toLowerCase()).filter(Boolean));
+
+  function limparEquipe(){
+    if(sementeVale()) return;
+    if(!Array.isArray(S.equipe) || !S.equipe.length) return;
+    const fica = S.equipe.filter(m =>
+      !daSemente.has(String((m && m.mail) || '').trim().toLowerCase()));
+    if(fica.length !== S.equipe.length) S.equipe = fica;
+  }
+
+  setInterval(limparEquipe, 700);
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ limparEquipe(); return orig.apply(this, arguments); };
+  })(render);
+
+  window.MaestroSemente = { sementeVale, limparEquipe, DONA_DA_SEMENTE };
 })();
 </script>
