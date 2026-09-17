@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-17 17:09 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-17 17:59 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -16003,7 +16003,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v222 · 17 set · semana em abas, e mais um card';
+const VERSAO_PROTOTIPO = 'v223 · 17 set · o nome do card pede para ser trocado';
 
 menuSheet = (function(orig){
   return function(){
@@ -40945,5 +40945,185 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
     e.stopImmediatePropagation(); e.preventDefault();
     maisUmCard(t.dataset.cymais);
   }, true);
+})();
+</script>
+
+<style>
+/* v223 — o nome do card, na hora de estruturar */
+.ptNomeAviso{ display:flex; align-items:flex-start; gap:10px; margin:0 0 14px;
+  padding:11px 13px; border-radius:11px; font-size:12.5px; line-height:1.5;
+  color:var(--ink-200); border:1px solid rgba(91,141,239,.34);
+  background:rgba(91,141,239,.09) }
+.ptNomeAviso b{ color:var(--ink-50) }
+.ptNomeAviso svg.i{ color:var(--cobalt); flex:0 0 auto; margin-top:1px }
+.fld label .fdica{ font-family:var(--sans); font-size:11.5px; font-weight:400;
+  letter-spacing:0; text-transform:none; color:var(--ink-400); margin-left:8px }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v223 — NA HORA DE ESTRUTURAR, O NOME DO CARD VEM PRIMEIRO E PEDE PARA
+   SER TROCADO.
+
+   O founder: "Na hora que for estruturar pauta, colocar primeiro a
+   opção de mudar o nome do card da tarefa, pra n ficar confundindo
+   quando clicar em estruturar mais de um card."
+
+   O QUE EU MEDI ANTES DE MEXER. O campo do nome JÁ era o primeiro do
+   formulário — então a ordem não era o defeito, e trocá-la não
+   resolveria nada. O defeito é outro, e a v222 o criou: as irmãs nascem
+   todas com o título da DEMANDA ("Preciso de vários materiais (2)"), o
+   campo se chama "Título da pauta" — que não soa como "o nome deste
+   card" — e nada convida a trocá-lo. Três cards com quase o mesmo nome
+   no quadro é exatamente a confusão que ele descreve.
+
+   Então o que muda é o CONVITE, não a posição:
+
+   · o formulário que nasce de "estruturar" se chama "Estruturar a
+     pauta", não "Editar postagem" — ele não está editando nada ainda;
+   · o campo vira "Nome deste card", com a dica do que ele faz;
+   · quando é irmã, uma faixa diz de que demanda ela é e que o nome é o
+     que separa uma da outra;
+   · e o cursor nasce nele, com o texto SELECIONADO: digitar já troca.
+
+   Só no momento de estruturar. Abrir um card antigo para editar não
+   rouba o foco nem muda o rótulo — lá o nome já é o que a pessoa
+   escolheu, e o assunto é outro.
+   ================================================================== */
+(function(){
+  if(typeof modalPauta !== 'function') return;
+
+  const tarefaDoCard = p => {
+    try{
+      return (S.ensaio && S.ensaio.tarefas || [])
+        .find(t => t && t.cardId === p.id && t.cli === S.cli) || null;
+    }catch(e){ return null; }
+  };
+  /* O INSTANTE DO ESTRUTURAR TEM DE SER NOMEADO, não deduzido.
+     A primeira versão deduzia por "veio do Ensaio e ainda não tem
+     texto". Errado: a irmã NASCE com o briefing preenchido — o
+     descritivo da demanda vira texto do card (v36437). Então ela já
+     chegava "usada" e o formulário dela não recebia nada do que esta
+     versão existe para dar. Quem pegou foi a prova da irmã.
+
+     Agora quem marca o momento é quem o cria: `estruturarTarefa`, no
+     ramo em que um card NASCE. Abrir um card que já existe para editar
+     não marca nada, que é o que a seção 4 da prova cobra. */
+  const recemEstruturado = p => {
+    if(!p) return false;
+    if(S.ptEstruturando === p.id) return true;
+    /* o formulário é montado DENTRO de `estruturarTarefa`, antes de o
+       card estar amarrado à tarefa — então neste instante quem responde
+       é a tarefa que está estruturando agora. */
+    const t = (S.ensaio && S.ensaio.tarefas || [])
+      .find(x => x && x.id === S.ptEstruturandoTarefa);
+    return !!(t && t.cardId === p.id);
+  };
+
+  if(typeof estruturarTarefa === 'function') estruturarTarefa = (function(orig){
+    return function(tid){
+      const t = (S.ensaio && S.ensaio.tarefas || []).find(x => x.id === +tid);
+      /* ANTES de chamar, não depois: `estruturarTarefa` monta o
+         formulário por dentro (`S.modal = modalPauta(id)`), e o modal é
+         uma STRING montada uma vez. Marcar o momento depois é marcar
+         quando a tela já foi escrita — e nada do que esta versão dá
+         chegava nela. Como o card ainda não existe, a marca vai no
+         `id da tarefa`, e o `recemEstruturado` aceita os dois. */
+      const tinha = !!(t && t.cardId);
+      if(t && !tinha) S.ptEstruturandoTarefa = t.id;
+      const r = orig.apply(this, arguments);
+      try{
+        if(!tinha && t && t.cardId) S.ptEstruturando = t.cardId;
+        S.ptEstruturandoTarefa = null;
+      }catch(e){}
+      return r;
+    };
+  })(estruturarTarefa);
+
+  /* e o momento acaba quando o formulário fecha */
+  if(typeof renderLayer === 'function') renderLayer = (function(orig){
+    return function(){
+      try{ if(!S.modal) S.ptEstruturando = null; }catch(e){}
+      return orig.apply(this, arguments);
+    };
+  })(renderLayer);
+
+  modalPauta = (function(orig){
+    return function(id){
+      let html = orig.apply(this, arguments);
+      try{
+        if(!html || !id) return html;
+        const p = S.pauta && S.pauta.find(x => x.id === id);
+        if(!p || !recemEstruturado(p)) return html;
+        /* a demanda interna tem rótulos próprios (v21020) — não mexo lá */
+        if(html.indexOf('>Título da demanda<') >= 0) return html;
+
+        html = html.replace('<h3>Editar postagem</h3>', '<h3>Estruturar a pauta</h3>')
+                   .replace('>Título da pauta<',
+                     '>Nome deste card<span class="fdica">como ele aparece na pauta e no quadro</span><');
+
+        const t = tarefaDoCard(p);
+        const fam = (t && t.irma && window.MaestroIrmas)
+          ? MaestroIrmas.irmasDe(t) : [];
+        if(fam.length > 1){
+          const i = fam.findIndex(x => x.id === t.id) + 1;
+          const aviso = `<div class="ptNomeAviso">${ic('stack', 14)}<span>
+            <b>Card ${i} de ${fam.length} da mesma demanda.</b> Todas nasceram com o nome do
+            pedido — troque este para saber qual é qual no quadro e na pauta.</span></div>`;
+          html = html.replace(/(<div class="fld"><label for="pt-t")/, aviso + '$1');
+        }
+        html = html.replace('id="pt-t"', 'id="pt-t" data-ptfoco="1"');
+      }catch(e){}
+      return html;
+    };
+  })(modalPauta);
+
+  /* ---------- o cursor nasce no nome, com o texto selecionado -------- */
+  /* uma vez por abertura: a marca fica no próprio campo, e o campo é
+     outro a cada desenho — então ela não sobrevive a um redesenho, que
+     é justamente quando NÃO se quer roubar o foco de volta. */
+  if(typeof renderLayer === 'function') renderLayer = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      try{
+        const c = document.querySelector('#pt-t[data-ptfoco]');
+        if(c && !c._focado){
+          c._focado = true;
+          setTimeout(() => { try{ c.focus(); c.select(); }catch(e){} }, 60);
+        }
+      }catch(e){}
+      return r;
+    };
+  })(renderLayer);
+
+  /* ---------- o nome do card É o nome da tarefa --------------------
+     A prova pegou: renomeei o card para "Carrossel do lançamento" e o
+     QUADRO continuou dizendo "Preciso de vários materiais". Nesta casa
+     uma tarefa É um card (a coluna dela é a fase dele, v16635) — então
+     dois nomes para a mesma coisa é a informação em dois lugares, e é
+     exatamente a confusão que ele descreveu ao pedir isto.
+
+     Fica no ouvinte da janela, em captura, porque o `data-ptok` do
+     documento corta a propagação: leio o campo ANTES de ele salvar e
+     acerto a tarefa depois, no mesmo gesto. */
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-ptok]');
+    if(!b) return;
+    const id = +b.dataset.ptok; if(!id) return;
+    const campo = document.getElementById('pt-t');
+    const nome = (campo && campo.value || '').trim();
+    if(nome.length < 2) return;                 /* o salvar vai recusar */
+    setTimeout(() => {
+      try{
+        const t = (S.ensaio && S.ensaio.tarefas || [])
+          .find(x => x && x.cardId === id);
+        if(!t || t.titulo === nome) return;
+        t.titulo = nome;
+        if(typeof render === 'function') render();
+      }catch(err){}
+    }, 0);
+  }, true);
+
+  window.MaestroNomeDoCard = { recemEstruturado, tarefaDoCard };
 })();
 </script>
