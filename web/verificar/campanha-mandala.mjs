@@ -152,10 +152,39 @@ checa('cada peça leva a etiqueta com o código e a campanha',
       naPauta.chips.length === 8 && /C\.P\.2 · Setembro quente/.test(naPauta.chips[0]), naPauta.chips.slice(0, 2));
 await pg.click('.ptCamps [data-ptcamp=""]'); await pg.waitForTimeout(300);
 await abrirDiasPassados(); await pg.waitForTimeout(300);
-const toda = await pg.evaluate(() => ({ ptCamp: S.ptCamp, itens: document.querySelectorAll('.ptItem').length, total: S.pautas.cj.length }));
+/* v221: fora de campanha, a vista Semana passa a ser navegada por ABAS
+   de mês e semana — então "a pauta inteira volta" deixa de querer dizer
+   "as oito na tela de uma vez". O que ela quer dizer agora, e o que esta
+   prova cobra: o filtro saiu, a pauta tem as oito, e elas estão
+   alcançáveis — a soma das abas de semana é oito. Com a campanha LIGADA
+   não há abas (campanha atravessa semanas), e a prova de cima, que
+   continua cobrando as oito na tela, é quem garante isso. */
+const toda = await pg.evaluate(async () => {
+  const soma = async () => {
+    let n = 0;
+    const meses = [...document.querySelectorAll('[data-ptabames]')].map(b => b.dataset.ptabames);
+    for(const m of meses){
+      document.querySelector(`[data-ptabames="${m}"]`).click();
+      await new Promise(r => setTimeout(r, 120));
+      const sem = [...document.querySelectorAll('[data-ptabasem]')].map(b => b.dataset.ptabasem);
+      if(!sem.length){ n += document.querySelectorAll('.ptItem').length; continue; }
+      for(const w of sem){
+        document.querySelector(`[data-ptabasem="${w}"]`).click();
+        await new Promise(r => setTimeout(r, 120));
+        for(const p of S.pautas.cj) if(p.data) S.ptExpand[p.data] = true;
+        render(); await new Promise(r => setTimeout(r, 60));
+        n += document.querySelectorAll('.ptItem').length;
+      }
+    }
+    return n;
+  };
+  return { ptCamp: S.ptCamp, total: S.pautas.cj.length,
+           abas: document.querySelectorAll('[data-ptabames]').length,
+           itens: await soma() };
+});
 /* v167: a pauta do cliente de teste começa vazia — o total é o da
    campanha, não mais o da semente de demonstração */
-checa('"toda a pauta" tira o filtro e a pauta inteira volta',
+checa('"toda a pauta" tira o filtro e a pauta inteira volta (somando as abas de semana)',
       toda.ptCamp === null && toda.itens === toda.total && toda.total >= 8, toda);
 
 /* grava no banco, com a campanha dentro.

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-10 16:37 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-17 17:09 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -16003,7 +16003,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v220 · 10 set · o aparelho sabe de que agencia e';
+const VERSAO_PROTOTIPO = 'v222 · 17 set · semana em abas, e mais um card';
 
 menuSheet = (function(orig){
   return function(){
@@ -40640,5 +40640,310 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
   })(render);
 
   window.MaestroAgenciaDoAparelho = { conferir, CARIMBO, PACOTE, agenciaAfirmada };
+})();
+</script>
+
+<style>
+/* =====================================================================
+   v221 — A VISTA SEMANA GANHA MÊS E SEMANA COMO ABAS.
+   ================================================================== */
+.ptAbas{ display:flex; flex-direction:column; gap:8px; margin:0 0 16px }
+.ptAbas .lin{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+.ptAbas .rot{ font-family:var(--mono); font-size:9.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-500); flex:0 0 auto; width:54px }
+.ptAbas .ptFiltros{ margin-left:0 }
+.ptAbas .ptFiltros button{ font-size:11px }
+/* o mês é o degrau de cima: um pouco mais presente que a semana */
+.ptAbas .mes button.on{ background:rgba(200,150,58,.14) }
+.ptAbas .ptFiltros button.hoje{ box-shadow:inset 0 0 0 1px rgba(200,150,58,.35) }
+.ptAbas .ptFiltros button.vazia{ opacity:.55 }
+@media(max-width:760px){
+  .ptAbas .lin{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none }
+  .ptAbas .lin::-webkit-scrollbar{ display:none }
+  .ptAbas .ptFiltros{ flex-wrap:nowrap }
+  .ptAbas .rot{ width:auto }
+}
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v221 — NA VISTA SEMANA, O MÊS E A SEMANA VIRAM ABAS.
+
+   O founder: "na aba da semana, eu quero ver só os cards que são da
+   semana daquele mês — que mostre as abas de cada semana de acordo com
+   aquele mês. (aba) Setembro · (aba) semana 1 ... semana 5 (dependendo
+   do mês se tiver 5 semanas). E que em cada aba tenha a opção de
+   recolher, como já existe."
+
+   COMO ERA. A vista Semana despejava TODAS as semanas numa rolagem só,
+   com um cabeçalho por semana. Numa pauta de dois meses isso é uma
+   página de rolar — e para achar a semana que interessa você passa por
+   todas as outras. O cabeçalho de semana existia; a NAVEGAÇÃO, não.
+
+   DUAS DECISÕES QUE VALE REGISTRAR.
+
+   1. A SEMANA PERTENCE AO MÊS DO CARD, não o contrário. Uma semana que
+      atravessa a virada (segunda 29/set a domingo 5/out) aparece nos
+      DOIS meses: em setembro mostrando 29 e 30, em outubro mostrando 1
+      a 5. É o que ele pediu — "as abas de cada semana de acordo com
+      aquele mês" — e é como se lê um calendário de conteúdo: o mês é a
+      unidade de contrato com o cliente. Para não restar dúvida, a aba
+      diz o intervalo de dias que ELA mostra ("1–5"), e o cabeçalho de
+      semana que já existia continua dizendo a semana inteira.
+
+   2. NADA SOME. Card sem data tem a aba dele ("Sem data"), no fim. Uma
+      pauta pode ter card sem data — ele não pode virar invisível por
+      causa de uma navegação nova.
+
+   A opção de recolher não muda: ela é por DIA, dentro da semana, e
+   continua onde estava. Esta camada só escolhe QUAIS cards descem para
+   a vista de sempre.
+   ================================================================== */
+(function(){
+  if(typeof ptVistaSemana !== 'function') return;
+
+  const mesDe  = iso => String(iso || '').slice(0, 7);          /* '2026-09' */
+  const nomeMes = ym => {
+    const [a, m] = String(ym).split('-');
+    const nome = (typeof MESNOME_INTEIRO !== 'undefined')
+      ? MESNOME_INTEIRO[+m - 1]
+      : (MESNOME[+m - 1] || '').replace(/^./, c => c.toUpperCase());
+    const anoAtual = String(new Date().getFullYear());
+    return a === anoAtual ? nome : nome + '/' + a.slice(2);
+  };
+  const diaDe = iso => +String(iso).slice(8, 10);
+
+  /* as semanas de um mês: a segunda-feira de cada semana que tem card
+     NAQUELE mês, em ordem. O número da aba é a posição aqui — é o que
+     "semana 1..5" quer dizer para quem olha o calendário do mês. */
+  function semanasDoMes(cards, ym){
+    const doMes = cards.filter(p => p.data && mesDe(p.data) === ym);
+    const porSeg = {};
+    for(const p of doMes){
+      const seg = inicioDaSemana(p.data);
+      (porSeg[seg] = porSeg[seg] || []).push(p);
+    }
+    return Object.keys(porSeg).sort().map((seg, i) => {
+      const dias = porSeg[seg].map(p => diaDe(p.data)).sort((a, b) => a - b);
+      const de = dias[0], ate = dias[dias.length - 1];
+      return { seg, n: i + 1, cards: porSeg[seg],
+               faixa: de === ate ? String(de) : de + '–' + ate };
+    });
+  }
+
+  function chips(lista, chave, atual){
+    return '<div class="ptFiltros" role="group">' + lista.map(x =>
+      `<button class="${x.id === atual ? 'on' : ''}${x.hoje ? ' hoje' : ''}"
+        data-${chave}="${esc(x.id)}">${esc(x.rot)}<b>${x.n}</b></button>`).join('') + '</div>';
+  }
+
+  ptVistaSemana = (function(orig){
+    return function(visiveis, filtro){
+      /* as outras vistas passam direto: a original despacha stories/dia */
+      if(S.ptVista !== 'semana') return orig.apply(this, arguments);
+      /* CAMPANHA LIGADA, NENHUMA ABA. Uma campanha atravessa semanas por
+         natureza — é o que ela é. Fatiá-la por semana desfaz a escolha
+         que a pessoa acabou de fazer: ela pediu "me mostre esta
+         campanha", e veria três das oito peças. Quem denunciou foi a
+         suíte da campanha, medindo 3 onde promete 8. */
+      if(S.ptCamp) return orig.apply(this, arguments);
+      const cards = visiveis || [];
+      if(!cards.length) return orig.apply(this, arguments);
+
+      /* ---------- os meses que existem, e o "sem data" -------------- */
+      const meses = [...new Set(cards.filter(p => p.data).map(p => mesDe(p.data)))].sort();
+      const semData = cards.filter(p => !p.data);
+      const abasMes = meses.map(ym => ({ id: ym, rot: nomeMes(ym),
+        n: cards.filter(p => p.data && mesDe(p.data) === ym).length,
+        hoje: ym === mesDe(hojeISO()) }));
+      if(semData.length) abasMes.push({ id: 'sem-data', rot: 'Sem data', n: semData.length });
+      if(!abasMes.length) return orig.apply(this, arguments);
+
+      /* o mês escolhido: o guardado, se ainda existe; senão o de hoje;
+         senão o primeiro. Nunca uma aba que não está na tela. */
+      let mes = S.ptMes;
+      if(!abasMes.some(a => a.id === mes))
+        mes = (abasMes.find(a => a.hoje) || abasMes[0]).id;
+      S.ptMes = mes;
+
+      if(mes === 'sem-data')
+        return `<div class="ptAbas">
+          <div class="lin"><span class="rot">mês</span>${chips(abasMes, 'ptabames', mes)}</div>
+        </div>` + orig.call(this, semData, filtro);
+
+      /* ---------- as semanas daquele mês ---------------------------- */
+      const sem = semanasDoMes(cards, mes);
+      const hojeSeg = inicioDaSemana(hojeISO());
+      const abasSem = sem.map(w => ({ id: w.seg, rot: 'Semana ' + w.n + ' · ' + w.faixa,
+        n: w.cards.length, hoje: w.seg === hojeSeg }));
+
+      let seg = (S.ptSemana || {})[mes];
+      if(!abasSem.some(a => a.id === seg))
+        seg = (abasSem.find(a => a.hoje) || abasSem[0] || {}).id;
+      S.ptSemana = Object.assign({}, S.ptSemana, { [mes]: seg });
+
+      const daSemana = (sem.find(w => w.seg === seg) || {}).cards || [];
+
+      const topo = `<div class="ptAbas">
+        <div class="lin mes"><span class="rot">mês</span>${chips(abasMes, 'ptabames', mes)}</div>
+        ${abasSem.length ? `<div class="lin"><span class="rot">semana</span>${
+          chips(abasSem, 'ptabasem', seg)}</div>` : ''}
+      </div>`;
+
+      return topo + orig.call(this, daSemana, filtro);
+    };
+  })(ptVistaSemana);
+
+  /* ---------- o toque ------------------------------------------------ */
+  /* Os atributos são `ptabames`/`ptabasem`, e não `ptmes`: `data-ptmes` JÁ
+     EXISTE — é o seletor de mês da vista MÊS (v7708). Como este ouvinte
+     corta a propagação, o nome repetido teria sequestrado os botões
+     daquela vista e a quebrado em silêncio. Quem pegou foi a prova que
+     cobra "as outras vistas não foram tocadas". */
+  /* na janela e em captura, como o resto da casa: chega antes do
+     roteador de cliques da pauta, que corta a propagação. */
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-ptabames],[data-ptabasem]');
+    if(!t) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    if(t.dataset.ptabames !== undefined) S.ptMes = t.dataset.ptabames;
+    else S.ptSemana = Object.assign({}, S.ptSemana, { [S.ptMes]: t.dataset.ptabasem });
+    try{ if(typeof som === 'function') som('toque'); }catch(err){}
+    if(typeof render === 'function') render();
+  }, true);
+
+  window.MaestroAbasSemana = { semanasDoMes, mesDe };
+})();
+</script>
+
+<style>
+/* v222 — a marca de irmãs no cartão do Ensaio */
+.enCard .cyIrma{ display:inline-flex; align-items:center; gap:5px;
+  font-family:var(--mono); font-size:9px; letter-spacing:.08em; text-transform:uppercase;
+  padding:2px 8px; border-radius:999px; margin:0 0 6px;
+  color:var(--cobalt); border:1px solid rgba(91,141,239,.38); background:rgba(91,141,239,.10) }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v222 — UMA DEMANDA, VÁRIOS CARDS: A TAREFA GANHA IRMÃS.
+
+   O founder: "Criei nova tarefa e joguei no card que preciso de vários
+   materiais, coloquei o responsável. O responsável vai precisar
+   estruturar a pauta, mas a demanda que coloquei é mais de um card,
+   então preciso que ele estruture a pauta pra mais de um card."
+
+   POR QUE NÃO É UMA LISTA DENTRO DA TAREFA. A tentação era `t.cardId`
+   virar `t.cardIds`. Não dá, e a razão é de arquitetura: `t.col` — a
+   COLUNA da tarefa no quadro — não é um campo, é um GETTER que lê a
+   FASE do card (v16635). Uma tarefa com três cards em fases diferentes
+   não tem coluna: estaria no Plan, no Check e com o cliente ao mesmo
+   tempo. E é justamente isso que se quer ver quando a demanda são três
+   peças — uma já aprovada, outra no Check, a terceira por escrever.
+
+   ENTÃO A DEMANDA VIRA IRMÃS. "+ mais um card" cria uma tarefa NOVA,
+   irmã da primeira — mesmo cliente, mesmo responsável, mesmo projeto,
+   mesmo prazo e mesmo descritivo — já com o card dela, e abre a pauta
+   desse card para preencher. Cada uma anda no seu passo, e as duas
+   sabem que vieram do mesmo pedido (`irma`), o que o cartão mostra.
+
+   E ela REUSA `estruturarTarefa`: o card nasce pelo mesmo caminho de
+   sempre, com o id do relógio da v199 e o histórico. Um caminho só para
+   "nasce card" — o segundo caminho é como as duas versões divergem.
+   ================================================================== */
+(function(){
+  if(typeof estruturarTarefa !== 'function') return;
+
+  const tarefas = () => (S.ensaio && S.ensaio.tarefas) || [];
+  const irmasDe = t => {
+    if(!t || !t.irma) return [t].filter(Boolean);
+    return tarefas().filter(x => x.irma === t.irma)
+      .sort((a, b) => (a.id || 0) - (b.id || 0));
+  };
+  window.MaestroIrmas = { irmasDe };
+
+  /* o título da irmã: "Fulano (2)". Se o original já termina em (n),
+     não empilha parênteses — conta a partir do nome limpo. */
+  function tituloIrma(base, n){
+    const limpo = String(base || 'Sem título').replace(/\s*\(\d+\)\s*$/, '');
+    return `${limpo} (${n})`;
+  }
+
+  function maisUmCard(tid){
+    const t = tarefas().find(x => x.id === +tid);
+    if(!t) return;
+    if(!t.cli){ toast('Escolha o cliente da tarefa primeiro.'); return; }
+    if(!t.cardId){
+      /* ainda não tem o primeiro: estruturar o primeiro É este botão */
+      estruturarTarefa(t.id); return;
+    }
+    /* a família: quem não tinha marca ganha uma agora, e ela é do
+       PRIMEIRO — assim a ordem não depende de quem clicou. */
+    if(!t.irma) t.irma = 'ir' + t.id;
+    const familia = irmasDe(t);
+    const n = familia.length + 1;
+
+    const nova = {
+      id: novoIdTarefa(),
+      titulo: tituloIrma(t.titulo, n),
+      cli: t.cli, resp: t.resp || null,
+      projeto: t.projeto || null,
+      prazo: t.prazo || null,
+      desc: t.desc || '',
+      col: t.resp ? 'plan' : 'inbox',
+      cat: 'producao', job: true,
+      criada: Date.now(), tempoMs: 0, desde: null,
+      irma: t.irma, irmaDe: t.id
+    };
+    tarefas().push(nova);
+    /* e o card nasce pelo caminho de sempre, que já abre a pauta */
+    estruturarTarefa(nova.id);
+    toast(`Card ${n} da mesma demanda. Preencha a pauta dele.`);
+  }
+  window.MaestroMaisUmCard = { maisUmCard, tituloIrma };
+
+  /* ---------- o botão, ao lado de "editar a pauta" ------------------- */
+  if(typeof pintarCiclo === 'function') pintarCiclo = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      try{
+        document.querySelectorAll('.enCard[data-entar]').forEach(card => {
+          const t = tarefas().find(x => x.id === +card.dataset.entar);
+          if(!t || (typeof catIdDe === 'function' && catIdDe(t) !== 'producao')) return;
+          const acoes = card.querySelector('.acoes');
+
+          /* a marca de família, uma vez por cartão */
+          if(t.irma && !card.querySelector('.cyIrma')){
+            const fam = irmasDe(t);
+            const i = fam.findIndex(x => x.id === t.id) + 1;
+            if(fam.length > 1)
+              (acoes || card).insertAdjacentHTML('beforebegin',
+                `<span class="cyIrma">${ic('stack',10)} card ${i} de ${fam.length} · mesma demanda</span>`);
+          }
+
+          /* "+ mais um card": só onde faz sentido — a tarefa já tem card
+             e ele ainda está na agência. Depois que foi ao cliente, a
+             demanda seguinte é uma tarefa nova, não uma irmã tardia. */
+          if(!acoes || card.querySelector('[data-cymais]')) return;
+          const p = (typeof cardDaTarefa === 'function') ? cardDaTarefa(t) : null;
+          if(!p) return;
+          const f = (typeof faseDe === 'function') ? faseDe(p) : '';
+          if(f !== 'rascunho' && f !== 'criado') return;
+          acoes.insertAdjacentHTML('beforeend',
+            `<button class="cyBtn" data-cymais="${t.id}"
+               title="A mesma demanda rende outro card">+ mais um card</button>`);
+        });
+      }catch(e){}
+      return r;
+    };
+  })(pintarCiclo);
+
+  /* na janela e em captura: o roteador do Ensaio corta a propagação */
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-cymais]');
+    if(!t) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    maisUmCard(t.dataset.cymais);
+  }, true);
 })();
 </script>
