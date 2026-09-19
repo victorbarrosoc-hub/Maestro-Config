@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-19 05:59 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-19 07:30 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -878,6 +878,18 @@ const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
    não passam, e o esc fecha a aspa. */
 const urlSegura = u => { const v = String(u == null ? '' : u).trim();
   return /^(https?:|blob:|data:(image|video|audio)\/)/i.test(v) ? esc(v) : ''; };
+/* v225 — `esc` fecha a aspa, mas NÃO olha o esquema: um href montado
+   só com esc aceita `javascript:alert(1)` inteiro, porque não há aspa
+   para fechar.
+   Quem vai para um href passa por aqui; endereço que não se reconhece
+   vira `#`, que não faz nada e não mente para quem clicou. */
+const hrefSeguro = u => { const v = String(u == null ? '' : u).trim();
+  return /^(https?:|mailto:|tel:|blob:|data:(image|video|audio)\/)/i.test(v) ? esc(v) : '#'; };
+/* v225 — cor que entra em `style="..."` vem do banco, e o banco guarda o
+   que outra pessoa escreveu. Dentro de um atributo de estilo não basta
+   fechar a aspa: só passa o que É uma cor. */
+const corSegura = c => { const v = String(c == null ? '' : c).trim();
+  return /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]{3,20}|(rgb|hsl)a?\([\d\s.,%/-]+\)|var\(--[\w-]+\))$/.test(v) ? v : 'transparent'; };
 /* v140 — token de link com entropia de verdade (crypto), não Math.random */
 const tokenForte = (n = 22) => { const a = 'abcdefghijklmnopqrstuvwxyz0123456789'; let out = '';
   try { const b = new Uint8Array(n); crypto.getRandomValues(b); for(const x of b) out += a[x % a.length]; return out; }
@@ -891,7 +903,7 @@ function avCliente(c, cls){
   if(c && c.logo)
     return `<span class="${classe} comLogo"><img src="${urlSegura(c.logo)}" alt="" aria-hidden="true"></span>`;
   const cor = c && c.cor
-    ? ` style="background:linear-gradient(150deg,${c.cor},#111);color:#fff"` : '';
+    ? ` style="background:linear-gradient(150deg,${corSegura(c.cor)},#111);color:#fff"` : '';
   return `<span class="${classe}"${cor}>${esc((c && c.ini) || '?')}</span>`;
 }
 const ativos    = () => S.pecas.filter(p=>p.st!=='CANCELLED');
@@ -2440,7 +2452,7 @@ function modalNovaCampanha(){ return `<div class="modal"><div class="modalbox wi
 /* ---------- redefinições ---------------------------------------------- */
 function agClientes(){
   const novos = S.novos.map((c,i)=>`<div class="row fu" style="animation-delay:${(i+2)*50}ms">
-    <div class="av" style="background:linear-gradient(150deg,${c.cor},#111);color:#fff">${c.ini}</div>
+    <div class="av" style="background:linear-gradient(150deg,${corSegura(c.cor)},#111);color:#fff">${esc(c.ini)}</div>
     <div class="t"><b>${esc(c.nome)}</b><span>${esc(c.seg)} · projeto "Sempre ativo" criado</span></div>
     <span class="pill p-DRAFT">novo</span></div>`).join('');
   return agShell(`
@@ -2999,7 +3011,7 @@ function vFull(){
 function agClientes(){
   const linha = (c,i,sub,pill,pcls) => `<button ${stg(i)} data-clidet="${c.id}" style="display:block;width:100%">
     <span class="row" style="margin:0 0 8px">
-      <span class="av" ${c.cor?`style="background:linear-gradient(150deg,${c.cor},#111);color:#fff"`:''}>${c.ini}</span>
+      <span class="av" ${c.cor?`style="background:linear-gradient(150deg,${corSegura(c.cor)},#111);color:#fff"`:''}>${esc(c.ini)}</span>
       <span class="t"><b>${esc(c.nome)}</b><span>${sub}</span></span>
       <span class="pill ${pcls}">${pill}</span><span class="chev">${ic('chevr')}</span></span></button>`;
   const cs = CLIS();
@@ -3025,10 +3037,10 @@ function agClienteDet(){
       <div class="card"><h4>Referências</h4><p>${esc(c.refs)}</p></div>
       <div class="card"><h4>Tom</h4><p>${c.id==='ln'?'Calmo, nunca urgência. Durabilidade, não novidade.':c.id==='cj'?'Autoridade sem juridiquês. A Dra. Ana é o rosto.':'Definido no briefing acima.'}</p></div>`,
     projetos: S.proj[c.id]
-      ? `<button class="row" data-r="projeto" style="width:100%"><span class="av">${c.ini}</span>
+      ? `<button class="row" data-r="projeto" style="width:100%"><span class="av">${esc(c.ini)}</span>
           <span class="t"><b>${esc(S.proj[c.id].nome)}</b><span>${S.proj[c.id].per} · ${S.proj[c.id].fases.length} fases</span></span>
           <span class="chev">${ic('chevr')}</span></button>`
-      : `<div class="row"><span class="av">${c.ini}</span><span class="t"><b>Sempre ativo</b>
+      : `<div class="row"><span class="av">${esc(c.ini)}</span><span class="t"><b>Sempre ativo</b>
           <span>metodologia de social · 12 datas no calendário</span></span><span class="pill p-DRAFT">novo</span></div>
         <div class="card" style="margin-top:12px"><h4>Próximo passo</h4><p>Criar o primeiro conteúdo —
           ou aplicar outra metodologia com "Novo projeto".</p></div>`,
@@ -7317,6 +7329,20 @@ function novoIdTarefa(){
   return id;
 }
 
+/* v226 — ids para o que a mescla precisa unir item a item. Relógio +
+   acaso: dois aparelhos no mesmo milissegundo não colidem, e a ordem
+   continua sendo a do tempo. */
+let _midSeq = 0;
+function novoIdMsg(){
+  return 'm' + Date.now().toString(36) + '-' + (++_midSeq).toString(36)
+       + '-' + Math.random().toString(36).slice(2, 7);
+}
+let _altSeq = 0;
+function novoIdAlteracao(){
+  return 'a' + Date.now().toString(36) + '-' + (++_altSeq).toString(36)
+       + '-' + Math.random().toString(36).slice(2, 7);
+}
+
 /* ---------- nada se perde: guarda no navegador ----------------------- */
 const CHAVE = 'maestro-prototipo-v1';
 S.mat = S.mat || {};                       // inicializa aqui — este bloco
@@ -7363,6 +7389,16 @@ try{
 }catch(e){}
 let _tmSalva = 0;
 function salvarLocal(){
+  /* v226 — QUEM ENTROU POR LINK NÃO ESCREVE A PAUTA DA AGÊNCIA.
+     Numa sessão de link `S.pautas` tem só o cliente daquele link — a
+     v170 proibiu LER o guardado, com razão. Mas gravar continuou
+     valendo, e gravava esse recorte por cima do cache da agência: os
+     outros clientes sumiam. Desde a v216 os botões "ver o lado do
+     cliente" abrem o link em outra aba, MESMA origem, mesmo
+     localStorage — então isso acontecia num toque. O irmão desta
+     função (`guardarTudo`) já era travado para os dois casos. */
+  try{ if(S.viaLink || S.soVer ||
+          (typeof abertoPorLink === 'function' && abertoPorLink())) return; }catch(e){}
   try{ localStorage.setItem(CHAVE, JSON.stringify({
     pautas:S.pautas, novos:S.novos, mat:S.mat, refs:S.refs, quando:Date.now() })); }catch(e){}
 }
@@ -8006,9 +8042,9 @@ function tiraMaterial(p){
   return `<span class="mtTira">
     ${mostra.map((m,i)=>`<span class="mtMini ${m.url&&(m.tipo==='imagem'||m.tipo==='video')?'temArte':''}">
       ${ms.length>1?`<span class="ord">${i+1}</span>`:''}
-      ${m.url && m.tipo==='imagem' ? `<img src="${m.url}" alt="">`
-        : (m.url||m.poster) && m.tipo==='video' ? `<video ${m.url?`src="${m.url}"`:''}
-            ${m.poster?`poster="${m.poster}"`:''} muted playsinline preload="metadata"></video>`
+      ${m.url && m.tipo==='imagem' ? `<img src="${urlSegura(m.url)}" alt="">`
+        : (m.url||m.poster) && m.tipo==='video' ? `<video ${m.url?`src="${urlSegura(m.url)}"`:''}
+            ${m.poster?`poster="${urlSegura(m.poster)}"`:''} muted playsinline preload="metadata"></video>`
         : ''}
       <span class="tipo">${ic(ICONE_TIPO[m.tipo]||'doc',15)}</span></span>`).join('')}
     ${ms.length>4?`<span class="mtMais">+${ms.length-4}</span>`:''}
@@ -8049,8 +8085,8 @@ function modalMaterial(id){
     ${ms.length?`<div class="mtGrade" id="mt-grade">
       ${ms.map((m,i)=>`<div class="mtCard">
         <div class="vis">
-          ${m.url && m.tipo==='imagem' ? `<img src="${m.url}" alt="${esc(m.nome)}">`
-            : m.url && m.tipo==='video' ? `<video src="${m.url}" ${m.poster?`poster="${m.poster}"`:''}
+          ${m.url && m.tipo==='imagem' ? `<img src="${urlSegura(m.url)}" alt="${esc(m.nome)}">`
+            : m.url && m.tipo==='video' ? `<video src="${urlSegura(m.url)}" ${m.poster?`poster="${urlSegura(m.poster)}"`:''}
                 muted playsinline controls preload="metadata"></video>`
             : `<span class="semPrev">${ic(ICONE_TIPO[m.tipo]||'doc',24)}</span>`}
           ${ms.length>1?`<span class="ordem">${i+1}</span>`:''}
@@ -9854,7 +9890,7 @@ function modalRefs(id){
     ${rs.length?`<div class="rfLista">${rs.map((r,i)=>`<div class="rfItem">
       <span class="rfIc">${ic(r.tipo==='link'?'linkic':(ICONE_TIPO[r.tipo]||'doc'),14)}</span>
       ${r.tipo==='link'
-        ? `<a class="rfNome" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">
+        ? `<a class="rfNome" href="${hrefSeguro(r.url)}" target="_blank" rel="noopener noreferrer">
             ${esc(r.nome)}<small>${esc(dominioDe(r.url))}</small></a>`
         : `<span class="rfNome">${esc(r.nome)}<small>${pesoLegivel(r.peso||0)}</small></span>`}
       <button class="rfX" data-rfdel="${i}" aria-label="Remover">${ic('x',12)}</button>
@@ -10990,7 +11026,7 @@ modalMaterial = (function(orig){
         <div class="vis"><span class="semPrev">${ic('linkic',22)}</span>
           <button class="x" data-mtdel="${i}" aria-label="Remover">${ic('x',12)}</button>
         </div>
-        <div class="nome"><a href="${esc(m.url)}" target="_blank" rel="noopener noreferrer"
+        <div class="nome"><a href="${hrefSeguro(m.url)}" target="_blank" rel="noopener noreferrer"
           style="color:inherit">${esc(m.nome)}</a>
           <span class="mtDominio">${esc(dominioDe(m.url))}</span></div>
       </div>`;
@@ -12203,8 +12239,8 @@ function modalVer(id){
     ${p.pend?`<div class="vzBloco" style="border-color:rgba(229,72,77,.35)"><b>Pendência</b><p>${esc(p.pend)}</p></div>`:''}
     ${ms.length?`<div class="vzBloco"><b>Material (${ms.length})</b><div class="vzMats">
       ${ms.slice(0,6).map(m=>`<span class="mtMini ${m.url&&(m.tipo==='imagem'||m.tipo==='video')?'temArte':''}">
-        ${m.url&&m.tipo==='imagem'?`<img src="${m.url}" alt="">`
-          :(m.url||m.poster)&&m.tipo==='video'?`<video ${m.url?`src="${m.url}"`:''} ${m.poster?`poster="${m.poster}"`:''} muted playsinline preload="metadata"></video>`:''}
+        ${m.url&&m.tipo==='imagem'?`<img src="${urlSegura(m.url)}" alt="">`
+          :(m.url||m.poster)&&m.tipo==='video'?`<video ${m.url?`src="${urlSegura(m.url)}"`:''} ${m.poster?`poster="${urlSegura(m.poster)}"`:''} muted playsinline preload="metadata"></video>`:''}
         <span class="tipo">${ic(m.tipo==='link'?'linkic':(ICONE_TIPO[m.tipo]||'doc'),14)}</span></span>`).join('')}
       </div><button class="b gho sm" style="margin-top:10px" data-mtabrir="${p.id}">${ic('img',12)} Abrir material</button></div>`:''}
     ${rs.length?`<div class="vzBloco"><b>Referências (${rs.length})</b>
@@ -12741,7 +12777,7 @@ agDash = function(){
   const corpo = grupos.length ? grupos.map(g=>`
     <div class="hjCli">
       <div class="hjCliHd">
-        <span class="av" ${g.cli.cor?`style="background:linear-gradient(150deg,${g.cli.cor},#111);color:#fff"`:''}>${esc(g.cli.ini)}</span>
+        <span class="av" ${g.cli.cor?`style="background:linear-gradient(150deg,${corSegura(g.cli.cor)},#111);color:#fff"`:''}>${esc(g.cli.ini)}</span>
         <b>${esc(g.cli.nome)}</b>
         <span>${g.itens.filter(p=>p.feito).length}/${g.itens.length} feito</span>
       </div>
@@ -12803,8 +12839,8 @@ agFeed = function(){
     ${abertaAqui?`<div class="fdGrade">${posts.slice(0,18).map(p=>{
       const m = materiaisDe(p).find(x=>x.url||x.poster);
       return `<button class="fdPost" data-ptedit="${p.id}">
-        ${m && m.tipo==='imagem' && m.url ? `<img src="${m.url}" alt="" loading="lazy">`
-        : m && m.tipo==='video' && (m.poster||m.url) ? `<video ${m.url?`src="${m.url}"`:''} ${m.poster?`poster="${m.poster}"`:''} muted playsinline preload="none"></video>`
+        ${m && m.tipo==='imagem' && m.url ? `<img src="${urlSegura(m.url)}" alt="" loading="lazy">`
+        : m && m.tipo==='video' && (m.poster||m.url) ? `<video ${m.url?`src="${urlSegura(m.url)}"`:''} ${m.poster?`poster="${urlSegura(m.poster)}"`:''} muted playsinline preload="none"></video>`
         : `<span class="semArte">${ic('img',18)}</span>`}
         <span class="rot">${p.data?rotuloData(p.data):''} · ${esc(p.fmt)}</span>
       </button>`;}).join('')}</div>`:''}`;
@@ -13276,6 +13312,7 @@ document.addEventListener('click', e => {
     if(!nota) return;
     p.obs = (p.obs ? p.obs + '\n' : '') + '[revisão] ' + nota;
     (p.alteracoes = p.alteracoes || []).push({
+      id: novoIdAlteracao(),
       por: (usuarioAtual()?.nome || S.agencia.nome), quando: rotuloData(hojeISO()) });
     porFase(p, faseDe(p)==='revisao' ? 'criado' : 'producao');
     render();
@@ -13953,13 +13990,13 @@ agClienteDet = (function(orig){
       const url = /^https?:\/\//i.test(l) ? l : (l.includes('.') ? 'https://'+l : null);
       if(!url) return;
       html = html.split(`${ic('linkic',12)} ${esc(l)}`).join(
-        `${ic('linkic',12)} <a class="mvLink" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(l)}</a>`);
+        `${ic('linkic',12)} <a class="mvLink" href="${hrefSeguro(url)}" target="_blank" rel="noopener noreferrer">${esc(l)}</a>`);
     });
     if(c.manual){
       const url = /^https?:\/\//i.test(c.manual) ? c.manual : 'https://'+c.manual;
       html = html.replace('<div class="card"><h4>Referências</h4>',
         `<div class="card"><h4>Manual da marca</h4><p>
-          <a class="mvLink" href="${esc(url)}" target="_blank" rel="noopener noreferrer">
+          <a class="mvLink" href="${hrefSeguro(url)}" target="_blank" rel="noopener noreferrer">
           ${ic('doc',12)} Abrir o manual</a></p></div>
         <div class="card"><h4>Referências</h4>`);
     }
@@ -14140,12 +14177,15 @@ function cvMidiaHtml(m){
   if(!mid.length) return '';
   const previa = id => { try{ return (window.MaestroConversas && MaestroConversas.previa(id)) || null; }catch(e){ return null; } };
   const ehHttp = u => /^https?:\/\//.test(String(u || ''));
-  const baixar = (u, nome) => u ? `<a class="cvBaixar" href="${u}" download="${nome}" target="_blank"
+  const baixar = (u, nome) => u ? `<a class="cvBaixar" href="${hrefSeguro(u)}" download="${nome}" target="_blank"
       rel="noopener" aria-label="Baixar ${nome}" title="Baixar">${ic('down',14)}</a>` : '';
   return '<div class="cvMid">' + mid.map(a => {
     const nome = esc(a.nome || 'arquivo');
-    const oficial = ehHttp(a.url) ? esc(a.url) : '';
-    const local = oficial ? '' : (a.id ? esc(previa(a.id) || '') : '');
+    /* v225 — o endereço fica CRU aqui e passa pela guarda no ponto em
+       que entra na tela. Escapar cedo obriga a desescapar depois (era o
+       que o cartão de link fazia), e é aí que o furo nasce. */
+    const oficial = ehHttp(a.url) ? String(a.url) : '';
+    const local = oficial ? '' : (a.id ? String(previa(a.id) || '') : '');
     const u = oficial || local;
     const prog = (!oficial && !a.erro && a.prog != null && a.prog < 100)
       ? `<span class="cvProg"><i style="width:${Math.max(3, +a.prog)}%"></i></span>` : '';
@@ -14164,17 +14204,17 @@ function cvMidiaHtml(m){
         <span><b>${nome}</b><small>${motivo}</small></span></div>`;
     }
     if(a.tipo === 'imagem')
-      return `<div class="cvMidBox"><button class="cvFoto" data-cvver="${u}" data-cvvertipo="imagem"
-        data-cvnome="${nome}" aria-label="Abrir ${nome}"><img src="${u}" alt="${nome}" loading="lazy"></button>
+      return `<div class="cvMidBox"><button class="cvFoto" data-cvver="${esc(u)}" data-cvvertipo="imagem"
+        data-cvnome="${nome}" aria-label="Abrir ${nome}"><img src="${urlSegura(u)}" alt="${nome}" loading="lazy"></button>
         ${prog}${baixar(oficial, nome)}${falhou}</div>`;
     if(a.tipo === 'video')
-      return `<div class="cvMidBox"><video class="cvVideo" src="${u}" controls preload="metadata" playsinline
+      return `<div class="cvMidBox"><video class="cvVideo" src="${urlSegura(u)}" controls preload="metadata" playsinline
         data-cvnome="${nome}"></video>${prog}${baixar(oficial, nome)}${falhou}</div>`;
     if(a.tipo === 'audio')
       /* a duração fica no nome ("Áudio · 0:12"): o player nativo já mostra a
          dele, e duas contagens que não batem (0:04 vs 0:05) confundem */
-      return `<div class="cvMidBox"><div class="cvAudio"><audio src="${u}" controls preload="metadata"></audio></div>${prog}${falhou}</div>`;
-    return `<div class="cvMidBox"><a class="cvArq" href="${u}" target="_blank" rel="noopener">
+      return `<div class="cvMidBox"><div class="cvAudio"><audio src="${urlSegura(u)}" controls preload="metadata"></audio></div>${prog}${falhou}</div>`;
+    return `<div class="cvMidBox"><a class="cvArq" href="${hrefSeguro(u)}" target="_blank" rel="noopener">
       ${ic('doc',15)}<span><b>${nome}</b>${a.tam ? `<small>${esc(a.tam)}</small>` : ''}</span></a>${prog}${baixar(oficial, nome)}${falhou}</div>`;
   }).join('') + '</div>';
 }
@@ -14252,7 +14292,11 @@ document.addEventListener('click', e => {
     if(!txt) return;
     const canal = S.chat.canais.find(c=>c.id===S.cvAtivo);
     const eu = S.usuario ? (S.usuario.tipo==='cliente' ? 'cliente_'+S.usuario.id : S.usuario.id) : 'victor';
-    canal.msgs.push({de:eu, txt, ts:Date.now()});
+    /* v226 — TODA MENSAGEM NASCE COM `id`. Sem ele a lista não é "lista
+       com ids", e a mescla de três lados escolhe UM LADO INTEIRO: duas
+       pessoas escrevendo no mesmo minuto, e a fala de uma some do fio,
+       nos dois aparelhos, sem aviso. Só o caminho COM anexo tinha id. */
+    canal.msgs.push({ id: novoIdMsg(), de:eu, txt, ts:Date.now() });
     campo.value='';
     som('toque'); render();
     setTimeout(()=>{ const cx=document.getElementById('cv-msgs'); if(cx) cx.scrollTop=cx.scrollHeight;
@@ -14554,7 +14598,7 @@ agEnsaio = function(){
     const tarde = t.prazo && t.prazo < hojeISO();
     const cat = catDe(t);
     const job = t.cardId && (S.pautas[t.cli]||[]).find(p=>p.id===t.cardId);
-    return `<div class="enCard" data-entar="${t.id}" style="--catCor:${cat.cor}">
+    return `<div class="enCard" data-entar="${t.id}" style="--catCor:${corSegura(cat.cor)}">
       <div class="tit">${esc(t.titulo)}</div>
       <div class="meta">
         ${c && cat.id==='marketing' ? `<span class="cli">${esc(c.ini)}</span>`:''}
@@ -14562,7 +14606,7 @@ agEnsaio = function(){
         ${r?`<span class="ptResp" title="${esc(r.nome)}">${esc(r.ini)}</span>`
            :`<span class="prazo" style="color:#E5A54D">sem dono</span>`}
         ${t.prazo?`<span class="prazo ${tarde?'tarde':''}">${rotuloData(t.prazo)}</span>`:''}
-        ${t.valor?`<span class="prazo" style="color:${cat.cor}">R$ ${esc(String(t.valor))}${t.fin==='receber'?' ↓':' ↑'}</span>`:''}
+        ${t.valor?`<span class="prazo" style="color:${corSegura(cat.cor)}">R$ ${esc(String(t.valor))}${t.fin==='receber'?' ↓':' ↑'}</span>`:''}
         <span class="kbTempo ${t.desde?'rodando':''}" data-kbtempo="${t.id}">${kbFmt(kbTempoTotal(t))}</span>
       </div>
       ${job?`<div style="margin-top:7px"><span class="jobLink">${ic('linkic',10)}
@@ -14588,7 +14632,7 @@ agEnsaio = function(){
   const chips = cats.map(c=>{
     const n = S.ensaio.tarefas.filter(t=>catIdDe(t)===c.id && podeVerTarefa(t)).length;
     return `<button class="enCat ${c.id===S.enCat?'on':''}" data-encat="${c.id}"
-      style="--catCor:${c.cor}"><i style="background:${c.cor}"></i>${c.nome}<b>${n||''}</b></button>`;
+      style="--catCor:${corSegura(c.cor)}"><i style="background:${corSegura(c.cor)}"></i>${esc(c.nome)}<b>${n||''}</b></button>`;
   }).join('');
   const feitasMes = S.ensaio.feitas.length;
   return agShell(`
@@ -14628,7 +14672,7 @@ modalTarefa = function(id){
     <p>Um job do Ensaio. A categoria decide as funções — e quem pode ver.</p>
     <div class="fld"><label>Categoria</label><div class="ptChips">
       ${CATS_ENSAIO.map(c=>`<button data-encatpick="${c.id}"
-        class="${S.enCatModal===c.id?'on':''}"><i style="background:${c.cor}"></i>${c.nome}</button>`).join('')}</div></div>
+        class="${S.enCatModal===c.id?'on':''}"><i style="background:${corSegura(c.cor)}"></i>${esc(c.nome)}</button>`).join('')}</div></div>
     <div class="fld"><label for="en-t">O que precisa ser feito</label>
       <input id="en-t" value="${t?esc(t.titulo):''}" placeholder="Ex.: cortar o episódio 12 para Reels"></div>
     <div class="fld"><label for="en-desc">Detalhes</label>
@@ -14763,8 +14807,8 @@ modalVer = (function(orig){
     if(!p || p.tarefa || S.view==='client' || !S.ensaio) return html;
     const tr = S.ensaio.tarefas.find(x=>x.cardId===id && x.cli===cliAtual().id);
     const bloco = tr
-      ? `<span class="vzEnsaio" style="border-color:${catDe(tr).cor}55">
-          <i style="background:${catDe(tr).cor}"></i>
+      ? `<span class="vzEnsaio" style="border-color:${corSegura(catDe(tr).cor)}55">
+          <i style="background:${corSegura(catDe(tr).cor)}"></i>
           No Ensaio · ${EN_COLS.find(([k])=>k===tr.col)?.[1]||tr.col}</span>`
       : `<button class="vzEnsaio" data-ptparaensaio="${id}">
           ${ic('kanban',11)} Mandar pro Ensaio</button>`;
@@ -15251,7 +15295,11 @@ function decidirCard(id, decisao, nota){
     /* volta para onde o trabalho acontece: texto reprovado volta a ser
        escrito, postagem reprovada volta para a produção. */
     porFase(p, eraTexto ? 'criado' : 'producao');
+    /* v226 — com `id`, a mescla UNE os pedidos dos dois lados. Sem ele,
+       o pedido do revisor apagava o do cliente (a lista escolhia um lado
+       inteiro), e é o Princípio 6 — nada se perde — no lugar mais caro. */
     p.alteracoes = [...(p.alteracoes||[]), {
+      id: novoIdAlteracao(),
       por: nomeDeQuemAprova(), quando: new Date().toLocaleDateString('pt-BR'),
       oque: (nota||'').trim(), fase: eraTexto ? 'texto' : 'postagem'
     }];
@@ -15781,7 +15829,7 @@ function vLightbox(){
     ${lado
       ? `<div class="lbFita ${S.lb.tudo?'cabe':''}" id="lbFita">
            <div class="lbEmenda ${S.lb.tudo?'tudo':''}" style="--n:${slides.length}">${slides.map((s,j)=>`<figure>
-             <img src="${s.url}" alt="${esc(s.nome)}"><figcaption>${j+1}</figcaption>
+             <img src="${urlSegura(s.url)}" alt="${esc(s.nome)}"><figcaption>${j+1}</figcaption>
            </figure>`).join('')}</div>
          </div>
          <p class="lbDica">As telas estão coladas, na ordem de envio — é assim que o desenho
@@ -15795,7 +15843,7 @@ function vLightbox(){
          </div>
          ${ms.length>1?`<div class="lbTiras">${ms.map((x,j)=>`
            <button class="${j===i?'on':''}" data-lbir="${j}" aria-label="${esc(x.nome)}">
-             ${x.tipo==='imagem'?`<img src="${x.url}" alt="">`
+             ${x.tipo==='imagem'?`<img src="${urlSegura(x.url)}" alt="">`
                :`<span>${ic(ICONE_TIPO[x.tipo]||'doc',14)}</span>`}
              <i>${j+1}</i></button>`).join('')}</div>`:''}`}
   </div>`;
@@ -16003,7 +16051,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v224 · 19 set · uma tarefa por card, sempre';
+const VERSAO_PROTOTIPO = 'v226 · 19 set · nada que se junta perde o nome';
 
 menuSheet = (function(orig){
   return function(){
@@ -16304,7 +16352,7 @@ function hjAgenda(grupos){
   const cab = visiveis.map(g=>{
     const n = g.itens.length, feitos = g.itens.filter(p=>p.feito).length;
     return `<div class="agCabCol">
-      <div class="agAv" style="background:${g.cli.cor || '#4C535D'};color:#fff">${esc(g.cli.ini)}</div>
+      <div class="agAv" style="background:${corSegura(g.cli.cor || '#4C535D')};color:#fff">${esc(g.cli.ini)}</div>
       <b>${esc(g.cli.nome)}</b>
       <span>${n} ${n===1?'peça':'peças'}${feitos?` · ${feitos} feito${feitos>1?'s':''}`:''}</span>
     </div>`;
@@ -16343,7 +16391,7 @@ function hjControles(grupos){
     const n = k==='todos' ? grupos.flatMap(g=>g.itens).length
                           : grupos.find(g=>g.cli.id===k).itens.length;
     return `<button class="${S.hjCli===k?'on':''}" data-hjcli="${k}">${
-      c ? `<i style="background:${c.cor || '#6B7280'}"></i>${esc(c.nome)}` : 'Todos'
+      c ? `<i style="background:${corSegura(c.cor || '#6B7280')}"></i>${esc(c.nome)}` : 'Todos'
     }<b style="font-family:var(--mono);font-size:9.5px;margin-left:5px">${n}</b></button>`;
   }).join('');
 
@@ -16810,7 +16858,7 @@ agEnsaio = function(){
     const pedido = job && job.ajustePendente
       ? (job.alteracoes||[])[job.alteracoes.length-1] : null;
     const i = job ? faseIdx(job) : 0;
-    return `<div class="enCard ${pedido?'pedido':''}" data-entar="${t.id}" style="--catCor:${cat.cor}">
+    return `<div class="enCard ${pedido?'pedido':''}" data-entar="${t.id}" style="--catCor:${corSegura(cat.cor)}">
       <div class="tit">${esc(t.titulo)}</div>
       <div class="meta">
         ${c && producao ? `<span class="cli">${esc(c.ini)}</span>`:''}
@@ -16819,7 +16867,7 @@ agEnsaio = function(){
         ${r?`<span class="ptResp" title="${esc(r.nome)}">${esc(r.ini)}</span>`
            :`<span class="prazo" style="color:#E5A54D">sem dono</span>`}
         ${t.prazo?`<span class="prazo ${tarde?'tarde':''}">${rotuloData(t.prazo)}</span>`:''}
-        ${t.valor?`<span class="prazo" style="color:${cat.cor}">R$ ${esc(String(t.valor))}${t.fin==='receber'?' ↓':' ↑'}</span>`:''}
+        ${t.valor?`<span class="prazo" style="color:${corSegura(cat.cor)}">R$ ${esc(String(t.valor))}${t.fin==='receber'?' ↓':' ↑'}</span>`:''}
         <span class="kbTempo ${t.desde?'rodando':''}" data-kbtempo="${t.id}">${kbFmt(kbTempoTotal(t))}</span>
       </div>
       ${pedido && pedido.oque ? `<div class="enPedido">${ic('warn',12)}
@@ -16862,7 +16910,7 @@ agEnsaio = function(){
       frentes<b>${nTudo||''}</b></button>` + cats.map(c=>{
     const n = S.ensaio.tarefas.filter(t=>catIdDe(t)===c.id && podeVerTarefa(t)).length;
     return `<button class="enCat ${c.id===S.enCat?'on':''}" data-encat="${c.id}"
-      style="--catCor:${c.cor}"><i style="background:${c.cor}"></i>${c.nome}<b>${n||''}</b></button>`;
+      style="--catCor:${corSegura(c.cor)}"><i style="background:${corSegura(c.cor)}"></i>${esc(c.nome)}<b>${n||''}</b></button>`;
   }).join('');
   /* --- filtro por responsável ---------------------------------------
      Uma fila de pessoas, com quantos cards cada uma tem NESTA frente. O
@@ -17226,14 +17274,14 @@ vLightbox = (function(orig){
     if(!m || !m.link) return html;
     const emb = embedDeVideo(m.url);
     const dentro = emb
-      ? `<iframe class="lbEmbed" src="${esc(emb)}" allow="autoplay; fullscreen;
+      ? `<iframe class="lbEmbed" src="${urlSegura(emb)}" allow="autoplay; fullscreen;
            picture-in-picture" allowfullscreen title="${esc(m.nome)}"></iframe>`
-      : `<video src="${esc(m.url)}" controls playsinline preload="metadata"></video>`;
+      : `<video src="${urlSegura(m.url)}" controls playsinline preload="metadata"></video>`;
     html = html.replace(/<video[^>]*><\/video>/, dentro);
     /* baixar um link de outro domínio não funciona — o navegador barra.
        No lugar, o que serve: abrir onde o arquivo mora de verdade. */
     html = html.replace(/<button class="lbBtn" data-lbbaixa="1"[\s\S]*?<\/button>/,
-      `<a class="lbBtn" href="${esc(m.url)}" target="_blank" rel="noopener noreferrer"
+      `<a class="lbBtn" href="${hrefSeguro(m.url)}" target="_blank" rel="noopener noreferrer"
          aria-label="Abrir no ${esc(dominioDe(m.url))}"
          title="Abrir no ${esc(dominioDe(m.url))}">${ic('linkic',16)}</a>`);
     return html;
@@ -19356,7 +19404,7 @@ S.cliLogo = undefined;
 function previaLogo(c){
   const atual = (S.cliLogo !== undefined) ? S.cliLogo : (c.logo || null);
   return atual
-    ? `<img src="${atual}" alt="">`
+    ? `<img src="${urlSegura(atual)}" alt="">`
     : esc(c.ini || '?');
 }
 
@@ -19416,7 +19464,7 @@ addEventListener('change', async e => {
        escrito no briefing e nos links (a classe de defeito da v77) */
     S.cliLogo = await encolherImagem(arquivo);
     const previa = document.getElementById('cl-previa');
-    if(previa) previa.innerHTML = `<img src="${S.cliLogo}" alt="">`;
+    if(previa) previa.innerHTML = `<img src="${urlSegura(S.cliLogo)}" alt="">`;
     const tirar = document.querySelector('[data-logotirar]');
     if(tirar) tirar.hidden = false;
     const escolher = document.querySelector('[data-logoescolher]');
@@ -19510,7 +19558,7 @@ modalMembro = (function(orig){
     const campo = `<div class="fld"><label>Foto do perfil</label>
       <div class="mbFoto">
         <div class="previa" id="mb-previa">${m.foto
-          ? `<img src="${m.foto}" alt="">` : esc(membroIni(m))}</div>
+          ? `<img src="${urlSegura(m.foto)}" alt="">` : esc(membroIni(m))}</div>
         <div class="lado">
           <div class="acoes">
             <button type="button" data-fotoescolher="1">${tem ? 'Trocar foto' : 'Escolher foto'}</button>
@@ -19551,7 +19599,7 @@ addEventListener('change', async e => {
   try{
     _fotoRascunho = await encolherImagem(arquivo, 'cover');
     const previa = document.getElementById('mb-previa');
-    if(previa) previa.innerHTML = `<img src="${_fotoRascunho}" alt="">`;
+    if(previa) previa.innerHTML = `<img src="${urlSegura(_fotoRascunho)}" alt="">`;
     const tirar = document.querySelector('[data-fototirar]');
     if(tirar) tirar.hidden = false;
     const escolher = document.querySelector('[data-fotoescolher]');
@@ -20185,7 +20233,7 @@ telaConversas = (function(orig){
     const el = document.createElement('div');
     el.id = 'entrarMaestro';
     el.innerHTML = `<div class="caixa" role="dialog" aria-modal="true" aria-label="Entrar na Maestro">
-      <div class="marca">${typeof LOGO === 'function' ? LOGO('', 30) : ''}</div>
+      <div class="marca">${typeof LOGO === 'function' ? LOGO('var(--brass-500)', 30) : ''}</div>
       <h3>Entrar na Maestro</h3>
       <p class="sub">Seu e-mail e sua senha da equipe. É por eles que o
         banco sabe que a pauta é sua.</p>
@@ -22011,7 +22059,7 @@ function rostoCli(c){
   return (c && c.logo)
     ? `<span class="cliFoto comLogo"><img src="${urlSegura(c.logo)}" alt="" aria-hidden="true"></span>`
     : `<span class="cliFoto"${c && c.cor
-        ? ` style="background:linear-gradient(150deg,${c.cor},#111);color:#fff"` : ''
+        ? ` style="background:linear-gradient(150deg,${corSegura(c.cor)},#111);color:#fff"` : ''
       }>${esc((c && c.ini) || '?')}</span>`;
 }
 
@@ -24082,7 +24130,7 @@ function clArteHtml(p){
   const midia = (m, i) => `<span class="mtMini ${m.url ? 'temArte' : ''} ${m.tipo === 'video' ? 'ehVideo' : ''}"
       data-mtmini="${i}">
       ${vis.length > 1 ? `<span class="ord">${i + 1}</span>` : ''}
-      ${m.url && m.tipo === 'imagem' ? `<img src="${m.url}" alt="${esc(m.nome || 'imagem da publicação')}">`
+      ${m.url && m.tipo === 'imagem' ? `<img src="${urlSegura(m.url)}" alt="${esc(m.nome || 'imagem da publicação')}">`
         : (m.url || m.poster) && m.tipo === 'video'
           ? `<video ${m.url ? `src="${urlSegura(m.url)}"` : ''} ${m.poster ? `poster="${urlSegura(m.poster)}"` : ''}
                muted playsinline preload="metadata"></video>`
@@ -24094,8 +24142,8 @@ function clArteHtml(p){
     <div class="clArte ${uma ? 'uma' : ''}" data-mttira="${mChave(p)}">
       ${vis.map(midia).join('')}</div>` : ''}
     ${arqs.length ? `<div class="clArqs">${arqs.map(m => m.tipo === 'link'
-      ? `<a href="${esc(m.url)}" target="_blank" rel="noopener noreferrer">${ic('linkic', 12)} ${esc(m.nome)}</a>`
-      : `<a href="${esc(m.url)}" download="${esc(m.nome)}">${ic('baixar', 12)} ${esc(m.nome)}</a>`).join('')}</div>` : ''}`;
+      ? `<a href="${hrefSeguro(m.url)}" target="_blank" rel="noopener noreferrer">${ic('linkic', 12)} ${esc(m.nome)}</a>`
+      : `<a href="${hrefSeguro(m.url)}" download="${esc(m.nome)}">${ic('baixar', 12)} ${esc(m.nome)}</a>`).join('')}</div>` : ''}`;
 }
 
 clCard = (function(orig){
@@ -24291,7 +24339,7 @@ function clAnexosHtml(p){
   };
   const linkLinha = m => `<div class="clAnexo"><span class="ic">${ic('linkic', 15)}</span>
     <span class="txt"><b>${esc(m.nome || m.url)}</b><span>link</span></span>
-    <a class="bt" href="${esc(m.url)}" target="_blank" rel="noopener noreferrer">Abrir</a></div>`;
+    <a class="bt" href="${hrefSeguro(m.url)}" target="_blank" rel="noopener noreferrer">Abrir</a></div>`;
   return `<div class="clAnexos">${anexos.map(linha).join('')}${links.map(linkLinha).join('')}</div>`;
 }
 
@@ -24430,8 +24478,8 @@ function enAnexListaHtml(lista){
   if(!lista.length) return '<p class="enAnexVazio">Nenhum documento ainda.</p>';
   return `<div class="enAnexLista">${lista.map((m, i) => {
     const url = enUrlDe(m);
-    const capa = url && m.tipo === 'imagem' ? `<img src="${url}" alt="">`
-      : url && m.tipo === 'video' ? `<video src="${url}" muted playsinline preload="metadata"></video>`
+    const capa = url && m.tipo === 'imagem' ? `<img src="${urlSegura(url)}" alt="">`
+      : url && m.tipo === 'video' ? `<video src="${urlSegura(url)}" muted playsinline preload="metadata"></video>`
       : ic(ICONE_TIPO[m.tipo] || 'doc', 15);
     return `<div class="enAnexIt">
       <span class="mini">${capa}</span>
@@ -25846,7 +25894,7 @@ function cicJogoHtml(){
       <button type="button" class="cicCmd" data-cicreset="1">Recomeçar</button>
     </div>
     ${cicTrilhoHtml()}
-    <div class="cicCartao" style="--cor:${e.cor}">
+    <div class="cicCartao" style="--cor:${corSegura(e.cor)}">
       <div class="top"><span class="selo">${e.selo}</span><span class="volta">${volta}</span></div>
       <h2>Reels do ateliê</h2>
       <div class="sub">Linho &amp; Co · Instagram · quinta, 18h30${
@@ -26616,7 +26664,7 @@ function mdRodaSvg(){
      fatia. Classe explícita é o que impede esse tipo de acidente. */
   const fases = MD_ORDEM_FASES.map(f => {
     const [a0, a1] = MD_QUAD[f], emCima = a0 >= 180;
-    return `<g class="fase" data-mdfase="${f}" style="--cor:${MD_FASES[f].cor}">
+    return `<g class="fase" data-mdfase="${f}" style="--cor:${corSegura(MD_FASES[f].cor)}">
       <path class="fatia" d="${mdFatia(150, 190, a0, a1)}"/>
       <path id="mdTxt_${f}" class="guia" d="${mdArcoTexto(168, a0 + 5, a1 - 5, emCima)}" fill="none"/>
       <text dominant-baseline="middle"><textPath href="#mdTxt_${f}" startOffset="50%" text-anchor="middle">${MD_FASES[f].n.toUpperCase()}</textPath></text>
@@ -26691,7 +26739,7 @@ function mdLeituraHtml(){
   else if(S.md.fase === 'remarketing')
     aviso = 'Trilha de 30 dias — ' + MD_RMK_TRILHA.map(([d, o]) => `${d}: ${o.split(/[:,]/)[0]}`).join(' · ') + '.';
   else if(S.md.fase === 'descoberta') aviso = f.quando;
-  return `<span class="tag" style="--c:${f.cor}">${f.n}</span><span class="tag">${t.n}</span><span class="tag mdOmt">${mdOmt(S.md.fase, S.md.temp, S.md.gancho)}</span>
+  return `<span class="tag" style="--c:${corSegura(f.cor)}">${esc(f.n)}</span><span class="tag">${t.n}</span><span class="tag mdOmt">${mdOmt(S.md.fase, S.md.temp, S.md.gancho)}</span>
     <span class="regra">${esc(t.tom.replace(/^\w/, c => c.toUpperCase()))}. ${esc(f.regra)}</span>
     ${aviso ? `<span class="aviso">${esc(aviso)}</span>` : ''}`;
 }
@@ -27008,7 +27056,7 @@ function mdIdeiaHtml(i, noBanco){
      informação": o cartão fechado mostra o que decide se a ideia serve —
      o gancho, o título, a primeira frase e três batidas. Legenda, CTA,
      hashtags e a justificativa ficam a um toque. */
-  return `<article class="mdIdeia${aberto ? ' aberta' : ''}${i.origem === 'ia' ? ' ia' : ''}" data-mdideia="${i.id}" style="--cor:${f.cor}">
+  return `<article class="mdIdeia${aberto ? ' aberta' : ''}${i.origem === 'ia' ? ' ia' : ''}" data-mdideia="${i.id}" style="--cor:${corSegura(f.cor)}">
     <header>
       <span class="n">${g.n}</span>
       <span class="quem"><b>${esc(g.nome)}</b><span>${f.n} · ${esc(i.formato || '')}${i.dia !== undefined ? ' · ' + MD_DIAS[i.dia] : ''}${i.origem === 'ia' ? ' · IA' : ''}</span></span>
@@ -27879,7 +27927,7 @@ function cbRefsHtml(cliId){
   const arq = (cbDe(cliId).refs.arquivos || []);
   return `<div class="cbCampo"><label>Imagens de referência<em>o único setor onde texto não resolve</em></label>
     ${arq.length ? `<div class="cbRefs">${arq.map((a, i) => `<div class="cbRef">
-      ${a.url ? `<img src="${a.url}" alt="${esc(a.nome)}">` : ''}
+      ${a.url ? `<img src="${urlSegura(a.url)}" alt="${esc(a.nome)}">` : ''}
       <span class="nome">${esc(a.nome)}</span>
       <button data-cbrefdel="${i}" aria-label="Remover ${esc(a.nome)}">${ic('x', 10)}</button></div>`).join('')}</div>` : ''}
     <label class="cbSubir" style="margin-top:${arq.length ? '9px' : '0'}">
@@ -28473,7 +28521,7 @@ function mdcResumoHtml(){
   const cont = {};
   plano.forEach(p => { cont[p.fase] = (cont[p.fase] || 0) + 1; });
   const partes = MD_ORDEM_FASES.filter(f => cont[f]).map(f => `${cont[f]} ${MD_FASES[f].n}`);
-  const barra = MD_ORDEM_FASES.filter(f => cont[f]).map(f => `<i style="width:${cont[f] / n * 100}%;background:${MD_FASES[f].cor}"></i>`).join('');
+  const barra = MD_ORDEM_FASES.filter(f => cont[f]).map(f => `<i style="width:${cont[f] / n * 100}%;background:${corSegura(MD_FASES[f].cor)}"></i>`).join('');
   const est = mdEstagio();
   let aviso = '';
   if(est === 'validando' && ['descoberta', 'relacionamento'].includes(cfg.obj))
@@ -28501,7 +28549,7 @@ function mdcModal(){
     <h3 id="mdc-tit">Montar campanha</h3>
     <p style="margin:0 0 12px;font-size:13px;color:var(--ink-400)">Para a <b style="color:var(--ink-100)">${esc(mdCli().nome)}</b>. Cada peça entra na pauta como rascunho, com o ponto da mandala e o código.</p>
     <label class="rot" style="display:block;font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-500);margin:0 0 6px">objetivo</label>
-    <div class="mdPlats mdcObj">${MDC_OBJS.map(([k, n]) => `<button type="button" data-mdcobj="${k}" class="${cfg.obj === k ? 'on' : ''}"><i style="background:${k === 'funil' ? 'var(--brass-400)' : MD_FASES[k].cor}"></i>${n}</button>`).join('')}</div>
+    <div class="mdPlats mdcObj">${MDC_OBJS.map(([k, n]) => `<button type="button" data-mdcobj="${k}" class="${cfg.obj === k ? 'on' : ''}"><i style="background:${corSegura(k === 'funil' ? 'var(--brass-400)' : MD_FASES[k].cor)}"></i>${n}</button>`).join('')}</div>
     <div class="mdcSobre">${mdcSobreHtml()}</div>
     <div class="fld"><label for="mdc-nome">Nome</label>
       <input id="mdc-nome" value="${esc(cfg.nome)}" placeholder="${esc(mdcNomePadrao())}"></div>
@@ -28842,7 +28890,11 @@ function estQuadro(){
   return q || null;
 }
 const estId = p => (p || 'n') + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
-const estHoje = () => new Date().toISOString().slice(0, 10);
+/* v226 — `toISOString` é UTC: depois das 21h em Brasília o "hoje" virava
+   amanhã, e a sequência do Estúdio contava dias que não existiram.
+   `hojeISO()` é local e já existe desde o começo. */
+const estHoje = () => (typeof hojeISO === 'function' ? hojeISO()
+                       : new Date().toISOString().slice(0, 10));
 const estNivel = f => { let n = EST_NIVEIS[0]; EST_NIVEIS.forEach(x => { if(f >= x[0]) n = x; }); return n; };
 const estProximo = f => EST_NIVEIS.find(x => x[0] > f) || null;
 
@@ -30055,7 +30107,7 @@ function verFolhaHtml(c, p){
       ${p.sticker ? vfBloco('Interação', par(p.sticker)) : ''}
       ${ms.length ? vfBloco(`Arte (${ms.length})`, `<div class="vfArtes">${ms.slice(0, 8).map(m => `<div class="vfArte">${
         m.url && m.tipo === 'imagem' ? `<img src="${urlSegura(m.url)}" alt="${esc(m.nome || 'arte')}">`
-        : m.url && m.tipo === 'video' ? `<video src="${m.url}" ${m.poster ? `poster="${m.poster}"` : ''} controls playsinline preload="metadata"></video>`
+        : m.url && m.tipo === 'video' ? `<video src="${urlSegura(m.url)}" ${m.poster ? `poster="${urlSegura(m.poster)}"` : ''} controls playsinline preload="metadata"></video>`
         : `<span class="semArte"><b>${esc(m.nome || 'arquivo')}</b>a arte está no aparelho de quem montou o card</span>`
       }</div>`).join('')}</div>`) : ''}
     </div>
@@ -30555,7 +30607,7 @@ function enModalLixeira(){
   const linhaCasa = x => {
     const cat = typeof catDe === 'function' ? catDe(x.t) : null;
     return `<div class="enLxItem">
-      <span class="ic" style="${cat ? `color:${cat.cor}` : ''}">${ic('kanban', 13)}</span>
+      <span class="ic" style="${cat ? `color:${corSegura(cat.cor)}` : ''}">${ic('kanban', 13)}</span>
       <span class="nome"><b>${esc(x.t.titulo || 'sem título')}</b>
         <small>${cat ? esc(cat.nome) + ' · ' : ''}${x.t.cli ? esc(nomeCli(x.t.cli)) + ' · ' : ''}
           <i>excluída ${esc(enLxHa(x.quando))}</i></small></span>
@@ -31058,7 +31110,7 @@ function ppLidoHtml(p, titulo){
   return `<div class="ppLido">
     ${titulo ? `<div class="ppCab"><b>${esc(titulo)}</b></div>` : ''}
     ${lista.map(x => `<div class="cx">
-      <div class="cb"><i style="background:${x.cor}"></i><b>${esc(x.nome)}</b>
+      <div class="cb"><i style="background:${corSegura(x.cor)}"></i><b>${esc(x.nome)}</b>
         ${x.hora ? `<span class="h">${ic('clock', 10)} ${esc(x.hora)}</span>` : ''}</div>
       ${x.texto ? `<p>${esc(x.texto)}</p>`
                 : `<p style="color:var(--ink-400)">mesmo texto, só o horário muda</p>`}
@@ -32454,7 +32506,12 @@ addEventListener('click', e => {
     'pcPedindo','_confirmaPostagem','cvAtivo','mtId','rfId','ptMes','hjVista','hjCli','ptVista','ptVistaAuto','ptFiltro',
     'ptRedes','ptTipos','envGrupo','enOrdem','enCli','enCli2','enCat','enResp','enSoMinhas','rtPer','cqNova','ncTipo',
     'cliTipo','pcSel','menu','ptFmt','ptFmts','ptPlats','ptPilar','ptPilarEscolhido','ptDataEscolhida','ptCamp','ptResp',
-    'ptPorPlat','ptPorPlatSalvar','ptPorPlatHora','ptHerdado','ptImport','ptSemear','ptStoryCampos']);
+    'ptPorPlat','ptPorPlatSalvar','ptPorPlatHora','ptHerdado','ptImport','ptSemear','ptStoryCampos',
+    /* v226 — a v221 criou `ptSemana` e esqueceu esta lista: a aba de
+       semana viajava entre aparelhos, e trocar de aba no computador
+       fazia o celular pular de semana. Estado de tela fica onde está a
+       tela. */
+    'ptSemana']);
 
   const json  = v => { try{ return JSON.stringify(v === undefined ? null : v); }catch(e){ return null; } };
   /* igual em conteúdo, mesmo com as chaves em outra ordem (o jsonb do
@@ -35368,7 +35425,9 @@ addEventListener('click', e => {
     }
 
     const n = esperando.length;
-    const dia = new Date().toISOString().slice(0, 10);
+    /* v226 — local, não UTC: a chave do aviso mudava de dia às 21h */
+    const dia = (typeof hojeISO === 'function' ? hojeISO()
+                 : new Date().toISOString().slice(0, 10));
     return enfileirar({
       tipo: 'lote',
       chave: 'lote:' + c.id + ':' + dia,
@@ -37549,7 +37608,7 @@ sbGravar = (function(orig){
     const el = document.createElement('div');
     el.id = 'criarAgencia';
     el.innerHTML = `<div class="caixa" role="dialog" aria-modal="true" aria-label="Criar uma agência">
-      <div class="marca">${typeof LOGO === 'function' ? LOGO('', 30) : ''}</div>
+      <div class="marca">${typeof LOGO === 'function' ? LOGO('var(--brass-500)', 30) : ''}</div>
       <h3>Sua agência ainda não existe aqui</h3>
       <p class="sub">Este e-mail entrou, mas não pertence a nenhuma agência.
         Crie a sua: ela nasce vazia, com os seus clientes, e ninguém mais a enxerga.</p>
@@ -38835,7 +38894,10 @@ sbGravar = (function(orig){
 (function(){
   if(!/[?&]diag\b/.test(location.search)) return;
 
-  const linha = (r, v) => `<b>${r}</b>: ${v}\n`;
+  /* v225 — o valor vem do banco (nome de cliente, de membro, resposta
+     crua de RPC) e vai para `innerHTML`. O rótulo é do código; o valor,
+     nunca. */
+  const linha = (r, v) => `<b>${r}</b>: ${typeof esc === 'function' ? esc(v) : String(v)}\n`;
   const seguro = f => { try{ return f(); }catch(e){ return 'ERRO: ' + e.message; } };
 
   async function montar(){
@@ -40018,7 +40080,7 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
     if(!anexos.length) return '';
     return '<div class="cvAnexos">' + anexos.map(a => `
       <span class="cvAnexo">
-        ${a.tipo === 'imagem' && a.url ? `<img src="${esc(a.url)}" alt="">` : ic(a.tipo === 'audio' ? 'mic' : 'doc', 14)}
+        ${a.tipo === 'imagem' && a.url ? `<img src="${urlSegura(a.url)}" alt="">` : ic(a.tipo === 'audio' ? 'mic' : 'doc', 14)}
         <b>${esc(a.nome)}</b>
         ${a.prog != null && a.prog < 100 ? `<span class="pr">${a.prog}%</span>` : ''}
         <button class="x" data-cvtira="${a.id}" aria-label="Tirar ${esc(a.nome)}">×</button>
@@ -40094,14 +40156,14 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
         const cartao = achados.slice(0, 1).map(u => {
           let host = u;
           try{ host = new URL(u).hostname.replace(/^www\./, ''); }catch(e){}
-          return `<a class="cvLink" href="${u.replace(/&amp;/g, '&')}" target="_blank" rel="noopener nofollow">
+          return `<a class="cvLink" href="${hrefSeguro(u.replace(/&amp;/g, '&'))}" target="_blank" rel="noopener nofollow">
             <b>${esc(host)}</b><span>${esc(u.slice(0, 90))}</span></a>`;
         }).join('');
         /* o texto já veio por `esc()`, então um `&` virou `&amp;` — no
            TEXTO isso é certo, no HREF levaria a pessoa a outro endereço. */
         const href = u => u.replace(/&amp;/g, '&');
         const comLink = dentro.replace(URLRE,
-          u => `<a href="${href(u)}" target="_blank" rel="noopener nofollow">${u.length > 44 ? u.slice(0,44) + '…' : u}</a>`);
+          u => `<a href="${hrefSeguro(href(u))}" target="_blank" rel="noopener nofollow">${u.length > 44 ? u.slice(0,44) + '…' : u}</a>`);
         return cartao + '<span class="balao">' + comLink + '</span>';
       });
     };
@@ -40279,10 +40341,17 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
 
   function subirAnexo(canalId, msgId, a){
     const marcar = f => { const x = acharMidia(canalId, msgId, a.id); if(x) f(x); };
-    if(typeof subirNuvem !== 'function' || !window._sbLigado && typeof _sbLigado === 'undefined'){
+    /* v226 — era `A || (B && C)` por precedência, e B e C se anulavam:
+       código morto. Sem banco o anexo tentava subir e a pessoa lia
+       "upload recusado (401)" em vez de "sem banco". */
+    if(typeof subirNuvem !== 'function' || !_sbLigado){
       marcar(x => { x.subindo = false; x.erro = true; x.motivo = 'sem banco'; }); desenhar(); return;
     }
-    const caminho = `conversas/${canalId}/${Date.now()}_${
+    /* v225 — o id do canal vem do banco, e o banco guarda o que outra
+       pessoa escreveu: um `../` aqui escreveria fora de `conversas/`.
+       O NOME já passava por `nomeSeguro`; a PASTA não passava. */
+    const pasta = (typeof nomeSeguro === 'function' ? nomeSeguro(canalId) : 'canal');
+    const caminho = `conversas/${pasta}/${Date.now()}_${
       (typeof nomeSeguro === 'function' ? nomeSeguro(a.nome) : 'arquivo')}`;
     let ultimo = 0;
     subirNuvem(caminho, a.file, p => {
@@ -40336,11 +40405,11 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
     el.className = 'cvLupa';
     const nome = (arguments[2] || 'arquivo');
     el.innerHTML = `<button class="fechar" aria-label="Fechar">${ic('x',18)}</button>
-      ${/^https?:\/\//.test(url) ? `<a class="baixar" href="${esc(url)}" download="${esc(nome)}" target="_blank"
+      ${/^https?:\/\//.test(url) ? `<a class="baixar" href="${hrefSeguro(url)}" download="${esc(nome)}" target="_blank"
         rel="noopener" aria-label="Baixar">${ic('down',18)}</a>` : ''}
       ${tipo === 'video'
-        ? `<video src="${esc(url)}" controls autoplay playsinline></video>`
-        : `<img src="${esc(url)}" alt="">`}`;
+        ? `<video src="${urlSegura(url)}" controls autoplay playsinline></video>`
+        : `<img src="${urlSegura(url)}" alt="">`}`;
     const sai = () => { el.remove(); document.removeEventListener('keydown', tecla); };
     const tecla = ev => { if(ev.key === 'Escape') sai(); };
     el.addEventListener('click', ev => {
@@ -41295,3 +41364,278 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
   })(agEnsaio);
 })();
 </script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v225 — SAIR SAI, E O PAINEL DE DIAGNÓSTICO NÃO É PARA O CLIENTE.
+
+   Duas coisas que a revisão de segurança de 19/set achou e que se
+   consertam aqui, por cima, porque as funções vivem dentro de closures.
+
+   1. "Sair da conta" tirava a SESSÃO e deixava os DADOS. As cinco chaves
+      do `localStorage` — pautas, clientes, equipe, perfil, bases da
+      mescla — continuavam no aparelho, e o diálogo de entrar oferece
+      "Continuar sem entrar", que desenha tudo aquilo de novo. Num
+      celular emprestado, ou num computador da agência, sair não saía.
+      A trava da v220 não cobre isto: ela só limpa quando o banco AFIRMA
+      outra agência, e sem sessão não há o que afirmar.
+      Agora sair leva o pacote inteiro junto, espera o servidor derrubar
+      o refresh token, e recarrega — a memória da aba também é estado.
+
+   2. O painel `?diag` é uma ferramenta de obra: mostra e-mail da sessão,
+      org, o `S.usuario` inteiro e as respostas cruas do banco, e monta
+      isso com `innerHTML` sem escapar. Fica para quem está trabalhando
+      no protótipo (localhost, ou a chave que o founder liga uma vez),
+      não para quem abre o produto.
+   ===================================================================== */
+(function(){
+  /* ---------- 1. sair leva o que é da agência ----------------------- */
+  const CHAVE_DIAG = 'maestro-diag-v1';
+  function limparAparelho(){
+    let n = 0;
+    try{
+      const A = window.MaestroAgenciaDoAparelho;
+      const pacote = (A && Array.isArray(A.PACOTE)) ? A.PACOTE.slice() : [];
+      if(A && A.CARIMBO) pacote.push(A.CARIMBO);
+      for(const k of pacote){ try{ localStorage.removeItem(k); n++; }catch(e){} }
+    }catch(e){}
+    return n;
+  }
+  window.MaestroSairLimpa = { limparAparelho };
+
+  if(window.MaestroPorta && typeof MaestroPorta.sair === 'function'){
+    MaestroPorta.sair = (function(orig){
+      return function(){
+        const r = orig.apply(this, arguments);
+        limparAparelho();
+        /* o estado em memória é tão do dono quanto o guardado: recarregar
+           é o único jeito honesto de esvaziar as duas coisas de uma vez.
+           Fica depois do desenho do `orig`, para o aviso ser visto. */
+        try{ setTimeout(() => { try{ location.reload(); }catch(e){} }, 260); }catch(e){}
+        return r;
+      };
+    })(MaestroPorta.sair);
+  }
+  /* o aviso deixa de prometer o contrário */
+  if(typeof toast === 'function') toast = (function(orig){
+    return function(txt){
+      if(typeof txt === 'string' && txt.indexOf('O que está neste aparelho continua aqui') >= 0)
+        arguments[0] = txt = 'Você saiu. Este aparelho não guarda mais nada da agência.';
+      return orig.apply(this, arguments);
+    };
+  })(toast);
+
+  /* ---------- 2. o diagnóstico é de obra ---------------------------- */
+  const deObra = (() => {
+    try{
+      const h = location.hostname;
+      if(h === 'localhost' || h === '127.0.0.1' || h === '' || /^192\.168\./.test(h)) return true;
+      return localStorage.getItem(CHAVE_DIAG) === 'sim';
+    }catch(e){ return false; }
+  })();
+  if(!deObra){
+    const some = () => { try{ document.querySelectorAll('#diagMaestro').forEach(el => el.remove()); }catch(e){} };
+    some(); setTimeout(some, 2600); setTimeout(some, 6000);
+  }
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v226 — O QUE A MESCLA PRECISA UNIR TEM DE TER NOME.
+
+   A revisão de 19/set mediu, num navegador de verdade, chamando a
+   própria `Sincro.mescla3` da página:
+
+       sem id, prefere local  → ["oi", "MINHA do celular"]
+       sem id, prefere remoto → ["oi", "DELA do desktop"]
+       com id                 → ["oi", "DELA do desktop", "MINHA do celular"]
+
+   Lista sem `id` não é unida item a item: a mescla ESCOLHE UM LADO
+   INTEIRO. Três listas do produto estavam assim, e são as três que mais
+   doem: as MENSAGENS das Conversas (duas pessoas falando no mesmo
+   minuto, e uma fala some), os PEDIDOS DE ALTERAÇÃO (o pedido do
+   revisor apagava o do cliente) e o HISTÓRICO da tarefa.
+
+   A origem já foi consertada — toda mensagem e todo pedido nascem com
+   `id`. Falta o que JÁ ESTÁ no banco sem ele: enquanto sobrar UMA
+   mensagem antiga sem id naquele canal, `local.every(comId)` é falso e
+   a mescla continua escolhendo um lado. Então este bloco carimba o que
+   é velho, de um jeito ESTÁVEL — derivado do conteúdo, não do relógio —
+   para que os dois aparelhos cheguem ao MESMO id para a MESMA mensagem.
+   Id diferente para a mesma linha duplicaria em vez de unir.
+   ===================================================================== */
+(function(){
+  /* o mesmo id nos dois aparelhos: sai do que a linha já é */
+  function idEstavel(pre, obj, i){
+    try{
+      const base = pre + ':' + i + ':' + JSON.stringify(obj);
+      let a = 0x811c9dc5;
+      for(let k = 0; k < base.length; k++) a = Math.imul(a ^ base.charCodeAt(k), 0x01000193) >>> 0;
+      return pre + a.toString(36);
+    }catch(e){ return pre + i; }
+  }
+
+  function carimbarMensagens(){
+    let n = 0;
+    try{
+      for(const c of ((S.chat && S.chat.canais) || [])){
+        if(!c || !Array.isArray(c.msgs)) continue;
+        c.msgs.forEach((m, i) => {
+          if(!m || m.id !== undefined) return;
+          m.id = idEstavel('m', { de:m.de, txt:m.txt, ts:m.ts }, i); n++;
+        });
+      }
+    }catch(e){}
+    return n;
+  }
+  function carimbarAlteracoes(){
+    let n = 0;
+    try{
+      for(const cli in (S.pautas || {}))
+        for(const p of (S.pautas[cli] || [])){
+          if(!p || !Array.isArray(p.alteracoes)) continue;
+          p.alteracoes.forEach((a, i) => {
+            if(!a || a.id !== undefined) return;
+            a.id = idEstavel('a', a, i); n++;
+          });
+        }
+    }catch(e){}
+    return n;
+  }
+  function carimbarHistorico(){
+    let n = 0;
+    try{
+      const E = S.ensaio || {};
+      for(const t of [...(E.tarefas || []), ...(E.feitas || [])]){
+        if(!t || !Array.isArray(t.hist)) continue;
+        t.hist.forEach((h, i) => {
+          if(!h || h.id !== undefined) return;
+          h.id = idEstavel('h', h, i); n++;
+        });
+      }
+    }catch(e){}
+    return n;
+  }
+  function carimbarTudo(){ return carimbarMensagens() + carimbarAlteracoes() + carimbarHistorico(); }
+  window.MaestroCarimboDeId = { carimbarTudo, idEstavel };
+
+  /* antes de qualquer mescla e depois de toda carga */
+  carimbarTudo();
+  ['aplicarEstado','sbAplicar','sbCarregar'].forEach(nome => {
+    try{
+      if(typeof window[nome] !== 'function' && typeof eval(nome) !== 'function') return;
+    }catch(e){ return; }
+  });
+  if(typeof aplicarEstado === 'function') aplicarEstado = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); try{ carimbarTudo(); }catch(e){} return r; };
+  })(aplicarEstado);
+  if(typeof sbAplicar === 'function') sbAplicar = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); try{ carimbarTudo(); }catch(e){} return r; };
+  })(sbAplicar);
+  setTimeout(carimbarTudo, 1500);
+  setTimeout(carimbarTudo, 5000);
+
+  /* ---------- o corpo passa a dizer em que rota está ---------------- */
+  /* Nenhum seletor de CSS sabia responder "estou nas Conversas?", e é o
+     que a colisão do botão de atualizar precisa saber. Serve para o
+     resto da casa também. */
+  function marcarRota(){
+    try{
+      const b = document.body; if(!b) return;
+      const r = String(S.route || ''), v = String(S.view || '');
+      if(b.dataset.rota !== r) b.dataset.rota = r;
+      if(b.dataset.lado !== v) b.dataset.lado = v;
+    }catch(e){}
+  }
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); marcarRota(); return r; };
+  })(render);
+  marcarRota();
+
+  /* ---------- a janela das Conversas cabe na tela ------------------- */
+  /* Medir é o único jeito honesto: quanto sobra depende do topo, dos
+     filtros e da barra de baixo, que mudam de tela para tela. E o
+     `visualViewport` é o que responde pelo TECLADO do iOS, que sobe por
+     cima sem encolher o viewport de layout. */
+  function caberConversas(){
+    try{
+      if(!document.body || document.body.dataset.rota !== 'conversas') return;
+      if(innerWidth > 860) return;
+      const j = document.querySelector('.cvJanela'); if(!j) return;
+      const vv = window.visualViewport;
+      const alturaUtil = vv ? vv.height : innerHeight;
+      const topo = j.getBoundingClientRect().top;
+      const barra = document.querySelector('.tabbar');
+      /* com o teclado aberto a barra de baixo sai do caminho sozinha */
+      const hBarra = (barra && getComputedStyle(barra).display !== 'none'
+                      && (!vv || vv.height > innerHeight - 100))
+                     ? barra.getBoundingClientRect().height : 0;
+      const alvo = Math.max(240, Math.round(alturaUtil - topo - hBarra - 12));
+      const atual = j.style.getPropertyValue('--cvAlt');
+      if(atual !== alvo + 'px') j.style.setProperty('--cvAlt', alvo + 'px');
+    }catch(e){}
+  }
+  window.MaestroConversasCabe = { caberConversas };
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ const r = orig.apply(this, arguments);
+      try{ requestAnimationFrame(caberConversas); }catch(e){ caberConversas(); }
+      return r; };
+  })(render);
+  addEventListener('resize', caberConversas);
+  addEventListener('orientationchange', () => setTimeout(caberConversas, 120));
+  try{
+    if(window.visualViewport){
+      visualViewport.addEventListener('resize', caberConversas);
+      visualViewport.addEventListener('scroll', caberConversas);
+    }
+  }catch(e){}
+  setTimeout(caberConversas, 400);
+
+  /* ---------- o upload que falha passa a DIZER ---------------------- */
+  /* A v218 curou isto nas Conversas ("mensagem que DIZ quando não
+     subiu"). Nos MATERIAIS — que é onde a ARTE mora — o erro continuava
+     indo só para o console: a miniatura ficava com cara de normal, com
+     um `blob:` que morre ao recarregar, e o cliente abria o link sem
+     peça nenhuma. */
+  if(typeof subirNuvem === 'function') subirNuvem = (function(orig){
+    return function(caminho, file, onProgress){
+      const nome = (file && file.name) || 'arquivo';
+      return Promise.resolve(orig.apply(this, arguments)).catch(err => {
+        try{
+          const m = (err && err.message) || 'sem conexão';
+          if(typeof toast === 'function')
+            toast(`"${nome}" não subiu (${m}). Está só neste aparelho.`, false, 'erro');
+        }catch(e){}
+        throw err;
+      });
+    };
+  })(subirNuvem);
+})();
+</script>
+<style>
+/* v226 — O BOTÃO DE ATUALIZAR COBRIA O DE ENVIAR, NAS CONVERSAS.
+   Medido no celular (390×664): o `#btAtualizar` e o `[data-cvenvia]` se
+   sobrepõem em 21×16 px, e três dos quatro cantos do botão de enviar
+   pertencem ao de atualizar. Tocar ali não envia — e pior, `render()`
+   remonta o compositor e o texto digitado VAI EMBORA.
+   Das sete rotas da agência, só Conversas colide: é consequência da
+   v216/v217, que puseram Conversas na barra do polegar. */
+@media(max-width:860px){
+  body[data-rota="conversas"] #btAtualizar{ display:none }
+
+  /* E A COLISÃO DE VERDADE, que a prova achou ao medir: a janela das
+     Conversas tem `min-height:66vh`, e num iPhone de 664px ela termina
+     em 693 — 29px ABAIXO da tela. O compositor inteiro (campo e botão
+     de enviar, y 634→674) fica atrás da barra de baixo, que é fixa e
+     está em z-600. Ou seja: no celular não dava para enviar mensagem
+     pelo botão. A altura passa a ser medida, com `--cvAlt` escrito pelo
+     JS; isto aqui é o piso, para quem tiver o JS mais lento. */
+  body[data-rota="conversas"] .cvJanela{
+    min-height:0; max-height:none;
+    height:var(--cvAlt, calc(100dvh - 42px - 240px));
+  }
+}
+</style>
