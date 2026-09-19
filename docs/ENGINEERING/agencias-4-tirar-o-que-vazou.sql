@@ -30,8 +30,21 @@
 -- PASSO 0 — CÓPIA DE SEGURANÇA
 --
 -- Antes de apagar qualquer coisa, uma cópia inteira das linhas da ZRO
--- numa tabela à parte. O app não a enxerga (só lê `pauta`), então ela é
--- inerte — e se o passo 2 tirar algo que você queria, está aqui.
+-- numa tabela à parte.
+--
+-- >>> A PRIMEIRA VERSÃO DESTE PASSO ESTAVA ERRADA, E O ERRO ERA GRAVE.
+-- Ela dizia: "o app não a enxerga (só lê `pauta`), então ela é inerte".
+-- Quem serve a tabela não é o app — é o PostgREST, que publica TODA
+-- tabela do schema `public`, e as permissões padrão do Supabase já dão
+-- acesso a `anon`. Sem RLS, um `GET /rest/v1/pauta_backup_...` com a
+-- chave anônima (que está na página, à vista) devolveria a base
+-- inteira — inclusive as CHAVES DOS LINKS de aprovação, que são as
+-- credenciais dos clientes.
+--
+-- Então a cópia nasce fechada: RLS ligada, sem política nenhuma (o que
+-- significa "ninguém, exceto a chave de serviço"), e sem permissão para
+-- `anon` e `authenticated`. Lição para toda cópia futura: backup NÃO
+-- mora em `public`.
 --
 -- Pode rodar mais de uma vez: a segunda vez não sobrescreve a primeira.
 -- =====================================================================
@@ -40,6 +53,9 @@ create table if not exists public.pauta_backup_zro_20260910 as
   select *, now() as copiado_em
     from public.pauta
    where org = 'zro';                                        -- <<< AQUI
+
+alter table public.pauta_backup_zro_20260910 enable row level security;
+revoke all on public.pauta_backup_zro_20260910 from anon, authenticated;
 
 select 'copia de seguranca' as passo,
        count(*) as linhas_guardadas
@@ -74,30 +90,37 @@ select '1.2 dentro da zro' as consulta,
  order by (cliente like '\_\_%\_\_') desc, cliente;
 
 -- 1.3 — O QUE O PASSO 2 VAI APAGAR, e por quê.
---       O critério não é chute: é um cliente que existe sob a ZRO E sob
---       outra agência, COM O MESMO NOME. Essa é a assinatura da cópia —
---       o vazamento subiu as linhas como estavam.
+--       O critério é a CHAVE DO LINK de aprovação: 22 caracteres de
+--       `crypto`, única no banco inteiro. A mesma chave sob duas
+--       agências não é coincidência possível — é prova de que a linha
+--       foi copiada. (O nome igual, sozinho, NÃO serve: a chave
+--       `cliente` é posicional — `n0`, `n1` — e a semente repete nomes,
+--       então "mesmo nome" apagaria cliente legítimo da ZRO.)
 -- (uma linha por cliente. Se o mesmo cliente existir em mais de uma
---  outra agência, os nomes delas vêm juntos na mesma linha — senão a
+--  outra agência, os nomes delas vêm juntos na mesma linha. A coluna
+--  `mesma_chave_de_link` é a que MANDA no passo 2: ela é prova de
+--  cópia; o nome igual pode ser coincidência. Senão a
 --  lista diria 7 quando vão sair 6, e é ela que você lê antes de apagar.)
+with chave_de as (
+  select p.org, e.k as cliente, e.v->>'chave' as chave
+    from public.pauta p,
+         lateral jsonb_each(coalesce(p.dados->'cliEdit','{}'::jsonb)) as e(k, v)
+   where p.cliente = '__config__'
+     and coalesce(e.v->>'chave','') <> ''
+)
 select '1.3 vai sair' as consulta,
        z.cliente,
        z.dados->>'nome' as nome,
-       (select string_agg(distinct o.org, ', ' order by o.org)
-          from public.pauta o
-         where o.cliente = z.cliente
-           and o.org <> z.org
-           and coalesce(o.dados->>'nome','') = coalesce(z.dados->>'nome','')
-           and coalesce(o.dados->>'nome','') <> '') as tambem_existe_em,
+       (select string_agg(distinct ko.org, ', ' order by ko.org)
+          from chave_de kz join chave_de ko on ko.chave = kz.chave and ko.org <> kz.org
+         where kz.org = z.org and kz.cliente = z.cliente) as mesma_chave_de_link_que,
        z.atualizado_em as gravado_na_zro_em
   from public.pauta z
  where z.org = 'zro'                                         -- <<< AQUI
    and z.cliente not like '\_\_%\_\_'
-   and exists (select 1 from public.pauta o
-                where o.cliente = z.cliente
-                  and o.org <> z.org
-                  and coalesce(o.dados->>'nome','') = coalesce(z.dados->>'nome','')
-                  and coalesce(o.dados->>'nome','') <> '')
+   and exists (select 1 from chave_de kz join chave_de ko
+                 on ko.chave = kz.chave and ko.org <> kz.org
+                where kz.org = z.org and kz.cliente = z.cliente)
  order by z.cliente;
 
 -- 1.4 — O QUE O PASSO 2 NÃO VAI TOCAR, e você decide.
@@ -105,18 +128,28 @@ select '1.3 vai sair' as consulta,
 --       outra agência já apagou, ou pode ser um cliente que VOCÊ
 --       cadastrou na ZRO. O SQL não sabe a diferença — quem sabe é você.
 --       Se for para sair, apague pela lista de Clientes, dentro do app.
+with chave_de as (
+  select p.org, e.k as cliente, e.v->>'chave' as chave
+    from public.pauta p,
+         lateral jsonb_each(coalesce(p.dados->'cliEdit','{}'::jsonb)) as e(k, v)
+   where p.cliente = '__config__'
+     and coalesce(e.v->>'chave','') <> ''
+)
 select '1.4 so existe na zro - voce decide' as consulta,
        z.cliente,
        z.dados->>'nome' as nome,
+       (select string_agg(distinct o.org, ', ' order by o.org)
+          from public.pauta o
+         where o.cliente = z.cliente and o.org <> z.org
+           and coalesce(o.dados->>'nome','') = coalesce(z.dados->>'nome','')
+           and coalesce(o.dados->>'nome','') <> '') as nome_igual_em_mas_chave_diferente,
        z.atualizado_em
   from public.pauta z
  where z.org = 'zro'                                         -- <<< AQUI
    and z.cliente not like '\_\_%\_\_'
-   and not exists (
-     select 1 from public.pauta o
-      where o.cliente = z.cliente and o.org <> z.org
-        and coalesce(o.dados->>'nome','') = coalesce(z.dados->>'nome','')
-        and coalesce(o.dados->>'nome','') <> '')
+   and not exists (select 1 from chave_de kz join chave_de ko
+                     on ko.chave = kz.chave and ko.org <> kz.org
+                    where kz.org = z.org and kz.cliente = z.cliente)
  order by z.cliente;
 
 -- 1.5 — o perfil da agência guardado na ZRO.
@@ -157,14 +190,30 @@ select '1.5 perfil e equipe na zro' as consulta,
 begin;
 
 -- ---------- (a) as linhas de cliente que vieram da outra agência ------
-with vazados as (
+--
+-- >>> O CRITÉRIO MUDOU, E A VERSÃO ANTERIOR APAGARIA CLIENTE LEGÍTIMO.
+-- Ela casava "mesma chave `cliente` E mesmo nome". Mas a chave do
+-- cliente é POSICIONAL (`n0`, `n1`, `cj` — foi a causa da v178): duas
+-- agências independentes têm `n0` por construção, e a semente cria os
+-- mesmos nomes em toda agência nova. Bastava a ZRO ter um cliente
+-- homônimo de um da EJUP para ele ser apagado.
+--
+-- O discriminador certo já está nos dados: a cópia levou junto a CHAVE
+-- DO LINK da EJUP, que tem 22 caracteres de `crypto` e é única no banco
+-- inteiro. Duas agências terem a mesma chave não é coincidência
+-- possível — é prova de cópia. O nome entra só como conferência.
+with chave_de as (
+  select p.org, e.k as cliente, e.v->>'chave' as chave
+    from public.pauta p,
+         lateral jsonb_each(coalesce(p.dados->'cliEdit','{}'::jsonb)) as e(k, v)
+   where p.cliente = '__config__'
+     and coalesce(e.v->>'chave','') <> ''
+),
+vazados as (
   select z.org, z.cliente
     from public.pauta z
-    join public.pauta o
-      on o.cliente = z.cliente
-     and o.org <> z.org
-     and coalesce(o.dados->>'nome','') = coalesce(z.dados->>'nome','')
-     and coalesce(o.dados->>'nome','') <> ''
+    join chave_de kz on kz.org = z.org and kz.cliente = z.cliente
+    join chave_de ko on ko.chave = kz.chave and ko.org <> kz.org
    where z.org = 'zro'                                       -- <<< AQUI
      and z.cliente not like '\_\_%\_\_'
 )

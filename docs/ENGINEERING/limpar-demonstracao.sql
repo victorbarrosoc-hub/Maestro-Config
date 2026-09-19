@@ -43,6 +43,12 @@ order by cliente;
 create table if not exists public.pauta_backup_2026_09_06 as
   select * from public.pauta;
 
+-- v225 — a cópia nasce FECHADA. O PostgREST publica toda tabela de
+-- `public`, e a chave anônima está na página: sem isto, a cópia é a
+-- base inteira servida pela API, com as chaves dos links dentro.
+alter table public.pauta_backup_2026_09_06 enable row level security;
+revoke all on public.pauta_backup_2026_09_06 from anon, authenticated;
+
 -- confere que a cópia ficou completa: os dois números têm de bater
 select
   (select count(*) from public.pauta)                    as linhas_agora,
