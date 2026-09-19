@@ -15935,7 +15935,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v223 · 17 set · o nome do card pede para ser trocado';
+const VERSAO_PROTOTIPO = 'v224 · 19 set · uma tarefa por card, sempre';
 
 menuSheet = (function(orig){
   return function(){
@@ -16651,21 +16651,39 @@ function ligarTarefaAoCard(t){
    Plan não é um quadro, é um paredão. O calendário É o Plan: enquanto o
    card está em rascunho ele vive na semana, onde o fundador gosta de ler.
    Ele aparece no quadro quando alguém começa — e some quando vai ao ar. */
+/* v224 — O REPOSITOR ESPERA O BANCO FALAR. A pauta do cliente e o
+   quadro viajam em linhas diferentes, e a carga aplica a pauta,
+   redesenha, e só depois traz o quadro. Nesse redesenho um card que
+   outro aparelho acabou de mandar ao Check ainda "não tem tarefa" — e o
+   repositor criava uma clone. Enquanto o banco está falando, ele espera;
+   a carga redesenha ao terminar. (Sem banco, o aparelho é a fonte.) */
+let _repositorAdiado = false;
+function repositorDeveEsperar(){
+  try{
+    if(typeof _sbLigado === 'undefined' || !_sbLigado) return false;
+    const Sin = window.Sincro; if(!Sin) return false;
+    const espera = (Sin.carregando > 0) || !Sin.lido;
+    if(espera) _repositorAdiado = true;
+    return espera;
+  }catch(e){ return false; }
+}
 function sincronizarJobs(){
   if(!S.ensaio) S.ensaio = kbSemente();
   migrarCategorias();
   semearAsFrentes();
   const tem = (cli,id) => S.ensaio.tarefas.some(t => t.cli===cli && t.cardId===id)
                        || (S.ensaio.feitas||[]).some(t => t.cli===cli && t.cardId===id);
-  for(const c of CLIS()){
+  if(!repositorDeveEsperar()) for(const c of CLIS()){
     for(const p of (S.pautas[c.id]||[])){
       if(p.tarefa || p.feito) continue;
       const f = faseDe(p);
       if(f==='rascunho' || f==='postado') continue;
       if(tem(c.id, p.id)) continue;
+      /* `reposta`: nasceu do card, não de uma pessoa. Se um dia aparecer
+         a tarefa de quem criou o card, esta cede o lugar (v224). */
       S.ensaio.tarefas.push({ id:novoIdTarefa(), titulo:p.t, cli:c.id, resp:p.resp||null,
         cat:'producao', criada:Date.now(), prazo:p.data||null, tempoMs:0, desde:null,
-        cardId:p.id, job:true, col:'do' });
+        cardId:p.id, job:true, col:'do', reposta:true });
     }
   }
   S.ensaio.tarefas.forEach(ligarTarefaAoCard);
@@ -36677,7 +36695,7 @@ sbGravar = (function(orig){
          de uma fase que já passou — e card em rascunho com pedido do
          cliente em aberto. */
       const PARADO = ['postado'];
-      for(const c of CLIS()){
+      if(!(typeof repositorDeveEsperar === 'function' && repositorDeveEsperar())) for(const c of CLIS()){
         for(const p of (S.pautas[c.id] || [])){
           if(p.tarefa || p.feito) continue;
           const f = faseDe(p);
@@ -36693,7 +36711,7 @@ sbGravar = (function(orig){
           S.ensaio.tarefas.push({ id: novoIdTarefa(), titulo: p.t, cli: c.id,
             resp: p.resp || null, cat: 'producao', criada: Date.now(),
             prazo: p.data || null, tempoMs: 0, desde: null,
-            cardId: p.id, job: true, col: FASE_COL[f] || 'do' });
+            cardId: p.id, job: true, col: FASE_COL[f] || 'do', reposta: true });
         }
       }
       S.ensaio.tarefas.forEach(ligarTarefaAoCard);
@@ -37853,11 +37871,26 @@ sbGravar = (function(orig){
     let n = 0;
     for(const [k, lista] of porCard){
       if(lista.length < 2) continue;
-      /* a mais antiga fica com o card — foi ela que o criou */
-      lista.sort((a, b) => (+a.criada || 0) - (+b.criada || 0));
+      /* v224: quem foi criado por uma PESSOA vem antes de quem o
+         repositor criou a partir do card (carimbo `reposta` — só o
+         carimbo: adivinhar por aparência já apagaria tarefa de gente).
+         Entre iguais, a mais antiga. */
+      const clone = t => t.reposta === true;
+      lista.sort((a, b) => (clone(a) - clone(b)) || ((+a.criada || 0) - (+b.criada || 0)));
       const dona = lista[0];
       dona.__jaCasada = true;
       for(const t of lista.slice(1)){
+        /* a clone cede o lugar em silêncio: o que ela tinha de seu (o
+           tempo contado) vai para a dona, e ela ganha lápide para não
+           voltar de outro aparelho */
+        if(clone(t) && !clone(dona)){
+          dona.tempoMs = (+dona.tempoMs || 0) + (+t.tempoMs || 0);
+          if(t.desde && !dona.desde) dona.desde = t.desde;
+          if(!dona.resp && t.resp) dona.resp = t.resp;
+          const i = E.tarefas.indexOf(t); if(i >= 0) E.tarefas.splice(i, 1);
+          try{ window.MaestroFaxinaEnsaio && window.MaestroFaxinaEnsaio.enterrar(t.id); }catch(e){}
+          n++; continue;
+        }
         const p = (S.pautas[t.cli] || []).find(x => x.id === t.cardId);
         t.conflitoCard = { quando: Date.now(),
                            titulo: (p && p.t) || null, com: dona.titulo || null };
@@ -41057,5 +41090,140 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
   }, true);
 
   window.MaestroNomeDoCard = { recemEstruturado, tarefaDoCard };
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v224 — UMA TAREFA POR CARD, SEMPRE.
+
+   O founder, com um print do Check: dois cards da mesma demanda, cada
+   um com "Este job perdeu o card: ele tinha o mesmo número do card de
+   '<o mesmo nome>', e os dois viraram um". Ele achou que era o
+   "+ mais um card" (v222). Não era: era uma CORRIDA que já existia.
+
+   A pauta do cliente e o quadro do Ensaio viajam em linhas diferentes
+   do banco e sobem em momentos diferentes (a pauta em 1,4s, o quadro
+   em 1,2s, cada um pelo seu caminho). Um aparelho que estrutura o card
+   e vai ao Check pode ter a PAUTA gravada e o QUADRO ainda não — o
+   iPhone suspende a aba ao voltar para a tela inicial. Outro aparelho
+   carrega: vê o card no Check sem tarefa, e o repositor (v193) faz o
+   que foi feito para fazer — cria uma tarefa para ele. Quando o quadro
+   do primeiro aparelho enfim sobe, a mescla une as duas listas por id,
+   o card fica com duas tarefas, e a faxina da v199 desfaz o "casamento
+   duplo" orfanando uma delas — com um aviso assustador e sem saída.
+
+   Três consertos, na origem:
+
+   1. O repositor ESPERA enquanto o banco está falando (a carga aplica
+      a pauta, redesenha, e só então traz o quadro — nesse redesenho ele
+      não cria nada; a carga redesenha ao terminar). É a mesma lição da
+      v219: nunca editar uma lista que ainda não se leu do banco.
+   2. Tarefa que o repositor cria leva o carimbo `reposta`: nasceu do
+      card, não de uma pessoa. Quando as duas se encontram, a de quem
+      criou fica com o card e a reposta cede o lugar EM SILÊNCIO,
+      entregando o tempo que contou. Ninguém é orfanado.
+   3. O que a v199 já orfanou se conserta sozinho: a clone órfã (sem
+      nada que uma pessoa teria escrito) some; a tarefa de verdade
+      orfanada recupera o card se quem o segura é uma clone.
+
+   E o aviso, para o caso que sobra (duas tarefas de PESSOAS no mesmo
+   card, herança de antes da v199), fica curto e diz o que fazer.
+   ===================================================================== */
+(function(){
+  const tarefas = () => (S.ensaio && Array.isArray(S.ensaio.tarefas)) ? S.ensaio.tarefas : [];
+  const enterrar = id => { try{ window.MaestroFaxinaEnsaio && window.MaestroFaxinaEnsaio.enterrar(id); }catch(e){} };
+
+  /* "nasceu do card": carimbada, ou sem nada que uma pessoa escreveria */
+  function tarefaReposta(t, p){
+    if(!t) return false;
+    if(t.reposta === true) return true;
+    if(t.irma || t.irmaDe) return false;
+    if((t.desc || '').trim() || t.pedido || t.doCliente) return false;
+    if(t.desde || (+t.tempoMs || 0) > 0) return false;
+    if(p && p.t && t.titulo !== p.t) return false;
+    return true;
+  }
+  window.tarefaReposta = tarefaReposta;
+
+  /* ---------- 3. o estrago já gravado se conserta -------------------- */
+  function consertarOrfas(){
+    const E = S.ensaio; if(!E || !Array.isArray(E.tarefas)) return 0;
+    let n = 0;
+    for(const t of E.tarefas.slice()){
+      if(!t || !t.conflitoCard) continue;
+      const c = t.conflitoCard;
+      const cards = (S.pautas[t.cli] || []).filter(p => p && p.t && p.t === c.titulo);
+      /* a órfã É uma clone: some, e não volta de outro aparelho */
+      if(tarefaReposta(t, { t: c.titulo })){
+        const i = E.tarefas.indexOf(t); if(i >= 0) E.tarefas.splice(i, 1);
+        enterrar(t.id); n++; continue;
+      }
+      /* a órfã é de uma pessoa: recupera o card se quem o segura é uma
+         reposta CARIMBADA — ou, quando a órfã é uma IRMÃ (v222, prova
+         certa de que uma pessoa a criou), uma clone de antes do carimbo:
+         mais nova, sem família e sem nada escrito. Por aparência sozinha,
+         não: seria tirar card de gente. */
+      const cede = (x, p) => x.reposta === true
+        || (!!t.irma && !x.irma && !x.irmaDe && tarefaReposta(x, p) && (+x.criada || 0) > (+t.criada || 0));
+      for(const p of cards){
+        const donas = E.tarefas.filter(x => x && x !== t && x.cli === t.cli && x.cardId === p.id);
+        if(!donas.length || !donas.every(x => cede(x, p))) continue;
+        for(const x of donas){
+          t.tempoMs = (+t.tempoMs || 0) + (+x.tempoMs || 0);
+          if(x.desde && !t.desde) t.desde = x.desde;
+          const i = E.tarefas.indexOf(x); if(i >= 0) E.tarefas.splice(i, 1);
+          enterrar(x.id);
+        }
+        t.cardId = p.id; t.job = true; t.cat = 'producao';
+        delete t.conflitoCard; t.__jaCasada = true;
+        try{ if(typeof ligarTarefaAoCard === 'function') ligarTarefaAoCard(t); }catch(e){}
+        n++; break;
+      }
+    }
+    return n;
+  }
+  window.MaestroUmaTarefaPorCard = { consertarOrfas, tarefaReposta };
+
+  if(typeof sincronizarJobs === 'function') sincronizarJobs = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); try{ consertarOrfas(); }catch(e){} return r; };
+  })(sincronizarJobs);
+  if(typeof aplicarEstado === 'function') aplicarEstado = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); try{ consertarOrfas(); }catch(e){} return r; };
+  })(aplicarEstado);
+  setTimeout(() => { try{ if(consertarOrfas() && typeof render === 'function') render(); }catch(e){} }, 1500);
+
+  /* ---------- 1. a carga redesenha ao terminar, se o repositor esperou */
+  if(typeof sbCarregar === 'function') sbCarregar = (function(orig){
+    return function(){
+      const p = orig.apply(this, arguments);
+      return Promise.resolve(p).then(ok => {
+        try{
+          if(typeof _repositorAdiado !== 'undefined' && _repositorAdiado){
+            _repositorAdiado = false;
+            if(S.view === 'agency' && !S.modal && typeof render === 'function') render();
+          }
+        }catch(e){}
+        return ok;
+      }, err => {
+        try{ if(typeof _repositorAdiado !== 'undefined') _repositorAdiado = false; }catch(e){}
+        throw err;
+      });
+    };
+  })(sbCarregar);
+
+  /* ---------- o aviso que sobra, curto e com saída ------------------- */
+  if(typeof agEnsaio === 'function') agEnsaio = (function(orig){
+    return function(){
+      let html = orig.apply(this, arguments);
+      if(typeof html !== 'string') return html;
+      return html.replace(/<b>Este job perdeu o card:<\/b>[\s\S]*?<\/span>/g, m => {
+        const q = /card de "([^"]*)"/.exec(m);
+        return `<b>Ficou sem card.</b> Outra tarefa já segurava o card${q ? ` de "${q[1]}"` : ''}.
+          Estruture a pauta de novo — ou apague esta.</span>`;
+      });
+    };
+  })(agEnsaio);
 })();
 </script>
