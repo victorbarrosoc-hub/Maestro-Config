@@ -1,9 +1,84 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.40
+Version: 0.5.41
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.41 — 2026-09-19
+
+**Status:** Concluída
+**Objetivo:** a pauta cabe em mais de um card por demanda, e o quadro nunca
+mais orfana uma tarefa por causa de uma corrida entre duas linhas do banco.
+
+### v224 — uma tarefa por card, sempre
+
+O founder, com um print do Check: dois cards da mesma demanda ("EJUPcast -
+Episódio 18 - corte 1" e "... - youtube"), cada um com *"Este job perdeu o
+card: ele tinha o mesmo número do card de '<o mesmo nome>', e os dois viraram
+um"*. Ele achou que era o "+ mais um card" da v222. **Não era.**
+
+**A causa** é uma corrida que já existia. A pauta do cliente e o quadro do
+Ensaio viajam em linhas diferentes do banco e sobem em momentos diferentes
+(a pauta em 1,4s, o quadro em 1,2s, cada um pelo seu caminho). Um aparelho que
+estrutura o card e o manda ao Check pode ter a **pauta** gravada e o **quadro**
+ainda não — o iPhone suspende a aba ao voltar para a tela inicial. Outro
+aparelho carrega: vê o card no Check sem tarefa, e o repositor (v193) faz o que
+foi feito para fazer — cria uma tarefa para ele. Quando o quadro do primeiro
+aparelho enfim sobe, a mescla une as duas listas por id, o card fica com duas
+tarefas, e a faxina da v199 desfaz o "casamento duplo" orfanando uma delas.
+E, medido numa prova: a própria carga aplica a pauta, **redesenha**, e só então
+traz o quadro — nesse redesenho o repositor já criava a clone.
+
+**Três consertos, na origem:**
+
+1. O repositor **espera** enquanto o banco está falando (`Sincro.carregando`
+   ou ainda não lido) e a carga redesenha ao terminar. Mesma lição da v219:
+   nunca editar uma lista que ainda não se leu do banco.
+2. Tarefa que o repositor cria leva o carimbo `reposta`: nasceu do card, não de
+   uma pessoa. Quando as duas se encontram, a de quem criou fica com o card e a
+   reposta cede o lugar **em silêncio**, entregando o tempo que contou, e ganha
+   lápide para não voltar de outro aparelho.
+3. O que a v199 já orfanou se conserta sozinho: clone órfã sem nada escrito
+   some; irmã orfanada (v222, prova certa de que uma pessoa a criou) recupera o
+   card de uma clone antiga.
+
+O aviso que sobra (duas tarefas de pessoas no mesmo card, herança de antes da
+v199) fica curto e diz o que fazer. A primeira versão do conserto adivinhava
+"clone" por aparência e a suíte da v199 pegou: apagaria tarefa de gente. Só o
+carimbo decide.
+
+21 provas em `web/verificar/v224-o-repositor-espera-o-banco.mjs`, incluindo o
+caso dele de ponta a ponta (pauta sobe, quadro não; repõe; quadro chega).
+
+### v223 — na hora de estruturar, o nome do card pede para ser trocado
+
+*"Colocar primeiro a opção de mudar o nome do card da tarefa, pra n ficar
+confundindo quando clicar em estruturar mais de um card."* O modal
+"Estruturar a pauta" abre com o nome em foco e selecionado, com a dica de que
+o nome herdado é o da demanda; renomear o card renomeia a tarefa (uma tarefa É
+um card — dois nomes seria a informação em dois lugares). 22 provas em
+`web/verificar/v223-nome-do-card.mjs`.
+
+### v222 — uma demanda, vários cards
+
+*"A demanda que coloquei é mais de um card, então preciso que ele estruture a
+pauta pra mais de um card."* Não virou lista dentro da tarefa (`t.col` é
+leitura da fase do card — uma tarefa com três cards em três fases não tem
+coluna). A demanda vira **irmãs**: "+ mais um card" cria uma tarefa nova com o
+mesmo cliente, responsável, projeto, prazo e descritivo, já com o card dela, e
+o cartão diz "card 2 de 3 · mesma demanda". 27 provas em
+`web/verificar/v222-mais-um-card.mjs`.
+
+### v221 — a semana dentro do mês
+
+*"Na aba da semana, eu quero ver só os cards que são da semana daquele mês…
+(aba) Setembro (aba) semana 1… semana 5."* A vista Semana do Cronograma ganha
+a aba do mês e as abas de semana, com o recolher que já existia. O atributo da
+aba colidiu com o da vista Mês (`data-ptmes`) e foi renomeado; o filtro de
+campanha passa por fora. 29 provas em `web/verificar/v221-semana-por-mes.mjs`.
 
 ---
 

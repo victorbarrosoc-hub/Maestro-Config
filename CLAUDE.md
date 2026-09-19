@@ -4,7 +4,7 @@ Version: 0.5
 Status: Implementação — blocos 1, 2, 3 e 5 da API prontos, verificados por HTTP
         · D-080 resolvida (a fase substitui o status): blocos 4, 6, 7 e 8 liberados
 Codename: Project Symphony
-Última atualização: 2026-09-09
+Última atualização: 2026-09-19
 
 > **Retomando o projeto? Leia [`docs/HANDOFF.md`](docs/HANDOFF.md) primeiro.**
 > Ele é o mapa: estado do código, o que já foi verificado, o que está aberto
@@ -299,6 +299,19 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (19 set, v224):** dois cards da mesma demanda no Check com "Este job
+perdeu o card". Não era o "+ mais um card" (v222): era uma CORRIDA entre a linha
+da pauta e a linha do quadro no banco. A carga aplica a pauta, redesenha, e só
+depois traz o quadro — e nesse redesenho o repositor (v193) criava uma tarefa-
+clone para o card cuja tarefa ainda não tinha chegado do outro aparelho; a
+mescla unia as duas por id e a faxina da v199 orfanava uma. Agora o repositor
+ESPERA enquanto o banco fala (`Sincro.carregando`/`lido`), tarefa reposta pelo
+card leva carimbo `reposta` e cede o lugar em silêncio quando a de quem criou
+chega, e o estrago já gravado se conserta sozinho. **Lição:** a primeira versão
+adivinhava "clone" por aparência e a suíte da v199 pegou — apagaria tarefa de
+gente; só o carimbo decide. 21 provas em
+`web/verificar/v224-o-repositor-espera-o-banco.mjs`. v221–v223 (semana por mês,
+irmãs de uma demanda, nome do card em foco) em `docs/CHANGELOG.md` 0.5.41.
 **Fechado (10 set, v220) — O MAIS GRAVE ATÉ AQUI:** dado de uma agência dentro da
 sessão de outra. Com a sessão da ZRO aberta, o app mostrava "EJUP · Orquestra", o
 perfil e os SEIS clientes da EJUP. **Causa:** o estado de trabalho vive em cinco
