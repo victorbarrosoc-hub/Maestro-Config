@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-19 07:30 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-21 15:18 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -16051,7 +16051,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v226 · 19 set · nada que se junta perde o nome';
+const VERSAO_PROTOTIPO = 'v227 · 21 set · estruturar começa no Inbox';
 
 menuSheet = (function(orig){
   return function(){
@@ -41639,3 +41639,182 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
   }
 }
 </style>
+
+<script>
+"use strict";
+/* =====================================================================
+   v227 — ESTRUTURAR COMEÇA NO INBOX, E O CARD SÓ SAI DE LÁ DEPOIS DE
+   ESTRUTURADO.
+
+   O founder: "o estruturar mais de um card não está aparecendo. A ideia
+   é que quando crio uma nova tarefa, vá pro inbox e quando estruturar
+   mais de um card ou estruturar o card for criado, continua em inbox, só
+   depois de estruturar que vai pra plan."
+
+   Duas coisas, e a primeira explica a segunda.
+
+   1. NO INBOX NÃO HAVIA BOTÃO NENHUM. O cartão sem card dizia "Ideia
+      lançada. Falta o responsável — ele estrutura no Plan", e o botão
+      "estruturar a pauta →" só nascia em Plan e Do. O "+ mais um card"
+      (v222) pedia um card JÁ EXISTENTE (`if(!p) return`), então também
+      não aparecia. Quem criava uma tarefa e queria estruturar ali mesmo
+      não tinha por onde.
+
+   2. E ESTRUTURAR EMPURRAVA O CARD PARA O PLAN NA HORA. `t.col` é
+      leitura da FASE do card (v16635), o card nasce em `rascunho`, e
+      `FASE_COL['rascunho']` é `plan`. Ou seja: o card pulava de coluna
+      no instante em que nascia, antes de ter uma linha escrita. A pessoa
+      perdia de vista o que acabou de criar.
+
+   A regra nova: o card que NASCE do Ensaio carrega `porEstruturar`, e
+   enquanto ele carrega isso a tarefa lê `inbox` — não importa a fase.
+   Salvar a pauta tira a marca, e aí ele vai para o Plan pelo caminho de
+   sempre. Arrastar para o Plan também tira (é a pessoa dizendo que
+   terminou), e card com texto escrito nunca fica preso: conteúdo é
+   prova de que foi estruturado, mesmo que a marca tenha sobrado.
+
+   Por que uma marca no CARD e não um campo na tarefa: a tarefa não tem
+   `col` própria desde a v16635 — ela lê o card. Duas fontes para a mesma
+   pergunta é como o card do Marco Bruno apareceu aprovado.
+   ================================================================== */
+(function(){
+  if(typeof ligarTarefaAoCard !== 'function') return;
+
+  /* ---------- 1. o que é "ainda por estruturar" ---------------------
+     A primeira versão perguntava "tem conteúdo?" e a prova pegou: o card
+     JÁ NASCE com o briefing preenchido a partir do descritivo da tarefa
+     (v191), então "tem conteúdo" é verdade no instante do nascimento e a
+     marca nunca era posta. O sinal certo não é "tem texto", é "MUDOU
+     desde que nasceu".
+
+     Então a marca guarda a ASSINATURA do card ao nascer. Enquanto o que
+     está escrito for o mesmo, ele está por estruturar. Qualquer mudança
+     no que a pessoa escreve — inclusive o nome do card, que a v223 pôs
+     em primeiro lugar — solta. Salvar a pauta também solta, explícito. */
+  const assina = p => {
+    if(!p) return '';
+    try{
+      return JSON.stringify([p.t || '', p.texto || '', p.legenda || '', p.cta || '',
+                             p.objetivo || '', p.porPlat || null, p.fmt || '', p.plats || []]);
+    }catch(e){ return ''; }
+  };
+  function porEstruturar(p){
+    if(!p || typeof p.porEstruturar !== 'string') return false;
+    try{ if(typeof faseDe === 'function' && faseDe(p) !== 'rascunho') return false; }catch(e){}
+    return p.porEstruturar === assina(p);      /* nada mudou desde o nascimento */
+  }
+  function jaEstruturado(p){
+    if(!p) return;
+    if(p.porEstruturar !== undefined) delete p.porEstruturar;
+  }
+  window.MaestroPorEstruturar = { porEstruturar, jaEstruturado, assina };
+
+  /* ---------- 2. o card que nasce do Ensaio fica no Inbox ----------- */
+  if(typeof estruturarTarefa === 'function') estruturarTarefa = (function(orig){
+    return function(tid){
+      const antes = (S.ensaio && S.ensaio.tarefas || []).find(x => x && x.id === +tid);
+      const tinha = !!(antes && antes.cardId);
+      const r = orig.apply(this, arguments);
+      try{
+        if(!tinha && antes && antes.cardId){
+          const p = (typeof cardDaTarefa === 'function') ? cardDaTarefa(antes) : null;
+          /* o card recém-nascido guarda como nasceu */
+          if(p && p.porEstruturar === undefined) p.porEstruturar = assina(p);
+        }
+      }catch(e){}
+      return r;
+    };
+  })(estruturarTarefa);
+
+  /* ---------- 3. `t.col` respeita a marca --------------------------- */
+  ligarTarefaAoCard = (function(orig){
+    return function(t){
+      const r = orig.apply(this, arguments);
+      try{
+        if(!t || !t.cardId) return r;
+        const d = Object.getOwnPropertyDescriptor(t, 'col');
+        if(!d || !d.get || d.get.__v227) return r;
+        const leia = d.get, grave = d.set;
+        const novoGet = function(){
+          try{
+            const p = (typeof cardDaTarefa === 'function') ? cardDaTarefa(this) : null;
+            if(porEstruturar(p)) return 'inbox';
+          }catch(e){}
+          return leia.call(this);
+        };
+        novoGet.__v227 = true;
+        Object.defineProperty(t, 'col', {
+          configurable:true, enumerable:true,
+          get: novoGet,
+          set(v){
+            /* tirar do Inbox à mão é dizer "terminei de estruturar" */
+            try{
+              const p = (typeof cardDaTarefa === 'function') ? cardDaTarefa(this) : null;
+              if(porEstruturar(p) && v && v !== 'inbox'){ jaEstruturado(p); return; }
+            }catch(e){}
+            return grave ? grave.call(this, v) : undefined;
+          }
+        });
+      }catch(e){}
+      return r;
+    };
+  })(ligarTarefaAoCard);
+  /* o que já está ligado passa a valer a regra nova agora */
+  try{ ((S.ensaio && S.ensaio.tarefas) || []).forEach(ligarTarefaAoCard); }catch(e){}
+
+  /* ---------- 4. salvar a pauta é o que estrutura ------------------- */
+  /* Na janela e em captura, como a v223: o `data-ptok` do documento corta
+     a propagação. Leio o id ANTES e tiro a marca depois, no mesmo gesto. */
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-ptok]');
+    if(!b) return;
+    const id = +b.dataset.ptok; if(!id) return;
+    setTimeout(() => {
+      try{
+        const cli = (typeof donoDoCard === 'function') ? donoDoCard(id) : S.cli;
+        const p = (S.pautas[cli] || []).find(x => x && x.id === id);
+        if(p) jaEstruturado(p);
+        if(typeof render === 'function') render();
+      }catch(err){}
+    }, 2);
+  }, true);
+
+  /* ---------- 5. os botões existem no Inbox ------------------------- */
+  if(typeof pintarCiclo === 'function') pintarCiclo = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      try{
+        document.querySelectorAll('.enCard[data-entar]').forEach(card => {
+          const t = (S.ensaio && S.ensaio.tarefas || []).find(x => x && x.id === +card.dataset.entar);
+          if(!t || (typeof catIdDe === 'function' && catIdDe(t) !== 'producao')) return;
+          const acoes = card.querySelector('.acoes'); if(!acoes) return;
+          const p = (typeof cardDaTarefa === 'function') ? cardDaTarefa(t) : null;
+
+          /* sem card ainda: estruturar é o passo, e ele começa aqui */
+          if(!p){
+            if(card.querySelector('[data-cyestrutura]')) return;
+            acoes.insertAdjacentHTML('beforeend',
+              `<button class="cyBtn pri" data-cyestrutura="${t.id}">estruturar a pauta →</button>`);
+            /* a frase que mandava esperar o Plan não vale mais: estruturar
+               é aqui. O que sobra de útil é dizer que falta dono — e isso
+               cabe em quatro palavras. */
+            card.querySelectorAll('.cyEtapa').forEach(el => {
+              if(!/estrutura no Plan/i.test(el.textContent)) return;
+              if(t.resp){ el.remove(); return; }
+              el.innerHTML = `${ic('users',11)} <span>Sem responsável ainda.</span>`;
+            });
+            return;
+          }
+
+          /* com card em branco: dizer que ele está esperando ser escrito */
+          if(porEstruturar(p) && !card.querySelector('.cyPorEstr'))
+            acoes.insertAdjacentHTML('beforebegin',
+              `<div class="cyEtapa cyPorEstr">${ic('doc',11)}
+                 <span><b>Card criado.</b> Escreva a pauta — ele vai para o Plan ao salvar.</span></div>`);
+        });
+      }catch(e){}
+      return r;
+    };
+  })(pintarCiclo);
+})();
+</script>
