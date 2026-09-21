@@ -13547,10 +13547,18 @@ document.addEventListener('click', e => {
     if(+d.enok){
       const tr = S.ensaio.tarefas.find(x=>x.id===+d.enok);
       Object.assign(tr, {titulo, prazo, resp:S.enResp, cli:S.enCli});
-      if(tr.col==='inbox' && tr.resp) tr.col = 'plan';
+      /* v228 — PÔR DONO NÃO É ESTRUTURAR. Aqui morava
+         `if(tr.col==='inbox' && tr.resp) tr.col = 'plan';`: escolher o
+         responsável empurrava a tarefa para o Plan na hora. O founder:
+         "criei uma nova tarefa e foi pra plan, não pra inbox". O que tira
+         do Inbox é a pauta estar escrita, não a tarefa ter dono. */
     } else {
+      /* v228 — a tarefa nova nasce no INBOX, com dono ou sem. Era
+         `col: S.enResp ? 'plan' : 'inbox'`, e com responsável ela pulava
+         o Inbox inteiro — então o botão de estruturar que a v227 pôs lá
+         nunca era visto. */
       S.ensaio.tarefas.push({ id:novoIdTarefa(), titulo, cli:S.enCli, resp:S.enResp,
-        col: S.enResp ? 'plan' : 'inbox', criada:Date.now(), prazo, tempoMs:0, desde:null });
+        col: 'inbox', criada:Date.now(), prazo, tempoMs:0, desde:null });
     }
     S.modal=null; som('toque'); render();
     toast(S.enResp ? `Tarefa no Plan, com ${membro(S.enResp)?.nome}.` : 'Solicitação no Inbox — o gestor destina.');
@@ -15983,7 +15991,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v227 · 21 set · estruturar começa no Inbox';
+const VERSAO_PROTOTIPO = 'v228 · 21 set · pôr dono não é estruturar';
 
 menuSheet = (function(orig){
   return function(){
@@ -41637,7 +41645,13 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
   }
   function jaEstruturado(p){
     if(!p) return;
-    if(p.porEstruturar !== undefined) delete p.porEstruturar;
+    /* v228 — SOLTO É `false`, NÃO APAGADO. Apagar devolvia o campo a
+       `undefined`, e `undefined` quer dizer "nunca foi carimbado" — o
+       carimbador da v228, que roda a cada desenho, punha a marca de
+       volta no desenho seguinte e o card voltava para o Inbox. A prova
+       da v227 pegou: três casos viraram vermelho de uma vez.
+       "Nunca vi" e "vi e soltei" precisam ser coisas diferentes. */
+    if(p.porEstruturar !== false) p.porEstruturar = false;
   }
   window.MaestroPorEstruturar = { porEstruturar, jaEstruturado, assina };
 
@@ -41748,5 +41762,61 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
       return r;
     };
   })(pintarCiclo);
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v228 — O CARD NASCE NO INBOX POR TODOS OS CAMINHOS.
+
+   O founder, testando a v227: "a parte de estruturar mais um card não
+   está aparecendo e criei uma nova tarefa e foi pra plan, não pra
+   inbox".
+
+   Os dois sintomas são a MESMA coisa, e a v227 só cobriu metade.
+
+   A v227 fez o card que nasce de `estruturarTarefa` ficar no Inbox até
+   ser escrito. Mas a tarefa com RESPONSÁVEL nunca chegava lá: ela nascia
+   direto no Plan (`col: S.enResp ? 'plan' : 'inbox'`). Como ele sempre
+   põe o responsável, o Inbox — e o botão que a v227 pôs nele — nunca
+   apareciam. E o "+ mais um card" pede um card existente, então também
+   não aparecia numa tarefa recém-criada.
+
+   O conserto da coluna está na origem (pôr dono deixou de empurrar para
+   o Plan). Falta aqui o TERCEIRO caminho de nascer card: o seletor
+   "＋ criar um card novo na pauta", dentro da janela de nova tarefa. Ele
+   monta o card à mão, sem passar por `estruturarTarefa`, então não
+   recebia o carimbo e ia direto para o Plan — o mesmo defeito, por outra
+   porta.
+
+   A regra, dita uma vez: **o que tira do Inbox é a pauta estar escrita.**
+   Não o dono, não o prazo, não o caminho por onde o card nasceu.
+   ================================================================== */
+(function(){
+  const M = window.MaestroPorEstruturar;
+  if(!M) return;
+
+  /* o card que nasce pelo seletor da janela de tarefa também guarda como
+     nasceu. `assina` é a mesma da v227: a marca é a assinatura. */
+  function carimbarRecemNascidos(){
+    try{
+      for(const t of ((S.ensaio && S.ensaio.tarefas) || [])){
+        if(!t || !t.cardId || !t.criada) continue;
+        /* só o que acabou de nascer: 8 segundos é folga de sobra para o
+           gesto, e curto o bastante para não pegar card antigo */
+        if(Date.now() - (+t.criada || 0) > 8000) continue;
+        const p = (typeof cardDaTarefa === 'function') ? cardDaTarefa(t) : null;
+        if(!p || p.porEstruturar !== undefined) continue;
+        try{ if(typeof faseDe === 'function' && faseDe(p) !== 'rascunho') continue; }catch(e){}
+        p.porEstruturar = M.assina(p);
+      }
+    }catch(e){}
+  }
+  window.MaestroCardNasceNoInbox = { carimbarRecemNascidos };
+
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ try{ carimbarRecemNascidos(); }catch(e){} return orig.apply(this, arguments); };
+  })(render);
 })();
 </script>

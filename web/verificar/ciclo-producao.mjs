@@ -77,14 +77,19 @@ checa('no Inbox o card diz que falta o responsável',
 checa('e o Inbox já oferece estruturar a pauta (v227)',
       await pg.locator(cardSel(tid) + ' [data-cyestrutura]').count() === 1);
 
-/* ---------- 2. responsável → Plan → estruturar a pauta ------------------ */
+/* ---------- 2. responsável → estruturar a pauta -------------------------
+   v228: pôr dono DEIXOU de empurrar a tarefa para o Plan. O founder:
+   "criei uma nova tarefa e foi pra plan, não pra inbox". O que tira do
+   Inbox é a pauta estar escrita, não a tarefa ter dono — senão o botão
+   de estruturar que a v227 pôs no Inbox nunca é visto por quem sempre
+   escolhe o responsável, que é como ele trabalha. */
 const designer = await pg.evaluate(() => membroId(S.equipe.find(m => m.papel === 'Designer')));
 const primeiro = await pg.evaluate(() => membroId(S.equipe[0]));
 await pg.click(cardSel(tid) + ' .tit'); await pg.waitForTimeout(250);
 await pg.click(`[data-enresppick="${primeiro}"]`);
 await pg.click(`[data-enok="${tid}"]`); await pg.waitForTimeout(300);
-checa('com responsável a tarefa vai para o Plan', await colDa(pg, tid) === 'plan');
-checa('no Plan o card oferece estruturar a pauta', await pg.locator(cardSel(tid) + ' [data-cyestrutura]').count() === 1);
+checa('com responsável a tarefa CONTINUA no Inbox (v228)', await colDa(pg, tid) === 'inbox');
+checa('e o card oferece estruturar a pauta ali mesmo', await pg.locator(cardSel(tid) + ' [data-cyestrutura]').count() === 1);
 await pg.click(cardSel(tid) + ' [data-cyestrutura]'); await pg.waitForTimeout(300);
 const cardId = await pg.evaluate(tid => S.ensaio.tarefas.find(x => x.id === tid).cardId, tid);
 checa('estruturar cria o card da pauta e liga a tarefa a ele', !!cardId);
