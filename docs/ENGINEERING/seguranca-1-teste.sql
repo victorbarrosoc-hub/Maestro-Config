@@ -28,10 +28,14 @@ create table public.pauta(
   primary key (org, cliente));
 
 create table public.avisos(
-  id bigserial primary key, tipo text, para_email text not null,
+  id bigserial primary key, tipo text, chave text, canal text default 'email',
+  para_email text not null,
   titulo text, corpo text, link text, dados jsonb,
   tentativas int not null default 0, enviado_em timestamptz, erro text,
   enviar_em timestamptz not null default now());
+-- o indice como esta no banco de verdade hoje: sem agencia
+create unique index avisos_um_por_assunto
+  on public.avisos (chave, para_email, canal) where enviado_em is null;
 
 create table public.presenca(
   usuario text primary key, nome text, estado text,
@@ -167,6 +171,30 @@ do $$ begin
     values ('decisao','contato@zro.com.br','O cliente decidiu','link');
   raise notice 'PROVA 7B ok   · e a EQUIPE da propria agencia tambem';
 exception when others then raise notice 'PROVA 7B FALHOU · %', sqlerrm; end $$;
+
+-- O ÍNDICE, sozinho. Sai do papel de `app_autenticado` de proposito: o que
+-- se mede aqui e o INDICE, nao a RLS. Com a RLS no caminho, a prova
+-- passaria pelo motivo errado — foi o que aconteceu na primeira versao
+-- desta suite, e e o mesmo jeito de errar da v220 ("passou por vacuidade").
+reset role;
+do $$ begin
+  insert into public.avisos(org, tipo, chave, canal, para_email, titulo)
+    values ('maestro','lote','lote:n0:2026-09-21','email','mesma.pessoa@x.com','Lote da EJUP');
+  insert into public.avisos(org, tipo, chave, canal, para_email, titulo)
+    values ('zro','lote','lote:n0:2026-09-21','email','mesma.pessoa@x.com','Lote da ZRO');
+  raise notice 'PROVA 7C ok   · duas agencias avisam a mesma pessoa no mesmo dia (a chave do app repete entre agencias)';
+exception when unique_violation then
+  raise notice 'PROVA 7C FALHOU · o aviso da segunda agencia foi recusado em silencio';
+          when others then raise notice 'PROVA 7C FALHOU · %', sqlerrm; end $$;
+
+do $$ begin
+  insert into public.avisos(org, tipo, chave, canal, para_email, titulo)
+    values ('zro','lote','lote:n0:2026-09-21','email','mesma.pessoa@x.com','Lote da ZRO de novo');
+  raise notice 'PROVA 7D FALHOU · a MESMA agencia repetiu o aviso';
+exception when unique_violation then
+  raise notice 'PROVA 7D ok   · e dentro da mesma agencia continua um so';
+          when others then raise notice 'PROVA 7D FALHOU · recusado pelo motivo errado (%)', sqlerrm; end $$;
+set role app_autenticado;
 
 do $$ begin
   insert into public.avisos(tipo, para_email, titulo, corpo)

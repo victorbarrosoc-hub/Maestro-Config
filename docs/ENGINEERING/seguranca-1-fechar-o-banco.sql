@@ -215,6 +215,22 @@ update public.avisos set org = 'maestro' where org is null;
 alter table public.avisos alter column org set default public.maestro_org();
 create index if not exists avisos_org_idx on public.avisos (org);
 
+-- O ÍNDICE DE "UM AVISO POR ASSUNTO" NÃO CONHECE AGÊNCIA, e isso silencia
+-- o aviso de uma delas.
+--
+-- A chave que o app monta é `lote:<cliente>:<dia>`, e `cliente` é
+-- POSICIONAL (`n0`, `n1`, `cj` — a causa da v178): duas agências chegam à
+-- MESMA chave no mesmo dia, por construção. O índice é
+-- `(chave, para_email, canal) where enviado_em is null`, então basta a
+-- mesma pessoa ser cliente das duas — o que acontece — para o aviso da
+-- segunda ser RECUSADO em silêncio. Ela nunca fica sabendo do lote.
+--
+-- Com `org` na chave do índice, cada agência tem o seu "um por assunto".
+drop index if exists public.avisos_um_por_assunto;
+create unique index avisos_um_por_assunto
+  on public.avisos (org, chave, para_email, canal)
+  where enviado_em is null;
+
 -- Quem esta agência PODE contatar: a EQUIPE dela e os APROVADORES dos
 -- clientes dela. As duas listas moram no `__config__` da própria
 -- agência — `equipe[].mail` e `cliEdit.<cliente>.aprovador.mail`.
