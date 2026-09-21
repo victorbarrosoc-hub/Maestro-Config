@@ -180,12 +180,19 @@ console.log('\n6. o card sem data tem onde aparecer');
 
 console.log('\n7. o recolher por dia continua funcionando dentro da aba');
 {
-  /* uma data no passado, para o dia nascer recolhido como sempre foi */
+  /* uma data no passado, para o dia nascer recolhido como sempre foi.
+     A SEMANA É ESCOLHIDA À MÃO de propósito: a aba padrão é "a semana de
+     hoje, se ela tiver card; senão a primeira". Deixar no padrão faz a
+     prova depender do DIA em que ela roda — ela passou em 19/set e
+     falhou em 21/set sem nada ter mudado no código, porque a semana de
+     hoje virou outra e o card de 2/set deixou de estar nela. */
   await pag.evaluate(() => {
     const c = CLIS()[0];
     const p = (S.pautas[c.id] || [])[0];
     p.data = '2026-09-02';
-    S.ptMes = '2026-09'; S.ptSemana = null; S.ptExpand = {}; render();
+    S.ptMes = '2026-09';
+    S.ptSemana = { '2026-09': inicioDaSemana('2026-09-02') };
+    S.ptExpand = {}; render();
   });
   await pag.waitForTimeout(500);
   const tem = await pag.evaluate(() => ({
