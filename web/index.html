@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-21 15:18 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-21 16:31 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -13615,10 +13615,18 @@ document.addEventListener('click', e => {
     if(+d.enok){
       const tr = S.ensaio.tarefas.find(x=>x.id===+d.enok);
       Object.assign(tr, {titulo, prazo, resp:S.enResp, cli:S.enCli});
-      if(tr.col==='inbox' && tr.resp) tr.col = 'plan';
+      /* v228 — PÔR DONO NÃO É ESTRUTURAR. Aqui morava
+         `if(tr.col==='inbox' && tr.resp) tr.col = 'plan';`: escolher o
+         responsável empurrava a tarefa para o Plan na hora. O founder:
+         "criei uma nova tarefa e foi pra plan, não pra inbox". O que tira
+         do Inbox é a pauta estar escrita, não a tarefa ter dono. */
     } else {
+      /* v228 — a tarefa nova nasce no INBOX, com dono ou sem. Era
+         `col: S.enResp ? 'plan' : 'inbox'`, e com responsável ela pulava
+         o Inbox inteiro — então o botão de estruturar que a v227 pôs lá
+         nunca era visto. */
       S.ensaio.tarefas.push({ id:novoIdTarefa(), titulo, cli:S.enCli, resp:S.enResp,
-        col: S.enResp ? 'plan' : 'inbox', criada:Date.now(), prazo, tempoMs:0, desde:null });
+        col: 'inbox', criada:Date.now(), prazo, tempoMs:0, desde:null });
     }
     S.modal=null; som('toque'); render();
     toast(S.enResp ? `Tarefa no Plan, com ${membro(S.enResp)?.nome}.` : 'Solicitação no Inbox — o gestor destina.');
@@ -15323,7 +15331,11 @@ function abrirTarefaDeAjuste(p){
   if(!S.ensaio) S.ensaio = kbSemente();
   const jaTem = S.ensaio.tarefas.some(t => t.cardId === p.id && t.doCliente);
   if(jaTem) return;
-  const ultimo = p.alteracoes[p.alteracoes.length-1];
+  /* v228 — `(p.alteracoes||[])` na indexação e `p.alteracoes.length` na
+     conta era meia guarda: card com ajuste pendente e sem lista derruba
+     o desenho inteiro. Achado por uma prova que semeou o caso. */
+  const _alts = Array.isArray(p.alteracoes) ? p.alteracoes : [];
+  const ultimo = _alts[_alts.length-1];
   S.ensaio.tarefas.push({
     id: novoIdTarefa(), titulo: `Ajustar: ${p.t}`,
     cli: cliAtual().id, resp: null, col: 'inbox', cat: 'producao',
@@ -16051,7 +16063,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v227 · 21 set · estruturar começa no Inbox';
+const VERSAO_PROTOTIPO = 'v228 · 21 set · pôr dono não é estruturar';
 
 menuSheet = (function(orig){
   return function(){
@@ -16809,7 +16821,8 @@ function sincronizarJobs(){
 abrirTarefaDeAjuste = function(p){
   if(!S.ensaio) S.ensaio = kbSemente();
   sincronizarJobs();
-  const ultimo = (p.alteracoes||[])[p.alteracoes.length-1];
+  const _alts2 = Array.isArray(p.alteracoes) ? p.alteracoes : [];
+  const ultimo = _alts2[_alts2.length-1];
   let t = S.ensaio.tarefas.find(x => x.cardId===p.id && x.cli===cliAtual().id);
   if(!t){
     t = { id:novoIdTarefa(), titulo:p.t, cli:cliAtual().id, resp:p.resp||null,
@@ -16856,7 +16869,8 @@ agEnsaio = function(){
     const f = job ? faseDe(job) : null;
     const v = f ? voltaDe(f) : 0;
     const pedido = job && job.ajustePendente
-      ? (job.alteracoes||[])[job.alteracoes.length-1] : null;
+      ? (() => { const a = Array.isArray(job.alteracoes) ? job.alteracoes : [];
+                 return a[a.length-1]; })() : null;
     const i = job ? faseIdx(job) : 0;
     return `<div class="enCard ${pedido?'pedido':''}" data-entar="${t.id}" style="--catCor:${corSegura(cat.cor)}">
       <div class="tit">${esc(t.titulo)}</div>
@@ -41705,7 +41719,13 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
   }
   function jaEstruturado(p){
     if(!p) return;
-    if(p.porEstruturar !== undefined) delete p.porEstruturar;
+    /* v228 — SOLTO É `false`, NÃO APAGADO. Apagar devolvia o campo a
+       `undefined`, e `undefined` quer dizer "nunca foi carimbado" — o
+       carimbador da v228, que roda a cada desenho, punha a marca de
+       volta no desenho seguinte e o card voltava para o Inbox. A prova
+       da v227 pegou: três casos viraram vermelho de uma vez.
+       "Nunca vi" e "vi e soltei" precisam ser coisas diferentes. */
+    if(p.porEstruturar !== false) p.porEstruturar = false;
   }
   window.MaestroPorEstruturar = { porEstruturar, jaEstruturado, assina };
 
@@ -41816,5 +41836,81 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
       return r;
     };
   })(pintarCiclo);
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v228 — O CARD NASCE NO INBOX POR TODOS OS CAMINHOS.
+
+   O founder, testando a v227: "a parte de estruturar mais um card não
+   está aparecendo e criei uma nova tarefa e foi pra plan, não pra
+   inbox".
+
+   Os dois sintomas são a MESMA coisa, e a v227 só cobriu metade.
+
+   A v227 fez o card que nasce de `estruturarTarefa` ficar no Inbox até
+   ser escrito. Mas a tarefa com RESPONSÁVEL nunca chegava lá: ela nascia
+   direto no Plan (`col: S.enResp ? 'plan' : 'inbox'`). Como ele sempre
+   põe o responsável, o Inbox — e o botão que a v227 pôs nele — nunca
+   apareciam. E o "+ mais um card" pede um card existente, então também
+   não aparecia numa tarefa recém-criada.
+
+   O conserto da coluna está na origem (pôr dono deixou de empurrar para
+   o Plan). Falta aqui o TERCEIRO caminho de nascer card: o seletor
+   "＋ criar um card novo na pauta", dentro da janela de nova tarefa. Ele
+   monta o card à mão, sem passar por `estruturarTarefa`, então não
+   recebia o carimbo e ia direto para o Plan — o mesmo defeito, por outra
+   porta.
+
+   A regra, dita uma vez: **o que tira do Inbox é a pauta estar escrita.**
+   Não o dono, não o prazo, não o caminho por onde o card nasceu.
+   ================================================================== */
+(function(){
+  const M = window.MaestroPorEstruturar;
+  if(!M) return;
+
+  /* o card que nasce pelo seletor da janela de tarefa também guarda como
+     nasceu. `assina` é a mesma da v227: a marca é a assinatura. */
+  /* CARD QUE JÁ FOI AO CLIENTE NUNCA É "POR ESTRUTURAR".
+     A prova da v193 pegou isto antes do ar: o card volta do cliente com
+     pedido de alteração, volta a `rascunho`, e o repositor cria a tarefa
+     dele AGORA — então ela cai na janela de "acabou de nascer" e ia para
+     o Inbox. Mas esse card já foi escrito e já foi visto pelo cliente:
+     é trabalho em curso, não pauta em branco. O Inbox é para o que ainda
+     não foi estruturado, e "já saiu daqui uma vez" é a prova de que foi. */
+  function jaSaiuDaAgencia(p, t){
+    if(!p) return true;
+    if(p.enviadoEm || p.ajustePendente) return true;
+    if(Array.isArray(p.alteracoes) && p.alteracoes.length) return true;
+    if(p.revisao || p.revisadoPor || p.voltaDireta) return true;
+    if(t && (t.pedido || t.doCliente)) return true;
+    try{ if(typeof voltaDe === 'function' && typeof faseDe === 'function'
+            && voltaDe(faseDe(p)) > 1) return true; }catch(e){}
+    return false;
+  }
+
+  function carimbarRecemNascidos(){
+    try{
+      for(const t of ((S.ensaio && S.ensaio.tarefas) || [])){
+        if(!t || !t.cardId || !t.criada) continue;
+        /* só o que acabou de nascer: 8 segundos é folga de sobra para o
+           gesto, e curto o bastante para não pegar card antigo */
+        if(Date.now() - (+t.criada || 0) > 8000) continue;
+        const p = (typeof cardDaTarefa === 'function') ? cardDaTarefa(t) : null;
+        if(!p || p.porEstruturar !== undefined) continue;
+        try{ if(typeof faseDe === 'function' && faseDe(p) !== 'rascunho') continue; }catch(e){}
+        if(jaSaiuDaAgencia(p, t)) continue;
+        p.porEstruturar = M.assina(p);
+      }
+    }catch(e){}
+  }
+  window.MaestroJaSaiuDaAgencia = jaSaiuDaAgencia;
+  window.MaestroCardNasceNoInbox = { carimbarRecemNascidos };
+
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ try{ carimbarRecemNascidos(); }catch(e){} return orig.apply(this, arguments); };
+  })(render);
 })();
 </script>
