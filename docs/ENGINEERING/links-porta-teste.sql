@@ -110,6 +110,68 @@ select case when r is not null and r::text like '%EJUPcast Ep 20%'
   from (select public.maestro_link_card('n0', '101',
           ((public.maestro_link_lote('n0', :chave_ejup) -> 'dados' -> 'pauta' -> 0) ->> 'tok')) as r) t;
 
+-- =====================================================================
+-- O CASO DELE, DE 21/set: A MESMA CHAVE EM DUAS AGENCIAS.
+--
+-- O banco tinha DUAS agencias (`maestro` e uma nova) com os MESMOS seis
+-- clientes, os mesmos nomes e as mesmas chaves — a copia que a v220
+-- documentou, agora numa agencia nova. O card estava certo, em
+-- `texto_cli`, e o link abria vazio.
+-- =====================================================================
+\echo ''
+\echo '=== a copia: a chave da EJUP passa a existir em DUAS agencias ==='
+
+insert into public.pauta(org, cliente, dados) values
+ ('ag71d6cd233','__config__', jsonb_build_object(
+    'cliEdit', jsonb_build_object('n0', jsonb_build_object(
+       'nome','EJUP', 'chave', :chave_ejup)),     -- <<< A MESMA CHAVE
+    'cliFora', '[]'::jsonb)),
+ ('ag71d6cd233','n0', jsonb_build_object('pauta', '[]'::jsonb));
+
+-- PROVA 9 — o defeito, medido: a porta vira cara ou coroa
+select case when (select count(*) from (
+                select p.org from public.pauta p
+                 where p.cliente = '__config__'
+                   and p.dados->'cliEdit'->'n0'->>'chave' = :chave_ejup) x) = 2
+            then 'PROVA 9 ok    · reproduzido: a mesma chave resolve para DUAS agencias'
+            else 'PROVA 9 FALHOU · nao reproduziu a ambiguidade' end;
+
+select case when public.maestro_org_da_chave('n0', :chave_ejup) is not null
+            then 'PROVA 10 ok   · ANTES do conserto a porta escolhe uma agencia por sorteio ('
+                 || public.maestro_org_da_chave('n0', :chave_ejup) || ')'
+            else 'PROVA 10 FALHOU' end;
+
+\echo ''
+\echo '=== com o conserto: chave ambigua nao abre nada ==='
+\i docs/ENGINEERING/links-5-chave-ambigua.sql
+
+select case when public.maestro_org_da_chave('n0', :chave_ejup) is null
+            then 'PROVA 11 ok   · chave ambigua deixa de abrir — falha FECHADA'
+            else 'PROVA 11 FALHOU · ainda abriu (' ||
+                 public.maestro_org_da_chave('n0', :chave_ejup) || ')' end;
+
+select case when public.maestro_link_lote('n0', :chave_ejup) is null
+            then 'PROVA 12 ok   · e o lote tambem recusa, em vez de mostrar a agencia errada'
+            else 'PROVA 12 FALHOU · o lote abriu com chave ambigua' end;
+
+-- PROVA 13 — e a saida que destrava o founder: gerar outro link.
+-- Chave nova na agencia de verdade volta a ser unica, e tudo funciona.
+update public.pauta
+   set dados = jsonb_set(dados, '{cliEdit,n0,chave}', to_jsonb('nova9chave8unica7x'::text))
+ where org = 'maestro' and cliente = '__config__';
+
+select case when jsonb_array_length(
+              public.maestro_link_lote('n0','nova9chave8unica7x') -> 'dados' -> 'pauta') = 2
+            then 'PROVA 13 ok   · gerar outro link destrava na hora: a chave volta a ser unica'
+            else 'PROVA 13 FALHOU · ' || coalesce(
+              left(public.maestro_link_lote('n0','nova9chave8unica7x')::text, 150), 'null') end;
+
+-- PROVA 14 — e a chave repetida da agencia nova continua sem abrir
+select case when public.maestro_link_lote('n0', :chave_ejup) is null
+               or (public.maestro_link_lote('n0', :chave_ejup) -> 'dados' -> 'pauta') = '[]'::jsonb
+            then 'PROVA 14 ok   · a copia nao abre a pauta de ninguem'
+            else 'PROVA 14 FALHOU · a copia abriu algo' end;
+
 -- ---------------------------------------------------------------------
 -- E AGORA O PERIGO: rodar o arquivo ANTIGO por cima.
 -- `links-anonimos.sql` define `maestro_link_lote` com a MESMA assinatura
