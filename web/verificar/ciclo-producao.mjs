@@ -69,7 +69,13 @@ const tid = await pg.evaluate(() => S.ensaio.tarefas[S.ensaio.tarefas.length - 1
 const tarefa = await pg.evaluate(tid => { const t = S.ensaio.tarefas.find(x => x.id === tid); return { col: t.col, projeto: t.projeto, cli: t.cli, resp: t.resp, cardId: t.cardId || null }; }, tid);
 checa('a tarefa nasce no Inbox, sem dono, com projeto e sem card ainda',
       tarefa.col === 'inbox' && !tarefa.resp && !!tarefa.projeto && tarefa.cli === 'cj' && !tarefa.cardId);
-checa('no Inbox o card diz que falta o responsável', /Falta o responsável/.test(await pg.locator(cardSel(tid) + ' .cyEtapa').textContent().catch(() => '')));
+/* v227: o texto mudou de propósito. Antes: "Ideia lançada. Falta o
+   responsável — ele estrutura no Plan". Estruturar deixou de ser coisa do
+   Plan, então a frase que mandava esperar saiu e ficou só o que é útil. */
+checa('no Inbox o card diz que falta o responsável',
+      /Sem responsável ainda/.test(await pg.locator(cardSel(tid) + ' .cyEtapa').textContent().catch(() => '')));
+checa('e o Inbox já oferece estruturar a pauta (v227)',
+      await pg.locator(cardSel(tid) + ' [data-cyestrutura]').count() === 1);
 
 /* ---------- 2. responsável → Plan → estruturar a pauta ------------------ */
 const designer = await pg.evaluate(() => membroId(S.equipe.find(m => m.papel === 'Designer')));
