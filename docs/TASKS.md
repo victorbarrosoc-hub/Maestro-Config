@@ -1,7 +1,7 @@
 # TASKS.md — Maestro Roadmap
 
 Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 iniciados — **o código roda contra banco**
-Última atualização: 2026-08-16
+Última atualização: 2026-09-21
 
 ---
 
@@ -200,6 +200,83 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 
 ## Sprint 13 — MVP
 - [ ] Deploy · Landing Page · Documentação · Lançamento
+
+---
+
+## Revisão geral de 19/set — o que ficou ABERTO
+
+Detalhe, causa e o caminho de conserto em
+`docs/ENGINEERING/REVISAO_GERAL_2026-09-19.md`. Tudo aqui foi **verificado
+no código**; o que foi medido num navegador ou num Postgres está marcado.
+
+### No banco, por conta do founder
+- [ ] Rodar `docs/ENGINEERING/seguranca-1-fechar-o-banco.sql` (passo 0
+      primeiro, só leitura) — fecha `presenca` e `push_inscricoes` (hoje em
+      `using(true)` e sem `org`), tira a listagem pública do bucket `midia`
+      e amarra a fila de e-mail à agência. 20 provas em `seguranca-1-teste.sql`.
+- [ ] Apagar o bloco `pedido.teste` da Edge Function `enviar-avisos`, ou
+      exigir a chave de serviço — hoje é um relay aberto a quem tem a chave
+      anônima, que está na página, sem limite, pelo domínio verificado.
+- [ ] Backup de verdade: não há `pg_dump` agendado nem PITR. Hoje a
+      recuperação é "alguém rodou um `create table as` antes de apagar".
+- [x] ~~Desligar o cadastro aberto~~ — feito em 21/set.
+- [x] ~~`agencias-3` e `agencias-2`~~ — a inspeção de 21/set mostrou que já
+      estavam aplicados. O `CLAUDE.md` dizia o contrário.
+
+### Bugs de estado e sincronia (verificados, não consertados)
+- [ ] Acima de 1,5 MB a **base da sincronia é descartada** e a mescla
+      item-a-item desliga inteira: o quadro do Ensaio de um aparelho
+      substitui o do outro. O comentário que justifica o corte diz que "o
+      hash basta" — não basta.
+- [ ] **Nada é descarregado quando a aba esconde**: até 2,6s de trabalho não
+      chega ao banco. O iPhone suspende a aba ao voltar à tela inicial.
+- [ ] `aplicarEstado` pode lançar, o erro é engolido, e o aparelho registra
+      o banco como "já visto" — divergência permanente e invisível.
+- [ ] Exceção na mescla faz o banco **substituir a pauta local inteira**.
+- [ ] A **fila de decisões do cliente falha em silêncio** se o
+      `localStorage` estiver cheio, **depois** de a tela dizer "a agência já
+      sabe".
+- [ ] A **lixeira do cliente** perde itens na mescla (itens sem `id`).
+- [ ] `cliFora` (clientes excluídos) perde um lado no pacote.
+- [ ] O novo job do Ensaio é achado por `tarefas[length-1]` em quatro
+      callbacks escalonados, com um `render()` no meio.
+- [ ] `S.pautas[cli]` é substituído por um subconjunto **filtrado durante o
+      render** (3 lugares). Sobrevive porque o render é síncrono hoje.
+
+### No `apps/api` — antes do `apps/web`
+Sete furos **provados por HTTP**. Nada disso está no ar (a API não serve o
+protótipo), mas é o que as telas vão herdar.
+- [ ] Quem pode convidar **se promove a SUPER_ADMIN** numa requisição.
+- [ ] O papel CLIENT **não é escopado a um cliente**: o aprovador de um lê,
+      aprova e **assina o termo** do lote de outro cliente da mesma agência.
+- [ ] Id vindo do corpo **atravessa organizações** (nenhuma FK é composta).
+- [ ] **Duas decisões no mesmo item** saltam a segunda volta inteira.
+- [ ] A decisão aceita lote em **rascunho** e lote **já fechado**.
+- [ ] A agência **aprova a própria estratégia** por PATCH.
+- [ ] O cliente **lê rascunho e todo o histórico de versões** por id.
+- [ ] O **link mágico volta no corpo da resposta** sempre que `NODE_ENV` não
+      é exatamente `production` — e o default é ausente.
+
+### Texto e desenho — a próxima leva (v228)
+Medido renderizando as telas: 284 toasts (46 não cabem nos 3,2s que ficam na
+tela), 257 parágrafos explicativos, 51 cartões que só ensinam, um card do
+Ensaio com 10 selos e 41% da altura do celular, nove nomes para a mesma
+coisa, 25 estilos de botão numa tela só.
+- [ ] Toast de uma frase, no máximo 12 palavras (46 a encurtar).
+- [ ] Apagar as oito dicas de rodapé que ensinam a clicar.
+- [ ] O card do Ensaio de 10 selos para 5.
+- [ ] Rótulos de fase curtos (`Aprovação da postagem (cliente)` → `Com o
+      cliente · peça`).
+- [ ] O modal de estruturar a pauta em tela cheia no celular, com cabeçalho
+      e rodapé fixos — hoje o botão primário fica 1.440px abaixo da dobra.
+- [ ] Tirar a monoespaçada da interface (285 usos contra 14 da de texto).
+- [ ] Vocabulário: `card` para o objeto, `Quadro` no lugar de Ensaio,
+      `Calendário` em todo lugar. Aposentar `job`, `peça`, `postagem`.
+- [ ] Navegação de 5 itens + "Mais", e o Calendário no topo (hoje a três
+      toques, sendo a tela de todo dia).
+- [ ] Datas nativas em formato americano (`09/21/2026`) num produto pt-BR.
+- [ ] Contraste: rótulo de grupo a 2,31:1 (o mínimo é 4,5:1).
+- [ ] O andaime de protótipo que o cliente vê: `← Site`, `Ato 1 de 4`.
 
 ---
 
