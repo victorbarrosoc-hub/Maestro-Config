@@ -4,7 +4,7 @@ Version: 0.5
 Status: Implementação — blocos 1, 2, 3 e 5 da API prontos, verificados por HTTP
         · D-080 resolvida (a fase substitui o status): blocos 4, 6, 7 e 8 liberados
 Codename: Project Symphony
-Última atualização: 2026-09-19
+Última atualização: 2026-09-21
 
 > **Retomando o projeto? Leia [`docs/HANDOFF.md`](docs/HANDOFF.md) primeiro.**
 > Ele é o mapa: estado do código, o que já foi verificado, o que está aberto
@@ -299,6 +299,31 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (21 set, v227):** "o estruturar mais de um card não está
+aparecendo". Duas coisas: no Inbox não havia botão nenhum (o "estruturar a
+pauta" só nascia em Plan e Do, e o "+ mais um card" da v222 exigia um card
+que ainda não existia), e estruturar empurrava o card para o Plan na hora —
+`t.col` é leitura da FASE, o card nasce em `rascunho`, e rascunho mora no
+Plan. Agora o card que nasce do Ensaio guarda a ASSINATURA do que era ao
+nascer, e enquanto nada mudar a tarefa lê `inbox`; salvar a pauta, escrever
+por outro caminho ou mover com a seta soltam. **A prova pegou a primeira
+versão antes do ar:** ela perguntava "tem conteúdo?" e o card JÁ NASCE com o
+briefing preenchido a partir do descritivo da tarefa (v191) — o sinal certo
+não é "tem texto", é "mudou desde que nasceu". 26 provas em
+`web/verificar/v227-estruturar-comeca-no-inbox.mjs`.
+**Fechado (19 set, v225–v226):** a revisão geral pedida pelo founder, em
+cinco frentes. **v225** — 31 pontos levavam endereço do banco para
+`src`/`href` sem guarda e 17 levavam cor crua para `style=""`; `esc` e
+`urlSegura` existiam e estavam certos desde a v140, faltava chamá-los. Um
+href montado só com `esc` aceitava `javascript:` inteiro (nasceu o
+`hrefSeguro`); "Sair da conta" tirava a sessão e deixava os dados;
+o painel `?diag` ia para produção. **v226** — lista sem `id` não é unida
+item a item, a mescla ESCOLHE UM LADO INTEIRO: as mensagens das Conversas,
+os pedidos de alteração e o histórico da tarefa estavam assim. No celular o
+compositor das Conversas ficava atrás da barra de baixo (a janela terminava
+29px abaixo da tela) e não dava para enviar pelo botão; e a sessão de link
+gravava a pauta recortada por cima do cache da agência. Detalhe e a lista do
+que ficou aberto em `docs/ENGINEERING/REVISAO_GERAL_2026-09-19.md`.
 **Fechado (19 set, v224):** dois cards da mesma demanda no Check com "Este job
 perdeu o card". Não era o "+ mais um card" (v222): era uma CORRIDA entre a linha
 da pauta e a linha do quadro no banco. A carga aplica a pauta, redesenha, e só
@@ -504,6 +529,21 @@ fechadura nova (antes disso, conta nova enxergaria a base inteira). 43 provas em
 `web/verificar/v197-mais-de-uma-agencia.mjs`. Uma lição do caminho: a porta de
 criar agência é uma AFIRMAÇÃO, e só se afirma o que o banco afirmou — resposta
 estranha, erro ou função ausente é "não sei", e não sei não abre porta.
+**FECHADO (21 set) — a inspeção do banco desmentiu o papel.** As três
+consultas do `seguranca-1-fechar-o-banco.sql` (passo 0, só leitura) rodadas
+no banco de produção mostraram que a `pauta` JÁ está com a chave
+`(org, cliente)` e com RLS por agência nos três comandos
+(`org = maestro_org()` em select, insert e update), e que o índice antigo
+`pauta_cliente_idx` não existe mais. Ou seja: **as partes 2 e 3 já foram
+aplicadas** e o que está escrito abaixo ficou desatualizado. Fica o
+registro, e a lição, que é a v197 pelo avesso: o documento disse uma coisa
+e o banco disse outra — antes de agir sobre estado de banco, perguntar ao
+banco. **O que de fato resta** é o `docs/ENGINEERING/seguranca-1-fechar-o-banco.sql`:
+`presenca` e `push_inscricoes` ainda estão em `using(true)` e sem coluna
+`org`, o bucket `midia` ainda deixa LISTAR sem login, e a fila de avisos
+ainda aceita destinatário livre. 17 provas num Postgres de verdade em
+`seguranca-1-teste.sql`. Cadastro aberto desligado em 21/set.
+
 **Aberto (10 set): a PARTE 3 do SQL das agências.** Criar a segunda agência
 falha com `409 · duplicate key value violates unique constraint
 "pauta_cliente_idx"`. A parte 2 trocou a CHAVE PRIMÁRIA, mas havia além dela um

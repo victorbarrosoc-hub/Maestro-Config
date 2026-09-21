@@ -1,9 +1,126 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.41
+Version: 0.5.42
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.42 — 2026-09-21
+
+**Status:** Concluída
+**Objetivo:** a revisão geral que o founder pediu — segurança, bugs de
+estado, texto, design e backend — e o fluxo de estruturar começando onde
+a tarefa nasce.
+
+### v227 — estruturar começa no Inbox
+
+*"O estruturar mais de um card não está aparecendo. A ideia é que quando
+crio uma nova tarefa, vá pro inbox e quando estruturar mais de um card ou
+estruturar o card for criado, continua em inbox, só depois de estruturar
+que vai pra plan."*
+
+Duas coisas, e a primeira explica a segunda.
+
+**No Inbox não havia botão nenhum.** O cartão sem card dizia *"Ideia
+lançada. Falta o responsável — ele estrutura no Plan"*, e o botão
+"estruturar a pauta →" só nascia em Plan e Do. O "+ mais um card" (v222)
+exigia um card **já existente** (`if(!p) return`), então também não
+aparecia. Quem criava uma tarefa e queria estruturar ali mesmo não tinha
+por onde.
+
+**E estruturar empurrava o card para o Plan na hora.** `t.col` é leitura
+da FASE do card (v16635), o card nasce em `rascunho`, e
+`FASE_COL['rascunho']` é `plan`. O card pulava de coluna no instante em
+que nascia, antes de ter uma linha escrita.
+
+A regra nova: o card que nasce do Ensaio guarda a **assinatura do que era
+ao nascer**, e enquanto nada mudar a tarefa lê `inbox`. Salvar a pauta
+solta, escrever por outro caminho solta, e a seta para a direita solta.
+
+**A prova pegou a primeira versão antes do ar:** ela perguntava "tem
+conteúdo?" para não carimbar card já escrito — mas o card **já nasce com o
+briefing preenchido** a partir do descritivo da tarefa (v191), então a
+marca nunca era posta. O sinal certo não é "tem texto", é "mudou desde que
+nasceu".
+
+26 provas em `web/verificar/v227-estruturar-comeca-no-inbox.mjs`.
+
+### v226 — nada que a mescla junta pode ficar sem nome
+
+Lista sem `id` não é unida item a item: a mescla de três lados **escolhe um
+lado inteiro**. Medido chamando a própria mescla da página:
+
+```
+sem id, prefere local  → ["oi", "MINHA do celular"]     ← a dela sumiu
+sem id, prefere remoto → ["oi", "DELA do desktop"]      ← a minha sumiu
+com id                 → ["oi", "DELA", "MINHA"]
+```
+
+Três listas estavam assim: as **mensagens das Conversas** (só o caminho com
+anexo tinha `id`), os **pedidos de alteração** (o do revisor apagava o do
+cliente) e o **histórico da tarefa**. O que já está no banco sem `id` ganha
+um id **estável**, derivado do conteúdo — os dois aparelhos chegam ao mesmo
+id para a mesma linha, senão duplicaria em vez de unir.
+
+Junto: a sessão de link gravava a pauta recortada por cima do cache da
+agência; no celular o compositor das Conversas ficava atrás da barra de
+baixo (a janela terminava 29px abaixo da tela) e não dava para enviar pelo
+botão; upload de material que falha passa a dizer; a aba de semana da v221
+viajava entre aparelhos; o "hoje" do Estúdio saía de UTC; e o logotipo da
+porta era preto sobre fundo escuro.
+
+29 provas em `web/verificar/v226-nada-que-se-junta-perde-o-nome.mjs`.
+
+### v225 — nada entra na tela sem passar pela guarda
+
+**31 pontos** levavam um endereço vindo do banco para `src=`, `poster=` ou
+`href=` sem guarda, e **17** levavam uma cor crua para `style=""`. `esc` e
+`urlSegura` existiam e estavam **certos** desde a v140 — faltava chamá-los.
+Em dois casos o ponto guardado e o desguardado estavam na mesma expressão,
+a duas linhas um do outro.
+
+- `esc` fecha a aspa mas **não olha o esquema**: um href montado só com
+  `esc` aceitava `javascript:alert(1)` inteiro. Nasceu o `hrefSeguro`.
+- cor crua dentro de `style=""` quebra o atributo. Nasceu o `corSegura`.
+- **"Sair da conta" tirava a sessão e deixava os dados** — as cinco chaves
+  do aparelho ficavam, e o diálogo oferecia "continuar sem entrar", que
+  desenhava tudo de novo. Num celular emprestado, sair não saía.
+- o painel `?diag` ia para produção com e-mail, org e respostas cruas do
+  banco, montado sem escapar.
+
+A suíte lê a **fonte** e reprova qualquer ponto novo sem guarda: auditoria
+não segura isso, prova segura. 24 provas em
+`web/verificar/v225-nada-entra-sem-guarda.mjs`.
+
+### Segurança do banco
+
+`docs/ENGINEERING/seguranca-1-fechar-o-banco.sql`, com **17 provas num
+Postgres de verdade** (`seguranca-1-teste.sql`): fecha as cópias de
+segurança em `public` (o PostgREST publica toda tabela do schema, e o
+raciocínio escrito nos arquivos — *"o app não a enxerga"* — estava errado),
+tira a listagem pública do bucket `midia`, amarra a fila de e-mail à
+agência de quem enfileira, e dá `org` a `presenca` e `push_inscricoes`.
+
+Uma das provas pegou um erro antes do ar: o campo do aprovador é `mail`,
+não `email` — a primeira versão recusaria **todo** e-mail legítimo.
+
+E o `agencias-4-tirar-o-que-vazou.sql` foi corrigido: o critério de remoção
+era "mesmo id **e** mesmo nome", e a chave do cliente é posicional (`n0`,
+`n1` — a causa da v178) com nomes que a semente repete. Agora o critério é
+a **chave do link**, 22 caracteres de `crypto`, única no banco — prova de
+cópia, não coincidência. A cópia de segurança também nasce fechada.
+
+### O papel estava errado sobre o banco
+
+A inspeção de 21/set mostrou que a `pauta` **já** está com a chave
+`(org, cliente)` e RLS por agência nos três comandos, e que o índice antigo
+que travava a migração não existe mais. As partes 2 e 3 das agências já
+tinham sido aplicadas; o `CLAUDE.md` dizia o contrário.
+
+**A lição é a v197 pelo avesso:** o documento disse uma coisa e o banco
+disse outra. Antes de agir sobre estado de banco, perguntar ao banco.
 
 ---
 

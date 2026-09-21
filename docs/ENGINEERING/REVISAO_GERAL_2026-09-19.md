@@ -87,22 +87,32 @@ Junto:
 
 Ordem importa. O item 1 é o mais grave de toda a revisão.
 
-### 1. CRÍTICO — a RLS que está no ar é `using (true)`
-A política que o banco tem hoje (`SUPABASE_FECHAR_A_BRECHA.md`, rodada em
-4/set) diz `using (true)`: **qualquer conta autenticada lê e escreve a
-linha de qualquer agência.** As políticas por agência só existem no
-`agencias-2`, que está travado no `agencias-3`.
+### 1. ~~CRÍTICO — a RLS que está no ar é `using (true)`~~ — JÁ FECHADO
+**Corrigido em 21/set, pela inspeção do banco de verdade.** Esta revisão
+afirmou, com base no `CLAUDE.md` e no `SUPABASE_FECHAR_A_BRECHA.md`, que a
+`pauta` ainda estava em `using (true)`. **Não estava.** O PASSO 0 rodado no
+banco de produção devolveu:
 
-O filtro `org=eq.` que o app manda é do lado do navegador. Quem ataca não
-usa o navegador — usa a chave anônima, que está no fonte da página.
+| política | comando | regra |
+|---|---|---|
+| `pauta_select_da_minha_agencia` | SELECT | `org = maestro_org()` |
+| `pauta_insert_da_minha_agencia` | INSERT | `org = maestro_org()` |
+| `pauta_update_da_minha_agencia` | UPDATE | `org = maestro_org()` nos dois lados |
 
-**O que fazer, nesta ordem:**
-1. `docs/ENGINEERING/agencias-3-tirar-a-chave-velha.sql`
-2. `docs/ENGINEERING/agencias-2-virar-a-chave.sql`
+E a chave primária é `pauta_pkey ON public.pauta USING btree (org, cliente)`
+— a chave composta. Ou seja: **o `agencias-2-virar-a-chave.sql` já foi
+aplicado**, e o índice antigo que travava a migração (`pauta_cliente_idx`)
+não existe mais. O `CLAUDE.md` estava desatualizado nesse ponto.
 
-**Enquanto isso não rodar**, o remendo honesto: Supabase →
-Authentication → Providers → Email → **"Enable signup" OFF**. Reduz de
-"qualquer pessoa na internet" para "quem você convidou".
+**A lição é a mesma da v197, agora do outro lado:** o documento disse uma
+coisa e o banco disse outra. Antes de agir sobre estado de banco, perguntar
+ao banco. Se eu tivesse mandado rodar `agencias-3` e `agencias-2` sem
+inspecionar, teria mexido numa migração que já estava de pé, em produção,
+com dado de cliente real dentro.
+
+O cadastro aberto foi desligado em 21/set (Authentication → Sign In /
+Providers → Email → "Enable signup" OFF) — continua sendo uma boa ideia
+enquanto a conta não tem fluxo de convite próprio.
 
 ### 2. CRÍTICO — as cópias de segurança são servidas pela API
 As tabelas `pauta_backup_*` e `config_backup_*` moram em `public` sem RLS.
@@ -312,9 +322,10 @@ exceção, lê-se como "a tela que alguém refez depois".
 
 ## 6. A ORDEM QUE EU FARIA
 
-**Hoje, por você, no Supabase:** desligar o cadastro aberto · rodar o
-`seguranca-1-fechar-o-banco.sql` (passo 0 primeiro) · `agencias-3` e
-`agencias-2`.
+**Hoje, por você, no Supabase:** ~~desligar o cadastro aberto~~ (feito em
+21/set) · ~~`agencias-3` e `agencias-2`~~ (a inspeção mostrou que já estão
+aplicados) · rodar o `seguranca-1-fechar-o-banco.sql`, que é o que de fato
+resta: `presenca`, `push_inscricoes`, o bucket e a fila de e-mail.
 
 **Próxima leva de código (v227):** os toasts de uma frase · apagar as oito
 dicas que ensinam a clicar · o card do Ensaio de 10 selos para 5 · os
