@@ -173,6 +173,46 @@ console.log('\n5. pôr dono numa tarefa que já existe não a empurra para o Pla
      `continua no Inbox depois de ganhar dono (${r.antes} → ${r.depois})`);
 }
 
+console.log('\n6. card que JÁ FOI ao cliente nunca volta para o Inbox');
+{
+  /* A prova da v193 pegou isto antes do ar: o card volta do cliente com
+     pedido de alteração, volta a `rascunho`, e o repositor cria a tarefa
+     dele AGORA — caindo na janela de "acabou de nascer". Mas esse card já
+     foi escrito e já foi visto: é trabalho em curso, não pauta em branco.
+     O card é montado pelo caminho de verdade e só então recebe a marca do
+     que já aconteceu com ele. */
+  const casos = [
+    ['pediu alteração', 'alteracoes'],
+    ['já foi enviado',  'enviadoEm'],
+    ['ajuste pendente', 'ajustePendente'],
+    ['revisor opinou',  'revisao']
+  ];
+  for(const [nome, campo] of casos){
+    await limpar(); await pag.waitForTimeout(250);
+    const r = await pag.evaluate(campo => {
+      const c = CLIS()[0];
+      const t = { id: novoIdTarefa(), titulo:'Card que já rodou', cli:c.id, resp:null,
+        col:'inbox', cat:'producao', criada: Date.now(), tempoMs:0, desde:null };
+      S.ensaio.tarefas.push(t);
+      estruturarTarefa(t.id);                      /* card pelo caminho de sempre */
+      S.modal = null; renderLayer();
+      const p = cardDaTarefa(t);
+      p.texto = 'já estava escrito';
+      delete p.porEstruturar;                      /* como se viesse do banco */
+      /* e o que prova que ele já saiu daqui */
+      if(campo === 'alteracoes')      p.alteracoes = [{ id:'a1', por:'Roberto', oque:'trocar a foto' }];
+      if(campo === 'enviadoEm')       p.enviadoEm = Date.now() - 60000;
+      if(campo === 'ajustePendente')  p.ajustePendente = true;
+      if(campo === 'revisao')         p.revisao = { nota:'ilegível no celular' };
+      t.criada = Date.now();                       /* tarefa recriada agora, como o repositor faz */
+      render();
+      return { col: t.col, marca: typeof p.porEstruturar };
+    }, campo);
+    ok(r.col !== 'inbox' && r.marca !== 'string',
+       `${nome}: fica no quadro, fora do Inbox (${r.col})`);
+  }
+}
+
 ok(erros.length === 0, 'nenhum erro de página (' + (erros[0] || '') + ')');
 await navegador.close(); srv.close();
 console.log(`\n${passou} passaram · ${falhou} falharam`);

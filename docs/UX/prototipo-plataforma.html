@@ -15263,7 +15263,11 @@ function abrirTarefaDeAjuste(p){
   if(!S.ensaio) S.ensaio = kbSemente();
   const jaTem = S.ensaio.tarefas.some(t => t.cardId === p.id && t.doCliente);
   if(jaTem) return;
-  const ultimo = p.alteracoes[p.alteracoes.length-1];
+  /* v228 — `(p.alteracoes||[])` na indexação e `p.alteracoes.length` na
+     conta era meia guarda: card com ajuste pendente e sem lista derruba
+     o desenho inteiro. Achado por uma prova que semeou o caso. */
+  const _alts = Array.isArray(p.alteracoes) ? p.alteracoes : [];
+  const ultimo = _alts[_alts.length-1];
   S.ensaio.tarefas.push({
     id: novoIdTarefa(), titulo: `Ajustar: ${p.t}`,
     cli: cliAtual().id, resp: null, col: 'inbox', cat: 'producao',
@@ -16749,7 +16753,8 @@ function sincronizarJobs(){
 abrirTarefaDeAjuste = function(p){
   if(!S.ensaio) S.ensaio = kbSemente();
   sincronizarJobs();
-  const ultimo = (p.alteracoes||[])[p.alteracoes.length-1];
+  const _alts2 = Array.isArray(p.alteracoes) ? p.alteracoes : [];
+  const ultimo = _alts2[_alts2.length-1];
   let t = S.ensaio.tarefas.find(x => x.cardId===p.id && x.cli===cliAtual().id);
   if(!t){
     t = { id:novoIdTarefa(), titulo:p.t, cli:cliAtual().id, resp:p.resp||null,
@@ -16796,7 +16801,8 @@ agEnsaio = function(){
     const f = job ? faseDe(job) : null;
     const v = f ? voltaDe(f) : 0;
     const pedido = job && job.ajustePendente
-      ? (job.alteracoes||[])[job.alteracoes.length-1] : null;
+      ? (() => { const a = Array.isArray(job.alteracoes) ? job.alteracoes : [];
+                 return a[a.length-1]; })() : null;
     const i = job ? faseIdx(job) : 0;
     return `<div class="enCard ${pedido?'pedido':''}" data-entar="${t.id}" style="--catCor:${corSegura(cat.cor)}">
       <div class="tit">${esc(t.titulo)}</div>
@@ -41799,6 +41805,24 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
 
   /* o card que nasce pelo seletor da janela de tarefa também guarda como
      nasceu. `assina` é a mesma da v227: a marca é a assinatura. */
+  /* CARD QUE JÁ FOI AO CLIENTE NUNCA É "POR ESTRUTURAR".
+     A prova da v193 pegou isto antes do ar: o card volta do cliente com
+     pedido de alteração, volta a `rascunho`, e o repositor cria a tarefa
+     dele AGORA — então ela cai na janela de "acabou de nascer" e ia para
+     o Inbox. Mas esse card já foi escrito e já foi visto pelo cliente:
+     é trabalho em curso, não pauta em branco. O Inbox é para o que ainda
+     não foi estruturado, e "já saiu daqui uma vez" é a prova de que foi. */
+  function jaSaiuDaAgencia(p, t){
+    if(!p) return true;
+    if(p.enviadoEm || p.ajustePendente) return true;
+    if(Array.isArray(p.alteracoes) && p.alteracoes.length) return true;
+    if(p.revisao || p.revisadoPor || p.voltaDireta) return true;
+    if(t && (t.pedido || t.doCliente)) return true;
+    try{ if(typeof voltaDe === 'function' && typeof faseDe === 'function'
+            && voltaDe(faseDe(p)) > 1) return true; }catch(e){}
+    return false;
+  }
+
   function carimbarRecemNascidos(){
     try{
       for(const t of ((S.ensaio && S.ensaio.tarefas) || [])){
@@ -41809,10 +41833,12 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
         const p = (typeof cardDaTarefa === 'function') ? cardDaTarefa(t) : null;
         if(!p || p.porEstruturar !== undefined) continue;
         try{ if(typeof faseDe === 'function' && faseDe(p) !== 'rascunho') continue; }catch(e){}
+        if(jaSaiuDaAgencia(p, t)) continue;
         p.porEstruturar = M.assina(p);
       }
     }catch(e){}
   }
+  window.MaestroJaSaiuDaAgencia = jaSaiuDaAgencia;
   window.MaestroCardNasceNoInbox = { carimbarRecemNascidos };
 
   if(typeof render === 'function') render = (function(orig){
