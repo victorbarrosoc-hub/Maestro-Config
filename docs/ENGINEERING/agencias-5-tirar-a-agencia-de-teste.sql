@@ -50,12 +50,33 @@ select '0.1 agências' as passo,
  group by p.org, c.dados -> 'agencia' ->> 'nome'
  order by cards desc, clientes desc;
 
--- 0.2 — QUEM ENTRA EM CADA AGÊNCIA. Um login pertence a uma agência só
---       (`maestro_membros.user_id` é chave primária). A agência que
---       ficar precisa ter pelo menos um login, senão não há porta.
-select '0.2 logins' as passo, m.org, u.email, m.papel, m.criado_em
+-- 0.2 — QUEM ENTRA EM CADA AGÊNCIA, e em qual.
+--       Um login pertence a uma agência SÓ (`maestro_membros.user_id` é
+--       chave primária), então é por aqui que um e-mail conhecido
+--       ("esse é o login da ZRO") revela qual `org` é aquela agência.
+--       Duas coisas para conferir nesta saída:
+--         · o SEU e-mail tem de estar na agência que FICA. Se estiver na
+--           outra, remover a outra tira a sua porta de entrada — veja o
+--           item 4 no fim deste arquivo antes de rodar o PASSO 1.
+--         · CUIDADO com uma armadilha: o `agencias-1-preparar.sql`
+--           colocou TODO login que já existia na agência `maestro`. Um
+--           login criado antes daquele arquivo está na `maestro`
+--           independentemente de que agência a pessoa usa no dia a dia —
+--           então, se os dois e-mails aparecerem na MESMA `org`, o
+--           e-mail não distingue as duas, e quem distingue é o nome e a
+--           data de gravação do 0.1.
+select '0.2 logins' as passo,
+       m.org,
+       coalesce(nullif(btrim(c.dados -> 'agencia' ->> 'nome'), ''), '(sem nome)') as nome_da_agencia,
+       u.email,
+       m.papel,
+       m.criado_em,
+       (select coalesce(sum(case when jsonb_typeof(p.dados -> 'pauta') = 'array'
+                                 then jsonb_array_length(p.dados -> 'pauta') else 0 end), 0)
+          from public.pauta p where p.org = m.org) as cards_da_agencia
   from public.maestro_membros m
   left join auth.users u on u.id = m.user_id
+  left join public.pauta c on c.org = m.org and c.cliente = '__config__'
  order by m.org, m.criado_em;
 
 -- 0.3 — OS CLIENTES QUE ESTÃO NAS DUAS COM A MESMA CHAVE.
