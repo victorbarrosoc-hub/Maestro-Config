@@ -585,6 +585,9 @@ agência de teste (`zro.contato@gmail.com`): sobrou uma agência só — `maestr
 voltaram a resolver para a EJUP com a chave que o cliente já tem; nenhum link
 foi trocado. O `links-5` entrou em seguida, então a porta agora falha fechada:
 chave que casar em duas agências não abre nada.
+**E o founder conferiu no caminho de verdade**, abrindo o link do cliente no
+celular: "tudo ok". É esta a verificação que vale — as outras eram o banco
+confirmando o banco.
 **E a trava 2 pegou o erro de quem escreveu o arquivo.** A primeira versão
 trazia o identificador da agência TRANSCRITO de um print — `ag71d6cd233`, 11
 caracteres, quando `maestro_criar_agencia` gera 12 (`ag` + 10 de md5). O
