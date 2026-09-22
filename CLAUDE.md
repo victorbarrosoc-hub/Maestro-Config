@@ -579,6 +579,10 @@ nome não distingue uma da outra. Quem protege contra inverter as duas é a
 contagem de cards (0 contra 40), e foi acrescentada a 4b — a que fica tem de
 ter trabalho dentro. Provado no formato do banco dele: invertido, com as duas
 chamadas "EJUP", o arquivo recusa (provas 27–31).
+**APLICADO no banco de produção em 22/set.** Sobrou uma agência só —
+`maestro`, 13 linhas — e a consulta de chaves repetidas devolve ZERO. Os seis
+links voltaram a resolver para a EJUP com a chave que o cliente já tem; nenhum
+link foi trocado.
 **E a trava 2 pegou o erro de quem escreveu o arquivo.** A primeira versão
 trazia o identificador da agência TRANSCRITO de um print — `ag71d6cd233`, 11
 caracteres, quando `maestro_criar_agencia` gera 12 (`ag` + 10 de md5). O
