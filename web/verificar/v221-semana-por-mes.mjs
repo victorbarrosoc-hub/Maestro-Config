@@ -83,6 +83,15 @@ await pag.evaluate(() => {
 });
 await pag.waitForTimeout(700);
 
+/* v231: a fila de semanas ganhou um chip "Todas" na frente. Ele é uma
+   aba de verdade e conta como aba — mas NÃO é uma semana. Onde esta
+   suíte fala de "a semana N", ela passa a pegar da lista sem ele; onde
+   fala da FILA, continua contando tudo. Filtrar aqui, e não somar 1 nos
+   índices, é o que mantém a prova legível se amanhã entrar outro chip. */
+const idsDasSemanas = () => pag.evaluate(() =>
+  [...document.querySelectorAll('[data-ptabasem]')]
+    .map(b => b.dataset.ptabasem).filter(id => id !== 'todas'));
+
 const abas = () => pag.evaluate(() => ({
   meses: [...document.querySelectorAll('[data-ptabames]')].map(b => ({
     id: b.dataset.ptabames, rot: b.textContent.replace(/\s+/g,' ').trim(), on: b.classList.contains('on') })),
@@ -111,17 +120,18 @@ console.log('\n2. setembro tem CINCO semanas, e a aba diz os dias que mostra');
   await pag.evaluate(() => { S.ptMes = null; S.ptSemana = null; render(); });
   await pag.click('[data-ptabames="2026-09"]'); await pag.waitForTimeout(400);
   const a = await abas();
-  ok(a.semanas.length === 5, 'cinco abas de semana (' + a.semanas.length + ')');
-  ok(a.semanas.map(s => s.rot).every((r, i) => r.startsWith('Semana ' + (i+1))),
-     'numeradas de 1 a 5, na ordem (' + a.semanas.map(s => s.rot).join(' | ') + ')');
-  ok(/Semana 5 · 29–30/.test(a.semanas[4].rot),
-     'a quinta mostra só os dias DE SETEMBRO da semana que vira o mês (' + a.semanas[4].rot + ')');
+  const semSet = a.semanas.filter(s => s.id !== 'todas');
+  ok(semSet.length === 5, 'cinco abas de semana (' + semSet.length + ')');
+  ok(semSet.map(s => s.rot).every((r, i) => r.startsWith('Semana ' + (i+1))),
+     'numeradas de 1 a 5, na ordem (' + semSet.map(s => s.rot).join(' | ') + ')');
+  ok(/Semana 5 · 29–30/.test(semSet[4].rot),
+     'a quinta mostra só os dias DE SETEMBRO da semana que vira o mês (' + semSet[4].rot + ')');
   ok(a.semanas.filter(s => s.on).length === 1, 'uma semana ligada por vez');
 }
 
 console.log('\n3. a aba mostra SÓ os cards daquela semana daquele mês');
 {
-  const ids = await pag.evaluate(() => [...document.querySelectorAll('[data-ptabasem]')].map(b => b.dataset.ptabasem));
+  const ids = await idsDasSemanas();
   /* semana 2 de setembro: 8 e 10 */
   await pag.click(`[data-ptabasem="${ids[1]}"]`); await pag.waitForTimeout(400);
   let a = await abas();
@@ -141,10 +151,11 @@ console.log('\n4. a mesma semana, do lado de outubro, mostra o outro pedaço');
 {
   await pag.click('[data-ptabames="2026-10"]'); await pag.waitForTimeout(400);
   const a = await abas();
-  ok(a.semanas.length === 2, 'outubro tem duas semanas com card (' + a.semanas.length + ')');
-  ok(/Semana 1 · 1–2/.test(a.semanas[0].rot),
-     'e a primeira mostra 1–2 de outubro (' + a.semanas[0].rot + ')');
-  const ids = await pag.evaluate(() => [...document.querySelectorAll('[data-ptabasem]')].map(b => b.dataset.ptabasem));
+  const semOut = a.semanas.filter(s => s.id !== 'todas');
+  ok(semOut.length === 2, 'outubro tem duas semanas com card (' + semOut.length + ')');
+  ok(/Semana 1 · 1–2/.test(semOut[0].rot),
+     'e a primeira mostra 1–2 de outubro (' + semOut[0].rot + ')');
+  const ids = await idsDasSemanas();
   await pag.click(`[data-ptabasem="${ids[0]}"]`); await pag.waitForTimeout(400);
   const b = await abas();
   ok(b.cards.length === 2 && b.cards.every(t => /out s1/.test(t)),
@@ -159,7 +170,11 @@ console.log('\n5. nenhum card se perde: a soma das abas é a pauta inteira');
   const meses = await pag.evaluate(() => [...document.querySelectorAll('[data-ptabames]')].map(b => b.dataset.ptabames));
   for(const m of meses){
     await pag.click(`[data-ptabames="${m}"]`); await pag.waitForTimeout(250);
-    const ids = await pag.evaluate(() => [...document.querySelectorAll('[data-ptabasem]')].map(b => b.dataset.ptabasem));
+    /* v231: "Todas" mostra o mês inteiro, então somar por ela DUPLICA a
+       conta. Esta prova é sobre o que cada SEMANA mostra — que nenhum
+       card fique sem aba. A prova de que "Todas" bate com o mês é da
+       suíte da v231, que é de quem é o assunto. */
+    const ids = await idsDasSemanas();
     if(!ids.length){ soma += (await abas()).cards.length; continue; }
     for(const w of ids){
       await pag.click(`[data-ptabasem="${w}"]`); await pag.waitForTimeout(220);

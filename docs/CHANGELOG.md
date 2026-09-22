@@ -1,9 +1,53 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.44
+Version: 0.5.45
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.45 — 2026-09-22
+
+**Status:** Concluída
+
+### v231 — "Todas", o mês inteiro numa olhada
+
+*"Aqui nessa parte, bota um filtro pra ver todas as semanas do mês."*
+
+A v221 trocou uma rolagem só por uma semana de cada vez, e resolveu o
+problema dela: achar a semana que interessa. Mas tirou junto a leitura que a
+agência faz uma vez por mês — a **cadência**. Ver se a semana 2 está vazia, se
+tudo caiu na 4, se o mês fecha equilibrado: isso não se enxerga uma semana por
+vez.
+
+Não é uma vista nova: é passar o mês inteiro para a vista de sempre, que **já
+sabe** separar por semana (`.ptSemanaHd`). Os cabeçalhos que a v221 empurrou
+para fora de cena voltam, e com eles a conta de cada semana.
+
+**Duas decisões que valem registro:**
+
+1. **O padrão não muda.** Abrir a pauta continua caindo na semana de hoje —
+   foi o pedido da v221 e continua certo no dia a dia. "Todas" é escolha, não
+   novo começo; o `fallback` ignora a aba nova de propósito, e uma prova cobra
+   isso.
+2. **Com uma semana só, ela não aparece.** "Todas" ao lado de "Semana 1" é um
+   botão que não faz nada — e a revisão de 19/set contou 284 avisos e 257
+   parágrafos a mais nesta casa justamente por não se ter feito essa pergunta.
+
+A escolha gruda **por mês**, como a da semana: setembro em "Todas" e outubro
+na semana 1 convivem.
+
+21 provas em `web/verificar/v231-todas-as-semanas.mjs`, incluindo o caso que
+separa um desenho certo de um quase-certo — a semana que vira o mês (29/set a
+5/out) não pode trazer os cards de outubro para dentro de setembro.
+
+**A suíte da v221 precisou mudar, e o conserto foi de raiz:** ela pegava as
+semanas por POSIÇÃO (`ids[1]`, `ids[4]`), e o chip novo na frente deslocava
+tudo. Em vez de somar 1 nos índices, ela passa a filtrar o chip que não é
+semana — assim continua legível se amanhã entrar outro. E a prova de que "as
+abas somam os cards da pauta" passou a ignorar "Todas", que por definição
+duplicaria a conta.
 
 ---
 

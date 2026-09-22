@@ -15995,7 +15995,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v230 · 22 set · o cliente vê o corte que decide';
+const VERSAO_PROTOTIPO = 'v231 · 22 set · o mês inteiro numa olhada';
 
 menuSheet = (function(orig){
   return function(){
@@ -40824,12 +40824,44 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
       const abasSem = sem.map(w => ({ id: w.seg, rot: 'Semana ' + w.n + ' · ' + w.faixa,
         n: w.cards.length, hoje: w.seg === hojeSeg }));
 
+      /* ---------- v231: "Todas", o mês inteiro de uma vez -------------
+         O founder, olhando a fila de semanas: "bota um filtro pra ver
+         todas as semanas do mês."
+
+         A v221 trocou uma rolagem só por uma semana de cada vez, e
+         resolveu o problema dela — achar a semana que interessa. Mas
+         tirou junto a leitura que a agência faz uma vez por mês: a
+         CADÊNCIA. Ver se a semana 2 está vazia, se tudo caiu na 4, se o
+         mês fecha equilibrado — isso não se enxerga uma semana por vez.
+
+         Não é uma vista nova: é passar o mês inteiro para a vista de
+         sempre, que já sabe separar por semana (`.ptSemanaHd`). Os
+         cabeçalhos que a v221 empurrou para fora de cena voltam, e com
+         eles a conta de cada semana.
+
+         DUAS DECISÕES:
+
+         1. O PADRÃO NÃO MUDA. Abrir a pauta continua caindo na semana de
+            hoje — foi o pedido da v221 e continua certo no dia a dia.
+            "Todas" é escolha, não novo começo. Por isso o fallback
+            abaixo ignora a aba nova de propósito.
+         2. COM UMA SEMANA SÓ, ELA NÃO APARECE. "Todas" ao lado de
+            "Semana 1" é um botão que não faz nada — e a revisão de
+            19/set contou 284 avisos e 257 parágrafos a mais nesta casa
+            justamente por não se ter feito essa pergunta. */
+      const TODAS = 'todas';
+      if(abasSem.length > 1)
+        abasSem.unshift({ id: TODAS, rot: 'Todas',
+          n: sem.reduce((t, w) => t + w.cards.length, 0) });
+
       let seg = (S.ptSemana || {})[mes];
       if(!abasSem.some(a => a.id === seg))
-        seg = (abasSem.find(a => a.hoje) || abasSem[0] || {}).id;
+        seg = (abasSem.find(a => a.hoje) || abasSem.find(a => a.id !== TODAS) || {}).id;
       S.ptSemana = Object.assign({}, S.ptSemana, { [mes]: seg });
 
-      const daSemana = (sem.find(w => w.seg === seg) || {}).cards || [];
+      const daSemana = seg === TODAS
+        ? sem.reduce((acc, w) => acc.concat(w.cards), [])
+        : (sem.find(w => w.seg === seg) || {}).cards || [];
 
       const topo = `<div class="ptAbas">
         <div class="lin mes"><span class="rot">mês</span>${chips(abasMes, 'ptabames', mes)}</div>

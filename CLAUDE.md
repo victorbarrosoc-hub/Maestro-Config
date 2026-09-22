@@ -299,6 +299,20 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (22 set, v231):** *"bota um filtro pra ver todas as semanas do
+mês."* A v221 trocou uma rolagem só por uma semana de cada vez e resolveu o
+problema dela — achar a semana que interessa —, mas tirou junto a leitura que
+a agência faz uma vez por mês: a CADÊNCIA (a semana 2 está vazia? tudo caiu na
+4?). Não é vista nova: é passar o mês inteiro para a vista de sempre, que já
+sabe separar por semana (`.ptSemanaHd`); os cabeçalhos voltam com a conta de
+cada uma. **Duas decisões:** (1) o PADRÃO não muda — abrir a pauta continua
+caindo na semana de hoje, e o `fallback` ignora a aba nova de propósito;
+(2) com uma semana só o chip não aparece, porque "Todas" ao lado de "Semana 1"
+é botão que não faz nada. A escolha gruda por mês. 21 provas em
+`web/verificar/v231-todas-as-semanas.mjs`, incluindo a semana que vira o mês.
+**E a suíte da v221 mudou de raiz:** ela pegava as semanas por POSIÇÃO e o chip
+novo na frente deslocava tudo — em vez de somar 1 nos índices, passa a filtrar
+o que não é semana, e segue legível se amanhã entrar outro chip.
 **Fechado (22 set, v230):** *"Cliente não está conseguindo ver o timecode do
 corte que foi colocado na estruturação de pauta."* **Não era perda de dado** —
 o card é um corte de podcast, o formulário guarda
