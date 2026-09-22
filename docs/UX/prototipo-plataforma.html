@@ -15995,7 +15995,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v231 · 22 set · o mês inteiro numa olhada';
+const VERSAO_PROTOTIPO = 'v232 · 22 set · a peça por link chega ao cliente';
 
 menuSheet = (function(orig){
   return function(){
@@ -42086,5 +42086,99 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
   })(clCard);
 
   window.MaestroClienteVeOConteudo = { temCorte, temRoteiro, temTelas };
+})();
+</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   v232 — a peça entregue como LINK parava de existir para o cliente.
+
+   O founder: "Foi no ensaio, na hora de subir a peça pra liberar pra
+   check, isso na segunda volta. O link não aparece pra o cliente quando
+   vai pra ele."
+
+   A gaveta estava certa: `subirPeca` abre o material DO CARD, e o link
+   atravessa a porta do banco (provas 17 e 18 em `links-porta-teste.sql`).
+   A tela também desenhava o link. O que ela fazia ANTES dele é que
+   matava o assunto — medido na tela do cliente, 2ª volta, só com link:
+
+     y=600  "A imagem ainda não chegou aqui. Avise a agência antes de
+             decidir — sem ela você estaria aprovando só o texto de novo."
+     y=718  o link da peça, numa pastilha sem título nenhum.
+
+   Ou seja: o produto afirmava que a peça não chegou e mandava o cliente
+   NÃO DECIDIR, com a peça 118px abaixo. Ele obedece o aviso — e para
+   quem está do lado de cá isso é "o link não aparece".
+
+   A CAUSA é um predicado:
+
+       clVisuais  = só `imagem` e `video`
+       clMostraArte = fase !== 'texto_cli' && clVisuais.length > 0
+       ... else if(fase === 'post_cli') → o aviso, SEM perguntar se há
+                                          material de outro tipo
+
+   Uma peça entregue como link do Drive, como PDF ou como arquivo não é
+   imagem nem vídeo, então ela não conta como "chegou". O aviso da v-anterior
+   está certo no caso que ele foi escrito para pegar (mandar a 2ª volta
+   sem nada) e mente em todos os outros.
+
+   DUAS CURAS, e as duas são pequenas:
+
+   1. O AVISO SÓ VALE QUANDO É VERDADE. Havendo material de qualquer
+      tipo, ele sai. Não havendo nada, fica como está — ele existe por um
+      bom motivo.
+   2. O MATERIAL GANHA NOME. A lista de anexos não tinha rótulo: o
+      cliente via uma pastilha solta. Na 2ª volta ela passa a se chamar
+      "A peça", que é o que ela é e o que ele está decidindo; na 1ª,
+      "Material de apoio", porque ali o que se decide é o texto.
+
+   Feito no DOM depois do desenho, porque `clMostraArte` e `clVisuais`
+   são `const` — e porque mexer no predicado mudaria o bloco da arte, que
+   está certo. Aqui só se tira uma afirmação falsa e se põe um nome.
+   ================================================================== */
+(function(){
+  if(typeof clCard !== 'function') return;
+
+  const RUA = ['imagem', 'video'];
+  const materiais = p => (typeof materiaisDe === 'function' ? materiaisDe(p) : []);
+  /* o que conta como "a peça chegou": qualquer material que o cliente
+     consiga de fato ABRIR — link, ou arquivo com endereço */
+  const temEntrega = p => materiais(p).some(m => m.tipo === 'link' || m.url || m.chave);
+  const temVisual  = p => materiais(p).some(m => RUA.includes(m.tipo) && (m.url || m.chave));
+
+  clCard = (function(orig){
+    return function(){
+      let html = orig.apply(this, arguments);
+      if(typeof html !== 'string' || !html) return html;
+      const p = (S.pauta || []).find(x => x.id === S.pcSel);
+      if(!p) return html;
+      const f = typeof faseDe === 'function' ? faseDe(p) : '';
+      if(html.indexOf('clMatRot') >= 0) return html;
+      if(!temEntrega(p)) return html;          /* sem material, nada a corrigir */
+
+      let doc;
+      try{ doc = new DOMParser().parseFromString(html, 'text/html'); }catch(e){ return html; }
+
+      /* 1. o aviso que mente sai de cena */
+      const aviso = doc.querySelector('.clArteVazia');
+      if(aviso && aviso.parentNode) aviso.parentNode.removeChild(aviso);
+
+      /* 2. a lista de anexos ganha nome. Só quando não há visual: com
+            imagem na tela, o bloco da arte já diz o que é, e o anexo ali
+            é mesmo apoio. */
+      const lista = doc.querySelector('.clAnexos');
+      if(lista && lista.parentNode && !temVisual(p)){
+        const rot = doc.createElement('div');
+        rot.className = 'caplbl clMatRot';
+        rot.textContent = f === 'post_cli' ? 'A peça' : 'Material de apoio';
+        lista.parentNode.insertBefore(rot, lista);
+      }
+
+      return doc.body.innerHTML;
+    };
+  })(clCard);
+
+  window.MaestroPecaPorLink = { temEntrega, temVisual };
 })();
 </script>

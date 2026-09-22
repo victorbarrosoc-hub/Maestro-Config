@@ -299,6 +299,25 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (22 set, v232):** *"Foi no ensaio, na hora de subir a peça pra
+liberar pra check, isso na segunda volta. O link não aparece pra o cliente."*
+**A gaveta estava certa e o dado chegava:** `subirPeca` abre o material DO
+CARD, o link atravessa a porta (provas 17–18 em `links-porta-teste.sql`) e a
+tela o desenhava. **O que ela fazia ANTES dele é que matava o assunto** —
+medido na tela do cliente, 2ª volta, só com link: em y=600 *"A imagem ainda não
+chegou aqui. Avise a agência antes de decidir"*, e em y=718 o link da peça,
+numa pastilha sem título. O produto afirmava que a peça não chegou e mandava o
+cliente NÃO decidir, com a peça 118px abaixo. **A causa é um predicado:**
+`clVisuais` conta só `imagem` e `video`, e o aviso de `post_cli` dispara sem
+perguntar se há material de outro tipo — peça entregue como link do Drive, PDF
+ou arquivo não contava como "chegou". Duas curas: o aviso só sai quando há
+material que o cliente consiga abrir (sem nada, ele FICA — uma prova cobra
+isso), e a lista de anexos ganha nome, "A peça" na 2ª volta e "Material de
+apoio" na 1ª. 20 provas em `web/verificar/v232-a-peca-por-link.mjs`.
+**A lição:** eu quase consertei o desenho. As duas primeiras medições — "a
+porta funciona", "a tela desenha o link" — eram verdadeiras e inúteis sozinhas.
+Quem respondeu foi medir a POSIÇÃO das coisas na tela: o defeito não era
+ausência, era uma afirmação falsa 118px acima.
 **Fechado (22 set, v231):** *"bota um filtro pra ver todas as semanas do
 mês."* A v221 trocou uma rolagem só por uma semana de cada vez e resolveu o
 problema dela — achar a semana que interessa —, mas tirou junto a leitura que

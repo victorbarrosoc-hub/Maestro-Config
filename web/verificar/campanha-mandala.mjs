@@ -172,7 +172,11 @@ const toda = await pg.evaluate(async () => {
     for(const m of meses){
       document.querySelector(`[data-ptabames="${m}"]`).click();
       await new Promise(r => setTimeout(r, 120));
-      const sem = [...document.querySelectorAll('[data-ptabasem]')].map(b => b.dataset.ptabasem);
+      /* v231: a fila de semanas ganhou o chip "Todas", que mostra o mês
+         INTEIRO. Somar por ele duplicaria a conta — esta prova é sobre
+         nenhum card ficar sem aba, então percorre só as semanas. */
+      const sem = [...document.querySelectorAll('[data-ptabasem]')]
+        .map(b => b.dataset.ptabasem).filter(id => id !== 'todas');
       if(!sem.length){ n += document.querySelectorAll('.ptItem').length; continue; }
       for(const w of sem){
         document.querySelector(`[data-ptabasem="${w}"]`).click();

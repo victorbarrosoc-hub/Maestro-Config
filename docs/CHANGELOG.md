@@ -1,9 +1,60 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.45
+Version: 0.5.46
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.46 — 2026-09-22
+
+**Status:** Concluída
+
+### v232 — a peça entregue como link parava de existir para o cliente
+
+*"Foi no ensaio, na hora de subir a peça pra liberar pra check, isso na segunda
+volta. O link não aparece pra o cliente quando vai pra ele."*
+
+**A gaveta estava certa e o dado chegava.** `subirPeca` abre o material DO
+CARD; o link atravessa a porta do banco (provas 17 e 18 em
+`links-porta-teste.sql`); a tela até o desenhava. **O que ela fazia ANTES dele
+é que matava o assunto** — medido na tela do cliente, 2ª volta, só com link:
+
+```
+y=600   "A imagem ainda não chegou aqui. Avise a agência antes de decidir
+         — sem ela você estaria aprovando só o texto de novo."
+y=718   o link da peça, numa pastilha sem título nenhum
+```
+
+O produto afirmava que a peça não chegou e mandava o cliente **não decidir**,
+com a peça 118px abaixo. Ele obedece o aviso — e daqui isso se lê como "o link
+não aparece".
+
+**A causa é um predicado.** `clVisuais` conta só `imagem` e `video`;
+`clMostraArte` exige `clVisuais.length > 0`; e o `else if(fase === 'post_cli')`
+dispara o aviso **sem perguntar se existe material de outro tipo**. Uma peça
+entregue como link do Drive, como PDF ou como arquivo não é imagem nem vídeo,
+então não contava como "chegou". O aviso está certo no caso para o qual foi
+escrito — mandar a 2ª volta sem nada — e mente em todos os outros.
+
+**Duas curas, as duas pequenas:**
+
+1. **O aviso só vale quando é verdade.** Havendo material de qualquer tipo que
+   o cliente consiga abrir (link, ou arquivo com endereço), ele sai. Não
+   havendo nada, fica — ele existe por um bom motivo, e uma prova cobra isso.
+2. **O material ganha nome.** A lista de anexos não tinha rótulo: o cliente via
+   uma pastilha solta. Na 2ª volta ela passa a se chamar **"A peça"**, que é o
+   que ele está decidindo; na 1ª, **"Material de apoio"**, porque ali o que se
+   decide é o texto. Com imagem na tela o rótulo não entra — a peça é a imagem.
+
+20 provas em `web/verificar/v232-a-peca-por-link.mjs`, nos quatro estados que
+importam (link, nada, imagem, PDF) e nas duas voltas.
+
+**A lição:** eu quase consertei o desenho. As duas primeiras medições diziam
+"a porta funciona" e "a tela desenha o link" — as duas verdadeiras, e as duas
+inúteis sozinhas. O que respondeu foi medir a POSIÇÃO das coisas na tela do
+cliente: o defeito não era ausência, era uma afirmação falsa 118px acima.
 
 ---
 
