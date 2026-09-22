@@ -84,14 +84,35 @@ begin
        'cliEdit',  v_cliedit,
        'cliFora',  '[]'::jsonb));
 
-  for i in 1..6 loop
+  if p_variante <> 'fica_vazia' then
+    for i in 1..6 loop
+      insert into public.pauta(org, cliente, dados) values
+        ('maestro', 'n' || (i-1), jsonb_build_object('pauta', jsonb_build_array(
+          jsonb_build_object('id', i*100 + 1, 't', v_nomes[i] || ' — Ep. 01',
+                             'fase', 'texto_cli', 'texto', 'o texto que o cliente decide'),
+          jsonb_build_object('id', i*100 + 2, 't', v_nomes[i] || ' — em casa',
+                             'fase', 'rascunho', 'texto', 'nao sai daqui'))));
+    end loop;
+  end if;
+
+  -- O BANCO DELE, como o 0.2 mostrou em 22/set: a agência de teste tem
+  -- ZERO cards e AINDA ASSIM se chama "EJUP" — o vazamento da v220
+  -- copiou o `__config__` inteiro, com o perfil da agência e o cadastro
+  -- dos clientes (as chaves de link) dentro. É por isso que o link
+  -- cai numa tela vazia quando o sorteio dá nela: não há linha de
+  -- cliente nenhuma para devolver.
+  if p_variante in ('banco_dele', 'fica_vazia') then
     insert into public.pauta(org, cliente, dados) values
-      ('maestro', 'n' || (i-1), jsonb_build_object('pauta', jsonb_build_array(
-        jsonb_build_object('id', i*100 + 1, 't', v_nomes[i] || ' — Ep. 01',
-                           'fase', 'texto_cli', 'texto', 'o texto que o cliente decide'),
-        jsonb_build_object('id', i*100 + 2, 't', v_nomes[i] || ' — em casa',
-                           'fase', 'rascunho', 'texto', 'nao sai daqui'))));
-  end loop;
+      ('ag71d6cd233', '__config__', jsonb_build_object(
+         'agencia', jsonb_build_object('nome', 'EJUP'),
+         'cliEdit', v_cliedit,
+         'cliFora', '[]'::jsonb));
+    insert into public.maestro_membros(user_id, org, papel)
+      values (v_u2, 'ag71d6cd233', 'dono');
+    insert into public.maestro_membros(user_id, org, papel)
+      values (v_u1, 'maestro', 'membro');
+    return;
+  end if;
 
   if p_variante <> 'sem_a_de_teste' then
     insert into public.pauta(org, cliente, dados) values
@@ -313,7 +334,67 @@ select case when count(*) = 0
    and grantee in ('anon', 'authenticated');
 
 \echo ''
+\echo '=========== O BANCO DELE: AS DUAS SE CHAMAM "EJUP" ==========='
+\echo '--- o 0.2 de 22/set: ag71d6cd233 com 0 cards e o nome da EJUP ---'
+\set ON_ERROR_STOP off
+call public.semear('banco_dele');
+
+select case when (select count(*) from public.pauta where org = 'ag71d6cd233') = 1
+              and (select dados -> 'agencia' ->> 'nome' from public.pauta
+                    where org = 'ag71d6cd233' and cliente = '__config__') = 'EJUP'
+              and public.cards_de('ag71d6cd233') = 0
+            then 'PROVA 27 ok   · o banco dele reproduzido: a de teste tem 0 cards e se chama "EJUP"'
+            else 'PROVA 27 FALHOU · nao reproduziu o 0.2' end;
+
+select case when public.candidatas('n2', :chave_n2) = 2
+              and (select dados from public.pauta
+                    where org = 'ag71d6cd233' and cliente = 'n2') is null
+            then 'PROVA 28 ok   · a chave casa nas duas E a de teste nao tem linha do cliente: a tela vazia explicada'
+            else 'PROVA 28 FALHOU · casou em ' || public.candidatas('n2', :chave_n2) end;
+
+-- A TRAVA DO NOME NAO DISTINGUE AS DUAS AQUI: as duas se chamam "EJUP".
+-- Entao inverter tem de ser recusado por OUTRA trava, e esta prova
+-- existe para garantir que e.
+\o /dev/null
+\! sed -e 's|^  v_fica      text := .*|  v_fica      text := '"'"'ag71d6cd233'"'"';|' -e 's|^  v_fora      text := .*|  v_fora      text := '"'"'maestro'"'"';|' docs/ENGINEERING/agencias-5-tirar-a-agencia-de-teste.sql > /tmp/ag5-invertido.sql
+\i /tmp/ag5-invertido.sql
+\o
+select case when public.cards_de('maestro') = 12
+              and (select count(*) from public.pauta where org = 'maestro') = 7
+            then 'PROVA 29 ok   · INVERTIDO, com as duas chamadas "EJUP": recusou e nao apagou a EJUP'
+            else 'PROVA 29 FALHOU · a EJUP foi apagada com o nome batendo dos dois lados' end;
+
+-- a trava 4b: a que fica sem card nenhum
+call public.semear('fica_vazia');
+\o /dev/null
+\i docs/ENGINEERING/agencias-5-tirar-a-agencia-de-teste.sql
+\o
+select case when (select count(*) from public.pauta where org = 'ag71d6cd233') = 1
+            then 'PROVA 30 ok   · a que fica sem card nenhum: recusou, nada apagado'
+            else 'PROVA 30 FALHOU · apagou com a que fica vazia' end;
+
+-- e na ordem certa, no formato do banco dele, funciona
+call public.semear('banco_dele');
+\set ON_ERROR_STOP on
+\o /dev/null
+\i docs/ENGINEERING/agencias-5-tirar-a-agencia-de-teste.sql
+\o
+select case when not exists (select 1 from public.pauta where org = 'ag71d6cd233')
+              and public.cards_de('maestro') = 12
+              and public.maestro_org_da_chave('n2', :chave_n2) = 'maestro'
+              and jsonb_array_length(public.maestro_link_lote('n2', :chave_n2)
+                                     -> 'dados' -> 'pauta') = 1
+            then 'PROVA 31 ok   · na ordem certa, no banco dele: sai a de teste, o link do cliente volta'
+            else 'PROVA 31 FALHOU · fica=' || public.cards_de('maestro') ||
+                 ' org_da_chave=' || coalesce(public.maestro_org_da_chave('n2', :chave_n2), 'NADA') end;
+
+\echo ''
 \echo '--- rodar duas vezes não estraga nada ---'
+call public.semear('normal');
+\set ON_ERROR_STOP on
+\o /dev/null
+\i docs/ENGINEERING/agencias-5-tirar-a-agencia-de-teste.sql
+\o
 \set ON_ERROR_STOP off
 \o /dev/null
 \i docs/ENGINEERING/agencias-5-tirar-a-agencia-de-teste.sql
@@ -337,4 +418,4 @@ select case when public.cards_de('ag71d6cd233') = 1
             else 'PROVA 26 FALHOU · o desfazer não devolveu' end;
 
 \echo ''
-\echo '=== 26 provas. Qualquer linha com FALHOU acima é o arquivo errado. ==='
+\echo '=== 31 provas. Qualquer linha com FALHOU acima é o arquivo errado. ==='

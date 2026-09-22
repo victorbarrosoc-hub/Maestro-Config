@@ -566,9 +566,23 @@ fica precisa ter login, quem sai não pode ter mais cards que quem fica) e
 cópia de segurança que nasce com RLS ligada. 26 provas num Postgres que
 reproduz o banco dele, rodando o arquivo de verdade, em
 `agencias-5-teste.sql`; 14 provas da porta em `links-porta-teste.sql`.
+**O banco confirmou em 22/set:** a agência de teste é a `ag71d6cd233`, criada
+em 10/set 01h46, com `zro.contato@gmail.com` como dono — e ela tem **ZERO
+cards e ainda assim se chama "EJUP"**, porque o vazamento copiou o
+`__config__` inteiro (perfil da agência E cadastro dos clientes, onde moram as
+chaves de link). É isso que explica a tela vazia com precisão: quando o
+sorteio cai nela, não há linha de cliente nenhuma para devolver. O
+`victorbarrosoc@gmail.com` está na `maestro`, junto com a Gabi, a Ana e o
+Roberto — a trava do login passa.
+**E daí saiu uma trava nova:** com as DUAS se chamando "EJUP", a trava do
+nome não distingue uma da outra. Quem protege contra inverter as duas é a
+contagem de cards (0 contra 40), e foi acrescentada a 4b — a que fica tem de
+ter trabalho dentro. Provado no formato do banco dele: invertido, com as duas
+chamadas "EJUP", o arquivo recusa (provas 27–31).
 **A lição, que é a v220 outra vez:** nenhuma prova do navegador tocava o SQL
 dos links — as suítes FINGEM `maestro_link_lote` em JavaScript. O app estava
-coberto; a porta, não.
+coberto; a porta, não. **E a segunda:** uma trava que depende de um campo que
+o próprio defeito copia não é trava — a do nome caiu sozinha aqui.
 
 **Aberto (10 set): a PARTE 3 do SQL das agências.** Criar a segunda agência
 falha com `409 · duplicate key value violates unique constraint

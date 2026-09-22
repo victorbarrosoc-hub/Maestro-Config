@@ -167,6 +167,16 @@ begin
     raise exception 'A agência que você mandou SAIR (%) tem % cards, e a que fica (%) tem %. Isso é o contrário do esperado — a de teste é cópia da sua. Confira se não inverteu os dois. Nada foi tocado.', v_fora, v_cards_fora, v_fica, v_cards_fica;
   end if;
 
+  -- 4b) E A QUE FICA TEM DE TER TRABALHO DENTRO. Esta trava existe
+  --     porque a de cima tem um buraco quando as duas estão vazias —
+  --     e sobretudo porque A TRAVA DO NOME PODE NÃO DISTINGUIR AS
+  --     DUAS: o vazamento da v220 copia o `__config__` inteiro, com o
+  --     nome da agência junto, então as duas podem se chamar igual.
+  --     Quando o nome não separa, quem separa é o conteúdo.
+  if coalesce(v_cards_fica, 0) = 0 then
+    raise exception 'A agência que você mandou FICAR (%) não tem card nenhum. A que fica é a que tem o trabalho dentro — confira o 0.1 e veja se não inverteu os dois. Nada foi tocado.', v_fica;
+  end if;
+
   -- 5) quem fica tem de ter por onde entrar. Sem membro, `maestro_org()`
   --    devolve NULL, a RLS fecha tudo e a agência some para você.
   select count(*) into v_membros_fica from public.maestro_membros where org = v_fica;
