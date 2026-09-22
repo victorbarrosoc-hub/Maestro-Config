@@ -579,10 +579,23 @@ nome não distingue uma da outra. Quem protege contra inverter as duas é a
 contagem de cards (0 contra 40), e foi acrescentada a 4b — a que fica tem de
 ter trabalho dentro. Provado no formato do banco dele: invertido, com as duas
 chamadas "EJUP", o arquivo recusa (provas 27–31).
+**E a trava 2 pegou o erro de quem escreveu o arquivo.** A primeira versão
+trazia o identificador da agência TRANSCRITO de um print — `ag71d6cd233`, 11
+caracteres, quando `maestro_criar_agencia` gera 12 (`ag` + 10 de md5). O
+`do` não achou linha nenhuma e recusou, com o founder já no SQL Editor. O
+conserto não foi reler o print: o arquivo passou a derivar a agência que sai
+do **e-mail do login dela** (`maestro_membros` + `auth.users`, e `user_id` é
+chave primária, então a conversão é exata). Identificador gerado é feito para
+ser copiado, não lido — e `agencias-3` já dizia isso sobre índice, que é a
+mesma família de erro.
 **A lição, que é a v220 outra vez:** nenhuma prova do navegador tocava o SQL
 dos links — as suítes FINGEM `maestro_link_lote` em JavaScript. O app estava
-coberto; a porta, não. **E a segunda:** uma trava que depende de um campo que
-o próprio defeito copia não é trava — a do nome caiu sozinha aqui.
+coberto; a porta, não. **A segunda:** uma trava que depende de um campo que
+o próprio defeito copia não é trava — a do nome caiu sozinha aqui. **A
+terceira:** "não adivinhe o identificador" vale para quem escreve o arquivo,
+não só para quem o roda. 34 provas em `agencias-5-teste.sql`, três delas
+guardando exatamente estes casos (identificador truncado, e-mail
+desconhecido, e o caminho certo sem ninguém digitar identificador).
 
 **Aberto (10 set): a PARTE 3 do SQL das agências.** Criar a segunda agência
 falha com `409 · duplicate key value violates unique constraint

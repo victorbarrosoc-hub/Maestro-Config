@@ -111,10 +111,22 @@ declare
   -- ┌───────────────────────────────────────────────────────────────┐
   -- │ PREENCHA AQUI, com o que o PASSO 0 mostrou.                   │
   -- └───────────────────────────────────────────────────────────────┘
-  v_fica      text := 'maestro';          -- a agência que FICA (a EJUP)
-  v_nome_fica text := 'EJUP';             -- parte do nome dela, como o 0.1 mostrou
-  v_fora      text := 'ag71d6cd233';      -- a agência de TESTE, que SAI
+  v_fica      text := 'maestro';               -- a agência que FICA (a EJUP)
+  v_nome_fica text := 'EJUP';                  -- parte do nome dela, como o 0.1 mostrou
+  v_mail_fora text := 'zro.contato@gmail.com'; -- o LOGIN da agência que SAI (o 0.2 mostra)
+  v_fora      text := null;                    -- deixe NULL: sai do e-mail acima
   -- ┌───────────────────────────────────────────────────────────────┐
+  --
+  -- POR QUE O E-MAIL, E NÃO O IDENTIFICADOR DA AGÊNCIA
+  --   O identificador é gerado (`ag` + 10 caracteres de md5) e não quer
+  --   dizer nada para ninguém — é feito para ser copiado, não lido. Na
+  --   primeira versão deste arquivo ele foi TRANSCRITO de um print e
+  --   perdeu um caractere: `ag71d6cd233` tem 11, e o gerador faz 12.
+  --   A trava 2 recusou, como devia, mas o tempo já tinha ido.
+  --   O e-mail você sabe de cor. O banco converte um no outro melhor
+  --   do que qualquer um de nós lendo uma tela.
+  --   Se preferir mandar o identificador à mão, escreva-o em `v_fora`
+  --   (copiando do 0.1, nunca digitando) e o e-mail é ignorado.
 
   v_nome_banco   text;
   v_cards_fica   bigint;
@@ -123,6 +135,25 @@ declare
   v_linhas_fora  bigint;
   v_linhas_bkp   bigint;
 begin
+  ------------------------------------------------------------------
+  -- 0) QUEM É A AGÊNCIA QUE SAI. Do e-mail, pelo banco — não da minha
+  --    leitura nem da sua. `maestro_membros.user_id` é chave primária,
+  --    então um login pertence a uma agência só e a conversão é exata.
+  ------------------------------------------------------------------
+  if v_fora is null or btrim(v_fora) = '' then
+    if v_mail_fora is null or btrim(v_mail_fora) = '' then
+      raise exception 'Preencha `v_mail_fora` (o login da agência que sai) ou `v_fora` (o identificador dela). Nada foi tocado.';
+    end if;
+    select m.org into v_fora
+      from public.maestro_membros m
+      join auth.users u on u.id = m.user_id
+     where lower(u.email) = lower(btrim(v_mail_fora));
+    if v_fora is null then
+      raise exception 'Nenhum login com o e-mail "%" tem agência em maestro_membros. Confira o 0.2 — pode ser outro e-mail, ou esse login já ter ficado sem agência. Nada foi tocado.', v_mail_fora;
+    end if;
+    raise notice 'O e-mail % é da agência %.', v_mail_fora, v_fora;
+  end if;
+
   ------------------------------------------------------------------
   -- AS TRAVAS. Remoção de agência é irreversível na prática: é dado
   -- de trabalho de meses. Cada trava aqui existe porque errá-la

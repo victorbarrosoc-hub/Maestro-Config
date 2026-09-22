@@ -67,7 +67,7 @@ begin
   delete from auth.users;
 
   insert into auth.users(id, email) values
-    (v_u1, 'victorbarrosoc@gmail.com'), (v_u2, 'a.outra.empresa@gmail.com');
+    (v_u1, 'victorbarrosoc@gmail.com'), (v_u2, 'zro.contato@gmail.com');
 
   for i in 1..6 loop
     v_cliedit := v_cliedit || jsonb_build_object('n' || (i-1),
@@ -201,7 +201,7 @@ call public.semear('sem_a_de_teste');
 \i docs/ENGINEERING/agencias-5-tirar-a-agencia-de-teste.sql
 \o
 select case when public.cards_de('maestro') = 12
-            then 'PROVA 5 ok    · agência de teste inexistente: recusou e não apagou a EJUP'
+            then 'PROVA 5 ok    · o e-mail da que sai nao tem agencia: recusou e nao apagou a EJUP'
             else 'PROVA 5 FALHOU · EJUP com ' || public.cards_de('maestro') || ' cards' end;
 select case when to_regclass('public.pauta_saiu_agencia_de_teste') is null
             then 'PROVA 6 ok    · e não deixou tabela de backup pela metade'
@@ -389,6 +389,45 @@ select case when not exists (select 1 from public.pauta where org = 'ag71d6cd233
                  ' org_da_chave=' || coalesce(public.maestro_org_da_chave('n2', :chave_n2), 'NADA') end;
 
 \echo ''
+\echo '=== O IDENTIFICADOR VEM DO BANCO, NAO DE UMA TRANSCRICAO ==='
+\set ON_ERROR_STOP off
+call public.semear('banco_dele');
+
+-- 22/set: a primeira versao deste arquivo trazia o identificador
+-- TRANSCRITO de um print -- `ag71d6cd233`, 11 caracteres, quando o
+-- gerador faz 12 (`ag` + 10 de md5). A trava 2 recusou, e essa prova
+-- guarda o caso: identificador truncado nao apaga nada.
+\o /dev/null
+\! sed 's|^  v_fora      text := .*|  v_fora      text := '"'"'ag71d6cd23'"'"';|' docs/ENGINEERING/agencias-5-tirar-a-agencia-de-teste.sql > /tmp/ag5-truncado.sql
+\i /tmp/ag5-truncado.sql
+\o
+select case when (select count(*) from public.pauta where org = 'ag71d6cd233') = 1
+              and public.cards_de('maestro') = 12
+            then 'PROVA 32 ok   · identificador truncado (11 de 12): recusou, nada apagado'
+            else 'PROVA 32 FALHOU · apagou com o identificador errado' end;
+
+-- e-mail que nao existe: recusa antes de qualquer trava
+\o /dev/null
+\! sed -e 's|^  v_mail_fora text := .*|  v_mail_fora text := '"'"'ninguem@exemplo.com'"'"';|' docs/ENGINEERING/agencias-5-tirar-a-agencia-de-teste.sql > /tmp/ag5-mail-errado.sql
+\i /tmp/ag5-mail-errado.sql
+\o
+select case when (select count(*) from public.pauta where org = 'ag71d6cd233') = 1
+            then 'PROVA 33 ok   · e-mail que nao e de agencia nenhuma: recusou, nada apagado'
+            else 'PROVA 33 FALHOU · apagou com e-mail desconhecido' end;
+
+-- e o caminho de verdade: SEM ninguem digitar identificador
+\set ON_ERROR_STOP on
+\o /dev/null
+\i docs/ENGINEERING/agencias-5-tirar-a-agencia-de-teste.sql
+\o
+select case when not exists (select 1 from public.pauta where org = 'ag71d6cd233')
+              and not exists (select 1 from public.maestro_membros where org = 'ag71d6cd233')
+              and public.cards_de('maestro') = 12
+              and public.maestro_org_da_chave('n2', :chave_n2) = 'maestro'
+            then 'PROVA 34 ok   · so com o e-mail zro.contato@gmail.com: a agencia certa saiu e o link voltou'
+            else 'PROVA 34 FALHOU · nao removeu pelo e-mail' end;
+
+\echo ''
 \echo '--- rodar duas vezes não estraga nada ---'
 call public.semear('normal');
 \set ON_ERROR_STOP on
@@ -402,7 +441,7 @@ call public.semear('normal');
 \set ON_ERROR_STOP on
 select case when public.cards_de('maestro') = 12
               and (select count(*) from public.pauta_saiu_agencia_de_teste) = 2
-            then 'PROVA 25 ok   · a segunda rodada recusa (já não existe) e não mexe em nada'
+            then 'PROVA 25 ok   · a segunda rodada recusa (o login ja nao tem agencia) e nao mexe em nada'
             else 'PROVA 25 FALHOU · EJUP com ' || public.cards_de('maestro') ||
                  ' cards, backup com ' ||
                  (select count(*) from public.pauta_saiu_agencia_de_teste) || ' linhas' end;
@@ -418,4 +457,4 @@ select case when public.cards_de('ag71d6cd233') = 1
             else 'PROVA 26 FALHOU · o desfazer não devolveu' end;
 
 \echo ''
-\echo '=== 31 provas. Qualquer linha com FALHOU acima é o arquivo errado. ==='
+\echo '=== 34 provas. Qualquer linha com FALHOU acima é o arquivo errado. ==='
