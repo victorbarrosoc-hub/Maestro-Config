@@ -544,6 +544,32 @@ banco. **O que de fato resta** é o `docs/ENGINEERING/seguranca-1-fechar-o-banco
 ainda aceita destinatário livre. 17 provas num Postgres de verdade em
 `seguranca-1-teste.sql`. Cadastro aberto desligado em 21/set.
 
+**Fechado no código (22 set) — o card não chegava no link do cliente.**
+*"Mandei card pra aprovação pra o cliente EJUP e não chegou lá"* e *"to com
+os cards presos e não aparece no link do cliente"* eram a MESMA coisa, e não
+era perda de dado: os cards estavam em `texto_cli`, na agência certa, com as
+chaves certas. A porta é que não sabia responder **de que agência** era a
+chave. `maestro_org_da_chave` resolvia com `limit 1` **sem `order by`** — e o
+banco dele tem DUAS agências com os mesmos seis clientes, os mesmos nomes e as
+MESMAS chaves (a segunda nasceu de um teste de "Criar conta" e a primeira
+sincronização subiu a base da primeira para dentro dela: é a v220). Logo,
+cara ou coroa: na coroa o cliente caía na pauta da outra agência, vazia. Pior
+que a tela vazia — no sorteio ruim um cliente veria a pauta de estranhos.
+**Dois arquivos, e eles não são alternativos:**
+`docs/ENGINEERING/links-5-chave-ambigua.sql` faz a porta **falhar fechada**
+(chave que casa em mais de uma agência não abre nada), e
+`docs/ENGINEERING/agencias-5-tirar-a-agencia-de-teste.sql` tira a agência de
+teste — com isso a chave volta a apontar para um lugar só e **o link antigo
+volta a funcionar, sem trocar chave nenhuma**. O segundo apaga linhas, então
+vai em três passos, com cinco travas (nome do banco tem de confirmar, quem
+fica precisa ter login, quem sai não pode ter mais cards que quem fica) e
+cópia de segurança que nasce com RLS ligada. 26 provas num Postgres que
+reproduz o banco dele, rodando o arquivo de verdade, em
+`agencias-5-teste.sql`; 14 provas da porta em `links-porta-teste.sql`.
+**A lição, que é a v220 outra vez:** nenhuma prova do navegador tocava o SQL
+dos links — as suítes FINGEM `maestro_link_lote` em JavaScript. O app estava
+coberto; a porta, não.
+
 **Aberto (10 set): a PARTE 3 do SQL das agências.** Criar a segunda agência
 falha com `409 · duplicate key value violates unique constraint
 "pauta_cliente_idx"`. A parte 2 trocou a CHAVE PRIMÁRIA, mas havia além dela um
