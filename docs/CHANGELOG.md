@@ -1,9 +1,64 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.43
+Version: 0.5.44
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.44 — 2026-09-22
+
+**Status:** Concluída
+
+### v230 — o cliente não via o timecode do corte
+
+*"Cliente não está conseguindo ver o timecode do corte que foi colocado na
+estruturação de pauta."* — com o print da tela do Roberto Pivotto aprovando
+"EJUPcast - Episódio 18 - corte 1".
+
+**Não era perda de dado, e a prova do banco confirma:** o card é um corte de
+podcast, o formulário guarda `p.corte = { ep, tcs:[{de,ate,ordem}] }`
+direitinho, e a porta do cliente devolve o campo intacto (provas 15 e 16 em
+`links-porta-teste.sql`, novas). O problema é **onde esses campos são
+desenhados**: a janela de ver o card, a ficha e a exportação — os três do lado
+da AGÊNCIA. A tela do cliente desenhava `texto`, `cta` e, desde a v201,
+`legenda`. Mais nada.
+
+Resultado: a agência estrutura o corte com episódio e timecodes, manda
+aprovar, e o cliente recebe um card chamado "corte 1" sem nada que diga QUAL
+corte é. Apertar "Aprovar o texto" ali é aprovar às cegas.
+
+**É a mesma família da v191** (*"o cliente recebia pedido de aprovação de texto
+sem texto"*) **e da v201** (*"a legenda nunca foi desenhada do lado do
+cliente"*): campo que existe, que descreve o que vai ao ar, e que ninguém
+ligou na tela de quem decide. Por isso a v230 não conserta só o corte — fecha
+os três que sobraram da mesma família:
+
+- **corte de podcast** → episódio e os timecodes, **na ordem da edição** (o
+  campo `ordem`, não a ordem em que foram digitados);
+- **roteiro de vídeo** → hook, desenvolvimento e CTA, que é o texto que ele
+  está aprovando;
+- **telas do story** → a sequência numerada, que É o conteúdo.
+
+**O que NÃO entra, e é decisão, não esquecimento:** `obs` (recado para quem
+executa), `pend` (pendência interna), responsável e recursos de produção. Isso
+é como a casa funciona, não o que o cliente decide — a Regra #1 é que ele vê o
+painel dele, não a operação da agência. Duas provas cobram esse lado.
+
+O bloco entra logo abaixo da ficha do card e **acima da legenda**: "qual corte
+é este" é a primeira pergunta, e sem resposta nenhuma das outras importa. Tudo
+montado por DOM com `textContent`, então não há caminho de texto do banco para
+o HTML — a regra da v225, com prova de que uma tag no nome do episódio sai
+como texto.
+
+26 provas em `web/verificar/v230-o-cliente-ve-o-corte.mjs`, mais duas em
+`docs/ENGINEERING/links-porta-teste.sql`.
+
+**A lição, que é a de ontem outra vez:** eu ia parar na tela. A prova do banco
+foi acrescentada porque desenho não adianta se o dado não atravessa — e
+nenhuma prova cobria isso. Era o mesmo buraco que custou dois dias no link do
+cliente: o app coberto, a porta não.
 
 ---
 

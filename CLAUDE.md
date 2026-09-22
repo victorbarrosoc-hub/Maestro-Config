@@ -299,6 +299,27 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (22 set, v230):** *"Cliente não está conseguindo ver o timecode do
+corte que foi colocado na estruturação de pauta."* **Não era perda de dado** —
+o card é um corte de podcast, o formulário guarda
+`p.corte = { ep, tcs:[{de,ate,ordem}] }`, e a porta do cliente devolve o campo
+INTACTO (provas 15–16, novas, em `links-porta-teste.sql`). O problema é onde
+esses campos são DESENHADOS: a janela de ver o card, a ficha e a exportação —
+os três do lado da AGÊNCIA. A tela do cliente desenhava `texto`, `cta` e, desde
+a v201, `legenda`. Então ele recebia um card chamado "corte 1" sem nada dizendo
+QUAL corte, e aprovar ali é aprovar às cegas. **Mesma família da v191** (pedido
+de aprovação de texto sem texto) **e da v201** (a legenda nunca desenhada do
+lado do cliente), então a v230 fecha os TRÊS que sobraram: corte de podcast
+(episódio e timecodes **na ordem da edição**, não na de digitação), roteiro de
+vídeo (hook, desenvolvimento, CTA) e telas do story (numeradas). **O que NÃO
+entra, e é decisão:** `obs`, `pend`, responsável e recursos — isso é como a casa
+funciona, não o que o cliente decide; duas provas cobram esse lado. O bloco fica
+acima da legenda, porque "qual corte é este" é a primeira pergunta. Montado por
+DOM com `textContent` (a regra da v225), com prova de que uma tag no nome do
+episódio sai como texto. 26 provas em `web/verificar/v230-o-cliente-ve-o-corte.mjs`.
+**A lição, que é a de ontem outra vez:** eu ia parar na tela — a prova do BANCO
+foi acrescentada porque desenho não adianta se o dado não atravessa, e nenhuma
+prova cobria isso. É o mesmo buraco que custou dois dias no link do cliente.
 **Fechado (22 set, v229):** a leva de UX da revisão de 19/set — a parte do
 pedido do founder que dizia *"quantidade de textos demais, o que der pra
 simplificar"*. **O mais grave era o modal no celular:** "Estruturar a pauta"

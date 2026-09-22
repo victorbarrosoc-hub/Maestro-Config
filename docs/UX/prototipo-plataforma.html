@@ -15995,7 +15995,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v229 · 22 set · menos texto, e o salvar à mão';
+const VERSAO_PROTOTIPO = 'v230 · 22 set · o cliente vê o corte que decide';
 
 menuSheet = (function(orig){
   return function(){
@@ -41897,5 +41897,162 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
   if(typeof render === 'function') render = (function(orig){
     return function(){ try{ carimbarRecemNascidos(); }catch(e){} return orig.apply(this, arguments); };
   })(render);
+})();
+</script>
+
+<style>
+/* =====================================================================
+   v230 · O QUE O CLIENTE DECIDE TEM DE ESTAR NA TELA DELE
+   ================================================================== */
+.clTCs{ display:flex; flex-wrap:wrap; gap:7px; margin-top:9px }
+.clTC{ display:inline-flex; align-items:center; gap:7px; font-family:var(--mono);
+  font-size:12px; background:var(--soft,#F4F1EB); border:1px solid var(--line,#E7E2D9);
+  border-radius:8px; padding:4px 9px; color:var(--tx,#17181C) }
+.clTC .ord{ width:19px; height:19px; border-radius:6px; background:var(--bg,#fff);
+  border:1px solid var(--line,#E7E2D9); display:grid; place-items:center;
+  font-size:10.5px; color:var(--acc,#855F22); font-weight:700 }
+.clSub{ display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--mut,#6E6A61); margin:12px 0 4px }
+.clSub:first-child{ margin-top:0 }
+</style>
+<script>
+"use strict";
+/* =====================================================================
+   v230 — o cliente não via o timecode do corte.
+
+   O founder, com o print da tela do Roberto: "Cliente não está
+   conseguindo ver o timecode do corte que foi colocado na estruturação
+   de pauta."
+
+   NÃO É PERDA DE DADO. O card é um corte de podcast, e o formulário
+   guarda isso direitinho em `p.corte = { ep, tcs:[{de,ate,ordem}] }`.
+   O problema é onde esses campos são DESENHADOS: a janela de ver o
+   card, a ficha e a exportação — os três do lado da AGÊNCIA. A tela do
+   cliente (`clCard`) desenha `texto`, `cta` e, desde a v201, `legenda`.
+   Mais nada.
+
+   Resultado: a agência estrutura o corte com episódio e timecodes,
+   manda aprovar, e o cliente recebe um card chamado "corte 1" sem nada
+   que diga QUAL corte é. Ele não tem como decidir — e apertar "Aprovar
+   o texto" ali é aprovar às cegas.
+
+   É a MESMA FAMÍLIA da v191 ("o cliente recebia pedido de aprovação de
+   texto sem texto") e da v201 ("a legenda nunca foi desenhada do lado do
+   cliente"): campo que existe, que descreve o que vai ao ar, e que
+   ninguém ligou na tela de quem decide. Por isso esta camada não
+   conserta só o corte — fecha os TRÊS que sobraram da mesma família:
+
+     · corte de podcast  → episódio e timecodes, na ordem da edição
+     · roteiro de vídeo  → hook, desenvolvimento e CTA
+     · telas do story    → a sequência, que É o conteúdo
+
+   O QUE NÃO ENTRA, e é decisão, não esquecimento: `obs` (recado para
+   quem executa), `pend` (pendência interna), responsável e recursos de
+   produção. Isso é como a casa funciona, não o que o cliente decide —
+   e a Regra #1 é que o cliente vê o painel dele, não a operação da
+   agência.
+
+   Ordem na tela: o corte vem LOGO ABAIXO do título, antes da legenda.
+   Ele responde "o que é isto que estou aprovando?", que é a primeira
+   pergunta — e sem resposta nenhuma das outras importa.
+   ================================================================== */
+(function(){
+  if(typeof clCard !== 'function') return;
+
+  const txt = v => String(v == null ? '' : v).trim();
+  const temCorte   = p => !!(p && p.corte && (txt(p.corte.ep) || (p.corte.tcs || []).some(
+                             tc => txt(tc.de) || txt(tc.ate))));
+  const temRoteiro = p => !!(p && p.roteiro && (txt(p.roteiro.hook) || txt(p.roteiro.des) ||
+                                                txt(p.roteiro.cta)));
+  const temTelas   = p => !!(p && Array.isArray(p.telas) && p.telas.some(t => txt(t)));
+
+  /* monta pelo DOM, não por concatenação de string: todo valor entra
+     por `textContent`, então não há caminho de texto do banco para o
+     HTML — é a regra que a v225 pôs na casa. */
+  function bloco(doc, rotulo, classe){
+    const d = doc.createElement('div');
+    d.className = 'clcap leitura ' + classe;
+    const l = doc.createElement('div');
+    l.className = 'caplbl'; l.textContent = rotulo;
+    d.appendChild(l);
+    return d;
+  }
+  function linha(doc, pai, rotulo, valor){
+    if(!txt(valor)) return;
+    if(rotulo){ const s = doc.createElement('span'); s.className = 'clSub';
+                s.textContent = rotulo; pai.appendChild(s); }
+    const p = doc.createElement('div');
+    p.className = 'clleitura'; p.textContent = txt(valor);
+    pai.appendChild(p);
+  }
+
+  function blocoCorte(doc, p){
+    const d = bloco(doc, 'Corte — qual trecho do episódio', 'clCorte');
+    linha(doc, d, '', p.corte.ep);
+    const tcs = (p.corte.tcs || [])
+      .filter(tc => txt(tc.de) || txt(tc.ate))
+      /* a ordem é o que diz como o corte se monta; sem ela a lista é
+         um amontoado de números */
+      .sort((a, b) => (+a.ordem || 0) - (+b.ordem || 0));
+    if(!tcs.length) return d;
+    const fila = doc.createElement('div'); fila.className = 'clTCs';
+    tcs.forEach((tc, i) => {
+      const s = doc.createElement('span'); s.className = 'clTC';
+      const o = doc.createElement('span'); o.className = 'ord';
+      o.textContent = String(tc.ordem == null ? i + 1 : tc.ordem);
+      s.appendChild(o);
+      s.appendChild(doc.createTextNode(
+        (txt(tc.de) || '?') + ' → ' + (txt(tc.ate) || '?')));
+      fila.appendChild(s);
+    });
+    d.appendChild(fila);
+    return d;
+  }
+
+  function blocoRoteiro(doc, p){
+    const d = bloco(doc, 'Roteiro do vídeo', 'clRoteiro');
+    linha(doc, d, 'Hook',            p.roteiro.hook);
+    linha(doc, d, 'Desenvolvimento', p.roteiro.des);
+    linha(doc, d, 'CTA',             p.roteiro.cta);
+    return d;
+  }
+
+  function blocoTelas(doc, p){
+    const d = bloco(doc, 'Telas do story, na ordem', 'clTelas');
+    p.telas.forEach((t, i) => { if(txt(t)) linha(doc, d, 'Tela ' + (i + 1), t); });
+    return d;
+  }
+
+  clCard = (function(orig){
+    return function(){
+      let html = orig.apply(this, arguments);
+      if(typeof html !== 'string' || !html) return html;
+      const p = (S.pauta || []).find(x => x.id === S.pcSel);
+      if(!p) return html;
+      if(!temCorte(p) && !temRoteiro(p) && !temTelas(p)) return html;
+      if(html.indexOf('clCorte') >= 0 || html.indexOf('clRoteiro') >= 0
+         || html.indexOf('clTelas') >= 0) return html;
+
+      let doc;
+      try{ doc = new DOMParser().parseFromString(html, 'text/html'); }catch(e){ return html; }
+
+      /* âncora: a ficha do card. Os blocos entram logo depois dela,
+         antes da legenda — identidade primeiro. */
+      const cabeca = doc.querySelector('.clbody .clhead');
+      if(!cabeca || !cabeca.parentNode) return html;
+
+      const novos = [];
+      if(temCorte(p))   novos.push(blocoCorte(doc, p));
+      if(temRoteiro(p)) novos.push(blocoRoteiro(doc, p));
+      if(temTelas(p))   novos.push(blocoTelas(doc, p));
+
+      let onde = cabeca;
+      novos.forEach(n => { onde.parentNode.insertBefore(n, onde.nextSibling); onde = n; });
+
+      return doc.body.innerHTML;
+    };
+  })(clCard);
+
+  window.MaestroClienteVeOConteudo = { temCorte, temRoteiro, temTelas };
 })();
 </script>

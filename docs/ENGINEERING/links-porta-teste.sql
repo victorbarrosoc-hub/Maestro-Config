@@ -86,6 +86,37 @@ select case when r::text not like '%Ainda em rascunho%'
             else 'PROVA 3 FALHOU · o rascunho vazou pelo link' end
   from (select public.maestro_link_lote('n0', :chave_ejup) as r) t;
 
+-- ---------------------------------------------------------------------
+-- PROVA 15 — O CORTE DE PODCAST ATRAVESSA A PORTA.
+--
+-- 22/set, o founder: "Cliente não está conseguindo ver o timecode do
+-- corte." A v230 conserta o DESENHO no app — mas o desenho não adianta
+-- se o dado não chegar. A porta devolve a pauta filtrada por fase, e
+-- nenhuma prova conferia se os campos ESTRUTURADOS (o corte, o roteiro,
+-- as telas do story) sobrevivem à travessia. É o mesmo buraco que
+-- custou dois dias: o app coberto, a porta não.
+-- ---------------------------------------------------------------------
+update public.pauta
+   set dados = jsonb_set(dados, '{pauta,0,corte}', jsonb_build_object(
+         'ep', 'EJUPcast #018 · Eduardo Pacheco',
+         'tcs', jsonb_build_array(
+           jsonb_build_object('de','00:12:30','ate','00:14:05','ordem',1),
+           jsonb_build_object('de','00:27:44','ate','00:28:50','ordem',2))))
+ where org = 'maestro' and cliente = 'n0';
+
+select case when r -> 'dados' -> 'pauta' -> 0 -> 'corte' ->> 'ep'
+                 = 'EJUPcast #018 · Eduardo Pacheco'
+            then 'PROVA 15 ok   · o episodio do corte atravessa a porta do cliente'
+            else 'PROVA 15 FALHOU · a porta comeu o campo `corte`: '
+                 || coalesce(left((r -> 'dados' -> 'pauta' -> 0)::text, 140), 'null') end
+  from (select public.maestro_link_lote('n0', :chave_ejup) as r) t;
+
+select case when jsonb_array_length(r -> 'dados' -> 'pauta' -> 0 -> 'corte' -> 'tcs') = 2
+              and r -> 'dados' -> 'pauta' -> 0 -> 'corte' -> 'tcs' -> 0 ->> 'de' = '00:12:30'
+            then 'PROVA 16 ok   · e os timecodes chegam inteiros, com inicio, fim e ordem'
+            else 'PROVA 16 FALHOU · timecodes perdidos na travessia' end
+  from (select public.maestro_link_lote('n0', :chave_ejup) as r) t;
+
 -- PROVA 4 — o link da EJUP nao enxerga a ZRO (as duas tem cliente `n0`)
 select case when r::text not like '%Card da ZRO%' and r::text like '%EJUP%'
             then 'PROVA 4 ok    · o link da EJUP nao alcanca o `n0` da ZRO'
