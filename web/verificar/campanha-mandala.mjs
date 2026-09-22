@@ -129,7 +129,13 @@ checa('título e texto vêm do motor, sem buraco de modelo',
       !criada.buraco && criada.titulo.length > 8 && /\n1\. /.test(criada.texto), { t: criada.titulo, texto: criada.texto.slice(0, 80) });
 checa('a tela vai para a pauta do cliente, já na campanha',
       criada.route === 'clientedet' && criada.tab === 'pauta' && criada.cli === 'cj' && criada.ptCamp === criada.camp.id && !criada.modal, criada);
-checa('e o aviso diz o que aconteceu', /"Setembro quente": 8 peças/.test(criada.toast) && /07\/09 a 23\/09/.test(criada.toast), criada.toast);
+/* v229: o aviso perdeu o intervalo de datas de propósito. O toast vive
+   3,2 segundos, e o calendário com essas datas é exatamente a tela que
+   está atrás dele — repetir ali custa leitura e não informa nada. O que
+   o aviso TEM de dizer continua cobrado: qual campanha, quantas peças,
+   de quem. */
+checa('e o aviso diz o que aconteceu', /"Setembro quente": 8 peças/.test(criada.toast) && /Cortez/.test(criada.toast), criada.toast);
+checa('e não repete as datas, que estão na tela atrás dele', !/07\/09 a 23\/09/.test(criada.toast), criada.toast);
 
 /* a pauta recolhe os DIAS PASSADOS (a campanha começa em 07/09, e o dia
    já passou): abrir todos antes de contar, senão conta-se a tela, não a

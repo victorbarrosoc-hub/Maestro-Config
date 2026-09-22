@@ -257,18 +257,28 @@ protótipo), mas é o que as telas vão herdar.
 - [ ] O **link mágico volta no corpo da resposta** sempre que `NODE_ENV` não
       é exatamente `production` — e o default é ausente.
 
-### Texto e desenho — a próxima leva (v228)
+### Texto e desenho
 Medido renderizando as telas: 284 toasts (46 não cabem nos 3,2s que ficam na
 tela), 257 parágrafos explicativos, 51 cartões que só ensinam, um card do
 Ensaio com 10 selos e 41% da altura do celular, nove nomes para a mesma
 coisa, 25 estilos de botão numa tela só.
-- [ ] Toast de uma frase, no máximo 12 palavras (46 a encurtar).
-- [ ] Apagar as oito dicas de rodapé que ensinam a clicar.
-- [ ] O card do Ensaio de 10 selos para 5.
-- [ ] Rótulos de fase curtos (`Aprovação da postagem (cliente)` → `Com o
-      cliente · peça`).
-- [ ] O modal de estruturar a pauta em tela cheia no celular, com cabeçalho
-      e rodapé fixos — hoje o botão primário fica 1.440px abaixo da dobra.
+
+**Feito na v229** (37 provas em `web/verificar/v229-menos-texto-mais-tela.mjs`):
+- [x] ~~O modal em tela cheia no celular, com título e rodapé fixos~~ — vira
+      folha, com `position:sticky` nos dois, sem tocar em nenhum dos 62
+      modais. As provas MEDEM onde o botão de salvar está e se dá para
+      tocá-lo.
+- [x] ~~O card do Ensaio de 10 selos para 5~~ — saíram o selo de volta (que
+      repetia o rótulo de fase) e o preâmbulo "é o card da pauta".
+- [x] ~~Rótulos de fase curtos~~ — e **dois pares eram literalmente iguais**
+      (`revisao`/`revisao2` e `lote_texto`/`lote_post`): o card dizia a mesma
+      coisa em dois pontos diferentes do fluxo. Agora o par texto/peça
+      atravessa todas as fases.
+- [x] ~~Apagar as dicas que ensinam a clicar~~ — dez parágrafos, com a regra
+      *corta o gesto sobre elemento já visível; fica a convenção visual*.
+- [~] Toast de uma frase — 26 encurtados: de 48 acima de 70 caracteres para
+      27, e de 86 com duas frases para 61. Os dois números viraram catraca na
+      suíte. **Faltam os 27.**
 - [ ] Tirar a monoespaçada da interface (285 usos contra 14 da de texto).
 - [ ] Vocabulário: `card` para o objeto, `Quadro` no lugar de Ensaio,
       `Calendário` em todo lugar. Aposentar `job`, `peça`, `postagem`.

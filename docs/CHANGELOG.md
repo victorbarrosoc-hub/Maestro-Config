@@ -1,9 +1,74 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.42
+Version: 0.5.43
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.43 — 2026-09-22
+
+**Status:** Concluída
+**Objetivo:** a leva de UX que sobrou da revisão de 19/set, depois que a
+v225/v226 fecharam segurança e estado. É a parte do pedido do founder que
+dizia *"quantidade de textos demais, o que der pra simplificar e deixar mais
+intuitivo"* — e *"cara de big empresa como slack, Trello, bitrix, mlabs"*.
+
+### v229 — menos texto, e o botão de salvar de volta à tela
+
+**O modal no celular era inutilizável, e isso é o mais grave da leva.**
+"Estruturar a pauta" tem 2.177px de conteúdo. Uma camada anterior pôs
+`max-height` e `overflow-y:auto` na caixa, o que resolveu o CORTE — mas o
+título e a fila de botões rolam junto com o corpo, então o "Próxima etapa"
+ficava **1.440px abaixo da dobra**. Na prática: não dava para salvar sem
+rolar três telas, e não dava para saber em que modal se estava.
+
+O conserto é de CSS, e isso importa: são **62 modais**, cada um com um corpo
+diferente, num arquivo que só cresce por camadas. `position:sticky` prende o
+`h3` no topo e a última `.modalrow` no rodapé **sem tocar em nenhum deles** —
+os dois já são filhos diretos da caixa em todos os 62. E a caixa vira folha
+(colada embaixo, cantos só em cima), que é o padrão do Slack, do Linear e do
+Notion no celular: o polegar fica perto do que decide. No desktop nada muda.
+
+**As provas medem a tela, não o código.** Onde está o botão de salvar, se
+`elementFromPoint` devolve ele mesmo (ou seja: dá para tocá-lo), e se ele
+continua lá depois de rolar até o fim. "Pus `position:sticky`" não é prova de
+nada.
+
+**O card do Ensaio dizia a mesma coisa duas vezes.** O selo "1ª volta · texto"
+e o rótulo "Aprovação de textos (cliente)" são o MESMO fato. E "é o card da
+pauta" é preâmbulo — o ícone de elo já diz. Saíram os dois; a linha de selos
+caiu para cinco.
+
+**Dois pares de rótulos de fase eram LITERALMENTE IGUAIS.** `revisao` e
+`revisao2` diziam ambos "Aprovação interna"; `lote_texto` e `lote_post`
+diziam ambos "No lote · a enviar". O card dizia a mesma coisa em dois pontos
+diferentes do fluxo — pior que dizer pouco. Agora o par texto/peça atravessa
+todas as fases: *Check do texto* / *Check da peça* · *Texto no lote* / *Peça
+no lote* · *Texto com o cliente* / *Peça com o cliente*. De quebra, "com o
+cliente" repete o nome da coluna do quadro, de propósito.
+**O segundo par eu não sabia que existia — a prova achou**, porque ela
+compara os rótulos em tempo de execução em vez de conferir o que eu editei.
+
+**Dez parágrafos que ensinavam a clicar saíram**, com uma regra para não virar
+poda arbitrária: *corta o que ensina um gesto sobre um elemento já visível e
+rotulado; fica o que explica uma convenção visual ou uma consequência.*
+"Clique num card para abrir" sai; "Tracejado é buraco na agenda" fica, "Borda
+verde = tudo feito" fica, "Arquivos de até 50MB" fica. As provas cobrem os
+dois lados — o que saiu **e** o que não podia sair junto.
+
+**26 toasts encurtados.** O toast vive 3,2 segundos; o pior tinha 178
+caracteres. Regra: *o toast diz o que aconteceu, ou por que não* — instrução
+não cabe em 3,2s, ela mora na tela onde a ação está. De 48 acima de 70
+caracteres para 27, e de 86 com duas frases para 61. Os dois números viraram
+**catraca na suíte**: quem escrever um toast-parágrafo derruba a prova.
+
+37 provas em `web/verificar/v229-menos-texto-mais-tela.mjs`.
+
+**O que a revisão ainda tem em aberto:** a monoespaçada sair da interface (285
+usos contra 14 de sans), o vocabulário de nove nomes para a mesma coisa, a
+navegação de 5 itens, e o Calendário sair de três toques de distância.
 
 ---
 

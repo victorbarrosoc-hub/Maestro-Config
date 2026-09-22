@@ -299,6 +299,37 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (22 set, v229):** a leva de UX da revisão de 19/set — a parte do
+pedido do founder que dizia *"quantidade de textos demais, o que der pra
+simplificar"*. **O mais grave era o modal no celular:** "Estruturar a pauta"
+tem 2.177px de conteúdo, uma camada anterior pôs `max-height`+`overflow` (o
+que resolveu o CORTE), mas título e fila de botões rolam junto com o corpo —
+então o "Próxima etapa" ficava **1.440px abaixo da dobra**. Não dava para
+salvar sem rolar três telas. O conserto é de CSS, e isso importa: são **62
+modais**, cada um com corpo diferente, e `position:sticky` prende o `h3` e a
+última `.modalrow` **sem tocar em nenhum deles** — os dois já são filhos
+diretos da caixa nos 62. A caixa vira folha no celular; no desktop nada muda.
+**As provas MEDEM a tela** — onde está o botão de salvar, se
+`elementFromPoint` devolve ele mesmo, se continua lá depois de rolar até o
+fim. Junto: o card do Ensaio dizia o mesmo fato duas vezes (o selo "1ª volta ·
+texto" e o rótulo da fase), e "é o card da pauta" era preâmbulo do ícone de
+elo — saíram, e a linha de selos caiu para cinco; **DOIS pares de rótulos de
+fase eram literalmente iguais** (`revisao`/`revisao2` e
+`lote_texto`/`lote_post`), então o card dizia a mesma coisa em dois pontos
+diferentes do fluxo; dez parágrafos que ensinavam a clicar saíram, com uma
+regra para não virar poda arbitrária (*corta o gesto sobre elemento já
+visível e rotulado; fica a convenção visual e a consequência* — "Tracejado é
+buraco na agenda" fica); e 26 toasts encurtados, de 48 acima de 70 caracteres
+para 27, com os dois números virando **catraca na suíte**. 37 provas em
+`web/verificar/v229-menos-texto-mais-tela.mjs`.
+**Duas lições:** (1) o segundo par de rótulos iguais eu não sabia que existia
+— a prova achou porque **compara os rótulos em tempo de execução** em vez de
+conferir o que eu editei; (2) a suíte da campanha me pegou tirando o NOME da
+campanha do aviso junto com as datas: encurtar não é apagar o que identifica
+o que aconteceu.
+**Aberto da mesma revisão:** a monoespaçada sair da interface (285 usos contra
+14 de sans), o vocabulário de nove nomes para a mesma coisa, a navegação de
+cinco itens, e o Calendário sair de três toques de distância.
 **Fechado (21 set, v227):** "o estruturar mais de um card não está
 aparecendo". Duas coisas: no Inbox não havia botão nenhum (o "estruturar a
 pauta" só nascia em Plan e Do, e o "+ mais um card" da v222 exigia um card

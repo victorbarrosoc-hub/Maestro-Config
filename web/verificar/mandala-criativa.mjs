@@ -221,8 +221,15 @@ checa('"Mandar para o Inbox" cria a tarefa no Ensaio, na frente de produção, d
 checa('com a ideia inteira no contexto: abertura, roteiro, CTA e o ponto da mandala',
       /ABERTURA:/.test(noInbox.desc) && /ROTEIRO:/.test(noInbox.desc) && /CTA:/.test(noInbox.desc) && /Mandala D\.\w+\.\d+: Descoberta/.test(noInbox.desc), noInbox.desc?.slice(0, 80));
 checa('e a coordenada gravada na tarefa', noInbox.mandala && noInbox.mandala.fase === 'descoberta', noInbox.mandala);
-checa('o botão vira "No Inbox" e o aviso diz o próximo passo',
-      /No Inbox/.test(noInbox.botao) && /responsável/.test(noInbox.toast), noInbox);
+/* v229: o aviso dizia "dá um responsável e ela vira Plan" — e isso
+   DEIXOU DE SER VERDADE na v228, quando pôr dono passou a não mover
+   mais o card (o founder: "só depois de estruturar que vai pra plan").
+   O toast ensinava um passo que o produto não faz. Ficou o que ele tem
+   de dizer: o quê, e onde foi parar. */
+checa('o botão vira "No Inbox" e o aviso diz onde a ideia foi parar',
+      /No Inbox/.test(noInbox.botao) && /Inbox do Ensaio/.test(noInbox.toast), noInbox);
+checa('e NÃO promete mais que o responsável leva ao Plan (a v228 acabou com isso)',
+      !/responsável/.test(noInbox.toast), noInbox.toast);
 
 await pg.evaluate(() => { S.route = 'producao'; S.enCat = 'producao'; render(); }); await pg.waitForTimeout(500);
 const noQuadro = await pg.evaluate(() => [...document.querySelectorAll('.enCol[data-encol="inbox"] .enCard .tit')].map(e => e.textContent.trim()));

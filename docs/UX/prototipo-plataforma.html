@@ -2618,13 +2618,12 @@ document.addEventListener('click', e => {
     if(nome.length<2){ const el=document.getElementById('np-nome');
       el.style.borderColor='var(--danger)'; el.focus(); return; }
     S.modal=null; som('toque'); S.view='agency'; S.route='projeto'; S.tab='cronograma'; render();
-    toast(`Projeto "${nome}" criado para ${cli}. O cronograma abre para revisão antes de gerar
-      as datas.`);
+    toast(`Projeto "${nome}" criado para ${cli}.`);
     return; }
   if(d.createcamp){
     const nome=v('cp-nome')||'Nova campanha';
     S.modal=null; som('toque'); S.view='agency'; S.route='projeto'; S.tab='campanhas'; render();
-    toast(`Campanha "${nome}" criada. O cliente continua recebendo um lote só por mês.`);
+    toast(`Campanha "${nome}" criada.`);
     return; }
 });
 
@@ -2957,7 +2956,7 @@ function agClientes(){
   ${cs.slice(2).map((c,i)=>linha(c,i+2,`${esc(c.seg)} · Sempre ativo`,'novo','p-DRAFT')).join('')}
   <div class="card" style="margin-top:18px"><h4>Ninguém começa em tela vazia</h4>
     <p>Todo cliente nasce com um projeto "Sempre ativo" e o calendário do primeiro mês.
-      Toque no cliente para abrir a página dele — briefing, marca, links e projetos.</p></div>`);
+      </p></div>`);
 }
 
 function agClienteDet(){
@@ -3564,7 +3563,7 @@ document.addEventListener('click', e => {
       f.ag = Math.max(0,parseInt(document.getElementById('cr-a-'+i)?.value)||0);
     });
     S.modal=null; som('toque'); render();
-    toast('Cronograma salvo. As datas do calendário se reacomodam nas fases.');
+    toast('Cronograma salvo — as datas se reacomodam.');
     return; }
   if(d.kbcard){
     const p=S.pecas.find(x=>x.id===+d.kbcard);
@@ -3630,7 +3629,7 @@ document.addEventListener('click', e => {
       sub:(nProd?nProd+' cards voltaram para produção · ':'')+'assinado por '+esc(v),selo:'TX91·C4E0'};
     som('conclusao'); render();
     setTimeout(()=>{S.stampShow=null; renderLayer();
-      toast('Termo do texto assinado. A copy está congelada — produção liberada.');},REDUZ?150:2400);
+      toast('Termo assinado — a copy está congelada.');},REDUZ?150:2400);
     return; }
 });
 
@@ -3640,7 +3639,7 @@ document.addEventListener('click', e => {
   if(!t) return;
   const [k,v] = t.dataset.kbmove.split('|');
   if(k==='__plan'){ e.stopPropagation(); S.plan=v; S.modal=null; som('termo'); render();
-    toast(`Bem-vindo ao ${PLANOS[v].nome}. ${PLANOS[v].assentos} assentos, ${PLANOS[v].projetos} projetos.`); }
+    toast(`${PLANOS[v].nome}: ${PLANOS[v].assentos} assentos, ${PLANOS[v].projetos} projetos.`); }
 }, true);
 
 // papel da equipe muda na hora — e as permissões junto
@@ -4027,7 +4026,7 @@ document.addEventListener('click', e => {
     const dias=Math.max(1,parseInt(document.getElementById('bo-dias')?.value)||7);
     S.boost[d.boostok]={obj:document.getElementById('bo-obj')?.value||'Alcance',orc,dias};
     S.modal=null; som('toque'); render();
-    toast(`Impulso salvo: R$ ${orc} por ${dias} dias. Sobe junto com a publicação.`); return; }
+    toast(`Impulso salvo: R$ ${orc} por ${dias} dias.`); return; }
   if(d.boostoff){ delete S.boost[d.boostoff]; S.modal=null; render();
     toast('Impulso removido.'); return; }
   if(d.autoag){ S.autoAg=!S.autoAg; som('toque'); render(); return; }
@@ -4687,7 +4686,7 @@ document.addEventListener('click', e => {
     p2.fase='FINAL'; p2.st='DRAFT';
     p2.seal = Array.from({length:8},()=>'0123456789ABCDEF'[Math.random()*16|0]).join('');
     S.modal=null; som('toque'); S.sel=p2.id; S.route='peca'; render();
-    toast(`Material no card "${p2.t}" — mesma peça, novo status. Envie para a aprovação final.`);
+    toast(`Material no card "${p2.t}".`);
     return; }
 });
 </script>
@@ -4851,7 +4850,7 @@ document.addEventListener('click', e => {
     const tinhaBoost = !!S.boost[p.id];
     if(tinhaBoost) delete S.boost[p.id];
     S.modal=null; som('ajuste'); S.sel=p.id; S.route='peca'; render();
-    toast(`"${p.t}" cancelada — saiu do lote e do calendário${tinhaBoost?', e o impulso foi removido':''}. Dá para reativar.`);
+    toast(`"${p.t}" cancelada${tinhaBoost?' — o impulso saiu junto':''}.`);
     return; }
 
   if(d.reativar){
@@ -6844,9 +6843,8 @@ function ptVistaTabela(visiveis){
       <th class="esq">CTA / ação</th><th>Hora</th><th>⚡</th></tr></thead>
     <tbody>${linhas.join('') || `<tr><td colspan="${plats.length+6}" style="text-align:center;padding:26px;color:var(--ink-300)">Nada aqui com este filtro.</td></tr>`}</tbody>
   </table></div>
-  <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">A tabela da sua
-    planilha, viva: clique numa linha para editar, no raio para agendar. Ela rola de
-    lado no celular.</p>`;
+  <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">Rola de lado no
+    celular.</p>`;
 }
 
 function ptVistaMes(visiveis){
@@ -6868,7 +6866,7 @@ function ptVistaMes(visiveis){
   const doSel = sel !== null ? doDiaSem(sel) : [];
   return `<div class="ptCal"><div class="malha">${cels}</div>
     <p class="nota">Setembro. A pauta é <b style="color:var(--ink-100)">semanal</b> — o mês
-    mostra a cadência dela se repetindo. Toque num dia para ver as postagens dele.</p></div>
+    mostra a cadência dela se repetindo.</p></div>
   ${sel!==null?`<div class="ptDia"><div class="ptDiaHd"><b>Toda ${DIAS[sel].toLowerCase()}${sel<5?'-feira':''}</b>
     <span>${doSel.length} ${doSel.length>1?'postagens':'postagem'}</span><i></i></div>
     ${doSel.map((p,i)=>ptItemHtml(p,i)).join('')}</div>`:''}`;
@@ -7711,9 +7709,8 @@ ptVistaTabela = function(visiveis){
       <th class="esq">CTA / ação</th><th>Hora</th><th>Status</th><th>⚡</th></tr></thead>
     <tbody>${linhas.join('') || `<tr><td colspan="8" style="text-align:center;padding:26px;color:var(--ink-300)">Nada aqui com este filtro.</td></tr>`}</tbody>
   </table></div>
-  <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">A tabela da sua
-    planilha, viva: clique na linha para editar, em FEITO / NÃO FEITO para marcar, no raio
-    para agendar, no X para apagar.</p>`;
+  <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">Rola de lado no
+    celular.</p>`;
 };
 
 /* o mês passa a usar as datas reais */
@@ -7746,7 +7743,7 @@ ptVistaMes = function(visiveis){
   }).join('');
   return `<div style="display:flex;gap:8px;margin-bottom:10px">${abas}</div>
   <div class="ptCal"><div class="malha">${cels}</div>
-    <p class="nota">Toque num dia para ver as postagens dele. Borda verde = tudo feito.</p></div>
+    <p class="nota">Borda verde = tudo feito.</p></div>
   ${sel && doSel.length?`<div class="ptDia"><div class="ptDiaHd"><b>${rotuloLongo(sel)}</b>
     <span>${doSel.filter(p=>p.feito).length}/${doSel.length} feito</span><i></i></div>
     ${doSel.sort((a,b)=>a.hora<b.hora?-1:1).map((p,i)=>ptItemHtml(p,i)).join('')}</div>`:''}`;
@@ -9968,8 +9965,7 @@ function ptVistaStories(visiveis){
         <span class="num"><em>${feitos}</em> de ${sts.length} feitos</span></div>
       <div class="ptBar"><i style="width:${Math.round(feitos/sts.length*100)}%"></i></div>
       <p style="margin:9px 0 0;font-size:11.5px;color:var(--ink-300)">Cada dia é uma
-        sequência de telas. Use ↑ ↓ para reordenar, × para tirar uma tela, e toque no
-        texto para editar.</p>
+        sequência de telas.</p>
     </div>
     ${sts.map((p,i)=>stCardHtml(p,i)).join('')}`;
 }
@@ -10760,8 +10756,7 @@ function ptVistaAgenda(){
       <div class="agHoras" style="height:${alturaCx}px">${marcas}</div>
       ${colunas}
     </div></div>
-    <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">A agenda do dia, por
-      onde a peça sai. Clique num card para abrir a postagem e alterar. Tracejado é buraco
+    <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">Tracejado é buraco
       na agenda daquele canal.</p>`;
 }
 
@@ -11155,7 +11150,7 @@ agClientes = function(){
         `<button class="b pri sm" data-newclient="1">${ic('users')} Novo cliente</button>`)}
   <div class="card" style="margin-top:18px"><h4>Ninguém começa em tela vazia</h4>
     <p>Todo cliente nasce com um projeto "Sempre ativo" e o calendário do primeiro mês.
-      Toque no cliente para abrir a página dele — briefing, marca, links e projetos.</p></div>`);
+      </p></div>`);
 };
 
 /* ---------- o formulário ------------------------------------------- */
@@ -13122,15 +13117,21 @@ agClienteDet = (function(orig){
 })(agClienteDet);
 
 /* ---------- o fluxo de status completo ------------------------------ */
+/* Os rótulos são curtos de propósito: eles aparecem DENTRO do card, ao
+   lado do nome dele, e "Aprovação de textos (cliente)" tomava a linha
+   inteira no celular. E os dois Check tinham o MESMO rótulo — o card
+   dizia a mesma coisa em dois pontos diferentes do fluxo, que é pior
+   que dizer pouco. "com o cliente" repete o nome da coluna do quadro,
+   de propósito: o mesmo fato com o mesmo nome nos dois lugares. */
 const FASES = [
   ['rascunho',   'Rascunho'],
-  ['criado',     'Criado'],
-  ['revisao',    'Aprovação interna'],
-  ['texto_cli',  'Aprovação de textos (cliente)'],
+  ['criado',     'Escrito'],
+  ['revisao',    'Check do texto'],
+  ['texto_cli',  'Texto com o cliente'],
   ['texto_ok',   'Texto aprovado'],
   ['producao',   'Em produção'],
-  ['revisao2',   'Aprovação interna'],
-  ['post_cli',   'Aprovação da postagem (cliente)'],
+  ['revisao2',   'Check da peça'],
+  ['post_cli',   'Peça com o cliente'],
   ['aprovado',   'Aprovado'],
   ['agendado',   'Agendado'],
   ['postado',    'Postado']
@@ -13488,9 +13489,8 @@ function agEnsaio(){
       <button class="b gho sm" data-enimp="1">${ic('doc',13)} Importar planilha</button>
       <button class="b pri sm" data-ennova="1">${ic('pencil',13)} Nova tarefa</button></div></div>
   <div class="enRolo">${cols}</div>
-  <p style="margin:4px 2px 0;font-size:11.5px;color:var(--ink-300)">Arraste um cartão entre
-    colunas (ou use as setas). O relógio conta quanto tempo cada tarefa levou — a média vira
-    métrica da agência.</p>`);
+  <p style="margin:4px 2px 0;font-size:11.5px;color:var(--ink-300)">O relógio conta quanto
+    tempo cada tarefa levou — a média vira métrica da agência.</p>`);
 }
 render = (function(orig){
   return function(){
@@ -15995,7 +15995,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v228 · 21 set · pôr dono não é estruturar';
+const VERSAO_PROTOTIPO = 'v229 · 22 set · menos texto, e o salvar à mão';
 
 menuSheet = (function(orig){
   return function(){
@@ -16323,8 +16323,7 @@ function hjAgenda(grupos){
       <div class="agHoras" style="height:${alturaCx}px">${marcas}</div>
       ${colunas}
     </div></div>
-    <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">O dia inteiro, uma
-      coluna por cliente. Toque num card para abrir a postagem. Tracejado é buraco na
+    <p style="margin:10px 2px 0;font-size:11.5px;color:var(--ink-300)">Tracejado é buraco na
       agenda daquele cliente.</p>`;
 }
 
@@ -16799,7 +16798,6 @@ agEnsaio = function(){
     const cat = catDe(t);
     const job = cardDaTarefa(t);
     const f = job ? faseDe(job) : null;
-    const v = f ? voltaDe(f) : 0;
     const pedido = job && job.ajustePendente
       ? (() => { const a = Array.isArray(job.alteracoes) ? job.alteracoes : [];
                  return a[a.length-1]; })() : null;
@@ -16809,7 +16807,6 @@ agEnsaio = function(){
       <div class="meta">
         ${c && producao ? `<span class="cli">${esc(c.ini)}</span>`:''}
         ${trancada(t) ? `<span class="priv">🔒 ${cat.restrita?esc(cat.nome):'só os marcados'}</span>`:''}
-        ${job?`<span class="enVolta ${v===2?'v2':''}">${v}ª volta · ${v===1?'texto':'peça'}</span>`:''}
         ${r?`<span class="ptResp" title="${esc(r.nome)}">${esc(r.ini)}</span>`
            :`<span class="prazo" style="color:#E5A54D">sem dono</span>`}
         ${t.prazo?`<span class="prazo ${tarde?'tarde':''}">${rotuloData(t.prazo)}</span>`:''}
@@ -16818,8 +16815,7 @@ agEnsaio = function(){
       </div>
       ${pedido && pedido.oque ? `<div class="enPedido">${ic('warn',12)}
         <span><b>${esc((pedido.por||'O cliente').split(' ')[0])} pediu:</b> ${esc(pedido.oque)}</span></div>`:''}
-      ${job?`<div class="enBola">${ic('linkic',11)} <span>é o card da pauta ·
-        <b>${esc(rotuloFase(job))}</b></span></div>
+      ${job?`<div class="enBola">${ic('linkic',11)} <span><b>${esc(rotuloFase(job))}</b></span></div>
       <div class="enTrilho">${FASES.map((_,j)=>
         `<i class="${j<i?'feita':''}${j===i?'atual':''}"></i>`).join('')}</div>`:''}
       <div class="acoes">
@@ -22855,8 +22851,12 @@ body.viaLink [data-seg], body.viaLink [data-go="site"]{ display:none !important 
     const i = FASES.findIndex(([x]) => x === depois);
     FASES.splice(i + 1, 0, [k, n]);
   };
-  ins('revisao',  'lote_texto', 'No lote · a enviar');
-  ins('revisao2', 'lote_post',  'No lote · a enviar');
+  /* v229: os dois tinham o MESMO rótulo, então o card dizia a mesma
+     coisa em dois pontos diferentes do fluxo — o mesmo defeito dos dois
+     "Aprovação interna". Agora dizem de QUE lote estão falando, com o
+     mesmo par texto/peça que o resto das fases usa. */
+  ins('revisao',  'lote_texto', 'Texto no lote');
+  ins('revisao2', 'lote_post',  'Peça no lote');
   FASE_COL.lote_texto = 'cliente';
   FASE_COL.lote_post  = 'cliente';
   /* texto aprovado volta ao PLAN (azul), não ao Act: a 2ª volta se
@@ -22881,7 +22881,7 @@ if(!CAPACIDADES.some(([k]) => k === 'revisar')){
 const ehRevisor = () => pode('revisar');
 function recusaRevisor(){
   if(ehRevisor()) return false;
-  toast('Aprovação interna: só quem tem o poder de Revisor libera o Check. Quem dá o poder é o administrador, na Equipe.');
+  toast('Só quem tem o poder de Revisor libera o Check.');
   return true;
 }
 
@@ -22907,7 +22907,7 @@ function revisarCard(cli, id, ok, nota){
     p.revisadoPor = hxQuem(); p.revisadoEm = Date.now();
     p.ajusteInterno = false;
     som('aprovar');
-    toast(`"${p.t}" liberado. Está no lote — sai para o cliente com o conjunto, quando você mandar.`);
+    toast(`"${p.t}" liberado — está no lote.`);
   } else {
     if(!nota) return false;
     /* o pedido do revisor fica no card e NÃO em `alteracoes`: aquela
@@ -22944,7 +22944,7 @@ moverJob = (function(orig){
       if(noLote(p)){ toast('Já está no lote. Sai pelo botão "Enviar", com o conjunto.'); return; }
       if(NO_CLIENTE.includes(f)){ toast('Está com o cliente. Daqui quem move é ele.'); return; }
       if(EM_CHECK.includes(f)){ revisarCard(cliDoCard(p), p.id, true); return; }
-      toast('Antes do cliente vem o Check: só o revisor libera. Mande para o Check primeiro.');
+      toast('Antes do cliente vem o Check, e só o revisor libera.');
       return;
     }
     if(col === 'check'){
@@ -22978,7 +22978,7 @@ enviarCards = (function(orig){
 confirmarEnvio = (function(orig){
   return function(){
     if(!cardsProntos().length){
-      toast('Nada no lote ainda. O revisor libera os cards no Check — e daqui eles saem juntos.');
+      toast('Nada no lote ainda — o revisor libera os cards no Check.');
       return;
     }
     return orig.apply(this, arguments);
@@ -23476,7 +23476,7 @@ addEventListener('click', e => {
   /* v178: sem link, não copia nem compartilha. Copiar "null" faria a
      pessoa mandar lixo; pior, um link de outro cliente daria acesso
      errado. Melhor a mão vazia e o motivo. */
-  if(!link){ toast('Não consegui identificar este cliente com segurança, então não gerei o link. Abra o cliente de novo pela lista.'); return; }
+  if(!link){ toast('Não identifiquei este cliente com segurança, então não gerei o link.'); return; }
   if(d.cycompart && navigator.share){
     const c = CLIS().find(x => x.id === id);
     navigator.share({ title: `Aprovação · ${c ? c.nome : 'Maestro'}`, url: link }).catch(() => {});
@@ -23834,7 +23834,7 @@ function excluirTarefa(tid){
   const t = S.ensaio.tarefas[i];
   const p = cardDaTarefa(t);
   if(p && typeof comCliente === 'function' && comCliente(p)){
-    toast('Está com o cliente decidindo. Traga o card de volta antes de excluir.');
+    toast('O cliente está decidindo — traga o card de volta antes de excluir.');
     return false;
   }
   if(!podeExcluirTarefa(t)){
@@ -25160,7 +25160,7 @@ addEventListener('click', e => {
   const id = t.dataset.cliapr;
   const c = CLIS().find(x => x.id === id);
   const link = linkDeAprovacao(id);
-  if(!link){ toast('Não consegui identificar este cliente com segurança, então não gerei o link. Abra o cliente de novo pela lista.'); return; }   /* v178 */
+  if(!link){ toast('Não identifiquei este cliente com segurança, então não gerei o link.'); return; }   /* v178 */
   copiarTexto(link).then(ok => toast(ok
     ? `Link de ${c ? c.nome : 'aprovação'} copiado. Quem aprova entra por ele, sem senha.`
     : 'Não deu para copiar — abra "Quem aprova" e copie de lá.'));
@@ -26922,7 +26922,7 @@ async function mdChamarIA(fase, temp, gancho, n){
 }
 async function mdDesenvolver(){
   if(!mdIaTemChave()){ S.modal = mdModalIA(); renderLayer(); return; }
-  if(!mdIaLigada()){ toast('A IA está desligada. Ligue no interruptor do topo — a chave já está guardada.'); return; }
+  if(!mdIaLigada()){ toast('A IA está desligada — ligue no interruptor do topo.'); return; }
   if(S.md.pensando) return;
   S.md.pensando = true; S.md.erro = null; render();
   const { fase, temp, gancho } = S.md;
@@ -26962,7 +26962,7 @@ function mdTextoDaIdeia(i){
 function mdParaInbox(id){
   const i = mdAchar(id); if(!i) return;
   if(!S.ensaio && typeof kbSemente === 'function') S.ensaio = kbSemente();
-  if(!S.ensaio) { toast('O Ensaio ainda não abriu nesta sessão. Abra o Ensaio uma vez e tente de novo.'); return; }
+  if(!S.ensaio) { toast('O Ensaio ainda não abriu nesta sessão.'); return; }
   const cli = i.cli || mdCli().id;
   S.ensaio.tarefas.push({ id:novoIdTarefa(), titulo:i.titulo, cli, resp:null, col:'inbox', cat:'producao',
     criada:Date.now(), prazo:null, tempoMs:0, desde:null, desc:mdTextoDaIdeia(i),
@@ -26970,7 +26970,7 @@ function mdParaInbox(id){
   i.noInbox = true;
   if(typeof som === 'function') som('toque');
   render();
-  toast(`"${i.titulo}" está no Inbox do Ensaio. Dá um responsável e ela vira Plan.`);
+  toast(`"${i.titulo}" está no Inbox do Ensaio.`);
 }
 function mdGuardar(id){
   const i = mdAchar(id); if(!i) return;
@@ -28550,7 +28550,7 @@ function mdcCriar(){
   S.ptVista = 'semana'; S.ptVistaAuto = false;
   if(typeof som === 'function') som('toque');
   render(); window.scrollTo(0, 0);
-  toast(`Campanha "${nome}": ${novos.length} peças na pauta da ${c.nome}, de ${dataCurta(datas[0])} a ${dataCurta(datas[datas.length - 1])}. Cada uma é um rascunho com o ponto da mandala.`);
+  toast(`Campanha "${nome}": ${novos.length} peças na pauta da ${c.nome}.`);
 }
 
 /* ---------- na pauta: a faixa de campanhas e a etiqueta ------------- */
@@ -29156,7 +29156,7 @@ function estEnviarCard(){
   const desc = (document.getElementById('est-desc')?.value || '').trim();
   const passos = [...document.querySelectorAll('[data-estpasso]:checked')].map(c => c.nextElementSibling?.textContent.trim()).filter(Boolean);
   if(!S.ensaio && typeof kbSemente === 'function') S.ensaio = kbSemente();
-  if(!S.ensaio){ toast('O Ensaio ainda não abriu nesta sessão. Abra o Ensaio uma vez e tente de novo.'); return; }
+  if(!S.ensaio){ toast('O Ensaio ainda não abriu nesta sessão.'); return; }
   const corpo = [desc, passos.length ? '\nPASSOS:\n' + passos.map((p, i) => `${i + 1}. ${p}`).join('\n') : '', `\nDo Estúdio · quadro "${q.nome}"`].filter(Boolean).join('\n');
   S.ensaio.tarefas.push({ id:novoIdTarefa(), titulo, cli, resp:null, col:'inbox', cat:'producao',
     criada:Date.now(), prazo:null, tempoMs:0, desde:null, desc:corpo, estudio:{ quadro:q.id, notas:estNotasDoCard().map(n => n.id) } });
@@ -29165,13 +29165,13 @@ function estEnviarCard(){
   estFaisca('card'); estGanhaSelo('palco');
   if(typeof som === 'function') som('conclusao');
   estGravar(); render();
-  toast(`"${titulo}" está no Inbox do Ensaio, para a ${(CLIS().find(c => c.id === cli) || {}).nome || 'agência'}. Dá um responsável e ela vira Plan.`);
+  toast(`"${titulo}" está no Inbox do Ensaio.`);
 }
 /* da mandala para cá: o banco de ideias vira notas */
 function estTrazerDaMandala(){
   const q = estQuadro(); if(!q) return;
   const banco = (S.mandala && S.mandala.banco) || [];
-  if(!banco.length){ toast('O banco de ideias da Mandala está vazio. Guarde uma ideia lá e ela aparece aqui.'); return; }
+  if(!banco.length){ toast('O banco de ideias da Mandala está vazio.'); return; }
   estLembrar();
   const base = q.itens.length ? Math.max(...q.itens.map(i => i.y)) + 160 : 80;
   banco.slice(0, 8).forEach((b, k) => q.itens.push({ id:estId(), tipo:'nota', x:80 + (k % 4) * 215, y:base + Math.floor(k / 4) * 150, cor:'violeta',
@@ -29212,7 +29212,7 @@ addEventListener('pointerdown', e => {
     }
     if(S.est.modo === 'votar'){
       e.preventDefault();
-      if(S.est.votosDados >= 5){ toast('Cinco votos por quadro. Tire um voto tocando com o modo Mover na bolinha.'); return; }
+      if(S.est.votosDados >= 5){ toast('Cinco votos por quadro — este acabou.'); return; }
       i.votos = (i.votos || 0) + 1; S.est.votosDados++; estFaisca('voto'); estGravar(); estPintar(); return;
     }
     /* mover: seleciona e arrasta */
@@ -34597,7 +34597,7 @@ addEventListener('click', e => {
     if(convidou || ligado() || !temNotificacao()) return;
     if(Notification.permission === 'denied') return;
     convidou = true;
-    setTimeout(() => toast('Quer ser avisado no aparelho quando te chamarem? Conta → Avisos neste aparelho.'), 900);
+    setTimeout(() => toast('Para ser avisado neste aparelho: Conta → Avisos.'), 900);
   }
 
   const _renderV161 = render;
@@ -36420,8 +36420,7 @@ sbGravar = (function(orig){
         const c = (typeof CLIS === 'function' && CLIS().find(x => x.id === cli)) || {};
         if(typeof toast === 'function')
           toast(`Não gravei: isto apagaria ${risco.perdidos} publicaç${
-            risco.perdidos > 1 ? 'ões' : 'ão'} de ${c.nome || 'um cliente'} que ninguém`
-            + ` mandou apagar. Recarregando do banco.`, true);
+            risco.perdidos > 1 ? 'ões' : 'ão'} de ${c.nome || 'um cliente'}.`, true);
         /* A tela precisa voltar à verdade. Recarregar não basta: a mescla
            da v151 vê a lista curta como "apagado aqui" e mantém o buraco.
            Então a linha do banco entra inteira, e a base da sincronização
@@ -36905,7 +36904,7 @@ sbGravar = (function(orig){
       return false;
     }
     if(!ehVolta(p)){
-      toast('Este card não voltou do cliente. A primeira ida passa pelo Check.', false, 'erro');
+      toast('Este card não voltou do cliente — a primeira ida passa pelo Check.', false, 'erro');
       return false;
     }
     const nao = porqueNaoDevolve(p);
@@ -41583,6 +41582,60 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
     min-height:0; max-height:none;
     height:var(--cvAlt, calc(100dvh - 42px - 240px));
   }
+}
+
+/* =====================================================================
+   v229 · NO CELULAR, O MODAL É UMA FOLHA — E O SALVAR FICA À MÃO
+   ---------------------------------------------------------------------
+   O "Estruturar a pauta" tem 2.177px de conteúdo numa caixa de 709px.
+   O `max-height` da v-anterior fez a caixa ROLAR POR DENTRO, o que
+   resolveu o corte — mas o título e a fila de botões rolam junto, então
+   o "Próxima etapa" fica 1.440px abaixo da dobra. Na prática: não dá
+   para salvar sem rolar três telas, e não dá para saber onde se está.
+
+   O conserto é de CSS, não de HTML — e isso importa, porque são 62
+   modais, cada um com um corpo diferente, num arquivo que só cresce por
+   camadas. `position:sticky` prende o `h3` no topo e a última
+   `.modalrow` no rodapé SEM tocar em nenhum deles: os dois já são
+   filhos diretos da caixa em todos os 62.
+
+   E a caixa vira folha (colada embaixo, cantos só em cima), que é o
+   padrão que o Slack, o Linear e o Notion usam no celular — o polegar
+   fica perto do que decide.
+
+   `!important` na margem porque o rodapé do modal de postagem traz
+   `style="margin-top:14px"` no próprio elemento.
+   ================================================================== */
+@media(max-width:860px){
+  .modal{ padding:0; place-items:end stretch }
+  .modalbox, .modalbox.wide{
+    width:100%; max-width:none;
+    max-height:94dvh;
+    border-radius:18px 18px 0 0;
+    border-bottom:0;
+    padding:0 16px;
+    overscroll-behavior:contain;
+  }
+  /* sem rodapé de botões, a caixa ainda precisa respirar embaixo */
+  .modalbox::after{ content:''; display:block; height:16px }
+
+  .modalbox > h3{
+    position:sticky; top:0; z-index:3;
+    margin:0 -16px 10px !important;
+    padding:16px 16px 12px;
+    background:var(--ink-850);
+    border-bottom:1px solid var(--ink-800);
+  }
+  .modalbox > .modalrow:last-child{
+    position:sticky; bottom:0; z-index:3;
+    margin:14px -16px 0 !important;
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:var(--ink-850);
+    border-top:1px solid var(--ink-800);
+  }
+  /* o modal branco (o termo assinado) tem fundo próprio, não tokenizado */
+  .modalbox.light > h3,
+  .modalbox.light > .modalrow:last-child{ background:#fff; border-color:#E7E2D9 }
 }
 </style>
 
