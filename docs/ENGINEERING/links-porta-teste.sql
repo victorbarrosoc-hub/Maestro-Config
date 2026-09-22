@@ -117,6 +117,38 @@ select case when jsonb_array_length(r -> 'dados' -> 'pauta' -> 0 -> 'corte' -> '
             else 'PROVA 16 FALHOU · timecodes perdidos na travessia' end
   from (select public.maestro_link_lote('n0', :chave_ejup) as r) t;
 
+-- ---------------------------------------------------------------------
+-- PROVA 17 — O MATERIAL DO CARD (inclusive um LINK) atravessa a porta.
+--
+-- 22/set: "O cliente nao consegue ver o link anexado no card, como
+-- material de peca." O app empacota em `dados.mats[<id do card>]` e a
+-- porta filtra por `maestro_so_ids`. Se a chave do objeto e o id do
+-- card nao baterem, o material some sem erro nenhum -- e some SO no
+-- link, que e onde ninguem estava olhando.
+-- ---------------------------------------------------------------------
+update public.pauta
+   set dados = jsonb_set(coalesce(dados, '{}'::jsonb), '{mats}', jsonb_build_object(
+         '101', jsonb_build_array(jsonb_build_object(
+                  'tipo','link', 'nome','Gravacao bruta do episodio',
+                  'url','https://drive.google.com/x', 'peso',0)),
+         '102', jsonb_build_array(jsonb_build_object(
+                  'tipo','link', 'nome','ESTE e do card em rascunho',
+                  'url','https://exemplo.com/nao','peso',0))))
+ where org = 'maestro' and cliente = 'n0';
+
+select case when r -> 'dados' -> 'mats' -> '101' -> 0 ->> 'nome'
+                 = 'Gravacao bruta do episodio'
+            then 'PROVA 17 ok   · o link anexado ao card atravessa a porta do cliente'
+            else 'PROVA 17 FALHOU · o material sumiu na travessia: '
+                 || coalesce((r -> 'dados' -> 'mats')::text, 'null') end
+  from (select public.maestro_link_lote('n0', :chave_ejup) as r) t;
+
+-- e o material do card que NAO foi ao cliente nao pode vazar junto
+select case when (r -> 'dados' -> 'mats' -> '102') is null
+            then 'PROVA 18 ok   · e o material do card em rascunho NAO vai junto'
+            else 'PROVA 18 FALHOU · vazou material de card que nao foi enviado' end
+  from (select public.maestro_link_lote('n0', :chave_ejup) as r) t;
+
 -- PROVA 4 — o link da EJUP nao enxerga a ZRO (as duas tem cliente `n0`)
 select case when r::text not like '%Card da ZRO%' and r::text like '%EJUP%'
             then 'PROVA 4 ok    · o link da EJUP nao alcanca o `n0` da ZRO'
