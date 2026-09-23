@@ -44038,7 +44038,7 @@ button.clPost:active{ transform:scale(.98) }
         <span class="tt">${esc(p.t || '')}</span></button>`;
     return `<div id="v243ig" role="dialog" aria-modal="true" aria-label="Pré-visualização do feed no Instagram">
       <div class="igTopo"><b>@${esc(arroba)}</b><button type="button" data-v243fecha="1" aria-label="Fechar">${ic('x', 18)}</button></div>
-      <div class="igPerfil"><div class="igFoto" style="background:${cor}">${logo ? `<img src="${logo}" alt="">` : esc(c.ini || String(c.nome || '?').slice(0, 2).toUpperCase())}</div>
+      <div class="igPerfil"><div class="igFoto" style="background:${cor}">${logo ? `<img src="${urlSegura(c.logo)}" alt="">` : esc(c.ini || String(c.nome || '?').slice(0, 2).toUpperCase())}</div>
         <div class="igNums"><span><b>${todos.length}</b>posts</span><span><b>${todos.filter(comCliente).length}</b>para aprovar</span><span><b>${todos.filter(p => grupo(p) === 'ok').length}</b>aprovados</span></div></div>
       <div class="igNome">${esc(c.nome || '')}</div>
       <div class="igBio">Pré-visualização do feed</div>
