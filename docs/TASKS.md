@@ -308,8 +308,10 @@ ficam com os nomes de hoje, e o botão de cada card é sempre a próxima porta.
       founder: usepostarium.com.br. Perfil no topo de "Publicações", grade com a
       arte e o estado, e tocar no post abre a decisão. **Falta daqui:** abas
       Calendário/Stories dentro do perfil; foto do cliente vir do perfil real.
-- [ ] **Parte 4 — a aba Redes, por planilha.** Em paralelo, o pedido de
-      aprovação do app na Meta para a conexão automática.
+- [x] **Parte 4 — a aba Redes, por planilha (v238).** CSV do Meta Business
+      Suite, YouTube Studio e TikTok Studio; leitura por regras. **Falta daqui:**
+      o pedido de aprovação do app na Meta (conexão automática, semanal sozinha);
+      a leitura escrita por IA com o cérebro da marca; XLSX além de CSV.
 
 ---
 

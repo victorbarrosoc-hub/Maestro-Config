@@ -1,9 +1,61 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.51
+Version: 0.5.52
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.52 — 2026-09-23
+
+**Status:** Concluída
+
+### v238 — a cara nova, parte 4: a aba Redes do cliente
+
+*"uma aba para análise dos perfis das redes sociais de cada cliente… cliques,
+tempo assistido… atualizações semanais, gráficos, sugestões de melhorias, o que
+tá dando certo, o que não tá."*
+
+**Onde mora:** dentro da página do cliente, ao lado de "Banco de dados" — é o
+perfil DELE. "Resultados" continua sendo a operação da agência (tempo, ritmo).
+
+**Como os números entram: planilha.** Só o @ não dá — alcance, cliques e tempo
+assistido são dados privados da conta. A aba lê o CSV que o **Meta Business
+Suite**, o **YouTube Studio** e o **TikTok Studio** exportam, e ensina, na
+própria tela, onde clicar em cada um. O leitor aguenta o que essas planilhas
+fazem de verdade: cabeçalho em português ou inglês, **UTF-16** (o Meta às vezes
+exporta assim), a linha "Total" do YouTube, números `1.234` e `1,234`, tempo
+`0:45`, datas dd/mm ou mm/dd (decidido pelo conjunto: um dia acima de 12
+resolve). **Antes de guardar, mostra o que leu** — quantas publicações, de quando
+a quando, quantas novas. A conexão automática (login oficial de cada rede) é o
+passo seguinte, depois da aprovação do app pela Meta, e cai nesta mesma tela.
+
+**A tela:** últimos 7 dias da planilha contra os 7 anteriores — alcance,
+visualizações, engajamento, cliques, seguidores novos, tempo médio assistido
+("a planilha não traz" quando não traz); alcance por semana (**só semanas
+fechadas** — a em curso desenhava uma queda que não aconteceu); engajamento por
+formato; as publicações que mais alcançaram; e **o que deu certo / o que não
+deu / o que fazer**. Essa leitura é por **regras** sobre os números (formato que
+mais engaja, dia que mais alcança, publicação muito acima da média, queda de 15%
+ou mais, tempo assistido baixo) — **não é IA, e a tela diz isso**. A leitura
+escrita por IA, com o cérebro da marca, é o passo seguinte.
+
+**Semanal:** importar a planilha nova **soma** com as anteriores (cada publicação
+é uma chave); se a última tem mais de 7 dias, a aba avisa.
+
+**Os dados:** numa linha própria da agência no banco (`__redes__`), que os links
+de cliente não leem, e **gravar soma com o que está lá** — dois aparelhos
+importando não se apagam. **Não vão para o `localStorage`:** chave local sem dono
+foi o vazamento da v220, e esta não seria outra.
+
+**28 provas** em `web/verificar/v238-a-aba-redes.mjs`, com planilhas nos
+formatos de verdade. **As provas pegaram:** (1) o gráfico no celular — o SVG
+encolhia para caber e levava o texto de 11px para 6,4px; a primeira prova media
+a caixa das letras e não o tamanho, e a segunda (fonte × escala) acertou; agora
+o gráfico é desenhado na largura do celular e redesenha ao girar; (2) sem sessão,
+a trava da v220 segura a escrita antes da rede — a prova passou a medir o que a
+aba MANDA gravar, e a trava segue coberta pela suíte dela.
 
 ---
 

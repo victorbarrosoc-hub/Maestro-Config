@@ -16032,7 +16032,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v237 · 23 set · a curtida que aprova';
+const VERSAO_PROTOTIPO = 'v238 · 23 set · a aba Redes';
 
 menuSheet = (function(orig){
   return function(){
@@ -42623,6 +42623,522 @@ button.clPost:active{ transform:scale(.98) }
     return r;
   };
   window.MaestroCurtida = { pulsar };
+})();
+</script>
+<style id="v238-redes">
+/* =====================================================================
+   v238 — a cara nova, parte 4: a aba Redes do cliente.
+   "uma aba para análise dos perfis das redes sociais de cada cliente…
+   quantidade de cliques, tempo assistido… atualizações semanais, gráficos,
+   sugestões de melhorias, o que tá dando certo, o que não tá."
+   Mora DENTRO da página do cliente (ao lado de "Banco de dados"): é o
+   perfil DELE. Resultados continua sendo a operação da agência.
+   Os números entram por PLANILHA — o CSV que o Meta Business Suite, o
+   YouTube Studio e o TikTok Studio exportam. Só o @ não dá: alcance,
+   cliques e tempo assistido são dados privados da conta. A conexão
+   automática (login oficial de cada rede) é o passo seguinte, depois da
+   aprovação do app pela Meta; esta tela é a mesma nos dois casos.
+   A leitura ("o que deu certo / não deu / o que fazer") é feita por
+   REGRAS sobre os números, e a tela diz isso. Não é IA, e não finge ser.
+   ================================================================== */
+.rdTopo{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px }
+.rdTopo .sp{ flex:1 }
+.rdChips{ display:flex; gap:6px; flex-wrap:wrap }
+.rdChip{ padding:6px 12px; border-radius:99px; border:1px solid var(--ink-700); font-size:13px; color:var(--ink-300); background:none }
+.rdChip.on{ background:var(--ink-100); color:var(--ink-950); border-color:var(--ink-100); font-weight:600 }
+.rdAviso{ border:1px solid rgba(200,150,58,.4); background:rgba(200,150,58,.08); color:var(--ink-100);
+  border-radius:12px; padding:11px 14px; font-size:13px; margin-bottom:14px }
+.rdKpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px }
+.rdKpi{ background:var(--ink-850); border:1px solid var(--ink-800); border-radius:12px; padding:13px 14px }
+.rdKpi .l{ font-size:12px; color:var(--ink-400) }
+.rdKpi .v{ font-size:24px; font-weight:600; color:var(--ink-50); letter-spacing:-.02em; margin:3px 0 1px }
+.rdKpi .d{ font-size:12px; font-weight:500 }
+.rdKpi .d.up{ color:var(--encore) } .rdKpi .d.down{ color:#F0784C } .rdKpi .d.flat{ color:var(--ink-400) }
+.rdGrade{ display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); gap:12px; margin-bottom:12px }
+@media(max-width:900px){ .rdGrade{ grid-template-columns:1fr } }
+.rdBox{ background:var(--ink-850); border:1px solid var(--ink-800); border-radius:14px; padding:15px 16px; min-width:0 }
+.rdBox h3{ margin:0 0 12px; font-size:14px; font-weight:600; color:var(--ink-50) }
+.rdBox h3 small{ font-weight:400; color:var(--ink-400); font-size:12px; margin-left:6px }
+.rdChart{ width:100%; height:auto; display:block }
+.rdChart text{ font:11px var(--sans); fill:var(--ink-400) }
+.rdFmt{ display:grid; grid-template-columns:96px 1fr 52px; gap:8px 10px; align-items:center; font-size:13px; color:var(--ink-200) }
+.rdFmt .tr{ height:10px; background:var(--ink-900); border-radius:5px; overflow:hidden }
+.rdFmt .tr i{ display:block; height:100%; border-radius:5px; background:var(--cobalt) }
+.rdFmt b{ text-align:right; font-weight:600; color:var(--ink-50) }
+.rdLeitura{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:12px }
+@media(max-width:900px){ .rdLeitura{ grid-template-columns:1fr } }
+.rdLeitura ul{ margin:0; padding:0; list-style:none }
+.rdLeitura li{ font-size:13px; color:var(--ink-200); padding:8px 0; border-top:1px solid var(--ink-800); line-height:1.45 }
+.rdLeitura li:first-child{ border-top:0; padding-top:0 }
+.rdLeitura li b{ color:var(--ink-50); font-weight:600 }
+.rdLeitura .ico{ display:inline-grid; place-items:center; width:22px; height:22px; border-radius:6px; margin-right:6px; font-size:12px; font-weight:700 }
+.rdTab{ width:100%; border-collapse:collapse; font-size:13px }
+.rdTab th{ text-align:left; font-weight:500; color:var(--ink-400); font-size:12px; padding:0 8px 8px; border-bottom:1px solid var(--ink-800) }
+.rdTab td{ padding:9px 8px; border-bottom:1px solid var(--ink-800); color:var(--ink-200) }
+.rdTab td.n, .rdTab th.n{ text-align:right; font-variant-numeric:tabular-nums }
+.rdTab td .t{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; max-width:360px }
+.rdNota{ font-size:12px; color:var(--ink-400); margin:8px 0 0 }
+.rdComo ol{ margin:6px 0 0; padding-left:18px; font-size:13px; color:var(--ink-200) }
+.rdComo li{ margin-bottom:4px }
+.rdComo b{ color:var(--ink-50) }
+</style>
+<script>
+/* v238 — a aba Redes: ler a planilha, guardar, somar semanas e dizer o que os números dizem */
+(function(){
+  S.redes = S.redes || { itens: {} };              /* id → publicação */
+  const PLATS_RD = { ig:'Instagram', fb:'Facebook', tt:'TikTok', yt:'YouTube', li:'LinkedIn' };
+
+  /* ---------- 1. ler o arquivo --------------------------------------- */
+  const semAcento = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  /* o Meta às vezes exporta em UTF-16; o resto, UTF-8 com ou sem BOM */
+  function decodificar(buf){
+    const u = new Uint8Array(buf);
+    if(u[0] === 0xFF && u[1] === 0xFE) return new TextDecoder('utf-16le').decode(u.subarray(2));
+    if(u[0] === 0xFE && u[1] === 0xFF) return new TextDecoder('utf-16be').decode(u.subarray(2));
+    const t = new TextDecoder('utf-8').decode(u);
+    return t.charCodeAt(0) === 0xFEFF ? t.slice(1) : t;
+  }
+  /* CSV com aspas, vírgula, ponto e vírgula ou tabulação */
+  function lerCsv(txt){
+    const linha1 = txt.split(/\r?\n/, 1)[0] || '';
+    const sep = [',', ';', '\t'].sort((a, b) => linha1.split(b).length - linha1.split(a).length)[0];
+    const linhas = []; let campo = '', lin = [], aspas = false;
+    for(let i = 0; i < txt.length; i++){
+      const ch = txt[i];
+      if(aspas){
+        if(ch === '"' && txt[i + 1] === '"'){ campo += '"'; i++; }
+        else if(ch === '"') aspas = false;
+        else campo += ch;
+      } else if(ch === '"') aspas = true;
+      else if(ch === sep){ lin.push(campo); campo = ''; }
+      else if(ch === '\n' || ch === '\r'){
+        if(ch === '\r' && txt[i + 1] === '\n') i++;
+        lin.push(campo); campo = '';
+        if(lin.some(x => x.trim() !== '')) linhas.push(lin);
+        lin = [];
+      } else campo += ch;
+    }
+    lin.push(campo); if(lin.some(x => x.trim() !== '')) linhas.push(lin);
+    return linhas;
+  }
+  /* "1.234" (pt), "1,234" (en), "1.234,5", "12,5%", "0:45" (tempo) */
+  function numero(v){
+    let t = String(v == null ? '' : v).trim().replace(/[%\s"]/g, '');
+    if(!t || t === '-' || /^n\/?a$/i.test(t)) return null;
+    if(/^\d+:\d{1,2}(:\d{1,2})?$/.test(t)){                     /* m:ss ou h:mm:ss → segundos */
+      const p = t.split(':').map(Number); return p.reduce((a, b) => a * 60 + b, 0);
+    }
+    const temP = t.includes('.'), temV = t.includes(',');
+    if(temP && temV) t = t.lastIndexOf(',') > t.lastIndexOf('.') ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+    else if(temV) t = /^\d{1,3}(,\d{3})+$/.test(t) ? t.replace(/,/g, '') : t.replace(',', '.');
+    else if(temP && /^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, '');
+    const n = Number(t);
+    return Number.isFinite(n) ? n : null;
+  }
+  /* datas: ISO, dd/mm/aaaa (pt) ou mm/dd/aaaa (en) — decide pelo conjunto */
+  function lerDatas(vals, pt){
+    const br = vals.map(v => String(v || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/));
+    let ddmm = pt;
+    if(br.some(m => m && +m[1] > 12)) ddmm = true;
+    else if(br.some(m => m && +m[2] > 12)) ddmm = false;
+    return vals.map((v, i) => {
+      const s = String(v || '').trim();
+      const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if(iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+      const m = br[i]; if(!m) return null;
+      const a = m[3].length === 2 ? '20' + m[3] : m[3];
+      const [d, mes] = ddmm ? [m[1], m[2]] : [m[2], m[1]];
+      if(+mes < 1 || +mes > 12 || +d < 1 || +d > 31) return null;
+      return `${a}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    });
+  }
+  /* cabeçalhos das três ferramentas, em português e em inglês */
+  const COLUNAS = {
+    id:        ['identificacao do post', 'id do post', 'post id', 'id', 'identificacao do video', 'video id', 'content'],
+    data:      ['horario de publicacao', 'data de publicacao', 'publish time', 'post time', 'video publish time', 'data', 'date', 'created', 'hora da publicacao'],
+    titulo:    ['descricao', 'description', 'titulo do video', 'video title', 'titulo', 'title', 'legenda', 'caption', 'texto'],
+    tipo:      ['tipo de post', 'post type', 'tipo de publicacao', 'tipo', 'type', 'formato', 'format'],
+    link:      ['link permanente', 'permalink', 'link', 'video link', 'url'],
+    alcance:   ['alcance', 'reach', 'contas alcancadas', 'accounts reached'],
+    views:     ['visualizacoes', 'views', 'total views', 'impressoes', 'impressions', 'reproducoes', 'plays', 'exibicoes'],
+    curtidas:  ['curtidas', 'likes', 'total likes', 'reacoes', 'reactions', 'gostei'],
+    coment:    ['comentarios', 'comments', 'total comments'],
+    compart:   ['compartilhamentos', 'shares', 'total shares'],
+    salvos:    ['salvamentos', 'saves', 'salvos', 'saved'],
+    cliques:   ['cliques no link', 'link clicks', 'cliques', 'clicks', 'toques no link', 'visitas ao perfil', 'profile visits'],
+    seguid:    ['seguimentos', 'follows', 'novos seguidores', 'seguidores ganhos', 'inscritos', 'subscribers', 'new followers'],
+    tempo:     ['duracao media da visualizacao', 'average view duration', 'tempo medio assistido', 'average watch time', 'tempo medio de reproducao', 'tempo medio'],
+  };
+  function mapear(cab){
+    const n = cab.map(semAcento); const m = {};
+    for(const [k, nomes] of Object.entries(COLUNAS)){
+      let i = -1;
+      for(const nome of nomes){ i = n.findIndex(h => h === nome); if(i >= 0) break; }
+      if(i < 0) for(const nome of nomes){ i = n.findIndex(h => nome.length > 4 && h.includes(nome)); if(i >= 0) break; }
+      if(i >= 0 && !Object.values(m).includes(i)) m[k] = i;
+    }
+    return m;
+  }
+  function plataformaDe(cab, nomeArq){
+    const h = semAcento(cab.join(' ') + ' ' + (nomeArq || ''));
+    if(/youtube|inscritos|subscribers|impressions click/.test(h)) return 'yt';
+    if(/tiktok|total views|total likes/.test(h)) return 'tt';
+    if(/linkedin/.test(h)) return 'li';
+    if(/facebook|reacoes|reactions/.test(h)) return 'fb';
+    return 'ig';
+  }
+  /* a planilha vira publicações; o que não tem data não entra */
+  function interpretar(txt, nomeArq){
+    const linhas = lerCsv(txt);
+    if(linhas.length < 2) return { erro: 'A planilha está vazia ou não é um CSV.' };
+    /* o YouTube põe uma linha "Total" logo depois do cabeçalho */
+    const cab = linhas[0], m = mapear(cab);
+    if(m.data == null) return { erro: 'Não achei a coluna de data da publicação. Confira se é o CSV de conteúdo/publicações.' };
+    const temMetrica = ['alcance', 'views', 'curtidas', 'coment', 'compart', 'salvos', 'cliques'].some(k => m[k] != null);
+    if(!temMetrica) return { erro: 'Achei as datas, mas nenhuma coluna de número (alcance, visualizações, curtidas…).' };
+    const pt = /[çãõáéíóú]|visualiza|alcance|curtidas/.test(cab.join(' ').toLowerCase());
+    const corpo = linhas.slice(1).filter(l => !/^total/i.test(String(l[0] || '').trim()));
+    const datas = lerDatas(corpo.map(l => l[m.data]), pt);
+    const plat = plataformaDe(cab, nomeArq);
+    const pubs = [];
+    corpo.forEach((l, i) => {
+      if(!datas[i]) return;
+      const v = k => m[k] == null ? null : numero(l[m[k]]);
+      const t = k => m[k] == null ? '' : String(l[m[k]] || '').trim();
+      const idCru = t('id') || `${datas[i]}|${t('titulo').slice(0, 60)}`;
+      pubs.push({ id: `${plat}:${idCru}`, plat, data: datas[i], titulo: t('titulo').slice(0, 300),
+        tipo: t('tipo').slice(0, 40), link: t('link').slice(0, 500),
+        alcance: v('alcance'), views: v('views'), curtidas: v('curtidas'), coment: v('coment'),
+        compart: v('compart'), salvos: v('salvos'), cliques: v('cliques'), seguid: v('seguid'), tempo: v('tempo') });
+    });
+    if(!pubs.length) return { erro: 'Nenhuma linha com data que eu conseguisse ler.' };
+    return { plat, pubs, colunas: Object.keys(m) };
+  }
+
+  /* ---------- 2. guardar (e somar, nunca apagar) --------------------- */
+  const doCliente = cli => Object.values(S.redes.itens || {}).filter(p => p && p.cli === cli);
+  function guardar(cli, pubs){
+    let novas = 0, atual = 0;
+    S.redes.itens = S.redes.itens || {};
+    pubs.forEach(p => {
+      const id = `${cli}|${p.id}`;
+      S.redes.itens[id] ? atual++ : novas++;
+      S.redes.itens[id] = { ...p, id, cli, em: Date.now() };
+    });
+    S.redes.lidoEm = S.redes.lidoEm || {};
+    S.redes.lidoEm[cli] = Date.now();
+    if(typeof sbGravarConfig === 'function') sbGravarConfig();
+    return { novas, atual };
+  }
+  /* no banco: uma linha só da agência, que os links de cliente não leem.
+     Gravar SOMA com o que está lá (cada publicação é uma chave), então dois
+     aparelhos importando ao mesmo tempo não se apagam. */
+  sbGravarConfig = (function(orig){
+    let _esp = null;
+    return async function(){
+      await orig.apply(this, arguments);
+      if(typeof _sbLigado === 'undefined' || !_sbLigado || !S.redes || !Object.keys(S.redes.itens || {}).length) return;
+      try{
+        const lido = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__redes__&select=dados`, { headers: sbCab() });
+        if(lido.ok){ const [l] = await lido.json(); if(l && l.dados) unir(l.dados); }
+        const corpo = JSON.stringify(S.redes);
+        if(_esp === corpo) return;
+        const r = await fetch(`${SB.url}/rest/v1/pauta?on_conflict=cliente`, {
+          method: 'POST', headers: { ...sbCab(), Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify({ cliente: '__redes__', dados: S.redes, atualizado_em: new Date().toISOString() }) });
+        if(r.ok) _esp = corpo;
+      }catch(e){}
+    };
+  })(sbGravarConfig);
+  function unir(dados){
+    if(!dados || typeof dados !== 'object') return;
+    S.redes.itens = S.redes.itens || {};
+    for(const [id, p] of Object.entries(dados.itens || {})){
+      const meu = S.redes.itens[id];
+      if(!meu || (p && (p.em || 0) > (meu.em || 0))) S.redes.itens[id] = p;
+    }
+    S.redes.lidoEm = S.redes.lidoEm || {};
+    for(const [c, t] of Object.entries(dados.lidoEm || {})) S.redes.lidoEm[c] = Math.max(S.redes.lidoEm[c] || 0, t || 0);
+  }
+  let _rdCarregado = false;
+  async function carregar(){
+    if(_rdCarregado || typeof _sbLigado === 'undefined' || !_sbLigado) return;
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__redes__&select=dados`, { headers: sbCab() });
+      if(!r.ok) return;
+      _rdCarregado = true;
+      const [l] = await r.json();
+      if(l && l.dados){ unir(l.dados); if(S.route === 'clientedet' && S.tab === 'redes') render(); }
+    }catch(e){}
+  }
+  [2400, 6000, 14000].forEach(t => setTimeout(carregar, t));
+
+  /* ---------- 3. as contas ------------------------------------------- */
+  const soma = (arr, k) => { const v = arr.map(p => p[k]).filter(x => typeof x === 'number'); return v.length ? v.reduce((a, b) => a + b, 0) : null; };
+  const media = (arr, k) => { const v = arr.map(p => p[k]).filter(x => typeof x === 'number'); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  const interacoes = p => ['curtidas', 'coment', 'compart', 'salvos'].map(k => p[k] || 0).reduce((a, b) => a + b, 0);
+  const engaj = arr => { const a = soma(arr, 'alcance') || soma(arr, 'views'); return a ? arr.reduce((s, p) => s + interacoes(p), 0) / a * 100 : null; };
+  const diaISO = d => { const x = new Date(d + 'T12:00:00'); return x; };
+  const iso = d => d.toISOString().slice(0, 10);
+  /* segunda-feira da semana de uma data */
+  const segunda = s => { const d = diaISO(s); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return iso(d); };
+  function periodos(pubs){
+    const fim = pubs.map(p => p.data).sort().pop();
+    const d = diaISO(fim);
+    const ini = new Date(d); ini.setDate(d.getDate() - 6);
+    const iniAnt = new Date(d); iniAnt.setDate(d.getDate() - 13);
+    const fimAnt = new Date(d); fimAnt.setDate(d.getDate() - 7);
+    return {
+      atual: pubs.filter(p => p.data >= iso(ini) && p.data <= fim),
+      anterior: pubs.filter(p => p.data >= iso(iniAnt) && p.data <= iso(fimAnt)),
+      de: iso(ini), ate: fim };
+  }
+  const fmtN = n => n == null ? '—' : n >= 1e6 ? (n / 1e6).toFixed(1).replace('.', ',') + ' mi'
+    : n >= 1e4 ? Math.round(n / 1e3) + ' mil' : n >= 1e3 ? (n / 1e3).toFixed(1).replace('.', ',') + ' mil' : String(Math.round(n));
+  const fmtPct = n => n == null ? '—' : n.toFixed(1).replace('.', ',') + '%';
+  const fmtSeg = n => n == null ? '—' : n >= 60 ? `${Math.floor(n / 60)}min${String(Math.round(n % 60)).padStart(2, '0')}` : Math.round(n) + 's';
+  const dataBR = s => s ? s.slice(8, 10) + '/' + s.slice(5, 7) : '';
+  function variacao(a, b){
+    if(a == null || b == null || !b) return { t: 'sem semana anterior', c: 'flat' };
+    const d = (a - b) / b * 100;
+    if(Math.abs(d) < 1) return { t: 'igual à semana anterior', c: 'flat' };
+    return { t: `${d > 0 ? '↑' : '↓'} ${Math.abs(d).toFixed(0)}% vs semana anterior`, c: d > 0 ? 'up' : 'down' };
+  }
+  const formatoDe = p => {
+    const t = semAcento(p.tipo);
+    if(/reel|video|short/.test(t)) return 'Reels / vídeo';
+    if(/carrossel|carousel|album/.test(t)) return 'Carrossel';
+    if(/stor/.test(t)) return 'Stories';
+    if(/imagem|image|foto|photo|estatico/.test(t)) return 'Post estático';
+    return p.plat === 'yt' || p.plat === 'tt' ? 'Vídeo' : (p.tipo ? p.tipo.slice(0, 18) : 'Outro');
+  };
+  const DIAS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+
+  /* ---------- 4. a leitura, por regras -------------------------------- */
+  function leitura(pubs, per){
+    const bem = [], mal = [], fazer = [];
+    const porFmt = {};
+    pubs.forEach(p => { (porFmt[formatoDe(p)] = porFmt[formatoDe(p)] || []).push(p); });
+    const fmts = Object.entries(porFmt).filter(([, a]) => a.length >= 2)
+      .map(([f, a]) => [f, engaj(a)]).filter(([, e]) => e != null).sort((a, b) => b[1] - a[1]);
+    if(fmts.length >= 2){
+      const [top, pior] = [fmts[0], fmts[fmts.length - 1]];
+      bem.push(`<b>${esc(top[0])}</b> é o formato que mais engaja: ${fmtPct(top[1])}${pior[1] > 0 ? `, ${(top[1] / pior[1]).toFixed(1).replace('.', ',')}× o de ${esc(pior[0])}` : ''}.`);
+      if(pior[1] < top[1] * .6) { mal.push(`<b>${esc(pior[0])}</b> ficou atrás: ${fmtPct(pior[1])} de engajamento.`);
+        fazer.push(`Trocar parte de <b>${esc(pior[0])}</b> por <b>${esc(top[0])}</b> na próxima pauta.`); }
+    }
+    const comAlc = pubs.filter(p => (p.alcance || p.views));
+    if(comAlc.length >= 3){
+      const base = p => p.alcance || p.views;
+      const ord = [...comAlc].sort((a, b) => base(b) - base(a));
+      const med = base(ord[Math.floor(ord.length / 2)]);
+      const top = ord[0];
+      if(med && base(top) > med * 1.5)
+        bem.push(`<b>“${esc((top.titulo || 'Uma publicação').slice(0, 60))}”</b> alcançou ${(base(top) / med).toFixed(1).replace('.', ',')}× a média do período.`);
+      /* o dia da semana que mais alcança, se houver dados para isso */
+      const porDia = {};
+      comAlc.forEach(p => { const d = diaISO(p.data).getDay(); (porDia[d] = porDia[d] || []).push(base(p)); });
+      const dias = Object.entries(porDia).filter(([, v]) => v.length >= 2)
+        .map(([d, v]) => [+d, v.reduce((a, b) => a + b, 0) / v.length]).sort((a, b) => b[1] - a[1]);
+      if(dias.length >= 2){ const nome = DIAS[dias[0][0]];
+        bem.push(`<b>${nome[0].toUpperCase() + nome.slice(1)}</b> é o dia que mais alcança.`);
+        fazer.push(`Deixar as publicações mais importantes para <b>${DIAS[dias[0][0]]}</b>.`); }
+    }
+    const cmp = [['alcance', 'O alcance'], ['cliques', 'Os cliques'], ['seguid', 'Os seguidores novos'], ['views', 'As visualizações']];
+    for(const [k, nome] of cmp){
+      const a = soma(per.atual, k), b = soma(per.anterior, k);
+      if(a == null || !b) continue;
+      const d = (a - b) / b * 100;
+      if(d <= -15){ mal.push(`<b>${nome}</b> caíram ${Math.abs(d).toFixed(0)}% na semana.`);
+        if(k === 'cliques') fazer.push('Pôr <b>chamada para o link</b> em mais publicações e stories.'); }
+      else if(d >= 15) bem.push(`<b>${nome}</b> subiram ${d.toFixed(0)}% na semana.`);
+    }
+    const tempo = media(pubs.filter(p => p.tempo != null), 'tempo');
+    if(tempo != null && tempo < 8){ mal.push(`Tempo médio assistido baixo: <b>${fmtSeg(tempo)}</b>.`);
+      fazer.push('Abrir os vídeos com <b>rosto e fala</b> nos 3 primeiros segundos.'); }
+    const salvos = soma(pubs, 'salvos');
+    if(salvos != null && salvos > 0 && !fazer.some(x => /consulta/.test(x)))
+      fazer.push('Mais conteúdo de <b>consulta</b> (lista, checklist, "o que fazer se…"): é o que as pessoas salvam.');
+    if(!per.atual.length) mal.push('Nenhuma publicação nos últimos 7 dias da planilha.');
+    return { bem, mal, fazer };
+  }
+
+  /* ---------- 5. o gráfico -------------------------------------------- */
+  function grafico(semanas){
+    if(semanas.length < 2) return '<p class="rdNota">O gráfico aparece a partir da segunda semana de dados.</p>';
+    /* no celular o SVG é desenhado na largura da tela: encolher um de 560
+       levava o texto de 11px para 7px */
+    const cel = typeof innerWidth === 'number' && innerWidth < 600;
+    const W = cel ? 340 : 560, H = cel ? 170 : 190, pl = 44, pr = 24, pt = 12, pb = 26, iw = W - pl - pr, ih = H - pt - pb;
+    const max = Math.max(...semanas.map(s => s.v), 1) * 1.12;
+    const x = i => pl + i * (iw / (semanas.length - 1)), y = v => pt + ih - v / max * ih;
+    const caminho = semanas.map((s, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(s.v).toFixed(1)).join(' ');
+    const passo = Math.ceil(semanas.length / (cel ? 4 : 6));
+    return `<svg class="rdChart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Alcance por semana">`
+      + [0, .5, 1].map(f => `<line x1="${pl}" x2="${W - pr}" y1="${y(max * f)}" y2="${y(max * f)}" stroke="var(--ink-800)"/>
+         <text x="${pl - 8}" y="${y(max * f) + 4}" text-anchor="end">${fmtN(max * f)}</text>`).join('')
+      + `<path d="${caminho} L${x(semanas.length - 1)} ${pt + ih} L${pl} ${pt + ih}Z" fill="var(--cobalt)" opacity=".1"/>`
+      + `<path d="${caminho}" fill="none" stroke="var(--cobalt)" stroke-width="2.2" stroke-linejoin="round"/>`
+      + semanas.map((s, i) => `<circle cx="${x(i)}" cy="${y(s.v)}" r="${i === semanas.length - 1 ? 4 : 2.5}" fill="var(--cobalt)"><title>semana de ${dataBR(s.sem)}: ${fmtN(s.v)}</title></circle>`
+        + (i % passo === 0 || i === semanas.length - 1 ? `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${dataBR(s.sem)}</text>` : '')).join('')
+      + '</svg>';
+  }
+
+  /* ---------- 6. a tela ----------------------------------------------- */
+  function tela(){
+    const c = cliAtual();
+    const todas = doCliente(c.id);
+    const plats = [...new Set(todas.map(p => p.plat))];
+    if(!S.rdPlat || !plats.includes(S.rdPlat)) S.rdPlat = plats[0] || null;
+    const lidoEm = (S.redes.lidoEm || {})[c.id];
+    const velho = lidoEm && Date.now() - lidoEm > 7 * 864e5;
+    const topo = `<div class="rdTopo">
+      <div class="rdChips">${plats.map(k => `<button class="rdChip ${k === S.rdPlat ? 'on' : ''}" data-rdplat="${k}">${PLATS_RD[k] || k}</button>`).join('')}</div>
+      <span class="sp"></span>
+      ${lidoEm ? `<span class="rdNota" style="margin:0">Última planilha: ${new Date(lidoEm).toLocaleDateString('pt-BR')}</span>` : ''}
+      <button class="b pri sm" data-rdimp="1">${ic('doc')} Importar planilha</button>
+      <input type="file" id="rdArquivo" accept=".csv,text/csv,.txt" hidden></div>`;
+    const como = `<div class="rdBox rdComo"><h3>Como tirar a planilha de cada rede</h3><ol>
+      <li><b>Instagram e Facebook</b> — Meta Business Suite → Insights → Conteúdo → escolha o período → <b>Exportar dados</b> (CSV).</li>
+      <li><b>YouTube</b> — YouTube Studio → Análises → <b>Modo avançado</b> → ícone de baixar → <b>Valores separados por vírgula (.csv)</b>.</li>
+      <li><b>TikTok</b> — TikTok Studio → Análises → Conteúdo → <b>Baixar dados</b>.</li></ol>
+      <p class="rdNota">Só o @ não basta: alcance, cliques e tempo assistido são dados privados da conta, e quem tem acesso ao painel da rede baixa a planilha. A conexão automática (login oficial de cada rede) é o passo seguinte — e cai nesta mesma tela.</p></div>`;
+    if(!todas.length) return `${topo}
+      <div class="empty" style="padding:28px 16px"><div class="eic">${ic('chart')}</div>
+        <b>Nenhum número de rede ainda</b>
+        <p>Importe o CSV que a rede exporta. Toda semana, a planilha nova <b>soma</b> com a anterior — nada se perde.</p></div>
+      ${como}`;
+    const pubs = todas.filter(p => p.plat === S.rdPlat).sort((a, b) => a.data.localeCompare(b.data));
+    const per = periodos(pubs);
+    const k = (rot, a, b, fmt, dica) => { const d = variacao(a, b);
+      return `<div class="rdKpi" title="${esc(dica)}"><div class="l">${rot}</div><div class="v">${a == null ? '—' : fmt(a)}</div><div class="d ${d.c}">${a == null ? 'a planilha não traz' : d.t}</div></div>`; };
+    const kpis = `<div class="rdKpis">
+      ${k('Alcance', soma(per.atual, 'alcance'), soma(per.anterior, 'alcance'), fmtN, 'Contas únicas que viram as publicações')}
+      ${k('Visualizações', soma(per.atual, 'views'), soma(per.anterior, 'views'), fmtN, 'Quantas vezes as publicações foram vistas')}
+      ${k('Engajamento', engaj(per.atual), engaj(per.anterior), fmtPct, 'Curtidas + comentários + compartilhamentos + salvos ÷ alcance')}
+      ${k('Cliques', soma(per.atual, 'cliques'), soma(per.anterior, 'cliques'), fmtN, 'Cliques no link / visitas ao perfil')}
+      ${k('Seguidores novos', soma(per.atual, 'seguid'), soma(per.anterior, 'seguid'), fmtN, 'Quem passou a seguir a partir das publicações')}
+      ${k('Tempo médio assistido', media(per.atual, 'tempo'), media(per.anterior, 'tempo'), fmtSeg, 'Média de quanto cada pessoa assiste dos vídeos')}
+    </div>`;
+    /* semanas: soma de alcance (ou visualizações) por semana, últimas 12 */
+    const porSem = {};
+    pubs.forEach(p => { const s = segunda(p.data); porSem[s] = (porSem[s] || 0) + (p.alcance || p.views || 0); });
+    /* só semana FECHADA entra: a em curso tem um ou dois dias e desenharia
+       uma queda que não aconteceu */
+    const ultimoDia = pubs.map(p => p.data).sort().pop();
+    const fechada = sem => { const d = diaISO(sem); d.setDate(d.getDate() + 6); return iso(d) <= ultimoDia; };
+    const emCurso = Object.keys(porSem).some(sm => !fechada(sm));
+    const semanas = Object.keys(porSem).sort().filter(fechada).slice(-12).map(s => ({ sem: s, v: porSem[s] }));
+    const porFmt = {};
+    pubs.forEach(p => { (porFmt[formatoDe(p)] = porFmt[formatoDe(p)] || []).push(p); });
+    const fmts = Object.entries(porFmt).map(([f, a]) => [f, engaj(a), a.length]).filter(([, e]) => e != null).sort((a, b) => b[1] - a[1]);
+    const maxF = Math.max(...fmts.map(f => f[1]), .01);
+    const L = leitura(pubs, per);
+    const lista = (arr, vazio) => arr.length ? `<ul>${arr.map(x => `<li>${x}</li>`).join('')}</ul>` : `<p class="rdNota" style="margin:0">${vazio}</p>`;
+    const top = [...per.atual.length ? per.atual : pubs].sort((a, b) => (b.alcance || b.views || 0) - (a.alcance || a.views || 0)).slice(0, 8);
+    return `${topo}
+      ${velho ? `<div class="rdAviso">A última planilha é de ${new Date(lidoEm).toLocaleDateString('pt-BR')}. Importe a desta semana para a leitura ficar em dia.</div>` : ''}
+      <p class="rdNota" style="margin:-6px 0 12px">${PLATS_RD[S.rdPlat] || ''} · últimos 7 dias da planilha (${dataBR(per.de)} a ${dataBR(per.ate)}) comparados aos 7 anteriores · ${pubs.length} publicações no total</p>
+      ${kpis}
+      <div class="rdGrade">
+        <div class="rdBox"><h3>Alcance por semana<small>${semanas.length} semanas fechadas</small></h3>${grafico(semanas)}
+          ${emCurso ? '<p class="rdNota">A semana em curso entra no gráfico quando fechar.</p>' : ''}</div>
+        <div class="rdBox"><h3>O que engaja mais<small>por formato</small></h3>
+          ${fmts.length ? `<div class="rdFmt">${fmts.map(([f, e, n], i) => `<span>${esc(f)}</span><div class="tr"><i style="width:${(e / maxF * 100).toFixed(0)}%;${i ? 'opacity:.5' : ''}"></i></div><b>${fmtPct(e)}</b>`).join('')}</div>`
+            : '<p class="rdNota">A planilha não traz alcance e interações juntos.</p>'}</div>
+      </div>
+      <div class="rdLeitura">
+        <div class="rdBox"><h3><span class="ico" style="background:rgba(53,184,122,.15);color:var(--encore)">↑</span>O que deu certo</h3>${lista(L.bem, 'Ainda pouco dado para dizer.')}</div>
+        <div class="rdBox"><h3><span class="ico" style="background:rgba(240,120,76,.15);color:#F0784C">↓</span>O que não deu</h3>${lista(L.mal, 'Nada caiu de forma relevante.')}</div>
+        <div class="rdBox"><h3><span class="ico" style="background:rgba(200,150,58,.15);color:var(--brass-400)">→</span>O que fazer</h3>${lista(L.fazer, 'Siga a pauta — os números estão estáveis.')}</div>
+      </div>
+      <p class="rdNota" style="margin:-4px 0 12px">Leitura automática por regras sobre os números da planilha — não é IA. Confira antes de levar ao cliente.</p>
+      <div class="rdBox" style="margin-bottom:12px"><h3>Publicações que mais alcançaram<small>${per.atual.length ? 'últimos 7 dias' : 'todo o período'}</small></h3>
+        <div style="overflow-x:auto"><table class="rdTab"><thead><tr><th>Publicação</th><th>Data</th><th class="n">Alcance</th><th class="n">Engaj.</th><th class="n">Cliques</th></tr></thead><tbody>
+        ${top.map(p => { const h = typeof hrefSeguro === 'function' ? hrefSeguro(p.link) : '';
+          return `<tr><td><span class="t">${h ? `<a href="${hrefSeguro(p.link)}" target="_blank" rel="noopener" style="color:inherit">${esc(p.titulo || formatoDe(p))}</a>` : esc(p.titulo || formatoDe(p))}</span></td>
+          <td>${dataBR(p.data)}</td><td class="n">${fmtN(p.alcance || p.views)}</td><td class="n">${fmtPct(engaj([p]))}</td><td class="n">${fmtN(p.cliques)}</td></tr>`; }).join('')}
+        </tbody></table></div></div>
+      ${como}`;
+  }
+
+  /* ---------- 7. a aba entra na régua do cliente ----------------------- */
+  abasCliente = (function(orig){
+    return function(atual){
+      return orig.apply(this, arguments).replace(/(<button data-tab="equipe")/,
+        `<button data-tab="redes" class="${atual === 'redes' ? 'on' : ''}">Redes</button>$1`);
+    };
+  })(abasCliente);
+  agClienteDet = (function(orig){
+    return function(){
+      if(S.tab !== 'redes') return orig.apply(this, arguments);
+      const c = cliAtual();
+      return agShell(`
+      <div class="mtop"><div>
+        <button class="b gho sm" data-r="clientes" style="margin-bottom:13px">${ic('arrowl')} Clientes</button>
+        <h1>${esc(c.nome)}</h1><p>Como os perfis estão indo</p></div></div>
+      ${abasCliente('redes')}
+      ${tela()}`);
+    };
+  })(agClienteDet);
+
+  /* ---------- 8. importar: ler, mostrar o que leu, e só então guardar -- */
+  let pendente = null;
+  function confirmar(r, nomeArq){
+    pendente = r;
+    const c = cliAtual();
+    const datas = r.pubs.map(p => p.data).sort();
+    const ja = new Set(doCliente(c.id).map(p => p.id));
+    const novas = r.pubs.filter(p => !ja.has(`${c.id}|${p.id}`)).length;
+    S.modal = `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true">
+      <h3>Conferir a planilha</h3>
+      <p>Li <b>${r.pubs.length} publicações de ${PLATS_RD[r.plat]}</b>${nomeArq ? ` em ${esc(nomeArq)}` : ''}, de ${dataBR(datas[0])} a ${dataBR(datas[datas.length - 1])}.
+        ${novas} ${novas === 1 ? 'é nova' : 'são novas'}; ${r.pubs.length - novas} já estavam aqui e serão atualizadas. Nada é apagado.</p>
+      <p class="rdNota">Para: <b>${esc(c.nome)}</b> · colunas reconhecidas: ${esc(r.colunas.join(', '))}</p>
+      <div class="modalrow"><button class="b gho" data-rdcancela="1">Cancelar</button>
+        <button class="b pri" data-rdok="1">Importar</button></div></div></div>`;
+    renderLayer();
+  }
+  async function lerArquivo(f){
+    if(!f) return;
+    if(f.size > 15 * 1024 * 1024){ toast('Planilha grande demais (máximo 15 MB).'); return; }
+    if(/\.xlsx?$/i.test(f.name)){ toast('Exporte em CSV — a rede oferece essa opção ao baixar.'); return; }
+    try{
+      const txt = decodificar(await f.arrayBuffer());
+      const r = interpretar(txt, f.name);
+      if(r.erro){ toast(r.erro); return; }
+      confirmar(r, f.name);
+    }catch(e){ toast('Não consegui ler esse arquivo.'); }
+  }
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-rdimp],[data-rdplat],[data-rdok],[data-rdcancela]');
+    if(!t) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    if(t.dataset.rdimp){ document.getElementById('rdArquivo')?.click(); return; }
+    if(t.dataset.rdplat){ S.rdPlat = t.dataset.rdplat; render(); return; }
+    if(t.dataset.rdcancela){ pendente = null; S.modal = null; renderLayer(); return; }
+    if(t.dataset.rdok && pendente){
+      const r = pendente; pendente = null;
+      const n = guardar(cliAtual().id, r.pubs);
+      S.rdPlat = r.plat; S.modal = null; renderLayer(); render();
+      toast(`${n.novas} publicações novas, ${n.atual} atualizadas.`);
+      if(typeof som === 'function') som('toque');
+    }
+  }, true);
+  addEventListener('change', e => {
+    if(e.target && e.target.id === 'rdArquivo'){ lerArquivo(e.target.files && e.target.files[0]); e.target.value = ''; }
+  }, true);
+
+  /* girar o tablet ou estreitar a janela redesenha o gráfico na largura nova */
+  let _rdLarg = innerWidth, _rdT = 0;
+  addEventListener('resize', () => {
+    clearTimeout(_rdT);
+    _rdT = setTimeout(() => {
+      const cruzou = (_rdLarg < 600) !== (innerWidth < 600); _rdLarg = innerWidth;
+      if(cruzou && S.view === 'agency' && S.route === 'clientedet' && S.tab === 'redes') render();
+    }, 150);
+  });
+  window.MaestroRedes = { interpretar, numero, lerDatas, decodificar, guardar, unir, leitura, periodos, tela, doCliente, lerArquivo };
 })();
 </script>
 <style id="v233-tipografia">

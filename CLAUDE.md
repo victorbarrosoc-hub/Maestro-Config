@@ -299,6 +299,15 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (23 set, v238) — a cara nova, parte 4: a aba Redes.** Na página do
+cliente. Lê o CSV do Meta Business Suite, YouTube Studio e TikTok Studio (pt/en,
+UTF-16, "Total", 1.234/1,234, dd/mm ou mm/dd) e mostra o que leu antes de
+guardar; KPIs dos últimos 7 dias contra os 7 anteriores, alcance por semana
+fechada, engajamento por formato, as que mais alcançaram, e "deu certo / não deu
+/ fazer" POR REGRAS (a tela diz que não é IA). Dados numa linha `__redes__` da
+agência, gravar soma; nada no `localStorage` (lição da v220). 28 provas em
+`web/verificar/v238-a-aba-redes.mjs`. **Falta:** conexão automática (app na
+Meta) e leitura por IA.
 **Fechado (23 set, v237) — a curtida que aprova.** Do vídeo do Postarium: aprovar
 é curtir o post. Na decisão do cliente entra a fileira do Instagram (coração e
 balão) em cima dos botões; o coração REPASSA o toque para o Aprovar que já
