@@ -299,6 +299,12 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (23 set, v236) — a cara nova, parte 3: o cliente decide olhando o
+perfil.** Referência do founder: usepostarium.com.br (o link de aprovação imita
+um perfil do Instagram). O topo de "Publicações" do cliente vira um perfil —
+foto, nome, contas, grade com a arte e a etiqueta de cada post — e tocar no post
+REPASSA o toque para a linha da lista (um caminho só para decidir). Rascunho e
+produção não entram. 14 provas em `web/verificar/v236-o-perfil-do-cliente.mjs`.
 **Fechado (23 set, v235) — o link de cada card.** "Copiar link" no "•••" do
 card do Ensaio, para mandar à equipe: card da pauta usa o `#post=cliente:número`
 que o Cronograma já copiava; tarefa sem card, `#tarefa=número`. A abertura

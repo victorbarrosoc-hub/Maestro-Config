@@ -304,8 +304,10 @@ ficam com os nomes de hoje, e o botão de cada card é sempre a próxima porta.
       por ela. O próximo passo à vista; setas, cronômetro e lixeira no "•••".
       A linha curta sob cada coluna entrou na v235, com o link de cada card.
       **Tema:** o founder escolheu manter o escuro por padrão (23/set).
-- [ ] **Parte 3 — o Portal do cliente.** "3 de 12 esperam sua decisão" no
-      topo, a peça grande, dois botões.
+- [x] **Parte 3 — o cliente decide olhando o perfil (v236).** Referência do
+      founder: usepostarium.com.br. Perfil no topo de "Publicações", grade com a
+      arte e o estado, e tocar no post abre a decisão. **Falta daqui:** abas
+      Calendário/Stories dentro do perfil; foto do cliente vir do perfil real.
 - [ ] **Parte 4 — a aba Redes, por planilha.** Em paralelo, o pedido de
       aprovação do app na Meta para a conexão automática.
 

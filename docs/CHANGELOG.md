@@ -1,9 +1,47 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.49
+Version: 0.5.50
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.50 — 2026-09-23
+
+**Status:** Concluída
+
+### v236 — a cara nova, parte 3: o cliente decide olhando o perfil
+
+O founder trouxe uma referência: **usepostarium.com.br** — "muito bonito,
+simples de entender, dá pra ver bem como o feed vai ficar". Estudado: o que
+faz o efeito está numa tela só — **o link de aprovação imita um perfil do
+Instagram** (foto, nome, contagem, abas Feed/Calendário/Stories) e a grade
+mostra a arte de verdade, cada post com uma etiqueta de estado. O cliente
+decide olhando o próprio perfil. (A "curtida" que ele viu não deu para
+confirmar: as demonstrações são vídeos do YouTube; os corações da página são
+prints de depoimento, estáticos.)
+
+A Maestro já tinha a grade ("Seu feed", v111), mas **numa aba à parte**, em
+quadrados tracejados, e **sem levar a decisão nenhuma**. A v236 sobe um perfil
+para o topo de "Publicações":
+
+- foto (logo do cliente, ou as iniciais na cor dele), nome e três contas —
+  publicações, **para você**, aprovadas;
+- a grade 3 colunas, 3:4, com a arte quando existe e o título quando não; o
+  topo é o que vai ao ar por último, como no Instagram;
+- etiqueta em cada post: **Aprovar** (dourada — D-018: só o que espera por
+  você), Em ajuste, Aprovado, Agendado, No ar;
+- **tocar no post abre a MESMA decisão que a linha da lista abre** — o toque é
+  repassado para a linha, não há um segundo caminho para decidir; e só é botão
+  o que espera decisão.
+
+**O que não entra, e é decisão:** rascunho e produção da agência (não são do
+cliente). A lista de sempre continua embaixo, inteira.
+
+**14 provas** em `web/verificar/v236-o-perfil-do-cliente.mjs`. **A prova pegou**
+os números colados no texto ("5publicações"): o espaço vinha de margem no
+CSS, e leitor de tela e cópia leem sem ele.
 
 ---
 

@@ -16032,7 +16032,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v235 · 23 set · o link de cada card';
+const VERSAO_PROTOTIPO = 'v236 · 23 set · o cliente decide olhando o perfil';
 
 menuSheet = (function(orig){
   return function(){
@@ -42394,6 +42394,124 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
     return r;
   };
   window.MaestroCardEnxuto = { pintar, abertos, voltaDoCard, FASES_TEXTO, linkDe };
+})();
+</script>
+<style id="v236-perfil-do-cliente">
+/* =====================================================================
+   v236 — a cara nova, parte 3: o cliente decide olhando o PERFIL.
+   Referência que o founder trouxe (usepostarium.com.br): o link de
+   aprovação imita um perfil do Instagram — foto, nome, contagem, e a grade
+   com a arte de verdade, cada post com o seu estado. O cliente decide
+   vendo como o perfil vai ficar. A Maestro já tinha a grade ("Seu feed"),
+   mas numa aba à parte, em quadrados tracejados, e sem levar a decisão
+   nenhuma. Aqui ela sobe para o TOPO de "Publicações", e tocar num post
+   abre a MESMA decisão que a linha da lista abre (o toque é repassado
+   para a linha — nada de um segundo caminho para decidir).
+   A lista continua embaixo, igual.
+   ================================================================== */
+.clPerfil{ margin:4px 0 22px }
+.clPerfilTopo{ display:flex; align-items:center; gap:14px; margin-bottom:14px }
+.clPerfilFoto{ width:64px; height:64px; border-radius:50%; flex:0 0 auto; display:grid; place-items:center;
+  font-weight:700; font-size:20px; color:#fff; background:var(--ink-700); overflow:hidden;
+  box-shadow:0 0 0 2px var(--ink-950), 0 0 0 4px var(--brass-500) }
+.clPerfilFoto img{ width:100%; height:100%; object-fit:cover }
+.clPerfilNome{ font-weight:600; font-size:16px; color:var(--ink-50); line-height:1.25 }
+.clPerfilNums{ display:flex; gap:16px; margin-top:6px; font-size:13px; color:var(--ink-300) }
+.clPerfilNums b{ color:var(--ink-50); font-weight:600 }
+.clPerfilAba{ display:flex; justify-content:center; gap:6px; border-top:1px solid var(--ink-800);
+  padding-top:9px; margin-bottom:8px; font-size:12px; font-weight:600; color:var(--ink-100) }
+.clGrade{ display:grid; grid-template-columns:repeat(3,1fr); gap:3px; border-radius:10px; overflow:hidden }
+.clPost{ position:relative; aspect-ratio:3/4; display:flex; align-items:flex-end; padding:8px;
+  color:#fff; font-size:12px; font-weight:600; line-height:1.25; text-align:left; border:0;
+  background-size:cover !important; background-position:center !important; overflow:hidden }
+.clPost .tt{ position:relative; z-index:1; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+  overflow:hidden; text-shadow:0 1px 3px rgba(0,0,0,.5) }
+.clPost.comArte .tt{ display:none }
+.clPost .st{ position:absolute; top:6px; left:6px; z-index:1; font-size:11px; font-weight:600; padding:2px 7px;
+  border-radius:99px; line-height:1.5; background:rgba(12,12,14,.72); color:#fff; backdrop-filter:blur(4px) }
+.clPost .st.espera{ background:var(--brass-500); color:#1a1405 }
+.clPost .st.ajuste{ background:#F0784C; color:#fff }
+.clPost .st.ok{ background:rgba(53,184,122,.92); color:#fff }
+button.clPost{ cursor:pointer; transition:transform var(--fast) var(--eo), filter var(--fast) var(--eo) }
+button.clPost:hover{ filter:brightness(1.08) }
+button.clPost:active{ transform:scale(.98) }
+.clPost.espera::after{ content:''; position:absolute; inset:0; box-shadow:inset 0 0 0 2px var(--brass-500) }
+.clPerfilDica{ font-size:12px; color:var(--ink-400); margin-top:9px }
+</style>
+<script>
+/* v236 — o perfil no topo das Publicações do cliente */
+(function(){
+  if(typeof clPauta !== 'function') return;
+  const fase = p => (typeof faseDe === 'function' ? faseDe(p) : (p.fase || 'rascunho'));
+  const esperando = p => typeof comCliente === 'function' && comCliente(p);
+  const emAjuste = p => typeof pedidoAberto === 'function' && pedidoAberto(p);
+  /* entra na grade o que já chegou ao cliente: o que espera ele, o que
+     está em ajuste, e o que já foi aprovado, agendado ou ao ar. Rascunho
+     da agência não é do cliente. */
+  const daGrade = p => !p.tarefa && (typeof noInsta !== 'function' || noInsta(p))
+    && (esperando(p) || emAjuste(p) || ['aprovado', 'agendado', 'postado'].includes(fase(p)));
+  const estado = p => esperando(p) ? ['espera', 'Aprovar']
+    : emAjuste(p) ? ['ajuste', 'Em ajuste']
+    : fase(p) === 'postado' ? ['', 'No ar']
+    : fase(p) === 'agendado' ? ['ok', 'Agendado'] : ['ok', 'Aprovado'];
+
+  const perfil = () => {
+    const c = (typeof clCliente === 'function' ? clCliente() : null) || (typeof cliAtual === 'function' ? cliAtual() : {}) || {};
+    const cards = (typeof cardsDoCliente === 'function' ? cardsDoCliente() : []).filter(daGrade);
+    if(!cards.length) return '';
+    /* o topo do perfil é o que vai ao ar por último, como no Instagram */
+    cards.sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')) || (b.id - a.id));
+    const nEspera = cards.filter(esperando).length;
+    const nOk = cards.filter(p => ['aprovado', 'agendado', 'postado'].includes(fase(p))).length;
+    const logo = c.logo && typeof urlSegura === 'function' ? urlSegura(c.logo) : '';
+    const ini = esc(c.ini || String(c.nome || '?').slice(0, 2).toUpperCase());
+    const cor = typeof corSegura === 'function' ? corSegura(c.cor || '#35333A') : '#35333A';
+    const temArte = p => (typeof materiaisDe === 'function' ? materiaisDe(p) : [])
+      .some(m => m && m.tipo === 'imagem' && m.url);
+    const post = p => {
+      const [cls, rot] = estado(p);
+      const arte = temArte(p);
+      const fundo = typeof capaDoCard === 'function' ? capaDoCard(p) : cor;
+      /* só é botão o que tem linha na lista: o toque é repassado para ela */
+      const tag = esperando(p) || emAjuste(p) ? 'button' : 'div';
+      return `<${tag} class="clPost ${cls} ${arte ? 'comArte' : ''}" ${tag === 'button' ? `type="button" data-clperfil="${p.id}"` : ''}
+        style="background:${fundo}" title="${esc(p.t || '')}">
+        <span class="st ${cls}">${rot}</span><span class="tt">${esc(p.t || '')}</span></${tag}>`;
+    };
+    return `<section class="clPerfil" aria-label="Como o seu perfil vai ficar">
+      <div class="clPerfilTopo">
+        <div class="clPerfilFoto" style="background:${cor}">${logo ? `<img src="${logo}" alt="">` : ini}</div>
+        <div><div class="clPerfilNome">${esc(c.nome || '')}</div>
+          <div class="clPerfilNums"><span><b>${cards.length}</b> publicações</span>
+            <span><b>${nEspera}</b> para você</span><span><b>${nOk}</b> aprovadas</span></div></div>
+      </div>
+      <div class="clPerfilAba">Como o seu feed vai ficar</div>
+      <div class="clGrade">${cards.map(post).join('')}</div>
+      <div class="clPerfilDica">Toque num post com a etiqueta dourada para decidir.</div>
+    </section>`;
+  };
+
+  clPauta = (function(orig){
+    return function(){
+      const html = orig.apply(this, arguments);
+      if(S.view !== 'client') return html;
+      const bloco = perfil();
+      if(!bloco) return html;
+      /* entra logo depois do cabeçalho da tela (o primeiro parágrafo) */
+      const i = html.indexOf('</p>');
+      return i > 0 ? html.slice(0, i + 4) + bloco + html.slice(i + 4) : html.replace('<div class="clbody', bloco + '<div class="clbody');
+    };
+  })(clPauta);
+  if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clpauta = () => clPauta();
+
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-clperfil]');
+    if(!t) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    const linha = document.querySelector(`[data-clcard="${t.dataset.clperfil}"]`);
+    if(linha) linha.click();
+  }, true);
+  window.MaestroPerfilDoCliente = { perfil, daGrade };
 })();
 </script>
 <style id="v233-tipografia">
