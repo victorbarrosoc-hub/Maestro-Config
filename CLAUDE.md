@@ -299,6 +299,15 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v242) — o arquivo e o formato.** O app mede cada arquivo e
+diz quando não bate com o formato/rede (9:16 reels/story/shorts/TikTok, 16:9
+YouTube, 4:5–1,91:1 feed; carrossel com telas diferentes) — no card, na ficha
+(Act inclusive) e no "subir peça"; prévia "No feed / Na grade 3:4 / Story";
+"Ajustar para X" em imagem, com o original guardado e desfazer; **"Ordenar por
+nome"** (tela2 antes de tela10) e setas de ordem — a ordem da lista é a que o
+cliente vê; e o cliente marca QUAIS telas no pedido ("Telas 2 e 3 — …", no
+texto, para atravessar link, banco e e-mail sem mudar nada). 29 provas em
+`web/verificar/v242-o-arquivo-e-o-formato.mjs`.
 **Fechado (24 set, v241) — a mídia que chega.** "O cliente não vê as imagens
 do carrossel anexadas na tarefa, e eu não vejo no Ensaio." Havia DUAS caixas: o
 anexo da tarefa (`t.anexos`, só da equipe) e a peça do card (`S.mat`, a única

@@ -1,9 +1,51 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.55
+Version: 0.5.56
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.56 — 2026-09-24
+
+**Status:** Concluída
+
+### v242 — o arquivo e o formato
+
+O que a v241 deixou anotado como "falta", e o founder disse "pode fazer"; no
+meio, um pedido a mais: *"quando subir as peças no card, ter uma opção de
+organizar a ordem por nome — no card no Ensaio e no link do cliente, ele
+precisa ver na ordem certa, principalmente o carrossel."*
+
+- **O arquivo contra o formato.** O app mede cada imagem e vídeo (largura e
+  altura de verdade, guardadas no item) e compara com o formato e a rede:
+  reels/story/shorts/TikTok pedem 9:16; vídeo no YouTube, 16:9; o feed aceita
+  de 4:5 a 1,91:1. O aviso diz o quê e a consequência ("é 16:9; Reels pede
+  9:16 — vai aparecer com faixas ou cortada"). Carrossel com telas de
+  proporções diferentes ganha o aviso próprio: o Instagram corta todas pela
+  primeira. Aparece no card do quadro ("formato"), na ficha (inclusive em
+  Act, onde quem publica confere) e no "subir peça", onde o arquivo entra.
+- **Ver como aparece:** Inteira · No feed · Na grade do perfil (3:4) · Story /
+  Reels (9:16, com as faixas da interface do app por cima).
+- **Ajustar para X (corta o centro)**, só para imagem — vídeo não se corta no
+  navegador. O original fica guardado no item, e "Desfazer o ajuste" o devolve.
+- **A ordem das telas:** "Ordenar por nome" na ficha e no "subir peça", com
+  ordem de número de verdade (tela2 antes de tela10); setas ← → em cada
+  cartão do "subir peça"; e a frase que diz a regra: "a ordem daqui é a que o
+  cliente vê". A ordem é a da lista, então o link do cliente segue sozinho.
+- **O cliente diz QUAL tela.** No "Pedir alteração" de um carrossel, as telas
+  aparecem para marcar (opcional). O pedido sai como "Telas 2 e 3 — …": as
+  telas viajam no texto, então chegam pelo link, pelo banco, pelo e-mail e
+  pelo aprendizado da marca sem mexer em nenhum desses caminhos. No Ensaio,
+  essas telas aparecem marcadas como "pedido". A aprovação continua sendo do
+  carrossel inteiro — é ela que registra a versão exata.
+- De passagem: o "Baixar" do cartão de material tinha o ícone de seta para a
+  direita, que ao lado das setas de ordem leria como "mover". Agora é o de
+  baixar. E a caixa do pedido do cliente era espremida a 86px pela coluna de
+  altura fixa (`flex:1 1 0`), rolando por dentro; agora cresce com o que tem.
+
+29 provas em `web/verificar/v242-o-arquivo-e-o-formato.mjs`.
 
 ---
 

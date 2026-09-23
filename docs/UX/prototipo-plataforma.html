@@ -12626,7 +12626,7 @@ modalMaterial = (function(orig){
       html = html.replace(
         new RegExp(`(<button class="x" data-mtdel="${i}")`),
         `<button class="baixa" data-mtbaixa="${i}" aria-label="Baixar ${esc(m.nome)}"
-          title="Baixar">${ic('arrowr',12)}</button>$1`);
+          title="Baixar">${ic('baixar',12)}</button>$1`);
     });
     return html;
   };
@@ -16053,7 +16053,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v241 · 24 set · a mídia que chega';
+const VERSAO_PROTOTIPO = 'v242 · 24 set · o arquivo e o formato';
 
 menuSheet = (function(orig){
   return function(){
@@ -43551,6 +43551,322 @@ button.clPost:active{ transform:scale(.98) }
         <small>${rot}</small></div>`;
     };
   })(svgBars);
+
+  try{ render(); }catch(e){}
+})();
+</script>
+<style id="v242-o-arquivo-e-o-formato">
+/* v242 — o arquivo e o formato. Motivo e caminho em docs/CHANGELOG.md 0.5.56. */
+.v242Fmt{ display:flex; gap:9px; align-items:flex-start; padding:10px 12px; margin:0 0 10px; border-radius:12px;
+  border:1px solid rgba(229,197,77,.45); background:rgba(229,197,77,.08); font-size:12.5px; color:var(--ink-200); line-height:1.5 }
+.v242Fmt ul{ margin:4px 0 0; padding-left:16px }
+.v242Vistas{ display:flex; gap:4px; flex-wrap:wrap; margin:0 0 8px }
+.v242Vistas button{ font-size:11.5px; padding:4px 10px; border-radius:999px; border:1px solid var(--ink-800); color:var(--ink-300); background:transparent }
+.v242Vistas button.on{ border-color:var(--brass-500); color:var(--ink-50); background:rgba(200,150,58,.10) }
+.enPeca[data-v242vista="grade"]{ --vr:3/4 }
+.enPeca[data-v242vista="story"]{ --vr:9/16 }
+.enPeca[data-v242vista="feed"]{ --vr:var(--arFeed,4/5) }
+.enPeca[data-v242vista] .enPecaItem{ aspect-ratio:var(--vr) }
+.enPeca[data-v242vista] .enPecaGrade.uma .enPecaItem{ height:auto; justify-self:center;
+  width:min(100%, calc(min(56vh, 460px) * var(--vr))) }
+.v242Ordem{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin:12px 0 8px; font-size:12px; color:var(--ink-400) }
+.mtCard .nome .v242Mv{ display:inline-flex; gap:4px; margin-top:4px }
+.mtCard .nome .v242Mv button{ width:26px; height:24px; border-radius:6px; border:1px solid var(--ink-700); color:var(--ink-200); background:transparent; display:grid; place-items:center }
+.mtCard .nome .v242Mv button:disabled{ opacity:.3 }
+.enPeca[data-v242vista] .enPecaItem img, .enPeca[data-v242vista] .enPecaItem video{ object-fit:cover }
+.enPeca[data-v242vista="story"] .enPecaItem::before, .enPeca[data-v242vista="story"] .enPecaItem::after{
+  content:''; position:absolute; left:0; right:0; z-index:1; pointer-events:none; background:rgba(8,9,11,.55) }
+.enPeca[data-v242vista="story"] .enPecaItem::before{ top:0; height:14% }
+.enPeca[data-v242vista="story"] .enPecaItem::after{ bottom:0; height:20% }
+.enPecaItem .v242Mede{ position:absolute; right:6px; top:6px; z-index:2; font-size:10px; padding:1px 6px; border-radius:6px;
+  background:rgba(8,9,11,.72); color:var(--ink-100) }
+.enPecaItem.v242Fora .v242Mede{ background:rgba(229,197,77,.95); color:#1a1405 }
+.enPecaItem.v242Pedida{ border-color:#F0784C; box-shadow:0 0 0 2px rgba(240,120,76,.55) }
+.enPecaItem .v242Ped{ position:absolute; left:6px; bottom:6px; z-index:2; font-size:10.5px; padding:1px 6px; border-radius:6px; background:#F0784C; color:#fff }
+.v242Acoes{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px }
+.enMidia .fmt{ font-size:11px; color:#E5C54D; margin-left:4px }
+.v242Telas{ margin:10px 0 0 }
+.v242Telas .caplbl{ margin-bottom:6px }
+.v242Telas .fila{ display:flex; gap:6px; overflow-x:auto; padding-bottom:2px }
+.v242Telas button{ position:relative; flex:0 0 auto; width:54px; aspect-ratio:4/5; border-radius:8px; overflow:hidden;
+  border:2px solid var(--line); background:var(--soft); padding:0 }
+.v242Telas button img{ width:100%; height:100%; object-fit:cover; display:block }
+.v242Telas button b{ position:absolute; left:3px; top:3px; font-size:10.5px; background:rgba(8,9,11,.72); color:#fff; border-radius:5px; padding:0 5px }
+.v242Telas button.on{ border-color:#F0784C }
+.v242Telas button.on::after{ content:'✓'; position:absolute; right:3px; bottom:3px; width:16px; height:16px; border-radius:50%;
+  background:#F0784C; color:#fff; font-size:10px; display:grid; place-items:center }
+.v242Telas small{ display:block; margin-top:6px; font-size:11.5px; color:var(--mut) }
+/* a coluna de decidir tem altura fixa e as caixas encolhem: a do pedido, não */
+.clcap:has(#altnota){ flex:0 0 auto; overflow:visible }
+</style>
+<script>
+(function(){
+  if(!window.MaestroMidia) return;
+  const { proporcao, visuais } = MaestroMidia;
+
+  /* ---------- 1. o tamanho de verdade de cada arquivo ----------------- */
+  const REGRA = {
+    '9/16': { alvo: 9 / 16, min: 0.5,  max: 0.62, pede: '9:16, em pé',     rot: '9:16' },
+    '16/9': { alvo: 16 / 9, min: 1.7,  max: 1.85, pede: '16:9, deitado',   rot: '16:9' },
+    '4/5':  { alvo: 4 / 5,  min: 0.78, max: 1.92, pede: 'de 4:5 a 1,91:1', rot: '4:5' }
+  };
+  const NOMES = [[9 / 16, '9:16'], [2 / 3, '2:3'], [3 / 4, '3:4'], [4 / 5, '4:5'], [1, '1:1'], [1.91, '1,91:1'], [16 / 9, '16:9']];
+  const nomeProp = (w, h) => { const r = w / h; const n = NOMES.find(([v]) => Math.abs(v - r) < 0.025); return n ? n[1] : `${w}×${h}`; };
+  const regraDe = p => REGRA[proporcao(p)] || REGRA['4/5'];
+  const nomeFmt = p => ((p.fmts && p.fmts.length ? p.fmts : [p.fmt]).filter(Boolean)[0] || 'Post');
+
+  const medindo = new Set();
+  let redesenho = null;
+  function medir(m){
+    if(!m || (m.w && m.h)) return;
+    const u = m.tipo === 'imagem' ? m.url : m.tipo === 'video' ? m.url : null;
+    if(!u || !urlSegura(u) || medindo.has(u)) return;
+    medindo.add(u);
+    const fim = (w, h) => { if(w && h){ m.w = w; m.h = h; clearTimeout(redesenho); redesenho = setTimeout(() => { try{ render(); if(S.modal) renderLayer(); }catch(e){} }, 120); } };
+    if(m.tipo === 'imagem'){ const im = new Image(); im.onload = () => fim(im.naturalWidth, im.naturalHeight); im.src = u; }
+    else { const v = document.createElement('video'); v.preload = 'metadata'; v.muted = true;
+      v.onloadedmetadata = () => fim(v.videoWidth, v.videoHeight); v.src = u; }
+  }
+
+  /* o que não bate: cada arquivo contra o formato, e as telas entre si */
+  function conferir(p){
+    const r = regraDe(p), fmt = nomeFmt(p);
+    const v = visuais(p);
+    v.forEach(medir);
+    const fora = [];
+    v.forEach((m, i) => {
+      if(!(m.w && m.h)) return;
+      const x = m.w / m.h;
+      if(x < r.min || x > r.max){
+        const alto = x < r.min;
+        fora.push({ i, m, frase: `${v.length > 1 ? `Tela ${i + 1}` : 'A peça'} é ${nomeProp(m.w, m.h)}; ${fmt} pede ${r.pede} — ${
+          proporcao(p) === '4/5' ? (alto ? 'no feed o topo e o pé ficam cortados' : 'fica pequena, com faixas')
+                                 : alto ? 'vai aparecer cortada nas laterais' : 'vai aparecer com faixas ou cortada'}.` });
+      }
+    });
+    const medidas = v.filter(m => m.w && m.h).map(m => m.w / m.h);
+    const mistura = v.length > 1 && medidas.length > 1 && medidas.some(x => Math.abs(x - medidas[0]) > 0.02);
+    return { fora, mistura, r };
+  }
+  window.MaestroMidia.conferir = conferir;
+  window.MaestroMidia.nomeProp = nomeProp;
+
+  function avisoHtml(p){
+    const { fora, mistura } = conferir(p);
+    if(!fora.length && !mistura) return '';
+    const linhas = fora.map(x => `<li>${esc(x.frase)}</li>`);
+    if(mistura) linhas.push('<li>As telas têm proporções diferentes: o Instagram corta todas pela proporção da primeira.</li>');
+    return `<div class="v242Fmt">${ic('warn', 14)}<span><b>O arquivo não bate com o formato</b><ul>${linhas.join('')}</ul></span></div>`;
+  }
+
+  /* ---------- 2. a ficha: aviso, prévia por rede, ajustar, e o pedido - */
+  const telasDoPedido = p => {
+    const ult = (p.alteracoes || [])[(p.alteracoes || []).length - 1];
+    if(!ult || !p.ajustePendente) return new Set();
+    const m = /^Telas? ([\d, e]+?) —/.exec(ult.oque || '');
+    return new Set(m ? (m[1].match(/\d+/g) || []).map(Number) : []);
+  };
+  S.v242Vista = S.v242Vista || null;
+  function decorarGaleria(html, p){
+    if(!html || html.indexOf('class="enPeca"') < 0) return html;
+    const v = visuais(p);
+    const { fora } = conferir(p);
+    const foraIdx = new Set(fora.map(x => x.i));
+    const pedidas = telasDoPedido(p);
+    const k = mChave(p);
+    let n = -1;
+    html = html.replace(/<button type="button" class="enPecaItem"([^>]*)>/g, (m0, resto) => {
+      n++; const m = v[n]; if(!m) return m0;
+      const cls = `${foraIdx.has(n) ? ' v242Fora' : ''}${pedidas.has(n + 1) ? ' v242Pedida' : ''}`;
+      return `<button type="button" class="enPecaItem${cls}"${resto}>`
+        + (m.w && m.h ? `<span class="v242Mede">${esc(nomeProp(m.w, m.h))}</span>` : '')
+        + (pedidas.has(n + 1) ? '<span class="v242Ped">pedido</span>' : '');
+    });
+    const aviso = avisoHtml(p);
+    const ajustaveis = fora.filter(x => x.m.tipo === 'imagem');
+    const desfazer = v.map((m, i) => ({ m, i })).filter(x => x.m.orig);
+    const acoes = (ajustaveis.length || desfazer.length) ? `<div class="v242Acoes">
+      ${ajustaveis.map(x => `<button type="button" class="b gho sm" data-v242ajusta="${esc(k)}|${x.i}">Ajustar ${v.length > 1 ? `tela ${x.i + 1}` : 'a peça'} para ${regraDe(p).rot} (corta o centro)</button>`).join('')}
+      ${desfazer.map(x => `<button type="button" class="b gho sm" data-v242desfaz="${esc(k)}|${x.i}">Desfazer o ajuste ${v.length > 1 ? `da tela ${x.i + 1}` : ''}</button>`).join('')}</div>` : '';
+    const vista = S.v242Vista;
+    const vistas = `<div class="v242Vistas" role="group" aria-label="Ver como aparece">${[['', 'Inteira'], ['feed', 'No feed'], ['grade', 'Na grade do perfil'], ['story', 'Story / Reels']]
+      .map(([id, nome]) => `<button type="button" data-v242vista="${id}" class="${(vista || '') === id ? 'on' : ''}">${nome}</button>`).join('')}</div>`;
+    const med = v.find(m => m.w && m.h);
+    const arFeed = med ? Math.min(1.91, Math.max(0.8, med.w / med.h)).toFixed(3) : '0.8';
+    html = html.replace(/<div class="enPeca"( style=")?/, (m0, st) =>
+      `<div class="enPeca"${vista ? ` data-v242vista="${vista}"` : ''} style="--arFeed:${arFeed};${st ? '' : '"'}`);
+    const ordem = v.length > 1 ? `<div class="v242Ordem"><button type="button" class="b gho sm" data-v242nome="${esc(k)}">Ordenar por nome</button>
+      <button type="button" class="b gho sm" data-v242mudar="${esc(k)}">Mudar a ordem</button></div>` : '';
+    const g = html.indexOf('class="enPecaGrade');
+    const fecha = html.indexOf('</button></div>', g);
+    if(g >= 0 && fecha >= 0) html = html.slice(0, fecha + 15) + ordem + acoes + html.slice(fecha + 15);
+    return html.replace(/(<div class="enPecaGrade)/, aviso + vistas + '$1');
+  }
+  /* pela janela da tarefa, em qualquer coluna — em Act a peça grande vem
+     de outra função (v154), e é lá que quem publica confere */
+  modalTarefa = (function(orig){
+    return function(id){ const html = orig.apply(this, arguments);
+      const t = html && id && S.ensaio ? S.ensaio.tarefas.find(x => x.id === id) : null;
+      const p = t && typeof cardDaTarefa === 'function' ? cardDaTarefa(t) : null;
+      return p ? decorarGaleria(html, p) : html; };
+  })(modalTarefa);
+
+  /* o card do quadro: um sinal curto, o detalhe mora na ficha */
+  function pintarFmt(){
+    if(!S.ensaio || S.view !== 'agency') return;
+    document.querySelectorAll('.enCard[data-entar] .enMidia:not(.v242)').forEach(el => {
+      el.classList.add('v242');
+      const t = S.ensaio.tarefas.find(x => x.id === +el.closest('.enCard').dataset.entar);
+      const p = t && cardDaTarefa(t); if(!p) return;
+      const c = conferir(p);
+      if(c.fora.length || c.mistura) el.insertAdjacentHTML('beforeend', '<span class="fmt">formato</span>');
+    });
+  }
+  render = (function(orig){ return function(){ const r = orig.apply(this, arguments); pintarFmt(); return r; }; })(render);
+
+  /* no subir peça também: é ali que o arquivo errado entra */
+  modalMaterial = (function(orig){
+    return function(id){
+      const html = orig.apply(this, arguments);
+      const p = html && cardDe(id, S.mtCli); if(!p) return html;
+      const a = avisoHtml(p);
+      let out = a ? html.replace(/(<\/p>)/, '$1' + a) : html;
+      const ms = materiaisDe(p);
+      if(ms.length > 1){
+        const k = mChave(p);
+        let n = -1;
+        out = out.replace(/<div class="nome">([\s\S]*?<span class="peso">[\s\S]*?<\/span>)/g, (m0, dentro) => { n++;
+          return `<div class="nome">${dentro}<span class="v242Mv">
+            <button type="button" data-v242mover="${esc(k)}|${n}|-1" aria-label="Uma posição antes" ${n === 0 ? 'disabled' : ''}>${ic('arrowl', 11)}</button>
+            <button type="button" data-v242mover="${esc(k)}|${n}|1" aria-label="Uma posição depois" ${n === ms.length - 1 ? 'disabled' : ''}>${ic('arrowr', 11)}</button></span>`; });
+        out = out.replace('<div class="mtGrade" id="mt-grade">', `<div class="v242Ordem"><span>A ordem daqui é a que o cliente vê.</span>
+          <button type="button" class="b gho sm" data-v242nome="${esc(k)}">Ordenar por nome</button></div><div class="mtGrade" id="mt-grade">`);
+      }
+      return out;
+    };
+  })(modalMaterial);
+
+  /* ---------- 3. ajustar: corta o centro, guarda o original ----------- */
+  async function ajustar(k, i){
+    const [cli, id] = k.split('|');
+    const p = cardDe(+id, cli); const arr = S.mat[k] || [];
+    const vis = arr.filter(m => m.tipo === 'imagem' || m.tipo === 'video');
+    const m = vis[i]; if(!p || !m || m.tipo !== 'imagem') return;
+    const alvo = regraDe(p).alvo;
+    let blob = null;
+    try{ blob = m.url ? await (await fetch(m.url)).blob() : null; }catch(e){}
+    if(!blob && m.chave) try{ blob = await idbLer(m.chave); }catch(e){}
+    if(!blob){ toast('Não consegui abrir este arquivo aqui — ajuste no editor e suba de novo.'); return; }
+    let bmp; try{ bmp = await createImageBitmap(blob); }catch(e){ toast('Este arquivo não é uma imagem que eu consiga cortar.'); return; }
+    const x = bmp.width / bmp.height;
+    const w = x > alvo ? Math.round(bmp.height * alvo) : bmp.width;
+    const h = x > alvo ? bmp.height : Math.round(bmp.width / alvo);
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    cv.getContext('2d').drawImage(bmp, (bmp.width - w) / 2, (bmp.height - h) / 2, w, h, 0, 0, w, h);
+    const tipo = /png/i.test(blob.type) ? 'image/png' : 'image/jpeg';
+    const saida = await new Promise(r => cv.toBlob(r, tipo, 0.92));
+    if(!saida){ toast('Não consegui gerar o arquivo ajustado.'); return; }
+    const nome = String(m.nome || 'peca').replace(/(\.[a-z0-9]+)?$/i, `-ajustada${tipo === 'image/png' ? '.png' : '.jpg'}`);
+    const antes = arr.length;
+    guardarArquivos(+id, [new File([saida], nome, { type: tipo })], cli);
+    if(arr.length !== antes + 1) return;
+    const novo = arr.pop();
+    novo.w = w; novo.h = h;
+    novo.orig = { ...m };
+    arr.splice(arr.indexOf(m), 1, novo);
+    if(typeof som === 'function') som('toque');
+    render(); if(S.modal && S.enAnexAlvo){ S.modal = modalTarefa(S.enAnexAlvo); renderLayer(); }
+    toast(`Ajustada para ${nomeProp(w, h)}. O original fica guardado — dá para desfazer.`);
+  }
+  function desfazer(k, i){
+    const arr = S.mat[k] || [];
+    const vis = arr.filter(m => m.tipo === 'imagem' || m.tipo === 'video');
+    const m = vis[i]; if(!m || !m.orig) return;
+    arr.splice(arr.indexOf(m), 1, m.orig);
+    render(); if(S.modal && S.enAnexAlvo){ S.modal = modalTarefa(S.enAnexAlvo); renderLayer(); }
+    toast('Voltou o original.');
+  }
+  window.MaestroMidia.ajustar = ajustar;
+
+  /* ---------- 3b. a ordem: por nome, ou uma a uma --------------------- */
+  const porNome = (a, b) => String((a && a.nome) || '').localeCompare(String((b && b.nome) || ''), 'pt-BR', { numeric: true, sensitivity: 'base' });
+  function redesenhar(){
+    render();
+    if(S.modal && /id="mt-grade"|id="mt-solta"/.test(S.modal) && S.mtId != null){
+      S.modal = modalMaterial(S.mtId); renderLayer(); if(typeof ligarSolta === 'function') setTimeout(ligarSolta, 0); }
+    else if(S.modal && S.enAnexAlvo){ S.modal = modalTarefa(S.enAnexAlvo); renderLayer(); }
+  }
+  function ordenarPorNome(k){
+    const arr = S.mat[k]; if(!arr || arr.length < 2) return;
+    const antes = arr.map(m => m.nome).join('|');
+    arr.sort(porNome);
+    if(typeof som === 'function') som('toque');
+    redesenhar();
+    toast(arr.map(m => m.nome).join('|') === antes ? 'Já estava na ordem dos nomes.'
+      : `Em ordem de nome: ${arr.slice(0, 3).map(m => m.nome).join(', ')}${arr.length > 3 ? '…' : ''}`);
+  }
+  function mover(k, i, d){
+    const arr = S.mat[k]; const j = i + d;
+    if(!arr || !arr[i] || !arr[j]) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    redesenhar();
+  }
+  window.MaestroMidia.ordenarPorNome = ordenarPorNome;
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-v242nome],[data-v242mover],[data-v242mudar]'); if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    if(b.dataset.v242nome){ ordenarPorNome(b.dataset.v242nome); return; }
+    if(b.dataset.v242mudar){ const [cli, id] = b.dataset.v242mudar.split('|');
+      S.cli = cli; S.mtId = +id; S.mtCli = cli; S.modal = modalMaterial(+id); renderLayer();
+      if(typeof ligarSolta === 'function') setTimeout(ligarSolta, 0); return; }
+    const [c, id, i, d] = b.dataset.v242mover.split('|');
+    mover(`${c}|${id}`, +i, +d);
+  }, true);
+
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-v242ajusta],[data-v242desfaz],[data-v242vista]');
+    if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    if(b.dataset.v242vista !== undefined){
+      S.v242Vista = b.dataset.v242vista || null;
+      if(S.modal && S.enAnexAlvo){ S.modal = modalTarefa(S.enAnexAlvo); renderLayer(); } return; }
+    const [k1, k2, i] = (b.dataset.v242ajusta || b.dataset.v242desfaz).split('|');
+    (b.dataset.v242ajusta ? ajustar : desfazer)(`${k1}|${k2}`, +i);
+  }, true);
+
+  /* ---------- 4. o cliente diz QUAL tela ------------------------------- */
+  S.pcTelas = new Set();
+  clCard = (function(orig){
+    return function(){
+      let html = orig.apply(this, arguments);
+      const p = S.pauta.find(x => x.id === S.pcSel);
+      if(!html || !p || !S.pcPedindo || faseDe(p) === 'texto_cli') { if(!S.pcPedindo) S.pcTelas = new Set(); return html; }
+      const v = clVisuais(p); if(v.length < 2) return html;
+      const fila = `<div class="v242Telas"><div class="caplbl">Em qual tela? <span style="text-transform:none;letter-spacing:0">(opcional)</span></div>
+        <div class="fila">${v.map((m, i) => `<button type="button" data-v242tela="${i + 1}" class="${S.pcTelas.has(i + 1) ? 'on' : ''}" aria-pressed="${S.pcTelas.has(i + 1)}" aria-label="Tela ${i + 1}">
+          ${m.url && m.tipo === 'imagem' ? `<img src="${urlSegura(m.url)}" alt="">` : m.poster ? `<img src="${urlSegura(m.poster)}" alt="">` : ''}<b>${i + 1}</b></button>`).join('')}</div>
+        <small>Sem marcar nenhuma, o pedido vale para o carrossel inteiro.</small></div>`;
+      return html.replace(/(<textarea id="altnota"[\s\S]*?<\/textarea>)/, '$1' + fila);
+    };
+  })(clCard);
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-v242tela]'); if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    const n = +b.dataset.v242tela;
+    S.pcTelas.has(n) ? S.pcTelas.delete(n) : S.pcTelas.add(n);
+    b.classList.toggle('on', S.pcTelas.has(n)); b.setAttribute('aria-pressed', S.pcTelas.has(n));
+  }, true);
+  const rotuloTelas = ns => { const a = [...ns].sort((x, y) => x - y);
+    return (a.length === 1 ? 'Tela ' : 'Telas ') + (a.length > 1 ? a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1] : a[0]); };
+  decidirCard = (function(orig){
+    return function(id, decisao, nota){
+      if(decisao === 'ALTERACAO' && S.pcTelas && S.pcTelas.size && typeof nota === 'string' && !/^Telas? \d/.test(nota))
+        nota = `${rotuloTelas(S.pcTelas)} — ${nota}`;
+      S.pcTelas = new Set();
+      return orig.call(this, id, decisao, nota);
+    };
+  })(decidirCard);
+  window.MaestroMidia.telasDoPedido = telasDoPedido;
 
   try{ render(); }catch(e){}
 })();
