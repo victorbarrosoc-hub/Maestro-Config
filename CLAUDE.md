@@ -299,6 +299,12 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v239) — "Não consigo logar."** O portão sem porta: aparelho
+em sessão de link de cliente (`?aprovar=` no endereço) + "Entrar" → a regra da
+v170 tira a porta da agência, e recarregar não salva. A regra fica; o portão
+agora diz o que é e oferece a saída para o endereço limpo. 8 provas em
+`web/verificar/v239-a-porta-nao-fica-presa.mjs`. **Para quem testa o link do
+cliente no mesmo celular:** abra o link numa aba separada.
 **Fechado (23 set, v238) — a cara nova, parte 4: a aba Redes.** Na página do
 cliente. Lê o CSV do Meta Business Suite, YouTube Studio e TikTok Studio (pt/en,
 UTF-16, "Total", 1.234/1,234, dd/mm ou mm/dd) e mostra o que leu antes de

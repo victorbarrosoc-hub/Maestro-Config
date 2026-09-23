@@ -1,9 +1,48 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.52
+Version: 0.5.53
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.53 — 2026-09-24
+
+**Status:** Concluída
+
+### v239 — a porta que não fica presa
+
+*"Não consigo logar."* — com um print do portão "Entrar na sua agência" **sem
+porta nenhuma**, só o quadro "E o cliente?".
+
+**Reproduzido no caminho de verdade:** abrir o link do cliente (`?aprovar=…`),
+tocar "Entrar" na barra do topo (ou "← Site" e depois "Entrar"). O endereço
+continua com o `?aprovar=` — o acompanhamento de endereço não mexe em sessão
+de link, de propósito —, e a regra da v170/v178 tira a porta da agência de
+quem chegou por link. Resultado: portão sem porta, e **recarregar não salva**,
+porque o endereço continua dizendo "cliente". O founder caiu nisso testando o
+link das partes 3 e 4. É a família da v178 (um dia perdido em 7/set), por outro
+caminho.
+
+**A regra fica** — quem chegou por link não ganha a porta da agência. O que muda
+é que o portão, nesse estado, **diz o que está acontecendo e oferece a saída**:
+"Entrar na agência" leva ao endereço LIMPO (sem `?aprovar=`), onde o login
+existe. A saída é uma navegação, não um crachá: ninguém assume identidade aqui.
+
+**8 provas** em `web/verificar/v239-a-porta-nao-fica-presa.mjs`, fazendo o
+caminho: link → "Entrar" → portão (ainda com `?aprovar=`, porta da agência
+fora, saída à vista) → saída → endereço limpo → login de volta, sem o aviso.
+**A prova mostrou um caminho mais curto do que eu achava:** não precisa do
+"← Site" — o "Entrar" do topo já leva lá.
+
+**E um acerto na suíte do cérebro (`cerebro-marca`), que a v238 expôs:** ela
+zerava a contagem de gravações 500ms depois do login e esperava a chamada
+explícita gravar. Com a v238, a gravação automática (1,5s depois de um desenho)
+caiu **2ms antes** desse ponto — medido numa linha do tempo, com e sem a v238 —
+e a chamada explícita já não tinha o que gravar. O cérebro gravava; a prova é
+que olhava tarde. Agora ela conta a partir do login. Rodada 3× com a v238 e
+contra o código de antes: nos dois, a gravação passa.
 
 ---
 

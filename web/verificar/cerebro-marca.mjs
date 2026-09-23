@@ -144,7 +144,8 @@ const aba = await pg.evaluate(() => ({
   h1: document.querySelector('.mtop h1')?.textContent,
   sub: document.querySelector('.mtop p')?.textContent }));
 checa('a aba "Banco de dados" entra na régua do cliente, antes de "Quem aprova"',
-      aba.regua.join(',') === 'pauta,marca,projetos,banco,equipe' && aba.acesa === 'banco', aba.regua);
+      /* v238: a aba Redes entra antes do Banco — que continua colado em "Quem aprova" */
+      aba.regua.join(',') === 'pauta,marca,projetos,redes,banco,equipe' && aba.acesa === 'banco', aba.regua);
 checa('e abre no cliente certo', aba.h1 === 'EJUP' && /a IA sabe desta marca/.test(aba.sub || ''), aba);
 checa('com os oito setores que o fundador pediu, mais o que aprende sozinho',
       aba.setores.join('|') === 'Identidade|Voz|Exemplos aprovados|Oferta e provas|Pessoas|Identidade visual|Referências visuais|Restrições|Aprendizado', aba.setores);
@@ -356,12 +357,17 @@ await sb.evaluate(() => {
   cbDe('n0').refs.arquivos = [{ nome: 'tatame.jpg', chave: 'cb_1', url: 'blob:http://x/abc' }];
   render();
 });
+/* conta a partir do LOGIN. A gravação automática (1,5s depois de um desenho)
+   pode cair antes ou depois do ponto em que a prova zerava a conta — com a
+   v238 caiu 2ms antes, e a chamada explícita abaixo já não tinha o que
+   gravar (o espelho estava igual). O que esta prova guarda é que, com
+   alguém dentro, o cérebro chega à linha dele; não em que milissegundo. */
+gravou.length = 0;
 await sb.evaluate(async () => { await window.MaestroPorta.entrar('victorbarrosoc@gmail.com', 's'); await sbCarregar(); });
 await sb.waitForTimeout(500);
-gravou.length = 0;
 await sb.evaluate(async () => { await sbGravarConfig(); });
 await sb.waitForTimeout(600);
-const linha = gravou.find(g => g.cliente === '__cerebro__');
+const linha = [...gravou].reverse().find(g => g.cliente === '__cerebro__');
 checa('o cérebro grava numa linha própria do banco', !!linha, gravou.map(g => g.cliente));
 checa('com o conteúdo do cliente dentro',
       linha && /nunca treinou/.test(JSON.stringify(linha.dados.n0.identidade)), linha && linha.dados.n0);

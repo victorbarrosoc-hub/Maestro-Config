@@ -16032,7 +16032,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v238 · 23 set · a aba Redes';
+const VERSAO_PROTOTIPO = 'v239 · 24 set · a porta que não fica presa';
 
 menuSheet = (function(orig){
   return function(){
@@ -42871,7 +42871,21 @@ button.clPost:active{ transform:scale(.98) }
       if(l && l.dados){ unir(l.dados); if(S.route === 'clientedet' && S.tab === 'redes') render(); }
     }catch(e){}
   }
-  [2400, 6000, 14000].forEach(t => setTimeout(carregar, t));
+  /* busca depois que a carga do banco terminou — não num relógio próprio,
+     que disputava a janela das outras cargas */
+  sbCarregar = (function(orig){
+    return function(){
+      const p = orig.apply(this, arguments);
+      return Promise.resolve(p).then(ok => { if(ok) carregar(); return ok; });
+    };
+  })(sbCarregar);
+  /* e ao abrir a aba, se ainda não veio */
+  const _rdAbre = render;
+  render = function(){
+    const r = _rdAbre.apply(this, arguments);
+    if(!_rdCarregado && S.route === 'clientedet' && S.tab === 'redes') carregar();
+    return r;
+  };
 
   /* ---------- 3. as contas ------------------------------------------- */
   const soma = (arr, k) => { const v = arr.map(p => p[k]).filter(x => typeof x === 'number'); return v.length ? v.reduce((a, b) => a + b, 0) : null; };
@@ -43065,8 +43079,11 @@ button.clPost:active{ transform:scale(.98) }
   /* ---------- 7. a aba entra na régua do cliente ----------------------- */
   abasCliente = (function(orig){
     return function(atual){
-      return orig.apply(this, arguments).replace(/(<button data-tab="equipe")/,
-        `<button data-tab="redes" class="${atual === 'redes' ? 'on' : ''}">Redes</button>$1`);
+      /* antes do "Banco de dados", que fica colado em "Quem aprova" (cerebro-marca) */
+      const html = orig.apply(this, arguments);
+      const bt = `<button data-tab="redes" class="${atual === 'redes' ? 'on' : ''}">Redes</button>`;
+      return /<button data-tab="banco"/.test(html) ? html.replace(/(<button data-tab="banco")/, bt + '$1')
+        : html.replace(/(<button data-tab="equipe")/, bt + '$1');
     };
   })(abasCliente);
   agClienteDet = (function(orig){
@@ -43139,6 +43156,48 @@ button.clPost:active{ transform:scale(.98) }
     }, 150);
   });
   window.MaestroRedes = { interpretar, numero, lerDatas, decodificar, guardar, unir, leitura, periodos, tela, doCliente, lerArquivo };
+})();
+</script>
+<style id="v239-porta-presa">
+/* v239 — "Não consigo logar." O aparelho estava numa sessão de LINK de
+   cliente (`?aprovar=` no endereço): quem testa o link e toca "← Site" e
+   depois "Entrar" cai no portão da agência com o endereço ainda dizendo
+   "cliente" — e a regra da v170/v178, certa, tira a porta da agência de quem
+   chegou por link. Resultado: o portão sem porta nenhuma, e recarregar não
+   salva, porque o endereço continua o mesmo. É a família da v178 (um dia
+   perdido em 7/set) por outro caminho.
+   A regra fica. O que muda é que o portão, nesse estado, diz o que está
+   acontecendo e oferece a SAÍDA: abrir a Maestro sem o link (endereço
+   limpo), onde o login da agência existe. Nada de assumir identidade aqui —
+   a saída é uma navegação, não um crachá. */
+.gateSaida{ max-width:400px; margin:0 auto 14px; border:1px solid rgba(200,150,58,.45); border-radius:16px;
+  padding:20px; background:rgba(200,150,58,.07); text-align:left }
+.gateSaida b{ display:block; font-size:15px; color:var(--ink-50); margin-bottom:6px }
+.gateSaida p{ margin:0 0 14px; font-size:13.5px; color:var(--ink-300); line-height:1.55; text-align:left }
+.gateSaida .b{ width:100% }
+</style>
+<script>
+(function(){
+  if(typeof vGate !== 'function') return;
+  vGate = (function(orig){
+    return function(){
+      const html = orig.apply(this, arguments);
+      if(!S.viaLink) return html;
+      const saida = `<div class="gateSaida fu">
+        <b>Este aparelho está aberto no link de um cliente</b>
+        <p>O link de aprovação é do cliente, e por ele não se entra na agência. Para entrar com a sua conta, abra a Maestro sem o link.</p>
+        <button class="b pri" data-sairlink="1">Entrar na agência</button></div>`;
+      /* entra no lugar da porta, que a regra da v170 tira nesse estado */
+      return html.replace('<div class="doors doors1">', saida + '<div class="doors doors1">');
+    };
+  })(vGate);
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-sairlink]');
+    if(!t) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    /* endereço limpo: sem ?aprovar=, sem #; a sessão de link não nasce */
+    location.assign(location.origin + '/');
+  }, true);
 })();
 </script>
 <style id="v233-tipografia">
