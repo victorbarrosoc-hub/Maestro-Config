@@ -1,9 +1,53 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.58
+Version: 0.5.59
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.59 — 2026-09-24
+
+**Status:** Concluída
+
+### v245 — o card não pisca, e o vídeo tem capa
+
+Duas queixas do founder na mesma tarde.
+
+**"O card fica piscando quando eu subo algo, toda vez que atualiza
+automaticamente."** O quadro do Ensaio é redesenhado a cada sincronização
+(e várias vezes durante um upload). A faixa de miniaturas da v241 nascia de
+novo em cada redesenho: `<img>` novo, com `loading="lazy"`, quadro preto até
+carregar — e com seis telas, seis quadrados pretos piscando. Agora a faixa
+de cada card é guardada com a **assinatura da peça** (endereço, capa,
+nuvem, progresso e tamanho de cada item, e o formato): enquanto a
+assinatura não muda, o redesenho recoloca o MESMO elemento no card novo;
+quando a peça muda (tela a mais, upload que terminou), a faixa é refeita.
+A prova marca os elementos e confere em cinco redesenhos seguidos que são
+os mesmos — e falha no código de antes.
+
+**"Subi o vídeo, e lá pro cliente deveria ficar a capa do reels."** Em
+"Como o seu feed vai ficar" o corte aparecia com o degradê azul. O vídeo
+subiu sem capa: a capa é gerada no aparelho ANTES de subir, e no iPhone o
+quadro do vídeo muitas vezes não sai. E a capa do card só era procurada
+em imagem. Três curas, em ordem:
+
+1. **A capa segue a peça.** Se a 1ª tela é vídeo com capa, é ela; senão a
+   primeira imagem; senão a capa de qualquer vídeo.
+2. **A agência completa a capa que faltou.** Quem está no Ensaio gera, um
+   por vez, a capa dos vídeos que já estão na nuvem e não têm (vídeo pedido
+   com `crossOrigin`, senão o quadro "contamina" o canvas). A capa vai para
+   a peça e chega ao cliente pela sincronização. Achada de novo pelo
+   endereço na hora de gravar — a sincronização pode ter trocado a lista
+   no meio (lição da v218).
+3. **Enquanto não há capa, o 1º quadro do próprio vídeo** — mudo, parado,
+   sem roubar o toque — na grade do perfil, no "Seu feed" e no Modo
+   Instagram; na decisão, o vídeo abre no 1º quadro, não num retângulo
+   preto.
+
+26 provas em `web/verificar/v245-o-card-nao-pisca.mjs`, com um vídeo de
+verdade gravado no próprio navegador.
 
 ---
 

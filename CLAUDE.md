@@ -299,6 +299,13 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v245) — o card não pisca, e o vídeo tem capa.** A faixa
+de miniaturas do Ensaio nascia de novo a cada sincronização (`<img>` novo,
+quadro preto até carregar); agora é o MESMO elemento enquanto a peça não
+muda. E o corte sem capa aparecia como degradê para o cliente: a capa segue
+a peça (vídeo com capa → imagem → qualquer capa), a agência gera a que
+faltou a partir do vídeo na nuvem, e enquanto isso a grade mostra o 1º
+quadro do vídeo. 26 provas em `web/verificar/v245-o-card-nao-pisca.mjs`.
 **Fechado (24 set, v244) — o cliente pede e acha.** Pelo link:
 "Pedir à agência" (formulário → tarefa no Inbox do Ensaio, com andamento que
 volta ao cliente) e "Arquivos" (tudo o que aprovou, por mês, com baixar). 23

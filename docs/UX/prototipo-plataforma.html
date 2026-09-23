@@ -16053,7 +16053,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v244 · 24 set · o cliente pede e acha';
+const VERSAO_PROTOTIPO = 'v245 · 24 set · o card não pisca e o vídeo tem capa';
 
 menuSheet = (function(orig){
   return function(){
@@ -43367,9 +43367,18 @@ button.clPost:active{ transform:scale(.98) }
   };
 
   /* ---------- 2. o quadro do Ensaio mostra a peça, em toda coluna ------ */
+  /* v245 — o quadro é redesenhado a todo instante (sincronização, e a cada
+     0,35s durante um upload). Uma faixa NOVA a cada desenho eram <img> novos,
+     e cada um passa um instante preto antes de aparecer: o card piscava.
+     Agora a faixa pronta fica guardada por card e volta A MESMA para o card
+     novo; só se refaz quando o que ela mostra muda (a assinatura). */
+  const FAIXAS = new Map();
+  const assinatura = (p, v) => proporcao(p) + '|' + v.map(m => [m.url || m.chave || '', m.poster || '', m.nuvem ? 1 : 0,
+    m.progresso !== undefined ? 1 : 0, m.w || 0, m.h || 0].join(',')).join(';') + '|' + (_sbLigado ? 1 : 0);
   function pintarMidia(){
     if(!S.ensaio || S.view !== 'agency') return;
     let falta = false;
+    const vistos = new Set();
     document.querySelectorAll('.enCard[data-entar]').forEach(card => {
       if(card.querySelector('.enMidia')) return;
       const t = S.ensaio.tarefas.find(x => x.id === +card.dataset.entar);
@@ -43377,11 +43386,18 @@ button.clPost:active{ transform:scale(.98) }
       const v = visuais(p); if(!v.length) return;
       if(v.some(m => !m.url && m.chave)) falta = true;
       const tit = card.querySelector('.tit'); if(!tit) return;
+      const sig = assinatura(p, v);
+      vistos.add(t.id);
+      const guardada = FAIXAS.get(t.id);
+      if(guardada && guardada.sig === sig){ tit.after(guardada.el); return; }
       tit.insertAdjacentHTML('afterend', `<div class="enMidia" style="--ar:${proporcao(p)}" title="${v.length > 1 ? v.length + ' telas' : 'a peça'}">
         ${v.slice(0, 3).map(m => `<span class="mn">${miniatura(m)}</span>`).join('')}
         ${v.length > 3 ? `<span class="mais">+${v.length - 3}</span>` : ''}
         ${_sbLigado && v.some(naoSubiu) ? '<span class="aviso">não subiu</span>' : ''}</div>`);
+      FAIXAS.set(t.id, { sig, el: tit.nextElementSibling });
     });
+    /* o que saiu do quadro não fica ocupando memória — só se o quadro está à vista */
+    if(document.querySelector('.enCard[data-entar]')) for(const k of [...FAIXAS.keys()]) if(!vistos.has(k)) FAIXAS.delete(k);
     if(falta && typeof rehidratarArquivos === 'function') try{ rehidratarArquivos(); }catch(e){}
   }
   render = (function(orig){ return function(){ const r = orig.apply(this, arguments); pintarMidia(); pintarTipos(); return r; }; })(render);
@@ -44340,6 +44356,97 @@ button.clPost:active{ transform:scale(.98) }
     if(b.dataset.pdenviar){ if(!S.v244.enviando) enviarPedido(); return; }
     S.v244Arq = b.dataset.v244arq; render();
   }, true);
+  try{ render(); }catch(e){}
+})();
+</script>
+<style id="v245-a-capa-do-video">
+/* v245 — a capa do vídeo, e o card que não pisca. Motivo em docs/CHANGELOG.md 0.5.59. */
+.v245cap{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; pointer-events:none; background:#0B0C0E }
+.clPost > .v245cap ~ *, .ftile > .v245cap ~ *, #v243ig .igGrade button > .v245cap ~ *{ position:relative; z-index:1 }
+#v243ig .igGrade button > .v245cap ~ .tp, #v243ig .igGrade button > .v245cap ~ .ap, .ftile > .v245cap ~ .st, .clPost > .v245cap ~ .st{ position:absolute }
+</style>
+<script>
+(function(){
+  const cssUrlV = u => urlSegura(String(u == null ? '' : u).replace(/['"()\\\s]/g, c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')));
+  const visuaisDe = p => (typeof materiaisDe === 'function' ? materiaisDe(p) : []).filter(m => m && (m.tipo === 'imagem' || m.tipo === 'video'));
+
+  /* ---------- 1. a capa segue a peça: a 1ª tela manda ---------------- */
+  capaDoCard = (function(orig){
+    return function(p){
+      const v = visuaisDe(p);
+      const primeira = v[0];
+      let u = '';
+      if(primeira && primeira.tipo === 'video' && cssUrlV(primeira.poster)) u = cssUrlV(primeira.poster);
+      if(!u){ const img = v.find(m => m.tipo === 'imagem' && cssUrlV(m.url)); if(img) u = cssUrlV(img.url); }
+      if(!u){ const vid = v.find(m => m.tipo === 'video' && cssUrlV(m.poster)); if(vid) u = cssUrlV(vid.poster); }
+      return u ? `linear-gradient(rgba(8,9,11,.06),rgba(8,9,11,.28)),url('${u}') center/cover` : orig.apply(this, arguments);
+    };
+  })(capaDoCard);
+  const semCapa = p => { const v = visuaisDe(p);
+    return !v.some(m => m.tipo === 'imagem' && m.url) && !v.some(m => m.tipo === 'video' && m.poster) ? v.find(m => m.tipo === 'video' && urlSegura(m.url)) : null; };
+  window.MaestroCapa = { semCapa };
+
+  /* ---------- 2. gerar a capa também de vídeo que já está na nuvem ----
+     Sem `crossOrigin`, o quadro de um vídeo de outro endereço "contamina"
+     o canvas e a leitura falha em silêncio. E no iPhone o vídeo que
+     ninguém tocou não carrega com `preload=auto`: por isso a capa quase
+     nunca nascia lá. Quem completa é o aparelho da agência que abrir o
+     quadro, a partir do endereço da nuvem. */
+  gerarPoster = (function(orig){
+    return function(url){
+      if(!/^https?:/i.test(String(url || ''))) return orig.apply(this, arguments);
+      return new Promise(resolve => {
+        const v = document.createElement('video');
+        v.crossOrigin = 'anonymous'; v.muted = true; v.playsInline = true; v.preload = 'metadata';
+        let feito = false;
+        const acaba = x => { if(feito) return; feito = true; try{ v.removeAttribute('src'); v.load(); }catch(e){} resolve(x); };
+        v.addEventListener('loadedmetadata', () => { try{ v.currentTime = Math.min(.5, (v.duration || 1) / 3); }catch(e){ acaba(null); } }, { once: true });
+        v.addEventListener('seeked', () => { try{
+          const w = 320, h = Math.round(w * (v.videoHeight || 1) / (v.videoWidth || 1)) || w;
+          const c = document.createElement('canvas'); c.width = w; c.height = h;
+          c.getContext('2d').drawImage(v, 0, 0, w, h); acaba(c.toDataURL('image/jpeg', .74)); }catch(e){ acaba(null); } }, { once: true });
+        v.addEventListener('error', () => acaba(null), { once: true });
+        setTimeout(() => acaba(null), 12000);
+        v.src = url;
+      });
+    };
+  })(gerarPoster);
+  const tentadas = new Set();
+  let gerando = false;
+  async function completarCapas(){
+    if(gerando || S.view !== 'agency' || typeof _sbLigado === 'undefined' || !_sbLigado) return;
+    const alvo = Object.values(S.mat || {}).flat().find(m => m && m.tipo === 'video' && !m.poster && m.nuvem && /^https?:/i.test(m.url || '') && !tentadas.has(m.url));
+    if(!alvo) return;
+    gerando = true; tentadas.add(alvo.url);
+    const pst = await gerarPoster(alvo.url);
+    gerando = false;
+    /* a sincronização pode ter trocado S.mat enquanto o quadro saía: achar
+       de novo pelo endereço, nunca segurar o objeto velho (lição da v218) */
+    if(pst && /^data:image\//.test(pst)){ let n = 0;
+      for(const m of Object.values(S.mat || {}).flat()) if(m && m.tipo === 'video' && m.url === alvo.url && !m.poster){ m.poster = pst; n++; }
+      if(n) render(); }
+    setTimeout(completarCapas, 400);
+  }
+  window.MaestroCapa.completarCapas = completarCapas;
+
+  /* ---------- 3. sem capa nenhuma: o 1º quadro do próprio vídeo --------- */
+  function pintarQuadros(){
+    const cards = typeof cardsDoCliente === 'function' ? cardsDoCliente() : [];
+    const pelo = id => cards.find(x => String(x.id) === String(id)) || (S.pauta || []).find(x => String(x.id) === String(id));
+    document.querySelectorAll('.clPost[data-pid], .ftile[data-pid], #v243ig [data-v243abre]').forEach(el => {
+      if(el.querySelector('.v245cap')) return;
+      const p = pelo(el.dataset.pid || el.dataset.v243abre); if(!p) return;
+      const vid = semCapa(p); if(!vid) return;
+      el.insertAdjacentHTML('afterbegin', `<video class="v245cap" muted playsinline preload="metadata" src="${urlSegura(vid.url + '#t=0.1')}" aria-hidden="true"></video>`);
+      el.classList.add('comArte');
+    });
+    /* na decisão, o vídeo sem capa também mostra o quadro, não um retângulo preto */
+    document.querySelectorAll('.clArte video:not([poster]):not([data-v245])').forEach(v => {
+      v.dataset.v245 = '1'; const s = v.getAttribute('src') || '';
+      if(s && !/#t=/.test(s)) v.setAttribute('src', s + '#t=0.1');
+    });
+  }
+  render = (function(orig){ return function(){ const r = orig.apply(this, arguments); pintarQuadros(); if(S.view === 'agency') setTimeout(completarCapas, 1500); return r; }; })(render);
   try{ render(); }catch(e){}
 })();
 </script>
