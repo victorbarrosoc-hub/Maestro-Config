@@ -1,9 +1,53 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.48
+Version: 0.5.49
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.49 — 2026-09-23
+
+**Status:** Concluída
+
+### v235 — o link de cada card
+
+*"Quero que o card tenha um link personalizado pra cada card. Que eu possa
+enviar no grupo pra outras pessoas da equipe ver o card que eu estou falando
+sobre."*
+
+**O formato já existia** — o Cronograma copiava `#post=cliente:número`, que
+abre a ficha completa do card. Faltavam duas coisas:
+
+- **O botão no Ensaio.** "Copiar link" entra no "•••" do card. Card da pauta
+  usa o mesmo `#post=` (abre como o "abrir o card" do Ensaio já abre: a pauta
+  do cliente, com a ficha por cima); tarefa sem card ganha `#tarefa=número`,
+  que abre a ficha dela no Ensaio. Sem permissão de área de transferência, o
+  link aparece para copiar à mão.
+- **Uma abertura que funcione de verdade.** A antiga esperava **2,6s fixos** e
+  abria. Quem recebe o link no grupo quase nunca está logado nesses 2,6s — e o
+  primeiro desenho da tela ainda apagava o `#post` do endereço. Agora o alvo é
+  GUARDADO ao abrir a página (`sessionStorage`, sobrevive ao login e a
+  recarregar) e só é aberto quando há alguém da agência dentro e o banco já
+  falou. Banco que não responde não prende o link: com a pessoa dentro há 8s,
+  abre com o que o aparelho tem. Card que não existe mais **avisa** em vez de
+  abrir ficha em branco; pedido guardado há mais de 10 minutos é sobra e não
+  abre sozinho.
+
+**O link não carrega dado nenhum** — só aponta. Quem não é da agência cai no
+login, como em qualquer endereço do app.
+
+**Da proposta de 23/set, por cima do tema escuro** (o founder escolheu manter o
+escuro): a linha curta sob o nome de cada coluna ("revisão interna",
+"esperando a decisão"…). Os nomes do método ficam.
+
+**19 provas** em `web/verificar/v235-o-link-do-card.mjs`, fazendo o caminho de
+quem recebe: aba nova sem ninguém dentro (não abre, guarda), login 4,5s depois
+(abre ESTE card, uma vez só, e não reabre num redesenho), card apagado (avisa),
+`#tarefa=`, pedido velho, e o banco mudo (espera, depois abre). **A primeira
+versão ficava presa para sempre** sem banco — a prova do banco mudo nasceu
+disso.
 
 ---
 

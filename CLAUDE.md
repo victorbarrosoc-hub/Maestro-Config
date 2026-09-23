@@ -299,6 +299,14 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (23 set, v235) — o link de cada card.** "Copiar link" no "•••" do
+card do Ensaio, para mandar à equipe: card da pauta usa o `#post=cliente:número`
+que o Cronograma já copiava; tarefa sem card, `#tarefa=número`. A abertura
+antiga esperava 2,6s fixos (quem recebe no grupo quase nunca está logado nesse
+tempo); agora o alvo fica guardado e abre quando há alguém da agência dentro e o
+banco falou — com saída de 8s se o banco não responde, aviso se o card não
+existe mais. Tema: o founder escolheu **manter o escuro**; da proposta entrou a
+linha curta sob cada coluna. 19 provas em `web/verificar/v235-o-link-do-card.mjs`.
 **Fechado (23 set, v234) — a cara nova, parte 2: o card enxuto.** O card do
 Ensaio caiu de ~350px para ~220px: o rótulo da fase e os pontinhos saíram
 (repetiam a coluna) e entrou o selo **Texto/Peça** (o que a coluna não diz);

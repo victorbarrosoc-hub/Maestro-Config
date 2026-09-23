@@ -302,7 +302,8 @@ ficam com os nomes de hoje, e o botão de cada card é sempre a próxima porta.
       de quem é, quando vence, e o selo **Texto/Peça**. **A frente fica no
       card como filete de cor** — o founder confirmou que o time se orienta
       por ela. O próximo passo à vista; setas, cronômetro e lixeira no "•••".
-      **Falta daqui:** a linha curta em português sob cada coluna.
+      A linha curta sob cada coluna entrou na v235, com o link de cada card.
+      **Tema:** o founder escolheu manter o escuro por padrão (23/set).
 - [ ] **Parte 3 — o Portal do cliente.** "3 de 12 esperam sua decisão" no
       topo, a peça grande, dois botões.
 - [ ] **Parte 4 — a aba Redes, por planilha.** Em paralelo, o pedido de

@@ -12212,19 +12212,56 @@ document.addEventListener('click', async e => {
   }catch(err){ toast('Não consegui copiar — o navegador bloqueou.'); }
 }, true);
 
-/* o link profundo: #post=cliente:id abre o card ao carregar */
+/* o link profundo: #post=cliente:id abre o card ao carregar.
+   v235 — antes: esperava 2,6s fixos e abria. Se o login ou o banco
+   demorassem mais, o link caía na tela errada (e o endereço perdia o
+   `#post` no primeiro desenho, então recarregar não salvava). Agora o
+   alvo é GUARDADO ao abrir a página (sobrevive ao login e a recarregar)
+   e só é aberto quando há alguém da agência dentro e o banco já falou.
+   `#tarefa=id` é o mesmo para tarefa do Ensaio que não tem card. */
 (function(){
-  const m = location.hash.match(/#post=([^:]+):(\d+)/);
-  if(!m) return;
-  const [, cli, id] = m;
-  const abre = () => {
-    if(!CLIS().some(c=>c.id===cli)) return;
-    S.view='agency'; S.route='clientedet'; S.cli=cli; S.tab='pauta';
-    const p = (S.pautas[cli]||[]).find(x=>x.id===+id);
-    if(p){ S.modal = modalVer(p.id); }
-    render(); renderLayer();
+  const CHAVE = 'maestro-link-alvo';
+  const m = location.hash.match(/#post=([^:&]+):(\d+)/) || location.hash.match(/#(tarefa)=(\d+)/);
+  try{
+    if(m) sessionStorage.setItem(CHAVE, JSON.stringify({ k: m[1] === 'tarefa' ? 'tarefa' : 'post',
+      cli: m[1], id: +m[2], em: Date.now() }));
+  }catch(e){}
+  let alvo = null;
+  try{ alvo = JSON.parse(sessionStorage.getItem(CHAVE) || 'null'); }catch(e){}
+  /* guardado há mais de 10 minutos é sobra de outra visita, não pedido */
+  if(!alvo || Date.now() - (alvo.em || 0) > 10*60*1000){ try{ sessionStorage.removeItem(CHAVE); }catch(e){} return; }
+  const esquece = () => { try{ sessionStorage.removeItem(CHAVE); }catch(e){} };
+  const dentro = () => typeof S !== 'undefined' && S.usuario && S.usuario.tipo === 'agencia'
+    && !S.viaLink && !S.soVer
+    && !document.getElementById('entrarMaestro') && !document.getElementById('quemEsta')
+    && !document.getElementById('abertura');
+  const bancoFalou = () => !window.Sincro || (Sincro.lido && !Sincro.carregando);
+  /* banco que não responde (rede caída, erro) não pode prender o link para
+     sempre: com a pessoa dentro há 8s, abre com o que o aparelho tem */
+  let dentroDesde = 0;
+  let tentativas = 0;
+  const tique = () => {
+    tentativas++;
+    if(tentativas > 450){ esquece(); return; }             /* ~3 min: desiste em silêncio */
+    if(!dentro()){ dentroDesde = 0; setTimeout(tique, 400); return; }
+    if(!dentroDesde) dentroDesde = Date.now();
+    if(!bancoFalou() && Date.now() - dentroDesde < 8000){ setTimeout(tique, 400); return; }
+    esquece();
+    if(alvo.k === 'tarefa'){
+      const t = S.ensaio && (S.ensaio.tarefas || []).find(x => x.id === alvo.id);
+      S.view = 'agency'; S.route = 'producao'; render();
+      if(t && typeof modalTarefa === 'function'){ S.modal = modalTarefa(t.id); renderLayer(); }
+      else toast('Não achei essa tarefa — ela pode ter sido concluída ou apagada.');
+      return;
+    }
+    const p = CLIS().some(c => c.id === alvo.cli) && (S.pautas[alvo.cli] || []).find(x => x.id === alvo.id);
+    if(!p){ toast('Não achei esse card — ele pode ter sido apagado.'); return; }
+    S.view = 'agency'; S.route = 'clientedet'; S.cli = alvo.cli; S.tab = 'pauta';
+    render();
+    S.modal = modalVer(p.id); renderLayer();
   };
-  setTimeout(abre, 2600);          // depois do banco carregar
+  setTimeout(tique, 600);
+  window.MaestroLinkDoCard = { tique };
 })();
 </script>
 <script>
@@ -15995,7 +16032,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v234 · 23 set · a cara nova, parte 2: o card';
+const VERSAO_PROTOTIPO = 'v235 · 23 set · o link de cada card';
 
 menuSheet = (function(orig){
   return function(){
@@ -42208,6 +42245,7 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
 .enCard:not(.menuAberto) .acoes [data-hjabre],
 .enCard:not(.menuAberto) .acoes .enRm,
 .enCard:not(.menuAberto) .acoes [data-entimer]{ display:none }
+.enCard:not(.menuAberto) .acoes [data-enlink]{ display:none }
 .enCard:not(.menuAberto):has(.kbTempo.rodando) .acoes [data-entimer]{ display:grid }
 .enCard .acoes{ flex-wrap:wrap; row-gap:6px }
 .enCard:has(.enMais){ position:relative }
@@ -42228,6 +42266,9 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
 .enCard .meta .ptResp b{ display:none }
 .enCard .enSelos{ display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap }
 .enCard .enSelos .prazo{ font-size:12px }
+.enCard .acoes .enLink{ width:auto !important; padding:0 10px; font-size:12px; border-radius:8px;
+  border:1px solid var(--ink-700); color:var(--ink-200); background:none }
+.enColSub{ font-size:12px; color:var(--ink-400); margin:-4px 0 10px; padding-left:18px; line-height:1.3 }
 @media(max-width:860px){
   /* no celular o botão tem o alvo de toque de 40px+: o título reserva a
      altura dele, para o "•••" não encostar no rosto da linha de baixo */
@@ -42279,6 +42320,13 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
       /* só ganha "•••" quem tem o que guardar */
       if(acoes && !acoes.querySelector('.enMais')
          && acoes.querySelector('[data-enmove],[data-hjabre],.enRm,[data-entimer]')){
+        /* v235: o link do card mora no mesmo menu */
+        if(t && !acoes.querySelector('[data-enlink]')){
+          const l = document.createElement('button');
+          l.type = 'button'; l.className = 'enLink'; l.dataset.enlink = String(id);
+          l.textContent = 'Copiar link'; l.title = 'Link deste card, para mandar à equipe';
+          acoes.appendChild(l);
+        }
         const b = document.createElement('button');
         b.className = 'enMais'; b.type = 'button';
         b.dataset.enmais = String(id);
@@ -42301,13 +42349,51 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
     if(typeof som === 'function') som('toque');
   }, true);
 
+  /* v235 — o link de UM card, para mandar no grupo da equipe. Card da
+     pauta usa o formato que o Cronograma já copia (#post=cliente:número,
+     abre a ficha completa); tarefa sem card, #tarefa=número (abre a ficha
+     dela no Ensaio). Só abre para quem é da agência e está logado: o
+     link não carrega dado nenhum, só aponta. */
+  const linkDe = t => {
+    const base = location.origin + '/ensaio';
+    return t.cli && t.cardId ? `${base}#post=${t.cli}:${t.cardId}` : `${base}#tarefa=${t.id}`;
+  };
+  addEventListener('click', async e => {
+    const b = e.target.closest && e.target.closest('[data-enlink]');
+    if(!b) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    const t = (S.ensaio && S.ensaio.tarefas || []).find(x => x.id === +b.dataset.enlink);
+    if(!t) return;
+    const url = linkDe(t);
+    try{ await navigator.clipboard.writeText(url); toast('Link do card copiado.'); }
+    catch(err){
+      /* sem permissão de área de transferência: mostra o link para copiar à mão */
+      try{ window.prompt('Copie o link do card:', url); }catch(e2){}
+    }
+    if(typeof som === 'function') som('toque');
+  }, true);
+
+  /* a linha curta sob cada coluna (proposta de 23/set): o nome do método
+     fica, e quem chega entende o que mora ali */
+  const SUB = { inbox:'chegou, ninguém pegou', plan:'estruturando', do:'produzindo',
+    check:'revisão interna', cliente:'esperando a decisão', act:'aprovado · agenda', feito:'já foi ao ar' };
+  const legendar = () => {
+    document.querySelectorAll('.enCol[data-encol]').forEach(col => {
+      const hd = col.querySelector('.enColHd'); const txt = SUB[col.dataset.encol];
+      if(!hd || !txt || col.querySelector('.enColSub')) return;
+      const sub = document.createElement('div'); sub.className = 'enColSub'; sub.textContent = txt;
+      hd.after(sub);
+    });
+  };
+
   const _render = render;
   render = function(){
     const r = _render.apply(this, arguments);
     try{ pintar(); }catch(err){}
+    try{ legendar(); }catch(err){}
     return r;
   };
-  window.MaestroCardEnxuto = { pintar, abertos, voltaDoCard, FASES_TEXTO };
+  window.MaestroCardEnxuto = { pintar, abertos, voltaDoCard, FASES_TEXTO, linkDe };
 })();
 </script>
 <style id="v233-tipografia">
