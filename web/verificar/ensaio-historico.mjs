@@ -4,6 +4,14 @@
    3. historico de movimentacao e registro do cronometro (inicio, fim,
       duracao) — o principio 6 do produto aplicado ao quadro. */
 import { chromium } from 'playwright';
+
+/* v234: setas, cronômetro, "abrir o card" e lixeira moram atrás do "•••"
+   do card — quem usa toca nele primeiro, e a prova faz o mesmo gesto. */
+const abreMenu = async (pg, sel) => {
+  const alvo = await pg.evaluate(s => { const c = document.querySelector(s)?.closest('.enCard');
+    return c && !c.classList.contains('menuAberto') && c.querySelector('[data-enmais]') ? c.dataset.entar : null; }, sel);
+  if(alvo) { await pg.click(`[data-enmais="${alvo}"]`); await pg.waitForTimeout(150); }
+};
 import http from 'http';
 import fs from 'fs';
 
@@ -99,7 +107,7 @@ const idT = await pag.evaluate(() => {
 await pag.waitForTimeout(350);
 
 /* mover de coluna deixa rastro */
-await pag.click(`[data-enmove="${idT}|1"]`); await pag.waitForTimeout(350);
+await abreMenu(pag, `[data-enmove="${idT}|1"]`); await pag.click(`[data-enmove="${idT}|1"]`); await pag.waitForTimeout(350);
 const hist1 = await pag.evaluate(id => (S.ensaio.tarefas.find(t=>t.id===id)||{}).hist || [], idT);
 /* v142: passar de coluna é UMA linha de etapa — não mais um campo entre outros */
 checa('mover de coluna entra no historico',
@@ -111,7 +119,7 @@ checa('o historico guarda QUEM fez',
 checa('o historico guarda QUANDO', hist1.every(h => typeof h.ts === 'number' && h.ts > 0));
 
 /* o cronometro: comeca, para, e o registro diz as horas e a duracao */
-await pag.click(`[data-entimer="${idT}"]`); await pag.waitForTimeout(1200);
+await abreMenu(pag, `[data-entimer="${idT}"]`); await pag.click(`[data-entimer="${idT}"]`); await pag.waitForTimeout(1200);
 const rodando = await pag.evaluate(id => {
   const t = S.ensaio.tarefas.find(x=>x.id===id);
   return { desde: !!t.desde, aberta: (t.sessoes||[]).some(s => s.ini && !s.fim) }; }, idT);

@@ -7,6 +7,14 @@
       e do quadro; trocar de tela ainda sobe ao topo;
    3. com o dedo como ponteiro, campos têm 16px e o toque duplo não é zoom. */
 import { chromium } from 'playwright';
+
+/* v234: setas, cronômetro, "abrir o card" e lixeira moram atrás do "•••"
+   do card — quem usa toca nele primeiro, e a prova faz o mesmo gesto. */
+const abreMenu = async (pg, sel) => {
+  const alvo = await pg.evaluate(s => { const c = document.querySelector(s)?.closest('.enCard');
+    return c && !c.classList.contains('menuAberto') && c.querySelector('[data-enmais]') ? c.dataset.entar : null; }, sel);
+  if(alvo) { await pg.click(`[data-enmais="${alvo}"]`); await pg.waitForTimeout(150); }
+};
 import http from 'http';
 import fs from 'fs';
 
@@ -72,12 +80,12 @@ async function abrir(opts){
         && (await pag.locator('.enFiltros .rot', { hasText: 'ordem' }).count()) === 1);
 
   /* o mais velho anda pela seta: vai para Do e volta para Plan */
-  await pag.locator('[data-enmove="9901|1"]').click(); await pag.waitForTimeout(300);
+  await abreMenu(pag, '[data-enmove="9901|1"]'); await pag.locator('[data-enmove="9901|1"]').click(); await pag.waitForTimeout(300);
   checa('1.4 depois da seta o card está em Do, no topo',
         JSON.stringify(await ordemDe('do')) === JSON.stringify([9901]));
   const mov1 = await pag.evaluate(() => S.ensaio.tarefas.find(t => t.id === 9901).movidoEm);
   checa('1.5 o card ganhou o carimbo movidoEm', typeof mov1 === 'number' && Date.now() - mov1 < 5000);
-  await pag.locator('[data-enmove="9901|-1"]').click(); await pag.waitForTimeout(300);
+  await abreMenu(pag, '[data-enmove="9901|-1"]'); await pag.locator('[data-enmove="9901|-1"]').click(); await pag.waitForTimeout(300);
   checa('1.6 de volta em Plan, o card mexido fica NO TOPO (o bug relatado)',
         JSON.stringify(await ordemDe('plan')) === JSON.stringify([9901, 9903, 9902]));
   checa('1.7 o cartão diz "mexido agora" e está destacado',

@@ -1,9 +1,58 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.47
+Version: 0.5.48
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.48 — 2026-09-23
+
+**Status:** Concluída
+
+### v234 — a cara nova, parte 2: o card enxuto
+
+O card do Ensaio tinha ~350px e onze coisas com o mesmo peso: dois chips
+(cliente e pessoa), a data, o cronômetro em "0m", o rótulo da fase, o
+trilho de pontinhos, três ícones, três botões de texto e a lixeira. Com a
+condição do founder — **o método não muda** — o card passa a mostrar:
+
+- **o que é, de quem, quando**, e o selo **Texto/Peça**, que diz em qual das
+  duas voltas o card está. O rótulo da fase e os pontinhos saíram porque
+  repetiam a coluna; o selo é o que a coluna NÃO diz (o Check do texto e o
+  da peça são a mesma coluna).
+- **a frente como filete de cor na borda** — ficou, porque o time se orienta
+  por ela (founder, 23/set).
+- **o próximo passo de cada porta, à vista**: editar a pauta, para o Check,
+  subir a peça, liberar **e** pedir ajuste (as duas metades da decisão do
+  revisor), agendar, concluir — e o **"+ mais um card"**, que ficou à vista
+  de propósito: a v227 foi justamente ele não aparecer.
+- **o resto atrás do "•••"**: setas, cronômetro, abrir o card e lixeira.
+  Nada sumiu; é um toque a mais para o que se usa pouco. O cronômetro que
+  está **correndo** continua à vista, para dar pausa.
+
+No desktop o card do Do do texto caiu de ~350px para 220px. No celular o
+"•••" tem 40px de alvo e o título reserva a altura dele, para não encostar
+no rosto do responsável.
+
+**Uma armadilha no caminho:** `voltaDe()` conta `lote_texto` como 2ª volta
+(ela só lista `rascunho, criado, revisao, texto_cli`). O selo usa lista
+própria — "Texto no lote" é texto, e uma prova cobra exatamente esse caso.
+
+**26 provas** em `web/verificar/v234-o-card-enxuto.mjs`, que medem a tela:
+o que saiu está fora da vista mas no DOM; o que fica, fica em cada porta;
+o "•••" abre com toque de verdade, não abre a ficha da tarefa, sobrevive a
+um redesenho e fecha; a seta guardada MOVE depois de aberta; o cronômetro
+correndo e o pedido do cliente continuam; filete de 3px colorido; e, no
+celular, alvo de 40px sem encostar em nada. **A prova pegou** o "•••" do
+celular com 28×34px — uma regra de alvo de toque de outra camada segurava
+a altura em 34.
+
+**Seis suítes aprenderam o gesto novo** (`ensaio-excluir`,
+`ensaio-historico`, `ensaio-mover`, `ensaio-ordem`, `revisao-geral`,
+`v142-quatro`): antes de tocar na seta, no cronômetro ou na lixeira, tocam
+no "•••" do card — com clique de verdade, como quem usa.
 
 ---
 

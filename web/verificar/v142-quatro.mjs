@@ -4,6 +4,14 @@
    3. o card do quadro abre o card completo, sem botão paralelo;
    4. histórico só em salvar e passar de etapa. */
 import { chromium } from 'playwright';
+
+/* v234: setas, cronômetro, "abrir o card" e lixeira moram atrás do "•••"
+   do card — quem usa toca nele primeiro, e a prova faz o mesmo gesto. */
+const abreMenu = async (pg, sel) => {
+  const alvo = await pg.evaluate(s => { const c = document.querySelector(s)?.closest('.enCard');
+    return c && !c.classList.contains('menuAberto') && c.querySelector('[data-enmais]') ? c.dataset.entar : null; }, sel);
+  if(alvo) { await pg.click(`[data-enmais="${alvo}"]`); await pg.waitForTimeout(150); }
+};
 import http from 'http';
 import fs from 'fs';
 
@@ -223,13 +231,13 @@ async function abrir(vp, rota, prep){
     S.ensaio.tarefas.push(t); render(); return t.id; });
   await pag.waitForTimeout(300);
   /* cronômetro: liga e desliga */
-  await pag.locator(`[data-entimer="${id}"]`).click(); await pag.waitForTimeout(400);
+  await abreMenu(pag, `[data-entimer="${id}"]`); await pag.locator(`[data-entimer="${id}"]`).click(); await pag.waitForTimeout(400);
   await pag.locator(`[data-entimer="${id}"]`).click(); await pag.waitForTimeout(400);
   const posCrono = await pag.evaluate(i => (S.ensaio.tarefas.find(t => t.id === i).hist || []).map(h => h.tipo), id);
   checa('4.1 ligar e parar o cronômetro não escreve no histórico',
         !posCrono.includes('crono_ini') && !posCrono.includes('crono_fim'), posCrono);
   /* mover de coluna: uma linha de etapa */
-  await pag.locator(`[data-enmove="${id}|1"]`).click(); await pag.waitForTimeout(500);
+  await abreMenu(pag, `[data-enmove="${id}|1"]`); await pag.locator(`[data-enmove="${id}|1"]`).click(); await pag.waitForTimeout(500);
   const posMove = await pag.evaluate(i => (S.ensaio.tarefas.find(t => t.id === i).hist || []), id);
   checa('4.2 passar de coluna vira uma linha de etapa',
         posMove.filter(h => h.tipo === 'etapa').length === 1, posMove.map(h => h.tipo));

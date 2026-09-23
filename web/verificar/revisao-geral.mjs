@@ -7,6 +7,14 @@
    5. segurança: toast escapado, src com urlSegura, token forte, chave
       da IA fora do DOM. */
 import { chromium } from 'playwright';
+
+/* v234: setas, cronômetro, "abrir o card" e lixeira moram atrás do "•••"
+   do card — quem usa toca nele primeiro, e a prova faz o mesmo gesto. */
+const abreMenu = async (pg, sel) => {
+  const alvo = await pg.evaluate(s => { const c = document.querySelector(s)?.closest('.enCard');
+    return c && !c.classList.contains('menuAberto') && c.querySelector('[data-enmais]') ? c.dataset.entar : null; }, sel);
+  if(alvo) { await pg.click(`[data-enmais="${alvo}"]`); await pg.waitForTimeout(150); }
+};
 import http from 'http';
 import fs from 'fs';
 
@@ -69,7 +77,7 @@ async function abrir(opts, rota){
       cat: frente.id, criada: Date.now(), prazo:null, tempoMs:0, desde:null, quemVe:[] };
     S.ensaio.tarefas.push(t); render(); return t.id; });
   await pag.waitForTimeout(250);
-  await pag.locator(`[data-enrm="${tid}"]`).click(); await pag.waitForTimeout(250);
+  await abreMenu(pag, `[data-enrm="${tid}"]`); await pag.locator(`[data-enrm="${tid}"]`).click(); await pag.waitForTimeout(250);
   await pag.locator('[data-enrmok]').click(); await pag.waitForTimeout(400);
   checa('1.3 excluída, some do quadro',
         await pag.locator(`.enCard[data-entar="${tid}"]`).count() === 0);
@@ -94,7 +102,7 @@ async function abrir(opts, rota){
     return t ? { id: t.id, cli: t.cli, cardId: t.cardId, titulo: t.titulo } : null; });
   checa('1.5 existe um card da pauta no quadro (cenário)', !!job, job);
   if(job){
-    await pag.locator(`[data-enrm="${job.id}"]`).click(); await pag.waitForTimeout(250);
+    await abreMenu(pag, `[data-enrm="${job.id}"]`); await pag.locator(`[data-enrm="${job.id}"]`).click(); await pag.waitForTimeout(250);
     await pag.locator('[data-enrmok]').click(); await pag.waitForTimeout(400);
     const naPauta = await pag.evaluate(j => (S.pautas[j.cli] || []).some(p => p.id === j.cardId), job);
     checa('1.6 o card sai da pauta e vai para a lixeira do cliente',

@@ -299,6 +299,15 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (23 set, v234) — a cara nova, parte 2: o card enxuto.** O card do
+Ensaio caiu de ~350px para ~220px: o rótulo da fase e os pontinhos saíram
+(repetiam a coluna) e entrou o selo **Texto/Peça** (o que a coluna não diz);
+a frente segue como filete; o próximo passo de cada porta e o "+ mais um card"
+ficam à vista; setas, cronômetro, abrir e lixeira vão para o "•••" (o
+cronômetro correndo fica à vista). Cuidado: `voltaDe()` conta `lote_texto`
+como 2ª volta — o selo usa lista própria. 26 provas em
+`web/verificar/v234-o-card-enxuto.mjs`; seis suítes aprenderam a tocar no
+"•••" antes da seta, do cronômetro e da lixeira.
 **Fechado (23 set, v233) — a cara nova, parte 1: a letra.** O founder pediu
 "cara de empresa big, sem muita coisa, mais intuitiva"; a proposta foi mostrada
 à parte (`claude.ai/artifact/VuR9iHASg3Ek2XcHturBzT`) e aprovada **em partes**,

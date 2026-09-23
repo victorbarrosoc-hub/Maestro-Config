@@ -298,10 +298,11 @@ ficam com os nomes de hoje, e o botão de cada card é sempre a próxima porta.
 
 - [x] **Parte 1 — a letra (v233).** Inter embutida, mono e serifada fora da
       interface, piso de 11px, contraste do menu, faixa do Hoje sem arco-íris.
-- [ ] **Parte 2 — o card enxuto e o painel do Ensaio.** O card diz o que é,
+- [x] **Parte 2 — o card enxuto (v234).** O card diz o que é,
       de quem é, quando vence, e o selo **Texto/Peça**. **A frente fica no
       card como filete de cor** — o founder confirmou que o time se orienta
-      por ela. Sob cada coluna, uma linha curta em português.
+      por ela. O próximo passo à vista; setas, cronômetro e lixeira no "•••".
+      **Falta daqui:** a linha curta em português sob cada coluna.
 - [ ] **Parte 3 — o Portal do cliente.** "3 de 12 esperam sua decisão" no
       topo, a peça grande, dois botões.
 - [ ] **Parte 4 — a aba Redes, por planilha.** Em paralelo, o pedido de

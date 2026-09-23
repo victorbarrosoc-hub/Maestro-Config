@@ -6,6 +6,14 @@
    o cliente não se exclui — sumiria da tela de quem está decidindo. */
 import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs';
 
+/* v234: setas, cronômetro, "abrir o card" e lixeira moram atrás do "•••"
+   do card — quem usa toca nele primeiro, e a prova faz o mesmo gesto. */
+const abreMenu = async (pg, sel) => {
+  const alvo = await pg.evaluate(s => { const c = document.querySelector(s)?.closest('.enCard');
+    return c && !c.classList.contains('menuAberto') && c.querySelector('[data-enmais]') ? c.dataset.entar : null; }, sel);
+  if(alvo) { await pg.click(`[data-enmais="${alvo}"]`); await pg.waitForTimeout(150); }
+};
+
 const html = fs.readFileSync('docs/UX/prototipo-plataforma.html', 'utf8');
 const srv = http.createServer((q, r) => { r.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); r.end(html); });
 await new Promise(r => srv.listen(0, r));
@@ -73,7 +81,7 @@ checa('dentro do card aberto também dá para excluir', await pg.locator('.enApa
 await pg.click('[data-modalno]'); await pg.waitForTimeout(250);
 
 /* ---------- 2. a tarefa da casa: sai do quadro, e volta com desfazer ---------- */
-await pg.click(sel(ids.interna) + ' [data-enrm]'); await pg.waitForTimeout(300);
+await abreMenu(pg, sel(ids.interna) + ' [data-enrm]'); await pg.click(sel(ids.interna) + ' [data-enrm]'); await pg.waitForTimeout(300);
 checa('excluir pergunta antes', await pg.locator('[data-enrmok]').count() === 1);
 checa('e diz o que vai acontecer com uma tarefa da casa',
       /Sai do quadro/.test(await pg.locator('.modalbox p').textContent()));
@@ -88,7 +96,7 @@ checa('desfazer devolve a tarefa ao quadro',
       && await pg.evaluate(() => !(S.ensaio.lixo || []).length));
 
 /* ---------- 3. o card da pauta: sai dos dois lados, para a lixeira ---------- */
-await pg.click(sel(ids.job) + ' [data-enrm]'); await pg.waitForTimeout(300);
+await abreMenu(pg, sel(ids.job) + ' [data-enrm]'); await pg.click(sel(ids.job) + ' [data-enrm]'); await pg.waitForTimeout(300);
 const aviso = await pg.locator('.modalbox p').textContent();
 checa('para um card da pauta, o aviso diz que ele sai dos dois lugares',
       /pauta e no quadro/.test(aviso) && /lixeira/.test(aviso), aviso.slice(0, 90));

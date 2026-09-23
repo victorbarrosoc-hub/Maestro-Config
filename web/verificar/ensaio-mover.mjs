@@ -5,6 +5,14 @@
    O teste roda a versao quebrada e a corrigida pelo mesmo caminho: clicar
    na seta e olhar se o card continua na tela. */
 import { chromium } from 'playwright';
+
+/* v234: setas, cronômetro, "abrir o card" e lixeira moram atrás do "•••"
+   do card — quem usa toca nele primeiro, e a prova faz o mesmo gesto. */
+const abreMenu = async (pg, sel) => {
+  const alvo = await pg.evaluate(s => { const c = document.querySelector(s)?.closest('.enCard');
+    return c && !c.classList.contains('menuAberto') && c.querySelector('[data-enmais]') ? c.dataset.entar : null; }, sel);
+  if(alvo) { await pg.click(`[data-enmais="${alvo}"]`); await pg.waitForTimeout(150); }
+};
 import http from 'http';
 import fs from 'fs';
 
@@ -42,6 +50,7 @@ const colDe = id => pag.evaluate(i =>
 const seta = async (id, dir) => {
   const b = pag.locator(`[data-enmove="${id}|${dir}"]`);
   if(await b.count() === 0) return false;
+  await abreMenu(pag, `[data-enmove="${id}|${dir}"]`);
   await b.click(); await pag.waitForTimeout(400); return true;
 };
 

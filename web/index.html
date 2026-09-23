@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-23 00:54 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-23 01:26 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -16063,7 +16063,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v233 · 23 set · a cara nova, parte 1: a letra';
+const VERSAO_PROTOTIPO = 'v234 · 23 set · a cara nova, parte 2: o card';
 
 menuSheet = (function(orig){
   return function(){
@@ -42251,6 +42251,133 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
 })();
 </script>
 
+<style id="v234-card-enxuto">
+/* =====================================================================
+   v234 — a cara nova, parte 2: o card enxuto.
+   O card do Ensaio tinha ~350px: dois chips, data, cronômetro "0m",
+   rótulo da fase, trilho de pontinhos, três ícones, três botões de texto
+   e a lixeira — tudo com o mesmo peso. O método NÃO muda (as seis
+   colunas, as portas); muda o que o card mostra de cara:
+     · o que é, de quem, quando — e o selo TEXTO/PEÇA, que diz em qual
+       das duas voltas ele está (a coluna já diz a fase: o rótulo e os
+       pontinhos saem, porque repetiam a coluna);
+     · a frente continua como filete de cor na borda — o time se orienta
+       por ela (founder, 23/set);
+     · o PRÓXIMO PASSO fica à vista: editar a pauta, para o Check, subir a
+       peça, liberar/pedir ajuste, agendar, concluir, e o "+ mais um card"
+       (a v227 foi justamente ele não aparecer);
+     · o resto — setas, cronômetro, abrir o card, lixeira — fica atrás do
+       "•••". Nada sumiu: é um toque a mais para o que se usa pouco.
+       O cronômetro que está CORRENDO continua à vista, para dar pausa.
+   ================================================================== */
+.enCard .enBola, .enCard .enTrilho{ display:none !important }
+.enCard .kbTempo:not(.rodando){ display:none }
+.enCard:not(.menuAberto) .acoes [data-enmove],
+.enCard:not(.menuAberto) .acoes [data-hjabre],
+.enCard:not(.menuAberto) .acoes .enRm,
+.enCard:not(.menuAberto) .acoes [data-entimer]{ display:none }
+.enCard:not(.menuAberto):has(.kbTempo.rodando) .acoes [data-entimer]{ display:grid }
+.enCard .acoes{ flex-wrap:wrap; row-gap:6px }
+.enCard:has(.enMais){ position:relative }
+.enCard:has(.enMais) .tit{ padding-right:26px }
+.enCard .acoes .enMais{ position:absolute; top:7px; right:6px; width:28px !important; height:24px; border-radius:8px;
+  display:grid; place-items:center; color:var(--ink-400); letter-spacing:1px; font-weight:700;
+  border:1px solid transparent; background:none }
+.enCard .acoes .enMais:hover, .enCard.menuAberto .acoes .enMais{ color:var(--ink-100);
+  border-color:var(--ink-700); background:var(--ink-900) }
+.enCard .enVolta{ display:inline-flex; align-items:center; height:20px; padding:0 7px;
+  border-radius:6px; font-size:11px; font-weight:600; letter-spacing:.01em;
+  border:1px solid var(--ink-600); color:var(--ink-200); flex:0 0 auto }
+.enCard .enVolta.peca{ background:var(--ink-700); color:var(--ink-50); border-color:var(--ink-700) }
+/* uma linha só: cliente, data, e a pessoa como rosto — o nome dela está no rosto (title) */
+.enCard .meta{ flex-wrap:nowrap; min-width:0 }
+.enCard .meta .cli{ min-width:0; max-width:100%; flex:1 1 auto }
+.enCard .meta .ptResp{ margin-left:auto; flex:0 0 auto }
+.enCard .meta .ptResp b{ display:none }
+.enCard .enSelos{ display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap }
+.enCard .enSelos .prazo{ font-size:12px }
+@media(max-width:860px){
+  /* no celular o botão tem o alvo de toque de 40px+: o título reserva a
+     altura dele, para o "•••" não encostar no rosto da linha de baixo */
+  .enCard:has(.enMais) .tit{ padding-right:44px; min-height:30px }
+  .enCard .acoes .enMais{ top:0; right:0; width:40px !important; height:40px !important; min-height:40px }
+}
+</style>
+<script>
+/* v234 — o card enxuto: selo Texto/Peça e o "•••". Passa DEPOIS de cada
+   desenho, sobre o DOM que as outras camadas já pintaram, e não troca
+   nenhum botão de lugar: só marca quais ficam guardados. */
+(function(){
+  const FASES_TEXTO = ['rascunho', 'criado', 'revisao', 'lote_texto', 'texto_cli', 'texto_ok'];
+  /* quais cards estão com o "•••" aberto — desta aba, fora do estado que
+     sincroniza (abrir um menu não é dado de ninguém) */
+  const abertos = new Set();
+
+  const voltaDoCard = t => {
+    const job = typeof cardDaTarefa === 'function' ? cardDaTarefa(t) : null;
+    if(!job) return null;
+    const f = typeof faseDe === 'function' ? faseDe(job) : job.fase;
+    return FASES_TEXTO.includes(f) ? 'texto' : 'peca';
+  };
+
+  const pintar = () => {
+    if(!S || !S.ensaio) return;
+    document.querySelectorAll('.enCard[data-entar]').forEach(card => {
+      const id = +card.dataset.entar;
+      const t = (S.ensaio.tarefas || []).find(x => x.id === id);
+      card.classList.toggle('menuAberto', abertos.has(id));
+      if(!card.querySelector('.enSelos')){
+        const volta = t ? voltaDoCard(t) : null;
+        if(volta){
+          const selos = document.createElement('div'); selos.className = 'enSelos';
+          const v = document.createElement('span');
+          v.className = 'enVolta' + (volta === 'peca' ? ' peca' : '');
+          v.textContent = volta === 'peca' ? 'Peça' : 'Texto';
+          v.title = volta === 'peca' ? '2ª volta: a peça (arte, vídeo)' : '1ª volta: o texto';
+          selos.appendChild(v);
+          const meta = card.querySelector('.meta');
+          if(meta) meta.after(selos); else card.appendChild(selos);
+          /* a data desce para junto do selo: cliente e rosto numa linha,
+             volta e prazo na outra — numa só não cabiam na coluna */
+          const prazo = meta && meta.querySelector('.prazo');
+          if(prazo) selos.appendChild(prazo);
+        }
+      }
+      const acoes = card.querySelector('.acoes');
+      /* só ganha "•••" quem tem o que guardar */
+      if(acoes && !acoes.querySelector('.enMais')
+         && acoes.querySelector('[data-enmove],[data-hjabre],.enRm,[data-entimer]')){
+        const b = document.createElement('button');
+        b.className = 'enMais'; b.type = 'button';
+        b.dataset.enmais = String(id);
+        b.setAttribute('aria-label', 'Mais ações'); b.setAttribute('aria-expanded', String(abertos.has(id)));
+        b.textContent = '•••';
+        acoes.appendChild(b);
+      }
+    });
+  };
+
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-enmais]');
+    if(!b) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    const id = +b.dataset.enmais;
+    abertos.has(id) ? abertos.delete(id) : abertos.add(id);
+    const card = b.closest('.enCard');
+    if(card) card.classList.toggle('menuAberto', abertos.has(id));
+    b.setAttribute('aria-expanded', String(abertos.has(id)));
+    if(typeof som === 'function') som('toque');
+  }, true);
+
+  const _render = render;
+  render = function(){
+    const r = _render.apply(this, arguments);
+    try{ pintar(); }catch(err){}
+    return r;
+  };
+  window.MaestroCardEnxuto = { pintar, abertos, voltaDoCard, FASES_TEXTO };
+})();
+</script>
 <style id="v233-tipografia">
 /* =====================================================================
    v233 — a cara de empresa grande, parte 1: tipografia e contraste.
