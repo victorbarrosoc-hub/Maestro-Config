@@ -43478,8 +43478,8 @@ button.clPost:active{ transform:scale(.98) }
     if(foi > 1){ const novos = arr.splice(arr.length - foi, foi).reverse(); arr.push(...novos); }
     if(typeof som === 'function') som('toque');
     S.modal = modalTarefa(t.id); renderLayer(); render();
-    toast(foi ? `${foi === 1 ? 'Uma imagem foi' : foi + ' imagens foram'} para a peça de "${p.t}".${ficou ? ` ${ficou} ficou no aparelho de quem subiu.` : ''}`
-              : 'Esse arquivo está só no aparelho de quem subiu — suba de novo pela peça.');
+    if(!foi) toast('Esse arquivo está só no aparelho de quem subiu.');
+    else toast(`${foi} na peça${ficou ? `, ${ficou} noutro aparelho` : ''}.`);
   }
   window.MaestroMidia.paraPeca = paraPeca;
 
@@ -43493,7 +43493,8 @@ button.clPost:active{ transform:scale(.98) }
       subirDepois(m, `mat/${k.replace('|', '/')}`, new File([blob], m.nome || 'peca', { type: blob.type }));
       n++;
     }
-    toast(n ? `Subindo ${n === 1 ? 'o arquivo' : n + ' arquivos'} de novo.` : 'Estes arquivos estão noutro aparelho — suba de lá.');
+    if(n) toast(`Subindo de novo: ${n}.`);
+    else toast('Estes arquivos estão noutro aparelho — suba de lá.');
     render();
   }
 
@@ -43756,7 +43757,7 @@ button.clPost:active{ transform:scale(.98) }
     let blob = null;
     try{ blob = m.url ? await (await fetch(m.url)).blob() : null; }catch(e){}
     if(!blob && m.chave) try{ blob = await idbLer(m.chave); }catch(e){}
-    if(!blob){ toast('Não consegui abrir este arquivo aqui — ajuste no editor e suba de novo.'); return; }
+    if(!blob){ toast('Não abri o arquivo aqui — ajuste no editor.'); return; }
     let bmp; try{ bmp = await createImageBitmap(blob); }catch(e){ toast('Este arquivo não é uma imagem que eu consiga cortar.'); return; }
     const x = bmp.width / bmp.height;
     const w = x > alvo ? Math.round(bmp.height * alvo) : bmp.width;
@@ -43776,7 +43777,7 @@ button.clPost:active{ transform:scale(.98) }
     arr.splice(arr.indexOf(m), 1, novo);
     if(typeof som === 'function') som('toque');
     render(); if(S.modal && S.enAnexAlvo){ S.modal = modalTarefa(S.enAnexAlvo); renderLayer(); }
-    toast(`Ajustada para ${nomeProp(w, h)}. O original fica guardado — dá para desfazer.`);
+    toast(`Ajustada para ${nomeProp(w, h)}; dá para desfazer.`);
   }
   function desfazer(k, i){
     const arr = S.mat[k] || [];
@@ -43802,8 +43803,8 @@ button.clPost:active{ transform:scale(.98) }
     arr.sort(porNome);
     if(typeof som === 'function') som('toque');
     redesenhar();
-    toast(arr.map(m => m.nome).join('|') === antes ? 'Já estava na ordem dos nomes.'
-      : `Em ordem de nome: ${arr.slice(0, 3).map(m => m.nome).join(', ')}${arr.length > 3 ? '…' : ''}`);
+    if(arr.map(m => m.nome).join('|') === antes) toast('Já estava na ordem dos nomes.');
+    else toast('Telas em ordem de nome.');
   }
   function mover(k, i, d){
     const arr = S.mat[k]; const j = i + d;
