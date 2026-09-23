@@ -44194,8 +44194,8 @@ button.clPost:active{ transform:scale(.98) }
       p_formato: rs.fmt || null, p_quando: rs.quando || null, p_desc: (rs.desc || '').trim() || null });
     S.v244.enviando = false;
     const d = r.dados || {};
-    if(d.ok){ S.v244.rascunho = {}; if(typeof som === 'function') som('aprovar'); toast('Pedido enviado. A agência já recebe.'); S.v244.pedidos = null; }
-    else toast(ERROS[d.erro] || 'Não consegui enviar agora. Tente de novo.');
+    if(d.ok){ S.v244.rascunho = {}; if(typeof som === 'function') som('aprovar'); toast('Pedido enviado — a agência já recebe.'); S.v244.pedidos = null; }
+    else toast(ERROS[d.erro] || 'Não consegui enviar agora — tente de novo.');
     render();
   }
 
@@ -44286,7 +44286,8 @@ button.clPost:active{ transform:scale(.98) }
       S.ensaio.pedidosVistos.push(it.id);
       n++;
       const c = (typeof CLIS === 'function' ? CLIS() : []).find(x => x.id === it.cli);
-      toast(`Pedido novo de ${c ? c.nome : 'um cliente'}: "${it.titulo}".`);
+      const quem = c ? c.nome : 'um cliente';
+      toast(`Pedido novo de ${quem}: "${it.titulo}".`);
     }
     return n;
   }

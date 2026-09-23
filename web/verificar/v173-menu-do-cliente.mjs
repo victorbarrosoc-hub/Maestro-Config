@@ -102,11 +102,12 @@ const itensDoMenu = pag => pag.evaluate(() => ({
         && !m.grupos.some(g => /Trocar de lugar/i.test(g)), { rodape:m.rodape, grupos:m.grupos });
   checa('1.4 nem "Tela de entrada" — ele entra por link, não tem senha',
         !m.rodape.some(b => /Tela de entrada/i.test(b)), m.rodape);
+  /* v244: "Pedir à agência" e "Arquivos" entram no acompanhar, de propósito */
   checa('1.5 o que ficou é o painel dele: início, publicações e o acompanhar',
-        m.telas.map(t => t.rota).join(',') === 'inicio,lote,feed,agenda,projeto,resultados,conta',
+        m.telas.map(t => t.rota).join(',') === 'inicio,lote,clpedidos,clarquivos,feed,agenda,projeto,resultados,conta',
         m.telas.map(t => t.rota));
   checa('1.6 e o cabeçalho conta o que ficou, sem falar de "lados"',
-        /^7 telas$/.test(m.cabecalho.trim()) && !/lado/i.test(m.cabecalho), m.cabecalho);
+        /^9 telas$/.test(m.cabecalho.trim()) && !/lado/i.test(m.cabecalho), m.cabecalho);
 
   /* o dedo: toca em cada item e cobra que abra alguma coisa */
   const idas = [];
