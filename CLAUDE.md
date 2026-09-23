@@ -299,6 +299,14 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v240) — o menu e a ficha do cliente.** "Duas abas de
+cliente", o cronograma caindo sempre na EJUP, a Redes sumida e um "undefined" na
+ficha. O "undefined" era antigo: "Cliente · ficha" (andaime, abria o primeiro
+cliente) chegava com a aba em branco, e só a camada da v27 sabe desenhar o
+cronograma. Saiu do Menu; aba vazia vira Cronograma; a ficha ganha a fileira
+dos clientes em cima; as seis abas quebram linha no celular (a Redes estava fora
+da tela, sem sinal); Conversas no Menu perde o ícone de som. 16 provas em
+`web/verificar/v240-o-menu-e-a-ficha.mjs`.
 **Fechado (24 set, v239) — "Não consigo logar."** O portão sem porta: aparelho
 em sessão de link de cliente (`?aprovar=` no endereço) + "Entrar" → a regra da
 v170 tira a porta da agência, e recarregar não salva. A regra fica; o portão

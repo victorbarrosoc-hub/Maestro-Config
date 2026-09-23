@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-23 04:07 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-23 09:58 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -16100,7 +16100,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v239 · 24 set · a porta que não fica presa';
+const VERSAO_PROTOTIPO = 'v240 · 24 set · o menu e a ficha do cliente';
 
 menuSheet = (function(orig){
   return function(){
@@ -43266,6 +43266,80 @@ button.clPost:active{ transform:scale(.98) }
     /* endereço limpo: sem ?aprovar=, sem #; a sessão de link não nasce */
     location.assign(location.origin + '/');
   }, true);
+})();
+</script>
+<style id="v240-menu-e-ficha">
+/* v240 — "Tá confuso: tem duas abas de cliente diferentes, cronograma de
+   conteúdo que leva direto pro perfil do cliente EJUP. E eu não achei a aba
+   Redes." Três coisas no mesmo print, e uma quarta que ele não nomeou:
+   · "Cliente · ficha" no Menu era andaime do protótipo — abria a ficha do
+     PRIMEIRO cliente da lista (daí sempre a EJUP), com a aba em branco; e em
+     branco a ficha de fábrica escrevia "undefined" no lugar do cronograma,
+     porque só a camada da v27 sabe desenhá-lo e ela só entrava com o nome
+     da aba dito por extenso. Sai do Menu; e a ficha passa a ler aba vazia
+     como Cronograma, que é o que a de fábrica já prometia.
+   · "Cronograma de conteúdos" abre a pauta de UM cliente, e o Menu não
+     pergunta qual. Em vez de uma tela nova, a página do cliente ganha a
+     fileira dos clientes em cima: fica dito de quem é, e trocar é um toque.
+   · as seis abas não cabem no celular, e a rolagem lateral estava sem
+     barra e sem sinal: Redes, Banco de dados e Quem aprova ficavam fora da
+     tela. No celular elas quebram linha — todas à vista.
+   · o Conversas do Menu seguia com o ícone de SOM: a v217 trocou o da
+     lateral e o do Menu era outro item. */
+.cliTroca{ display:flex; gap:6px; overflow-x:auto; margin:0 0 14px; padding-bottom:2px; scrollbar-width:none }
+.cliTroca::-webkit-scrollbar{ display:none }
+.cliTroca button{ flex:0 0 auto; padding:6px 12px; border-radius:999px; border:1px solid var(--ink-800);
+  font-size:12.5px; color:var(--ink-300); background:transparent; white-space:nowrap }
+.cliTroca button.on{ border-color:var(--brass-500); color:var(--ink-50); background:rgba(200,150,58,.10) }
+.cliTroca button:hover{ color:var(--ink-100) }
+@media (max-width:760px){
+  .tabs.tabsCli{ flex-wrap:wrap; overflow:visible; row-gap:2px }
+  .tabs.tabsCli{ gap:0 }
+  .tabs.tabsCli button{ flex:0 0 auto; padding:8px 9px }
+}
+</style>
+<script>
+(function(){
+  /* 1. aba vazia é Cronograma — na origem, antes de qualquer camada */
+  agClienteDet = (function(orig){
+    return function(){
+      if(S.route === 'clientedet' && !S.tab) S.tab = 'pauta';
+      let html = orig.apply(this, arguments);
+      if(typeof html !== 'string') return html;
+      /* 3. as abas do cliente ganham nome próprio, para quebrarem linha
+            sem mexer nas .tabs das outras telas */
+      html = html.replace(/<div class="tabs">(?=<button data-tab="pauta")/, '<div class="tabs tabsCli">');
+      /* 2. a fileira dos clientes, em cima do cabeçalho */
+      const clis = CLIS();
+      const atual = cliAtual();
+      if(clis.length > 1 && atual){
+        const fila = `<div class="cliTroca" role="tablist" aria-label="Trocar de cliente">${clis.map(c =>
+          `<button data-clitroca="${esc(c.id)}" class="${c.id === atual.id ? 'on' : ''}"${c.id === atual.id ? ' aria-current="true"' : ''}>${esc(c.nome)}</button>`).join('')}</div>`;
+        html = html.replace('<div class="mtop">', fila + '<div class="mtop">');
+      }
+      return html;
+    };
+  })(agClienteDet);
+
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-clitroca]');
+    if(!t) return;
+    const id = t.dataset.clitroca;
+    if(!CLIS().some(c => c.id === id)) return;
+    S.cli = id;          /* a aba fica: quem olha Redes de um, quer Redes do outro */
+    render();
+    document.querySelector('.cliTroca .on')?.scrollIntoView({ block:'nearest', inline:'center' });
+  });
+
+  /* 4. o Menu: sai o andaime, e Conversas com o desenho de conversa */
+  if(typeof MENU_AG !== 'undefined' && Array.isArray(MENU_AG)){
+    for(const g of MENU_AG){
+      if(!g.it) continue;
+      g.it = g.it.filter(it => it[0] !== 'clientedet');
+      g.it.forEach(it => { if(it[0] === 'conversas') it[2] = 'chat'; });
+    }
+  }
+  try{ if(typeof render === 'function') render(); }catch(e){}
 })();
 </script>
 <style id="v233-tipografia">

@@ -1,9 +1,47 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.53
+Version: 0.5.54
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.54 — 2026-09-24
+
+**Status:** Concluída
+
+### v240 — o menu e a ficha do cliente
+
+*"Tá confuso: tem duas abas de cliente diferentes, cronograma de conteúdo que
+leva direto pro perfil do cliente EJUP. E eu não achei a aba Redes."* — com dois
+prints: o Menu, e a ficha da EJUP escrevendo **"undefined"** onde devia estar o
+cronograma.
+
+**O "undefined" é antigo, não veio das v236–v239.** "Cliente · ficha" no Menu
+abria a ficha do PRIMEIRO cliente da lista (daí sempre a EJUP) com a aba em
+branco (`S.tab = null`). A ficha de fábrica trata aba vazia como `pauta`, mas não
+sabe desenhar a pauta — quem sabe é a camada da v27, e ela só entrava com o nome
+da aba dito por extenso. Resultado: `corpo[pauta]` → `undefined`, escrito na
+tela. Agora a ficha lê aba vazia como Cronograma na origem.
+
+**O Menu.** "Cliente · ficha" era andaime do protótipo (o mesmo tipo de coisa
+que a v216 tirou do menu do cliente) e sai. "Clientes" e "Cronograma de
+conteúdos" ficam. Conversas, no Menu, ainda tinha o ícone de SOM: a v217 trocou
+o da lateral, e o do Menu é outro item.
+
+**O cronograma diz de quem é.** Ele é de UM cliente, e o Menu não pergunta qual.
+Em vez de uma tela nova, a página do cliente ganha a fileira dos clientes em
+cima, com o atual aceso: fica dito de quem é, e trocar é um toque. A aba fica —
+quem olhava Redes de um vê Redes do outro.
+
+**A Redes estava lá, fora da tela.** As seis abas do cliente não cabem em 390px,
+e a rolagem lateral estava sem barra e sem sinal: Redes, Banco de dados e Quem
+aprova ficavam à direita, invisíveis. No celular elas quebram linha (duas
+linhas); no computador, nada muda.
+
+16 provas em `web/verificar/v240-o-menu-e-a-ficha.mjs`, pelo toque no Menu de
+verdade, medindo a posição de cada aba. Contra o código anterior, quatro falham.
 
 ---
 
