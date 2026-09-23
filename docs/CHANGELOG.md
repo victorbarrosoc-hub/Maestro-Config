@@ -1,9 +1,54 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.60
+Version: 0.5.61
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.61 — 2026-09-24
+
+**Status:** Concluída
+
+### v247 — o aparelho não enche
+
+*"Corrijo isso com banco de dados pago do Supabase?"* Não. O limite que
+estourava é o do NAVEGADOR, uns 5 MB por site (o iPhone é rígido nisso),
+e ele é o mesmo em qualquer plano do Supabase. Cheio, gravar falha em
+silêncio — foi a origem da v246. O que enchia:
+
+- **a mesma pauta duas vezes:** a cópia que o aparelho guarda e a base da
+  mescla de três lados;
+- **a capa de cada vídeo embutida no texto** (`data:`, 15 a 40 KB cada),
+  dentro das duas cópias — e também na linha do banco e em cada carga do
+  cliente.
+
+Medido com 30 cortes de podcast com capa: **1,95 MB** do espaço do
+navegador antes, **menos de 120 KB** depois. Por volta de 80 cortes o
+aparelho estourava.
+
+**O que mudou.**
+
+- **A capa vai para a nuvem.** Assim que o vídeo está no Storage, a capa
+  sobe ao lado dele (`<vídeo>.capa.jpg`) e a pauta passa a guardar só o
+  endereço — um por vez, com alguém da agência dentro, achando o item pelo
+  endereço na hora de trocar (lição da v218). As capas que já estão
+  embutidas sobem sozinhas na próxima vez que alguém da agência abrir.
+- **A base da mescla sai dos 5 MB** e vai para o IndexedDB, que não tem
+  esse teto. Nos 5 MB fica só uma MARCA — e é ela que as travas apagam
+  (troca de agência da v220, troca de conta, "Sair"): sem marca, a base
+  do IndexedDB não é de ninguém, não entra e é apagada. Se a casa é limpa
+  no meio de uma gravação, a marca não volta. A carga do banco espera a
+  base chegar (com teto de 4 s: IndexedDB mudo não trava a abertura).
+- **Sem espaço, o aparelho diz.** A cópia da pauta que não couber vira
+  aviso, uma vez — não mais silêncio.
+
+**O plano pago do Supabase importa por outro motivo:** o grátis dá 1 GB de
+arquivos, e vídeos enchem isso. Conferir em Settings → Usage → Storage size.
+
+17 provas em `web/verificar/v247-o-aparelho-nao-enche.mjs`; a v246 segue
+verde com a base vindo do IndexedDB.
 
 ---
 

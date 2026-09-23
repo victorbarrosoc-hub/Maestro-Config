@@ -181,7 +181,10 @@ console.log('\n  — o aparelho com a pauta guardada mais velha que a base —')
   /* o celular lê de novo: a BASE dele passa a ser a do postado… */
   await B.pag.evaluate(async () => { await sbCarregar(); });
   await esperar(B.pag, 1500);
-  const baseTemPostado = await B.pag.evaluate(() => /"postado"/.test(localStorage.getItem('maestro-sincro-bases-v1') || ''));
+  const baseTemPostado = await B.pag.evaluate(async () => {
+    if(/"postado"/.test(localStorage.getItem('maestro-sincro-bases-v1') || '')) return true;
+    /* desde a v247 a base mora no IndexedDB */
+    try{ await Sincro.basesIdb.fila; const r = await Sincro.basesIdb.ler(); return /"postado"/.test(JSON.stringify(r || {})); }catch(e){ return false; } });
   checa('2. a base guardada no celular já diz "postado"', baseTemPostado);
   /* …mas a pauta guardada fica a de antes: é o que o navegador sem espaço faz */
   await B.pag.evaluate(v => { localStorage.setItem('maestro-prototipo-v1', v);

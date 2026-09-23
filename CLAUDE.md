@@ -299,6 +299,13 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v247) — o aparelho não enche.** O limite que estourava é
+o do NAVEGADOR (~5 MB, igual em qualquer plano do Supabase): a pauta
+guardada duas vezes (cópia + base da mescla) e a capa de cada vídeo
+embutida como `data:`. 30 cortes: 1,95 MB → menos de 120 KB. A capa sobe
+para a nuvem (`<vídeo>.capa.jpg`), a base vai para o IndexedDB com uma
+MARCA nos 5 MB que as travas da v220/"Sair" apagam, e sem espaço o
+aparelho avisa. 17 provas em `web/verificar/v247-o-aparelho-nao-enche.mjs`.
 **Fechado (24 set, v246) — o card não volta.** Cards já postados voltavam a
 fases anteriores. O aparelho guarda a pauta e a base da sincronização em
 momentos diferentes (e as duas falham em silêncio sem espaço); com a pauta

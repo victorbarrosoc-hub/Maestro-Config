@@ -7330,7 +7330,12 @@ function salvarLocal(){
   try{ if(S.viaLink || S.soVer ||
           (typeof abertoPorLink === 'function' && abertoPorLink())) return; }catch(e){}
   try{ localStorage.setItem(CHAVE, JSON.stringify({
-    pautas:S.pautas, novos:S.novos, mat:S.mat, refs:S.refs, quando:Date.now() })); }catch(e){}
+    pautas:S.pautas, novos:S.novos, mat:S.mat, refs:S.refs, quando:Date.now() })); }
+  catch(e){
+    /* v247: cota estourada não é mais silêncio (foi a raiz da v246) */
+    if(!salvarLocal._avisou){ salvarLocal._avisou = true;
+      try{ if(typeof toast === 'function') toast('Sem espaço neste aparelho para a pauta — o banco segue salvando.', true); }catch(x){} }
+  }
 }
 const _renderV27 = render;
 render = function(){
@@ -10364,6 +10369,9 @@ async function sbCarregar(){
      do aparelho — sem a mescla — e o que foi mudado sem rede se perde. */
   if(document.readyState === 'loading')
     await new Promise(r => document.addEventListener('DOMContentLoaded', r, { once: true }));
+  /* v247 — e espera a base da mescla chegar do IndexedDB: sem ela, a
+     pauta do banco entraria inteira por cima do que só está aqui */
+  try{ if(window.Sincro && Sincro.basesProntas) await Sincro.basesProntas; }catch(e){}
   sbSelo('carregando');
   let linhas;
   try{
@@ -16060,7 +16068,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v246 · 24 set · o card não volta';
+const VERSAO_PROTOTIPO = 'v247 · 24 set · o aparelho não enche';
 
 menuSheet = (function(orig){
   return function(){
@@ -32571,6 +32579,67 @@ addEventListener('click', e => {
     tentativas:0, retomando:null, _tmRetoma:0, avisos:{}, _pend:false,
   };
   window.Sincro = Sin;
+  Sin.basesProntas = Promise.resolve();
+
+  function aplicarBases(b){
+    if(!b || typeof b !== 'object') return;
+    if(b.estado && typeof b.estado === 'object' && !Sin.base) Sin.base = b.estado;
+    for(const [k, v] of Object.entries(b.linhas || {}))
+      if(v && typeof v === 'object'){ const L = Sin.linhas[k] || (Sin.linhas[k] = { rev:undefined }); if(!L.base) L.base = v; }
+  }
+  /* de que agência é o que se guarda: o carimbo da v220. Base guardada
+     sob outro carimbo não é desta casa (a v220 troca o carimbo quando
+     limpa, e "Sair" o apaga). */
+  const carimboAgora = () => { try{ return localStorage.getItem('maestro-agencia-do-aparelho-v1') || ''; }catch(e){ return ''; } };
+  const basesIdb = (function(){
+    const NOME = 'maestro-cache-v1', LOJA = 'kv', CH = 'bases';
+    const ok = (function(){ try{ return typeof indexedDB !== 'undefined' && !!indexedDB; }catch(e){ return false; } })();
+    let db = null;
+    const abrir = () => db || (db = new Promise((res, rej) => {
+      try{
+        const r = indexedDB.open(NOME, 1);
+        r.onupgradeneeded = () => { try{ r.result.createObjectStore(LOJA); }catch(e){} };
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+        r.onblocked = () => rej(new Error('bloqueado'));
+      }catch(e){ rej(e); }
+    }));
+    const tx = (modo, fn) => abrir().then(d => new Promise((res, rej) => {
+      const t = d.transaction(LOJA, modo); const st = t.objectStore(LOJA);
+      const q = fn(st); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    }));
+    let seq = 0, fila = Promise.resolve();
+    function gravar(snap){
+      const meu = ++seq;
+      const ger = Date.now().toString(36) + '-' + meu.toString(36);
+      const carimbo = carimboAgora();
+      let copia;
+      try{ copia = JSON.parse(JSON.stringify(snap)); }catch(e){ return; }
+      /* em fila: duas gravações nunca se cruzam, e só a última põe a marca */
+      fila = fila.then(() => tx('readwrite', st => st.put({ ger, carimbo, snap:copia, quando:Date.now() }, CH)))
+        .then(() => {
+          if(meu !== seq) return;
+          /* entre pedir e gravar, a casa pode ter sido limpa (outra agência,
+             "Sair"): aí a marca NÃO volta — senão a base de uma casa
+             reapareceria na outra. As travas apagam a chave do Sincro junto
+             (ela é gravada no mesmo instante que esta base): sumiu, limpou. */
+          let viva = null; try{ viva = localStorage.getItem(CHAVE_SIN); }catch(e){}
+          if(!viva) return;
+          const agora = carimboAgora();
+          if(carimbo && agora !== carimbo) return;
+          try{ localStorage.setItem(CHAVE_BASES, JSON.stringify({ idb:ger, quando:Date.now() })); }catch(e){}
+        })
+        .catch(() => {
+          /* sem IndexedDB de verdade (modo privado antigo, cota): o caminho de antes */
+          try{ const j = JSON.stringify(copia); localStorage.setItem(CHAVE_BASES, j.length < 1500000 ? j : JSON.stringify({ linhas:copia.linhas })); }catch(e){}
+        });
+      return fila;
+    }
+    const ler = () => tx('readonly', st => st.get(CH));
+    const apagar = () => { if(!ok) return Promise.resolve(); return tx('readwrite', st => st.delete(CH)).catch(() => {}); };
+    return { ok, gravar, ler, apagar, get fila(){ return fila; } };
+  })();
+  Sin.basesIdb = basesIdb;
 
   (function lerGuardado(){
     try{
@@ -32583,10 +32652,22 @@ addEventListener('click', e => {
             if(v && typeof v === 'object') Sin.linhas[k] = { rev:undefined, hash:v.hash, base:null };
       }
       const b = JSON.parse(localStorage.getItem(CHAVE_BASES) || 'null');
-      if(b && typeof b === 'object'){
-        if(b.estado && typeof b.estado === 'object') Sin.base = b.estado;
-        for(const [k, v] of Object.entries(b.linhas || {}))
-          if(v && typeof v === 'object'){ (Sin.linhas[k] || (Sin.linhas[k] = { rev:undefined })).base = v; }
+      if(b && typeof b === 'object' && b.idb){
+        /* v247: a base mora no IndexedDB; aqui fica só a marca. A marca é
+           o que as travas apagam (troca de agência, de conta, "Sair"), então
+           sem ela a base do IndexedDB não é de ninguém e não entra. */
+        const ger = String(b.idb);
+        Sin.basesProntas = Promise.race([
+          basesIdb.ler().then(r => {
+            if(!r || r.ger !== ger || (r.carimbo && r.carimbo !== carimboAgora())) return;
+            aplicarBases(r.snap);
+          }).catch(() => {}),
+          new Promise(ok => setTimeout(ok, 4000))           /* IndexedDB mudo não trava a carga */
+        ]);
+      } else {
+        if(b && typeof b === 'object') aplicarBases(b);
+        /* base de ninguém (a marca foi apagada) sai do IndexedDB também */
+        if(!b) basesIdb.apagar();
       }
     }catch(e){}
   })();
@@ -32598,6 +32679,12 @@ addEventListener('click', e => {
       localStorage.setItem(CHAVE_SIN, JSON.stringify({ hashes:Sin.hashes, carimbos:Sin.carimbos, linhas, quando:Date.now() }));
       const bl = {};
       for(const [k, v] of Object.entries(Sin.linhas)) if(v.base) bl[k] = v.base;
+      /* v247 — A BASE SAI DOS 5 MB. Ela é quase a mesma pauta que o
+         aparelho já guarda — a mesma coisa duas vezes no espaço do
+         navegador, que no iPhone é de uns 5 MB e, cheio, faz as gravações
+         falharem em silêncio (a origem da v246). Vai para o IndexedDB,
+         que não tem esse teto; aqui fica só a marca. */
+      if(basesIdb.ok){ basesIdb.gravar({ estado:Sin.base || undefined, linhas:bl }); return; }
       const comEstado = JSON.stringify({ estado:Sin.base || undefined, linhas:bl });
       /* a base do pacote pode ser grande (fotos da equipe); acima do
          razoável fica só o hash — que basta para a mescla por chave */
@@ -33028,6 +33115,7 @@ addEventListener('click', e => {
   /* ---------- 9. as três operações, agora por aqui ---------- */
   async function buscar(){
     if(!_sbLigado) return false;
+    try{ await Sin.basesProntas; }catch(e){}
     try{
       /* barato: só a revisão. Se nada mudou lá, não há o que aplicar. */
       if(Sin.lido && Sin.rev !== undefined){
@@ -44531,6 +44619,46 @@ porFase = (function(orig){
   try{ render(); }catch(e){}
 })();
 </script>
+<script>
+/* v247 — A CAPA DO VÍDEO VAI PARA A NUVEM. A capa nascia como imagem
+   embutida no texto (data:, 15 a 40 KB cada) e viajava DENTRO da pauta:
+   duas vezes no espaço de 5 MB do navegador, na linha do banco e em cada
+   carga do cliente. Com os cortes do podcast, era ela que enchia o
+   aparelho. Agora, assim que o vídeo está na nuvem, a capa sobe também
+   (ao lado dele, `.capa.jpg`) e a pauta guarda só o endereço. Um por vez,
+   só com alguém da agência dentro, e achando o item pelo endereço na hora
+   de trocar (a lição da v218: nunca segurar o objeto que a mescla troca). */
+(function(){
+  const PUB = '/storage/v1/object/public/midia/';
+  const caminhoDe = u => { const i = String(u || '').indexOf(PUB); return i < 0 ? null : decodeURIComponent(String(u).slice(i + PUB.length).split('?')[0].split('#')[0]); };
+  const tentadas = new Set();
+  let subindo = false;
+  const itens = () => Object.values(S.mat || {}).flat().filter(Boolean);
+  async function capasParaNuvem(){
+    if(subindo || S.view !== 'agency' || typeof _sbLigado === 'undefined' || !_sbLigado || typeof subirNuvem !== 'function') return;
+    const alvo = itens().find(m => m.tipo === 'video' && m.nuvem && /^data:image\//.test(m.poster || '') && caminhoDe(m.url) && !tentadas.has(m.url));
+    if(!alvo) return;
+    subindo = true; tentadas.add(alvo.url);
+    const url = alvo.url, dado = alvo.poster;
+    try{
+      const blob = await (await fetch(dado)).blob();
+      const arq = new File([blob], 'capa.jpg', { type: blob.type || 'image/jpeg' });
+      const capa = await subirNuvem(caminhoDe(url) + '.capa.jpg', arq);
+      if(/^https:\/\//i.test(capa || '')){
+        let n = 0;
+        for(const m of itens()) if(m.tipo === 'video' && m.url === url && /^data:image\//.test(m.poster || '')){ m.poster = capa; n++; }
+        if(n) render();
+      }
+    }catch(e){ /* fica a de antes; tenta de novo na próxima abertura */ }
+    finally{ subindo = false; }
+    setTimeout(capasParaNuvem, 600);
+  }
+  window.MaestroCapaNuvem = { capasParaNuvem, caminhoDe };
+  render = (function(orig){ return function(){ const r = orig.apply(this, arguments);
+    if(S.view === 'agency') setTimeout(capasParaNuvem, 2500); return r; }; })(render);
+})();
+</script>
+
 <style id="v233-tipografia">
 /* =====================================================================
    v233 — a cara de empresa grande, parte 1: tipografia e contraste.
