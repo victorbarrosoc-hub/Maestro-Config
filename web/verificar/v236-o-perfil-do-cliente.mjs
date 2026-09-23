@@ -65,7 +65,8 @@ checa('rascunho e produção da agência NÃO entram na grade',
 checa('entra o que é do cliente: esperando, aprovado, no ar (5 posts)', g.titulos.length === 5, g.titulos);
 checa('o topo é o que vai ao ar por último (como no Instagram)',
       g.titulos[0].includes('Post com tag') && g.titulos[g.titulos.length - 1] === 'Já no ar', g.titulos);
-const est = Object.fromEntries(g.estados.map(([t, s]) => [t, s]));
+/* v237: o que foi aprovado ganha o ♥ na etiqueta ("curtido") — a palavra é a mesma */
+const est = Object.fromEntries(g.estados.map(([t, s]) => [t, String(s).replace(/^♥/, '')]));
 checa('cada post diz o estado: Aprovar · Aprovado · No ar',
       est['Texto com o cliente'] === 'Aprovar' && est['Peça com o cliente'] === 'Aprovar'
       && est['Aprovado antes'] === 'Aprovado' && est['Já no ar'] === 'No ar', est);
