@@ -158,6 +158,47 @@ checa('um mês: duas barras com nome e número, sem o quadrado cinza', graf.um, 
 checa('nada previsto: diz, em vez de desenhar NaN', graf.zero, graf);
 checa('com dois meses ou mais, o gráfico de sempre', graf.dois, graf);
 
+console.log('\n  — a agência nova não herda o cliente de fábrica —');
+{
+  /* A corrida, sem sorte: o arquivo chega em duas metades, com uma pausa
+     logo depois da entrada (que chama o banco). Antes da v241 a linha do
+     cliente de fábrica saía nessa pausa, crua, e ficava no banco novo. */
+  const corte = html.indexOf('/* v200 — com a equipe do banco */');
+  const meio = html.indexOf('</script>', corte) + 9;
+  const s2 = http.createServer((q, r) => { r.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    r.write(html.slice(0, meio)); setTimeout(() => r.end(html.slice(meio)), 1500); });
+  await new Promise(r => s2.listen(0, r));
+  const linhas = [{ cliente: '__config__', dados: {}, org: 'ag_nova' }], gravou = [];
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } });
+  const p2 = await ctx.newPage(); p2.on('pageerror', e => erros.push(String(e)));
+  await p2.route('https://tgrbmdsootnewjqpmeii.supabase.co/**', r => {
+    const u = r.request().url(), met = r.request().method();
+    const j = x => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(x) });
+    if (u.includes('/auth/v1/token')) return j({ access_token: 't', refresh_token: 'r', expires_in: 3600, user: { id: 'u', email: 'nova@agencia.com.br' } });
+    if (u.includes('/rpc/maestro_org')) return j('ag_nova');
+    if (u.includes('/rpc/maestro_pronto')) return j(true);
+    if (u.includes('/rest/v1/pauta')) {
+      if (met === 'GET') return j(linhas);
+      try { const c = JSON.parse(r.request().postData() || '[]');
+        for (const it of (Array.isArray(c) ? c : [c])) if (it && it.cliente) { gravou.push(it.cliente);
+          if (!linhas.some(l => l.cliente === it.cliente)) linhas.push({ cliente: it.cliente, dados: it.dados || {}, org: 'ag_nova' }); } } catch (e) {}
+      return j({});
+    }
+    return j([]);
+  });
+  await p2.addInitScript(d => { try { localStorage.setItem('maestro.sessao.v1', JSON.stringify(d));
+    localStorage.setItem('maestro-dono-do-aparelho-v1', 'nova@agencia.com.br'); } catch (e) {} },
+    { access: 't', refresh: 'r', email: 'nova@agencia.com.br', expira: Date.now() + 3600000 });
+  await p2.goto('http://127.0.0.1:' + s2.address().port + '/', { waitUntil: 'load' });
+  await p2.waitForTimeout(3000);
+  const casa = await p2.evaluate(() => CLIS().map(c => c.id));
+  const semente = await p2.evaluate(() => [...(window.MaestroSemente ? MaestroSemente.SEMENTE_CLIENTES : [])]);
+  checa('com o arquivo chegando devagar, nenhuma linha de cliente de fábrica vai ao banco da agência nova',
+    !gravou.some(c => semente.includes(c)), { gravou, semente });
+  checa('e a agência nova abre sem cliente nenhum', casa.length === 0, casa);
+  checa('o que é da agência (a config) continua sendo gravado', gravou.includes('__config__'), gravou);
+  await ctx.close(); s2.close();
+}
 checa('nenhum erro de página', erros.length === 0, erros.slice(0, 3));
 await b.close(); srv.close();
 console.log(`\n${ok} ${ok === 1 ? 'passou' : 'passaram'} · ${falhou} falhou`);

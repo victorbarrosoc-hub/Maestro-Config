@@ -59,9 +59,30 @@ causas, e cada uma explica um pedaço do que ele viu:
   `urlSegura` e aspa/parêntese são codificados.
 - O teto de peso do protótipo sobe para 2,90 MB, por escrito na suíte v172.
 
-28 provas em `web/verificar/v241-a-midia-que-chega.mjs`, pelo caminho do
+**E o que a regressão achou no caminho — o mais grave desta versão.** A suíte
+v213 (agência nova, primeiro cliente) caiu uma vez e passou na seguinte.
+Rodada em série contra versões antigas, ela caía **metade das vezes desde pelo
+menos a v232** — as regressões anteriores passaram por sorte. Não era a suíte:
+numa agência recém-criada, **as linhas dos clientes de fábrica (`cj`, o
+Cortez Jurídico, e `n0`) saíam para o banco DELA**, e dali em diante o app os
+tratava como "do banco", para sempre. É a v220 por outro caminho. A causa é de
+ORDEM: a entrada chama `sbCarregar` na linha ~20.300 do arquivo, e um `await`
+devolve o controle ao navegador antes de ele terminar de ler os 2,8 MB — as
+travas de agência (v197, v220) moram nas linhas 37–40 mil e ainda não existiam.
+A pilha da gravação mostrou isso: ela não passava por nenhuma das duas. Agora,
+antes da entrada, uma trava faz toda ESCRITA em tabela ESPERAR a página
+terminar de abrir e então sair pelo caminho inteiro (as funções `/rpc/` seguem
+livres, porque é por elas que se descobre a agência). E, com a página aberta,
+quem está logado também espera enquanto a pergunta "de que agência sou?" está
+no ar. **A prova é determinística:** o servidor entrega o arquivo em duas
+metades com uma pausa logo depois da entrada — no código anterior, 3 de 3
+gravaram `cj` e `n0` no banco novo; agora nenhuma.
+**A lição:** "passou na segunda" não é verde. Uma suíte que cai metade das
+vezes estava dizendo a verdade metade das vezes.
+
+31 provas em `web/verificar/v241-a-midia-que-chega.mjs`, pelo caminho do
 founder: imagens na tarefa → cliente sem arte → "Usar na peça" → cliente vê o
-carrossel.
+carrossel; e a corrida da agência nova, reproduzida sem sorte.
 
 **Falta (não é desta versão):** cortar/enquadrar a peça por rede; checar a
 proporção do ARQUIVO contra a do formato (um 16:9 num reels, por exemplo); e a

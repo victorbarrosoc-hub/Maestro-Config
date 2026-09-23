@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-23 12:32 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-23 13:19 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -10347,6 +10347,27 @@ const sbCab = () => ({
 S.sb = { estado:'parado', quando:null, erro:null };   // parado|carregando|salvando|salvo|erro|local
 let sbEspelho = {};        // ultimo conteudo confirmado no banco, por cliente
 let _sbTimer = null, _sbLigado = false;
+/* v241 — nenhuma ESCRITA em tabela enquanto a página ainda abre. A entrada
+   (linha ~20300) chama o banco antes de o navegador terminar de ler este
+   arquivo, e as travas de agência (v197, v220) moram no fim dele: metade das
+   vezes a linha do cliente de fábrica saía crua e ficava plantada no banco
+   de uma agência nova. A escrita não é recusada: ESPERA o arquivo terminar
+   e então sai pelo caminho inteiro, já pelas travas. As funções do banco
+   (/rpc/) seguem livres: é por elas que se sabe a agência. */
+(function(){
+  const _f = window.fetch;
+  window.fetch = function(u, o){
+    try{
+      const url = typeof u === 'string' ? u : ((u && u.url) || '');
+      const met = String((o && o.method) || (u && u.method) || 'GET').toUpperCase();
+      if(document.readyState === 'loading' && met !== 'GET' && met !== 'HEAD'
+         && /\/rest\/v1\//.test(url) && !/\/rest\/v1\/rpc\//.test(url))
+        return new Promise(ok => document.addEventListener('DOMContentLoaded',
+          () => ok(window.fetch(u, o)), { once: true }));
+    }catch(e){}
+    return _f.apply(this, arguments);
+  };
+})();
 
 /* o que vai para o banco: a pauta e as referencias em LINK. Arquivo
    solto vira blob: no navegador de quem subiu — nao significa nada em
@@ -40774,7 +40795,15 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
       const met = String((o && o.method) || (u && u.method) || 'GET').toUpperCase();
       if(met !== 'GET' && met !== 'HEAD' && /\/rest\/v1\//.test(url)){
         const org = agenciaAfirmada();
-        if(org && leia(CARIMBO) !== org){
+        /* v241: enquanto a pergunta "de que agência sou?" está no ar, quem
+           está logado também espera. Era por essa janela (milissegundos,
+           metade das vezes) que a linha do cliente de fábrica saía crua e
+           ficava plantada no banco de uma agência nova. Banco sem a função
+           já respondeu "não há" e não cai aqui. */
+        const a = window.MaestroAgencia;
+        const logadoJa = !!(window.MaestroPorta && typeof MaestroPorta.quem === 'function' && MaestroPorta.quem());
+        const semResposta = !!(a && logadoJa && !a.sondado) && !/\/rest\/v1\/rpc\//.test(url);
+        if(semResposta || (org && leia(CARIMBO) !== org)){
           return Promise.resolve(new Response(
             JSON.stringify({ message: 'maestro: aparelho ainda não é desta agência' }),
             { status: 503, headers: { 'Content-Type': 'application/json' } }));
