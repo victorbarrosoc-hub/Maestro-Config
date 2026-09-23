@@ -4,7 +4,7 @@ Version: 0.5
 Status: Implementação — blocos 1, 2, 3 e 5 da API prontos, verificados por HTTP
         · D-080 resolvida (a fase substitui o status): blocos 4, 6, 7 e 8 liberados
 Codename: Project Symphony
-Última atualização: 2026-09-21
+Última atualização: 2026-09-23
 
 > **Retomando o projeto? Leia [`docs/HANDOFF.md`](docs/HANDOFF.md) primeiro.**
 > Ele é o mapa: estado do código, o que já foi verificado, o que está aberto
@@ -299,6 +299,22 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (23 set, v233) — a cara nova, parte 1: a letra.** O founder pediu
+"cara de empresa big, sem muita coisa, mais intuitiva"; a proposta foi mostrada
+à parte (`claude.ai/artifact/VuR9iHASg3Ek2XcHturBzT`) e aprovada **em partes**,
+com uma condição que é dele: **o método não muda** — as seis colunas ficam com
+os nomes de hoje. Parte 1 é a tipografia, que é o que mais muda a sensação sem
+tocar em regra de fluxo. `--mono` e `--serif` passam a ser Inter (embutida,
+48 KB), então os 285 usos trocam de uma vez; o selo e os cronômetros ganham
+`--code`, o nome da marca `--marca`, e o site de marketing fica como era pelo
+escopo da variável. Os ajustes por regra (caixa alta, espaçamento, piso de 11px)
+foram GERADOS a partir de cada regra, no mesmo `@media`
+(`docs/UI/tipografia-v233-gerar.py`). Contraste do menu a 5,6:1 e a faixa do
+Hoje sem arco-íris (D-018). 53 provas em `web/verificar/v233-a-letra.mjs`, que
+medem cada nó de texto de cinco telas nos dois tamanhos. **Próximas partes**
+(em `docs/TASKS.md`): o card enxuto com selo Texto/Peça e **a frente como
+filete de cor** (o time se orienta por ela), o Portal do cliente, e a aba Redes
+por planilha.
 **Fechado (22 set, v232):** *"Foi no ensaio, na hora de subir a peça pra
 liberar pra check, isso na segunda volta. O link não aparece pra o cliente."*
 **A gaveta estava certa e o dado chegava:** `subirPeca` abre o material DO

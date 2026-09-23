@@ -1,9 +1,72 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.46
+Version: 0.5.47
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.47 — 2026-09-23
+
+**Status:** Concluída
+
+### v233 — a cara nova, parte 1: a letra
+
+*"Queria que ficasse mais bonito, com cara de empresa big. Sem muita coisa,
+sendo mais intuitiva."* A proposta foi mostrada à parte
+(`claude.ai/artifact/VuR9iHASg3Ek2XcHturBzT`), sem tocar na plataforma. O
+founder aprovou e pediu para ir **em partes**, cada uma no ar sozinha. Esta
+é a primeira, e é a que muda mais a sensação sem tocar em regra nenhuma do
+fluxo.
+
+**O que a revisão de 19/set tinha medido:** 50% dos nós de texto do Ensaio
+em monoespaçada, 285 usos de `var(--mono)` contra 14 de `var(--sans)`, rótulo
+em CAIXA ALTA a 9,5px, e o rótulo de grupo do menu a 2,31:1 de contraste. A
+D-019 já dizia o contrário: Inter em toda a interface, serifa só em marca e
+marketing, mono só para dado e código. O protótipo tinha se afastado dela.
+
+**Como, sem mexer em nenhuma tela:**
+- **As variáveis mudam de dono.** `--mono` e `--serif` passam a ser Inter,
+  então os 285 usos trocam de fonte de uma vez. O que precisa de mono de
+  verdade ganha `--code` (o selo, os cronômetros); o nome da marca, `--marca`.
+- **O site de marketing fica como era** pelo escopo da variável
+  (`.site{--serif:…;--mono:…}`): a vitrine é outra peça.
+- **Os ajustes por regra foram GERADOS**, não escritos à mão: para cada regra
+  que usava mono, serifada ou fonte abaixo de 11px, a regra de ajuste no
+  MESMO `@media`, com `:not(.site *)` — que também dá a especificidade para
+  vencer as camadas que entram depois. 346 regras.
+  O gerador ficou em `docs/UI/tipografia-v233-gerar.py`.
+- **Sem a caixa alta, "FRENTE" viraria "frente"**: a inicial sobe por
+  `::first-letter`. Isso não vale em contêiner flex — nos dois casos em que
+  o rótulo é flex, o texto ganhou um `<span>` (o `textContent` não muda, e
+  nenhuma suíte que procura o texto quebra).
+- **Piso de 11px** para todo texto da interface, inclusive 11 estilos inline.
+- **A fonte vai embutida** (Inter variável 400–700, 48 KB): o app abre no
+  celular sem depender de rede.
+- **Contraste:** o rótulo de grupo do menu passa a `--ink-400` (5,6:1).
+- **A faixa do Hoje deixa de ser arco-íris** (D-018): número é neutro; o
+  dourado só acende em "faltam", e só quando falta alguma coisa.
+
+**O que NÃO muda:** as seis colunas, os nomes, as portas, o tema claro (que
+já existia e herdou a letra nova sem ajuste).
+
+**As provas medem a tela renderizada, não o CSS.** 53 provas em
+`web/verificar/v233-a-letra.mjs`: cada nó de texto visível de cinco telas
+(Hoje, Ensaio, Clientes, Conversas, Cronograma), no desktop e no celular —
+nenhum em mono, nenhum em serifada fora da marca, nenhum em caixa alta,
+nenhum abaixo de 11px —, a fonte carregada de verdade e sem pedido à rede, o
+que fica como era (marca, selo, site), o contraste e a faixa do Hoje.
+
+**A prova pegou três coisas que o CSS não mostrava:** as iniciais dos avatares
+a 9px vinham de estilo INLINE, a barra de baixo do celular tinha 10px numa
+regra que não usava mono, e o rótulo de grupo continuava abaixo de 4,5:1 com
+o primeiro ajuste de cor. E uma da própria prova: ela lia o rótulo das
+Conversas depois de redesenhar a tela — elemento fora da tela não tem estilo.
+
+**Uma suíte antiga cobrava o contrário** (`cartao-ensaio`: "as metas do ciclo
+seguem em serifada"). O que ela guarda de verdade é que as regras do cartão
+não ENCOLHEM as metas; passou a cobrar tamanho e peso de título.
 
 ---
 

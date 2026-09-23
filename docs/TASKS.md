@@ -279,14 +279,33 @@ coisa, 25 estilos de botão numa tela só.
 - [~] Toast de uma frase — 26 encurtados: de 48 acima de 70 caracteres para
       27, e de 86 com duas frases para 61. Os dois números viraram catraca na
       suíte. **Faltam os 27.**
-- [ ] Tirar a monoespaçada da interface (285 usos contra 14 da de texto).
+- [x] ~~Tirar a monoespaçada da interface (285 usos contra 14 da de texto)~~
+      — v233: as variáveis mudaram de dono, zero nó de texto em mono nas
+      cinco telas medidas, sem caixa alta e sem nada abaixo de 11px.
 - [ ] Vocabulário: `card` para o objeto, `Quadro` no lugar de Ensaio,
       `Calendário` em todo lugar. Aposentar `job`, `peça`, `postagem`.
 - [ ] Navegação de 5 itens + "Mais", e o Calendário no topo (hoje a três
       toques, sendo a tela de todo dia).
 - [ ] Datas nativas em formato americano (`09/21/2026`) num produto pt-BR.
-- [ ] Contraste: rótulo de grupo a 2,31:1 (o mínimo é 4,5:1).
+- [x] ~~Contraste: rótulo de grupo a 2,31:1 (o mínimo é 4,5:1)~~ — v233.
 - [ ] O andaime de protótipo que o cliente vê: `← Site`, `Ato 1 de 4`.
+
+### A cara nova (aprovada em 22/set, sobre a proposta
+`claude.ai/artifact/VuR9iHASg3Ek2XcHturBzT`)
+
+Em partes, cada uma no ar sozinha. **O método não muda:** as seis colunas
+ficam com os nomes de hoje, e o botão de cada card é sempre a próxima porta.
+
+- [x] **Parte 1 — a letra (v233).** Inter embutida, mono e serifada fora da
+      interface, piso de 11px, contraste do menu, faixa do Hoje sem arco-íris.
+- [ ] **Parte 2 — o card enxuto e o painel do Ensaio.** O card diz o que é,
+      de quem é, quando vence, e o selo **Texto/Peça**. **A frente fica no
+      card como filete de cor** — o founder confirmou que o time se orienta
+      por ela. Sob cada coluna, uma linha curta em português.
+- [ ] **Parte 3 — o Portal do cliente.** "3 de 12 esperam sua decisão" no
+      topo, a peça grande, dois botões.
+- [ ] **Parte 4 — a aba Redes, por planilha.** Em paralelo, o pedido de
+      aprovação do app na Meta para a conexão automática.
 
 ---
 

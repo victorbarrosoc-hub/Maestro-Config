@@ -26,6 +26,8 @@ QUERO = {
         'family=Source+Serif+4:ital,opsz,wght@1,8..60,600',
     'inter-400.woff2': 'family=Inter:wght@400',
     'inter-600.woff2': 'family=Inter:wght@600',
+    # a interface (v233): um arquivo só cobre 400 a 700, inclusive o 500
+    'inter-variavel-400-700.woff2': 'family=Inter:wght@400..700',
     'jetbrains-mono-500.woff2': 'family=JetBrains+Mono:wght@500',
 }
 

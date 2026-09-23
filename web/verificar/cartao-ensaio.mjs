@@ -119,11 +119,14 @@ for(const [rotulo, largura, altura] of [['celular', 390, 844], ['desktop', 1280,
       S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'cj' }; S.cli = 'cj'; S.route = 'projeto'; render();
       return [...document.querySelectorAll('.metas .meta b')].map(el => ({
         fs: parseFloat(getComputedStyle(el).fontSize),
-        serif: window.__ehSerif(getComputedStyle(el).fontFamily) }));
+        peso: parseInt(getComputedStyle(el).fontWeight, 10) }));
     });
     await pg.waitForTimeout(200);
-    checa('as metas do ciclo, no painel do cliente, seguem grandes e em serifada',
-          metas.length > 0 && metas.every(x => x.fs >= 18 && x.serif), metas.slice(0, 2));
+    /* v233: a serifada saiu da interface (D-019: serifa só em marca e
+       marketing). O que esta prova guarda é que as regras do cartão não
+       ENCOLHEM as metas — então: grandes, e com peso de título. */
+    checa('as metas do ciclo, no painel do cliente, seguem grandes e com peso de título',
+          metas.length > 0 && metas.every(x => x.fs >= 18 && x.peso >= 600), metas.slice(0, 2));
   }
   await pg.close();
 }
