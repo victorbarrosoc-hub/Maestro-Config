@@ -66,7 +66,7 @@ await pg.evaluate(() => { S.route = 'inicio'; render(); }); await pg.waitForTime
 console.log('\n  — o caminho até lá —');
 const at = await pg.evaluate(() => ({ view: S.view, bts: [...document.querySelectorAll('.clInicioAtalhos [data-r]')].map(x => x.dataset.r),
   arq: document.querySelector('.clInicioAtalhos [data-r="clarquivos"] small')?.textContent }));
-checa('no Início do cliente: "Pedir à agência" e "Arquivos", com a conta do que foi aprovado', at.view === 'client' && at.bts.join() === 'clpedidos,clarquivos' && /4 arquivos aprovados/.test(at.arq || ''), at);
+checa('no Início do cliente: "Pedir à agência" e "Arquivos", com a conta do que foi aprovado', at.view === 'client' && at.bts.join() === 'clpedidos,clarquivos' && /3 arquivos aprovados/.test(at.arq || ''), at);
 checa('e os dois no Menu', await pg.evaluate(() => { const it = MENU_CL.flatMap(g => g.it || []).map(x => x[0]); return it.includes('clpedidos') && it.includes('clarquivos'); }));
 
 console.log('\n  — pedir —');
@@ -99,8 +99,8 @@ const arq = await pg.evaluate(() => ({ pubs: [...document.querySelectorAll('.arP
   hrefs: [...document.querySelectorAll('.arItem')].map(a => a.getAttribute('href')) }));
 checa('só o que foi aprovado ou publicado, o mais novo primeiro (o que espera decisão não entra)', arq.pubs.join('|') === 'Carrossel de setembro|Reels do bastidor', arq.pubs);
 checa('separado por mês', arq.meses.join('|') === 'Setembro de 2026|Agosto de 2026', arq.meses);
-checa('as contas por tipo: Tudo 4 · Imagens 2 · Vídeos 1 · Documentos 1', arq.chips.join('|') === 'Tudo 4|Imagens 2|Vídeos 1|Documentos 1', arq.chips);
-checa('endereço que não é http não vira link (javascript: sai como #)', arq.hrefs.includes('#') && !arq.hrefs.some(h => /^javascript/i.test(h)), arq.hrefs);
+checa('as contas por tipo: Tudo 3 · Imagens 2 · Vídeos 1 (o de endereço inválido nem entra, e tipo sem nada não vira chip)', arq.chips.join('|') === 'Tudo 3|Imagens 2|Vídeos 1', arq.chips);
+checa('endereço que não é http não vira link: nenhum javascript:, e todo link é https', arq.hrefs.length === 3 && arq.hrefs.every(h => /^https:/.test(h)), arq.hrefs);
 await pg.click('[data-v244arq="video"]'); await pg.waitForTimeout(200);
 checa('o filtro "Vídeos" deixa só o vídeo, com a capa', await pg.evaluate(() => document.querySelectorAll('.arItem').length === 1 && !!document.querySelector('.arItem img')));
 if(process.env.OUT) await pg.screenshot({ path: process.env.OUT + '/v244-arquivos.png', fullPage: true });

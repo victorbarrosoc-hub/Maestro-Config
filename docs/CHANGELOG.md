@@ -1,9 +1,63 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.57
+Version: 0.5.58
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.58 — 2026-09-24
+
+**Status:** Concluída
+
+### v244 — o cliente pede e acha
+
+*"Olha esse também"* — o vídeo de uma agência mostrando a área do cliente
+dela (um "Brand Center"): login com a marca do cliente, **Solicitações** (o
+cliente abre "+ Nova solicitação" e acompanha o status), **Arquivos** (tudo o
+que foi entregue, em pastas), Atas de reunião e Aprovações.
+
+**O que entrou, pelo link do cliente (sem login — a decisão da v216 fica):**
+
+- **Pedir à agência.** Formulário curto: o que precisa, formato, para quando e
+  o contexto. O pedido vai pela porta do link e o cliente acompanha o
+  andamento: Enviado → Recebido → Em produção → Para você aprovar → Entregue
+  (ou "Não vai ser feito"), com o recado da agência. O rascunho não se perde
+  num redesenho. Sem a função no banco, a tela DIZ que a agência ainda não
+  ligou os pedidos — não mostra um formulário que não chega a lugar nenhum.
+- **Arquivos.** Tudo o que o cliente aprovou ou já foi ao ar, por mês, com
+  filtro por tipo e baixar. Sai do que a porta já entregava (aprovado,
+  agendado e publicado já viajavam com as peças) — sem mudar o banco.
+  Endereço que não é http não entra.
+- **O caminho:** os dois no Início do cliente e no Menu.
+
+**Do lado da agência:** o pedido vira UMA tarefa no Inbox do Ensaio, do
+cliente certo, com prazo, o formato e o texto do cliente; um aviso na tela; e
+o selo "pedido do cliente" no card. O id da tarefa sai do id do pedido, então
+dois aparelhos que convertem ao mesmo tempo chegam à MESMA tarefa (a mescla une
+por id). O andamento da tarefa (Inbox, Do, com o cliente, Act, concluída,
+apagada) volta ao cliente sozinho. Tarefa apagada não ressuscita.
+
+**O banco — `docs/ENGINEERING/pedidos-1-o-cliente-pede.sql`, para rodar no
+Supabase.** Os pedidos moram numa linha só da agência (`__pedidos__`), NUNCA na
+linha do cliente — o app reescreve a linha do cliente com o que conhece e
+apagaria o resto. E ninguém regrava a linha inteira: três funções com a linha
+travada — `maestro_link_pedir` e `maestro_link_pedidos` (anônimas, pela chave
+do link, a mesma porta de `maestro_link_decidir`) e `maestro_pedido_status`
+(logada, só na agência dela). Ler-unir-regravar, como a `__redes__` faz,
+perderia o pedido que chegasse no meio da gravação da agência. Limites, porque
+a porta é anônima: título 3–140, texto até 3000, 30 pedidos novos e 10 por
+hora por cliente. **21 provas num Postgres 16 de verdade** em
+`pedidos-1-teste.sql`, incluindo o papel `anon` sem alcance à função da
+agência.
+
+**O que NÃO entrou, e é decisão:** o login com a marca do cliente (a v216
+decidiu: cliente tem link, não senha). O que vale dele — o link abrir com a
+cara do cliente — fica anotado. Atas de reunião cabem no "Banco de dados" do
+cliente; ficam para a próxima.
+
+23 provas em `web/verificar/v244-o-cliente-pede-e-acha.mjs`.
 
 ---
 

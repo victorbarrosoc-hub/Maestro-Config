@@ -16053,7 +16053,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v243 · 24 set · o lote do mês';
+const VERSAO_PROTOTIPO = 'v244 · 24 set · o cliente pede e acha';
 
 menuSheet = (function(orig){
   return function(){
@@ -44079,6 +44079,266 @@ button.clPost:active{ transform:scale(.98) }
     if(d.v243abre){ S.v243Ig = null; S.pcSel = +d.v243abre; S.pcPedindo = false; S.route = 'clcard'; window.scrollTo(0, 0); render(); }
   }, true);
   addEventListener('keydown', e => { if(e.key === 'Escape' && S.v243Ig){ S.v243Ig = null; render(); } });
+  try{ render(); }catch(e){}
+})();
+</script>
+<style id="v244-o-cliente-pede-e-acha">
+/* v244 — o cliente pede e acha. Motivo e caminho em docs/CHANGELOG.md 0.5.58. */
+.pdForm{ display:grid; gap:10px; margin:6px 0 18px; padding:14px; border:1px solid var(--line); border-radius:14px; background:var(--soft) }
+.pdForm label{ display:grid; gap:5px; font-size:12px; color:var(--mut) }
+.pdForm input, .pdForm select, .pdForm textarea{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line);
+  background:var(--bg, #141416); color:var(--tx); font-size:16px; font-family:inherit }
+.pdForm textarea{ min-height:96px; resize:vertical }
+.pdForm .duas{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
+.pdLinha{ display:grid; grid-template-columns:1fr auto; gap:4px 10px; padding:12px 14px; border:1px solid var(--line); border-radius:12px; margin-bottom:8px }
+.pdLinha b{ font-size:14px; color:var(--tx) }
+.pdLinha small{ grid-column:1; font-size:12px; color:var(--mut) }
+.pdLinha .nota{ grid-column:1 / -1; font-size:12.5px; color:var(--tx); background:rgba(200,150,58,.08); border-radius:8px; padding:7px 9px; margin-top:4px }
+.pdSt{ align-self:start; font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px; white-space:nowrap }
+.pdSt.novo, .pdSt.recebido{ background:rgba(139,123,240,.18); color:#B7ABFF }
+.pdSt.producao{ background:rgba(200,150,58,.18); color:#E5C54D }
+.pdSt.aprovacao{ background:rgba(229,185,76,.95); color:#1a1405 }
+.pdSt.entregue{ background:rgba(53,184,122,.18); color:#5FD39C }
+.pdSt.recusado{ background:rgba(240,120,76,.16); color:#F59A76 }
+.pdAviso{ padding:14px; border:1px dashed var(--line); border-radius:12px; color:var(--mut); font-size:13px; text-align:center }
+.arChips{ display:flex; gap:6px; overflow-x:auto; margin:4px 0 12px }
+.arChips button{ flex:0 0 auto; padding:7px 12px; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--mut); font-size:12.5px }
+.arChips button.on{ border-color:var(--acc); color:var(--tx); background:rgba(200,150,58,.10) }
+.arPub{ margin:0 0 14px }
+.arPub .cab{ display:flex; justify-content:space-between; gap:8px; font-size:13px; margin:0 0 6px }
+.arPub .cab b{ color:var(--tx) } .arPub .cab span{ color:var(--mut); font-size:12px }
+.arGrade{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px }
+.arItem{ position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; background:var(--soft); border:1px solid var(--line);
+  display:grid; place-items:center; color:var(--mut); text-decoration:none }
+.arItem img{ width:100%; height:100%; object-fit:cover; display:block }
+.arItem .ic{ display:grid; justify-items:center; gap:4px; font-size:10.5px; padding:6px; text-align:center; word-break:break-all }
+.arItem .baixa{ position:absolute; right:5px; bottom:5px; width:26px; height:26px; border-radius:8px; display:grid; place-items:center;
+  background:rgba(8,9,11,.72); color:#fff }
+.enSelos .pdSelo{ font-size:10.5px; padding:2px 7px; border-radius:6px; background:rgba(139,123,240,.18); color:#B7ABFF }
+.clInicioAtalhos{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 0 16px }
+.clInicioAtalhos button{ display:grid; gap:4px; text-align:left; padding:12px 14px; border-radius:14px; border:1px solid var(--line); background:var(--soft); color:var(--tx) }
+.clInicioAtalhos button small{ color:var(--mut); font-size:11.5px }
+</style>
+<script>
+(function(){
+  const fase = p => typeof faseDe === 'function' ? faseDe(p) : (p.fase || '');
+  const dataBRc = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${m[3]}/${m[2]}` : ''; };
+  const mAp = /[?&]aprovar=([^&.]+)\.([^&]+)/.exec(location.search);
+  const LINK = mAp ? { cli: decodeURIComponent(mAp[1]), chave: decodeURIComponent(mAp[2]) } : null;
+  async function rpc(nome, corpo, logado){
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/rpc/${nome}`, { method: 'POST',
+        headers: logado && typeof sbCab === 'function' ? { ...sbCab(), 'Content-Type': 'application/json' }
+          : { apikey: SB.key, Authorization: 'Bearer ' + SB.key, 'Content-Type': 'application/json' },
+        body: JSON.stringify(corpo) });
+      if(r.status === 404) return { faltando: true };
+      if(!r.ok) return { erro: r.status };
+      const t = await r.text();
+      return { dados: t ? JSON.parse(t) : null };
+    }catch(e){ return { erro: 0 }; }
+  }
+
+  /* ================= A. O CLIENTE PEDE ================================= */
+  const ANDAMENTO = { novo: 'Enviado', recebido: 'Recebido', producao: 'Em produção', aprovacao: 'Para você aprovar', entregue: 'Entregue', recusado: 'Não vai ser feito' };
+  S.v244 = S.v244 || { pedidos: null, rascunho: {}, abrindo: false };
+  async function carregarPedidos(){
+    if(!LINK){ S.v244.pedidos = []; S.v244.semLink = true; return; }
+    if(S.v244.abrindo) return;
+    S.v244.abrindo = true;
+    const r = await rpc('maestro_link_pedidos', { p_cli: LINK.cli, p_chave: LINK.chave });
+    S.v244.abrindo = false;
+    if(r.faltando){ S.v244.faltando = true; S.v244.pedidos = []; }
+    else if(r.erro !== undefined){ S.v244.erro = true; S.v244.pedidos = S.v244.pedidos || []; }
+    else S.v244.pedidos = Array.isArray(r.dados) ? r.dados : [];
+    if(S.route === 'clpedidos') render();
+  }
+  function telaPedidos(){
+    const c = cliAtual() || {};
+    const st = S.v244, rs = st.rascunho || {};
+    if(st.pedidos === null) carregarPedidos();
+    const fmts = typeof FORMATOS !== 'undefined' ? FORMATOS : ['Post', 'Carrossel', 'Reels', 'Story', 'Vídeo'];
+    const podePedir = !!LINK && !st.faltando;
+    const form = podePedir ? `<div class="pdForm" id="pdForm">
+        <label>O que você precisa? <input id="pdTit" maxlength="140" value="${esc(rs.tit || '')}" placeholder="Ex.: um carrossel sobre o evento de sexta"></label>
+        <div class="duas"><label>Formato <select id="pdFmt"><option value="">Tanto faz</option>${fmts.map(f => `<option ${rs.fmt === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select></label>
+          <label>Para quando <input id="pdQuando" type="date" value="${esc(rs.quando || '')}"></label></div>
+        <label>Conte com as suas palavras <textarea id="pdDesc" maxlength="3000" placeholder="O contexto, o link das fotos, o que não pode faltar.">${esc(rs.desc || '')}</textarea></label>
+        <button type="button" class="clbtn" data-pdenviar="1" ${st.enviando ? 'disabled' : ''}>${st.enviando ? 'Enviando…' : 'Enviar o pedido'}</button></div>`
+      : `<div class="pdAviso">${st.faltando ? 'A agência ainda não ligou os pedidos por aqui. Enquanto isso, fale com ela pelo canal de sempre.'
+          : 'Pedidos se fazem pelo link que a agência mandou.'}</div>`;
+    const lista = st.pedidos || [];
+    const linha = p => `<div class="pdLinha"><b>${esc(p.titulo || '')}</b><span class="pdSt ${esc(p.st || 'novo')}">${esc(ANDAMENTO[p.st] || 'Enviado')}</span>
+      <small>${[p.formato, p.quando ? 'para ' + dataBRc(p.quando) : '', p.em ? 'pedido em ' + new Date(p.em).toLocaleDateString('pt-BR') : ''].filter(Boolean).map(esc).join(' · ')}</small>
+      ${p.nota ? `<div class="nota">${esc(p.nota)}</div>` : ''}</div>`;
+    return clShell(`<div class="clbody venter">
+      <div class="kick">${esc(c.nome || '')} · pedidos</div>
+      <h2>Pedir à agência</h2>
+      <p>O que você precisa? A agência recebe aqui, sem WhatsApp, e você acompanha cada pedido até a entrega.</p>
+      ${form}
+      ${lista.length ? `<h3>Seus pedidos</h3>${lista.map(linha).join('')}` : st.pedidos === null ? '' : `<p style="color:var(--mut);font-size:13px">Nenhum pedido ainda.</p>`}
+    </div>`);
+  }
+  const lerRascunho = () => { const g = id => (document.getElementById(id) || {}).value;
+    if(document.getElementById('pdForm')) S.v244.rascunho = { tit: g('pdTit') || '', fmt: g('pdFmt') || '', quando: g('pdQuando') || '', desc: g('pdDesc') || '' }; };
+  addEventListener('input', e => { if(e.target && e.target.closest && e.target.closest('#pdForm')) lerRascunho(); }, true);
+  addEventListener('change', e => { if(e.target && e.target.closest && e.target.closest('#pdForm')) lerRascunho(); }, true);
+  const ERROS = { titulo: 'Escreva o que precisa em pelo menos 3 letras.', devagar: 'Muitos pedidos em pouco tempo — tente daqui a pouco.',
+    muitos: 'Há 30 pedidos esperando — a agência precisa responder alguns antes.', chave: 'Este link não vale mais — peça outro à agência.',
+    data: 'A data não parece certa.', descricao: 'O texto passou de 3000 letras.' };
+  async function enviarPedido(){
+    lerRascunho();
+    const rs = S.v244.rascunho;
+    if(!rs.tit || rs.tit.trim().length < 3){ toast(ERROS.titulo); return; }
+    S.v244.enviando = true; render();
+    const r = await rpc('maestro_link_pedir', { p_cli: LINK.cli, p_chave: LINK.chave, p_titulo: rs.tit.trim(),
+      p_formato: rs.fmt || null, p_quando: rs.quando || null, p_desc: (rs.desc || '').trim() || null });
+    S.v244.enviando = false;
+    const d = r.dados || {};
+    if(d.ok){ S.v244.rascunho = {}; if(typeof som === 'function') som('aprovar'); toast('Pedido enviado. A agência já recebe.'); S.v244.pedidos = null; }
+    else toast(ERROS[d.erro] || 'Não consegui enviar agora. Tente de novo.');
+    render();
+  }
+
+  /* ================= B. O CLIENTE ACHA ================================= */
+  S.v244Arq = S.v244Arq || 'todos';
+  const TIPOS_AR = [['todos', 'Tudo'], ['imagem', 'Imagens'], ['video', 'Vídeos'], ['doc', 'Documentos']];
+  const tipoAr = m => m.tipo === 'imagem' ? 'imagem' : m.tipo === 'video' ? 'video' : 'doc';
+  function entregues(){
+    return cardsDoCliente().filter(p => ['aprovado', 'agendado', 'postado'].includes(fase(p)))
+      .map(p => ({ p, ms: (typeof materiaisDe === 'function' ? materiaisDe(p) : []).filter(m => m && (urlSegura(m.url) || m.tipo === 'link')) }))
+      .filter(x => x.ms.length)
+      .sort((a, b) => String(b.p.data || '').localeCompare(String(a.p.data || '')));
+  }
+  function telaArquivos(){
+    const c = cliAtual() || {};
+    const todos = entregues();
+    const n = { todos: 0, imagem: 0, video: 0, doc: 0 };
+    todos.forEach(x => x.ms.forEach(m => { n.todos++; n[tipoAr(m)]++; }));
+    const filtro = n[S.v244Arq] ? S.v244Arq : 'todos';
+    const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    const mes = iso => { const m = /^(\d{4})-(\d{2})/.exec(iso || ''); return m ? `${MESES[+m[2] - 1]} de ${m[1]}` : 'sem data'; };
+    const item = m => {
+      const capa = m.tipo === 'imagem' ? `<img src="${urlSegura(m.url)}" alt="${esc(m.nome || '')}" loading="lazy">`
+        : m.poster ? `<img src="${urlSegura(m.poster)}" alt="" loading="lazy">`
+        : `<span class="ic">${ic(m.tipo === 'video' ? 'play' : m.tipo === 'link' ? 'linkic' : 'doc', 18)}<span>${esc((m.nome || '').slice(0, 28))}</span></span>`;
+      return `<a class="arItem" href="${hrefSeguro(m.url)}" target="_blank" rel="noopener noreferrer" title="${esc(m.nome || '')}">${capa}
+        ${m.tipo !== 'link' ? `<span class="baixa" aria-hidden="true">${ic('baixar', 13)}</span>` : ''}</a>`; };
+    let corpo = '', ultimoMes = '';
+    for(const x of todos){
+      const ms = x.ms.filter(m => filtro === 'todos' || tipoAr(m) === filtro);
+      if(!ms.length) continue;
+      const mm = mes(x.p.data);
+      if(mm !== ultimoMes){ corpo += `<h3 style="text-transform:none">${esc(mm.charAt(0).toUpperCase() + mm.slice(1))}</h3>`; ultimoMes = mm; }
+      corpo += `<div class="arPub"><div class="cab"><b>${esc(x.p.t || '')}</b><span>${esc([x.p.fmt, dataBRc(x.p.data)].filter(Boolean).join(' · '))}</span></div>
+        <div class="arGrade">${ms.map(item).join('')}</div></div>`;
+    }
+    return clShell(`<div class="clbody venter">
+      <div class="kick">${esc(c.nome || '')} · arquivos</div>
+      <h2>Arquivos</h2>
+      <p>Tudo o que você aprovou, num lugar só. Toque para abrir e baixar.</p>
+      ${n.todos ? `<div class="arChips" role="tablist">${TIPOS_AR.filter(([k]) => k === 'todos' || n[k]).map(([k, nome]) => `<button type="button" data-v244arq="${k}" class="${filtro === k ? 'on' : ''}" ${!n[k] && k !== 'todos' ? 'disabled' : ''}>${nome} ${n[k]}</button>`).join('')}</div>${corpo}`
+        : `<div class="pdAviso">Quando a primeira publicação for aprovada, os arquivos dela aparecem aqui.</div>`}
+    </div>`);
+  }
+
+  /* as rotas e o caminho até elas — o portão do cliente (v216) só deixa
+     passar o que está no mapa de endereços */
+  if(typeof URL_CL === 'object' && URL_CL){ URL_CL.clpedidos = 'pedidos'; URL_CL.clarquivos = 'arquivos'; }
+  if(typeof ROTAS_CL_PAUTA !== 'undefined'){ ROTAS_CL_PAUTA.clpedidos = () => telaPedidos(); ROTAS_CL_PAUTA.clarquivos = () => telaArquivos(); }
+  if(typeof MENU_CL !== 'undefined' && Array.isArray(MENU_CL)){
+    const g = MENU_CL.find(x => x.g === 'Acompanhar') || MENU_CL[MENU_CL.length - 1];
+    if(g && g.it && !g.it.some(it => it[0] === 'clpedidos'))
+      g.it.unshift(['clpedidos', 'Pedir à agência', 'pencil'], ['clarquivos', 'Arquivos', 'folder']);
+  }
+  function atalhosNoInicio(){
+    if(S.view !== 'client' || S.route !== 'inicio' || document.querySelector('.clInicioAtalhos')) return;
+    const alvo = document.querySelector('#root .clbody h2, #root .clbody h1'); if(!alvo) return;
+    const n = entregues().reduce((s, x) => s + x.ms.length, 0);
+    alvo.insertAdjacentHTML('afterend', `<div class="clInicioAtalhos">
+      <button type="button" data-r="clpedidos"><b>${ic('pencil', 14)} Pedir à agência</b><small>Um post, uma arte, um ajuste — sem WhatsApp.</small></button>
+      <button type="button" data-r="clarquivos"><b>${ic('folder', 14)} Arquivos</b><small>${n ? `${n} ${n === 1 ? 'arquivo aprovado' : 'arquivos aprovados'}` : 'O que você aprovar fica aqui.'}</small></button></div>`);
+  }
+
+  /* ================= C. A AGÊNCIA RECEBE =============================== */
+  S.pedidosCli = S.pedidosCli || {};
+  const idDaTarefa = id => { const m = /^pd(\d{10,16})/.exec(id || ''); return m ? +m[1] : null; };
+  const todasTarefas = () => S.ensaio ? [...(S.ensaio.tarefas || []), ...(S.ensaio.feitas || []), ...(S.ensaio.lixo || [])] : [];
+  function andamentoDe(it){
+    if(!S.ensaio) return null;
+    const apagadas = new Set(((S.ensaio.apagadas || [])).map(x => String(x && x.id !== undefined ? x.id : x)));
+    const t = (S.ensaio.tarefas || []).find(x => x.pedidoId === it.id);
+    if((S.ensaio.feitas || []).some(x => x.pedidoId === it.id)) return 'entregue';
+    if(!t){ const lixo = (S.ensaio.lixo || []).some(x => x.pedidoId === it.id) || apagadas.has(String(idDaTarefa(it.id))); return lixo ? 'recusado' : null; }
+    return t.col === 'inbox' ? 'recebido' : t.col === 'cliente' ? 'aprovacao' : (t.col === 'act' || t.col === 'feito') ? 'entregue' : 'producao';
+  }
+  function converter(){
+    if(!S.ensaio || !Array.isArray(S.ensaio.tarefas)) return 0;
+    S.ensaio.pedidosVistos = S.ensaio.pedidosVistos || [];
+    let n = 0;
+    for(const it of Object.values(S.pedidosCli)){
+      if(!it || !it.id || S.ensaio.pedidosVistos.includes(it.id) || todasTarefas().some(t => t.pedidoId === it.id)) continue;
+      if(it.st === 'recusado' || it.st === 'entregue') continue;
+      const id = idDaTarefa(it.id); if(!id) continue;
+      S.ensaio.tarefas.push({ id, titulo: it.titulo, cli: it.cli, resp: null, col: 'inbox', cat: 'producao',
+        criada: it.em || Date.now(), prazo: it.quando || null, tempoMs: 0, desde: null,
+        desc: [it.desc, it.formato ? `Formato pedido: ${it.formato}` : ''].filter(Boolean).join('\n\n'),
+        pedidoId: it.id, pedidoPor: it.por || '' });
+      S.ensaio.pedidosVistos.push(it.id);
+      n++;
+      const c = (typeof CLIS === 'function' ? CLIS() : []).find(x => x.id === it.cli);
+      toast(`Pedido novo de ${c ? c.nome : 'um cliente'}: "${it.titulo}".`);
+    }
+    return n;
+  }
+  const enviandoSt = new Set();
+  async function sincronizarAndamento(){
+    if(typeof _sbLigado === 'undefined' || !_sbLigado) return;
+    for(const it of Object.values(S.pedidosCli)){
+      const st = andamentoDe(it);
+      if(!st || st === it.st || enviandoSt.has(it.id)) continue;
+      enviandoSt.add(it.id);
+      const r = await rpc('maestro_pedido_status', { p_id: it.id, p_st: st }, true);
+      enviandoSt.delete(it.id);
+      if(r.dados && r.dados.ok) it.st = st;
+    }
+  }
+  async function lerPedidos(){
+    if(typeof _sbLigado === 'undefined' || !_sbLigado || S.view !== 'agency') return;
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__pedidos__&select=dados`, { headers: sbCab() });
+      if(!r.ok) return;
+      const [l] = await r.json();
+      const itens = (l && l.dados && l.dados.itens) || {};
+      for(const [id, it] of Object.entries(itens)) if(it && typeof it === 'object') S.pedidosCli[id] = it;
+      if(converter()) render();
+      sincronizarAndamento();
+    }catch(e){}
+  }
+  window.MaestroPedidos = { lerPedidos, converter, andamentoDe, sincronizarAndamento, carregarPedidos };
+  sbCarregar = (function(orig){
+    return function(){ const p = orig.apply(this, arguments);
+      return Promise.resolve(p).then(ok => { if(ok) setTimeout(lerPedidos, 300); return ok; }); };
+  })(sbCarregar);
+  setInterval(() => { if(document.visibilityState !== 'hidden') lerPedidos(); }, 60000);
+  let _ultimoSync = 0;
+  function pintarSelo(){
+    if(!S.ensaio || S.view !== 'agency') return;
+    document.querySelectorAll('.enCard[data-entar]').forEach(card => {
+      if(card.querySelector('.pdSelo')) return;
+      const sel = card.querySelector('.enSelos') || card.querySelector('.meta'); if(!sel) return;
+      const t = S.ensaio.tarefas.find(x => x.id === +card.dataset.entar);
+      if(t && t.pedidoId) sel.insertAdjacentHTML(sel.classList.contains('enSelos') ? 'afterbegin' : 'beforeend', `<span class="pdSelo" title="${esc(t.pedidoPor ? 'Pedido por ' + t.pedidoPor : 'Pedido pelo link do cliente')}">pedido do cliente</span>`);
+    });
+    if(Date.now() - _ultimoSync > 5000 && Object.keys(S.pedidosCli).length){ _ultimoSync = Date.now(); sincronizarAndamento(); }
+  }
+
+  render = (function(orig){ return function(){ const r = orig.apply(this, arguments); atalhosNoInicio(); pintarSelo(); return r; }; })(render);
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-pdenviar],[data-v244arq]'); if(!b) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if(b.dataset.pdenviar){ if(!S.v244.enviando) enviarPedido(); return; }
+    S.v244Arq = b.dataset.v244arq; render();
+  }, true);
   try{ render(); }catch(e){}
 })();
 </script>
