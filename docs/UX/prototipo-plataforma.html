@@ -16053,7 +16053,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v242 · 24 set · o arquivo e o formato';
+const VERSAO_PROTOTIPO = 'v243 · 24 set · o lote do mês';
 
 menuSheet = (function(orig){
   return function(){
@@ -43869,6 +43869,216 @@ button.clPost:active{ transform:scale(.98) }
   })(decidirCard);
   window.MaestroMidia.telasDoPedido = telasDoPedido;
 
+  try{ render(); }catch(e){}
+})();
+</script>
+<style id="v243-o-lote-do-mes">
+/* v243 — o lote do mês. Motivo e caminho em docs/CHANGELOG.md 0.5.57. */
+.clFiltros{ display:flex; gap:6px; overflow-x:auto; margin:4px 0 14px; scrollbar-width:none }
+.clFiltros::-webkit-scrollbar{ display:none }
+.clFiltros button{ flex:0 0 auto; padding:7px 12px; border-radius:999px; border:1px solid var(--line); background:transparent;
+  color:var(--mut); font-size:12.5px }
+.clFiltros button b{ font-weight:600; margin-left:4px; color:inherit }
+.clFiltros button.on{ border-color:var(--acc); color:var(--tx); background:rgba(200,150,58,.10) }
+.clFiltros button:disabled{ opacity:.45 }
+.clbody[data-clfiltro]:not([data-clfiltro="todas"]) > h3{ display:none }
+.clbody[data-clfiltro="espera"] .clrow[data-cgrp]:not([data-cgrp="espera"]),
+.clbody[data-clfiltro="ok"] .clrow[data-cgrp]:not([data-cgrp="ok"]),
+.clbody[data-clfiltro="ajuste"] .clrow[data-cgrp]:not([data-cgrp="ajuste"]){ display:none }
+.clNav{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 10px }
+.clNav button{ display:inline-flex; align-items:center; gap:4px; padding:7px 10px; border-radius:10px; border:1px solid var(--line);
+  background:transparent; color:var(--tx); font-size:13px }
+.clNav button:disabled{ opacity:.35 }
+.clNav span{ font-size:12.5px; color:var(--mut); font-variant-numeric:tabular-nums }
+.clPerfilAbaLinha{ display:flex; align-items:center; justify-content:space-between; gap:10px }
+.v243BtIg{ display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border-radius:999px; border:1px solid var(--line);
+  background:transparent; color:var(--tx); font-size:12px; white-space:nowrap }
+/* o modo Instagram: sempre escuro, como o app */
+#v243ig{ position:fixed; inset:0; z-index:1000; background:#000; color:#F5F5F5; overflow-y:auto;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif; -webkit-overflow-scrolling:touch }
+#v243ig .igTopo{ position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between;
+  padding:12px 14px; background:#000 }
+#v243ig .igTopo b{ font-size:18px; font-weight:700 }
+#v243ig .igTopo button{ width:36px; height:36px; border-radius:50%; border:0; background:transparent; color:#fff; display:grid; place-items:center }
+#v243ig .igPerfil{ display:flex; align-items:center; gap:22px; padding:6px 16px 10px }
+#v243ig .igFoto{ width:78px; height:78px; border-radius:50%; flex:0 0 auto; overflow:hidden; display:grid; place-items:center;
+  font-weight:700; font-size:24px; color:#fff; box-shadow:0 0 0 2px #000, 0 0 0 4px #DD2A7B }
+#v243ig .igFoto img{ width:100%; height:100%; object-fit:cover }
+#v243ig .igNums{ display:flex; gap:18px; text-align:center; font-size:13px }
+#v243ig .igNums b{ display:block; font-size:16px }
+#v243ig .igNome{ padding:0 16px; font-size:14px; font-weight:600 }
+#v243ig .igBio{ padding:2px 16px 12px; font-size:13px; color:#A8A8A8 }
+#v243ig .igDest{ display:flex; gap:14px; padding:4px 16px 14px; overflow-x:auto }
+#v243ig .igDest button{ flex:0 0 auto; border:0; background:transparent; color:#F5F5F5; font-size:12px; display:grid; justify-items:center; gap:5px }
+#v243ig .igDest i{ width:62px; height:62px; border-radius:50%; overflow:hidden; display:block; background:#262626 center/cover;
+  box-shadow:0 0 0 2px #000, 0 0 0 3.5px #363636 }
+#v243ig .igDest button.on i{ box-shadow:0 0 0 2px #000, 0 0 0 3.5px #F5F5F5 }
+#v243ig .igAbas{ display:flex; border-top:1px solid #262626 }
+#v243ig .igAbas button{ flex:1; padding:10px 0; border:0; background:transparent; color:#737373; display:grid; place-items:center;
+  border-bottom:1px solid transparent }
+#v243ig .igAbas button.on{ color:#F5F5F5; border-bottom-color:#F5F5F5 }
+#v243ig .igGrade{ display:grid; grid-template-columns:repeat(3,1fr); gap:2px }
+#v243ig .igGrade button{ position:relative; aspect-ratio:3/4; border:0; padding:0; background:#262626 center/cover; color:#fff; cursor:pointer }
+#v243ig .igGrade.reels button{ aspect-ratio:9/16 }
+#v243ig .igGrade .tp{ position:absolute; top:6px; right:6px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.7)) }
+#v243ig .igGrade .tt{ position:absolute; inset:auto 6px 6px 6px; font-size:11px; line-height:1.25; text-align:left;
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden }
+#v243ig .igGrade .comArte .tt{ display:none }
+#v243ig .igGrade .ap{ position:absolute; top:6px; left:6px; font-size:10.5px; font-weight:600; padding:2px 7px; border-radius:6px;
+  background:#E5B94C; color:#1a1405 }
+#v243ig .igVazio{ padding:40px 20px; text-align:center; color:#A8A8A8; font-size:13px }
+</style>
+<script>
+(function(){
+  const fase = p => typeof faseDe === 'function' ? faseDe(p) : (p.fase || '');
+  const grupo = p => (typeof comCliente === 'function' && comCliente(p)) ? 'espera'
+    : ((typeof pedidoAberto === 'function' && pedidoAberto(p)) || p.ajustePendente) ? 'ajuste' : 'ok';
+  S.clFiltro = S.clFiltro || 'todas';
+
+  /* ---------- 1. as abas com a conta --------------------------------- */
+  const FILTROS = [['espera', 'Para revisar'], ['ok', 'Aprovadas'], ['ajuste', 'Em ajuste'], ['todas', 'Todas']];
+  clPauta = (function(orig){
+    return function(){
+      let html = orig.apply(this, arguments);
+      if(S.view !== 'client' || !html) return html;
+      const cards = cardsDoCliente();
+      if(!cards.length) return html;
+      const n = { espera: 0, ok: 0, ajuste: 0, todas: cards.length };
+      const g = {}; cards.forEach(p => { g[p.id] = grupo(p); n[g[p.id]]++; });
+      if(S.clFiltro !== 'todas' && !n[S.clFiltro]) S.clFiltro = 'todas';
+      html = html.replace(/<button class="clrow([^"]*)" data-clcard="(\d+)"/g, (m0, c, id) =>
+        `<button class="clrow${c}" data-clcard="${id}" data-cgrp="${g[id] || 'ok'}"`);
+      html = html.replace('<div class="clbody venter">', `<div class="clbody venter" data-clfiltro="${S.clFiltro}">`);
+      const abas = `<div class="clFiltros" role="tablist" aria-label="Filtrar as publicações">${FILTROS.map(([k, nome]) =>
+        `<button type="button" role="tab" data-clfiltro="${k}" class="${S.clFiltro === k ? 'on' : ''}" aria-selected="${S.clFiltro === k}" ${!n[k] && k !== 'todas' ? 'disabled' : ''}>${nome}<b>${n[k]}</b></button>`).join('')}</div>`;
+      const i = html.search(/<h3>(Esperando você|Já decididas)<\/h3>/);
+      html = i > 0 ? html.slice(0, i) + abas + html.slice(i) : html;
+      /* o perfil ganha a porta para o modo Instagram */
+      html = html.replace('<div class="clPerfilAba">Como o seu feed vai ficar</div>',
+        `<div class="clPerfilAbaLinha"><div class="clPerfilAba">Como o seu feed vai ficar</div>
+          <button type="button" class="v243BtIg" data-v243ig="1">${ic('img', 13)} Modo Instagram</button></div>`);
+      return html;
+    };
+  })(clPauta);
+  if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clpauta = () => clPauta();
+
+  /* ---------- 2. anterior e próximo, dentro do post ------------------ */
+  const sequencia = () => {
+    const todas = [...cardsComCliente(), ...cardsDoCliente().filter(p => !comCliente(p))];
+    return S.clFiltro && S.clFiltro !== 'todas' ? todas.filter(p => grupo(p) === S.clFiltro || p.id === S.pcSel) : todas;
+  };
+  clCard = (function(orig){
+    return function(){
+      let html = orig.apply(this, arguments);
+      const p = S.pauta.find(x => x.id === S.pcSel);
+      if(S.view !== 'client' || !html || !p) return html;
+      const seq = sequencia(); const i = seq.findIndex(x => x.id === p.id);
+      if(i >= 0 && seq.length > 1){
+        const ant = seq[i - 1], prox = seq[i + 1];
+        const nav = `<div class="clNav"><button type="button" ${ant ? `data-clcard="${ant.id}"` : 'disabled'} aria-label="Publicação anterior">${ic('arrowl', 13)} Anterior</button>
+          <span>${String(i + 1).padStart(2, '0')} / ${String(seq.length).padStart(2, '0')}</span>
+          <button type="button" ${prox ? `data-clcard="${prox.id}"` : 'disabled'} aria-label="Próxima publicação">Próximo ${ic('arrowr', 13)}</button></div>`;
+        html = html.indexOf('<div class="decTopo">') >= 0 ? html.replace('<div class="decTopo">', '<div class="decTopo">' + nav)
+          : html.replace(/(<div class="clbody fix[^"]*">)/, '$1' + nav);
+      }
+      /* decidiu: o próximo que espera, num toque */
+      if(!comCliente(p) && !S.pcPedindo){
+        const falta = cardsComCliente().filter(x => x.id !== p.id);
+        if(falta.length) html = html.replace(/(<button class="clbtn" data-r="clpauta">)/,
+          `<button class="clbtn" data-clcard="${falta[0].id}">Próxima para revisar ${ic('arrowr', 13)}</button>
+           <button class="clbtn sec" data-r="clpauta" style="margin-top:9px">`);
+      }
+      return html;
+    };
+  })(clCard);
+  if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clcard = () => clCard();
+  /* decidir em fila: depois da decisão, o próximo que espera — a lista só
+     volta quando não sobra nenhum */
+  decidirCard = (function(orig){
+    return function(id, decisao){
+      const antes = S.view === 'client' && S.route === 'clcard' ? sequencia().map(p => p.id) : null;
+      const r = orig.apply(this, arguments);
+      if(antes && S.view === 'client' && S.route === 'clpauta'){
+        const i = antes.indexOf(id);
+        const pend = new Set(cardsComCliente().map(p => p.id));
+        const prox = [...antes.slice(i + 1), ...antes.slice(0, Math.max(i, 0))].find(x => pend.has(x));
+        if(prox){ S.route = 'clcard'; S.pcSel = prox; S.pcPedindo = false; window.scrollTo(0, 0); render(); }
+      }
+      return r;
+    };
+  })(decidirCard);
+
+  /* ---------- 3. o modo Instagram ------------------------------------ */
+  const ehReel = p => /reels|shorts|story|v[íi]deo/i.test((p.fmts && p.fmts.length ? p.fmts : [p.fmt]).join(' '))
+    || (window.MaestroMidia && MaestroMidia.tipoDe(p) === 'video');
+  const ehCarrossel = p => /carrossel/i.test((p.fmts && p.fmts.length ? p.fmts : [p.fmt]).join(' '))
+    || (window.MaestroMidia && MaestroMidia.tipoDe(p) === 'carrossel');
+  const DESTAQUES = [['todos', 'Todos'], ['feed', 'Feed'], ['reels', 'Reels'], ['carrossel', 'Carrossel']];
+  function postsIg(){
+    const lista = cardsDoCliente().filter(p => typeof noInsta !== 'function' || noInsta(p));
+    return lista.sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')) || (b.id - a.id));
+  }
+  function igHtml(){
+    const st = S.v243Ig; const c = cliAtual() || {};
+    const todos = postsIg();
+    const filtro = st.filtro || 'todos';
+    let lista = todos.filter(p => filtro === 'todos' ? true : filtro === 'reels' ? ehReel(p)
+      : filtro === 'carrossel' ? ehCarrossel(p) : !ehReel(p));
+    if(st.aba === 'reels') lista = lista.filter(ehReel);
+    const arroba = String(c.ig || c.instagram || c.nome || 'perfil').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9._]/g, '');
+    const logo = c.logo && urlSegura(c.logo);
+    const cor = typeof corSegura === 'function' ? corSegura(c.cor || '#35333A') : '#35333A';
+    const capa = p => typeof capaDoCard === 'function' ? capaDoCard(p) : cor;
+    const temArte = p => (typeof materiaisDe === 'function' ? materiaisDe(p) : []).some(m => m && ((m.tipo === 'imagem' && m.url) || m.poster));
+    const destaque = ([k, nome]) => { const um = todos.find(p => k === 'todos' || (k === 'reels' ? ehReel(p) : k === 'carrossel' ? ehCarrossel(p) : !ehReel(p)));
+      return `<button type="button" data-v243filtro="${k}" class="${filtro === k ? 'on' : ''}" aria-pressed="${filtro === k}"><i style="background:${um ? capa(um) : '#262626'}"></i>${nome}</button>`; };
+    const tile = p => `<button type="button" data-v243abre="${p.id}" class="${temArte(p) ? 'comArte' : ''}" style="background:${capa(p)}" title="${esc(p.t || '')}">
+        ${comCliente(p) ? '<span class="ap">Aprovar</span>' : ''}
+        ${ehCarrossel(p) ? `<span class="tp" aria-label="carrossel">${ic('stack', 15)}</span>` : ehReel(p) ? `<span class="tp" aria-label="reels">${ic('play', 15)}</span>` : ''}
+        <span class="tt">${esc(p.t || '')}</span></button>`;
+    return `<div id="v243ig" role="dialog" aria-modal="true" aria-label="Pré-visualização do feed no Instagram">
+      <div class="igTopo"><b>@${esc(arroba)}</b><button type="button" data-v243fecha="1" aria-label="Fechar">${ic('x', 18)}</button></div>
+      <div class="igPerfil"><div class="igFoto" style="background:${cor}">${logo ? `<img src="${logo}" alt="">` : esc(c.ini || String(c.nome || '?').slice(0, 2).toUpperCase())}</div>
+        <div class="igNums"><span><b>${todos.length}</b>posts</span><span><b>${todos.filter(comCliente).length}</b>para aprovar</span><span><b>${todos.filter(p => grupo(p) === 'ok').length}</b>aprovados</span></div></div>
+      <div class="igNome">${esc(c.nome || '')}</div>
+      <div class="igBio">Pré-visualização do feed</div>
+      <div class="igDest">${DESTAQUES.map(destaque).join('')}</div>
+      <div class="igAbas"><button type="button" data-v243aba="grade" class="${st.aba !== 'reels' ? 'on' : ''}" aria-label="Grade">${ic('grid', 18)}</button>
+        <button type="button" data-v243aba="reels" class="${st.aba === 'reels' ? 'on' : ''}" aria-label="Reels">${ic('play', 18)}</button></div>
+      ${lista.length ? `<div class="igGrade ${st.aba === 'reels' ? 'reels' : ''}">${lista.map(tile).join('')}</div>`
+        : `<div class="igVazio">Nada aqui ${st.aba === 'reels' ? 'na aba de reels' : 'neste filtro'} ainda.</div>`}
+    </div>`;
+  }
+  function pintarIg(){
+    const velho = document.getElementById('v243ig');
+    if(!S.v243Ig || S.view !== 'client'){ if(velho) velho.remove(); return; }
+    const topo = velho ? velho.scrollTop : 0;
+    if(velho) velho.remove();
+    document.body.insertAdjacentHTML('beforeend', igHtml());
+    document.getElementById('v243ig').scrollTop = topo;
+  }
+  /* no "Seu feed" também */
+  function portaNoFeed(){
+    if(S.view !== 'client' || S.route !== 'feed') return;
+    const seg = document.querySelector('#root .seg.s3');
+    if(seg && !document.querySelector('#root [data-v243ig]'))
+      seg.insertAdjacentHTML('beforebegin', `<div style="display:flex;justify-content:flex-end;margin:0 0 10px"><button type="button" class="v243BtIg" data-v243ig="1">${ic('img', 13)} Modo Instagram</button></div>`);
+  }
+  render = (function(orig){ return function(){ const r = orig.apply(this, arguments); portaNoFeed(); pintarIg(); return r; }; })(render);
+
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-clfiltro],[data-v243ig],[data-v243fecha],[data-v243filtro],[data-v243aba],[data-v243abre]');
+    if(!b || b.tagName !== 'BUTTON') return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    const d = b.dataset;
+    if(d.clfiltro){ S.clFiltro = d.clfiltro; render(); return; }
+    if(d.v243ig){ S.v243Ig = { aba: 'grade', filtro: 'todos' }; if(typeof som === 'function') som('toque'); render(); return; }
+    if(d.v243fecha){ S.v243Ig = null; render(); return; }
+    if(d.v243filtro){ S.v243Ig.filtro = d.v243filtro; pintarIg(); return; }
+    if(d.v243aba){ S.v243Ig.aba = d.v243aba; pintarIg(); return; }
+    if(d.v243abre){ S.v243Ig = null; S.pcSel = +d.v243abre; S.pcPedindo = false; S.route = 'clcard'; window.scrollTo(0, 0); render(); }
+  }, true);
+  addEventListener('keydown', e => { if(e.key === 'Escape' && S.v243Ig){ S.v243Ig = null; render(); } });
   try{ render(); }catch(e){}
 })();
 </script>

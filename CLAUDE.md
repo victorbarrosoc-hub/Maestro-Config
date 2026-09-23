@@ -299,6 +299,15 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v243) — o lote do mês.** Do vídeo do Pautta que o founder
+mandou: abas com a conta em Publicações (Para revisar · Aprovadas · Em ajuste ·
+Todas); **decidir em fila** ("‹ Anterior · 03 / 05 · Próximo ›", e depois de
+decidir o próximo que espera já abre); e o **Modo Instagram** em tela cheia
+(destaques que filtram, aba de reels 9:16, tocar abre a decisão). 20 provas em
+`web/verificar/v243-o-lote-do-mes.mjs`. **Aberto — publicar sozinho no
+Instagram/Facebook:** depende de app na Meta, verificação da empresa e revisão
+da permissão `instagram_content_publish` (passos do dono da conta), mais tokens
+no servidor e função agendada. Detalhe em `docs/CHANGELOG.md` 0.5.57.
 **Fechado (24 set, v242) — o arquivo e o formato.** O app mede cada arquivo e
 diz quando não bate com o formato/rede (9:16 reels/story/shorts/TikTok, 16:9
 YouTube, 4:5–1,91:1 feed; carrossel com telas diferentes) — no card, na ficha

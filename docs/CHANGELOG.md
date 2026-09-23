@@ -1,9 +1,56 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.56
+Version: 0.5.57
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.57 — 2026-09-24
+
+**Status:** Concluída
+
+### v243 — o lote do mês
+
+*"Eu queria muito isso no Maestro, resolveria muito os meus problemas"* — com um
+vídeo de 30s do Pautta (portal do cliente: o lote "Feed – julho", abas
+Revisar/Aprov./Ajuste/Tudo, o post aberto com "‹ Anterior · 01 / 08 ·
+Próximo ›", o "Modo Instagram" e "a partir do momento que ele aprova, agenda
+automaticamente no Instagram e no Facebook").
+
+**O que já existia na Maestro** e o vídeo também mostra: o perfil com a grade
+(v236), aprovar curtindo (v237), o carrossel que desliza e o pedido por tela
+(v241–v242). **O que faltava, e entrou:**
+
+- **As abas com a conta** em Publicações: Para revisar · Aprovadas · Em ajuste
+  · Todas. Aba sem nada fica apagada; o rascunho da agência não conta.
+- **Decidir em fila.** Dentro do post, "‹ Anterior · 03 / 05 · Próximo ›", na
+  ordem e no filtro da lista. E depois de decidir, o próximo que espera JÁ
+  ABRE — a lista só volta quando não sobra nenhum. Antes, cada decisão
+  devolvia o cliente à lista. Reabrindo um já decidido, o rodapé oferece
+  "Próxima para revisar".
+- **O Modo Instagram**, em tela cheia e sempre escuro, como o app: @ do
+  cliente, foto, a conta (posts · para aprovar · aprovados), "Pré-visualização
+  do feed", destaques que FILTRAM (Todos · Feed · Reels · Carrossel), a aba de
+  grade (3:4) e a de reels (9:16), selos de carrossel e reels, "Aprovar" no
+  que espera. Tocar num post fecha o modo e abre a decisão DELE. A porta fica
+  no perfil de Publicações e no "Seu feed"; Esc fecha. Fica acima das barras
+  do app (que cobriam o @ na primeira versão — a prova mede isso com
+  `elementFromPoint`) e abaixo dos avisos.
+
+20 provas em `web/verificar/v243-o-lote-do-mes.mjs`.
+
+**O que NÃO entrou, e por quê: publicar sozinho no Instagram e no Facebook.**
+Não é tela — é integração, e depende de passos que só o dono da conta Meta faz:
+um app na Meta for Developers, a verificação da empresa, e a revisão da Meta
+para a permissão de publicar (`instagram_content_publish`), com a conta do
+cliente sendo Profissional e ligada a uma Página. Do nosso lado: o login da
+Meta por cliente, os tokens guardados no servidor (nunca no navegador), e uma
+função agendada que publica na hora marcada. A mídia já está pronta para isso:
+o bucket `midia` é público e a API da Meta publica a partir de um endereço
+público — carrossel (até 10), reels e story. Botão de "agendar" que não
+publica seria mentira, então ele só entra quando publicar de verdade.
 
 ---
 
