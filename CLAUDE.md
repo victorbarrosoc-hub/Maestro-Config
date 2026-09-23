@@ -299,14 +299,14 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
-**Fechado no código (24 set, v244) — o cliente pede e acha.** Pelo link:
+**Fechado (24 set, v244) — o cliente pede e acha.** Pelo link:
 "Pedir à agência" (formulário → tarefa no Inbox do Ensaio, com andamento que
 volta ao cliente) e "Arquivos" (tudo o que aprovou, por mês, com baixar). 23
-provas em `web/verificar/v244-o-cliente-pede-e-acha.mjs`. **Falta o founder
-rodar `docs/ENGINEERING/pedidos-1-o-cliente-pede.sql` no Supabase** (três
-funções, linha `__pedidos__` travada; 21 provas em Postgres 16 em
-`pedidos-1-teste.sql`). Sem isso, a tela diz que os pedidos não estão ligados;
-Arquivos funciona sem nada.
+provas em `web/verificar/v244-o-cliente-pede-e-acha.mjs`. **O founder rodou
+`docs/ENGINEERING/pedidos-1-o-cliente-pede.sql` no Supabase em 24/set** — as
+três funções confirmadas no banco de produção (linha `__pedidos__` travada; 21
+provas em Postgres 16 em `pedidos-1-teste.sql`). Falta a conferência no
+caminho de verdade: um pedido pelo link chegando ao Inbox.
 **Fechado (24 set, v243) — o lote do mês.** Do vídeo do Pautta que o founder
 mandou: abas com a conta em Publicações (Para revisar · Aprovadas · Em ajuste ·
 Todas); **decidir em fila** ("‹ Anterior · 03 / 05 · Próximo ›", e depois de
