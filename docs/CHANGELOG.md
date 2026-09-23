@@ -1,9 +1,67 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.59
+Version: 0.5.60
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.60 — 2026-09-24
+
+**Status:** Concluída
+
+### v246 — o card não volta
+
+*"Os cards estão voltando às tarefas anteriores no Ensaio. Eu já postei e
+marquei como postado esses dois — e não é a primeira vez."* O carrossel do
+STF voltou para Do (produzindo) e o corte 5 do EJUPcast para "com o
+cliente", os dois já postados.
+
+**A causa.** O aparelho guarda a pauta e, À PARTE, a base da sincronização
+(o que o banco disse por último). As duas gravações no navegador acontecem
+em momentos diferentes e falham em silêncio quando ele fica sem espaço. Com
+a pauta guardada mais velha que a base, a mescla de três lados via "o card
+daqui difere da base, e o banco não mudou desde a base" e concluía "mexi
+aqui" — e o card de dias atrás vencia o postado, e ainda era gravado de
+volta no banco, carimbado como novo. **E a pergunta era feita na lista
+inteira de uma vez**: com o banco igual à base, a lista do aparelho entrava
+inteira, e a regra por card (o `mod`) nunca chegava a ser consultada.
+
+**O conserto.**
+
+- **A cópia velha não é mudança minha.** Quando "só aqui mudou", a mescla
+  agora desce até cada card: se a BASE (o que este aparelho viu do banco)
+  traz o card com `mod` MAIS NOVO que a cópia daqui, alguém mexeu nele
+  depois da última vez que este aparelho mexeu — a cópia é velha e o banco
+  vence. A hora é a da base, não a do banco agora: um aparelho velho que só
+  carimbou, sem mudar nada, não desfaz o que outro mudou (prova 4.1 da
+  v156, que pegou a primeira versão desta regra). Mudança de verdade feita aqui
+  leva `mod` de agora e segue vencendo; mudança sem carimbo sobre a mesma
+  base (sem rede desde o começo) também fica.
+- **A fase tem hora.** `porFase` carimba `faseEm`. Se o banco traz uma
+  mudança de fase comprovadamente mais nova, a daqui não vence por nenhum
+  caminho. A decisão do cliente pelo link (que muda a fase no banco sem
+  essa hora) continua decidida como sempre.
+- **A leitura espera a página abrir.** Achado pela própria prova: com a
+  sessão guardada, a resposta do banco podia chegar antes de a camada de
+  sincronização existir, e a pauta do banco entrava crua, sem mescla — o
+  que foi mudado sem rede se perdia. A escrita já esperava desde a v241;
+  agora a leitura também.
+
+**O que a v246 não desfaz:** os dois cards que voltaram estão assim no
+banco (com carimbo novo). É preciso marcar de novo como postados.
+
+**Primeira tentativa, descartada:** comparar a HORA em que a pauta e a base
+foram guardadas e, com a pauta mais velha, jogar a base fora. Resolvia o
+caso do founder, mas a base também é guardada depois de uma LEITURA — e
+então uma mudança feita sem rede, ainda não gravada, seria descartada. A
+prova 8 pegou isso numa rodada em três.
+
+19 provas em `web/verificar/v246-o-card-nao-volta.mjs`, com dois aparelhos
+contra um banco só: o celular com a pauta velha guardada reabre e os dois
+cards seguem postados. Sem o conserto, a prova falha nas três provas do
+caso (o banco volta para produção e "com o cliente"), toda vez.
 
 ---
 

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-23 18:26 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-23 22:42 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -10425,6 +10425,13 @@ async function sbCarregar(){
      nada. A RLS já devolveria `[]` — mas pedir o que não se pode ver é
      ruído, e um dia a RLS pode ser mexida por engano. */
   if(typeof abertoPorLink === 'function' && abertoPorLink()) return false;
+  /* v246 — a leitura também espera a página abrir (a escrita espera desde
+     a v241). Com a sessão guardada, a entrada pede o banco enquanto o
+     navegador ainda lê o arquivo; se a resposta chega antes da camada de
+     sincronização (v151) existir, a pauta do banco entra CRUA por cima da
+     do aparelho — sem a mescla — e o que foi mudado sem rede se perde. */
+  if(document.readyState === 'loading')
+    await new Promise(r => document.addEventListener('DOMContentLoaded', r, { once: true }));
   sbSelo('carregando');
   let linhas;
   try{
@@ -16121,7 +16128,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v245 · 24 set · o card não pisca e o vídeo tem capa';
+const VERSAO_PROTOTIPO = 'v246 · 24 set · o card não volta';
 
 menuSheet = (function(orig){
   return function(){
@@ -32735,7 +32742,68 @@ addEventListener('click', e => {
     for(const k of Object.keys(b)) if(!igual(b[k], x[k])) return false;
     return true;
   }
+  /* v246 — A CÓPIA VELHA NÃO É MUDANÇA MINHA.
+     "Os cards estão voltando às tarefas anteriores no Ensaio — eu já
+     postei e marquei como postado, e não é a primeira vez." A pauta do
+     aparelho e a base (o que o banco disse por último) são guardadas no
+     navegador em momentos diferentes, e as duas falham em silêncio quando
+     ele fica sem espaço. Com a pauta guardada mais velha que a base, a
+     regra "difere da base e lá não mudou → mexi aqui" lia o card de dias
+     atrás como mudança deste aparelho: ele vencia o postado e era gravado
+     de volta no banco. A prova disso: a BASE traz o card com `mod` MAIS
+     NOVO que o da cópia daqui — alguém mexeu nele depois da última vez
+     que este aparelho mexeu. Mudança de verdade feita aqui leva `mod` de
+     agora (carimbarItens, antes de gravar), e essa segue vencendo.
+     E a fase tem hora (`faseEm`, carimbada em porFase): se o banco traz
+     uma mudança de fase comprovadamente mais nova que a daqui, a daqui
+     não vence por nenhum caminho. Só nesse sentido: a decisão do cliente
+     pelo link muda a fase no banco sem `faseEm`, e essa segue decidida
+     pelo `mod`, como sempre. */
+  const DO_CICLO_V246 = ['fase','feito','st','postadoEm','postadoPor','agendadoEm','enviadoEm','faseEm'];
+  const velhoDiante = (b, l) => (+l.mod || 0) < (+b.mod || 0);
+  const faseVelha = (b, l) => l.fase !== b.fase && (+b.faseEm || 0) > (+l.faseEm || 0);
+  /* "só aqui mudou" é decidido na lista inteira de uma vez (ou no pacote
+     inteiro): a pergunta tem de descer até cada card */
+  function semCopiaVelha(b, l){
+    if(comId(l) && comId(b) && b.id === l.id){
+      if(velhoDiante(b, l)) return b;
+      if(faseVelha(b, l)){ const c = Object.assign({}, l);
+        for(const k of DO_CICLO_V246){ if(k in b) c[k] = b[k]; else delete c[k]; } return c; }
+      return l;
+    }
+    if(Array.isArray(l) && Array.isArray(b)){
+      const B = new Map(b.filter(comId).map(x => [x.id, x]));
+      let mudou = false;
+      const out = l.map(x => { const bx = comId(x) ? B.get(x.id) : undefined;
+        const y = bx ? semCopiaVelha(bx, x) : x; if(y !== x) mudou = true; return y; });
+      return mudou ? out : l;
+    }
+    if(plano(l) && plano(b)){
+      let out = l;
+      for(const k of Object.keys(l)){
+        if(!(k in b)) continue;
+        const y = semCopiaVelha(b[k], l[k]);
+        if(y !== l[k]){ if(out === l) out = Object.assign({}, l); out[k] = y; }
+      }
+      return out;
+    }
+    return l;
+  }
   function mescla3(base, local, remoto, prefer){
+    /* a hora que conta é a da BASE (o que este aparelho viu do banco), não
+       a do banco agora: um aparelho velho que só carimbou, sem mudar nada,
+       não desfaz o que outro mudou de verdade (prova 4.1 da v156) */
+    if(!igual(local, remoto) && igual(remoto, base) && !igual(local, base)) return semCopiaVelha(base, local);
+    const out = mescla3Cru(base, local, remoto, prefer);
+    if(comId(local) && comId(remoto) && plano(out) && out.fase === local.fase && local.fase !== remoto.fase
+       && (+remoto.faseEm || 0) > (+local.faseEm || 0)){
+      const c = Object.assign({}, out);
+      for(const k of DO_CICLO_V246){ if(k in remoto) c[k] = remoto[k]; else delete c[k]; }
+      return c;
+    }
+    return out;
+  }
+  function mescla3Cru(base, local, remoto, prefer){
     if(igual(local, remoto)) return local;
     if(igual(remoto, base)) return local;             // só aqui mudou
     if(igual(local, base)) return remoto;             // só lá mudou
@@ -44426,6 +44494,19 @@ button.clPost:active{ transform:scale(.98) }
   }, true);
   try{ render(); }catch(e){}
 })();
+</script>
+<script>
+/* v246 — a fase tem hora. Motivo em docs/CHANGELOG.md 0.5.60 e na mescla
+   da v151 (mescla3): o banco com uma fase mais nova não perde para uma
+   cópia velha deste aparelho. */
+porFase = (function(orig){
+  return function(p, k){
+    const antes = p && p.fase;
+    const r = orig.apply(this, arguments);
+    try{ if(p && p.fase !== antes) p.faseEm = Date.now(); }catch(e){}
+    return r;
+  };
+})(porFase);
 </script>
 <style id="v245-a-capa-do-video">
 /* v245 — a capa do vídeo, e o card que não pisca. Motivo em docs/CHANGELOG.md 0.5.59. */

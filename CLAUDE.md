@@ -299,6 +299,18 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v246) — o card não volta.** Cards já postados voltavam a
+fases anteriores. O aparelho guarda a pauta e a base da sincronização em
+momentos diferentes (e as duas falham em silêncio sem espaço); com a pauta
+mais velha que a base, a mescla lia o card velho como "mexi aqui" — e a
+pergunta era feita na LISTA inteira, então a regra por card nunca rodava.
+Agora "só aqui mudou" desce até cada card e o `mod` mais novo do banco
+vence a cópia velha; a fase ganhou hora (`faseEm`); e a leitura do banco
+espera a página abrir (mudança sem rede se perdia). **Lição:** a primeira
+cura (descartar a base pela hora) perdia mudança feita sem rede — a base
+também é guardada depois de LER; e a hora que conta é a da BASE, não a do
+banco agora (a prova 4.1 da v156 pegou isso). 19 provas em
+`web/verificar/v246-o-card-nao-volta.mjs`, dois aparelhos e um banco.
 **Fechado (24 set, v245) — o card não pisca, e o vídeo tem capa.** A faixa
 de miniaturas do Ensaio nascia de novo a cada sincronização (`<img>` novo,
 quadro preto até carregar); agora é o MESMO elemento enquanto a peça não
