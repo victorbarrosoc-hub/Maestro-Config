@@ -1,9 +1,71 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.54
+Version: 0.5.55
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.55 — 2026-09-24
+
+**Status:** Concluída
+
+### v241 — a mídia que chega
+
+*"O cliente não tá conseguindo ver as imagens do carrossel pra aprovação que
+foram anexadas na tarefa. Quero conseguir ver as imagens no Ensaio também —
+quando envia pro cliente eu não consigo mais ver na coluna 'com o cliente'."*
+E depois: *"Você precisa entender melhor as mídias que são enviadas e adaptar a
+cada situação de mídia ou plataforma"*, com prints do "Seu feed" (post
+tracejado, sem arte) e do "Previsto × no ar" (um quadrado cinza).
+
+**Reproduzido no navegador, com três telas de carrossel já na nuvem.** Cinco
+causas, e cada uma explica um pedaço do que ele viu:
+
+1. **Duas caixas.** O anexo da TAREFA (`t.anexos`, v119, "Documentos e
+   referências") mora no quadro e nunca vai ao link do cliente; só a PEÇA do
+   card (`S.mat`, o "subir peça") vai. Imagem anexada na tarefa = cliente vê o
+   post tracejado. É o print dele.
+2. **O Ensaio não desenhava a peça em coluna nenhuma.** O card não tinha mídia;
+   a ficha dizia "N peças anexadas"; a prévia grande só existia em Act.
+3. **Upload que falha é silencioso.** Sem nuvem, o arquivo fica só no aparelho
+   de quem subiu, e ninguém é avisado.
+4. **Um formato só.** 4:5 em tudo; o carrossel virava a primeira imagem nas
+   grades; na decisão, no celular, objetivo/data/projeto vinham antes da arte.
+5. **O gráfico com um mês só** desenhava a barra do previsto como um quadrado
+   cinza, e "no ar" = 0 sumia.
+
+**O que mudou:**
+- **Tarefa → peça.** Imagem ou vídeo na tarefa de um card ganha "→ peça", e a
+  ficha avisa quando a arte está na tarefa ("o cliente não recebe") com "Usar
+  as N na peça". É MOVER, não copiar, e na ordem. Documento da tarefa continua
+  sendo só da equipe — a decisão de ir ao cliente é de quem anexou, num toque.
+  Arquivo que só existe neste aparelho entra pelo caminho da peça, que sobe.
+- **O Ensaio mostra a peça em toda coluna:** faixa de miniaturas no card, e a
+  galeria na ficha ("O que o cliente está vendo" na coluna do cliente), com a
+  tela cheia de sempre.
+- **"Não subiu — o cliente não vê"**, no card e na ficha, com "Tentar subir de
+  novo" (lê o arquivo do banco do navegador e sobe outra vez).
+- **O formato manda no quadro:** reels, story, shorts e TikTok 9:16; vídeo no
+  YouTube 16:9; o resto 4:5. O carrossel, no celular, desliza tela a tela
+  (1/3, 2/3…). As grades do cliente marcam carrossel e vídeo como o Instagram;
+  vídeo sem imagem mostra a capa; o "Seu feed" passa ao 3:4 do perfil.
+- **Na decisão, a arte antes da ficha** (o pedido de alteração segue antes,
+  como a v192 quis).
+- **Um mês só: duas barras que se leem** ("previsto" e "no ar", com número);
+  nada previsto diz que não há, em vez de NaN.
+- De passagem: a capa do card ia para `url(...)` sem guarda; agora passa por
+  `urlSegura` e aspa/parêntese são codificados.
+- O teto de peso do protótipo sobe para 2,90 MB, por escrito na suíte v172.
+
+28 provas em `web/verificar/v241-a-midia-que-chega.mjs`, pelo caminho do
+founder: imagens na tarefa → cliente sem arte → "Usar na peça" → cliente vê o
+carrossel.
+
+**Falta (não é desta versão):** cortar/enquadrar a peça por rede; checar a
+proporção do ARQUIVO contra a do formato (um 16:9 num reels, por exemplo); e a
+decisão do cliente ainda é uma só para o carrossel inteiro, não por tela.
 
 ---
 

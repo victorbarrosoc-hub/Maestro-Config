@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-23 10:12 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-23 12:32 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -2260,14 +2260,14 @@ function feedGrid(modo){
     : (typeof pedidoAberto === 'function' && pedidoAberto(p)) ? 'CHANGES_REQUESTED'
     : fase(p) === 'postado' ? 'PUBLISHED'
     : fase(p) === 'agendado' ? 'SCHEDULED' : 'APPROVED';
-  const tile = (p, cls) => ({ t:p.t, a:capaDoCard(p), cls, dot:dot(p) });
+  const tile = (p, cls) => ({ t:p.t, a:capaDoCard(p), cls, dot:dot(p), pid:p.id });
   let tiles;
   if(modo==='agora')      tiles = noAr.map(p => tile(p,''));
   else if(modo==='novas') tiles = [...espera.map(p => tile(p,'ghosty')), ...prontas.map(p => tile(p,''))];
   else tiles = [...espera.map(p => tile(p,'ghosty')),
                 ...prontas.map(p => tile(p,'')), ...noAr.map(p => tile(p,''))];
   if(!tiles.length) return `<div class="fvazio">${esc(FEED_VAZIO[modo] || FEED_VAZIO.depois)}</div>`;
-  return `<div class="fgrid">${tiles.map((x,i)=>`<div class="ftile ${x.cls} fu"
+  return `<div class="fgrid">${tiles.map((x,i)=>`<div class="ftile ${x.cls} fu" data-pid="${x.pid}"
     style="background:${x.a};animation-delay:${Math.min(i*30,300)}ms">${esc(x.t)}
     ${x.dot?`<span class="st" style="background:${DOTC[x.dot]||'#9AA1AC'}"></span>`:''}</div>`).join('')}</div>`;
 }
@@ -16100,7 +16100,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v240 · 24 set · o menu e a ficha do cliente';
+const VERSAO_PROTOTIPO = 'v241 · 24 set · a mídia que chega';
 
 menuSheet = (function(orig){
   return function(){
@@ -42535,14 +42535,14 @@ button.clPost:active{ transform:scale(.98) }
     const ini = esc(c.ini || String(c.nome || '?').slice(0, 2).toUpperCase());
     const cor = typeof corSegura === 'function' ? corSegura(c.cor || '#35333A') : '#35333A';
     const temArte = p => (typeof materiaisDe === 'function' ? materiaisDe(p) : [])
-      .some(m => m && m.tipo === 'imagem' && m.url);
+      .some(m => m && ((m.tipo === 'imagem' && m.url) || (m.tipo === 'video' && m.poster)));
     const post = p => {
       const [cls, rot] = estado(p);
       const arte = temArte(p);
       const fundo = typeof capaDoCard === 'function' ? capaDoCard(p) : cor;
       /* só é botão o que tem linha na lista: o toque é repassado para ela */
       const tag = esperando(p) || emAjuste(p) ? 'button' : 'div';
-      return `<${tag} class="clPost ${cls} ${arte ? 'comArte' : ''}" ${tag === 'button' ? `type="button" data-clperfil="${p.id}"` : ''}
+      return `<${tag} class="clPost ${cls} ${arte ? 'comArte' : ''}" data-pid="${p.id}" ${tag === 'button' ? `type="button" data-clperfil="${p.id}"` : ''}
         style="background:${fundo}" title="${esc(p.t || '')}">
         <span class="st ${cls}">${rot}</span><span class="tt">${esc(p.t || '')}</span></${tag}>`;
     };
@@ -43324,6 +43324,274 @@ button.clPost:active{ transform:scale(.98) }
     }
   }
   try{ if(typeof render === 'function') render(); }catch(e){}
+})();
+</script>
+<style id="v241-a-midia-que-chega">
+/* v241 — a mídia que chega. Motivo e caminho em docs/CHANGELOG.md 0.5.55. */
+.enMidia{ display:flex; align-items:center; gap:4px; margin:6px 0 2px }
+.enMidia .mn{ width:30px; aspect-ratio:var(--ar,4/5); border-radius:5px; overflow:hidden; flex:0 0 auto;
+  background:#0B0C0E; border:1px solid var(--ink-800); display:grid; place-items:center; color:var(--ink-400) }
+.enMidia .mn img{ width:100%; height:100%; object-fit:cover; display:block }
+.enMidia .mais{ font-size:11px; color:var(--ink-400); margin-left:2px }
+.enMidia .aviso{ font-size:11px; color:#F0784C; margin-left:4px }
+.v241Tipo{ position:absolute; top:6px; right:6px; z-index:2; width:20px; height:20px; display:grid; place-items:center;
+  color:#fff; filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); pointer-events:none }
+.ftile .v241Tipo{ right:auto; left:6px }
+.ftile{ aspect-ratio:3/4 }
+.enPeca .enPecaItem{ aspect-ratio:var(--ar,4/5) }
+.enPecaItem .nuv{ position:absolute; left:6px; bottom:6px; z-index:1; font-size:10.5px; padding:1px 6px;
+  border-radius:6px; background:rgba(240,120,76,.92); color:#fff }
+.v241Aviso{ display:flex; gap:9px; align-items:flex-start; padding:10px 12px; margin:0 0 12px; border-radius:12px;
+  border:1px solid rgba(240,120,76,.45); background:rgba(240,120,76,.08); font-size:12.5px; color:var(--ink-200); line-height:1.5 }
+.v241Aviso .b{ margin-top:7px }
+.v241Aviso.info{ border-color:rgba(200,150,58,.45); background:rgba(200,150,58,.07) }
+.enAnexIt .v241Peca{ font-size:11px; padding:4px 8px; border-radius:8px; border:1px solid var(--brass-600);
+  color:var(--brass-300); background:transparent; white-space:nowrap }
+.clArte .mtMini{ aspect-ratio:var(--ar,4/5) }
+.clArte .mtMini img, .clArte .mtMini video{ object-fit:contain; background:#0A0B0E }
+.clArte.uma{ justify-items:center }
+.clArte.uma .mtMini{ aspect-ratio:var(--ar,4/5); height:auto !important; min-height:0; max-height:none;
+  width:min(100%, calc(min(60vh, 560px) * var(--ar,4/5))) !important }
+@media (max-width:1079px){
+  .clArte.carrossel{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; gap:8px;
+    scrollbar-width:none; margin-left:-2px; padding:0 2px }
+  .clArte.carrossel::-webkit-scrollbar{ display:none }
+  .clArte.carrossel .mtMini{ flex:0 0 86%; scroll-snap-align:center }
+  .clbody.fix .clficha{ order:2 }
+}
+.bmMes{ padding:6px 2px 4px }
+.bmMes .l{ display:grid; grid-template-columns:62px 1fr 34px; align-items:center; gap:10px; margin:8px 0; font-size:12.5px; color:var(--mut) }
+.bmMes .l i{ height:10px; border-radius:6px; background:var(--soft); overflow:hidden; display:block }
+.bmMes .l b{ display:block; height:100%; border-radius:6px }
+.bmMes .l em{ font-style:normal; text-align:right; color:var(--ink-50); font-weight:600 }
+.bmMes small{ display:block; margin-top:4px; font-size:11px; color:var(--mut) }
+</style>
+<script>
+(function(){
+  const visuais = p => (p && S.mat[mChave(p)] || []).filter(m => m && (m.tipo === 'imagem' || m.tipo === 'video'));
+  const doVisualizador = p => (p && S.mat[mChave(p)] || []).filter(m => m && m.tipo !== 'link');
+  const naoSubiu = m => !m.nuvem && m.progresso === undefined;
+  const anexosVisuais = t => ((t && t.anexos) || []).map((m, i) => ({ m, i }))
+    .filter(x => x.m && (x.m.tipo === 'imagem' || x.m.tipo === 'video'));
+
+  /* a proporção vem do formato e da rede: é o quadro em que a peça vai ao ar */
+  function proporcao(p){
+    if(!p) return '4/5';
+    const f = (p.fmts && p.fmts.length ? p.fmts : [p.fmt]).filter(Boolean).join(' ');
+    const pl = p.plats || [];
+    if(/reels|story|shorts/i.test(f) || (pl.length && pl.every(k => k === 'tt' || k === 'str'))) return '9/16';
+    if(/v[íi]deo/i.test(f) && pl.includes('yt')) return '16/9';
+    return '4/5';
+  }
+  const tipoDe = p => { const v = visuais(p);
+    return v.length > 1 ? 'carrossel' : v.length === 1 && v[0].tipo === 'video' ? 'video' : v.length ? 'imagem' : ''; };
+  window.MaestroMidia = { proporcao, tipoDe, visuais };
+
+  const miniatura = m => m.url && m.tipo === 'imagem' ? `<img src="${urlSegura(m.url)}" alt="" loading="lazy">`
+    : m.poster ? `<img src="${urlSegura(m.poster)}" alt="" loading="lazy">`
+    : ic(m.tipo === 'video' ? 'play' : 'img', 12);
+
+  /* ---------- 1. a capa: com guarda, e o vídeo pela capa dele --------- */
+  /* dentro de url('…') uma aspa ou um parêntese fecharia o endereço */
+  const cssUrl = u => urlSegura(String(u == null ? '' : u)
+    .replace(/['"()\\\s]/g, c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')));
+  capaDoCard = function(p){
+    const ms = typeof materiaisDe === 'function' ? materiaisDe(p) : [];
+    const img = ms.find(x => x && x.tipo === 'imagem' && cssUrl(x.url));
+    const vid = !img && ms.find(x => x && x.tipo === 'video' && cssUrl(x.poster));
+    const u = img ? cssUrl(img.url) : vid ? cssUrl(vid.poster) : '';
+    if(u) return `linear-gradient(rgba(8,9,11,.06),rgba(8,9,11,.28)),url('${u}') center/cover`;
+    const c = (typeof cliAtual === 'function' && cliAtual()) || {};
+    return `linear-gradient(150deg,${typeof corSegura === 'function' ? corSegura(c.cor || '#2A2C31') : '#2A2C31'},#15161A)`;
+  };
+
+  /* ---------- 2. o quadro do Ensaio mostra a peça, em toda coluna ------ */
+  function pintarMidia(){
+    if(!S.ensaio || S.view !== 'agency') return;
+    let falta = false;
+    document.querySelectorAll('.enCard[data-entar]').forEach(card => {
+      if(card.querySelector('.enMidia')) return;
+      const t = S.ensaio.tarefas.find(x => x.id === +card.dataset.entar);
+      const p = t && typeof cardDaTarefa === 'function' ? cardDaTarefa(t) : null;
+      const v = visuais(p); if(!v.length) return;
+      if(v.some(m => !m.url && m.chave)) falta = true;
+      const tit = card.querySelector('.tit'); if(!tit) return;
+      tit.insertAdjacentHTML('afterend', `<div class="enMidia" style="--ar:${proporcao(p)}" title="${v.length > 1 ? v.length + ' telas' : 'a peça'}">
+        ${v.slice(0, 3).map(m => `<span class="mn">${miniatura(m)}</span>`).join('')}
+        ${v.length > 3 ? `<span class="mais">+${v.length - 3}</span>` : ''}
+        ${_sbLigado && v.some(naoSubiu) ? '<span class="aviso">não subiu</span>' : ''}</div>`);
+    });
+    if(falta && typeof rehidratarArquivos === 'function') try{ rehidratarArquivos(); }catch(e){}
+  }
+  render = (function(orig){ return function(){ const r = orig.apply(this, arguments); pintarMidia(); pintarTipos(); return r; }; })(render);
+
+  /* ---------- 3. a ficha: a galeria no lugar da conta ------------------ */
+  function galeria(p, t){
+    const lista = doVisualizador(p);
+    const itens = lista.map((m, i) => ({ m, i })).filter(x => x.m.tipo === 'imagem' || x.m.tipo === 'video');
+    if(!itens.length) return '';
+    const noCliente = t && t.col === 'cliente';
+    const n = itens.length, uma = n === 1;
+    const fora = itens.filter(x => naoSubiu(x.m));
+    const k = mChave(p);
+    return `<div class="enPeca" style="--ar:${proporcao(p)}">
+      <div class="enPecaHd"><b>${noCliente ? 'O que o cliente está vendo' : 'A peça'}</b><span>${uma ? 'toque para ver inteira' : `${n} telas, na ordem em que vão ao ar`}</span></div>
+      ${_sbLigado && fora.length ? `<div class="v241Aviso">${ic('warn', 14)}<span>${fora.length === 1 ? 'Um arquivo não subiu' : `${fora.length} arquivos não subiram`} para a nuvem — o cliente não vê.
+        <br><button type="button" class="b gho sm" data-v241resubir="${esc(k)}">Tentar subir de novo</button></span></div>` : ''}
+      <div class="enPecaGrade" data-mttira="${esc(k)}">${itens.map(({ m, i }, ordem) => `<button type="button" class="enPecaItem" data-mtmini="${i}" title="${esc(m.nome || 'peça')}">
+        ${uma ? '' : `<span class="ord">${ordem + 1}</span>`}
+        ${m.url && m.tipo === 'imagem' ? `<img src="${urlSegura(m.url)}" alt="${esc(m.nome || 'peça')}">`
+          : (m.url || m.poster) && m.tipo === 'video' ? `<video ${m.url ? `src="${urlSegura(m.url)}"` : ''} ${m.poster ? `poster="${urlSegura(m.poster)}"` : ''} muted playsinline preload="metadata"></video>`
+          : `<span class="enPecaFalta">${ic('img', 20)}<span>Este arquivo está noutro aparelho.</span></span>`}
+        ${_sbLigado && naoSubiu(m) ? '<span class="nuv">só neste aparelho</span>' : ''}</button>`).join('')}</div></div>`;
+  }
+  function avisoAnexos(t, p){
+    const av = anexosVisuais(t); if(!av.length || !p) return '';
+    const semArte = !visuais(p).length;
+    return `<div class="v241Aviso ${semArte ? '' : 'info'}">${ic(semArte ? 'warn' : 'img', 14)}<span>
+      ${av.length === 1 ? 'Uma imagem está' : `${av.length} imagens estão`} nos documentos desta tarefa, e documento da tarefa é só da equipe —
+      ${semArte ? '<b>o cliente não recebe</b>.' : 'não vão ao cliente.'} Se ${av.length === 1 ? 'ela é' : 'elas são'} a peça, mande para o card.
+      <br><button type="button" class="b pri sm" data-v241pecatodas="${t.id}">Usar ${av.length === 1 ? 'na peça' : `as ${av.length} na peça`}</button></span></div>`;
+  }
+  enCardLidoHtml = (function(orig){
+    return function(t){
+      const html = orig.apply(this, arguments);
+      if(!html) return html;
+      const p = typeof cardDaTarefa === 'function' ? cardDaTarefa(t) : null;
+      if(!p) return html;
+      const g = galeria(p, t);
+      return g ? html.replace(/<div class="enFichaMat">[\s\S]*?<\/div>/, g) : html;
+    };
+  })(enCardLidoHtml);
+  modalTarefa = (function(orig){
+    return function(id){
+      let html = orig.apply(this, arguments);
+      if(!html || !id) return html;
+      const t = S.ensaio && S.ensaio.tarefas.find(x => x.id === id);
+      const p = t && typeof cardDaTarefa === 'function' ? cardDaTarefa(t) : null;
+      if(!p) return html;
+      const aviso = avisoAnexos(t, p);
+      if(aviso && html.indexOf('<div class="fld enAnexBloco">') >= 0)
+        html = html.replace('<div class="fld enAnexBloco">', aviso + '<div class="fld enAnexBloco">');
+      /* em Act a ficha curta sai (v154) e a peça grande entra — lá ela já vem */
+      if(html.indexOf('class="enPeca"') < 0){
+        const g = galeria(p, t);
+        if(g && html.indexOf('<div class="fld enAnexBloco">') >= 0)
+          html = html.replace(aviso + '<div class="fld enAnexBloco">', aviso + g + '<div class="fld enAnexBloco">');
+      }
+      return html;
+    };
+  })(modalTarefa);
+  enAnexListaHtml = (function(orig){
+    return function(lista){
+      let html = orig.apply(this, arguments);
+      const t = S.enAnexAlvo && S.ensaio ? S.ensaio.tarefas.find(x => x.id === S.enAnexAlvo) : null;
+      if(!t || !(typeof cardDaTarefa === 'function' && cardDaTarefa(t))) return html;
+      return html.replace(/<button type="button" class="bt" data-enanexbx="(\d+)"/g, (m0, n) => {
+        const m = lista[+n];
+        return (m && (m.tipo === 'imagem' || m.tipo === 'video'))
+          ? `<button type="button" class="v241Peca" data-v241peca="${n}" title="Mandar para a peça: é o que o cliente aprova">→ peça</button>` + m0 : m0;
+      });
+    };
+  })(enAnexListaHtml);
+
+  /* ---------- 4. tarefa → peça: mover, não copiar -------------------- */
+  async function paraPeca(t, idxs){
+    const p = cardDaTarefa(t); if(!p){ toast('Estruture a pauta primeiro — a peça mora no card.'); return; }
+    const k = mChave(p);
+    const arr = S.mat[k] = S.mat[k] || [];
+    let foi = 0, ficou = 0;
+    for(const i of [...idxs].sort((a, b) => b - a)){
+      const m = t.anexos && t.anexos[i]; if(!m) continue;
+      if(m.nuvem && urlSegura(m.url)){
+        arr.push({ nome: m.nome, tipo: m.tipo, peso: m.peso || 0, chave: m.chave, url: m.url, nuvem: true, ...(m.poster ? { poster: m.poster } : {}) });
+      } else {
+        let blob = null;
+        try{ blob = m.chave ? await idbLer(m.chave) : null; }catch(e){}
+        if(!blob){ ficou++; continue; }
+        guardarArquivos(p.id, [new File([blob], m.nome || 'peca', { type: blob.type })], t.cli);
+      }
+      t.anexos.splice(i, 1); foi++;
+    }
+    /* guardarArquivos empurra no fim; os movidos vieram de trás para frente */
+    if(foi > 1){ const novos = arr.splice(arr.length - foi, foi).reverse(); arr.push(...novos); }
+    if(typeof som === 'function') som('toque');
+    S.modal = modalTarefa(t.id); renderLayer(); render();
+    toast(foi ? `${foi === 1 ? 'Uma imagem foi' : foi + ' imagens foram'} para a peça de "${p.t}".${ficou ? ` ${ficou} ficou no aparelho de quem subiu.` : ''}`
+              : 'Esse arquivo está só no aparelho de quem subiu — suba de novo pela peça.');
+  }
+  window.MaestroMidia.paraPeca = paraPeca;
+
+  async function subirDeNovo(k){
+    const arr = S.mat[k] || [];
+    let n = 0;
+    for(const m of arr){
+      if(!naoSubiu(m) || !m.chave) continue;
+      let blob = null; try{ blob = await idbLer(m.chave); }catch(e){}
+      if(!blob) continue;
+      subirDepois(m, `mat/${k.replace('|', '/')}`, new File([blob], m.nome || 'peca', { type: blob.type }));
+      n++;
+    }
+    toast(n ? `Subindo ${n === 1 ? 'o arquivo' : n + ' arquivos'} de novo.` : 'Estes arquivos estão noutro aparelho — suba de lá.');
+    render();
+  }
+
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-v241peca],[data-v241pecatodas],[data-v241resubir]');
+    if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    if(b.dataset.v241resubir){ subirDeNovo(b.dataset.v241resubir); return; }
+    const t = b.dataset.v241pecatodas ? S.ensaio.tarefas.find(x => x.id === +b.dataset.v241pecatodas)
+      : S.ensaio.tarefas.find(x => x.id === S.enAnexAlvo);
+    if(!t) return;
+    paraPeca(t, b.dataset.v241pecatodas ? anexosVisuais(t).map(x => x.i) : [+b.dataset.v241peca]);
+  }, true);
+
+  /* ---------- 5. a decisão: o quadro do formato, e o carrossel desliza -- */
+  clArteHtml = (function(orig){
+    return function(p){
+      let html = orig.apply(this, arguments);
+      if(!html) return html;
+      const n = clVisuais(p).length;
+      html = html.replace('<div class="clArte ', `<div style="--ar:${proporcao(p)}" class="clArte ${n > 1 ? 'carrossel ' : ''}`);
+      if(n > 1){
+        let k = 0;
+        html = html.replace(/<span class="ord">\d+<\/span>/g, () => `<span class="ord">${++k}/${n}</span>`)
+                   .replace(`${n} telas · toque para ver inteira`, `${n} telas · deslize para o lado`);
+      }
+      return html;
+    };
+  })(clArteHtml);
+
+  /* ---------- 6. as grades dizem o que é: carrossel ou vídeo ---------- */
+  function pintarTipos(){
+    document.querySelectorAll('.ftile[data-pid]:not(.v241p), .clPost[data-pid]:not(.v241p)').forEach(el => {
+      el.classList.add('v241p');
+      const p = (typeof cardsDoCliente === 'function' ? cardsDoCliente() : []).find(x => String(x.id) === el.dataset.pid);
+      const tp = tipoDe(p);
+      if(tp === 'carrossel' || tp === 'video')
+        el.insertAdjacentHTML('afterbegin', `<span class="v241Tipo" aria-label="${tp === 'video' ? 'vídeo' : 'carrossel'}">${ic(tp === 'video' ? 'play' : 'stack', 14)}</span>`);
+    });
+  }
+
+  /* ---------- 7. um mês só: duas barras que se leem ------------------ */
+  svgBars = (function(orig){
+    return function(pares, o){
+      if(!Array.isArray(pares) || !pares.length) return '';
+      const max = Math.max(...pares.flatMap(p => [+p[1] || 0, +p[2] || 0]));
+      if(pares.length > 1 && max > 0) return orig.apply(this, arguments);
+      const [rot, prev, ar] = pares[pares.length - 1];
+      const { c1 = '#333941', c2 = '#C8963A' } = o || {};
+      if(!max) return `<div class="bmMes"><small>Nada previsto para ${rot} ainda.</small></div>`;
+      const w = v => v ? Math.max(3, Math.round(v / max * 100)) : 0;
+      return `<div class="bmMes">
+        <div class="l"><span>previsto</span><i><b style="width:${w(+prev || 0)}%;background:${c1}"></b></i><em>${+prev || 0}</em></div>
+        <div class="l"><span>no ar</span><i><b style="width:${w(+ar || 0)}%;background:${c2}"></b></i><em>${+ar || 0}</em></div>
+        <small>${rot}</small></div>`;
+    };
+  })(svgBars);
+
+  try{ render(); }catch(e){}
 })();
 </script>
 <style id="v233-tipografia">

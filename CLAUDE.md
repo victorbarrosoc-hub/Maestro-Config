@@ -299,6 +299,19 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v241) — a mídia que chega.** "O cliente não vê as imagens
+do carrossel anexadas na tarefa, e eu não vejo no Ensaio." Havia DUAS caixas: o
+anexo da tarefa (`t.anexos`, só da equipe) e a peça do card (`S.mat`, a única
+que vai ao link). Agora a tarefa tem "→ peça" / "Usar as N na peça" (mover, na
+ordem) e avisa quando a arte está no lugar errado; o Ensaio mostra a peça em
+toda coluna (miniaturas no card, galeria na ficha); "não subiu — o cliente não
+vê" com "Tentar de novo"; formato manda no quadro (9:16 reels/story/shorts/
+TikTok, 16:9 YouTube, 4:5 o resto); carrossel desliza na decisão; grades
+marcam carrossel e vídeo; o "Previsto × no ar" de um mês vira duas barras.
+Teto do protótipo: 2,90 MB. 28 provas em
+`web/verificar/v241-a-midia-que-chega.mjs`. **Lição:** a primeira contagem da
+grade do cliente deu "zero imagens" e estava errada — a arte ali é FUNDO em
+CSS, não `<img>`. Medir o que a tela desenha, não a tag que eu imaginava.
 **Fechado (24 set, v240) — o menu e a ficha do cliente.** "Duas abas de
 cliente", o cronograma caindo sempre na EJUP, a Redes sumida e um "undefined" na
 ficha. O "undefined" era antigo: "Cliente · ficha" (andaime, abria o primeiro

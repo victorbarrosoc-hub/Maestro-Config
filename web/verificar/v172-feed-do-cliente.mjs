@@ -243,8 +243,12 @@ const textoDaTela = pag => pag.evaluate(() =>
      rede — e a v232 já estava em 2,59 MB, encostada no teto. O que este
      teto guardava (fotos de demonstração dentro do arquivo) continua
      guardado pela 6.1: nenhuma linha passa de 200 KB, e a da fonte tem 64. */
-  checa('6.3 e o protótipo pesa menos de 2,75 MB',
-        Buffer.byteLength(html) < 2.75 * 1024 * 1024,
+  /* v241: sobe mais 150 KB, também por escrito. A v240 já tinha ficado a
+     218 bytes do teto só em código de produto (a mídia que chega ao
+     cliente, a ficha do Ensaio, os formatos). Quem guarda contra foto de
+     demonstração embutida continua sendo a 6.1, e ela não mudou. */
+  checa('6.3 e o protótipo pesa menos de 2,90 MB',
+        Buffer.byteLength(html) < 2.90 * 1024 * 1024,
         (Buffer.byteLength(html) / 1024 / 1024).toFixed(2) + ' MB');
 }
 
