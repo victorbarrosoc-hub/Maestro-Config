@@ -1,9 +1,48 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.50
+Version: 0.5.51
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.51 — 2026-09-23
+
+**Status:** Concluída
+
+### v237 — a curtida que aprova
+
+O founder mandou um vídeo do Postarium. Visto quadro a quadro: o cliente toca
+num post da grade, abre uma janela estilo Instagram (arte à esquerda; perfil,
+coração/comentário/compartilhar e legenda à direita; embaixo "Solicitar ajuste"
+e "Aprovar"), toca em Aprovar — e **o coração fica vermelho**, os botões viram
+"✓ Aprovado" e sobe o aviso. Aprovar é curtir o próprio post. O founder pediu:
+*"pode seguir com a curtida, mas deixa também um botão de aprovar"*.
+
+**A regra desta versão: não existe caminho novo de aprovar.** Aprovação é a
+coisa mais cara do produto (registra a versão exata aprovada), então:
+
+- o coração **repassa o toque** para o botão Aprovar que já existe — e por isso
+  só aparece quando o botão aparece. Onde uma camada antiga esconde o Aprovar
+  (texto vazio, v191), o coração some junto;
+- o balão de comentário abre o mesmo "Pedir alteração";
+- o **coração grande pulsa** no funil de toda decisão do cliente
+  (`decidirCard`), e só quando a fase de fato mudou — abrir um card já
+  aprovado não pulsa; aprovação feita pela agência não pulsa;
+- card aprovado mostra o coração cheio e parado ("Você curtiu — está
+  aprovado"), e na grade do perfil a etiqueta "Aprovado" ganha o ♥.
+
+**12 provas** em `web/verificar/v237-a-curtida.mjs`: coração e botão dão o
+MESMO resultado; texto vazio não tem nenhum dos dois; aprovado mostra o coração
+fixo; o balão abre o pedido; a grade; e a agência.
+
+**E um conserto na v236, que a suíte de segurança pegou:** a foto do perfil
+montava o `src` com um valor guardado FORA da linha — passava por `urlSegura`,
+mas a regra da v225 exige a guarda escrita no próprio atributo, para que ler a
+linha baste. **Eu tinha dado a suíte como verde procurando "FALHA", e ela
+escreve "FALHOU".** Seis rodadas seguidas mostraram que falhava sempre; não era
+oscilação.
 
 ---
 

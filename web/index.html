@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-23 03:12 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-23 03:28 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -16100,7 +16100,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v236 · 23 set · o cliente decide olhando o perfil';
+const VERSAO_PROTOTIPO = 'v237 · 23 set · a curtida que aprova';
 
 menuSheet = (function(orig){
   return function(){
@@ -42531,7 +42531,7 @@ button.clPost:active{ transform:scale(.98) }
     cards.sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')) || (b.id - a.id));
     const nEspera = cards.filter(esperando).length;
     const nOk = cards.filter(p => ['aprovado', 'agendado', 'postado'].includes(fase(p))).length;
-    const logo = c.logo && typeof urlSegura === 'function' ? urlSegura(c.logo) : '';
+    const temLogo = !!(c.logo && typeof urlSegura === 'function' && urlSegura(c.logo));
     const ini = esc(c.ini || String(c.nome || '?').slice(0, 2).toUpperCase());
     const cor = typeof corSegura === 'function' ? corSegura(c.cor || '#35333A') : '#35333A';
     const temArte = p => (typeof materiaisDe === 'function' ? materiaisDe(p) : [])
@@ -42548,7 +42548,7 @@ button.clPost:active{ transform:scale(.98) }
     };
     return `<section class="clPerfil" aria-label="Como o seu perfil vai ficar">
       <div class="clPerfilTopo">
-        <div class="clPerfilFoto" style="background:${cor}">${logo ? `<img src="${logo}" alt="">` : ini}</div>
+        <div class="clPerfilFoto" style="background:${cor}">${temLogo ? `<img src="${urlSegura(c.logo)}" alt="">` : ini}</div>
         <div><div class="clPerfilNome">${esc(c.nome || '')}</div>
           <div class="clPerfilNums"><span><b>${cards.length}</b> publicações</span>
             <span><b>${nEspera}</b> para você</span><span><b>${nOk}</b> aprovadas</span></div></div>
@@ -42580,6 +42580,117 @@ button.clPost:active{ transform:scale(.98) }
     if(linha) linha.click();
   }, true);
   window.MaestroPerfilDoCliente = { perfil, daGrade };
+})();
+</script>
+<style id="v237-a-curtida">
+/* =====================================================================
+   v237 — a curtida. Visto no vídeo que o founder mandou do Postarium: o
+   cliente abre o post, toca em Aprovar, e o CORAÇÃO fica vermelho — aprovar
+   é curtir o próprio post. O founder pediu o coração E o botão.
+   Regra desta camada: não existe caminho novo de aprovar. O coração
+   REPASSA o toque para o botão Aprovar que já existe, então ele só aparece
+   quando o botão aparece (se uma camada antiga esconde o Aprovar — texto
+   vazio, v191 —, o coração some junto). O balão de comentário abre o
+   "Pedir alteração", que também já existe.
+   ================================================================== */
+.clCurte{ display:flex; align-items:center; gap:14px; margin:0 0 12px; padding:2px 2px 0 }
+.clCurte button, .clCurte .fixo{ width:44px; height:44px; display:grid; place-items:center; border-radius:12px;
+  background:none; border:0; color:var(--ink-100); cursor:pointer; transition:transform var(--fast) var(--eo) }
+.clCurte button:active{ transform:scale(.88) }
+.clCurte svg{ width:28px; height:28px; stroke:currentColor; fill:none; stroke-width:1.9; stroke-linejoin:round; stroke-linecap:round }
+.clCurte .coracao.on svg{ fill:#ED4956; stroke:#ED4956 }
+.clCurte .coracao.on{ color:#ED4956 }
+.clCurte .dica{ font-size:13px; color:var(--ink-300); line-height:1.35 }
+.clCurte .dica b{ color:var(--ink-50); font-weight:600 }
+@keyframes curtida{ 0%{opacity:0;transform:translate(-50%,-50%) scale(.3)} 25%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}
+  45%{transform:translate(-50%,-50%) scale(.95)} 70%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.05)} }
+.clCurtidaGrande{ position:fixed; left:50%; top:45%; z-index:990; width:120px; height:120px; pointer-events:none;
+  animation:curtida .9s var(--eo) forwards; filter:drop-shadow(0 8px 24px rgba(237,73,86,.45)) }
+.clCurtidaGrande svg{ width:100%; height:100%; fill:#ED4956 }
+@media (prefers-reduced-motion:reduce){ .clCurtidaGrande{ display:none } }
+.clPost .st .kor{ color:#ED4956; margin-right:3px }
+.clPost .st.ok .kor{ color:#fff }
+</style>
+<script>
+/* v237 — a curtida: o coração que aprova, e o coração que pulsa */
+(function(){
+  const CORACAO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.6-4.6-9.3-9.2C1.5 7.8 3.6 4.6 7 4.6c2 0 3.6 1.1 5 2.9 1.4-1.8 3-2.9 5-2.9 3.4 0 5.5 3.2 4.3 6.5-1.7 4.6-9.3 9.2-9.3 9.2z"/></svg>';
+  const BALAO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.6a8.4 8.4 0 0 1-12.3 7.4L3.5 20.4l1.4-4.5A8.4 8.4 0 1 1 20.5 11.6z"/></svg>';
+
+  const pulsar = () => {
+    const el = document.createElement('div');
+    el.className = 'clCurtidaGrande'; el.innerHTML = CORACAO;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  };
+
+  /* o funil de toda decisão do cliente: aprovou de verdade → pulsa */
+  decidirCard = (function(orig){
+    return function(id, decisao){
+      const p = (S.pauta || []).find(x => x.id === id);
+      const antes = p && typeof faseDe === 'function' ? faseDe(p) : null;
+      const r = orig.apply(this, arguments);
+      try{
+        const depois = p && typeof faseDe === 'function' ? faseDe(p) : null;
+        if(decisao === 'APROVADO' && S.view === 'client' && antes !== depois) pulsar();
+      }catch(e){}
+      return r;
+    };
+  })(decidirCard);
+
+  /* a fileira do Instagram, em cima dos botões da decisão */
+  const fileira = () => {
+    if(S.view !== 'client' || S.route !== 'clcard') return;
+    const pe = document.querySelector('.clfoot'); if(!pe || pe.querySelector('.clCurte')) return;
+    const aprova = pe.querySelector('[data-claprova]');
+    const pede = pe.querySelector('[data-clpedir]');
+    const p = (S.pauta || []).find(x => x.id === S.pcSel);
+    const f = p && typeof faseDe === 'function' ? faseDe(p) : null;
+    const aprovado = !!p && ['texto_ok', 'aprovado', 'agendado', 'postado'].includes(f) && !p.ajustePendente;
+    if(!aprova && !aprovado) return;       /* nada a curtir: nem decisão aberta, nem aprovado */
+    const div = document.createElement('div'); div.className = 'clCurte';
+    if(aprova){
+      div.innerHTML = `<button type="button" class="coracao" data-clcurte="${aprova.dataset.claprova}" aria-label="Curtir e aprovar">${CORACAO}</button>`
+        + (pede ? `<button type="button" data-clbalao="1" aria-label="Pedir alteração">${BALAO}</button>` : '')
+        + `<span class="dica"><b>Curtiu?</b> O coração aprova — igual ao botão.</span>`;
+    } else {
+      div.innerHTML = `<span class="fixo coracao on" aria-label="Você aprovou">${CORACAO}</span>`
+        + `<span class="dica"><b>Você curtiu</b> — está aprovado.</span>`;
+    }
+    pe.prepend(div);
+  };
+
+  addEventListener('click', e => {
+    const c = e.target.closest && e.target.closest('[data-clcurte],[data-clbalao]');
+    if(!c) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    if(c.dataset.clcurte){
+      c.classList.add('on');
+      const b = document.querySelector(`[data-claprova="${c.dataset.clcurte}"]`);
+      if(b) b.click();                     /* o mesmo caminho do botão */
+      return;
+    }
+    const pede = document.querySelector('.clfoot [data-clpedir]');
+    if(pede) pede.click();
+  }, true);
+
+  /* na grade do perfil, o que foi aprovado ganha o coração */
+  const coracoes = () => {
+    document.querySelectorAll('.clGrade .clPost .st.ok').forEach(st => {
+      if(st.querySelector('.kor')) return;
+      const k = document.createElement('span'); k.className = 'kor'; k.textContent = '♥';
+      st.prepend(k);
+    });
+  };
+
+  const _render = render;
+  render = function(){
+    const r = _render.apply(this, arguments);
+    try{ fileira(); coracoes(); }catch(e){}
+    return r;
+  };
+  window.MaestroCurtida = { pulsar };
 })();
 </script>
 <style id="v233-tipografia">

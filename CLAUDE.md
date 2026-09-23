@@ -299,6 +299,14 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (23 set, v237) — a curtida que aprova.** Do vídeo do Postarium: aprovar
+é curtir o post. Na decisão do cliente entra a fileira do Instagram (coração e
+balão) em cima dos botões; o coração REPASSA o toque para o Aprovar que já
+existe (só aparece quando ele aparece), o balão abre o "Pedir alteração", e um
+coração grande pulsa quando a aprovação de fato acontece. 12 provas em
+`web/verificar/v237-a-curtida.mjs`. **Lição:** a suíte de segurança escreve
+"FALHOU", não "FALHA" — procurar pela palavra errada me fez dar como verde uma
+suíte que falhava sempre. Ler o total ("N falharam"), não a palavra.
 **Fechado (23 set, v236) — a cara nova, parte 3: o cliente decide olhando o
 perfil.** Referência do founder: usepostarium.com.br (o link de aprovação imita
 um perfil do Instagram). O topo de "Publicações" do cliente vira um perfil —
