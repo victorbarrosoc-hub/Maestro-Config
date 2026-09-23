@@ -238,8 +238,13 @@ const textoDaTela = pag => pag.evaluate(() =>
   const linhaA = (html.split('\n').find(l => l.startsWith('Object.assign(A, Object.fromEntries')) || '');
   checa('6.2 as chaves a1..a6 seguem definidas, agora como cor e não como foto',
         linhaA.length > 0 && linhaA.length < 400, linhaA.length);
-  checa('6.3 e o protótipo pesa menos de 2,6 MB',
-        Buffer.byteLength(html) < 2.6 * 1024 * 1024,
+  /* v233: o teto sobe 150 KB, de propósito e por escrito. A Inter entrou
+     EMBUTIDA (64 KB em base64) para o app abrir no celular sem depender de
+     rede — e a v232 já estava em 2,59 MB, encostada no teto. O que este
+     teto guardava (fotos de demonstração dentro do arquivo) continua
+     guardado pela 6.1: nenhuma linha passa de 200 KB, e a da fonte tem 64. */
+  checa('6.3 e o protótipo pesa menos de 2,75 MB',
+        Buffer.byteLength(html) < 2.75 * 1024 * 1024,
         (Buffer.byteLength(html) / 1024 / 1024).toFixed(2) + ' MB');
 }
 
