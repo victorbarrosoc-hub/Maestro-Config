@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-24 16:42 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-24 18:06 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -94,7 +94,15 @@
    escolha é lida no primeiro script do documento, antes de qualquer
    pintura. Quem está no escuro continua vendo escuro desde o quadro 1. */
 html[data-tema="claro"], html[data-tema="claro"] body{ background:#F5F5F7 }
-html.abrindo #root, html.abrindo .ctx, html.abrindo #layer{ visibility:hidden }</style>
+html.abrindo #root, html.abrindo .ctx, html.abrindo #layer{ visibility:hidden }
+/* v258 — nada aparece antes de o arquivo inteiro chegar: um ponto de latão
+   pulsa no grafite, e o app entra UMA vez, já com a cara certa */
+html:not(.pronto) body > *{ visibility:hidden !important }
+html:not(.pronto) body::after{ content:""; position:fixed; left:50%; top:50%; width:10px; height:10px; margin:-5px 0 0 -5px;
+  border-radius:50%; background:#C8963A; animation:v258p .8s ease-in-out infinite alternate }
+@keyframes v258p{ to{ opacity:.25; transform:scale(.6) } }
+html.pronto #root{ animation:v258e .22s ease }
+@keyframes v258e{ from{ opacity:0 } to{ opacity:1 } }</style>
 <script>
 /* Antes de tudo: a luz. Uma leitura de localStorage e um atributo — é o
    que separa uma abertura limpa de uma tela que pisca. */
@@ -129,6 +137,36 @@ html.abrindo #root, html.abrindo .ctx, html.abrindo #layer{ visibility:hidden }<
    O desenho continua no arquivo e continua alcançável de propósito, por
    quem quiser mostrá-lo: `#abertura` no fim do endereço. Só não acontece
    mais sozinho. */
+/* v258 — O APP PELA METADE. O arquivo tem 3 MB e o celular executa o
+   código à medida que ele chega: a tela era desenhada no MEIO do caminho,
+   só com as camadas antigas lidas ("Feed", o seletor Agência | Cliente, a
+   Lixeira à vista), e redesenhada quando o fim chegava — o founder viu as
+   duas caras trocando, a cada abertura e a cada recarga. Agora a casa fica
+   escondida até o documento terminar (DOMContentLoaded, depois de TODAS as
+   camadas), desenha uma vez e aparece. Não depende de animação nem de
+   memória do aparelho (o defeito da cortina antiga, v155); e se algo
+   travar, aparece em 12s de qualquer jeito. */
+(function(){
+  /* o link do cliente espera a PÁGINA DO CLIENTE: antes dela, o aparelho
+     mostraria o que tinha guardado (a agência, no aparelho de quem testa)
+     e a vitrine — o founder viu as duas piscarem antes do "Olá, EJUP" */
+  var link = /[?&](aprovar|ver)=/.test(location.search);
+  var mostra = function(){ document.documentElement.classList.add('pronto'); };
+  var pronto = function(){
+    try{ if(typeof render === 'function') render(); }catch(e){}
+    if(!link) return mostra();
+    var t0 = Date.now();
+    (function espera(){
+      var ok = false;
+      try{ ok = window.MAESTRO_LINK_RESPONDEU || (typeof S === 'object' && S && (S.view === 'client' || S.soVer || S.soFluxo) && !document.querySelector('.site')); }catch(e){}
+      if(ok || Date.now() - t0 > 8000) return mostra();
+      setTimeout(espera, 80);
+    })();
+  };
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pronto, { once: true });
+  else pronto();
+  setTimeout(function(){ document.documentElement.classList.add('pronto'); }, 12000);
+})();
 (function(){
   var forcada = location.hash === '#abertura';
   window.MAESTRO_ABRE = forcada;
@@ -16058,7 +16096,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v257 · 24 set · ao vivo';
+const VERSAO_PROTOTIPO = 'v259 · 24 set · o menu recua';
 
 menuSheet = (function(orig){
   return function(){
@@ -33604,6 +33642,7 @@ addEventListener('click', e => {
   (async () => {
     const abrir = mAp ? abrirLote : abrirCard;
     let ok = await abrir();
+    window.MAESTRO_LINK_RESPONDEU = true;       /* v259: a cortina da v258 pode abrir */
     if(!ok){
       /* banco sem as funções, ou rede ruim: tenta mais duas vezes, de
          longe, e depois deixa o caminho antigo seguir */
@@ -42898,8 +42937,11 @@ button.clPost:active{ transform:scale(.98) }
   }
   /* CSV com aspas, vírgula, ponto e vírgula ou tabulação */
   function lerCsv(txt){
-    const linha1 = txt.split(/\r?\n/, 1)[0] || '';
-    const sep = [',', ';', '\t'].sort((a, b) => linha1.split(b).length - linha1.split(a).length)[0];
+    /* v259: o Meta abre com "sep=," e uma linha de título antes do cabeçalho */
+    const dica = txt.match(/^\s*"?sep=(.)"?\s*\r?\n/i);
+    if(dica) txt = txt.slice(dica[0].length);
+    const amostra = txt.split(/\r?\n/).slice(0, 12).join('\n');
+    const sep = dica ? dica[1] : [',', ';', '\t'].sort((a, b) => amostra.split(b).length - amostra.split(a).length)[0];
     const linhas = []; let campo = '', lin = [], aspas = false;
     for(let i = 0; i < txt.length; i++){
       const ch = txt[i];
@@ -42933,16 +42975,27 @@ button.clPost:active{ transform:scale(.98) }
     const n = Number(t);
     return Number.isFinite(n) ? n : null;
   }
+  /* v259: "15 de set. de 2026", "15 set 2026", "Sep 15, 2026", "15 September 2026" */
+  const MESES = { jan:1, fev:2, feb:2, mar:3, abr:4, apr:4, mai:5, may:5, jun:6, jul:7, ago:8, aug:8, set:9, sep:9, out:10, oct:10, nov:11, dez:12, dec:12 };
+  function dataExtenso(s){
+    const t = semAcento(s).replace(/[.,]/g, ' ').replace(/\bde\b/g, ' ').replace(/\s+/g, ' ').trim();
+    let m = t.match(/^(\d{1,2}) ([a-z]{3})[a-z]* (\d{4})/), d, mes, a;
+    if(m){ d = +m[1]; mes = MESES[m[2]]; a = m[3]; }
+    else if((m = t.match(/^(?:[a-z]+ )?([a-z]{3})[a-z]* (\d{1,2}) (\d{4})/))){ d = +m[2]; mes = MESES[m[1]]; a = m[3]; }
+    if(!mes || !d || d > 31) return null;
+    return `${a}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
   /* datas: ISO, dd/mm/aaaa (pt) ou mm/dd/aaaa (en) — decide pelo conjunto */
   function lerDatas(vals, pt){
-    const br = vals.map(v => String(v || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/));
+    const br = vals.map(v => String(v || '').trim().match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/));
     let ddmm = pt;
     if(br.some(m => m && +m[1] > 12)) ddmm = true;
     else if(br.some(m => m && +m[2] > 12)) ddmm = false;
     return vals.map((v, i) => {
       const s = String(v || '').trim();
-      const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if(iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+      const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if(iso) return `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}`;
+      const ext = dataExtenso(s); if(ext) return ext;
       const m = br[i]; if(!m) return null;
       const a = m[3].length === 2 ? '20' + m[3] : m[3];
       const [d, mes] = ddmm ? [m[1], m[2]] : [m[2], m[1]];
@@ -42953,7 +43006,8 @@ button.clPost:active{ transform:scale(.98) }
   /* cabeçalhos das três ferramentas, em português e em inglês */
   const COLUNAS = {
     id:        ['identificacao do post', 'id do post', 'post id', 'id', 'identificacao do video', 'video id', 'content'],
-    data:      ['horario de publicacao', 'data de publicacao', 'publish time', 'post time', 'video publish time', 'data', 'date', 'created', 'hora da publicacao'],
+    data:      ['horario de publicacao', 'data de publicacao', 'publish time', 'post time', 'video publish time', 'data', 'date', 'created', 'hora da publicacao',
+                'hora da postagem', 'data da postagem', 'data do post', 'postado em', 'publicado em', 'published', 'publication date', 'posted', 'dia', 'day'],
     titulo:    ['descricao', 'description', 'titulo do video', 'video title', 'titulo', 'title', 'legenda', 'caption', 'texto'],
     tipo:      ['tipo de post', 'post type', 'tipo de publicacao', 'tipo', 'type', 'formato', 'format'],
     link:      ['link permanente', 'permalink', 'link', 'video link', 'url'],
@@ -42989,9 +43043,33 @@ button.clPost:active{ transform:scale(.98) }
   function interpretar(txt, nomeArq){
     const linhas = lerCsv(txt);
     if(linhas.length < 2) return { erro: 'A planilha está vazia ou não é um CSV.' };
+    /* v259: o cabeçalho nem sempre é a linha 1 (o Meta põe um título antes):
+       é a primeira das 12 primeiras que tem data e algum número */
+    const METR = ['alcance', 'views', 'curtidas', 'coment', 'compart', 'salvos', 'cliques'];
+    let ini = 0;
+    for(let i = 0; i < Math.min(12, linhas.length - 1); i++){
+      const mm = mapear(linhas[i]);
+      if(mm.data != null && METR.some(k => mm[k] != null)){ ini = i; break; }
+      if(!ini && linhas[i].length > 1 && METR.some(k => mm[k] != null)) ini = i;
+    }
+    linhas.splice(0, ini);
     /* o YouTube põe uma linha "Total" logo depois do cabeçalho */
     const cab = linhas[0], m = mapear(cab);
-    if(m.data == null) return { erro: 'Não achei a coluna de data da publicação. Confira se é o CSV de conteúdo/publicações.' };
+    if(m.data == null){
+      /* sem nome reconhecido: a coluna em que a maioria das linhas é uma data */
+      const amostra = linhas.slice(1, 40).filter(l => !/^total/i.test(String(l[0] || '').trim()));
+      let melhor = -1, nota = 0;
+      cab.forEach((_, j) => {
+        if(Object.values(m).includes(j)) return;
+        const ds = lerDatas(amostra.map(l => l[j]), true), n = ds.filter(Boolean).length;
+        if(n > nota){ nota = n; melhor = j; }
+      });
+      if(melhor >= 0 && nota >= Math.max(1, amostra.length * 0.6)) m.data = melhor;
+    }
+    if(m.data == null){
+      const vistas = cab.map(h => String(h || '').trim()).filter(Boolean).slice(0, 8).join(', ');
+      return { erro: `Não achei a coluna de data da publicação. Colunas lidas: ${vistas || 'nenhuma'}.` };
+    }
     const temMetrica = ['alcance', 'views', 'curtidas', 'coment', 'compart', 'salvos', 'cliques'].some(k => m[k] != null);
     if(!temMetrica) return { erro: 'Achei as datas, mas nenhuma coluna de número (alcance, visualizações, curtidas…).' };
     const pt = /[çãõáéíóú]|visualiza|alcance|curtidas/.test(cab.join(' ').toLowerCase());
@@ -47404,7 +47482,32 @@ border-top-color:var(--brass-500); animation:v256gira .8s linear infinite }
   const clientes = () => new Set((typeof CLIS === 'function' ? CLIS() : []).map(c => c.id));
   const cab = () => (typeof sbCab === 'function' ? sbCab() : {});
   let desenhoPendente = false;
+  let dedo = false, rolouEm = 0, tmEspera = 0;
+  addEventListener('pointerdown', () => { dedo = true; }, true);
+  addEventListener('pointerup', () => { dedo = false; }, true);
+  addEventListener('pointercancel', () => { dedo = false; }, true);
+  addEventListener('scroll', () => { rolouEm = Date.now(); }, true);
+  const caminho = el => { const p = []; for(let e = el; e && e.id !== 'root' && e !== document.body; e = e.parentElement){
+      const i = e.parentElement ? [...e.parentElement.children].indexOf(e) : 0; p.push(e.tagName + '.' + (e.className && e.className.baseVal === undefined ? String(e.className).split(' ')[0] : '') + ':' + i); } return p.join('<'); };
+  function guardarRolagem(){
+    const r = { x: scrollX, y: scrollY, caixas: [] };
+    document.querySelectorAll('#root *').forEach(el => { if(el.scrollTop > 0 || el.scrollLeft > 0) r.caixas.push([caminho(el), el.scrollTop, el.scrollLeft]); });
+    return r;
+  }
+  function voltarRolagem(r){
+    try{
+      if(scrollX !== r.x || scrollY !== r.y) scrollTo(r.x, r.y);
+      if(!r.caixas.length) return;
+      const mapa = new Map(r.caixas.map(c => [c[0], c]));
+      document.querySelectorAll('#root *').forEach(el => { const c = mapa.get(caminho(el)); if(c){ el.scrollTop = c[1]; el.scrollLeft = c[2]; } });
+    }catch(e){}
+  }
   function redesenhar(){
+    if(dedo || Date.now() - rolouEm < 700){ clearTimeout(tmEspera); tmEspera = setTimeout(redesenhar, 450); return; }
+    const rol = guardarRolagem();
+    try{ redesenharJa(); } finally { voltarRolagem(rol); requestAnimationFrame(() => voltarRolagem(rol)); }
+  }
+  function redesenharJa(){
     const a = document.activeElement;
     const digitando = a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range|color|file)$/.test(a.type)) || a.isContentEditable);
     if(!digitando){ try{ render(); }catch(e){} return; }
@@ -47530,5 +47633,168 @@ border-top-color:var(--brass-500); animation:v256gira .8s linear infinite }
   const espera = setInterval(() => { if(ligado()){ clearInterval(espera); puxar('abertura'); } }, 800);
   setInterval(() => { if(ligado() && org() && !(vivo.ws && vivo.ws.readyState <= 1) && !tmReconecta) conectar(); }, 2000);
   window.MaestroAoVivo = { puxar, conectar, diario, estado: () => ({ conectado: vivo.conectado, avisos: vivo.avisos, puxadas: vivo.puxadas, mudancas: vivo.mudancas, canal: vivo.canal }) };
+})();
+</script>
+<style id="v258-uma-cara">
+@media(max-width:860px){
+body:has(nav.tabbar) :is(#layer, #layerAvisos) .toast{ top:auto !important; bottom:calc(88px + env(safe-area-inset-bottom)) !important }
+}
+#v253dz .dzTexto.rola, #v253dz .dzInfo.aberto .dzLeg.rola{ touch-action:pan-y; overscroll-behavior:contain }
+</style>
+<script data-camada="v258">
+(function(){
+  const logado = () => { try{ return !!(window.MaestroPorta && MaestroPorta.quem()); }catch(e){ return false; } };
+  function atravessar(){
+    try{
+      if(S.viaLink || S.soVer || S.soFluxo) return false;
+      if(S.view !== 'site' || S.route !== 'entrar' || !logado()) return false;
+      document.getElementById('entrarMaestro')?.remove();
+      go('agency', 'dash');
+      if(!(S.usuario && S.usuario.tipo === 'agencia') && typeof abrirQuemAgencia === 'function') setTimeout(() => abrirQuemAgencia(), 0);
+      return true;
+    }catch(e){ return false; }
+  }
+  render = (function(orig){
+    return function(){
+      if(atravessar()) return;
+      return orig.apply(this, arguments);
+    };
+  })(render);
+  function donoAdmin(){
+    try{ (S.equipe || []).forEach(m => { if(m && m.dono && m.papel !== 'Administrador') m.papel = 'Administrador'; }); }catch(e){}
+  }
+  render = (function(orig){
+    return function(){ donoAdmin(); return orig.apply(this, arguments); };
+  })(render);
+  if(typeof abrirQuemAgencia === 'function') abrirQuemAgencia = (function(orig){
+    return function(){ donoAdmin(); return orig.apply(this, arguments); };
+  })(abrirQuemAgencia);
+  if(typeof abrirQuemEsta === 'function') abrirQuemEsta = (function(orig){
+    return function(){ donoAdmin(); return orig.apply(this, arguments); };
+  })(abrirQuemEsta);
+  function marcarRolaveis(){
+    document.querySelectorAll('#v253dz .dzTexto, #v253dz .dzLeg').forEach(el => {
+      el.classList.toggle('rola', el.scrollHeight > el.clientHeight + 4);
+    });
+  }
+  try{ new MutationObserver(marcarRolaveis).observe(document.body, { childList: true, subtree: true }); }catch(e){}
+  window.MaestroUmaCara = { atravessar, donoAdmin, marcarRolaveis };
+})();
+</script>
+<style id="v259-menu">
+@media(min-width:861px){
+.app.ag{ transition:none }
+html.v259Anda .app.ag{ transition:grid-template-columns .26s cubic-bezier(.2,.8,.2,1) }
+.aside .lg{ position:relative }
+.v259Recua{ margin-left:auto; width:28px; height:28px; display:grid; place-items:center; border-radius:8px;
+color:var(--ink-400); background:none; border:0; cursor:pointer; flex:0 0 auto }
+.v259Recua:hover{ background:var(--enc); color:var(--ink-50) }
+.v259Recua:focus-visible{ outline:2px solid var(--brass-500); outline-offset:1px }
+html.v259Recuado .app.ag{ grid-template-columns:68px minmax(0,1fr) !important }
+html.v259Recuado .app.ag > .aside{ overflow-x:hidden; align-items:center }
+html.v259Recuado .app.ag > .aside .lg{ flex-direction:column; gap:12px; padding:4px 0 14px !important; width:100% }
+html.v259Recuado .app.ag > .aside .lg b{ display:none }
+html.v259Recuado .app.ag > .aside .lg > svg{ width:30px; height:auto }
+html.v259Recuado .v259Recua{ margin:0; transform:scaleX(-1) }
+html.v259Recuado .app.ag > .aside .grp{ font-size:0 !important; padding:0 !important; height:1px; width:28px;
+margin:10px auto; background:var(--fio); overflow:hidden }
+html.v259Recuado .app.ag > .aside .grp:first-of-type{ display:none }
+html.v259Recuado .app.ag > .aside .nav{ width:44px !important; height:40px; margin:2px auto !important; padding:0 !important;
+justify-content:center; font-size:0 !important; gap:0 !important; position:relative }
+html.v259Recuado .app.ag > .aside .nav svg.i{ font-size:18px !important }
+html.v259Recuado .app.ag > .aside .nav .bd{ position:absolute; top:6px; right:7px; min-width:8px !important; width:8px;
+height:8px !important; padding:0 !important; font-size:0 !important; border-radius:50%; margin:0 !important;
+box-shadow:0 0 0 2px var(--lat) }
+html.v259Recuado .app.ag > .aside > div:has(> .qeAtual){ padding:12px 0 0 !important; width:100% }
+html.v259Recuado .app.ag > .aside .qeAtual{ font-size:0 !important; justify-content:center; width:44px !important;
+margin:0 auto; padding:8px 0 !important; gap:0 }
+}
+#v259Dica{ position:fixed; z-index:3000; transform:translateY(-50%); pointer-events:none; white-space:pre;
+padding:6px 10px; border-radius:8px; font:500 12.5px/1.2 var(--sans, Inter, system-ui, sans-serif);
+background:var(--ink-50); color:var(--ink-950); box-shadow:0 6px 20px rgba(0,0,0,.25);
+animation:v259d .12s ease both }
+@keyframes v259d{ from{ opacity:0; transform:translate(-4px,-50%) } }
+@media(max-width:860px){ #v259Dica{ display:none } }
+</style>
+<script data-camada="v259">
+(function(){
+  const CHAVE = 'maestro-menu-recuado-v1';
+  const html = document.documentElement;
+  const escolha = () => { try{ const v = localStorage.getItem(CHAVE); return v === '1' ? true : v === '0' ? false : null; }catch(e){ return null; } };
+  const recuado = () => { const e = escolha(); return e === null ? window.innerWidth <= 1280 : e; };
+  const aplicar = () => html.classList.toggle('v259Recuado', recuado());
+  function alternar(){
+    const novo = !html.classList.contains('v259Recuado');
+    try{ localStorage.setItem(CHAVE, novo ? '1' : '0'); }catch(e){}
+    html.classList.add('v259Anda');
+    aplicar(); marcar(); tirarDica();
+    clearTimeout(alternar._t); alternar._t = setTimeout(() => html.classList.remove('v259Anda'), 320);
+  }
+  const SETA = d => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+  const ICONE = SETA('M15 18l-6-6 6-6');
+  function marcar(){
+    const a = document.querySelector('.app.ag > .aside'); if(!a) return;
+    const lg = a.querySelector('.lg');
+    let b = a.querySelector('.v259Recua');
+    if(lg && !b){
+      b = document.createElement('button');
+      b.className = 'v259Recua'; b.type = 'button'; b.innerHTML = ICONE;
+      lg.appendChild(b);
+    }
+    if(b){
+      const r = html.classList.contains('v259Recuado');
+      b.setAttribute('aria-label', r ? 'Abrir o menu' : 'Recolher o menu');
+      b.setAttribute('aria-expanded', r ? 'false' : 'true');
+      b.dataset.dica = r ? 'Abrir o menu  [' : 'Recolher o menu  [';
+    }
+    a.querySelectorAll('.nav, .qeAtual').forEach(n => {
+      if(n.dataset.dica) return;
+      const t = [...n.childNodes].filter(x => x.nodeType === 3).map(x => x.textContent).join(' ').replace(/\s+/g, ' ').trim();
+      const bd = n.querySelector('.bd');
+      n.dataset.dica = t + (bd && bd.textContent.trim() ? ' · ' + bd.textContent.trim() : '');
+    });
+  }
+  let dica = null;
+  function tirarDica(){ if(dica){ dica.remove(); dica = null; } }
+  function mostrarDica(alvo){
+    if(!html.classList.contains('v259Recuado') || !alvo.dataset.dica) return tirarDica();
+    if(!dica){ dica = document.createElement('div'); dica.id = 'v259Dica'; dica.setAttribute('role', 'tooltip'); document.body.appendChild(dica); }
+    dica.textContent = alvo.dataset.dica;
+    const r = alvo.getBoundingClientRect();
+    const trilha = alvo.closest('.aside'), borda = trilha ? trilha.getBoundingClientRect().right : r.right;
+    dica.style.left = Math.round(Math.max(r.right, borda) + 8) + 'px';
+    dica.style.top = Math.round(r.top + r.height / 2) + 'px';
+  }
+  document.addEventListener('pointerover', e => {
+    const alvo = e.target.closest && e.target.closest('.app.ag > .aside .nav, .app.ag > .aside .qeAtual, .v259Recua');
+    if(alvo && e.pointerType !== 'touch') mostrarDica(alvo); else tirarDica();
+  });
+  document.addEventListener('focusin', e => {
+    const alvo = e.target.closest && e.target.closest('.app.ag > .aside .nav, .app.ag > .aside .qeAtual, .v259Recua');
+    if(alvo) mostrarDica(alvo);
+  });
+  document.addEventListener('focusout', tirarDica);
+  window.addEventListener('scroll', tirarDica, true);
+  document.addEventListener('click', e => {
+    if(e.target.closest && e.target.closest('.v259Recua')){ e.preventDefault(); e.stopPropagation(); alternar(); }
+    else if(e.target.closest && e.target.closest('.app.ag > .aside .nav, .app.ag > .aside .qeAtual')) tirarDica();
+  }, true);
+  document.addEventListener('keydown', e => {
+    if(e.key !== '[' || e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target, tag = (t && t.tagName) || '';
+    if(/INPUT|TEXTAREA|SELECT/.test(tag) || (t && t.isContentEditable)) return;
+    if(document.querySelector('.modalbg, .modal-bg, [role="dialog"]')) return;
+    if(!document.querySelector('.app.ag > .aside') || window.innerWidth <= 860) return;
+    e.preventDefault(); alternar();
+  });
+  window.addEventListener('resize', () => { if(escolha() === null){ aplicar(); marcar(); } });
+  if(typeof render === 'function'){
+    const orig = render;
+    render = function(){ const r = orig.apply(this, arguments); try{ marcar(); }catch(e){} return r; };
+  }
+  aplicar(); marcar();
+  try{ new MutationObserver(() => { if(document.querySelector('.app.ag > .aside .lg:not(:has(.v259Recua))')) marcar(); })
+    .observe(document.body, { childList: true, subtree: true }); }catch(e){}
+  window.MaestroMenu = { recuado, alternar, CHAVE };
 })();
 </script>
