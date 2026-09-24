@@ -1,9 +1,36 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.65
+Version: 0.5.66
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.66 — 2026-09-24
+
+**Status:** Concluída
+
+### v252 — o celular respira, parte 2
+
+A mesma regra da v251 em mais duas telas, a pedido do founder ("de cara
+pode executar"):
+
+- **Equipe:** no celular, os nove chips de permissão de cada pessoa viram
+  uma linha — "8 de 8 permissões · acesso completo", "4 de 8 permissões" —
+  e a explicação sob "Revisor · libera o Check" sai (a chave e o selo
+  LIBERA/NÃO LIBERA ficam). A lista inteira continua em "Editar", que é
+  onde se muda. A linha CONTA os chips que a v200 já desenha certos; não
+  recalcula permissão nenhuma. O cartão da pessoa caiu para a metade.
+- **Resultados:** no celular ficam os números, "Por cliente" e o ritmo do
+  Ensaio; o gráfico dia a dia e a quebra por pessoa e por tipo de peça
+  ficam no computador.
+- **As abas da ficha do cliente NÃO mudaram, de propósito:** a v240 as fez
+  quebrar linha porque a Redes ficava fora da tela, sem sinal — pôr as seis
+  numa linha que corre de lado traria isso de volta. Fica para o founder
+  decidir.
+
+4 provas novas em `web/verificar/v251-o-celular-respira.mjs` (28 no total).
 
 ---
 

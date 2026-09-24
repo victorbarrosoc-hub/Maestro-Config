@@ -1,0 +1,14 @@
+/* v252 — o celular respira, parte 2. A mesma regra da v251 (status fica,
+   painel de gestão fica no computador), em mais duas telas. */
+.v252Perm{ display:none }
+@media(max-width:860px){
+  /* Equipe: as nove permissões de cada pessoa viram UMA linha — a lista
+     inteira continua em "Editar", que é onde se muda */
+  .permchips{ display:none !important }
+  .v252Perm{ display:block; margin:2px 0 10px; font-size:13.5px; color:var(--ink-300) }
+  .v252Perm b{ color:var(--ink-50); font-weight:600 }
+  .rvMarca .rvTxt span{ display:none }
+  /* Resultados: os números ficam; o gráfico do dia a dia e a quebra por
+     pessoa e por tipo de peça ficam no computador */
+  body[data-rota="resultados"] .card:has(> svg), body[data-rota="resultados"] .rtGrade{ display:none !important }
+}

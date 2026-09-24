@@ -299,6 +299,10 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v252) — o celular respira, parte 2.** Equipe: permissões
+viram "N de M permissões" no celular (lista inteira em "Editar"); Resultados:
+números ficam, gráfico e quebra por pessoa só no computador. Abas da ficha
+do cliente NÃO mudaram (v240: a Redes sumia na rolagem) — decisão do founder.
 **Fechado (24 set, v251) — o celular respira.** Regra: no celular cada tela
 responde UMA pergunta — explicação sai (em todo tamanho), status fica, painel
 de gestão (os 4 números e a barra do Cronograma, as conquistas do cliente) só
