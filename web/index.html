@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-24 18:06 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-24 19:03 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -16096,7 +16096,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v259 · 24 set · o menu recua';
+const VERSAO_PROTOTIPO = 'v260 · 24 set · o nome do card';
 
 menuSheet = (function(orig){
   return function(){
@@ -47796,5 +47796,123 @@ animation:v259d .12s ease both }
   try{ new MutationObserver(() => { if(document.querySelector('.app.ag > .aside .lg:not(:has(.v259Recua))')) marcar(); })
     .observe(document.body, { childList: true, subtree: true }); }catch(e){}
   window.MaestroMenu = { recuado, alternar, CHAVE };
+})();
+</script>
+<style id="v260-nome-do-card">
+.v260Nome{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; padding:5px 6px 5px 8px; border-radius:12px;
+background:var(--campo, var(--enc)); border:1px solid var(--fio, transparent) }
+.v260Nome:focus-within{ border-color:var(--brass-500) }
+.v260Nome > i{ font-style:normal; color:var(--ink-400); font-weight:600 }
+.v260Pil{ display:inline-flex; align-items:center; height:26px; padding:0 10px; border-radius:999px; font-size:12.5px;
+font-weight:600; white-space:nowrap; max-width:220px; overflow:hidden; text-overflow:ellipsis }
+.v260Cli{ background:var(--enc2, rgba(255,255,255,.08)); color:var(--ink-50) }
+.v260Tipo{ background:rgba(200,150,58,.16); color:var(--brass-500) }
+.v260Tipo.falta{ background:none; color:var(--ink-400); border:1px dashed var(--ink-400) }
+#v260Tema{ flex:1 1 180px; min-width:140px; border:0 !important; background:none !important; box-shadow:none !important;
+padding:6px 4px !important; outline:none; font-size:14px }
+#v260Tema.v260Erro::placeholder{ color:var(--danger, #E5484D) }
+.v260Nome:has(#v260Tema.v260Erro){ border-color:var(--danger, #E5484D) }
+.v260Prev{ margin-top:6px; font-size:12.5px; color:var(--ink-200); font-weight:500; overflow-wrap:anywhere }
+.v260Prev span{ color:var(--ink-400); font-weight:400 }
+.v260Prev:not(:has(span))::before{ content:"Vai aparecer assim: "; color:var(--ink-400); font-weight:400 }
+</style>
+<script data-camada="v260">
+(function(){
+  const SEP = ' · ';
+  const fmts = () => {
+    let l = [];
+    try{ l = S.ptFmts && S.ptFmts.size ? [...S.ptFmts] : (S.ptFmt ? [S.ptFmt] : []); }catch(e){}
+    return l.filter(f => f && f !== 'Livre');
+  };
+  const cliente = () => { try{ return String((cliAtual() || {}).nome || '').trim(); }catch(e){ return ''; } };
+  const tipo = () => fmts().join(' + ');
+  const montar = tema => {
+    tema = String(tema || '').replace(/\s+/g, ' ').trim();
+    if(tema.length < 2) return '';
+    return [cliente(), tipo(), tema].filter(Boolean).join(SEP);
+  };
+  const esc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  function temaDe(nome){
+    let t = String(nome || '').trim(); if(!t) return '';
+    const F = (typeof FORMATOS !== 'undefined' ? FORMATOS : []).map(esc).join('|');
+    if(F){
+      const tipoRe = `(?:${F})(?:\\s\\+\\s(?:${F}))*`;
+      let m = t.match(new RegExp(`^.+?\\s·\\s${tipoRe}\\s·\\s(.+)$`));
+      if(m) return m[1].trim();
+      m = t.match(new RegExp(`^${tipoRe}\\s·\\s(.+)$`));
+      if(m) return m[1].trim();
+    }
+    const c = cliente();
+    if(c && t.startsWith(c + SEP)) return t.slice((c + SEP).length).trim();
+    return t;
+  }
+  let aberto = null, temaVivo = null;
+  const h = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  function pilulas(){
+    const c = cliente(), t = tipo();
+    return `<span class="v260Pil v260Cli" title="O cliente vem de onde a pauta foi aberta">${h(c || 'Cliente')}</span><i>·</i>`
+      + `<span class="v260Pil v260Tipo ${t ? '' : 'falta'}" title="Muda nos botões de Formato">${h(t || 'Tipo')}</span><i>·</i>`;
+  }
+  if(typeof modalPauta === 'function') modalPauta = (function(orig){
+    return function(id){
+      let html = orig.apply(this, arguments);
+      try{
+        if(!html || html.indexOf('>Título da demanda<') >= 0) return html;
+        if(html.indexOf('id="pt-t"') < 0) return html;
+        const chave = id || 'novo';
+        if(aberto !== chave){
+          aberto = chave;
+          const p = id && S.pauta ? S.pauta.find(x => x.id === id) : null;
+          temaVivo = temaDe(p ? p.t : '');
+        }
+        const foco = /id="pt-t"[^>]*data-ptfoco/.test(html) || / data-ptfoco="1"[^>]*id="pt-t"/.test(html);
+        html = html.replace(/<label for="pt-t">[\s\S]*?<\/label>/,
+          `<label for="v260Tema">Nome do card<span class="fdica">monta sozinho: cliente · tipo · tema</span></label>`);
+        html = html.replace(/<input id="pt-t"[^>]*>/,
+          `<div class="v260Nome">${pilulas()}<input id="v260Tema" value="${h(temaVivo)}" autocomplete="off"
+             placeholder="Tema — ex.: Inovação no Direito" aria-describedby="v260Prev"${foco ? ' data-v260foco="1"' : ''}></div>
+           <div class="v260Prev" id="v260Prev" aria-live="polite">${h(montar(temaVivo)) || '<span>Escreva o tema para dar nome ao card</span>'}</div>
+           <input type="hidden" id="pt-t" value="${h(montar(temaVivo))}">`);
+      }catch(e){}
+      return html;
+    };
+  })(modalPauta);
+  function atualizar(){
+    const campo = document.getElementById('v260Tema'); if(!campo) return;
+    temaVivo = campo.value;
+    const nome = montar(temaVivo);
+    const oculto = document.getElementById('pt-t'); if(oculto) oculto.value = nome;
+    const prev = document.getElementById('v260Prev');
+    if(prev) prev.innerHTML = nome ? h(nome) : '<span>Escreva o tema para dar nome ao card</span>';
+    const caixa = campo.closest('.v260Nome');
+    if(caixa){ caixa.querySelectorAll('.v260Pil, .v260Nome > i').forEach(e => e.remove()); campo.insertAdjacentHTML('beforebegin', pilulas()); }
+  }
+  document.addEventListener('input', e => { if(e.target && e.target.id === 'v260Tema'){ e.target.classList.remove('v260Erro'); atualizar(); } });
+  document.addEventListener('click', e => {
+    if(e.target.closest && e.target.closest('[data-fmtpick],[data-fmt98]')) setTimeout(atualizar, 0);
+  });
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-ptok]');
+    if(!b) return;
+    const campo = document.getElementById('v260Tema'); if(!campo) return;
+    atualizar();
+    if(montar(campo.value)) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    campo.classList.add('v260Erro'); campo.focus();
+    if(typeof toast === 'function') toast('Falta o tema do card.');
+  }, true);
+  if(typeof renderLayer === 'function') renderLayer = (function(orig){
+    return function(){
+      try{ if(!S.modal){ aberto = null; temaVivo = null; } }catch(e){}
+      const r = orig.apply(this, arguments);
+      try{ atualizar(); }catch(e){}
+      try{
+        const c = document.querySelector('#v260Tema[data-v260foco]');
+        if(c && !c._focado){ c._focado = true; setTimeout(() => { try{ c.focus(); c.select(); }catch(e){} }, 70); }
+      }catch(e){}
+      return r;
+    };
+  })(renderLayer);
+  window.MaestroNomeCard = { montar, temaDe, tipo, cliente };
 })();
 </script>
