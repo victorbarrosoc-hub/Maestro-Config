@@ -1,11 +1,57 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.71
+Version: 0.5.76
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.76 — 2026-09-24
+
+**Status:** Concluída
+
+### v262 — Redes em cinco plataformas
+
+O pedido do founder, nas quatro fases, com os arquivos REAIS da EJUP
+(Instagram, Facebook, YouTube, TikTok e LinkedIn, do Drive) como prova.
+Tudo em `docs/PRD/REDES.md` — as decisões, o modelo de dados e o estudo
+("os arquivos bastam?" e "como chegar à análise sem 24 arquivos").
+
+1. **O motor fora do protótipo**, em `web/redes/` (registro de adaptadores,
+   motor, dados, análise, tela e estilo). Desce só quando a aba abre; o
+   protótipo segue abaixo do teto.
+2. **Registro de adaptadores como configuração** — as cinco redes, com
+   natureza (fluxo, pessoas, estoque, saldo, taxa…) e família de cada
+   métrica; formato novo se registra pela tela, sem código.
+3. **O importador:** cliente, mês, rede escolhida por quem importa, conta;
+   um arraste com todos os arquivos, cada um no campo certo pelo conteúdo;
+   bandeja "De outras redes"; campo errado com "Mover"; confirmações
+   (datas sem ano do TikTok, série quase vazia, categorias faltando); mês
+   fora dos arquivos bloqueia e sugere o certo; sobrescrever só com
+   "Substituir" — **importar de novo substitui, nunca soma**.
+4. **Dados** numa linha por cliente e rede (`__redes__:<cliente>:<rede>`),
+   marcada `maestroRedes: 2` e fora da carga geral; trava de revisão.
+5. **O relatório do mês:** lado a lado por família (redes nunca somadas),
+   uma seção por conta com série diária, números do mês contra o mesmo
+   trecho do mês anterior, taxa recalculada com a fórmula, picos por dia,
+   alertas e "o que estes dados não permitem concluir"; YouTube com
+   lançamentos × catálogo; TikTok com a lista parcial e acumulada; LinkedIn
+   com os dois rankings; inventário e histórico de importações.
+6. **O Cronograma embaixo dos picos:** nenhum export diz qual post causou um
+   pico; a Maestro sabe o que saiu. Cada pico lista os cards agendados,
+   aprovados ou postados daquela rede no dia e na véspera.
+
+**Achados no caminho, corrigidos:** o × do importador ficava coberto pelo
+título preso da folha no celular (v229); o link das publicações do
+LinkedIn vinha da planilha direto para o `href` — só https do LinkedIn vira
+link; o aviso dos dados da v238 e o "quem importou" procuravam `window.S`
+(o estado é `const S`, a armadilha da v258).
+
+173 provas: 100 do motor (`v262-redes-motor.mjs`, sem navegador) e 73 da
+tela (`v262-redes-importar.mjs`). A suíte da v238 foi aposentada — cobrava
+a tela que saiu e "importar soma". E a `login-403` deixou de julgar no
+relógio: espera o evento que o cenário provoca (ficava vermelha sob carga).
 
 ## 0.5.75 — 2026-09-24
 

@@ -312,6 +312,15 @@ ficam com os nomes de hoje, e o botão de cada card é sempre a próxima porta.
       Suite, YouTube Studio e TikTok Studio; leitura por regras. **Falta daqui:**
       o pedido de aprovação do app na Meta (conexão automática, semanal sozinha);
       a leitura escrita por IA com o cérebro da marca; XLSX além de CSV.
+- [x] **Redes em cinco plataformas (v262).** Substitui a Parte 4: registro de
+      adaptadores, importador por rede (substitui, nunca soma), relatório do mês
+      com o Cronograma embaixo dos picos, XLSX e ZIP. Estudo em
+      `docs/PRD/REDES.md`. **Falta daqui:**
+  - [ ] "Importar as cinco redes" num clique, quando as contas já existem
+  - [ ] Adaptador do export **por conteúdo** do Meta (precisa de um arquivo real)
+  - [ ] Conexão por API: YouTube Analytics → Meta Graph (mesmo app do WhatsApp) →
+        TikTok business → LinkedIn Community Management
+  - [ ] Resumo do mês em texto (IA com o cérebro da marca)
 
 ---
 

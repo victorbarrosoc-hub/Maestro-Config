@@ -1,0 +1,7 @@
+/* v262 — enquanto o módulo da aba Redes desce */
+.v262Aviso{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:22px; margin-top:6px; border-radius:14px;
+  background:var(--sup); color:var(--ink-300); font-size:13px }
+.v262Aviso b{ color:var(--ink-50) }
+.v262Roda{ width:14px; height:14px; border-radius:50%; border:2px solid var(--ink-600); border-top-color:var(--brass-500);
+  animation:v262g .8s linear infinite; display:inline-block }
+@keyframes v262g{ to{ transform:rotate(360deg) } }

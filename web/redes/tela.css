@@ -1,0 +1,181 @@
+/* MAESTRO · REDES — a aba e o modal (tokens da v249/v254: --sup, --enc, --fio, --ink-*, --brass-*) */
+.rd2{ --rd2-bom:#30A46C; --rd2-mau:var(--danger, #E5484D); --rd2-r:var(--r-card, 14px);
+  display:flex; flex-direction:column; gap:14px; margin-top:6px }
+.rd2Topo{ display:flex; align-items:center; gap:10px; flex-wrap:wrap }
+.rd2Sp{ flex:1 }
+.rd2Mes{ display:flex; align-items:center; gap:6px; background:var(--sup); border-radius:999px; padding:4px }
+.rd2Mes b{ font-size:14px; min-width:150px; text-align:center; color:var(--ink-50) }
+.rd2Seta{ width:32px; height:32px; border-radius:50%; border:0; background:none; color:var(--ink-200); display:grid; place-items:center; cursor:pointer }
+.rd2Seta:hover{ background:var(--enc) }
+.rd2Chips{ display:flex; gap:6px; flex-wrap:wrap }
+.rd2Chips button{ display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 13px; border-radius:999px; border:0;
+  background:var(--sup); color:var(--ink-200); font-size:13px; font-weight:600; cursor:pointer }
+.rd2Chips button.on{ background:var(--ink-50); color:var(--ink-950) }
+.rd2Chips i, .rd2Ponto, .rd2Plats i, .rd2Tabela i{ display:inline-block; width:8px; height:8px; border-radius:50%; flex:0 0 auto }
+.rd2Ponto{ margin-right:6px; vertical-align:1px }
+
+.rd2Bloco{ background:var(--sup); border-radius:var(--rd2-r); padding:18px }
+.rd2Bloco > header h3, .rd2Conta h3{ margin:0; font-size:16px; color:var(--ink-50) }
+.rd2Bloco > header p{ margin:3px 0 12px; font-size:12.5px; color:var(--ink-400) }
+.rd2Bloco h4{ margin:16px 0 8px; font-size:13px; color:var(--ink-100); font-weight:650 }
+.rd2Bloco h4 small, .rd2Bloco h5 small{ color:var(--ink-400); font-weight:500; margin-left:6px }
+.rd2Nota{ font-size:12.5px; color:var(--ink-400); margin:6px 0 }
+.rd2Nota b{ color:var(--ink-100) }
+
+/* lado a lado */
+.rd2Tabela{ display:grid; gap:0; overflow-x:auto }
+.rd2Lin{ display:grid; grid-template-columns:minmax(140px, 1.1fr) repeat(auto-fit, minmax(130px, 1fr)); gap:10px; padding:10px 0; border-top:.5px solid var(--fio) }
+.rd2Lin.rd2Cab{ border-top:0; padding-top:0; font-size:12px; color:var(--ink-400); font-weight:600 }
+.rd2Lin.rd2Cab > span{ display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:6px }
+.rd2Lin > span{ display:flex; flex-direction:column; gap:4px; min-width:0 }
+.rd2Lin > span > b{ font-size:13px; color:var(--ink-100) }
+.rd2Lin > span > small{ font-size:11.5px; color:var(--ink-400) }
+.rd2Lin em{ font-style:normal; font-size:12px; color:var(--ink-300); line-height:1.35 }
+.rd2Lin em b{ font-size:15px; color:var(--ink-50); margin-right:4px }
+.rd2Lin em small{ display:block; color:var(--ink-400); font-size:11px }
+.rd2Nada{ color:var(--ink-600) }
+
+/* conta */
+.rd2ContaCab{ display:flex; gap:10px; align-items:flex-start; margin-bottom:10px }
+.rd2ContaCab .rd2Ponto{ width:12px; height:12px; margin-top:4px }
+.rd2Conta h3 span{ color:var(--ink-300); font-weight:500 }
+.rd2ContaCab p{ margin:2px 0 0; font-size:12.5px; color:var(--ink-400) }
+.rd2Kpis{ display:grid; grid-template-columns:repeat(auto-fill, minmax(158px, 1fr)); gap:8px }
+.rd2Kpi{ background:var(--fundo); border-radius:12px; padding:11px 12px; display:flex; flex-direction:column; gap:3px; min-width:0 }
+.rd2Kpi.minima{ opacity:.78 }
+.rd2KpiNome{ font-size:11.5px; color:var(--ink-400); line-height:1.25 }
+.rd2KpiVal{ font-size:21px; color:var(--ink-50); font-weight:700; letter-spacing:-.01em; font-variant-numeric:tabular-nums }
+.rd2Kpi small{ font-size:11.5px; color:var(--ink-400); line-height:1.3 }
+.rd2Comp{ font-size:11.5px; font-weight:600; color:var(--ink-300); line-height:1.3 }
+.rd2Comp.sobe{ color:var(--rd2-bom) } .rd2Comp.desce{ color:var(--rd2-mau) }
+.rd2Taxa{ display:flex; flex-direction:column; gap:2px; margin-top:12px; padding:11px 12px; border-radius:12px; background:var(--fundo) }
+.rd2Taxa b{ font-size:14px; color:var(--ink-50) } .rd2Taxa span{ font-size:12.5px; color:var(--ink-300) } .rd2Taxa small{ font-size:11.5px; color:var(--ink-400) }
+.rd2Graf{ margin:0 0 12px }
+.rd2Graf figcaption{ font-size:12px; color:var(--ink-400); margin-bottom:6px }
+.rd2Graf svg{ width:100%; height:74px; display:block }
+.rd2Graf rect{ fill:var(--ink-600) } .rd2Graf rect.pico{ fill:var(--brass-500) } .rd2Graf rect.falta{ fill:var(--ink-800) }
+.rd2GrafEixo{ display:flex; justify-content:space-between; font-size:11px; color:var(--ink-400); margin-top:4px }
+.rd2Dest ul, .rd2Alertas ul, .rd2Lim ul, .rd2Info ul, .rd2Conf ul, .rd2Sobre ul{ margin:0; padding-left:18px; font-size:12.5px; color:var(--ink-200); line-height:1.5 }
+.rd2Dest li.nota{ list-style:none; margin-left:-18px; color:var(--ink-400); font-size:12px; margin-top:4px }
+.rd2Crono{ display:block; color:var(--brass-500); font-size:12px; margin:1px 0 3px }
+.rd2Crono i{ font-style:normal; color:var(--ink-400) }
+.rd2Alertas li{ color:var(--ink-300) }
+.rd2Lim{ margin-top:12px } .rd2Lim summary, .rd2Info summary, .rd2Como summary{ cursor:pointer; font-size:12.5px; color:var(--ink-300); font-weight:600 }
+.rd2Lim ul{ margin-top:6px }
+.rd2Extra{ border-top:.5px solid var(--fio); margin-top:14px; padding-top:2px }
+.rd2Duas{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px }
+.rd2Lista h5{ margin:8px 0 6px; font-size:12.5px; color:var(--ink-200) }
+.rd2Lista ol, .rd2Ol{ margin:0; padding-left:20px; font-size:12.5px; color:var(--ink-200) }
+.rd2Lista li, .rd2Ol li{ display:grid; grid-template-columns:1fr auto; column-gap:10px; padding:5px 0; border-bottom:.5px solid var(--fio) }
+.rd2Lista li span, .rd2Ol li span, .rd2Lista li a{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink-100) }
+.rd2Lista li small, .rd2Ol li small{ grid-column:1; color:var(--ink-400); font-size:11px }
+.rd2Lista li b, .rd2Ol li b{ grid-row:1 / span 2; grid-column:2; align-self:center; color:var(--ink-50); font-variant-numeric:tabular-nums }
+.rd2Demo{ list-style:none; margin:0; padding:0 } .rd2Demo li{ display:flex; justify-content:space-between; gap:10px; font-size:12.5px; padding:4px 0; border-bottom:.5px solid var(--fio); color:var(--ink-200) }
+
+.rd2Vazio{ background:var(--sup); border-radius:var(--rd2-r); padding:28px 20px; text-align:center; color:var(--ink-300) }
+.rd2Vazio b{ display:block; color:var(--ink-50); font-size:15px; margin-bottom:6px }
+.rd2Vazio p{ max-width:560px; margin:0 auto 14px; font-size:13px; line-height:1.5 }
+.rd2VazioIc{ font-size:26px; color:var(--brass-500); margin-bottom:8px }
+.rd2Como{ text-align:left; margin:16px auto 0; max-width:680px }
+.rd2Como ul, .rd2Como p{ font-size:12.5px; color:var(--ink-300); line-height:1.5; padding-left:18px }
+.rd2Como p{ padding-left:0 }
+.rd2Carregando{ display:flex; align-items:center; gap:10px; padding:22px; color:var(--ink-300); background:var(--sup); border-radius:var(--rd2-r); font-size:13px }
+.rd2Roda{ width:14px; height:14px; border-radius:50%; border:2px solid var(--ink-600); border-top-color:var(--brass-500); animation:rd2Gira .8s linear infinite; display:inline-block }
+@keyframes rd2Gira{ to{ transform:rotate(360deg) } }
+.rd2Legado, .rd2Aviso{ display:flex; gap:8px; align-items:flex-start; font-size:12.5px; color:var(--ink-200); background:var(--sup); border-radius:12px; padding:10px 12px }
+.rd2Legado svg, .rd2Aviso svg{ color:var(--brass-500); flex:0 0 auto; margin-top:2px }
+
+.rd2Inv summary, .rd2Hist summary{ cursor:pointer; font-weight:650; color:var(--ink-100); font-size:14px }
+.rd2Inv summary small, .rd2Hist summary small{ color:var(--ink-400); font-weight:500; margin-left:6px }
+.rd2Rola{ overflow-x:auto; margin-top:10px }
+.rd2Tab{ width:100%; border-collapse:collapse; font-size:12.5px }
+.rd2Tab th{ text-align:left; font-weight:500; color:var(--ink-400); padding:0 8px 8px; font-size:11.5px; white-space:nowrap }
+.rd2Tab td{ padding:8px; border-top:.5px solid var(--fio); color:var(--ink-200); vertical-align:top }
+.rd2Tab td small{ display:block; color:var(--ink-400); font-size:11px }
+.rd2Tab .n{ text-align:right; font-variant-numeric:tabular-nums }
+.rd2Hist ol{ list-style:none; margin:10px 0 0; padding:0 }
+.rd2Hist li{ display:grid; grid-template-columns:110px 1fr; gap:10px; padding:8px 0; border-top:.5px solid var(--fio); font-size:12.5px; color:var(--ink-200) }
+.rd2Hist li small{ display:block; color:var(--ink-400); font-size:11.5px; overflow-wrap:anywhere }
+.rd2HistQuando{ color:var(--ink-400); font-variant-numeric:tabular-nums }
+
+/* ---------- o modal ---------- */
+html.rd2ModalAberto{ overflow:hidden }
+#rd2Modal .modal{ z-index:960 }
+.rd2Imp{ position:relative; max-width:760px; width:min(760px, calc(100vw - 24px)) }
+.rd2Imp > h3{ display:flex; align-items:center; justify-content:space-between; gap:12px }
+.rd2Fechar{ flex:0 0 32px; width:32px; height:32px; border-radius:50%; border:0; background:var(--enc); color:var(--ink-200); display:grid; place-items:center; cursor:pointer }
+.rd2Imp .fld{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px }
+.rd2Imp .fld > span, .rd2Rot{ font-size:12px; color:var(--ink-300); font-weight:600 }
+.rd2Imp select, .rd2Imp input[type=month], .rd2Imp input[type=text], .rd2Imp input:not([type]){ height:40px; border-radius:10px; border:1px solid var(--fio);
+  background:var(--fundo); color:var(--ink-50); padding:0 12px; font-size:14px; min-width:0; width:100% }
+.rd2Linha2{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
+.rd2Plats{ display:flex; gap:6px; flex-wrap:wrap }
+.rd2Plats button{ display:inline-flex; align-items:center; gap:7px; height:36px; padding:0 14px; border-radius:999px; border:1px solid var(--fio);
+  background:var(--fundo); color:var(--ink-100); font-size:13px; font-weight:600; cursor:pointer }
+.rd2Plats button.on{ background:var(--ink-50); color:var(--ink-950); border-color:var(--ink-50) }
+.rd2Dica{ font-size:11.5px; color:var(--ink-400) }
+.rd2Solta{ border:1.5px dashed var(--ink-600); border-radius:14px; padding:16px; text-align:center; font-size:13px; color:var(--ink-200); margin-bottom:12px; transition:border-color .15s, background .15s }
+.rd2Solta small{ display:block; margin-top:4px; color:var(--ink-400); font-size:11.5px }
+.rd2Solta.arrastando{ border-color:var(--brass-500); background:rgba(200,150,58,.08) }
+.rd2Link{ color:var(--brass-500); text-decoration:underline; cursor:pointer; font-weight:600 }
+.rd2Lendo{ display:flex; align-items:center; justify-content:center; gap:8px; margin:8px 0 0; color:var(--ink-300) }
+.rd2Campos{ display:flex; flex-direction:column; gap:8px; margin-bottom:12px }
+.rd2Slot{ background:var(--fundo); border-radius:12px; padding:10px 12px; border:1px solid transparent }
+.rd2Slot.cheio{ border-color:var(--fio) }
+.rd2SlotCab{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+.rd2SlotCab b{ font-size:13px; color:var(--ink-50) } .rd2SlotCab small{ font-size:11.5px; color:var(--ink-400) }
+.rd2Escolher{ margin-left:auto; cursor:pointer }
+.rd2Pend{ margin:4px 0 0; font-size:12px; color:var(--ink-500) }
+.rd2Parte{ margin-top:8px; padding-left:10px; border-left:2px solid var(--ink-700) } .rd2Parte.ok{ border-left-color:var(--rd2-bom, #30A46C) }
+.rd2Parte > b{ font-size:12.5px; color:var(--ink-200) }
+.rd2Itens{ list-style:none; margin:6px 0 0; padding:0; display:flex; flex-direction:column; gap:6px }
+.rd2Item{ background:var(--sup); border-radius:10px; padding:8px 10px }
+.rd2ItemL1{ display:flex; align-items:center; gap:8px }
+.rd2ItemNome{ font-size:12.5px; color:var(--ink-100); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0 }
+.rd2ItemL2{ font-size:11.5px; color:var(--ink-400); margin-top:3px }
+.rd2St{ font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; background:var(--enc2); color:var(--ink-200); white-space:nowrap }
+.rd2St.lido{ background:rgba(48,164,108,.16); color:#30A46C } .rd2St.vazio{ background:var(--enc2); color:var(--ink-300) }
+.rd2St.erro, .rd2St.desconhecido{ background:rgba(229,72,77,.14); color:var(--rd2-mau, #E5484D) }
+.rd2Tira{ width:26px; height:26px; border-radius:50%; border:0; background:none; color:var(--ink-400); cursor:pointer; display:grid; place-items:center }
+.rd2Tira:hover{ background:var(--enc) }
+.rd2Msg{ margin:4px 0 0; font-size:11.5px; color:var(--ink-300); line-height:1.4 } .rd2Msg.erro{ color:var(--rd2-mau, #E5484D) }
+.rd2Errado{ margin:6px 0 0; font-size:12px; color:var(--brass-500); display:flex; align-items:center; gap:6px; flex-wrap:wrap }
+.rd2Previa{ margin:6px 0; padding:8px; border-radius:8px; background:var(--fundo); font-size:11px; color:var(--ink-300); overflow-x:auto; max-height:120px; white-space:pre }
+.rd2Problema{ border-color:rgba(229,72,77,.35) }
+.rd2Bandeja{ background:var(--fundo); border-radius:12px; padding:10px 12px; margin-bottom:12px }
+.rd2Bandeja h4{ margin:0 0 6px; font-size:12.5px; color:var(--ink-200); display:flex; align-items:center; gap:6px }
+.rd2BandejaRede{ display:flex; align-items:center; gap:8px; justify-content:space-between; flex-wrap:wrap; font-size:12px; color:var(--ink-300); padding:4px 0 }
+.rd2Bloq, .rd2Av{ display:flex; gap:8px; align-items:flex-start; border-radius:12px; padding:10px 12px; margin-bottom:10px; font-size:12.5px; line-height:1.45 }
+.rd2Bloq{ background:rgba(229,72,77,.12); color:var(--ink-50) } .rd2Bloq svg{ color:var(--rd2-mau, #E5484D); flex:0 0 auto; margin-top:2px }
+.rd2Av{ background:rgba(200,150,58,.10); color:var(--ink-100) } .rd2Av svg{ color:var(--brass-500); flex:0 0 auto; margin-top:2px }
+.rd2Conf, .rd2Sobre{ background:rgba(200,150,58,.10); border-radius:12px; padding:10px 12px; margin-bottom:10px; font-size:12.5px; color:var(--ink-100) }
+.rd2Check{ display:flex; align-items:center; gap:8px; margin-top:8px; font-size:13px; color:var(--ink-50); font-weight:600; cursor:pointer }
+.rd2Check input{ width:18px; height:18px; accent-color:var(--brass-500) }
+.rd2Info{ margin-bottom:10px }
+.rd2Info ul{ margin-top:6px }
+.rd2PorQue{ flex:1; font-size:12px; color:var(--ink-400); align-self:center; min-width:0 }
+.rd2Feito{ display:flex; gap:12px; align-items:flex-start; background:rgba(48,164,108,.12); border-radius:12px; padding:14px; margin:6px 0 12px }
+.rd2Feito svg{ color:#30A46C; flex:0 0 auto } .rd2Feito b{ color:var(--ink-50) } .rd2Feito p{ margin:4px 0 0; font-size:12.5px; color:var(--ink-200) }
+.rd2WCols{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px }
+.rd2WCols li{ display:grid; grid-template-columns:1.2fr 1fr 1.4fr; gap:8px; align-items:center }
+.rd2WCols .rd2Check{ margin:0 }
+
+@media (max-width:860px){
+  .rd2Bloco{ padding:14px }
+  .rd2Mes b{ min-width:0 }
+  .rd2Topo .b.pri{ margin-left:auto }
+  /* lado a lado vira um cartão por família */
+  .rd2Lin{ grid-template-columns:1fr; gap:6px }
+  .rd2Lin.rd2Cab{ display:none }
+  /* rótulo da rede à esquerda, uma métrica por linha à direita — com duas métricas na
+     mesma rede (TikTok, LinkedIn), a segunda não escorrega para baixo do rótulo */
+  .rd2Lin > span[role=cell]{ display:grid; grid-template-columns:78px minmax(0, 1fr); column-gap:8px; row-gap:6px; align-items:baseline }
+  .rd2Lin > span[role=cell]::before{ content:attr(data-rede); grid-column:1; grid-row:1; font-size:11.5px; color:var(--ink-400) }
+  .rd2Lin > span[role=cell] > *{ grid-column:2 }
+  .rd2Kpis{ grid-template-columns:repeat(2, minmax(0, 1fr)) }
+  .rd2KpiVal{ font-size:19px }
+  .rd2Linha2{ grid-template-columns:1fr }
+  .rd2WCols li{ grid-template-columns:1fr }
+  .rd2Hist li{ grid-template-columns:1fr }
+  .rd2Imp{ width:100% }
+}

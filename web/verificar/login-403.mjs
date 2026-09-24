@@ -70,6 +70,19 @@ async function rodar(cenario){
     await pag.click('#em-entra');
   }
   await pag.waitForTimeout(3200);          // passa do debounce de 1400ms da gravacao
+  /* e, se o que o cenario provoca ainda nao aconteceu, espera por ELE (ate 12s a
+     mais) em vez de julgar no relogio: com tres suites em paralelo a pagina abre
+     mais devagar, e 3,2s as vezes nao alcancavam a primeira gravacao — a suite
+     ficava vermelha sem nada ter quebrado. Depois, 800ms para o que viria em
+     seguida (o painel voltar, que e o defeito) ter tempo de aparecer. */
+  const ate = Date.now() + 12000;
+  const aconteceu = async () => cenario === 'leEnaoGrava'
+    ? await pag.evaluate(() => !!(S.sb && S.sb.estado === 'erro')).catch(() => false)
+    : renovou;
+  if (!(await aconteceu())) {
+    while (Date.now() < ate && !(await aconteceu())) await pag.waitForTimeout(150);
+    await pag.waitForTimeout(800);
+  }
 
   const r = {
     painelVoltou: await pag.locator('#entrarMaestro').count() > 0,

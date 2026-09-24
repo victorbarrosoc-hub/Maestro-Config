@@ -299,6 +299,28 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v262) — Redes em cinco plataformas.** O pedido inteiro
+(quatro fases) com os arquivos REAIS da EJUP como prova
+(`web/verificar/fixtures/redes/`; repositório privado, pasta bloqueada no
+site). O motor mora em `web/redes/` e desce só quando a aba abre (o
+protótipo não comportaria). Registro de adaptadores como configuração;
+importador com a rede SEMPRE escolhida por quem importa (títulos idênticos
+no Instagram e no Facebook), um arraste com tudo, cada arquivo no campo
+certo pelo CONTEÚDO, bandeja das outras redes, confirmações e bloqueio de
+mês; **importar de novo substitui, nunca soma**; uma linha por cliente e
+rede (`__redes__:<cli>:<rede>`, marca `maestroRedes: 2`, fora da carga
+geral). Relatório: lado a lado sem somar redes, mesmo trecho do mês
+anterior, picos por dia **com o Cronograma embaixo** (o arquivo não diz a
+causa; a Maestro sabe o que saiu). O estudo — os arquivos bastam para a
+tendência, não para "qual post funcionou" no Meta; o mínimo são 18
+arquivos/mês; o caminho sem arquivos é API, na ordem YouTube → Meta (o
+mesmo app do WhatsApp) → TikTok → LinkedIn — está em
+`docs/PRD/REDES.md`. 100 + 73 provas em `web/verificar/v262-redes-*.mjs`.
+**Armadilhas:** o estado é `const S` — de fora do protótipo, `window.S` é
+undefined (o aviso da v238 e o "quem importou" nasceram mortos por isso);
+no celular o `h3` da folha é preso (v229) e cobre o que estiver posicionado
+fora dele; e toda URL que vem de planilha passa por conferência antes de
+virar `href`.
 **Fechado (24 set, v261) — o padrão chega aos cards de antes.** No
 Cronograma, "Padronizar nomes (N)" com antes → depois e caixa por linha (a
 tarefa do Ensaio vai junto; a grafia do tema vira a mais usada do
