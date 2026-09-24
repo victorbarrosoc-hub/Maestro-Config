@@ -14,6 +14,10 @@ const abreMenu = async (pg, sel) => {
 };
 import http from 'http';
 import fs from 'fs';
+/* v260: o nome do card se monta (Cliente · Tipo · Tema) — escreve no TEMA
+   quando o formulário é o de postagem; na demanda interna, no título livre */
+const nomeCard = async (pag, v) => (await pag.locator('#v260Tema').count())
+  ? pag.fill('#v260Tema', v) : pag.fill('#pt-t', v);
 
 /* v189 tirou "Nova postagem" do Cronograma: a postagem nasce no Ensaio.
    O formulário de card novo continua de pé — abre-se por ele. */
@@ -80,11 +84,11 @@ async function abrir(vp, rota, prep){
   await pag.locator('#layer [data-plat98="tt"]').click(); await pag.waitForTimeout(300);
   checa('1.4 ligar e desligar outra rede não apaga o que já foi escrito',
         (await pag.inputValue('[data-plattxt="ig"]')).startsWith('Versão do Instagram'));
-  await pag.fill('#pt-t', 'ZZ Post com texto por rede');
+  await nomeCard(pag, 'ZZ Post com texto por rede');
   await pag.fill('#pt-texto', 'Briefing geral do post.');
   await pag.locator('#layer [data-ptok]').first().click(); await pag.waitForTimeout(600);
   const salvo = await pag.evaluate(() => {
-    const p = S.pauta.find(x => x.t === 'ZZ Post com texto por rede');
+    const p = S.pauta.find(x => (x.t === 'ZZ Post com texto por rede' || String(x.t).endsWith(' · ' + 'ZZ Post com texto por rede')));
     return p ? { pp: p.porPlat, plats: p.plats, id: p.id } : null; });
   checa('1.5 salvar guarda um texto por plataforma, só das escolhidas',
         salvo && salvo.pp && Object.keys(salvo.pp).sort().join(',') === 'ig,li'

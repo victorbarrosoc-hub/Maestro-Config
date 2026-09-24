@@ -70,11 +70,11 @@ await pag.evaluate(() => { ['abertura', 'entrarMaestro', 'quemEsta'].forEach(i =
   S.usuario = { tipo:'agencia', id:'victorbarrosoc' }; S.skel = false;
   S.view = 'agency'; S.route = 'clientedet'; S.cli = CLIS()[0].id; S.tab = 'pauta'; render();
   S.modal = modalPauta(null); renderLayer();
-  const el = document.getElementById('pt-t'); if(el){ el.focus(); el.value = 'não pode sumir'; } });
+  const el = document.getElementById('v260Tema') || document.getElementById('pt-t'); if(el){ el.focus(); el.value = 'não pode sumir'; } });
 await pag.waitForTimeout(9000);
 const escrevendo = await pag.evaluate(() => ({
   aberto: !!document.querySelector('#layer .modalbox'),
-  texto: (document.getElementById('pt-t') || {}).value,
+  texto: (document.getElementById('v260Tema') || document.getElementById('pt-t') || {}).value,
   versao: VERSAO_PROTOTIPO }));
 checa('4.1 com formulário aberto, a atualização espera a pessoa terminar',
       escrevendo.aberto && escrevendo.texto === 'não pode sumir', escrevendo);

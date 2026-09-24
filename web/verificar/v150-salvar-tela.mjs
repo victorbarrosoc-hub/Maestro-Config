@@ -5,6 +5,10 @@
 import { chromium } from 'playwright';
 import http from 'http';
 import fs from 'fs';
+/* v260: o nome do card se monta (Cliente · Tipo · Tema) — escreve no TEMA
+   quando o formulário é o de postagem; na demanda interna, no título livre */
+const nomeCard = async (pag, v) => (await pag.locator('#v260Tema').count())
+  ? pag.fill('#v260Tema', v) : pag.fill('#pt-t', v);
 
 /* v189 tirou "Nova postagem" do Cronograma: a postagem nasce no Ensaio.
    O formulário de card novo continua de pé — abre-se por ele. */
@@ -53,10 +57,10 @@ async function abrir(){
 
   /* o estado é esvaziado por baixo — é o que acontecia em alguns caminhos */
   await pag.evaluate(() => { S.ptPlats = new Set(); });
-  await pag.fill('#pt-t', 'EJUPcast #02 — corte');
+  await nomeCard(pag, 'EJUPcast #02 — corte');
   await pag.locator('#layer [data-ptok][data-agendar]').click(); await pag.waitForTimeout(800);
   const salvo = await pag.evaluate(() => {
-    const p = (S.pautas[S.cli] || []).find(x => x.t === 'EJUPcast #02 — corte');
+    const p = (S.pautas[S.cli] || []).find(x => (x.t === 'EJUPcast #02 — corte' || String(x.t).endsWith(' · ' + 'EJUPcast #02 — corte')));
     return p ? { plats: p.plats, st: p.st } : null; });
   checa('1.2 mesmo com o estado vazio, salva com o que estava na tela (o defeito relatado)',
         salvo && salvo.plats.length === 3 && salvo.plats.includes('yt'), { salvo, avisos });
@@ -72,10 +76,10 @@ async function abrir(){
   const { pag, erros, avisos } = await abrir();
   await abrirCardNovo(pag); await pag.waitForTimeout(500);
   await pag.locator('#layer [data-plat98="li"]').click(); await pag.waitForTimeout(300);
-  await pag.fill('#pt-t', 'Post normal');
+  await nomeCard(pag, 'Post normal');
   await pag.locator('#layer [data-ptok]').first().click(); await pag.waitForTimeout(800);
   const salvo = await pag.evaluate(() => {
-    const p = (S.pautas[S.cli] || []).find(x => x.t === 'Post normal');
+    const p = (S.pautas[S.cli] || []).find(x => (x.t === 'Post normal' || String(x.t).endsWith(' · ' + 'Post normal')));
     return p ? { plats: p.plats, st: p.st } : null; });
   checa('2.1 salvar normal guarda as plataformas marcadas',
         salvo && salvo.plats.sort().join() === 'ig,li', salvo);
@@ -85,12 +89,12 @@ async function abrir(){
   await abrirCardNovo(pag); await pag.waitForTimeout(500);
   await pag.evaluate(() => { document.querySelectorAll('#layer [data-plat98].on')
     .forEach(b => b.classList.remove('on')); S.ptPlats = new Set(); });
-  await pag.fill('#pt-t', 'Sem rede nenhuma');
+  await nomeCard(pag, 'Sem rede nenhuma');
   await pag.locator('#layer [data-ptok]').first().click(); await pag.waitForTimeout(600);
   checa('2.3 sem nenhuma marcada, o aviso legítimo continua',
         avisos.some(a => /escolha ao menos uma plataforma/i.test(a)), avisos);
   checa('2.4 e o card não é criado pela metade',
-        await pag.evaluate(() => !(S.pautas[S.cli] || []).some(p => p.t === 'Sem rede nenhuma')));
+        await pag.evaluate(() => !(S.pautas[S.cli] || []).some(p => (p.t === 'Sem rede nenhuma' || String(p.t).endsWith(' · ' + 'Sem rede nenhuma')))));
   checa('2.5 sem erro de página (caminho normal)', erros.length === 0, erros.slice(0, 3));
   await pag.close();
 }
@@ -101,10 +105,10 @@ async function abrir(){
   await abrirCardNovo(pag); await pag.waitForTimeout(500);
   await pag.locator('#layer [data-fmt98="Carrossel"]').click(); await pag.waitForTimeout(350);
   await pag.evaluate(() => { S.ptFmt = 'Reels'; S.ptFmts = new Set(['Reels']); });  /* estado desencontrado */
-  await pag.fill('#pt-t', 'Segue o formato da tela');
+  await nomeCard(pag, 'Segue o formato da tela');
   await pag.locator('#layer [data-ptok]').first().click(); await pag.waitForTimeout(800);
   const salvo = await pag.evaluate(() => {
-    const p = (S.pautas[S.cli] || []).find(x => x.t === 'Segue o formato da tela');
+    const p = (S.pautas[S.cli] || []).find(x => (x.t === 'Segue o formato da tela' || String(x.t).endsWith(' · ' + 'Segue o formato da tela')));
     return p ? { fmt: p.fmt, fmts: p.fmts } : null; });
   checa('3.1 o formato salvo é o que está aceso na tela',
         salvo && /Carrossel/.test(JSON.stringify(salvo)), salvo);
@@ -117,10 +121,10 @@ async function abrir(){
   const { pag, erros, avisos } = await abrir();
   await abrirCardNovo(pag); await pag.waitForTimeout(500);
   await pag.locator('#layer [data-fmt98="Livre"]').click(); await pag.waitForTimeout(500);
-  await pag.fill('#pt-t', 'Fechar o financeiro');
+  await nomeCard(pag, 'Fechar o financeiro');
   await pag.locator('#layer [data-livreok]').click(); await pag.waitForTimeout(800);
   const salvo = await pag.evaluate(() => {
-    const p = (S.pautas[S.cli] || []).find(x => x.t === 'Fechar o financeiro');
+    const p = (S.pautas[S.cli] || []).find(x => (x.t === 'Fechar o financeiro' || String(x.t).endsWith(' · ' + 'Fechar o financeiro')));
     return p ? { tarefa: p.tarefa, plats: p.plats, fmt: p.fmt } : null; });
   checa('4.1 a demanda interna salva sem plataforma nenhuma',
         salvo && salvo.tarefa === true && (salvo.plats || []).length === 0, salvo);

@@ -299,6 +299,15 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v260) — o nome do card se monta sozinho.** "Quero um
+padrão: o cliente primeiro, depois o tipo, depois a temática." O nome vira
+`Cliente · Tipo · Tema`: cliente e tipo travados (de onde a pauta abriu e
+dos botões de Formato), só o tema se digita, com prévia. `#pt-t` segue
+sendo a fonte do nome, oculto e montado — então tarefa do Ensaio, lote e
+link do cliente mostram o padrão sem serem tocados. Nome antigo vira tema
+ao editar; Livre não muda. **Armadilha:** o redesenho devolve aos campos o
+valor antigo — o nome é remontado a cada desenho. 17 provas em
+`web/verificar/v260-o-nome-do-card.mjs`.
 **Fechado (24 set, v259) — o menu recua, e a planilha que entra.** (1) O
 "‹" ao lado da marca recolhe a lateral para uma trilha de ícones (68px),
 como o Instagram; `[` alterna; dica com o nome no hover; contagem vira

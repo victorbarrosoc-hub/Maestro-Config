@@ -7,6 +7,10 @@
 import { chromium } from 'playwright';
 import http from 'http';
 import fs from 'fs';
+/* v260: o nome do card se monta (Cliente · Tipo · Tema) — escreve no TEMA
+   quando o formulário é o de postagem; na demanda interna, no título livre */
+const nomeCard = async (pag, v) => (await pag.locator('#v260Tema').count())
+  ? pag.fill('#v260Tema', v) : pag.fill('#pt-t', v);
 
 /* v167: a casa começa vazia — todo teste que precisa de pauta monta a
    sua. Antes vinha de graça, do cliente de demonstração que saiu. */
@@ -77,7 +81,7 @@ checa('o seletor de plataformas nao oferece Stories',
         .some(t => /Stories/i.test(t)));
 
 // ---------- 2. O TRAVAMENTO ----------
-await pag.fill('#pt-t', 'Postagem de teste');
+await nomeCard(pag, 'Postagem de teste');
 await pag.fill('#pt-texto', 'Um texto que nao pode sumir.');
 await pag.click('[data-plat98="li"]');            // liga LinkedIn
 await pag.waitForTimeout(250);
@@ -93,7 +97,7 @@ checa('depois de um toast o chip CONTINUA marcado (o bug relatado)',
 checa('depois de um toast o estado e a tela concordam',
       JSON.stringify(await pag.evaluate(() => [...S.ptPlats])) === JSON.stringify(antes));
 checa('depois de um toast o que foi digitado continua la',
-      (await pag.inputValue('#pt-t')) === 'Postagem de teste' &&
+      (await pag.inputValue('#v260Tema')) === 'Postagem de teste' &&
       (await pag.inputValue('#pt-texto')) === 'Um texto que nao pode sumir.');
 
 /* e o clique seguinte desliga de verdade, em vez de brigar */
@@ -139,7 +143,7 @@ await abrirNovo();
 const larguras = await pag.evaluate(() => {
   const cx = document.querySelector('#layer .modalbox');
   return { hora: cx.querySelector('#pt-hora').getBoundingClientRect().width,
-           titulo: cx.querySelector('#pt-t').getBoundingClientRect().width };
+           titulo: cx.querySelector('.v260Nome').getBoundingClientRect().width };
 });
 checa('a caixa de horario e bem menor que a de texto',
       larguras.hora < larguras.titulo * 0.6);
@@ -168,11 +172,11 @@ checa('com uma tela o nome e "Story"',
       (await pag.locator('.stCampos > b').textContent()).trim() === 'Story');
 
 /* o Objetivo nao pode sobrescrever o Briefing que a pessoa escreveu ao lado */
-await pag.fill('#pt-t', 'Story com briefing proprio');
+await nomeCard(pag, 'Story com briefing proprio');
 await pag.fill('#pt-texto', 'O BRIEFING que nao pode ser sobrescrito.');
 await pag.fill('#pt-obj', 'Distribuir o artigo.');
 await pag.click('[data-ptok]'); await pag.waitForTimeout(500);
-const st = await pag.evaluate(() => S.pauta.find(x => x.t === 'Story com briefing proprio'));
+const st = await pag.evaluate(() => S.pauta.find(x => (x.t === 'Story com briefing proprio' || String(x.t).endsWith(' · ' + 'Story com briefing proprio'))));
 checa('marcar Story grava o card como story', st && st.story === true);
 checa('o Objetivo NAO sobrescreve o Briefing digitado',
       st && st.texto === 'O BRIEFING que nao pode ser sobrescrito.' &&
@@ -235,9 +239,9 @@ await pag.evaluate(() => { S.modal = null; renderLayer();
    GRAVAR, e o botao de editar muda de lugar conforme a visao */
 await pag.evaluate(() => { S.ptSemear = true; S.modal = modalPauta(S.pauta[0].id); renderLayer(); });
 await pag.waitForTimeout(350);
-await pag.fill('#pt-t', 'Titulo editado');
+await nomeCard(pag, 'Titulo editado');
 await pag.click('[data-ptok]'); await pag.waitForTimeout(450);
-const preservado = await pag.evaluate(() => S.pauta.find(x => x.t === 'Titulo editado'));
+const preservado = await pag.evaluate(() => S.pauta.find(x => (x.t === 'Titulo editado' || String(x.t).endsWith(' · ' + 'Titulo editado'))));
 checa('editar um card antigo NAO apaga o CTA que ja estava gravado',
       preservado && preservado.cta === 'Chamada antiga que nao pode sumir');
 checa('editar um card antigo NAO apaga o vinculo com a peca',
@@ -259,7 +263,7 @@ checa('no Livre o titulo do modal fala de demanda, nao de postagem',
 checa('o Livre avisa que nao vai ao ar',
       /não vai ao ar/i.test(await pag.evaluate(() => document.body.innerText)));
 
-await pag.fill('#pt-t', 'Fechar o financeiro de agosto');
+await nomeCard(pag, 'Fechar o financeiro de agosto');
 await pag.fill('#pt-texto', 'Conferir notas e mandar para a contabilidade.');
 await pag.click('[data-resppick]:not([data-resppick=""])'); await pag.waitForTimeout(200);
 await pag.click('[data-livreok]'); await pag.waitForTimeout(500);

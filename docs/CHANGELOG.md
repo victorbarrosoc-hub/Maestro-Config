@@ -7,6 +7,38 @@ Nunca apagar versões anteriores.
 
 ---
 
+## 0.5.74 — 2026-09-24
+
+**Status:** Concluída
+
+### v260 — o nome do card se monta sozinho
+
+O founder: *"não quero cards com nomes completamente diferentes, quero um
+padrão — o cliente primeiro, depois o tipo de conteúdo, depois a
+temática"* ("Roberto - Carrossel - Inovação no Direito").
+
+O nome passa a ser **montado**: `Cliente · Tipo · Tema`. O cliente vem de
+onde a pauta foi aberta e o tipo dos botões de Formato — os dois travados,
+em pílulas; só o tema se digita, com a prévia "Vai aparecer assim" embaixo.
+Dois formatos viram "Reels + Shorts". Rede e data ficam fora do nome (o
+card já mostra as duas, e a mesma peça vai a mais de uma rede); "·" em vez
+de "-" porque o hífen mora dentro dos temas ("Pré-venda").
+
+**Como entra sem tocar as telas:** `#pt-t` continua sendo a fonte do nome
+(a tarefa do Ensaio é renomeada por ele; lote e link do cliente mostram
+`p.t`), só que oculto e preenchido com o nome montado a cada tecla. Tema
+vazio deixa `#pt-t` vazio, e o salvar recusa com o campo do tema marcado.
+Nomes antigos viram tema ao editar ("Story · Autoridade" → "Autoridade";
+um nome já no padrão devolve só o tema, mesmo se o cliente mudou de nome).
+A demanda interna (Livre) não muda.
+
+**A prova pegou:** trocar o formato redesenha o formulário, e outra camada
+devolve aos campos o valor de antes — a prévia dizia "Carrossel" e o card
+seria gravado "Reels". Agora o nome é remontado do estado a cada desenho.
+17 provas em `web/verificar/v260-o-nome-do-card.mjs`; seis suítes antigas
+(v142, v149, v150, v223, pauta-editor, ciclo-producao) passaram a escrever
+pelo tema e a aceitar o nome no padrão.
+
 ## 0.5.73 — 2026-09-24
 
 **Status:** Concluída
