@@ -1,11 +1,62 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.68
+Version: 0.5.69
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.69 — 2026-09-24
+
+**Status:** Concluída
+
+### v255 — a Equipe que se entende
+
+O founder: *"a aba da equipe não está abrindo mais"* e *"precisa ser mais
+intuitiva, tá muito desorganizada"*. Ele mandou também os logins da EJUP
+para organizar.
+
+**Por que não abria.** Quem entra com uma conta que ainda não está na
+Equipe, numa agência que já tem dono, nasce com o papel "Equipe" (v219).
+Esse papel não existia na tabela `PERMS`, e a tela lia
+`PERMS[papel].sim`: TypeError, e a aba inteira morria. Agora "Equipe" é um
+papel de verdade (pauta e Ensaio), e qualquer papel fora da tabela cai
+nessa mesma rede. Os papéis de fábrica são congelados na carga, para que a
+rede não transforme um papel inventado em opção de lista; a prova pegou
+isso na primeira versão.
+
+**Por que era difícil organizar.** A ficha da pessoa tirava
+"Administrador" da lista de papéis, então não havia como fazer um segundo
+administrador. E um papel desconhecido deixava a caixa marcada no
+primeiro papel da lista, então salvar sem olhar trocava o papel.
+- Agora "Administrador" aparece para quem é administrador.
+- Papel desconhecido mostra "Escolha o papel", e salvar assim não aplica
+  papel nenhum.
+
+**A tela nova, em três abas:**
+- **Pessoas:** Administradores e Equipe. Cada linha mostra papel, e-mail,
+  Revisor e o cadeado da chave; papel faltando aparece marcado.
+- **Como se entra:** as três portas (login da agência, quem está
+  entrando, chave da pessoa) e "Criar/Trocar" a chave de cada um.
+- **Papéis:** o que cada papel pode por padrão, em tabela.
+
+A ficha junta tudo da pessoa: foto, nome, e-mail, papel, **Revisor ·
+libera o Check** (que saiu da lista para a ficha, e a ficha acompanha o
+toque sem perder o que foi digitado), permissões, chave e remover.
+
+**Os logins.** Conferi só com login, sem ler dado nenhum:
+- `victorbarrosoc@gmail.com` entra.
+- `ejup.mkt@gmail.com` não entrou com nenhuma das duas senhas.
+
+O roteiro para criar ou acertar essa conta e pô-la na EJUP está em
+`docs/ENGINEERING/equipe-1-login-da-agencia.sql`. **Não há senha em
+arquivo nenhum:** a senha se define no painel do Supabase, e as chaves na
+Equipe (guardadas como resumo).
+
+35 provas em `web/verificar/v255-a-equipe.mjs`. Três suítes aprenderam a
+tela nova: a v200 abre a ficha antes do revisor, a v251 conta as linhas, e
+`cliente-tipo-permissoes` lê a aba Papéis.
 
 ## 0.5.68 — 2026-09-24
 

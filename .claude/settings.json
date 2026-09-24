@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}

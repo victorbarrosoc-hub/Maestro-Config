@@ -146,6 +146,8 @@ console.log('\n5. a marcação de Revisor está na Equipe');
     S.view = 'agency'; S.route = 'equipe'; render();
   });
   await pag.waitForTimeout(300);
+  /* v255: a chave mora na ficha da pessoa — abre a ficha da Anna */
+  await pag.click('[data-editmembro="1"]'); await pag.waitForTimeout(300);
   const chaves = await pag.$$('[data-rvmarca]');
   ok(chaves.length >= 1, 'a chave "Revisor · libera o Check" aparece na ficha');
   ok(/Revisor · libera o Check/.test(await pag.evaluate(() => document.body.textContent)),
@@ -169,6 +171,8 @@ console.log('\n5. a marcação de Revisor está na Equipe');
      'voltando ao padrão do papel, o ajuste sai — trocar o papel depois vale');
 
   /* o dono não se tranca para fora */
+  await pag.evaluate(() => { S.modal = null; renderLayer(); });
+  await pag.click('[data-editmembro="0"]'); await pag.waitForTimeout(300);
   ok(await pag.evaluate(() => {
     const f = [...document.querySelectorAll('.rvChave')];
     return f.length && f[0].classList.contains('trav') && !f[0].hasAttribute('data-rvmarca');
@@ -177,10 +181,11 @@ console.log('\n5. a marcação de Revisor está na Equipe');
   /* quem não é administrador não distribui poder */
   const antesN = await pag.evaluate(() => {
     S.equipe[1].papel = 'Social Media'; delete S.equipe[1].perms;
-    S.usuario = { tipo:'agencia', id: membroId(S.equipe[1]) }; render();
+    S.usuario = { tipo:'agencia', id: membroId(S.equipe[1]) }; S.modal = null; renderLayer(); render();
     return podeMembro(S.equipe[1], 'revisar');
   });
   await pag.waitForTimeout(300);
+  await pag.click('[data-editmembro="1"]'); await pag.waitForTimeout(300);
   const alvo = await pag.$('[data-rvmarca="1"]');
   if(alvo) await alvo.click();
   await pag.waitForTimeout(300);

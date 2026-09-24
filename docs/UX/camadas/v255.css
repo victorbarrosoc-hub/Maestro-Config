@@ -1,0 +1,49 @@
+/* v255 — a Equipe: abas, grupos e linhas que dizem o essencial */
+.v255Abas{ display:inline-flex; gap:2px; padding:3px; margin:4px 0 22px; border-radius:12px; background:var(--enc); max-width:100%; overflow-x:auto }
+.v255Abas button{ padding:7px 16px; border-radius:9px; font-size:13.5px; font-weight:550; color:var(--ink-300); white-space:nowrap }
+.v255Abas button.on{ background:var(--sup); color:var(--ink-50); box-shadow:0 1px 3px rgba(0,0,0,.18) }
+.v255Grupo{ margin:0 0 26px }
+.v255Grupo h2{ margin:0 0 10px; font-size:13px; font-weight:650; color:var(--ink-400); letter-spacing:0; text-transform:none }
+.v255Grupo h2 span{ color:var(--ink-500); font-weight:500; margin-left:4px }
+.v255Lista{ border-radius:16px; background:var(--sup); overflow:hidden }
+.v255Pessoa, .v255ChLinha{ display:flex; align-items:center; gap:12px; width:100%; padding:12px 16px; text-align:left; background:none; border:0; color:inherit }
+.v255Pessoa + .v255Pessoa, .v255ChLinha + .v255ChLinha{ box-shadow:inset 0 .5px 0 var(--fio) }
+.v255Pessoa:hover{ background:var(--sup2) }
+.v255Pessoa .av, .v255ChLinha .av{ width:38px; height:38px; flex:0 0 auto }
+.v255Txt{ flex:1; min-width:0; display:grid; gap:2px }
+.v255Txt b{ font-size:14.5px; font-weight:600; color:var(--ink-50); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.v255Txt b i{ font-style:normal; font-size:11px; font-weight:600; color:var(--brass-500); margin-left:4px }
+.v255Txt > span{ font-size:12.5px; color:var(--ink-400); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.v255Selos{ display:flex; align-items:center; gap:6px; flex:0 0 auto }
+.v255Selo{ padding:3px 9px; border-radius:999px; font-size:11.5px; font-weight:600; background:var(--enc); color:var(--ink-200) }
+.v255Selo.dono{ background:rgba(200,150,58,.18); color:var(--brass-400) }
+.v255Selo.falta{ background:rgba(255,159,10,.16); color:var(--coral) }
+.v255Chave{ display:inline-flex; color:var(--ink-500) } .v255Chave.tem{ color:var(--encore) }
+.v255Chev{ color:var(--ink-500); display:inline-flex }
+.v255Aviso{ display:flex; gap:10px; align-items:flex-start; padding:12px 14px; margin:0 0 20px; border-radius:14px;
+  background:rgba(255,159,10,.1); color:var(--ink-100); font-size:13.5px; line-height:1.45 }
+.v255Aviso svg{ color:var(--coral); flex:0 0 auto; margin-top:2px } .v255Aviso a{ color:var(--brass-400) }
+.v255Passos{ list-style:none; counter-reset:p; margin:0 0 26px; padding:0; display:grid; gap:10px }
+.v255Passos li{ counter-increment:p; display:grid; grid-template-columns:30px 1fr; gap:2px 12px; padding:14px 16px; border-radius:16px; background:var(--sup) }
+.v255Passos li::before{ content:counter(p); grid-row:span 2; width:28px; height:28px; border-radius:50%; display:grid; place-items:center;
+  background:var(--enc); font-size:13px; font-weight:700; color:var(--ink-100) }
+.v255Passos b{ font-size:14.5px; color:var(--ink-50) } .v255Passos span{ font-size:13px; color:var(--ink-400); line-height:1.5 }
+.v255Passos em{ font-style:normal; color:var(--ink-100) } .v255Passos a{ color:var(--brass-400) }
+.v255ChLinha .b{ margin-left:auto }
+.v255Tabela{ border-radius:16px; background:var(--sup); overflow-x:auto }
+.v255TLin{ display:grid; align-items:center; padding:10px 16px }
+.v255TLin + .v255TLin{ box-shadow:inset 0 .5px 0 var(--fio) }
+.v255TLin.cab span{ font-size:11.5px; color:var(--ink-400); line-height:1.3; text-align:center }
+.v255TLin b{ font-size:13.5px; font-weight:600; color:var(--ink-50) }
+.v255TLin span.sim{ text-align:center; color:var(--encore); font-weight:700 } .v255TLin span.nao{ text-align:center; color:var(--ink-600) }
+.v255Nota{ font-size:12.5px; color:var(--ink-400); line-height:1.5; margin:12px 0 0 }
+.v255Nota b{ color:var(--ink-100) }
+/* a ficha */
+.v255Ficha .v255Rv{ margin:4px 0 14px; padding:12px 14px; border-radius:14px; background:var(--sup2) }
+.v255Sair{ display:block; width:100%; margin-top:14px; padding:11px; border-radius:12px; background:none; color:var(--danger); font-size:14px; font-weight:600 }
+.v255Sair:hover{ background:rgba(255,69,58,.08) }
+@media(max-width:860px){
+  .v255Pessoa{ padding:12px 14px }
+  .v255Selo:not(.falta):not(.dono){ display:none }
+  .v255Txt > span{ font-size:12px }
+}

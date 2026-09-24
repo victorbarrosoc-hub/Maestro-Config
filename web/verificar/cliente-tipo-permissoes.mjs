@@ -74,10 +74,13 @@ checa('o tipo sobrevive ao salvar (nao e apagado pelo resto do cadastro)',
         return c && c.nome === 'ZZ Cliente Socio' && tipoDoCli(c) === 'inativo'; }, idCli));
 
 // ================= 2. permissoes por pessoa =================
-await pag.evaluate(() => { S.route = 'equipe'; render(); });
+/* v255: o que cada papel pode mora na aba Papéis; a regra de ouro, em Pessoas */
+await pag.evaluate(() => { S.route = 'equipe'; S.eqAba = 'papeis'; render(); });
 await pag.waitForTimeout(400);
 checa('a Equipe mostra o que cada um pode, e nao um texto fixo',
       /Clientes e briefing/i.test(await texto()));
+await pag.evaluate(() => { S.eqAba = 'pessoas'; render(); });
+await pag.waitForTimeout(300);
 checa('a regra de ouro continua dita: aprovar e do cliente',
       /aprovar conteúdo — é do cliente/i.test(await texto()));
 

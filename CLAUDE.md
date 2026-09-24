@@ -299,6 +299,23 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v255) — a Equipe que se entende.** "A aba da equipe não
+está abrindo mais." Quem entra com uma conta que não está na Equipe, numa
+agência com dono, nasce com papel "Equipe" (v219) — que NÃO existia no
+`PERMS`, e a tela lia `PERMS[papel].sim`: TypeError, aba morta. Agora
+"Equipe" é papel de verdade (pauta e Ensaio) e todo papel fora da tabela
+cai nessa rede, sem virar opção de lista (os papéis de fábrica são
+congelados na carga). **E por que era difícil organizar:** a ficha tirava
+"Administrador" da lista de papéis, e papel desconhecido deixava a caixa
+no primeiro da lista. A tela nova: abas **Pessoas** (Administradores /
+Equipe, cada linha com papel, e-mail, Revisor e cadeado da chave),
+**Como se entra** (login da agência → quem está entrando → chave, com
+"Criar" por pessoa) e **Papéis** (o padrão de cada papel); a ficha junta
+foto, nome, e-mail, papel, revisor, permissões, chave e remover. O login
+`ejup.mkt@gmail.com` não entrou com as senhas passadas (conferido só
+com login, sem ler dado): o roteiro está em
+`docs/ENGINEERING/equipe-1-login-da-agencia.sql`, **sem senha no
+arquivo**. 35 provas em `web/verificar/v255-a-equipe.mjs`.
 **Fechado (24 set, v254) — o escuro suave.** "Fundo preto profundo, muito
 escuro… fica feio demais." O tema escuro troca o `#000` por grafite
 (`#1C1C1F`) e cada camada sobe um degrau a partir dele (card `#27272B`,

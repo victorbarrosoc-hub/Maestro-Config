@@ -102,8 +102,10 @@ for(const [q, vp] of [['celular', { width: 390, height: 844 }], ['computador', {
   await pg.evaluate(() => { S.route = 'equipe'; render(); }); await pg.waitForTimeout(300);
   const eq = await pg.evaluate(() => { const v = s => [...document.querySelectorAll(s)].some(e => getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0);
     return { chips: v('.permchips'), linha: [...document.querySelectorAll('.v252Perm')].filter(e => getComputedStyle(e).display !== 'none').map(e => e.textContent) }; });
-  if(q === 'celular') checa('celular · Equipe: as permissões de cada pessoa viram uma linha ("N de M permissões")', !eq.chips && eq.linha.length >= 2 && eq.linha.every(t => /^\d+ de \d+ permissões/.test(t)), eq);
-  else checa('computador · Equipe: os chips de permissão continuam, sem a linha', eq.chips && eq.linha.length === 0, eq);
+  /* v255: a Equipe virou lista — as permissões moram na ficha da pessoa,
+     nos dois tamanhos, e a linha diz papel, e-mail, revisor e chave */
+  const linhas = await pg.evaluate(() => document.querySelectorAll('.v255Pessoa').length);
+  checa(`${q} · Equipe: uma linha por pessoa, sem a parede de chips`, !eq.chips && linhas >= 3, { ...eq, linhas });
   await pg.evaluate(() => { S.route = 'resultados'; render(); }); await pg.waitForTimeout(300);
   const rt = await pg.evaluate(() => { const v = s => [...document.querySelectorAll(s)].some(e => getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0);
     return { numeros: v('.tiles'), grafico: v('.main .card > svg'), grade: v('.rtGrade') }; });

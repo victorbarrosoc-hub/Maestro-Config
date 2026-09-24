@@ -15990,7 +15990,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v254 · 24 set · o escuro suave';
+const VERSAO_PROTOTIPO = 'v255 · 24 set · a equipe que se entende';
 
 menuSheet = (function(orig){
   return function(){
@@ -47010,5 +47010,210 @@ max-width:560px; margin:0 auto }
     };
   })(render);
   window.MaestroDeslizar = { abrir, fechar, agir, estado: () => Z, receberElogios };
+})();
+</script>
+<style id="v255-equipe">
+.v255Abas{ display:inline-flex; gap:2px; padding:3px; margin:4px 0 22px; border-radius:12px; background:var(--enc); max-width:100%; overflow-x:auto }
+.v255Abas button{ padding:7px 16px; border-radius:9px; font-size:13.5px; font-weight:550; color:var(--ink-300); white-space:nowrap }
+.v255Abas button.on{ background:var(--sup); color:var(--ink-50); box-shadow:0 1px 3px rgba(0,0,0,.18) }
+.v255Grupo{ margin:0 0 26px }
+.v255Grupo h2{ margin:0 0 10px; font-size:13px; font-weight:650; color:var(--ink-400); letter-spacing:0; text-transform:none }
+.v255Grupo h2 span{ color:var(--ink-500); font-weight:500; margin-left:4px }
+.v255Lista{ border-radius:16px; background:var(--sup); overflow:hidden }
+.v255Pessoa, .v255ChLinha{ display:flex; align-items:center; gap:12px; width:100%; padding:12px 16px; text-align:left; background:none; border:0; color:inherit }
+.v255Pessoa + .v255Pessoa, .v255ChLinha + .v255ChLinha{ box-shadow:inset 0 .5px 0 var(--fio) }
+.v255Pessoa:hover{ background:var(--sup2) }
+.v255Pessoa .av, .v255ChLinha .av{ width:38px; height:38px; flex:0 0 auto }
+.v255Txt{ flex:1; min-width:0; display:grid; gap:2px }
+.v255Txt b{ font-size:14.5px; font-weight:600; color:var(--ink-50); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.v255Txt b i{ font-style:normal; font-size:11px; font-weight:600; color:var(--brass-500); margin-left:4px }
+.v255Txt > span{ font-size:12.5px; color:var(--ink-400); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.v255Selos{ display:flex; align-items:center; gap:6px; flex:0 0 auto }
+.v255Selo{ padding:3px 9px; border-radius:999px; font-size:11.5px; font-weight:600; background:var(--enc); color:var(--ink-200) }
+.v255Selo.dono{ background:rgba(200,150,58,.18); color:var(--brass-400) }
+.v255Selo.falta{ background:rgba(255,159,10,.16); color:var(--coral) }
+.v255Chave{ display:inline-flex; color:var(--ink-500) } .v255Chave.tem{ color:var(--encore) }
+.v255Chev{ color:var(--ink-500); display:inline-flex }
+.v255Aviso{ display:flex; gap:10px; align-items:flex-start; padding:12px 14px; margin:0 0 20px; border-radius:14px;
+background:rgba(255,159,10,.1); color:var(--ink-100); font-size:13.5px; line-height:1.45 }
+.v255Aviso svg{ color:var(--coral); flex:0 0 auto; margin-top:2px } .v255Aviso a{ color:var(--brass-400) }
+.v255Passos{ list-style:none; counter-reset:p; margin:0 0 26px; padding:0; display:grid; gap:10px }
+.v255Passos li{ counter-increment:p; display:grid; grid-template-columns:30px 1fr; gap:2px 12px; padding:14px 16px; border-radius:16px; background:var(--sup) }
+.v255Passos li::before{ content:counter(p); grid-row:span 2; width:28px; height:28px; border-radius:50%; display:grid; place-items:center;
+background:var(--enc); font-size:13px; font-weight:700; color:var(--ink-100) }
+.v255Passos b{ font-size:14.5px; color:var(--ink-50) } .v255Passos span{ font-size:13px; color:var(--ink-400); line-height:1.5 }
+.v255Passos em{ font-style:normal; color:var(--ink-100) } .v255Passos a{ color:var(--brass-400) }
+.v255ChLinha .b{ margin-left:auto }
+.v255Tabela{ border-radius:16px; background:var(--sup); overflow-x:auto }
+.v255TLin{ display:grid; align-items:center; padding:10px 16px }
+.v255TLin + .v255TLin{ box-shadow:inset 0 .5px 0 var(--fio) }
+.v255TLin.cab span{ font-size:11.5px; color:var(--ink-400); line-height:1.3; text-align:center }
+.v255TLin b{ font-size:13.5px; font-weight:600; color:var(--ink-50) }
+.v255TLin span.sim{ text-align:center; color:var(--encore); font-weight:700 } .v255TLin span.nao{ text-align:center; color:var(--ink-600) }
+.v255Nota{ font-size:12.5px; color:var(--ink-400); line-height:1.5; margin:12px 0 0 }
+.v255Nota b{ color:var(--ink-100) }
+.v255Ficha .v255Rv{ margin:4px 0 14px; padding:12px 14px; border-radius:14px; background:var(--sup2) }
+.v255Sair{ display:block; width:100%; margin-top:14px; padding:11px; border-radius:12px; background:none; color:var(--danger); font-size:14px; font-weight:600 }
+.v255Sair:hover{ background:rgba(255,69,58,.08) }
+@media(max-width:860px){
+.v255Pessoa{ padding:12px 14px }
+.v255Selo:not(.falta):not(.dono){ display:none }
+.v255Txt > span{ font-size:12px }
+}
+</style>
+<script data-camada="v255">
+(function(){
+  if(typeof agEquipe !== 'function' || typeof PERMS === 'undefined') return;
+  if(!PERMS.Equipe) PERMS.Equipe = { sim:['pauta e calendário','produção no Ensaio'],
+    nao:['enviar lotes','equipe','faturamento','aprovar conteúdo'] };
+  if(typeof PADRAO_PAPEL !== 'undefined' && !PADRAO_PAPEL.Equipe) PADRAO_PAPEL.Equipe = ['pauta','ensaio'];
+  const DE_FABRICA = new Set(Object.keys(PERMS).filter(p => p !== 'Equipe'));
+  const papelConhecido = p => !!(p && DE_FABRICA.has(p));
+  function redes(){
+    (S.equipe || []).forEach(m => {
+      if(!m) return;
+      if(!m.papel || !PERMS[m.papel]) PERMS[m.papel || 'Equipe'] = PERMS.Equipe;
+      if(typeof PADRAO_PAPEL !== 'undefined' && m.papel && !PADRAO_PAPEL[m.papel]) PADRAO_PAPEL[m.papel] = PADRAO_PAPEL.Equipe;
+    });
+  }
+  const nome1 = m => String((m && m.n) || '').split(' ')[0] || 'Esta pessoa';
+  const ehAdm = m => !!(m && (m.dono || m.papel === 'Administrador'));
+  const revisa = m => typeof podeMembro === 'function' && podeMembro(m, 'revisar');
+  const chaveDe = m => typeof temChave === 'function' && temChave(m);
+  const eu = () => (S.usuario && S.usuario.tipo === 'agencia') ? S.usuario.id : null;
+  const loginAtual = () => { try{ const q = window.MaestroPorta && MaestroPorta.quem(); return q && (q.login || q.email); }catch(e){ return null; } };
+  const admin = () => typeof ehAdmin === 'function' ? ehAdmin() : true;
+  function linha(m, i){
+    const papel = papelConhecido(m.papel) ? m.papel : null;
+    const selos = [];
+    if(m.dono) selos.push('<span class="v255Selo dono">Dono</span>');
+    if(!papel && !m.dono) selos.push('<span class="v255Selo falta">Defina o papel</span>');
+    if(revisa(m)) selos.push('<span class="v255Selo">Revisor</span>');
+    const ch = chaveDe(m);
+    return `<button type="button" class="v255Pessoa" data-editmembro="${i}">
+      ${avMembro(m)}
+      <span class="v255Txt"><b>${esc(m.n || 'Sem nome')}${membroId(m) === eu() ? ' <i>você</i>' : ''}</b>
+        <span>${esc(papel || (m.dono ? 'Administrador' : 'Sem papel'))} · ${esc(m.mail || 'sem e-mail')}</span></span>
+      <span class="v255Selos">${selos.join('')}
+        <span class="v255Chave${ch ? ' tem' : ''}" title="${ch ? 'Tem chave de acesso' : 'Sem chave de acesso'}">${ic(ch ? 'lock' : 'unlock', 13)}</span></span>
+      <span class="v255Chev">${ic('chevr', 14)}</span></button>`;
+  }
+  function abaPessoas(){
+    const idx = (S.equipe || []).map((m, i) => [m, i]).filter(([m]) => m);
+    const adms = idx.filter(([m]) => ehAdm(m)), resto = idx.filter(([m]) => !ehAdm(m));
+    const grupo = (t, l) => l.length ? `<section class="v255Grupo"><h2>${t} <span>${l.length}</span></h2>
+      <div class="v255Lista">${l.map(([m, i]) => linha(m, i)).join('')}</div></section>` : '';
+    const semPapel = resto.filter(([m]) => !papelConhecido(m.papel)).length;
+    return (semPapel ? `<div class="v255Aviso">${ic('warn', 15)}<span><b>${semPapel === 1 ? '1 pessoa está' : semPapel + ' pessoas estão'} sem papel.</b>
+        Toque no nome e escolha o papel — até lá, só pauta e Ensaio.</span></div>` : '')
+      + grupo('Administradores', adms) + grupo('Equipe', resto)
+      + '<p class="v255Nota">Aprovar conteúdo — é do cliente. Ninguém da agência aprova, nem o dono.</p>';
+  }
+  function abaEntrar(){
+    const lg = loginAtual();
+    const semChave = (S.equipe || []).filter(m => m && !chaveDe(m));
+    return `<ol class="v255Passos">
+      <li><b>O login da agência</b><span>E-mail e senha de uma conta da agência. ${lg ? `Neste aparelho: <em>${esc(lg)}</em>.` : ''}
+        A senha dessa conta se troca em <a href="#" data-r="conta">Conta</a>.</span></li>
+      <li><b>Quem está entrando?</b><span>A lista com os nomes da equipe. Quem entra com o próprio e-mail já cai no próprio nome.</span></li>
+      <li><b>A chave da pessoa</b><span>Se a pessoa tem chave, o app pede antes de entrar no nome dela. É o que separa uma pessoa da outra num login da agência.</span></li>
+    </ol>
+    <section class="v255Grupo"><h2>Chaves <span>${(S.equipe || []).length - semChave.length} de ${(S.equipe || []).length}</span></h2>
+      <div class="v255Lista">${(S.equipe || []).map((m, i) => m ? `<div class="v255ChLinha">
+        ${avMembro(m)}<span class="v255Txt"><b>${esc(m.n)}</b><span>${chaveDe(m) ? 'tem chave' : 'entra sem chave'}</span></span>
+        ${admin() || membroId(m) === eu() ? `<button type="button" class="b gho sm" data-chaveabre="${i}">${chaveDe(m) ? 'Trocar' : 'Criar'}</button>` : ''}</div>` : '').join('')}</div></section>`;
+  }
+  function abaPapeis(){
+    if(typeof CAPACIDADES === 'undefined' || typeof PADRAO_PAPEL === 'undefined') return '';
+    const papeis = Object.keys(PERMS).filter(p => papelConhecido(p));
+    const cols = `grid-template-columns:150px repeat(${CAPACIDADES.length}, minmax(86px, 1fr));min-width:${150 + CAPACIDADES.length * 92}px`;
+    return `<div class="v255Tabela" role="table">
+      <div class="v255TLin cab" role="row" style="${cols}"><span></span>${CAPACIDADES.map(([, n]) => `<span role="columnheader">${esc(n)}</span>`).join('')}</div>
+      ${papeis.map(p => `<div class="v255TLin" role="row" style="${cols}"><b>${esc(p)}</b>${CAPACIDADES.map(([k]) => {
+        const s = (PADRAO_PAPEL[p] || []).includes(k);
+        return `<span class="${s ? 'sim' : 'nao'}" aria-label="${s ? 'pode' : 'não pode'}">${s ? '✓' : '–'}</span>`; }).join('')}</div>`).join('')}
+    </div>
+    <p class="v255Nota">É o ponto de partida. Na ficha de cada pessoa dá para abrir ou fechar uma permissão só para ela.
+      Aprovar conteúdo é sempre do cliente.</p>`;
+  }
+  agEquipe = function(){
+    redes();
+    const aba = ['pessoas', 'entrar', 'papeis'].includes(S.eqAba) ? S.eqAba : 'pessoas';
+    const usados = assentosUsados(), lim = (plano() || {}).assentos || usados;
+    const corpo = aba === 'entrar' ? abaEntrar() : aba === 'papeis' ? abaPapeis() : abaPessoas();
+    return agShell(`<div class="v255">
+      <div class="mtop"><div><h1>Equipe</h1><p>${usados} ${usados === 1 ? 'pessoa' : 'pessoas'} · ${usados} de ${lim} assentos</p></div>
+        ${admin() ? `<button class="b pri sm" data-invite="1">${ic('users')} Convidar</button>` : ''}</div>
+      <div class="v255Abas" role="tablist">${[['pessoas', 'Pessoas'], ['entrar', 'Como se entra'], ['papeis', 'Papéis']].map(([k, n]) =>
+        `<button type="button" role="tab" aria-selected="${aba === k}" class="${aba === k ? 'on' : ''}" data-eqaba="${k}">${n}</button>`).join('')}</div>
+      ${corpo}
+      ${usados >= lim ? `<div class="v255Aviso">${ic('warn', 15)}<span><b>Assentos esgotados (${usados}/${lim}).</b>
+        Convidar mais alguém pede um plano maior. <a href="#" data-r="planos">Ver planos</a></span></div>` : ''}
+    </div>`);
+  };
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-eqaba]');
+    if(!t) return;
+    e.preventDefault(); S.eqAba = t.dataset.eqaba; render();
+  });
+  modalMembro = (function(orig){
+    return function(i){
+      redes();
+      let html = orig.apply(this, arguments);
+      const m = membroPorIndice(i);
+      if(!html || !m) return html;
+      html = html.replace('<div class="modalbox" role="dialog" aria-modal="true">',
+        `<div class="modalbox v255Ficha" role="dialog" aria-modal="true" data-v255ficha="${+i}">`);
+      html = html.replace(/<h3>Editar ([^<]*)<\/h3>/, (t, n) => `<h3>${n}</h3>`);
+      html = html.replace(/<select id="mb-p">([\s\S]*?)<\/select>/, (t, ops) => {
+        let o = ops.replace(/<option( selected)?>([^<]*)<\/option>/g, (t, sel, n) => papelConhecido(n) ? t : '');
+        if(admin() && !/>Administrador</.test(o)) o += `<option ${m.papel === 'Administrador' ? 'selected' : ''}>Administrador</option>`;
+        if(!papelConhecido(m.papel)) o = '<option value="" selected>Escolha o papel</option>' + o.replace(/ selected/g, '');
+        return `<select id="mb-p">${o}</select>`;
+      });
+      if(!admin()) html = html.replace(/<div class="fld"><label for="mb-p">Papel<\/label><select id="mb-p">[\s\S]*?<\/select><\/div>/,
+        `<p class="v255Nota">Papel: <b>${esc(papelConhecido(m.papel) ? m.papel : 'sem papel')}</b> — quem define é o administrador.</p>`);
+      const on = revisa(m);
+      const rv = `<div class="rvMarca v255Rv"><span class="rvTxt"><b>Revisor · libera o Check</b>
+          <span>${m.dono ? 'Dono da conta: libera sempre.' : on ? `${esc(nome1(m))} libera o card do Check para o cliente.` : `${esc(nome1(m))} vê o Check, mas não libera.`}</span></span>
+        <button type="button" class="rvChave${on ? ' on' : ''}${m.dono ? ' trav' : ''}" ${m.dono ? 'disabled' : `data-rvmarca="${+i}"`}
+          aria-pressed="${on}" aria-label="Revisor: ${esc(m.n)}"></button></div>`;
+      const sair = m.dono ? '<p class="v255Nota">O dono da conta não pode ser removido.</p>'
+        : admin() ? `<button type="button" class="v255Sair" data-rmmembro="${+i}">Remover ${esc(nome1(m))} da equipe</button>` : '';
+      const idx = html.lastIndexOf('<div class="modalrow"><button class="b gho" data-modalno="1">Cancelar</button>');
+      if(idx >= 0) html = html.slice(0, idx) + rv + html.slice(idx);
+      return html.replace(/<\/div><\/div>\s*$/, sair + '</div></div>');
+    };
+  })(modalMembro);
+  let rvNaFicha = null;
+  addEventListener('pointerdown', e => {
+    const t = e.target.closest && e.target.closest('.v255Ficha [data-rvmarca]');
+    rvNaFicha = t ? +t.dataset.rvmarca : null;
+  }, true);
+  addEventListener('keydown', e => {
+    const t = e.target.closest && e.target.closest('.v255Ficha [data-rvmarca]');
+    if(t && (e.key === 'Enter' || e.key === ' ')) rvNaFicha = +t.dataset.rvmarca;
+  }, true);
+  render = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      if(rvNaFicha !== null && S.modal && String(S.modal).includes(`data-v255ficha="${rvNaFicha}"`)){
+        const vals = ['mb-n', 'mb-m', 'mb-p'].map(id => document.getElementById(id)?.value);
+        const i = rvNaFicha; rvNaFicha = null;
+        S.modal = modalMembro(i); renderLayer();
+        ['mb-n', 'mb-m', 'mb-p'].forEach((id, k) => { const el = document.getElementById(id); if(el && vals[k] !== undefined) el.value = vals[k]; });
+      }
+      return r;
+    };
+  })(render);
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-savemembro]');
+    if(!t) return;
+    const m = membroPorIndice(t.dataset.savemembro);
+    const p = document.getElementById('mb-p');
+    if(m && !m.dono && p && p.value === '' && !papelConhecido(m.papel))
+      setTimeout(() => toast(`${nome1(m)} continua sem papel — escolha um na ficha.`), 0);
+  }, true);
+  window.MaestroEquipe = { papelConhecido, redes };
 })();
 </script>
