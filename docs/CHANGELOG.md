@@ -1,9 +1,73 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.63
+Version: 0.5.64
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.64 — 2026-09-24
+
+**Status:** Concluída
+
+### v250 — a vitrine e a conta
+
+Seis coisas de um vídeo e dois prints do founder, no mesmo dia da v249.
+
+**1. "A animação vai travando" — era a tela de Conversas no iPhone.** A
+janela do chat tem a altura MEDIDA (v226: o que sobra entre o topo dela e
+a barra de baixo), e o topo era lido pela TELA. Rolar a página mudava o
+topo, o topo mudava a altura, a altura mudava a rolagem — e a página
+rolava porque a v249 deu 104px de respiro no pé de toda tela, e ali a
+página ficou 10px maior que a tela. Duas curas: o topo é o da PÁGINA
+(rolar não muda a conta) e Conversas não tem respiro no pé (a página cabe
+na tela; quem rola é o fio). A prova força a página a rolar e confere que
+a altura não muda.
+
+**2. A foto do Roberto enorme no seletor de Pessoa.** O seletor da v249
+mostra uma CÓPIA da bolinha, e a regra que prende a `<img>` era do botão
+da lista. As suítes usavam iniciais — a prova agora usa uma foto de
+600×800.
+
+**3. "O texto de dentro tá quase na borda"** — os atalhos do cliente
+("Pedir à agência", "Arquivos") tinham caído na regra de pílula da v249.
+São caixas de duas linhas: cantos de 18px e 16px de folga.
+
+**4. "Não precisa aparecer de cara pra logar."** A porta nascia sozinha
+porque o banco responde vazio para quem não entrou (v91), o que continua
+certo DENTRO do app. Na vitrine ela fica escondida (junto com o "Quem está
+aí?" e a barra de protótipo); tocar em "Entrar" é que a mostra, já no
+campo do e-mail, e ela ganhou um × que volta para o site. Não é removida
+por fora: a porta se lembra de que está aberta, e apagá-la por fora a
+deixaria sem jeito de voltar.
+
+**5. A vitrine refeita** no desenho da plataforma: preto, Inter, títulos
+grandes, superfícies sem contorno, o latão só para o que importa. O quadro
+do Ensaio e o celular do cliente são desenhados em HTML (sem imagem para
+baixar), com o método de verdade — as seis colunas. **Saíram os
+depoimentos, as logos e os números do "programa piloto"**: não eram de
+clientes reais, e uma vitrine que inventa prova social contradiz o
+produto que vende "o que foi aprovado é o que vai ao ar". Quando houver
+depoimento de verdade (EJUP?), ele entra. Não foi preciso gerar nada no
+Higgsfield.
+
+**6. Trocar a senha e o e-mail**, na Conta. As duas pedem a senha atual,
+conferida no banco num pedido à parte (a sessão não muda): aparelho
+destravado na mesa não é dono da conta. **O e-mail tinha uma armadilha:**
+`membroId` nasce do e-mail, e é ele que as tarefas guardam como
+responsável — trocar `m.mail` deixaria órfã toda tarefa da pessoa, e a
+regra da v219 a poria de volta na equipe como "Equipe", sem o cargo de
+dono. Então o e-mail novo vira `m.login` da MESMA pessoa, e a porta lê
+quem entrou com ele como a identidade de sempre (`MaestroPorta.quem()`
+devolve `email` = identidade e `login` = o e-mail de verdade). O banco
+manda um link de confirmação (com a "Secure email change" do Supabase, um
+para cada endereço) — e, enquanto o SMTP do Resend não estiver ligado, em
+inglês.
+
+39 provas em `web/verificar/v250-a-vitrine-e-a-conta.mjs`. A suíte da
+v233 exigia a vitrine intocada (serifada, sobretítulo em mono) — era a
+condição daquela versão; agora exige a letra da plataforma.
 
 ---
 

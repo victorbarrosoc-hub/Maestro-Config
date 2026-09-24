@@ -299,6 +299,20 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v250) — a vitrine e a conta.** (1) O "travando" era
+Conversas no iPhone: a altura do chat media o topo pela TELA e a página
+rolava 10px (respiro da v249) — rolar mudava a altura, que mudava a
+rolagem. Topo da PÁGINA e página que cabe na tela. (2) Foto de verdade
+estourava no seletor de Pessoa (a cópia da bolinha não prendia a `<img>`).
+(3) Atalhos do cliente voltam a ser caixa. (4) A vitrine não pede login:
+a porta fica escondida até "Entrar", e tem × de volta. (5) Vitrine refeita
+no desenho da plataforma — **sem os depoimentos e números inventados**.
+(6) Trocar senha e e-mail na Conta, com a senha atual conferida antes.
+**Armadilha:** `membroId` nasce do e-mail — trocar `m.mail` orfanaria as
+tarefas; o e-mail novo vira `m.login` da mesma pessoa e
+`MaestroPorta.quem().email` segue sendo a identidade. 39 provas em
+`web/verificar/v250-a-vitrine-e-a-conta.mjs`. **Teto do protótipo:** 3,038
+de 3,041 MB — a próxima leva precisa emagrecer o arquivo antes.
 **Fechado (24 set, v249) — o estilo Apple, no app inteiro.** Da proposta
 aprovada (`docs/UX/proposta-ensaio-clean.html`), por TOKENS: fundo preto /
 `#F5F5F7`, superfícies sem contorno, cantos de 14px+, pílulas, primário

@@ -141,16 +141,19 @@ checa('o nome da marca continua em serifada', /^(georgia|iowan|times)/.test(fica
 checa('o selo de aprovação continua em monoespaçada (é código, lê-se caractere a caractere)',
       /^(ui-monospace|sf mono|menlo|consolas|monospace)/.test(fica.selo), fica);
 
+/* v250: a vitrine foi refeita a pedido do founder ("mais clean, mais
+   Apple") — o que era "não tocar" virou "no mesmo desenho da plataforma":
+   a mesma Inter, sem sobretítulo em caixa alta. */
 const site = await pg.evaluate(() => {
-  go('site');
+  go('site', 'home');
   const h1 = document.querySelector('.site h1');
-  const eb = document.querySelector('.site .eyebrow');
+  const eb = document.querySelector('.site .sOlho');
   const primeira = el => el ? getComputedStyle(el).fontFamily.split(',')[0].replace(/["']/g, '').trim().toLowerCase() : null;
   return { h1: primeira(h1), eyebrow: primeira(eb), ebCaixa: eb ? getComputedStyle(eb).textTransform : null };
 });
-checa('o site de marketing não foi tocado: título em serifada', /^(georgia|iowan|times)/.test(site.h1 || ''), site);
-checa('o site de marketing não foi tocado: sobretítulo em mono e caixa alta',
-      /^(ui-monospace|sf mono|menlo|consolas|monospace)/.test(site.eyebrow || '') && site.ebCaixa === 'uppercase', site);
+checa('a vitrine usa a letra da plataforma: título em Inter', site.h1 === 'inter', site);
+checa('a vitrine usa a letra da plataforma: sobretítulo em Inter, sem caixa alta',
+      site.eyebrow === 'inter' && site.ebCaixa === 'none', site);
 
 /* ------------------------------------------------------------------ *
  * 4. CONTRASTE E COR
