@@ -64,7 +64,7 @@ const modal = () => pag.evaluate(() => {
   const box = document.querySelector('.modalbox'); if(!box) return null;
   const campos = [...box.querySelectorAll('.fld > label')].map(l =>
     l.textContent.replace(/\s+/g,' ').trim());
-  const c = box.querySelector('#pt-t');
+  const c = box.querySelector('#v260Tema');   /* v260: o nome se digita pelo TEMA */
   return { h3: (box.querySelector('h3') || {}).textContent || '',
            primeiro: campos[0] || '', campos,
            aviso: (box.querySelector('.ptNomeAviso') || {}).textContent
@@ -82,10 +82,10 @@ console.log('\n1. estruturar o primeiro: o nome é o primeiro campo e pede para 
   ok(!!m, 'o formulário abre');
   ok(/Estruturar a pauta/.test(m.h3),
      'e se chama "Estruturar a pauta", não "Editar postagem" (' + m.h3 + ')');
-  ok(/^Nome deste card/.test(m.primeiro),
+  ok(/^Nome do card/.test(m.primeiro),
      'o primeiro campo é o nome do card (' + m.primeiro + ')');
-  ok(/como ele aparece na pauta e no quadro/.test(m.primeiro),
-     'com a dica do que ele faz');
+  ok(/monta sozinho: cliente · tipo · tema/.test(m.primeiro),
+     'com a dica do que ele faz (v260: o padrão)');
   ok(m.valor === 'Preciso de vários materiais',
      'trazendo o nome da demanda como ponto de partida (' + m.valor + ')');
   ok(m.focado, 'o cursor já está nele');
@@ -95,11 +95,11 @@ console.log('\n1. estruturar o primeiro: o nome é o primeiro campo e pede para 
 
 console.log('\n2. trocar o nome pega, e é o que aparece no quadro');
 {
-  await pag.fill('#pt-t', 'Carrossel do lançamento');
+  await pag.fill('#v260Tema', 'Carrossel do lançamento');
   await pag.evaluate(() => { document.querySelector('[data-ptok]').click(); });
   await pag.waitForTimeout(800);
   const n = await pag.evaluate(() => (S.pautas[S.cli] || [])[0].t);
-  ok(n === 'Carrossel do lançamento', 'o card guardou o nome novo (' + n + ')');
+  ok(/ · Carrossel do lançamento$/.test(n || ''), 'o card guardou o nome novo, no padrão (' + n + ')');
   const noQuadro = await pag.evaluate(() =>
     [...document.querySelectorAll('.enCard')].some(c => /Carrossel do lançamento/.test(c.textContent)));
   ok(noQuadro, 'e o quadro mostra esse nome');
@@ -109,7 +109,7 @@ console.log('\n3. "+ mais um card": a faixa diz de que demanda é e por que troc
 {
   await pag.waitForSelector('[data-cymais]', { timeout: 8000 });
   await pag.click('[data-cymais]');
-  await pag.waitForSelector('.modalbox #pt-t', { timeout: 8000 });
+  await pag.waitForSelector('.modalbox #v260Tema', { timeout: 8000 });
   await pag.waitForTimeout(500);
   const m = await modal();
   ok(!!m && /Estruturar a pauta/.test(m.h3), 'o formulário da irmã também é "Estruturar a pauta" (' + (m&&m.h3) + ')');
@@ -120,7 +120,7 @@ console.log('\n3. "+ mais um card": a faixa diz de que demanda é e por que troc
   ok(!!m.aviso && /troque este para saber qual é qual/.test(m.aviso),
      'e por que trocar o nome');
   ok(m.focado && m.selecionado, 'o cursor nasce no nome, selecionado');
-  ok(/^Nome deste card/.test(m.primeiro), 'que continua sendo o primeiro campo');
+  ok(/^Nome do card/.test(m.primeiro), 'que continua sendo o primeiro campo');
 }
 
 console.log('\n4. o que ele NÃO pode atrapalhar: editar um card que já existe');
@@ -137,8 +137,8 @@ console.log('\n4. o que ele NÃO pode atrapalhar: editar um card que já existe'
   const m = await modal();
   ok(!!m && !/Estruturar a pauta/.test(m.h3),
      'o cabeçalho volta a ser o de sempre (' + m.h3 + ')');
-  ok(!/^Nome deste card/.test(m.primeiro),
-     'o rótulo volta ao normal (' + m.primeiro + ')');
+  ok(/^Nome do card/.test(m.primeiro) && !!m.valor,
+     'o nome segue no padrão, com o tema de antes no campo (' + m.primeiro + ' · ' + m.valor + ')');
   ok(!m.focado, 'e o foco NÃO é roubado — quem abre para editar tem outro assunto');
   ok(m.aviso === null, 'sem faixa de irmãs');
 }
@@ -159,7 +159,7 @@ console.log('\n5. a demanda interna tem os rótulos dela, e eu não piso neles')
   });
   await pag.waitForTimeout(300);
   const interna = /demanda interna/i.test(r.h3) || /Título da demanda/.test(r.txt);
-  ok(interna ? !/Nome deste card/.test(r.txt) : true,
+  ok(interna ? (!/Nome do card/.test(r.txt) && /Título da demanda/.test(r.txt)) : true,
      interna ? 'na demanda interna, o rótulo dela é preservado'
              : 'este protótipo não trata esse card como demanda interna — nada a preservar');
 }

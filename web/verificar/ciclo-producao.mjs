@@ -94,7 +94,9 @@ await pg.click(cardSel(tid) + ' [data-cyestrutura]'); await pg.waitForTimeout(30
 const cardId = await pg.evaluate(tid => S.ensaio.tarefas.find(x => x.id === tid).cardId, tid);
 checa('estruturar cria o card da pauta e liga a tarefa a ele', !!cardId);
 checa('e abre exatamente o editor da pauta, já com a ideia',
-      await pg.locator('#pt-t').count() === 1 && (await pg.inputValue('#pt-t')) === 'Bastidores da coleção');
+      /* v260: o nome se monta (Cliente · Tipo · Tema) e a ideia vira o TEMA */
+      await pg.locator('#v260Tema').count() === 1 && (await pg.inputValue('#v260Tema')) === 'Bastidores da coleção'
+      && / · Bastidores da coleção$/.test(await pg.inputValue('#pt-t')));
 checa('o pedido virou o objetivo da pauta', (await pg.inputValue('#pt-objetivo').catch(() => '')) === 'Mostrar o ateliê e puxar conversa');
 await pg.fill('#pt-texto', 'Hoje abrimos o ateliê: cada peça começa num pedaço de linho.');
 await pg.click(`[data-ptok="${cardId}"]`); await pg.waitForTimeout(300);

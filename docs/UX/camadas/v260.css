@@ -1,0 +1,17 @@
+/* v260 — o nome do card: cliente e tipo travados, o tema se digita */
+.v260Nome{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; padding:5px 6px 5px 8px; border-radius:12px;
+  background:var(--campo, var(--enc)); border:1px solid var(--fio, transparent) }
+.v260Nome:focus-within{ border-color:var(--brass-500) }
+.v260Nome > i{ font-style:normal; color:var(--ink-400); font-weight:600 }
+.v260Pil{ display:inline-flex; align-items:center; height:26px; padding:0 10px; border-radius:999px; font-size:12.5px;
+  font-weight:600; white-space:nowrap; max-width:220px; overflow:hidden; text-overflow:ellipsis }
+.v260Cli{ background:var(--enc2, rgba(255,255,255,.08)); color:var(--ink-50) }
+.v260Tipo{ background:rgba(200,150,58,.16); color:var(--brass-500) }
+.v260Tipo.falta{ background:none; color:var(--ink-400); border:1px dashed var(--ink-400) }
+#v260Tema{ flex:1 1 180px; min-width:140px; border:0 !important; background:none !important; box-shadow:none !important;
+  padding:6px 4px !important; outline:none; font-size:14px }
+#v260Tema.v260Erro::placeholder{ color:var(--danger, #E5484D) }
+.v260Nome:has(#v260Tema.v260Erro){ border-color:var(--danger, #E5484D) }
+.v260Prev{ margin-top:6px; font-size:12.5px; color:var(--ink-200); font-weight:500; overflow-wrap:anywhere }
+.v260Prev span{ color:var(--ink-400); font-weight:400 }
+.v260Prev:not(:has(span))::before{ content:"Vai aparecer assim: "; color:var(--ink-400); font-weight:400 }
