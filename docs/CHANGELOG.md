@@ -46,9 +46,14 @@ Tudo em `docs/PRD/REDES.md` — as decisões, o modelo de dados e o estudo
 título preso da folha no celular (v229); o link das publicações do
 LinkedIn vinha da planilha direto para o `href` — só https do LinkedIn vira
 link; o aviso dos dados da v238 e o "quem importou" procuravam `window.S`
-(o estado é `const S`, a armadilha da v258).
+(o estado é `const S`, a armadilha da v258). **E a regressão pegou um meu:**
+a aba nova era desenhada por fora da moldura da v240 — sumiam a fileira de
+troca de cliente e a quebra das abas no celular. A moldura virou função com
+nome (`MaestroMolduraCliente`) e a aba Redes a pede. Junto: resposta que não
+é o motor (portal de Wi-Fi devolvendo HTML) vira "Tentar de novo", nunca
+"Carregando…" para sempre, e tentar de novo pede também o estilo.
 
-173 provas: 100 do motor (`v262-redes-motor.mjs`, sem navegador) e 73 da
+178 provas: 100 do motor (`v262-redes-motor.mjs`, sem navegador) e 78 da
 tela (`v262-redes-importar.mjs`). A suíte da v238 foi aposentada — cobrava
 a tela que saiu e "importar soma". E a `login-403` deixou de julgar no
 relógio: espera o evento que o cenário provoca (ficava vermelha sob carga).

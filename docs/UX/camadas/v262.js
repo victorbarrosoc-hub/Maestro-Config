@@ -33,12 +33,25 @@
         document.head.appendChild(css);
       }
       let i = 0;
+      /* falhou: tira o que entrou pela metade, para o "Tentar de novo" pedir
+         TUDO outra vez — inclusive o estilo, que senão ficaria o da tentativa ruim */
+      const desistir = motivo => {
+        fase = 'erro'; promessa = null;
+        document.querySelectorAll('link[data-v262css], script[data-v262js]').forEach(e => e.remove());
+        falha(new Error(motivo));
+      };
       const prox = () => {
-        if(i >= ARQS.length){ fase = 'pronto'; ok(); return; }
+        if(i >= ARQS.length){
+          /* carregou mas não definiu o motor: a resposta não era o arquivo (um
+             portal de rede, um proxy devolvendo HTML) — erro com "Tentar de
+             novo", nunca "Carregando…" para sempre */
+          if(!window.MaestroRedesTela) return desistir('o motor não se definiu');
+          fase = 'pronto'; ok(); return;
+        }
         const s = document.createElement('script');
-        s.src = b + ARQS[i++] + '?v=' + VERSAO;
+        s.src = b + ARQS[i++] + '?v=' + VERSAO; s.setAttribute('data-v262js', '1');
         s.onload = prox;
-        s.onerror = () => { fase = 'erro'; promessa = null; falha(new Error(s.src)); };
+        s.onerror = () => desistir(s.src);
         document.head.appendChild(s);
       };
       prox();
@@ -57,12 +70,15 @@
       else if(fase === 'erro') corpo = `<div class="v262Aviso" role="alert"><b>Não consegui carregar a aba Redes.</b>
         <span>Sem rede, ou o aparelho bloqueou o arquivo.</span> <button class="b gho sm" data-v262tentar="1">Tentar de novo</button></div>`;
       else { carregar(); corpo = '<div class="v262Aviso" role="status"><span class="v262Roda"></span>Carregando a aba Redes…</div>'; }
-      return agShell(`
+      /* a moldura da v240 (troca de cliente, abas que quebram linha no celular):
+         esta aba não passa pela cadeia de baixo, então a pede pelo nome */
+      const moldura = window.MaestroMolduraCliente || (x => x);
+      return moldura(agShell(`
       <div class="mtop"><div>
         <button class="b gho sm" data-r="clientes" style="margin-bottom:13px">${ic('arrowl')} Clientes</button>
         <h1>${esc(c.nome)}</h1><p>Como os perfis estão indo</p></div></div>
       ${abasCliente('redes')}
-      ${corpo}`);
+      ${corpo}`));
     };
   })(agClienteDet);
 

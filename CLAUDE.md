@@ -315,12 +315,16 @@ causa; a Maestro sabe o que saiu). O estudo — os arquivos bastam para a
 tendência, não para "qual post funcionou" no Meta; o mínimo são 18
 arquivos/mês; o caminho sem arquivos é API, na ordem YouTube → Meta (o
 mesmo app do WhatsApp) → TikTok → LinkedIn — está em
-`docs/PRD/REDES.md`. 100 + 73 provas em `web/verificar/v262-redes-*.mjs`.
+`docs/PRD/REDES.md`. 100 + 78 provas em `web/verificar/v262-redes-*.mjs`.
 **Armadilhas:** o estado é `const S` — de fora do protótipo, `window.S` é
 undefined (o aviso da v238 e o "quem importou" nasceram mortos por isso);
 no celular o `h3` da folha é preso (v229) e cobre o que estiver posicionado
-fora dele; e toda URL que vem de planilha passa por conferência antes de
-virar `href`.
+fora dele; toda URL que vem de planilha passa por conferência antes de
+virar `href`; e **aba que não chama o `agClienteDet` de baixo perde a
+moldura da v240** (troca de cliente, abas que quebram no celular) — ela
+agora é `MaestroMolduraCliente(html)`, e quem desenha aba por fora a chama.
+Suíte que abre a aba Redes por um servidor próprio precisa servir
+`/web/redes/` (a v240 aprendeu).
 **Fechado (24 set, v261) — o padrão chega aos cards de antes.** No
 Cronograma, "Padronizar nomes (N)" com antes → depois e caixa por linha (a
 tarefa do Ensaio vai junto; a grafia do tema vira a mais usada do

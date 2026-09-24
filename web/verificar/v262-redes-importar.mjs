@@ -422,10 +422,40 @@ console.log('\n11. no celular');
   checa('lado a lado no celular: duas métricas da mesma rede alinhadas uma embaixo da outra', cel && cel.ems.every(l => l === cel.ems[0]), cel);
   const larg = await pg.evaluate(() => document.documentElement.scrollWidth);
   checa('nada estoura a largura do celular', larg <= 390, larg);
+  /* a moldura da v240 vale aqui também: a troca de cliente e as abas que quebram linha */
+  const mold = await pg.evaluate(() => ({ troca: [...document.querySelectorAll('.cliTroca [data-clitroca]')].length,
+    on: document.querySelector('.cliTroca .on')?.dataset.clitroca, cli: cliAtual().id,
+    abas: [...document.querySelectorAll('.tabs.tabsCli button')].map(b => { const r = b.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.right)]; }) }));
+  checa('a aba Redes tem a fileira dos clientes, com o atual aceso (v240)', mold.troca > 1 && mold.on === mold.cli, mold);
+  checa('e as seis abas cabem na tela do celular (v240)', mold.abas.length === 6 && mold.abas.every(([l, r]) => l >= 0 && r <= 390), mold.abas);
+  const outro = await pg.evaluate(() => CLIS().find(c => c.id !== S.cli).id);
+  await pg.click(`[data-clitroca="${outro}"]`);
+  await esperar(pg, () => !!document.querySelector('.rd2') && !document.querySelector('.rd2Carregando'));
+  const trocou = await pg.evaluate(() => ({ cli: S.cli, tab: S.tab, vazio: /Nenhum número de rede ainda/.test(document.querySelector('.rd2')?.innerText || '') }));
+  checa('trocar de cliente na aba Redes mostra as Redes do outro (sem os números deste)', trocou.cli === outro && trocou.tab === 'redes' && trocou.vazio, trocou);
   await ctx.close();
 }
 
-checa('nenhum erro de página em toda a suíte', !erros.length, erros.slice(0, 4));
+console.log('\n12. o motor que não chega');
+{
+  const { ctx, pg } = await abrir();
+  /* um portal de rede devolvendo HTML no lugar do .js */
+  await pg.route('**/web/redes/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Wi-Fi</title>' }));
+  await pg.evaluate(() => { S.route = 'clientedet'; S.tab = 'redes'; render(); });
+  await esperar(pg, () => !!document.querySelector('[data-v262tentar]'), null, 8000);
+  const e = await pg.evaluate(() => ({ erro: document.querySelector('.v262Aviso')?.innerText || '', rodando: !!document.querySelector('.v262Roda') }));
+  checa('resposta que não é o motor vira erro com "Tentar de novo" — não "Carregando…" para sempre', /Não consegui carregar a aba Redes/.test(e.erro) && !e.rodando, e);
+  await pg.unroute('**/web/redes/**');
+  await pg.click('[data-v262tentar]');
+  const voltou = await esperar(pg, () => !!document.querySelector('.rd2') && !document.querySelector('.rd2Carregando'), null, 8000);
+  const estilo = await pg.evaluate(() => getComputedStyle(document.querySelector('.rd2Topo')).display);
+  checa('"Tentar de novo", com a rede de volta, abre a aba — e com o estilo, que também é pedido de novo', voltou && estilo === 'flex', { voltou, estilo });
+  await ctx.close();
+}
+
+/* o bloco 12 provoca, de propósito, o HTML do portal executado como script */
+const inesperados = erros.filter(x => !/Unexpected token '<'/.test(x));
+checa('nenhum erro de página em toda a suíte (fora o portal do bloco 12)', !inesperados.length, inesperados.slice(0, 4));
 console.log(`\n${ok} passaram, ${falhou} falharam.`);
 await nav.close(); srv.close();
 process.exit(falhou ? 1 : 0);

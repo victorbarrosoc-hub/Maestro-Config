@@ -10,7 +10,12 @@
 import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs';
 
 const html = fs.readFileSync('docs/UX/prototipo-plataforma.html', 'utf8');
-const srv = http.createServer((q, r) => { r.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); r.end(html); });
+const srv = http.createServer((q, r) => {
+  /* v262: a aba Redes busca o motor em /web/redes/ — servido como no ar */
+  const u = decodeURIComponent(q.url.split('?')[0]);
+  if(u.startsWith('/web/redes/') && !u.includes('..') && fs.existsSync('.' + u)){
+    r.writeHead(200, {'Content-Type': u.endsWith('.css') ? 'text/css' : 'text/javascript; charset=utf-8'}); r.end(fs.readFileSync('.' + u)); return; }
+  r.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); r.end(html); });
 await new Promise(r => srv.listen(0, r));
 const RAIZ = 'http://127.0.0.1:' + srv.address().port;
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });

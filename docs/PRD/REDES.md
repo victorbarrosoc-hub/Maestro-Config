@@ -184,11 +184,12 @@ requisitos das plataformas mudam — conferir na hora de pedir):
 - `web/verificar/v262-redes-motor.mjs` — **100 provas**, sem navegador, com
   os arquivos reais: reconhecimento, valores, datas, substituir-nunca-somar,
   bloqueio de mês, cada rede, falhas com cara, análise do mês e lado a lado.
-- `web/verificar/v262-redes-importar.mjs` — **73 provas** no navegador, com um
+- `web/verificar/v262-redes-importar.mjs` — **78 provas** no navegador, com um
   PostgREST de mentira que tem trava de revisão e `org`: carga sob demanda,
   importar pela tela, sobrescrever, campo errado, bandeja, mês fora,
   confirmação do TikTok, formato novo, relatório com as cinco redes,
-  Cronograma nos picos, falha do banco, texto que nunca vira código e celular.
+  Cronograma nos picos, falha do banco, texto que nunca vira código, celular
+  (com a moldura da v240) e o motor que não chega.
 - A suíte da v238 (`v238-a-aba-redes.mjs`) foi aposentada: ela cobrava a tela
   que saiu e "importar soma", o oposto da regra nova.
 
