@@ -944,10 +944,12 @@ function vSite(){
     dentro, e não num grupo de WhatsApp.</p>
   <div class="sCta fu" style="animation-delay:180ms"><button class="b pri" data-go="entrar">Entrar na Maestro</button>
     <a href="#" class="sLink" data-scroll="como">Ver como funciona ›</a></div>
+  <picture class="sFotoMol"><source media="(max-width: 600px)" width="1290" height="2010" sizes="76vw"
+    srcset="/web/img/vitrine-fone-860.webp 860w, /web/img/vitrine-fone-1290.webp 1290w">
   <img class="sFoto fu" style="animation-delay:260ms" src="/web/img/vitrine-aparelhos-1800.webp"
     srcset="/web/img/vitrine-aparelhos-1000.webp 1000w, /web/img/vitrine-aparelhos-1800.webp 1800w"
     sizes="(max-width: 860px) 100vw, 1040px" width="1800" height="1020" fetchpriority="high"
-    alt="A Maestro num notebook e num iPhone: o quadro do Ensaio e as publicações do cliente">
+    alt="A Maestro num notebook e num iPhone: o quadro do Ensaio e as publicações do cliente"></picture>
 </header>
 
 <section class="sSec" id="como">
@@ -975,10 +977,12 @@ function vSite(){
       <li>Ajuste pedido na tela exata do carrossel</li>
       <li>O elogio do cliente chega para a equipe</li></ul>
   </div>
+  <picture class="sFotoMol"><source media="(max-width: 600px)" width="1140" height="1640" sizes="90vw"
+    srcset="/web/img/vitrine-cliente-fone-760.webp 760w, /web/img/vitrine-cliente-fone-1140.webp 1140w">
   <img class="sFotoCli rv" src="/web/img/vitrine-cliente-900.webp"
     srcset="/web/img/vitrine-cliente-600.webp 600w, /web/img/vitrine-cliente-900.webp 900w"
     sizes="(max-width: 860px) 90vw, 440px" width="900" height="1117" loading="lazy"
-    alt="O cliente decide no celular: aprovar a publicação ou pedir alteração">
+    alt="O cliente decide deslizando no celular: a publicação e o selo de aprovar"></picture>
 </section>
 
 <section class="sSec" id="dif">
@@ -45802,6 +45806,13 @@ gap:10px 24px; align-items:center; font-size:12.5px; color:var(--sTx3) }
 @media(max-width:860px){
 .sHero{ padding-top:72px }
 .sFoto{ margin-top:40px; width:118%; max-width:none; margin-left:-9% }
+}
+.sFotoMol{ display:block }
+.sDividido > .sFotoMol{ justify-self:center; width:100%; max-width:440px }
+@media(max-width:600px){
+.sFoto{ width:76%; margin:28px auto 0;
+-webkit-mask-image:linear-gradient(to bottom, #000 74%, transparent 100%), linear-gradient(to right, transparent 0, #000 12%, #000 90%, transparent 100%);
+mask-image:linear-gradient(to bottom, #000 74%, transparent 100%), linear-gradient(to right, transparent 0, #000 12%, #000 90%, transparent 100%) }
 .sPassos{ grid-template-columns:1fr 1fr } .sDividido{ grid-template-columns:1fr; gap:48px }
 .sBento{ grid-template-columns:1fr } .sTile, .sTile.sG{ grid-column:auto; min-height:0 }
 .sSec{ padding-top:96px }

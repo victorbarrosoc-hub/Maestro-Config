@@ -312,8 +312,10 @@ pede ajuste, para cima "amei" com elogio. Tudo passa pelo `decidirCard`, o
 mesmo funil dos botões. O elogio vai pela porta do "Pedir à agência",
 marcado `elogio:<card>`, sem SQL novo, e vira aviso e selo no card, nunca
 tarefa; 26 provas. (3) **Fotos da vitrine** (Higgsfield), com as telas
-REAIS encaixadas e dados fictícios; moram em `/web/img`. Teto do protótipo:
-3,05 MB.
+REAIS encaixadas e dados fictícios; moram em `/web/img`. No celular a foto
+do notebook deixava o iPhone do tamanho de um selo: lá entra um recorte
+próprio (`<picture>`), com a tela composta em 3x para os posts ficarem
+nítidos. Teto do protótipo: 3,05 MB.
 **Fechado (24 set, v252) — o celular respira, parte 2.** Equipe: permissões
 viram "N de M permissões" no celular (lista inteira em "Editar"); Resultados:
 números ficam, gráfico e quebra por pessoa só no computador. Abas da ficha

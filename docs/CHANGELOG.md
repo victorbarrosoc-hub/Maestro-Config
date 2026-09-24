@@ -59,7 +59,10 @@ página pública. Um dos seis posts veio com uma tela de celular inventada
 dentro e ficou de fora. As fotos moram em `/web/img` (WebP de 23 a 71 KB),
 fora do protótipo. Custo: cerca de 14 créditos. O notebook mostra o Ensaio,
 o celular mostra as Publicações, e a mão mostra o **deslizar**, com o selo
-APROVAR.
+APROVAR. No celular, a foto larga deixava o iPhone do tamanho de um selo e os
+posts ilegíveis: até 600px entra um recorte próprio (`<picture>`), o iPhone
+grande, com a tela real composta em 3x por cima da foto ampliada, e a mão
+mais perto.
 
 **O teto do protótipo** subiu de 2,90 para 3,05 MB, por escrito na suíte da
 v172: o CRM é uma área inteira, e as fotos não entraram no arquivo.

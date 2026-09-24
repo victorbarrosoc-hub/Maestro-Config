@@ -111,6 +111,15 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
 @media(max-width:860px){
   .sHero{ padding-top:72px }
   .sFoto{ margin-top:40px; width:118%; max-width:none; margin-left:-9% }
+}
+/* no celular a foto do notebook deixava o iPhone do tamanho de um selo, com
+   os posts ilegíveis: lá entra o recorte do iPhone, grande */
+.sFotoMol{ display:block }
+.sDividido > .sFotoMol{ justify-self:center; width:100%; max-width:440px }
+@media(max-width:600px){
+  .sFoto{ width:76%; margin:28px auto 0;
+    -webkit-mask-image:linear-gradient(to bottom, #000 74%, transparent 100%), linear-gradient(to right, transparent 0, #000 12%, #000 90%, transparent 100%);
+    mask-image:linear-gradient(to bottom, #000 74%, transparent 100%), linear-gradient(to right, transparent 0, #000 12%, #000 90%, transparent 100%) }
   .sPassos{ grid-template-columns:1fr 1fr } .sDividido{ grid-template-columns:1fr; gap:48px }
   .sBento{ grid-template-columns:1fr } .sTile, .sTile.sG{ grid-column:auto; min-height:0 }
   .sSec{ padding-top:96px }
