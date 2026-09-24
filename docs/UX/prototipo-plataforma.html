@@ -33,7 +33,7 @@ html:not(.pronto) body > *{ visibility:hidden !important }
 html:not(.pronto) body::after{ content:""; position:fixed; left:50%; top:50%; width:10px; height:10px; margin:-5px 0 0 -5px;
   border-radius:50%; background:#C8963A; animation:v258p .8s ease-in-out infinite alternate }
 @keyframes v258p{ to{ opacity:.25; transform:scale(.6) } }
-html.pronto #root{ animation:v258e .22s ease both }
+html.pronto #root{ animation:v258e .22s ease }
 @keyframes v258e{ from{ opacity:0 } to{ opacity:1 } }</style>
 <script>
 /* Antes de tudo: a luz. Uma leitura de localStorage e um atributo — é o
@@ -90,7 +90,7 @@ html.pronto #root{ animation:v258e .22s ease both }
     var t0 = Date.now();
     (function espera(){
       var ok = false;
-      try{ ok = window.S && (S.view === 'client' || S.soVer || S.soFluxo) && !document.querySelector('.site'); }catch(e){}
+      try{ ok = window.MAESTRO_LINK_RESPONDEU || (typeof S === 'object' && S && (S.view === 'client' || S.soVer || S.soFluxo) && !document.querySelector('.site')); }catch(e){}
       if(ok || Date.now() - t0 > 8000) return mostra();
       setTimeout(espera, 80);
     })();
@@ -33574,6 +33574,7 @@ addEventListener('click', e => {
   (async () => {
     const abrir = mAp ? abrirLote : abrirCard;
     let ok = await abrir();
+    window.MAESTRO_LINK_RESPONDEU = true;       /* v259: a cortina da v258 pode abrir */
     if(!ok){
       /* banco sem as funções, ou rede ruim: tenta mais duas vezes, de
          longe, e depois deixa o caminho antigo seguir */

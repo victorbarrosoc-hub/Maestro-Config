@@ -62,8 +62,13 @@ async function visitaNova(busca, tela){
         comCortina.length === 0, comCortina.slice(0, 3));
   checa('1.3 a classe que escondia a casa nunca entra',
         comClasse.length === 0, comClasse.slice(0, 3));
-  checa('1.4 e a casa nunca fica escondida — nada de piscar',
-        escondeu.length === 0, escondeu.slice(0, 5));
+  /* v258: a casa espera o arquivo inteiro chegar (senão aparece a cara
+     ANTIGA no meio da leitura) — escondida no começo é de propósito. O que
+     não pode é piscar: depois de aparecer, sumir de novo. */
+  const primeiraVista = amostras.findIndex(a => !a.escondido);
+  const piscou = primeiraVista < 0 ? escondeu : amostras.slice(primeiraVista).filter(a => a.escondido);
+  checa('1.4 a casa aparece uma vez e não some mais — nada de piscar',
+        primeiraVista >= 0 && piscou.length === 0, piscou.slice(0, 5));
 
   const naTela = await pag.evaluate(() => {
     const r = document.getElementById('root');

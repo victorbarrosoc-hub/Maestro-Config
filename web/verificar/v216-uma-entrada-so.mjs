@@ -120,13 +120,18 @@ const a = await abrirAgencia();
 
 console.log('\n2. o portão tem UMA porta, e explica o cliente em vez de oferecê-lo');
 {
-  await a.pag.evaluate(() => { S.usuario = null; go('site', 'entrar'); });
+  /* o portão é de quem está FORA: com sessão, a v258 leva quem o pede para
+     dentro. Aqui a sessão sai de cena só durante a leitura do portão (as
+     seções seguintes precisam dela) */
+  await a.pag.evaluate(() => { window.__quem = MaestroPorta.quem; MaestroPorta.quem = () => null;
+    S.usuario = null; go('site', 'entrar'); });
   await a.pag.waitForTimeout(500);
   const t = await a.pag.evaluate(() => ({
     ag: document.querySelectorAll('[data-enter="agency"]').length,
     cl: document.querySelectorAll('#root [data-enter="client"]').length,
     txt: document.body.innerText
   }));
+  await a.pag.evaluate(() => { MaestroPorta.quem = window.__quem; });
   ok(t.ag >= 1, 'a porta da agência está lá');
   ok(t.cl === 0, 'e não há porta de cliente (achei ' + t.cl + ')');
   ok(!/Sou o cliente/i.test(t.txt), 'o rótulo "Sou o cliente" sumiu');

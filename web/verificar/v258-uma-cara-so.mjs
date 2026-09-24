@@ -88,8 +88,12 @@ console.log('\n3. o link do cliente');
   await pg.waitForTimeout(1500);
   const m = await aVista(pg);
   checa('durante a pausa, nada à vista', m.n === 0, m);
-  await pg.waitForFunction(() => document.documentElement.classList.contains('pronto'), null, { timeout: 15000 }).catch(() => {});
-  checa('e no fim a página se mostra', (await aVista(pg)).pronto);
+  /* o arquivo termina em 2,5s: a tela do cliente tem de vir logo depois,
+     não pela saída de emergência (a 1ª versão lia window.S, que não existe
+     — o estado é `const S` — e o cliente esperava 8s de tela vazia) */
+  await pg.waitForTimeout(2000);
+  const cedo = await aVista(pg);
+  checa('a tela do cliente aparece logo depois de o arquivo chegar (não em 8s)', cedo.pronto && cedo.n > 3, cedo);
   await ctx.close();
 }
 
