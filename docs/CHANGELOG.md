@@ -59,8 +59,10 @@ novo, o redesenho espera a pessoa sair dele.
   abertura, a volta para a aba e a leitura antes de gravar.
 
 **Também na v256, achado pela regressão:** o reconhecimento que repete
-depois da carga não age com "Quem está entrando?" aberto (a pessoa está
-escolhendo; a `v175` pegou).
+depois da carga só vale na abertura (nos 20s depois da primeira leitura do
+banco) e não age com "Quem está entrando?" aberto. Ligado para sempre, ele
+escolhia pela pessoa quando ela pedia "Trocar de pessoa" (`v175` e `v215`
+pegaram).
 
 11 provas em `web/verificar/v257-ao-vivo.mjs`, com dois navegadores, o canal
 simulado e o canal caído.

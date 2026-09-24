@@ -102,8 +102,16 @@
      crachá, e ninguém tenta de novo. A pessoa fica logada e SEM NOME.
      Agora, quando o banco termina de falar e ainda não há ninguém, a
      procura roda outra vez (e só casa pelo e-mail da sessão). */
+  /* só na ABERTURA: nos 20s depois da primeira leitura do banco. Depois
+     disso, "sem ninguém" é escolha da pessoa (trocar de pessoa, sair) —
+     a v215 pegou a primeira versão, que ficava ligada para sempre */
+  let leuEm = 0, feito = false;
   function reconhecer(){
     try{
+      if(feito) return;
+      if(bancoLeu() && !leuEm) leuEm = Date.now();
+      if(leuEm && Date.now() - leuEm > 20000){ feito = true; clearInterval(relogio); return; }
+      if(pessoaDefinida() && leuEm){ feito = true; clearInterval(relogio); return; }
       if(S.viaLink || S.soVer || pessoaDefinida() || !bancoLeu()) return;
       /* com a lista aberta a pessoa está ESCOLHENDO ("Trocar de pessoa"):
          não se escolhe por ela */
@@ -112,13 +120,13 @@
       const mail = q && String(q.email || '').trim().toLowerCase(); if(!mail) return;
       const m = (S.equipe || []).find(x => x && String(x.mail || '').trim().toLowerCase() === mail);
       if(!m) return;
-      S.usuario = { tipo: 'agencia', id: membroId(m) };
+      S.usuario = { tipo: 'agencia', id: membroId(m) }; feito = true; clearInterval(relogio);
       try{ localStorage.setItem('maestro-usuario-v1', JSON.stringify(S.usuario)); }catch(e){}
       document.getElementById('quemEsta')?.remove(); tirarEspera();
       if(typeof render === 'function') render();
     }catch(e){}
   }
-  setInterval(reconhecer, 500);
+  const relogio = setInterval(reconhecer, 500);
 
   window.MaestroEntrada = { obra, logado, bancoLeu, reconhecer };
 })();

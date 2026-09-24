@@ -47291,21 +47291,26 @@ border-top-color:var(--brass-500); animation:v256gira .8s linear infinite }
     new MutationObserver(limparPorta).observe(document.body, { childList: true });
   }catch(e){}
   limparPorta();
+  let leuEm = 0, feito = false;
   function reconhecer(){
     try{
+      if(feito) return;
+      if(bancoLeu() && !leuEm) leuEm = Date.now();
+      if(leuEm && Date.now() - leuEm > 20000){ feito = true; clearInterval(relogio); return; }
+      if(pessoaDefinida() && leuEm){ feito = true; clearInterval(relogio); return; }
       if(S.viaLink || S.soVer || pessoaDefinida() || !bancoLeu()) return;
       if(document.getElementById('quemEsta')) return;
       const q = window.MaestroPorta && MaestroPorta.quem();
       const mail = q && String(q.email || '').trim().toLowerCase(); if(!mail) return;
       const m = (S.equipe || []).find(x => x && String(x.mail || '').trim().toLowerCase() === mail);
       if(!m) return;
-      S.usuario = { tipo: 'agencia', id: membroId(m) };
+      S.usuario = { tipo: 'agencia', id: membroId(m) }; feito = true; clearInterval(relogio);
       try{ localStorage.setItem('maestro-usuario-v1', JSON.stringify(S.usuario)); }catch(e){}
       document.getElementById('quemEsta')?.remove(); tirarEspera();
       if(typeof render === 'function') render();
     }catch(e){}
   }
-  setInterval(reconhecer, 500);
+  const relogio = setInterval(reconhecer, 500);
   window.MaestroEntrada = { obra, logado, bancoLeu, reconhecer };
 })();
 </script>
