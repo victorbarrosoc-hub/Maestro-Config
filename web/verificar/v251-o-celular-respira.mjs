@@ -98,6 +98,17 @@ for(const [q, vp] of [['celular', { width: 390, height: 844 }], ['computador', {
     checa('celular · Cronograma: os quatro números e a barra da semana ficam no computador', !cron.kpis && !cron.barra, cron);
     checa('celular · Cronograma: cada semana é uma pílula de uma linha, não um círculo', cron.abas.length > 0 && cron.abas.every(h => h <= 44), cron.abas);
   } else checa('computador · Cronograma: os painéis continuam lá', cron.kpis || cron.barra, cron);
+  /* v252: Equipe e Resultados */
+  await pg.evaluate(() => { S.route = 'equipe'; render(); }); await pg.waitForTimeout(300);
+  const eq = await pg.evaluate(() => { const v = s => [...document.querySelectorAll(s)].some(e => getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0);
+    return { chips: v('.permchips'), linha: [...document.querySelectorAll('.v252Perm')].filter(e => getComputedStyle(e).display !== 'none').map(e => e.textContent) }; });
+  if(q === 'celular') checa('celular · Equipe: as permissões de cada pessoa viram uma linha ("N de M permissões")', !eq.chips && eq.linha.length >= 2 && eq.linha.every(t => /^\d+ de \d+ permissões/.test(t)), eq);
+  else checa('computador · Equipe: os chips de permissão continuam, sem a linha', eq.chips && eq.linha.length === 0, eq);
+  await pg.evaluate(() => { S.route = 'resultados'; render(); }); await pg.waitForTimeout(300);
+  const rt = await pg.evaluate(() => { const v = s => [...document.querySelectorAll(s)].some(e => getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0);
+    return { numeros: v('.tiles'), grafico: v('.main .card > svg'), grade: v('.rtGrade') }; });
+  if(q === 'celular') checa('celular · Resultados: os números ficam; o gráfico e a quebra por pessoa ficam no computador', rt.numeros && !rt.grafico && !rt.grade, rt);
+  else checa('computador · Resultados: o gráfico continua', rt.numeros && rt.grafico, rt);
   await pg.evaluate(() => { document.getElementById('quemEsta')?.remove(); S.viaLink = true; S.view = 'client'; S.usuario = { tipo: 'cliente', id: 'n0' }; S.cli = 'n0'; S.route = 'inicio'; render(); });
   await pg.waitForTimeout(500);
   checa(`${q} · link do cliente: "Leva uns N minutos…" sai, e o número que espera fica`, !(await textoVisto(pg, 'igualmente normais')) && await visto(pg, '.batidaCard .n'));
