@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-23 23:21 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-24 00:51 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -2452,7 +2452,7 @@ function modalNovaCampanha(){ return `<div class="modal"><div class="modalbox wi
 /* ---------- redefinições ---------------------------------------------- */
 function agClientes(){
   const novos = S.novos.map((c,i)=>`<div class="row fu" style="animation-delay:${(i+2)*50}ms">
-    <div class="av" style="background:linear-gradient(150deg,${corSegura(c.cor)},#111);color:#fff">${esc(c.ini)}</div>
+    ${avCliente(c, 'av')}
     <div class="t"><b>${esc(c.nome)}</b><span>${esc(c.seg)} · projeto "Sempre ativo" criado</span></div>
     <span class="pill p-DRAFT">novo</span></div>`).join('');
   return agShell(`
@@ -3010,7 +3010,7 @@ function vFull(){
 function agClientes(){
   const linha = (c,i,sub,pill,pcls) => `<button ${stg(i)} data-clidet="${c.id}" style="display:block;width:100%">
     <span class="row" style="margin:0 0 8px">
-      <span class="av" ${c.cor?`style="background:linear-gradient(150deg,${corSegura(c.cor)},#111);color:#fff"`:''}>${esc(c.ini)}</span>
+      ${avCliente(c, 'av')}
       <span class="t"><b>${esc(c.nome)}</b><span>${sub}</span></span>
       <span class="pill ${pcls}">${pill}</span><span class="chev">${ic('chevr')}</span></span></button>`;
   const cs = CLIS();
@@ -3036,10 +3036,10 @@ function agClienteDet(){
       <div class="card"><h4>Referências</h4><p>${esc(c.refs)}</p></div>
       <div class="card"><h4>Tom</h4><p>${c.id==='ln'?'Calmo, nunca urgência. Durabilidade, não novidade.':c.id==='cj'?'Autoridade sem juridiquês. A Dra. Ana é o rosto.':'Definido no briefing acima.'}</p></div>`,
     projetos: S.proj[c.id]
-      ? `<button class="row" data-r="projeto" style="width:100%"><span class="av">${esc(c.ini)}</span>
+      ? `<button class="row" data-r="projeto" style="width:100%">${avCliente(c, 'av')}
           <span class="t"><b>${esc(S.proj[c.id].nome)}</b><span>${S.proj[c.id].per} · ${S.proj[c.id].fases.length} fases</span></span>
           <span class="chev">${ic('chevr')}</span></button>`
-      : `<div class="row"><span class="av">${esc(c.ini)}</span><span class="t"><b>Sempre ativo</b>
+      : `<div class="row">${avCliente(c, 'av')}<span class="t"><b>Sempre ativo</b>
           <span>metodologia de social · 12 datas no calendário</span></span><span class="pill p-DRAFT">novo</span></div>
         <div class="card" style="margin-top:12px"><h4>Próximo passo</h4><p>Criar o primeiro conteúdo —
           ou aplicar outra metodologia com "Novo projeto".</p></div>`,
@@ -3213,7 +3213,7 @@ function agLote(){
   const c = cliAtual();
   if(c.id!=='ln') return agShell(`<div class="mtop"><div><h1>Lotes</h1><p>${esc(c.nome)}</p></div></div>
     ${chips()}${c.id==='cj'
-      ? `<button class="lothub fu"><span class="av">CJ</span><span class="t"><b>Lote de texto · Setembro</b>
+      ? `<button class="lothub fu">${avCliente(CLIS().find(x => x.id === 'cj') || { ini:'CJ' }, 'av')}<span class="t"><b>Lote de texto · Setembro</b>
           <span>em preparação — 12 copys e 4 roteiros no checklist</span></span>
           <span class="pill p-IN_PRODUCTION">Em produção</span></button>
         <div class="card"><h4>Por que ainda não foi</h4><p>O checklist acusa 2 peças sem propósito.
@@ -12845,7 +12845,7 @@ agDash = function(){
   const corpo = grupos.length ? grupos.map(g=>`
     <div class="hjCli">
       <div class="hjCliHd">
-        <span class="av" ${g.cli.cor?`style="background:linear-gradient(150deg,${corSegura(g.cli.cor)},#111);color:#fff"`:''}>${esc(g.cli.ini)}</span>
+        ${avCliente(g.cli, 'av')}
         <b>${esc(g.cli.nome)}</b>
         <span>${g.itens.filter(p=>p.feito).length}/${g.itens.length} feito</span>
       </div>
@@ -13358,7 +13358,7 @@ function agRevisao(){
     : 'nada esperando revisão'}</p></div></div>
   ${fila.length ? fila.map(({c,p,f})=>`<div class="rvItem">
     <div class="top">
-      <span class="av" style="width:24px;height:24px;font-size:11px">${esc(c.ini)}</span>
+      ${avCliente(c, 'av av24')}
       <b style="color:var(--ink-50)">${esc(p.t)}</b>
       ${p.data?`<span class="ptData">${rotuloData(p.data)}</span>`:''}
       <span class="pill p-FASE">${f==='revisao'?'antes do texto ir ao cliente':'antes da arte ir ao cliente'}</span>
@@ -16136,7 +16136,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v247 · 24 set · o aparelho não enche';
+const VERSAO_PROTOTIPO = 'v248 · 24 set · a logo do cliente';
 
 menuSheet = (function(orig){
   return function(){
@@ -16437,7 +16437,7 @@ function hjAgenda(grupos){
   const cab = visiveis.map(g=>{
     const n = g.itens.length, feitos = g.itens.filter(p=>p.feito).length;
     return `<div class="agCabCol">
-      <div class="agAv" style="background:${corSegura(g.cli.cor || '#4C535D')};color:#fff">${esc(g.cli.ini)}</div>
+      ${avCliente(g.cli.cor ? g.cli : { ...g.cli, cor:'#4C535D' }, 'agAv')}
       <b>${esc(g.cli.nome)}</b>
       <span>${n} ${n===1?'peça':'peças'}${feitos?` · ${feitos} feito${feitos>1?'s':''}`:''}</span>
     </div>`;
@@ -44597,6 +44597,11 @@ porFase = (function(orig){
 })(porFase);
 </script>
 <style id="v245-a-capa-do-video">
+/* v248 — a logo do cliente em todo círculo dele (o Hoje e o lote desenhavam só as iniciais) */
+.agAv.comLogo{ padding:0; overflow:hidden; background:var(--ink-700) }
+.agAv.comLogo img{ width:100%; height:100%; object-fit:cover; display:block }
+.av.av24{ width:24px; height:24px; font-size:11px }
+
 /* v245 — a capa do vídeo, e o card que não pisca. Motivo em docs/CHANGELOG.md 0.5.59. */
 .v245cap{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; pointer-events:none; background:#0B0C0E }
 .clPost > .v245cap ~ *, .ftile > .v245cap ~ *, #v243ig .igGrade button > .v245cap ~ *{ position:relative; z-index:1 }

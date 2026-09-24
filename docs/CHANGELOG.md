@@ -1,9 +1,46 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.61
+Version: 0.5.62
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.62 — 2026-09-24
+
+**Status:** Concluída
+
+### v248 — a logo do cliente
+
+*"O ícone do nome da EJUP está sem foto. Veja se vai ter esse problema com
+outros clientes também."* A logo do cliente tem uma função só
+(`avCliente`: a logo quando existe, as iniciais quando não), mas algumas
+telas montavam o círculo à mão, com as iniciais — e nunca perguntavam pela
+logo, de NENHUM cliente.
+
+**Como foi achado, e não só o do print:** uma varredura dá logo a todos
+os clientes, passa por todas as telas da agência e do link do cliente, e
+lista todo círculo que ainda mostra iniciais. Três telas:
+
+- a **Agenda do Hoje** (o print);
+- a **Lista do Hoje**;
+- o **hub do lote**.
+
+E cinco lugares que o código ainda monta do mesmo jeito, mesmo sem
+aparecer na varredura de hoje (lista de clientes antiga, projeto do
+cliente, revisão), passam a usar a mesma função — para a próxima tela não
+repetir o defeito.
+
+**Uma lição da varredura:** a primeira rodada dizia "tudo certo" no lado
+do cliente e estava errada — a logo foi posta no objeto que `CLIS()`
+devolve, que é RECRIADO a cada leitura quando o cliente foi editado (a
+logo mora em `S.cliEdit`). A prova só vale com o dado posto onde o app o
+guarda.
+
+6 provas em `web/verificar/v248-a-logo-do-cliente.mjs`, incluindo o
+contrário (cliente sem logo segue com as iniciais na cor dele) e a guarda
+de endereço (`javascript:` não vira `src`).
 
 ---
 

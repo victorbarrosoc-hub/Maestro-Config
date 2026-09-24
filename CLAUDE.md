@@ -299,6 +299,13 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v248) — a logo do cliente.** A Agenda e a Lista do Hoje e
+o hub do lote montavam o círculo do cliente à mão, só com as iniciais —
+nunca a logo, de nenhum cliente. Agora todo círculo passa por `avCliente`.
+Achado por varredura (logo em todos os clientes, todas as telas da agência
+e do link); a primeira rodada mentiu porque a logo mora em `S.cliEdit` e
+`CLIS()` recria os objetos. 6 provas em
+`web/verificar/v248-a-logo-do-cliente.mjs`.
 **Fechado (24 set, v247) — o aparelho não enche.** O limite que estourava é
 o do NAVEGADOR (~5 MB, igual em qualquer plano do Supabase): a pauta
 guardada duas vezes (cópia + base da mescla) e a capa de cada vídeo
