@@ -22,6 +22,14 @@
       "destination": "/web/index.html"
     },
     {
+      "source": "/negocios",
+      "destination": "/web/index.html"
+    },
+    {
+      "source": "/negocios/(.*)",
+      "destination": "/web/index.html"
+    },
+    {
       "source": "/clientes",
       "destination": "/web/index.html"
     },

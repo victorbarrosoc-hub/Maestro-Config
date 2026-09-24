@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-24 12:24 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-24 13:33 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -994,10 +994,6 @@ function precos(){
    ou depoimento inventado. O quadro e o celular são desenhados em HTML,
    com o método de verdade (as seis colunas) — sem imagem para baixar. */
 function vSite(){
-  const k = (f, t, cli, chip, extra = '') => `<div class="sK" style="--f:${f}"><b>${t}</b>
-    <span class="sKm"><i style="background:${f}"></i>${cli}</span><span class="sKc">${chip}</span>${extra}</div>`;
-  const col = (cor, nome, sub, cards, cls = '') => `<div class="sCol ${cls}"><div class="sColH"><i style="background:${cor}"></i>${nome}</div>
-    <small>${sub}</small>${cards}</div>`;
   const passo = (cor, nome, txt) => `<div class="sPasso rv"><i style="background:${cor}"></i><h3>${nome}</h3><p>${txt}</p></div>`;
   return `<div class="site sv">
 <nav class="snav" id="snav">
@@ -1016,18 +1012,10 @@ function vSite(){
     dentro, e não num grupo de WhatsApp.</p>
   <div class="sCta fu" style="animation-delay:180ms"><button class="b pri" data-go="entrar">Entrar na Maestro</button>
     <a href="#" class="sLink" data-scroll="como">Ver como funciona ›</a></div>
-  <div class="sJanela fu" style="animation-delay:260ms" aria-hidden="true">
-    <div class="sBarra"><i></i><i></i><i></i><span>Ensaio</span></div>
-    <div class="sResumo"><b>9</b> em curso · <em>1 atrasado</em> · <b>3</b> com o cliente</div>
-    <div class="sQuadro">
-      ${col('#5B8DEF', 'Plan', 'estruturando', k('#8E6CEF', 'Reforma tributária em 5 pontos', 'Loja Norte', 'Texto'))}
-      ${col('#E5B83B', 'Do', 'produzindo', k('#C8963A', 'Carrossel da nova coleção', 'Loja Norte', 'Peça',
-        '<span class="sMini"><s></s><s></s><s></s><em>+4</em></span>') + k('#34C759', 'Reels · bastidores', 'Café Aurora', 'Peça'))}
-      ${col('#FF9500', 'Check', 'revisão interna', k('#5B8DEF', 'Giro semanal · ep. 01', 'Clínica Viva', 'Texto', '<span class="sPasso1">liberar ✓</span>'))}
-      ${col('#C8963A', 'Com o cliente', 'esperando a decisão', k('#C8963A', 'Podcast · corte 5', 'Café Aurora', 'Peça', '<span class="sReel"></span>'), 'sCli')}
-      ${col('#34C759', 'Act', 'aprovado · agenda', k('#C8963A', 'Convite para a live', 'Loja Norte', 'Agendado · 26/09'))}
-    </div>
-  </div>
+  <img class="sFoto fu" style="animation-delay:260ms" src="/web/img/vitrine-aparelhos-1800.webp"
+    srcset="/web/img/vitrine-aparelhos-1000.webp 1000w, /web/img/vitrine-aparelhos-1800.webp 1800w"
+    sizes="(max-width: 860px) 100vw, 1040px" width="1800" height="1020" fetchpriority="high"
+    alt="A Maestro num notebook e num iPhone: o quadro do Ensaio e as publicações do cliente">
 </header>
 
 <section class="sSec" id="como">
@@ -1049,19 +1037,16 @@ function vSite(){
   <div>
     <p class="sOlho rv">Para o cliente</p>
     <h2 class="rv">O cliente aprova como curte um post.</h2>
-    <p class="sSub rv">Ele recebe um link, abre no celular e vê o mês como um perfil do Instagram.
-      Aprova com um toque ou pede ajuste na tela exata do carrossel.</p>
+    <p class="sSub rv">Ele recebe um link, abre no celular e decide deslizando: para a direita
+      aprova, para a esquerda pede ajuste, para cima diz o que amou.</p>
     <ul class="sLista rv"><li>Sem conta, sem senha, sem instalar nada</li>
-      <li>O mês inteiro de uma vez, não peça solta</li>
-      <li>Pedidos e arquivos aprovados no mesmo link</li></ul>
+      <li>Ajuste pedido na tela exata do carrossel</li>
+      <li>O elogio do cliente chega para a equipe</li></ul>
   </div>
-  <div class="sFone rv" aria-hidden="true"><div class="sTela">
-    <div class="sPerfil"><span class="sAv">LN</span><div><b>lojanorte</b><small>12 posts · setembro</small></div></div>
-    <div class="sGrade">${['#2B3A55', '#C8963A', '#1F2B22', '#3A2B45', '#55402B', '#22343A'].map((c, i) =>
-      `<span style="background:linear-gradient(160deg,${c},#000)">${i === 1 ? '<em>para aprovar</em>' : ''}</span>`).join('')}</div>
-    <div class="sDecide"><div class="sPost"></div><div class="sAcoes"><span>♡</span><span>◯</span></div>
-      <div class="sBts"><span class="sAjuste">Pedir ajuste</span><span class="sOk">Aprovar</span></div></div>
-  </div></div>
+  <img class="sFotoCli rv" src="/web/img/vitrine-cliente-900.webp"
+    srcset="/web/img/vitrine-cliente-600.webp 600w, /web/img/vitrine-cliente-900.webp 900w"
+    sizes="(max-width: 860px) 90vw, 440px" width="900" height="1117" loading="lazy"
+    alt="O cliente decide no celular: aprovar a publicação ou pedir alteração">
 </section>
 
 <section class="sSec" id="dif">
@@ -1074,10 +1059,10 @@ function vSite(){
     <div class="sTile sG rv"><h3>Texto antes da arte.</h3>
       <p>Primeiro o cliente aprova a copy; só depois a produção começa. Arte sobre texto não aprovado é retrabalho.</p>
       <span class="sVoltas"><em>1ª volta · texto ✓</em><em>2ª volta · peça</em></span></div>
+    <div class="sTile rv"><h3>Negócios</h3><p>Do primeiro contato ao cliente: próxima ação sempre à vista, e o ganho já nasce na operação.</p></div>
     <div class="sTile rv"><h3>Hoje</h3><p>O que vai ao ar hoje, de todos os clientes, numa tela só.</p></div>
     <div class="sTile rv"><h3>Conversas</h3><p>Canais da equipe com foto, vídeo e áudio — sem grupo de WhatsApp.</p></div>
     <div class="sTile rv"><h3>Pedidos do cliente</h3><p>Ele pede pelo link; vira tarefa no quadro, com andamento.</p></div>
-    <div class="sTile rv"><h3>Redes</h3><p>A planilha do Meta, do YouTube e do TikTok vira a leitura da semana.</p></div>
   </div>
 </section>
 
@@ -16069,7 +16054,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v252 · 24 set · o celular respira, parte 2';
+const VERSAO_PROTOTIPO = 'v253 · 24 set · negócios e o deslizar';
 
 menuSheet = (function(orig){
   return function(){
@@ -45830,31 +45815,12 @@ background:radial-gradient(ellipse at center, rgba(200,150,58,.20), transparent 
 .sCta{ display:flex; gap:26px; justify-content:center; align-items:center; flex-wrap:wrap }
 .sLink{ color:var(--brass-400); font-size:17px; text-decoration:none }
 .sLink:hover{ text-decoration:underline }
-.sJanela{ position:relative; max-width:1040px; margin:76px auto 0; border-radius:22px 22px 0 0; background:#0C0C0D;
-box-shadow:0 0 0 .5px rgba(255,255,255,.14), 0 -30px 120px rgba(200,150,58,.10); text-align:left; overflow:hidden;
--webkit-mask-image:linear-gradient(#000 70%, transparent); mask-image:linear-gradient(#000 70%, transparent) }
-.sBarra{ display:flex; align-items:center; gap:7px; height:38px; padding:0 16px; border-bottom:.5px solid var(--sFio) }
-.sBarra i{ width:11px; height:11px; border-radius:50%; background:#3A3A3C }
-.sBarra span{ margin-left:12px; font-size:12.5px; font-weight:600; color:var(--sTx2) }
-.sResumo{ padding:18px 20px 4px; font-size:13px; color:var(--sTx2) }
-.sResumo b{ color:var(--sTx) } .sResumo em{ font-style:normal; color:#FF453A }
-.sQuadro{ display:grid; grid-template-columns:repeat(5, minmax(172px, 1fr)); gap:12px; padding:14px 20px 44px }
-.sCol{ display:flex; flex-direction:column; gap:9px; min-width:0 }
-.sCol.sCli{ background:rgba(200,150,58,.07); border-radius:16px; padding:8px; margin:-8px }
-.sColH{ display:flex; align-items:center; gap:7px; font-size:13.5px; font-weight:650 }
-.sColH i{ width:8px; height:8px; border-radius:50% }
-.sCol small{ margin:-6px 0 2px 15px; font-size:11.5px; color:var(--sTx3) }
-.sK{ position:relative; display:flex; flex-direction:column; gap:7px; padding:12px 12px 12px 16px; border-radius:14px; background:var(--sSup2) }
-.sK::before{ content:""; position:absolute; left:6px; top:12px; bottom:12px; width:3px; border-radius:2px; background:var(--f) }
-.sK b{ font-size:13px; font-weight:600; line-height:1.3 }
-.sKm{ display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--sTx2) }
-.sKm i{ width:14px; height:14px; border-radius:50%; opacity:.85 }
-.sKc{ align-self:flex-start; font-size:11px; padding:2px 8px; border-radius:6px; background:rgba(255,255,255,.07); color:var(--sTx2) }
-.sMini{ display:flex; gap:4px; align-items:center }
-.sMini s{ width:30px; height:38px; border-radius:6px; background:linear-gradient(160deg,#2B3A55,#0E1422) }
-.sMini em{ font-style:normal; font-size:11px; color:var(--sTx3) }
-.sReel{ width:40px; height:70px; border-radius:7px; background:linear-gradient(160deg,#3A3F48,#0B0C0E) }
-.sPasso1{ text-align:center; padding:7px; border-radius:9px; background:var(--sTx); color:#000; font-size:12px; font-weight:650 }
+.sFoto{ display:block; width:100%; max-width:1080px; height:auto; margin:56px auto 0; position:relative;
+mix-blend-mode:lighten;
+-webkit-mask-image:linear-gradient(to bottom, #000 62%, transparent 96%), linear-gradient(to right, transparent 2%, #000 16%, #000 84%, transparent 98%);
+-webkit-mask-composite:source-in;
+mask-image:linear-gradient(to bottom, #000 62%, transparent 96%), linear-gradient(to right, transparent 2%, #000 16%, #000 84%, transparent 98%);
+mask-composite:intersect }
 .sSec{ max-width:1040px; margin:0 auto; padding:130px 22px 0 }
 .sSec h2{ margin:0 0 18px; font-size:clamp(34px, 5.4vw, 60px); line-height:1.06; font-weight:700; letter-spacing:-.04em; color:var(--sTx); max-width:18ch }
 .sSub{ margin:0 0 44px; max-width:44ch; font-size:clamp(17px, 1.9vw, 21px); line-height:1.45; color:var(--sTx2); letter-spacing:-.01em }
@@ -45867,21 +45833,8 @@ box-shadow:0 0 0 .5px rgba(255,255,255,.14), 0 -30px 120px rgba(200,150,58,.10);
 .sLista{ margin:0; padding:0; list-style:none; display:grid; gap:12px; font-size:17px; color:var(--sTx) }
 .sLista li{ display:flex; gap:12px; align-items:baseline }
 .sLista li::before{ content:"✓"; color:var(--brass-400); font-weight:700 }
-.sFone{ justify-self:center; width:290px; height:600px; border-radius:50px; padding:11px; background:#1C1C1E;
-box-shadow:0 0 0 .5px rgba(255,255,255,.18), 0 50px 120px rgba(0,0,0,.7) }
-.sTela{ height:100%; border-radius:40px; background:#0A0A0A; overflow:hidden; padding:44px 14px 14px; display:flex; flex-direction:column; gap:12px }
-.sPerfil{ display:flex; align-items:center; gap:10px }
-.sAv{ width:44px; height:44px; border-radius:50%; display:grid; place-items:center; background:linear-gradient(135deg,#C8963A,#7A5A1E); font-size:14px; font-weight:700; color:#000 }
-.sPerfil b{ display:block; font-size:14px } .sPerfil small{ font-size:11.5px; color:var(--sTx3) }
-.sGrade{ display:grid; grid-template-columns:repeat(3, 1fr); gap:2px; border-radius:8px; overflow:hidden }
-.sGrade span{ aspect-ratio:3/4; position:relative }
-.sGrade em{ position:absolute; left:4px; bottom:4px; font-style:normal; font-size:8.5px; font-weight:700; padding:2px 5px; border-radius:5px; background:var(--brass-500); color:#000 }
-.sDecide{ margin-top:auto; padding:10px; border-radius:22px; background:var(--sSup2); display:flex; flex-direction:column; gap:9px }
-.sPost{ height:120px; border-radius:14px; background:linear-gradient(160deg,#C8963A,#3A2A10) }
-.sAcoes{ display:flex; gap:12px; font-size:20px; padding:0 4px; color:var(--sTx) }
-.sBts{ display:grid; grid-template-columns:1fr 1fr; gap:7px }
-.sBts span{ text-align:center; padding:10px 0; border-radius:999px; font-size:12.5px; font-weight:650 }
-.sAjuste{ background:rgba(255,255,255,.08) } .sOk{ background:var(--sTx); color:#000 }
+.sFotoCli{ justify-self:center; display:block; width:100%; max-width:440px; height:auto; border-radius:28px;
+box-shadow:0 40px 100px rgba(0,0,0,.6) }
 .sBento{ display:grid; grid-template-columns:repeat(12, 1fr); gap:14px }
 .sTile{ grid-column:span 3; padding:30px 28px; border-radius:26px; background:var(--sSup); display:flex; flex-direction:column; gap:10px }
 .sTile.sG{ grid-column:span 6; min-height:280px }
@@ -45916,7 +45869,7 @@ gap:10px 24px; align-items:center; font-size:12.5px; color:var(--sTx3) }
 .sRodape .logo b{ font-size:15px; color:var(--sTx3) } .sRodape span:last-child{ margin-left:auto }
 @media(max-width:860px){
 .sHero{ padding-top:72px }
-.sQuadro{ grid-template-columns:repeat(5, 200px); overflow-x:auto; scrollbar-width:none }
+.sFoto{ margin-top:40px; width:118%; max-width:none; margin-left:-9% }
 .sPassos{ grid-template-columns:1fr 1fr } .sDividido{ grid-template-columns:1fr; gap:48px }
 .sBento{ grid-template-columns:1fr } .sTile, .sTile.sG{ grid-column:auto; min-height:0 }
 .sSec{ padding-top:96px }
@@ -46128,5 +46081,991 @@ body[data-rota="resultados"] .card:has(> svg), body[data-rota="resultados"] .rtG
   render = (function(orig){
     return function(){ const r = orig.apply(this, arguments); try{ resumir(); }catch(e){} return r; };
   })(render);
+})();
+</script>
+<style id="v253-negocios">
+.crmTela .mtop{ align-items:flex-start }
+.crmResumo{ display:flex; flex-wrap:wrap; gap:4px 16px; margin-top:6px; font-size:14px; color:var(--ink-300) }
+.crmResumo b{ color:var(--ink-50); font-weight:650 }
+.crmResumo .alerta, .crmResumo .alerta b{ color:#FF453A }
+.crmBarra{ display:flex; align-items:center; gap:10px; margin:4px 0 18px; flex-wrap:wrap }
+.crmAbas{ display:inline-flex; gap:2px; padding:3px; border-radius:12px; background:var(--enc); overflow-x:auto; scrollbar-width:none; max-width:100% }
+.crmAbas::-webkit-scrollbar{ display:none }
+.crmAbas button{ flex:0 0 auto; padding:7px 14px; border-radius:9px; font-size:13.5px; font-weight:550; color:var(--ink-200); display:inline-flex; gap:6px; align-items:center }
+.crmAbas button.on{ background:var(--sup); color:var(--ink-50); box-shadow:0 1px 3px rgba(0,0,0,.18) }
+.crmAbas button em{ font-style:normal; font-size:11px; font-weight:700; min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:#FF453A; color:#fff; display:inline-grid; place-items:center }
+.crmMeus{ padding:7px 13px; border-radius:999px; background:var(--enc); color:var(--ink-200); font-size:13px; font-weight:550 }
+.crmMeus.on{ background:var(--prim); color:var(--primT) }
+.crmVazio{ display:grid; gap:8px; justify-items:start; padding:28px; border-radius:20px; background:var(--sup); max-width:560px }
+.crmVazio b{ font-size:17px; color:var(--ink-50) } .crmVazio span{ color:var(--ink-300); font-size:14.5px; line-height:1.5 }
+.crmVazio .b{ margin-top:6px }
+.crmGrupo{ margin:0 0 20px; max-width:860px }
+.crmGrupo h3{ display:flex; align-items:center; gap:8px; margin:0 0 8px 4px; font-size:13px; font-weight:650; color:var(--ink-300); text-transform:none; letter-spacing:0 }
+.crmGrupo h3 span{ font-weight:500; color:var(--ink-400) }
+.crmGrupo.atrasada h3, .crmGrupo.sem h3{ color:#FF453A }
+.crmAcao{ display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:12px; padding:12px 14px; margin-bottom:6px;
+border-radius:14px; background:var(--sup); cursor:pointer; transition:background-color .18s }
+.crmAcao:hover{ background:var(--sup2) }
+.crmAcao .t{ display:grid; gap:2px; min-width:0 }
+.crmAcao .t b{ font-size:14.5px; font-weight:600; color:var(--ink-50); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.crmAcao .t span{ font-size:12.5px; color:var(--ink-400); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.crmFeito{ width:30px; height:30px; border-radius:50%; display:grid; place-items:center; color:var(--ink-400); background:var(--enc) }
+.crmFeito:hover{ color:#30D158; background:rgba(48,209,88,.14) }
+.crmQuando{ font-size:12.5px; font-weight:600; color:var(--ink-300); white-space:nowrap }
+.crmQuando.atrasada, .crmQuando.sem{ color:#FF453A } .crmQuando.hoje{ color:var(--brass-400) }
+.crmAv, .crmCard .av, .crmAcao .av{ width:24px !important; height:24px !important; font-size:10px !important; flex:0 0 auto; border-radius:50% }
+.crmFunil{ display:grid; grid-template-columns:repeat(5, minmax(210px, 1fr)); gap:12px; align-items:start }
+.crmCol{ display:flex; flex-direction:column; gap:8px; min-width:0; border-radius:18px; padding:4px; transition:background-color .18s }
+.crmCol.sobre{ background:var(--enc) }
+.crmColHd{ display:flex; align-items:center; gap:7px; padding:4px 6px 0; font-size:14px }
+.crmColHd i{ width:8px; height:8px; border-radius:50% } .crmColHd b{ font-weight:650; color:var(--ink-50) }
+.crmColHd span{ margin-left:auto; color:var(--ink-400); font-size:12.5px }
+.crmCol > small{ padding:0 6px 4px 21px; font-size:12px; color:var(--ink-400) }
+.crmColCorpo{ display:flex; flex-direction:column; gap:8px }
+.crmColVazia{ padding:18px; text-align:center; color:var(--ink-500); border-radius:14px; border:1px dashed var(--fio) }
+.crmCard{ position:relative; display:flex; flex-direction:column; gap:7px; text-align:left; width:100%; padding:13px 13px 12px 17px;
+border-radius:14px; background:var(--sup); color:var(--ink-100); cursor:grab }
+.crmCard::before{ content:""; position:absolute; left:7px; top:13px; bottom:13px; width:3px; border-radius:2px; background:var(--c) }
+.crmCard:hover{ background:var(--sup2) }
+.crmCard.arrastando{ opacity:.45 }
+.crmCardTopo{ display:flex; align-items:flex-start; gap:8px }
+.crmCardTopo b{ flex:1; font-size:14px; font-weight:650; color:var(--ink-50); line-height:1.3 }
+.crmVal{ font-size:14px; font-weight:650; color:var(--ink-50) } .crmVal small{ font-size:11.5px; font-weight:500; color:var(--ink-400) }
+.crmPx{ font-size:12px; line-height:1.4; color:var(--ink-300) } .crmPx b{ font-weight:650 }
+.crmPx.atrasada, .crmPx.sem{ color:#FF453A } .crmPx.hoje b{ color:var(--brass-400) }
+.crmPx svg{ width:12px; height:12px; vertical-align:-2px }
+.crmMeta{ font-size:11.5px; color:var(--ink-400) } .crmMeta em{ font-style:normal; color:var(--brass-400) }
+.crmFrio{ color:#64D2FF }
+.crmGanho, .crmPerdido{ padding:16px 18px; border-radius:18px; background:var(--sup); margin-bottom:10px; cursor:pointer; max-width:980px }
+.crmGanho:hover, .crmPerdido:hover{ background:var(--sup2) }
+.crmGanhoTopo{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:12px }
+.crmGanhoTopo b{ font-size:16px; color:var(--ink-50) }
+.crmTrilha{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(6, 1fr); gap:6px }
+.crmTrilha li{ position:relative; display:grid; gap:2px; padding-top:16px; min-width:0 }
+.crmTrilha li i{ position:absolute; top:0; left:0; right:0; height:5px; border-radius:3px; background:var(--enc2) }
+.crmTrilha li.ok i{ background:#30D158 } .crmTrilha li.agora i{ background:var(--brass-500) }
+.crmTrilha li b{ font-size:12.5px; font-weight:650; color:var(--ink-100) }
+.crmTrilha li span{ font-size:11.5px; color:var(--ink-400); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.crmTrilha li.agora b{ color:var(--brass-400) }
+.crmPerdido{ display:flex; align-items:center; gap:12px } .crmPerdido .t{ flex:1; display:grid; gap:2px }
+.crmPerdido .t b{ color:var(--ink-50) } .crmPerdido .t span{ font-size:12.5px; color:var(--ink-400) }
+.crmFicha{ max-width:720px !important }
+@media(min-width:861px){ .crmFicha > .modalrow:last-child{ position:sticky; bottom:-26px; margin:8px -26px -26px; padding:14px 26px;
+background:var(--sup); box-shadow:0 -12px 18px -6px var(--sup); z-index:2 } }
+.crmFichaSub{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; margin:-4px 0 14px; font-size:13.5px; color:var(--ink-300) }
+.crmFichaSub .b{ margin-left:auto }
+.crmEtapas{ display:flex; gap:4px; padding:3px; border-radius:12px; background:var(--enc); overflow-x:auto; scrollbar-width:none; margin-bottom:14px }
+.crmEtapas::-webkit-scrollbar{ display:none }
+.crmEtapas button{ flex:1 0 auto; padding:7px 10px; border-radius:9px; font-size:12.5px; font-weight:550; color:var(--ink-300); white-space:nowrap }
+.crmEtapas button.on{ background:var(--sup); color:var(--ink-50); box-shadow:0 1px 3px rgba(0,0,0,.18) }
+.crmSelo{ display:inline-flex; padding:6px 12px; border-radius:999px; font-size:13px; font-weight:650; margin-bottom:14px }
+.crmSelo.ganho{ background:rgba(48,209,88,.16); color:#30D158 } .crmSelo.perdido{ background:var(--enc); color:var(--ink-300) }
+.crmProx{ display:grid; gap:3px; padding:13px 15px; border-radius:14px; background:var(--enc); margin-bottom:12px }
+.crmProx .rot, .crmProxForm .rot{ font-size:11.5px; font-weight:650; color:var(--ink-400); text-transform:none; letter-spacing:0 }
+.crmProx b{ font-size:15px; color:var(--ink-50) } .crmProx span{ font-size:12.5px; color:var(--ink-300) }
+.crmProx.atrasada, .crmProx.sem{ box-shadow:inset 3px 0 0 #FF453A } .crmProx.hoje{ box-shadow:inset 3px 0 0 var(--brass-500) }
+.crmRegistra{ display:grid; gap:10px; padding:14px; border-radius:16px; background:var(--sup2); margin-bottom:16px }
+.crmTipos, .crmServ, .crmDias{ display:flex; flex-wrap:wrap; gap:6px }
+.crmTipos button, .crmServ button, .crmDias button{ padding:6px 12px; border-radius:999px; background:var(--enc); color:var(--ink-200); font-size:12.5px; font-weight:550 }
+.crmTipos button.on, .crmServ button.on{ background:var(--prim); color:var(--primT) }
+.crmDias button{ padding:5px 10px; font-size:12px }
+.crmRegistra textarea, .crmRegistra input, .crmRegistra select, .crmCtForm input{ width:100%; min-width:0; padding:10px 12px; border-radius:11px; border:0;
+background:var(--enc); color:var(--ink-50); font:inherit; font-size:14.5px }
+.crmProxForm{ display:grid; gap:8px }
+.crmLinha{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+.crmLinha > input, .crmLinha > select{ flex:1 1 140px }
+.crmLinha > select{ flex:0 0 auto; width:auto }
+.crmRegistra .erro, .crmForm .erro{ margin:0; min-height:0; font-size:13px; color:#FF453A }
+.crmRegistra .erro:empty, .crmForm .erro:empty{ display:none }
+.crmRegistra > .b{ justify-self:start }
+.crmSec{ margin-bottom:16px }
+.crmSecHd{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px }
+.crmSecHd b{ font-size:14px; color:var(--ink-50) }
+.crmMais{ font-size:13px; font-weight:600; color:var(--brass-400) }
+.crmContato{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; background:var(--enc); margin-bottom:6px }
+.crmContato .t{ flex:1; display:grid; min-width:0 } .crmContato .t b{ font-size:14px; color:var(--ink-50) } .crmContato .t span{ font-size:12px; color:var(--ink-400) }
+.crmLinks{ display:flex; gap:6px; flex-wrap:wrap }
+.crmLinks a{ padding:5px 10px; border-radius:999px; background:var(--sup); color:var(--ink-100); font-size:12px; font-weight:600; text-decoration:none }
+.crmX{ width:26px; height:26px; border-radius:50%; color:var(--ink-400); font-size:16px }
+.crmCtForm{ display:grid; gap:8px; padding:12px; border-radius:12px; background:var(--sup2) }
+.crmCtForm[hidden]{ display:none }
+.crmCtForm .b{ justify-self:start }
+.crmNada{ font-size:13px; color:var(--ink-400); margin:0 }
+.crmNotas{ margin:0; font-size:14px; color:var(--ink-200); white-space:pre-wrap; line-height:1.5 }
+.crmHist{ list-style:none; margin:0; padding:0; display:grid; gap:2px }
+.crmHist li{ display:grid; grid-template-columns:92px 1fr auto; gap:10px; padding:8px 4px; border-bottom:.5px solid var(--fio); font-size:13px }
+.crmHist li b{ font-weight:600; color:var(--ink-200) } .crmHist li span{ color:var(--ink-100); white-space:pre-wrap }
+.crmHist li small{ color:var(--ink-400); white-space:nowrap }
+.crmHist li.ganho b{ color:#30D158 } .crmHist li.perdido b{ color:var(--ink-400) } .crmHist li.etapa b{ color:var(--brass-400) }
+.crmHist li.nada{ display:block; color:var(--ink-400) }
+.crmConvAviso{ display:flex; gap:8px; align-items:flex-start; padding:10px 12px; border-radius:12px; background:rgba(48,209,88,.12); color:var(--ink-100); font-size:13.5px }
+.crmConvAviso svg{ color:#30D158; flex:0 0 auto; margin-top:2px }
+.crmForm select{ width:100% }
+.crmHoje{ margin:14px 0 18px; padding:14px; border-radius:18px; background:var(--sup) }
+.crmHojeHd{ display:flex; align-items:center; gap:10px; margin:0 2px 10px }
+.crmHojeHd b{ display:inline-flex; align-items:center; gap:6px; font-size:14.5px; color:var(--ink-50) }
+.crmHojeHd span{ font-size:13px; color:var(--ink-400) } .crmHojeHd .crmMais{ margin-left:auto }
+.crmHoje .crmAcao{ background:var(--sup2) } .crmHoje .crmAcao:last-child{ margin-bottom:0 }
+@media(max-width:860px){
+.crmFunil{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; gap:10px; margin:0 -16px; padding:0 16px 8px; scrollbar-width:none }
+.crmFunil::-webkit-scrollbar{ display:none }
+.crmCol{ flex:0 0 82vw; scroll-snap-align:start }
+.crmCard{ cursor:pointer }
+.crmAcao{ grid-template-columns:auto 1fr auto; padding:12px }
+.crmAcao > .av{ display:none }
+.crmTrilha{ grid-template-columns:repeat(3, 1fr); row-gap:12px }
+.crmHist li{ grid-template-columns:1fr auto } .crmHist li span{ grid-column:1 / -1 }
+.crmFichaSub .b{ margin-left:0 }
+.crmTela .mtop > div:last-child .b{ padding:9px 14px }
+}
+</style>
+<script data-camada="v253">
+(function(){
+  if(typeof agDash !== 'function' || typeof agShell !== 'function') return;
+  IC.alvo = '<circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r="1.1"/>';
+  const ETAPAS = [
+    ['prospect',   'Prospect',         'quem a agência quer atender',      '#8E8E93'],
+    ['contato',    'Primeiro contato', 'abordado, esperando resposta',     '#5B8DEF'],
+    ['reuniao',    'Reunião',          'diagnóstico marcado ou feito',     '#E5B83B'],
+    ['proposta',   'Proposta',         'enviada — o silêncio mora aqui',   '#FF9500'],
+    ['negociacao', 'Negociação',       'escopo e preço na mesa',           '#C8963A'],
+  ];
+  const ABERTAS = ETAPAS.map(e => e[0]);
+  const NOME_ETAPA = Object.assign(Object.fromEntries(ETAPAS.map(e => [e[0], e[1]])), { ganho: 'Ganho', perdido: 'Perdido' });
+  const COR_ETAPA = Object.assign(Object.fromEntries(ETAPAS.map(e => [e[0], e[3]])), { ganho: '#34C759', perdido: '#8E8E93' });
+  const ORIGENS = ['Indicação', 'Instagram', 'Site', 'WhatsApp', 'Evento', 'Prospecção ativa', 'Cliente antigo', 'Outro'];
+  const SERVICOS = ['Social media', 'Tráfego pago', 'Branding', 'Audiovisual', 'Site', 'Conteúdo', 'Consultoria'];
+  const TIPOS = [['whats', 'WhatsApp'], ['ligacao', 'Ligação'], ['email', 'E-mail'], ['reuniao', 'Reunião'], ['proposta', 'Proposta'], ['nota', 'Nota']];
+  const NOME_TIPO = Object.assign(Object.fromEntries(TIPOS), { etapa: 'Etapa', ganho: 'Ganho', perdido: 'Perdido' });
+  const MOTIVOS = ['Preço', 'Sem resposta', 'Escolheu outra agência', 'Não é o momento', 'Escopo não bate', 'Outro'];
+  const ESFRIA = 7;
+  function crm(){
+    if(!S.crm || typeof S.crm !== 'object' || Array.isArray(S.crm)) S.crm = {};
+    if(!Array.isArray(S.crm.negocios)) S.crm.negocios = [];
+    return S.crm;
+  }
+  const vivos = () => crm().negocios.filter(n => n && n.id && !n.fora);
+  const abertos = () => vivos().filter(n => ABERTAS.includes(n.etapa));
+  const achar = id => vivos().find(n => n.id === id) || null;
+  const novoId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const eu = () => (S.usuario && S.usuario.tipo === 'agencia') ? S.usuario.id : null;
+  const membro = id => (S.equipe || []).find(m => membroId(m) === id) || null;
+  const podeValor = () => { try{ return pode('financeiro'); }catch(e){ return true; } };
+  const reais = v => 'R$ ' + Math.round(+v || 0).toLocaleString('pt-BR');
+  const num = v => { const n = parseFloat(String(v || '').replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.')); return Number.isFinite(n) && n > 0 ? n : null; };
+  function somaDias(iso, k){ const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + k);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  const hoje = () => hojeISO();
+  function quando(iso){
+    if(!iso) return 'sem data';
+    const d = Math.round((new Date(iso + 'T12:00:00') - new Date(hoje() + 'T12:00:00')) / 864e5);
+    if(d === 0) return 'hoje'; if(d === 1) return 'amanhã'; if(d === -1) return 'ontem';
+    if(d < 0) return `há ${-d} dias`; if(d < 7) return `em ${d} dias`;
+    return rotuloData(iso);
+  }
+  function estadoProx(n){
+    if(!n.prox || !n.prox.quando || !String(n.prox.txt || '').trim()) return 'sem';
+    return n.prox.quando < hoje() ? 'atrasada' : n.prox.quando === hoje() ? 'hoje' : 'futura';
+  }
+  const ultimaVez = n => Math.max(+n.criado || 0, ...((n.ativs || []).map(a => +a.em || 0)));
+  const diasParado = n => Math.floor((Date.now() - ultimaVez(n)) / 864e5);
+  const esfriando = n => ABERTAS.includes(n.etapa) && diasParado(n) >= ESFRIA;
+  const valorDe = n => (+n.fee || 0);
+  function anotar(n, tipo, txt){
+    n.ativs = Array.isArray(n.ativs) ? n.ativs : [];
+    n.ativs.push({ id: novoId('a'), tipo, txt: String(txt || '').slice(0, 2000), em: Date.now(), por: eu() });
+  }
+  function mexeu(n){ n.mod = Date.now(); }
+  function salvar(){ render(); if(S.modal) renderLayer(); }
+  let _fresca = false;
+  function abrirModal(html){ S.modal = html; _fresca = true; renderLayer(); }
+  const chaveDe = h => { const m = String(h || '').match(/data-crmjanela="([^"]+)"/); return m ? m[1] : null; };
+  renderLayer = (function(orig){
+    return function(){
+      if(_fresca){ _fresca = false; return orig.apply(this, arguments); }
+      const box = document.querySelector('#layer [data-crmjanela]');
+      const chave = box && box.dataset.crmjanela;
+      if(!chave || chave !== chaveDe(S.modal)) return orig.apply(this, arguments);
+      const campos = [...box.querySelectorAll('input[id], textarea[id], select[id]')].map(e => [e.id, e.value]);
+      const ligados = [...box.querySelectorAll('[data-crmtipo].on, [data-crmserv].on, [data-crmmotivo].on')].map(e => e.outerHTML.match(/data-crm(tipo|serv|motivo)="([^"]*)"/)).filter(Boolean).map(m => [m[1], m[2]]);
+      const ctAberto = box.querySelector('#crm-ctform') && !box.querySelector('#crm-ctform').hidden;
+      const at = document.activeElement, foco = at && box.contains(at) && at.id ? [at.id, at.selectionStart, at.selectionEnd] : null;
+      const rolou = box.scrollTop;
+      const r = orig.apply(this, arguments);
+      const nova = document.querySelector('#layer [data-crmjanela]'); if(!nova) return r;
+      campos.forEach(([id, v]) => { const e = nova.querySelector('#' + CSS.escape(id)); if(e) e.value = v; });
+      if(ligados.length){
+        const grupos = new Set(ligados.map(([k]) => k));
+        grupos.forEach(k => nova.querySelectorAll(`[data-crm${k}]`).forEach(b => b.classList.toggle('on', ligados.some(([kk, v]) => kk === k && b.dataset['crm' + k] === v))));
+      }
+      if(ctAberto && nova.querySelector('#crm-ctform')) nova.querySelector('#crm-ctform').hidden = false;
+      nova.scrollTop = rolou;
+      if(foco){ const e = nova.querySelector('#' + CSS.escape(foco[0])); if(e){ e.focus({ preventScroll: true }); try{ if(foco[1] != null) e.setSelectionRange(foco[1], foco[2]); }catch(x){} } }
+      return r;
+    };
+  })(renderLayer);
+  function comAcao(){
+    return vivos().filter(n => ABERTAS.includes(n.etapa) || (n.etapa === 'perdido' && n.prox && n.prox.quando))
+      .filter(n => !S.crmSoMeus || !eu() || n.resp === eu());
+  }
+  function grupos(){
+    const h = hoje(), sem7 = somaDias(h, 7);
+    const G = [['atrasada', 'Atrasadas'], ['hoje', 'Hoje'], ['semana', 'Próximos 7 dias'], ['depois', 'Depois'], ['sem', 'Sem próximo passo']];
+    const por = Object.fromEntries(G.map(([k]) => [k, []]));
+    comAcao().forEach(n => {
+      const e = estadoProx(n);
+      if(e === 'futura') por[n.prox.quando <= sem7 ? 'semana' : 'depois'].push(n);
+      else por[e].push(n);
+    });
+    Object.values(por).forEach(l => l.sort((a, b) => String((a.prox || {}).quando || '').localeCompare(String((b.prox || {}).quando || ''))));
+    return G.map(([k, t]) => [k, t, por[k]]).filter(g => g[2].length);
+  }
+  const av = id => { const m = membro(id); return m ? avMembro(m, 'av crmAv') : ''; };
+  function linhaProx(n){
+    const e = estadoProx(n);
+    if(e === 'sem') return `<span class="crmPx sem">${ic('warn', 12)} sem próximo passo</span>`;
+    return `<span class="crmPx ${e}">${esc(NOME_TIPO[n.prox.tipo] || 'Ação')} · ${esc(n.prox.txt)} · <b>${esc(quando(n.prox.quando))}</b></span>`;
+  }
+  function cartao(n){
+    const fee = podeValor() && n.fee ? `<span class="crmVal">${reais(n.fee)}<small>/mês</small></span>` : '';
+    return `<button type="button" class="crmCard" data-crmabre="${esc(n.id)}" draggable="true" style="--c:${COR_ETAPA[n.etapa] || '#8E8E93'}">
+      <span class="crmCardTopo"><b>${esc(n.empresa)}</b>${av(n.resp)}</span>
+      ${fee}${linhaProx(n)}
+      <span class="crmMeta">${n.cli && !n.etapa.match(/ganho|perdido/) ? '<em>cliente · expansão</em>' : esc(n.origem || '')}${esfriando(n) ? ` · <span class="crmFrio">esfriando · ${diasParado(n)}d</span>` : ''}</span>
+    </button>`;
+  }
+  function linhaAcao(n){
+    const e = estadoProx(n);
+    const perdido = n.etapa === 'perdido';
+    return `<div class="crmAcao ${e}" data-crmabre="${esc(n.id)}" role="button" tabindex="0">
+      <button type="button" class="crmFeito" data-crmfeito="${esc(n.id)}" aria-label="Marcar como feito e registrar">${ic('checkc', 18)}</button>
+      <span class="t"><b>${e === 'sem' ? 'Definir o próximo passo' : esc((NOME_TIPO[n.prox.tipo] || 'Ação') + ' · ' + n.prox.txt)}</b>
+        <span>${esc(n.empresa)} · ${esc(perdido ? 'perdido · reabordar' : NOME_ETAPA[n.etapa] || '')}${podeValor() && n.fee ? ' · ' + reais(n.fee) + '/mês' : ''}</span></span>
+      <span class="crmQuando ${e}">${e === 'sem' ? '—' : esc(quando(n.prox.quando))}</span>${av(n.resp)}
+    </div>`;
+  }
+  function jornada(n){
+    const cli = n.cli ? CLIS().find(c => c.id === n.cli) : null;
+    const E = S.ensaio || {};
+    const kick = [...(E.tarefas || []), ...(E.feitas || [])].find(t => t && t.crmNeg === n.id);
+    const kickFeito = !!(kick && (E.feitas || []).some(t => t.id === kick.id));
+    const pauta = cli ? ((S.pautas || {})[cli.id] || []).filter(p => p && !p.fora) : [];
+    const idx = p => { try{ return faseIdx(p); }catch(e){ return 0; } };
+    const iOk = FASES.findIndex(([k]) => k === 'texto_ok');
+    const aprov = pauta.filter(p => idx(p) >= iOk);
+    const noar = pauta.filter(p => { try{ return faseDe(p) === 'postado'; }catch(e){ return false; } });
+    return [
+      { k: 'ganho', n: 'Ganho', ok: true, d: n.ganhoEm ? rotuloData(new Date(n.ganhoEm).toISOString().slice(0, 10)) : '' },
+      { k: 'cliente', n: 'Cliente', ok: !!cli, d: cli ? cli.nome : 'criar' },
+      { k: 'kickoff', n: 'Kickoff', ok: kickFeito, d: kick ? (kickFeito ? 'feito' : 'no Ensaio') : '—' },
+      { k: 'pauta', n: 'Pauta', ok: pauta.length > 0, d: pauta.length ? `${pauta.length} ${pauta.length === 1 ? 'card' : 'cards'}` : '—' },
+      { k: 'aprov', n: '1ª aprovação', ok: aprov.length > 0, d: aprov.length ? `${aprov.length} aprovad${aprov.length === 1 ? 'o' : 'os'}` : '—' },
+      { k: 'noar', n: 'No ar', ok: noar.length > 0, d: noar.length ? `${noar.length} no ar` : '—' },
+    ];
+  }
+  function trilha(n){
+    const j = jornada(n); const atual = j.findIndex(p => !p.ok);
+    return `<ol class="crmTrilha">${j.map((p, i) => `<li class="${p.ok ? 'ok' : i === atual ? 'agora' : ''}"><i></i><b>${esc(p.n)}</b><span>${esc(p.d)}</span></li>`).join('')}</ol>`;
+  }
+  function tela(){
+    const vista = S.crmVista || (innerWidth <= 860 ? 'acoes' : 'funil');
+    const ab = abertos(), vv = vivos();
+    const mes = hoje().slice(0, 7);
+    const ganhosMes = vv.filter(n => n.etapa === 'ganho' && n.ganhoEm && new Date(n.ganhoEm).toISOString().slice(0, 7) === mes);
+    const parados = ab.filter(n => ['atrasada', 'sem'].includes(estadoProx(n))).length;
+    const emJogo = ab.reduce((s, n) => s + valorDe(n), 0);
+    const resumo = `<div class="crmResumo"><span><b>${ab.length}</b> em aberto</span>
+      ${podeValor() && emJogo ? `<span><b>${reais(emJogo)}</b>/mês em jogo</span>` : ''}
+      ${parados ? `<span class="alerta"><b>${parados}</b> sem ação em dia</span>` : ''}
+      <span><b>${ganhosMes.length}</b> ${ganhosMes.length === 1 ? 'ganho' : 'ganhos'} no mês${podeValor() && ganhosMes.length ? ' · ' + reais(ganhosMes.reduce((s, n) => s + valorDe(n), 0)) + '/mês' : ''}</span></div>`;
+    const abas = [['acoes', 'Próximas ações'], ['funil', 'Funil'], ['ganhos', 'Ganhos'], ['perdidos', 'Perdidos']];
+    let corpo = '';
+    if(!vv.length) corpo = `<div class="crmVazio"><b>Comece pela lista de quem a agência quer atender.</b>
+      <span>Cada negócio anda com uma próxima ação e uma data — é ela que impede que a conversa esfrie.</span>
+      <button type="button" class="b pri" data-crmnovo="1">${ic('pencil', 14)} Novo negócio</button></div>`;
+    else if(vista === 'acoes'){
+      const g = grupos();
+      corpo = g.length ? g.map(([k, t, l]) => `<section class="crmGrupo ${k}"><h3>${esc(t)}<span>${l.length}</span></h3>${l.map(linhaAcao).join('')}</section>`).join('')
+        : `<div class="crmVazio"><b>Nenhuma ação pendente.</b><span>Tudo em dia.</span></div>`;
+    } else if(vista === 'funil'){
+      corpo = `<div class="crmFunil">${ETAPAS.map(([k, nome, sub, cor]) => {
+        const l = ab.filter(n => n.etapa === k).filter(n => !S.crmSoMeus || !eu() || n.resp === eu())
+          .sort((a, b) => String((a.prox || {}).quando || '9').localeCompare(String((b.prox || {}).quando || '9')));
+        const soma = l.reduce((s, n) => s + valorDe(n), 0);
+        return `<div class="crmCol" data-crmetapa="${k}"><div class="crmColHd"><i style="background:${cor}"></i><b>${esc(nome)}</b><span>${l.length}</span></div>
+          <small>${podeValor() && soma ? reais(soma) + '/mês' : esc(sub)}</small>
+          <div class="crmColCorpo">${l.map(cartao).join('') || '<div class="crmColVazia">—</div>'}</div></div>`;
+      }).join('')}</div>`;
+    } else if(vista === 'ganhos'){
+      const l = vv.filter(n => n.etapa === 'ganho').sort((a, b) => (b.ganhoEm || 0) - (a.ganhoEm || 0));
+      corpo = l.length ? l.map(n => `<div class="crmGanho" data-crmabre="${esc(n.id)}" role="button" tabindex="0">
+          <div class="crmGanhoTopo"><b>${esc(n.empresa)}</b>${podeValor() && n.fee ? `<span class="crmVal">${reais(n.fee)}<small>/mês</small></span>` : ''}</div>
+          ${trilha(n)}</div>`).join('')
+        : `<div class="crmVazio"><b>Nenhum negócio ganho ainda.</b><span>Quando ganhar, o cliente nasce daqui e a jornada até o primeiro post aparece nesta lista.</span></div>`;
+    } else {
+      const l = vv.filter(n => n.etapa === 'perdido').sort((a, b) => (b.perdidoEm || 0) - (a.perdidoEm || 0));
+      corpo = l.length ? l.map(n => `<div class="crmPerdido" data-crmabre="${esc(n.id)}" role="button" tabindex="0">
+          <span class="t"><b>${esc(n.empresa)}</b><span>${esc(n.motivo || 'sem motivo')}${n.prox && n.prox.quando ? ' · reabordar ' + esc(quando(n.prox.quando)) : ''}</span></span>
+          <button type="button" class="b gho sm" data-crmreabre="${esc(n.id)}">Reabrir</button></div>`).join('')
+        : `<div class="crmVazio"><b>Nenhum negócio perdido.</b></div>`;
+    }
+    return `<div class="crmTela">
+      <div class="mtop"><div><h1>Negócios</h1>${vv.length ? resumo : ''}</div>
+        <div><button type="button" class="b pri" data-crmnovo="1">${ic('pencil', 14)} Novo negócio</button></div></div>
+      ${vv.length ? `<div class="crmBarra"><div class="crmAbas" role="tablist">${abas.map(([k, t]) =>
+        `<button type="button" role="tab" class="${vista === k ? 'on' : ''}" aria-selected="${vista === k}" data-crmvista="${k}">${esc(t)}${k === 'acoes' && parados ? `<em>${parados}</em>` : ''}</button>`).join('')}</div>
+        ${eu() ? `<button type="button" class="crmMeus ${S.crmSoMeus ? 'on' : ''}" data-crmmeus="1">Só os meus</button>` : ''}</div>` : ''}
+      ${corpo}</div>`;
+  }
+  function linkWhats(t){ let d = String(t || '').replace(/\D/g, ''); if(!d) return '';
+    if(d.length <= 11) d = '55' + d; return 'https://wa.me/' + d; }
+  function linkInsta(t){ const h = String(t || '').trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/.*$/, '');
+    return /^[\w.]{1,30}$/.test(h) ? 'https://instagram.com/' + h : ''; }
+  function contatoHtml(n, c){
+    const w = linkWhats(c.wa), i = linkInsta(c.insta);
+    return `<div class="crmContato"><span class="t"><b>${esc(c.nome || 'Contato')}</b><span>${esc(c.cargo || '')}</span></span>
+      <span class="crmLinks">${w ? `<a href="${hrefSeguro(w)}" target="_blank" rel="noopener" data-crmwhats="${esc(n.id)}">WhatsApp</a>` : ''}
+      ${c.email ? `<a href="${hrefSeguro('mailto:' + c.email)}">E-mail</a>` : ''}
+      ${i ? `<a href="${hrefSeguro(i)}" target="_blank" rel="noopener">Instagram</a>` : ''}</span>
+      <button type="button" class="crmX" data-crmctdel="${esc(n.id)}|${esc(c.id)}" aria-label="Tirar contato">×</button></div>`;
+  }
+  function selTipo(id, sel){ return `<select id="${id}">${TIPOS.map(([k, t]) => `<option value="${k}" ${sel === k ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>`; }
+  function atalhosData(alvo){ return `<span class="crmDias">${[['Amanhã', 1], ['+3 dias', 3], ['+1 semana', 7], ['+2 semanas', 14]].map(([t, k]) =>
+      `<button type="button" data-crmdia="${alvo}|${k}">${t}</button>`).join('')}</span>`; }
+  function ficha(id){
+    const n = achar(id); if(!n) return '';
+    const aberto = ABERTAS.includes(n.etapa);
+    const feito = S.crmFeito === n.id;
+    S.crmFeito = null;
+    const px = n.prox || {};
+    const eP = estadoProx(n);
+    const valores = podeValor() && (n.fee || n.setup)
+      ? `<span class="crmVal">${n.fee ? reais(n.fee) + '<small>/mês</small>' : ''}${n.setup ? ` <small>+ setup ${reais(n.setup)}</small>` : ''}</span>` : '';
+    const etapas = aberto ? `<div class="crmEtapas" role="group" aria-label="Etapa">${ETAPAS.map(([k, t]) =>
+        `<button type="button" class="${n.etapa === k ? 'on' : ''}" data-crmetapa2="${esc(n.id)}|${k}">${esc(t)}</button>`).join('')}</div>`
+      : `<div class="crmSelo ${n.etapa}">${n.etapa === 'ganho' ? 'Ganho' : 'Perdido' + (n.motivo ? ' · ' + esc(n.motivo) : '')}</div>`;
+    const proxBloco = (aberto || n.etapa === 'perdido') ? `<div class="crmProx ${eP}">
+        <span class="rot">Próxima ação</span>
+        ${eP === 'sem' ? '<b>Nenhuma — defina abaixo o próximo passo.</b>'
+          : `<b>${esc((NOME_TIPO[px.tipo] || 'Ação') + ' · ' + px.txt)}</b><span>${esc(quando(px.quando))} · ${esc(rotuloData(px.quando))}${px.quem && membro(px.quem) ? ' · ' + esc(membro(px.quem).n.split(' ')[0]) : ''}</span>`}</div>` : '';
+    const registrar = (aberto || n.etapa === 'perdido') ? `<div class="crmRegistra">
+        <div class="crmTipos" role="group" aria-label="O que aconteceu">${TIPOS.map(([k, t]) =>
+          `<button type="button" class="${(feito ? (px.tipo || 'whats') : 'whats') === k ? 'on' : ''}" data-crmtipo="${k}">${esc(t)}</button>`).join('')}</div>
+        <textarea id="crm-txt" rows="2" placeholder="O que aconteceu? Ex.: conversei com a Ana, pediu a proposta por e-mail">${feito && px.txt ? esc('Feito: ' + px.txt) : ''}</textarea>
+        <div class="crmProxForm"><span class="rot">E o próximo passo?</span>
+          <div class="crmLinha">${selTipo('crm-ptipo', 'whats')}<input id="crm-ptxt" placeholder="Ex.: mandar a proposta"></div>
+          <div class="crmLinha"><input id="crm-pdata" type="date" value="${somaDias(hoje(), n.etapa === 'proposta' ? 3 : 2)}">${atalhosData('crm-pdata')}</div></div>
+        <p class="erro" id="crm-erro" role="alert"></p>
+        <button type="button" class="b pri" data-crmregistra="${esc(n.id)}">Registrar</button></div>` : '';
+    const contatos = (n.contatos || []).filter(c => c && !c.fora);
+    const hist = (n.ativs || []).slice().sort((a, b) => (b.em || 0) - (a.em || 0));
+    return `<div class="modal"><div class="modalbox wide crmFicha" data-crmjanela="ficha|${esc(n.id)}" role="dialog" aria-modal="true" aria-label="${esc(n.empresa)}">
+      <h3>${esc(n.empresa)}</h3>
+      <div class="crmFichaSub"><span>${esc([n.seg, n.origem, (n.servicos || []).join(', ')].filter(Boolean).join(' · '))}</span>${valores}
+        <button type="button" class="b gho sm" data-crmeditar="${esc(n.id)}">${ic('pencil', 13)} Editar</button></div>
+      ${etapas}
+      ${n.etapa === 'ganho' ? trilha(n) + (n.cli ? `<div class="crmLinha"><button type="button" class="b gho sm" data-crmcli="${esc(n.cli)}">Abrir o cliente</button>
+        <button type="button" class="b gho sm" data-crmensaio="1">Abrir o Ensaio</button></div>` : '') : ''}
+      ${proxBloco}${registrar}
+      <div class="crmSec"><div class="crmSecHd"><b>Contatos</b><button type="button" class="crmMais" data-crmctnovo="${esc(n.id)}">+ contato</button></div>
+        ${contatos.map(c => contatoHtml(n, c)).join('') || '<p class="crmNada">Nenhum contato ainda.</p>'}
+        <div class="crmCtForm" id="crm-ctform" hidden>
+          <div class="crmLinha"><input id="crm-ctnome" placeholder="Nome"><input id="crm-ctcargo" placeholder="Cargo"></div>
+          <div class="crmLinha"><input id="crm-ctwa" inputmode="tel" placeholder="WhatsApp"><input id="crm-ctmail" type="email" placeholder="E-mail"><input id="crm-ctinsta" placeholder="@instagram"></div>
+          <button type="button" class="b gho sm" data-crmctadd="${esc(n.id)}">Guardar contato</button></div></div>
+      ${n.notas ? `<div class="crmSec"><div class="crmSecHd"><b>Notas</b></div><p class="crmNotas">${esc(n.notas)}</p></div>` : ''}
+      <div class="crmSec"><div class="crmSecHd"><b>Histórico</b></div>
+        <ol class="crmHist">${hist.map(a => `<li class="${esc(a.tipo)}"><b>${esc(NOME_TIPO[a.tipo] || a.tipo)}</b><span>${esc(a.txt)}</span>
+          <small>${esc(new Date(a.em).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }))}${a.por && membro(a.por) ? ' · ' + esc(membro(a.por).n.split(' ')[0]) : ''}</small></li>`).join('') || '<li class="nada">Nada registrado.</li>'}</ol></div>
+      <div class="modalrow"><button type="button" class="b gho" data-modalno="1">Fechar</button>
+        ${aberto ? `<button type="button" class="b gho" data-crmperdeu="${esc(n.id)}">Perdeu</button><button type="button" class="b pri" data-crmganhou="${esc(n.id)}">Ganhou</button>`
+          : n.etapa === 'perdido' ? `<button type="button" class="b pri" data-crmreabre="${esc(n.id)}">Reabrir</button>` : ''}</div>
+    </div></div>`;
+  }
+  function formNegocio(id){
+    const n = id ? achar(id) : null;
+    const v = k => esc((n && n[k]) || '');
+    const resp = (n && n.resp) || eu() || '';
+    const cliOpc = CLIS().map(c => `<option value="${esc(c.id)}" ${n && n.cli === c.id ? 'selected' : ''}>${esc(c.nome)}</option>`).join('');
+    return `<div class="modal"><div class="modalbox wide crmForm" data-crmjanela="form|${n ? esc(n.id) : 'novo'}" role="dialog" aria-modal="true" aria-label="${n ? 'Editar negócio' : 'Novo negócio'}">
+      <h3>${n ? 'Editar negócio' : 'Novo negócio'}</h3>
+      <div class="frow"><div class="fld"><label for="crm-emp">Empresa ou marca</label><input id="crm-emp" value="${v('empresa')}" placeholder="Ex.: Loja Norte"></div>
+        <div class="fld"><label for="crm-seg">Segmento</label><input id="crm-seg" value="${v('seg')}" placeholder="Ex.: moda feminina"></div></div>
+      ${n ? '' : `<div class="frow"><div class="fld"><label for="crm-cnome">Contato</label><input id="crm-cnome" placeholder="Nome de quem decide"></div>
+        <div class="fld"><label for="crm-cwa">WhatsApp</label><input id="crm-cwa" inputmode="tel" placeholder="(11) 99999-0000"></div>
+        <div class="fld"><label for="crm-cinsta">Instagram</label><input id="crm-cinsta" placeholder="@marca"></div></div>`}
+      <div class="frow"><div class="fld"><label for="crm-origem">De onde veio</label><select id="crm-origem">${ORIGENS.map(o => `<option ${n && n.origem === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></div>
+        <div class="fld"><label for="crm-resp">Quem conduz</label><select id="crm-resp">${(S.equipe || []).map(m => `<option value="${esc(membroId(m))}" ${membroId(m) === resp ? 'selected' : ''}>${esc(m.n)}</option>`).join('')}</select></div>
+        <div class="fld"><label for="crm-cli">É de um cliente atual?</label><select id="crm-cli"><option value="">Não — cliente novo</option>${cliOpc}</select></div></div>
+      <div class="fld"><label>Serviços</label><div class="crmServ">${SERVICOS.map(s => `<button type="button" class="${n && (n.servicos || []).includes(s) ? 'on' : ''}" data-crmserv="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>
+      ${podeValor() ? `<div class="frow"><div class="fld"><label for="crm-fee">Fee mensal (R$)</label><input id="crm-fee" inputmode="decimal" value="${n && n.fee ? n.fee : ''}" placeholder="3.500"></div>
+        <div class="fld"><label for="crm-setup">Setup (R$)</label><input id="crm-setup" inputmode="decimal" value="${n && n.setup ? n.setup : ''}" placeholder="opcional"></div></div>` : ''}
+      ${n ? '' : `<div class="fld"><label for="crm-ptxt0">Primeira ação</label><div class="crmLinha">${selTipo('crm-ptipo0', 'whats')}<input id="crm-ptxt0" value="Primeiro contato"></div>
+        <div class="crmLinha"><input id="crm-pdata0" type="date" value="${somaDias(hoje(), 1)}">${atalhosData('crm-pdata0')}</div></div>`}
+      <div class="fld"><label for="crm-notas">Notas</label><textarea id="crm-notas" rows="2" placeholder="Contexto: quem indicou, o que dói, o que já tentaram">${v('notas')}</textarea></div>
+      <p class="erro" id="crm-ferro" role="alert"></p>
+      <div class="modalrow">${n ? `<button type="button" class="b gho" data-crmexcluir="${esc(n.id)}">Excluir</button>` : ''}
+        <button type="button" class="b gho" data-modalno="1">Cancelar</button>
+        <button type="button" class="b pri" data-crmsalva="${n ? esc(n.id) : ''}">${n ? 'Salvar' : 'Criar negócio'}</button></div>
+    </div></div>`;
+  }
+  const val = id => { const e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; };
+  function salvarForm(id){
+    const empresa = val('crm-emp'); const erro = document.getElementById('crm-ferro');
+    if(empresa.length < 2){ if(erro) erro.textContent = 'Diga o nome da empresa ou da marca.'; document.getElementById('crm-emp')?.focus(); return; }
+    const servicos = [...document.querySelectorAll('[data-crmserv].on')].map(b => b.dataset.crmserv);
+    const base = { empresa, seg: val('crm-seg'), origem: val('crm-origem'), resp: val('crm-resp') || eu(), cli: val('crm-cli') || null,
+      servicos, notas: val('crm-notas') };
+    if(document.getElementById('crm-fee')){ base.fee = num(val('crm-fee')); base.setup = num(val('crm-setup')); }
+    let n;
+    if(id){ n = achar(id); if(!n) return; Object.assign(n, base); anotar(n, 'nota', 'Dados editados'); }
+    else {
+      n = Object.assign({ id: novoId('n'), etapa: 'prospect', criado: Date.now(), contatos: [], ativs: [] }, base);
+      const cn = val('crm-cnome'), cw = val('crm-cwa'), ci = val('crm-cinsta');
+      if(cn || cw || ci) n.contatos.push({ id: novoId('c'), nome: cn, wa: cw, insta: ci });
+      const pt = val('crm-ptxt0'), pd = val('crm-pdata0');
+      if(pt && pd) n.prox = { id: novoId('p'), tipo: val('crm-ptipo0') || 'whats', txt: pt, quando: pd, quem: n.resp };
+      anotar(n, 'nota', 'Negócio criado' + (n.origem ? ' · ' + n.origem : ''));
+      crm().negocios.push(n);
+    }
+    mexeu(n);
+    if(typeof som === 'function') som('toque');
+    abrirModal(ficha(n.id)); render();
+    toast(id ? 'Negócio atualizado.' : `${empresa} entrou no funil.`);
+  }
+  function moverEtapa(id, etapa){
+    const n = achar(id); if(!n || !ABERTAS.includes(etapa) || n.etapa === etapa) return;
+    const de = NOME_ETAPA[n.etapa] || n.etapa;
+    n.etapa = etapa; n.etapaEm = Date.now();
+    anotar(n, 'etapa', `${de} → ${NOME_ETAPA[etapa]}`);
+    if(etapa === 'proposta' && (estadoProx(n) === 'sem' || estadoProx(n) === 'atrasada')){
+      n.prox = { id: novoId('p'), tipo: 'whats', txt: 'Follow-up da proposta', quando: somaDias(hoje(), 3), quem: n.resp };
+      toast('Proposta: follow-up marcado para daqui a 3 dias.');
+    }
+    mexeu(n);
+    if(typeof som === 'function') som('toque');
+  }
+  function registrar(id){
+    const n = achar(id); if(!n) return;
+    const erro = document.getElementById('crm-erro');
+    const tipo = (document.querySelector('.crmTipos .on') || {}).dataset?.crmtipo || 'nota';
+    const txt = val('crm-txt'), ptxt = val('crm-ptxt'), pdata = val('crm-pdata');
+    if(!txt && !ptxt){ if(erro) erro.textContent = 'Escreva o que aconteceu ou o próximo passo.'; return; }
+    if(ABERTAS.includes(n.etapa) && (!ptxt || !pdata)){
+      if(erro) erro.textContent = 'Todo negócio aberto precisa de um próximo passo com data — é o que impede que ele esfrie.';
+      document.getElementById(ptxt ? 'crm-pdata' : 'crm-ptxt')?.focus(); return;
+    }
+    if(txt) anotar(n, tipo, txt);
+    if(ptxt && pdata) n.prox = { id: novoId('p'), tipo: val('crm-ptipo') || 'whats', txt: ptxt, quando: pdata, quem: n.resp };
+    mexeu(n);
+    if(typeof som === 'function') som('toque');
+    abrirModal(ficha(n.id)); render();
+    toast(ptxt ? `Registrado · próximo passo ${quando(pdata)}.` : 'Registrado.');
+  }
+  function kickoff(n){
+    if(!S.ensaio || !Array.isArray(S.ensaio.tarefas) || typeof novoIdTarefa !== 'function') return;
+    if([...S.ensaio.tarefas, ...(S.ensaio.feitas || [])].some(t => t && t.crmNeg === n.id)) return;
+    const ct = (n.contatos || []).find(c => c && !c.fora);
+    const desc = [`Veio de Negócios${n.origem ? ' · ' + n.origem : ''}.`,
+      (n.servicos || []).length ? 'Serviços: ' + n.servicos.join(', ') + '.' : '',
+      ct ? `Contato: ${ct.nome || ''}${ct.wa ? ' · ' + ct.wa : ''}${ct.email ? ' · ' + ct.email : ''}.` : '',
+      n.notas ? 'Notas: ' + n.notas : '',
+      'Marcar a reunião de kickoff, pegar o briefing e combinar o primeiro mês.'].filter(Boolean).join('\n');
+    S.ensaio.tarefas.push({ id: novoIdTarefa(), titulo: `Kickoff · ${n.empresa}`, cli: n.cli || null, resp: n.resp || eu(),
+      col: 'inbox', cat: 'acompanhamento', criada: Date.now(), prazo: somaDias(hoje(), 3), tempoMs: 0, desde: null, desc, crmNeg: n.id });
+  }
+  function ganhar(n){
+    n.etapa = 'ganho'; n.ganhoEm = Date.now(); n.prox = null;
+    anotar(n, 'ganho', n.cli ? 'Ganho — cliente ' + ((CLIS().find(c => c.id === n.cli) || {}).nome || '') : 'Ganho');
+    kickoff(n); mexeu(n);
+    if(typeof som === 'function') som('conclusao');
+  }
+  function abrirGanhou(id){
+    const n = achar(id); if(!n) return;
+    if(n.cli && CLIS().some(c => c.id === n.cli)){
+      ganhar(n); S.crmVista = 'ganhos'; abrirModal(ficha(n.id)); render();
+      toast(`Ganho — o kickoff de ${n.empresa} está no Ensaio.`); return;
+    }
+    S.modal = modalNovoCliente().replace('<div class="modalbox wide"', `<div class="modalbox wide" data-crmconv="${esc(n.id)}"`)
+      .replace('<h3>Novo cliente</h3>', `<h3>Novo cliente</h3><p class="crmConvAviso">${ic('checkc', 14)} Ganhou <b>${esc(n.empresa)}</b>. Confira o cadastro — o cliente nasce daqui, com o kickoff no Ensaio.</p>`);
+    renderLayer();
+    const put = (k, v) => { const e = document.getElementById(k); if(e && v) e.value = v; };
+    const ct = (n.contatos || []).find(c => c && !c.fora);
+    put('nc-nome', n.empresa); put('nc-seg', n.seg);
+    put('nc-brief', [n.notas, (n.servicos || []).length ? 'Serviços contratados: ' + n.servicos.join(', ') : '', ct ? 'Contato: ' + [ct.nome, ct.wa, ct.email].filter(Boolean).join(' · ') : ''].filter(Boolean).join('\n'));
+    put('nc-site', ct && ct.insta);
+  }
+  function perdeuForm(id){
+    const n = achar(id); if(!n) return;
+    abrirModal(`<div class="modal"><div class="modalbox crmForm" data-crmjanela="perde|${esc(n.id)}" role="dialog" aria-modal="true" aria-label="Negócio perdido">
+      <h3>Perdeu ${esc(n.empresa)}?</h3>
+      <div class="fld"><label>Por quê</label><div class="crmServ" data-um="1">${MOTIVOS.map(m => `<button type="button" data-crmmotivo="${esc(m)}">${esc(m)}</button>`).join('')}</div></div>
+      <div class="fld"><label for="crm-reab">Reabordar</label><select id="crm-reab"><option value="0">Não reabordar</option><option value="30">Em 1 mês</option>
+        <option value="90" selected>Em 3 meses</option><option value="180">Em 6 meses</option></select></div>
+      <div class="fld"><label for="crm-pnota">Nota (opcional)</label><textarea id="crm-pnota" rows="2"></textarea></div>
+      <p class="erro" id="crm-perro" role="alert"></p>
+      <div class="modalrow"><button type="button" class="b gho" data-crmabre="${esc(n.id)}">Voltar</button>
+        <button type="button" class="b pri" data-crmperdeuok="${esc(n.id)}">Marcar como perdido</button></div></div></div>`);
+  }
+  function perder(id){
+    const n = achar(id); if(!n) return;
+    const motivo = (document.querySelector('[data-crmmotivo].on') || {}).dataset?.crmmotivo;
+    if(!motivo){ const e = document.getElementById('crm-perro'); if(e) e.textContent = 'Escolha o motivo — é o que ensina o funil.'; return; }
+    const dias = +val('crm-reab') || 0, nota = val('crm-pnota');
+    n.etapa = 'perdido'; n.perdidoEm = Date.now(); n.motivo = motivo;
+    n.prox = dias ? { id: novoId('p'), tipo: 'whats', txt: 'Reabordar', quando: somaDias(hoje(), dias), quem: n.resp } : null;
+    anotar(n, 'perdido', motivo + (nota ? ' — ' + nota : '') + (dias ? ` · reabordar em ${dias} dias` : ''));
+    mexeu(n); S.modal = null; renderLayer(); render();
+    toast(dias ? `Perdido — volta para você ${quando(n.prox.quando)}.` : 'Perdido — fica no histórico.');
+  }
+  function reabrir(id){
+    const n = achar(id); if(!n) return;
+    n.etapa = 'contato'; n.etapaEm = Date.now();
+    n.prox = { id: novoId('p'), tipo: 'whats', txt: 'Retomar o contato', quando: hoje(), quem: n.resp };
+    anotar(n, 'etapa', 'Reaberto → Primeiro contato');
+    mexeu(n); abrirModal(ficha(n.id)); render();
+  }
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-crmnovo],[data-crmvista],[data-crmmeus],[data-crmfeito],[data-crmabre],[data-crmeditar],[data-crmsalva],[data-crmexcluir],' +
+      '[data-crmserv],[data-crmdia],[data-crmtipo],[data-crmregistra],[data-crmetapa2],[data-crmganhou],[data-crmperdeu],[data-crmperdeuok],[data-crmmotivo],' +
+      '[data-crmreabre],[data-crmctnovo],[data-crmctadd],[data-crmctdel],[data-crmcli],[data-crmensaio],[data-crmwhats]');
+    if(!t) return;
+    const d = t.dataset;
+    if(d.crmwhats){ const n = achar(d.crmwhats); if(n){ anotar(n, 'whats', 'Abriu o WhatsApp'); mexeu(n); } return; }
+    e.preventDefault(); e.stopImmediatePropagation();
+    if(d.crmnovo !== undefined){ abrirModal(formNegocio(null)); setTimeout(() => document.getElementById('crm-emp')?.focus(), 60); return; }
+    if(d.crmvista){ S.crmVista = d.crmvista; render(); return; }
+    if(d.crmmeus){ S.crmSoMeus = !S.crmSoMeus; render(); return; }
+    if(d.crmfeito){ S.crmFeito = d.crmfeito; abrirModal(ficha(d.crmfeito)); setTimeout(() => document.getElementById('crm-ptxt')?.focus(), 80); return; }
+    if(d.crmeditar){ abrirModal(formNegocio(d.crmeditar)); return; }
+    if(d.crmsalva !== undefined){ salvarForm(d.crmsalva || null); return; }
+    if(d.crmexcluir){ const n = achar(d.crmexcluir); if(n){ n.fora = true; mexeu(n); S.modal = null; renderLayer(); render(); toast(`${n.empresa} saiu do funil.`); } return; }
+    if(d.crmserv){ if(t.parentElement.dataset.um) t.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('on')); t.classList.toggle('on'); return; }
+    if(d.crmmotivo){ t.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === t)); return; }
+    if(d.crmdia){ const [alvo, k] = d.crmdia.split('|'); const el = document.getElementById(alvo); if(el) el.value = somaDias(hoje(), +k); return; }
+    if(d.crmtipo){ t.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === t)); return; }
+    if(d.crmregistra){ registrar(d.crmregistra); return; }
+    if(d.crmetapa2){ const [id, et] = d.crmetapa2.split('|'); moverEtapa(id, et); abrirModal(ficha(id)); render(); return; }
+    if(d.crmganhou){ abrirGanhou(d.crmganhou); return; }
+    if(d.crmperdeu){ perdeuForm(d.crmperdeu); return; }
+    if(d.crmperdeuok){ perder(d.crmperdeuok); return; }
+    if(d.crmreabre){ reabrir(d.crmreabre); return; }
+    if(d.crmctnovo){ const f = document.getElementById('crm-ctform'); if(f){ f.hidden = !f.hidden; if(!f.hidden) document.getElementById('crm-ctnome')?.focus(); } return; }
+    if(d.crmctadd){ const n = achar(d.crmctadd); if(!n) return;
+      const c = { id: novoId('c'), nome: val('crm-ctnome'), cargo: val('crm-ctcargo'), wa: val('crm-ctwa'), email: val('crm-ctmail'), insta: val('crm-ctinsta') };
+      if(!c.nome && !c.wa && !c.email) return;
+      n.contatos = Array.isArray(n.contatos) ? n.contatos : []; n.contatos.push(c); mexeu(n);
+      abrirModal(ficha(n.id)); render(); return; }
+    if(d.crmctdel){ const [id, cid] = d.crmctdel.split('|'); const n = achar(id); const c = n && (n.contatos || []).find(x => x.id === cid);
+      if(c){ c.fora = true; mexeu(n); abrirModal(ficha(n.id)); render(); } return; }
+    if(d.crmcli){ S.modal = null; renderLayer(); go('agency', 'clientedet', { cli: d.crmcli, tab: 'pauta' }); return; }
+    if(d.crmensaio){ S.modal = null; renderLayer(); go('agency', 'producao'); return; }
+    if(d.crmabre){ abrirModal(ficha(d.crmabre)); return; }
+  }, true);
+  addEventListener('keydown', e => {
+    if(e.key !== 'Enter') return;
+    const r = e.target && e.target.closest && e.target.closest('.crmAcao[data-crmabre], .crmGanho[data-crmabre], .crmPerdido[data-crmabre]');
+    if(r && e.target === r){ e.preventDefault(); abrirModal(ficha(r.dataset.crmabre)); }
+  });
+  addEventListener('dragstart', e => { const c = e.target.closest && e.target.closest('.crmCard[data-crmabre]');
+    if(c){ e.dataTransfer.setData('text/plain', c.dataset.crmabre); e.dataTransfer.effectAllowed = 'move'; c.classList.add('arrastando'); } });
+  addEventListener('dragend', e => { document.querySelectorAll('.crmCard.arrastando, .crmCol.sobre').forEach(x => x.classList.remove('arrastando', 'sobre')); });
+  addEventListener('dragover', e => { const col = e.target.closest && e.target.closest('.crmCol[data-crmetapa]');
+    if(col){ e.preventDefault(); document.querySelectorAll('.crmCol.sobre').forEach(x => x !== col && x.classList.remove('sobre')); col.classList.add('sobre'); } });
+  addEventListener('drop', e => { const col = e.target.closest && e.target.closest('.crmCol[data-crmetapa]'); if(!col) return;
+    e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); moverEtapa(id, col.dataset.crmetapa); render(); });
+  let _conv = null;
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-createclient], [data-modalno]');
+    if(!t) return;
+    const box = document.querySelector('.modalbox[data-crmconv]');
+    if(!box) return;
+    if(t.dataset.modalno !== undefined){ _conv = null; return; }
+    _conv = { id: box.dataset.crmconv, antes: (S.novos || []).length };
+    setTimeout(() => {
+      const c = _conv; _conv = null;
+      if(!c || (S.novos || []).length <= c.antes) return;
+      const n = achar(c.id); const novo = S.novos[S.novos.length - 1];
+      if(!n || !novo) return;
+      n.cli = novo.cid; ganhar(n);
+      S.crmVista = 'ganhos';
+      go('agency', 'crm');
+      abrirModal(ficha(n.id));
+      toast(`Ganho — ${n.empresa} virou cliente, com o kickoff no Ensaio.`);
+    }, 80);
+  }, true);
+  agDash = (function(orig){
+    return function(){
+      if(S.route === 'crm') return agShell(tela());
+      return orig.apply(this, arguments);
+    };
+  })(agDash);
+  if(typeof URL_AG === 'object' && URL_AG) URL_AG.crm = 'negocios';
+  if(/^\/negocios(\/|$)/.test(location.pathname) && S.view !== 'client'){ S.view = 'agency'; S.route = 'crm'; }
+  if(Array.isArray(AGNAV) && !AGNAV.some(x => x.r === 'crm')){
+    const i = AGNAV.findIndex(x => x.r === 'clientes');
+    const item = { r: 'crm', n: 'Negócios', icn: 'alvo', bd: () => abertos().filter(n => estadoProx(n) === 'atrasada' && (!eu() || n.resp === eu())).length };
+    if(i >= 0) AGNAV.splice(i, 0, item); else AGNAV.push(item);
+  }
+  try{
+    const g = MENU_AG.find(x => x.g === 'Operação') || MENU_AG[0];
+    if(g && !g.it.some(([r]) => r === 'crm')) g.it.unshift(['crm', 'Negócios', 'alvo']);
+  }catch(e){}
+  function blocoHoje(){
+    const l = comAcao().filter(n => ['atrasada', 'hoje'].includes(estadoProx(n)))
+      .filter(n => !eu() || !n.resp || n.resp === eu())
+      .sort((a, b) => String(a.prox.quando).localeCompare(String(b.prox.quando)));
+    if(!l.length) return '';
+    return `<section class="crmHoje"><div class="crmHojeHd"><b>${ic('alvo', 15)} Negócios</b><span>${l.length} ${l.length === 1 ? 'ação para hoje' : 'ações para hoje'}</span>
+      <button type="button" class="crmMais" data-r="crm">Ver todas</button></div>${l.slice(0, 4).map(linhaAcao).join('')}</section>`;
+  }
+  render = (function(orig){
+    return function(){
+      const r = orig.apply(this, arguments);
+      try{
+        if(S.view === 'agency' && S.route === 'dash' && !document.querySelector('.crmHoje')){
+          const ancora = document.querySelector('.hjResumo');
+          const h = blocoHoje();
+          if(ancora && h) ancora.insertAdjacentHTML('afterend', h);
+        }
+        document.body.classList.toggle('emCrm', S.view === 'agency' && S.route === 'crm');
+      }catch(e){}
+      return r;
+    };
+  })(render);
+  window.MaestroCRM = { crm, vivos, abertos, achar, estadoProx, jornada, moverEtapa, ganhar, somaDias };
+})();
+</script>
+<style id="v253-deslizar">
+.dzEntrada{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; margin:4px 0 18px; padding:14px 16px;
+border-radius:18px; border:0; background:linear-gradient(135deg, rgba(200,150,58,.22), rgba(200,150,58,.08)); color:var(--tx) }
+.dzEntrada .t{ flex:1; display:grid; gap:2px } .dzEntrada .t b{ font-size:15.5px } .dzEntrada .t span{ font-size:13px; color:var(--mut) }
+.dzEntradaIc{ width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:#C8963A; color:#000; font-size:19px; flex:0 0 auto }
+body.v253dzAberto{ overflow:hidden }
+#v253dz{ position:fixed; inset:0; z-index:960; display:flex; flex-direction:column; background:#0B0B0C; color:#F5F5F7;
+padding:calc(10px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom)); animation:v249fundo .2s ease both; touch-action:none }
+.dzTopo{ display:flex; align-items:center; gap:12px; max-width:460px; width:100%; margin:0 auto }
+.dzTopo span{ font-size:13px; color:#A1A1A6; font-variant-numeric:tabular-nums }
+.dzX{ width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.1); color:#F5F5F7; font-size:20px; line-height:1; flex:0 0 auto }
+.dzProg{ flex:1; height:4px; border-radius:2px; background:rgba(255,255,255,.12); overflow:hidden }
+.dzProg i{ display:block; height:100%; background:#C8963A; transition:width .3s }
+.dzPalco{ flex:1; display:grid; place-items:center; min-height:0; padding:14px 0 10px }
+.dzCartao{ position:relative; width:100%; max-width:430px; max-height:100%; display:flex; flex-direction:column; border-radius:26px; overflow:hidden;
+background:#1C1C1E; box-shadow:0 30px 80px rgba(0,0,0,.55); user-select:none; -webkit-user-select:none; cursor:grab; will-change:transform }
+.dzCartao:active{ cursor:grabbing }
+.dzMidia{ position:relative; flex:1 1 auto; min-height:0; aspect-ratio:4/5; max-height:62vh; background:#000 }
+.dzMidia img, .dzMidia video{ width:100%; height:100%; object-fit:cover; display:block; pointer-events:none }
+.dzPontos{ position:absolute; top:10px; left:12px; right:12px; display:flex; gap:4px }
+.dzPontos i{ flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.35) } .dzPontos i.on{ background:#fff }
+.dzAntes, .dzDepois{ position:absolute; top:0; bottom:0; width:30%; background:none; border:0 }
+.dzAntes{ left:0 } .dzDepois{ right:0 }
+.dzTexto{ flex:1 1 auto; padding:26px 22px; overflow:auto; max-height:62vh; background:linear-gradient(160deg, #2A2A2E, #1C1C1E) }
+.dzTexto .rot{ font-size:12px; font-weight:650; color:#C8963A } .dzTexto p{ margin:10px 0 0; font-size:17px; line-height:1.55; white-space:pre-wrap; color:#F5F5F7 }
+.dzInfo{ padding:14px 18px 16px; display:grid; gap:4px }
+.dzInfo b{ font-size:17px; font-weight:650; letter-spacing:-.01em } .dzInfo > span{ font-size:12.5px; color:#A1A1A6 }
+.dzLeg{ margin:6px 0 0; font-size:14px; line-height:1.45; color:#D1D1D6; white-space:pre-wrap; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+.dzInfo.aberto .dzLeg{ -webkit-line-clamp:unset; max-height:34vh; overflow:auto }
+.dzLer{ justify-self:start; padding:0; border:0; background:none; color:#C8963A; font-size:13px; font-weight:600 }
+.dzSelo{ position:absolute; top:24px; z-index:3; padding:6px 14px; border-radius:10px; border:3px solid; font-size:22px; font-weight:800; letter-spacing:.04em;
+text-transform:uppercase; opacity:0; pointer-events:none; background:rgba(0,0,0,.25) }
+.dzSelo.ok{ left:20px; color:#30D158; border-color:#30D158; transform:rotate(-12deg) }
+.dzSelo.ajuste{ right:20px; color:#FF9F0A; border-color:#FF9F0A; transform:rotate(12deg) }
+.dzSelo.amei{ left:50%; top:auto; bottom:40%; transform:translateX(-50%); color:#FFD60A; border-color:#FFD60A }
+.dzBts{ display:flex; justify-content:center; align-items:center; gap:22px; padding:4px 0 2px }
+.dzB{ width:64px; height:64px; border-radius:50%; display:grid; place-items:center; background:#1C1C1E; box-shadow:0 8px 24px rgba(0,0,0,.4);
+font-size:28px; transition:transform .14s ease }
+.dzB:active{ transform:scale(.9) }
+.dzB.ajuste{ color:#FF9F0A } .dzB.ok{ color:#30D158; font-size:30px } .dzB.amei{ width:52px; height:52px; color:#FFD60A; font-size:24px }
+.dzDica{ margin:8px 0 0; text-align:center; font-size:12px; color:#6E6E73 }
+.dzDesfaz{ position:fixed; left:0; right:0; margin:0 auto; width:max-content; bottom:calc(120px + env(safe-area-inset-bottom)); display:flex; align-items:center; gap:14px;
+padding:10px 12px 10px 16px; border-radius:999px; background:rgba(44,44,46,.96); box-shadow:0 10px 30px rgba(0,0,0,.4); font-size:13.5px; white-space:nowrap; max-width:92vw; animation:v249janela .2s ease both }
+.dzDesfaz span{ overflow:hidden; text-overflow:ellipsis }
+.dzDesfaz button{ border:0; background:none; color:#C8963A; font-weight:700; font-size:13.5px }
+.dzFolha{ position:fixed; left:0; right:0; bottom:0; z-index:2; display:grid; gap:12px; padding:20px 18px calc(18px + env(safe-area-inset-bottom));
+border-radius:24px 24px 0 0; background:#1C1C1E; box-shadow:0 -20px 60px rgba(0,0,0,.5); animation:v249folha .3s cubic-bezier(.2,.8,.2,1) both;
+max-width:560px; margin:0 auto }
+.dzFolha b{ font-size:16.5px } .dzFolha.amei b{ color:#FFD60A }
+.dzFolha textarea{ width:100%; padding:12px; border-radius:14px; border:0; background:#2C2C2E; color:#F5F5F7; font:inherit; font-size:16px; resize:none }
+.dzTelas{ display:flex; flex-wrap:wrap; gap:6px }
+.dzTelas button{ padding:7px 13px; border-radius:999px; border:0; background:#2C2C2E; color:#E5E5EA; font-size:13.5px; font-weight:550 }
+.dzTelas button.on{ background:#F5F5F7; color:#000 }
+.dzFolhaBts{ display:grid; grid-template-columns:1fr 1.4fr; gap:8px } .dzFolhaBts .clbtn{ margin:0 !important }
+.dzFim{ display:grid; justify-items:center; gap:8px; text-align:center; max-width:360px }
+.dzFimIc{ width:74px; height:74px; border-radius:50%; display:grid; place-items:center; background:rgba(48,209,88,.16); color:#30D158; margin-bottom:6px }
+.dzFim h2{ margin:0; font-size:28px; font-weight:700; letter-spacing:-.02em } .dzFim p{ margin:0; color:#D1D1D6 } .dzFim .dzFimSub{ color:#8E8E93; font-size:13.5px; margin-bottom:10px }
+.dzFim .clbtn{ width:100% }
+.dzElogio{ display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px; background:rgba(255,214,10,.14); color:#FFD60A; font-size:11px; font-weight:650 }
+@media(max-height:700px){ .dzMidia{ max-height:50vh } .dzB{ width:56px; height:56px } }
+@media(min-width:861px){ .dzFolha{ bottom:24px; border-radius:24px } }
+</style>
+<script data-camada="v253-deslizar">
+(function(){
+  if(typeof decidirCard !== 'function' || typeof cardsComCliente !== 'function') return;
+  const LINK = (() => { const m = /[?&]aprovar=([^&.]+)\.([^&]+)/.exec(location.search);
+    return m ? { cli: decodeURIComponent(m[1]), chave: decodeURIComponent(m[2]) } : null; })();
+  const LIMITE_X = 110, LIMITE_Y = 120;
+  let Z = null;
+  const cardDe = id => (S.pauta || []).find(p => p.id === id) || null;
+  const visuais = p => { try{ return (typeof clVisuais === 'function' ? clVisuais(p) : []).filter(m => m && m.url); }catch(e){ return []; } };
+  const ehTexto = p => { try{ return faseDe(p) === 'texto_cli'; }catch(e){ return false; } };
+  const legendaDe = p => String(p.legenda || '').trim() || String(p.texto || '').trim();
+  function abrir(){
+    const fila = cardsComCliente().slice().sort((a, b) => String(a.data || '').localeCompare(String(b.data || '')) || (a.id - b.id)).map(p => p.id);
+    if(!fila.length){ toast('Nada esperando você agora.'); return; }
+    Z = { fila, i: 0, feitos: { ok: 0, ajuste: 0, amei: 0 }, desfazer: null, tela: 0, sheet: null };
+    desenhar();
+    if(typeof som === 'function') som('toque');
+  }
+  function fechar(){ Z = null; document.getElementById('v253dz')?.remove(); document.body.classList.remove('v253dzAberto'); render(); }
+  const atual = () => Z && Z.i < Z.fila.length ? cardDe(Z.fila[Z.i]) : null;
+  function midia(p){
+    const vs = visuais(p);
+    if(ehTexto(p) || !vs.length){
+      return `<div class="dzTexto"><span class="rot">${ehTexto(p) ? 'O texto para aprovar' : 'A publicação'}</span><p>${esc(legendaDe(p) || p.t)}</p></div>`;
+    }
+    const k = Math.min(Z.tela, vs.length - 1), m = vs[k];
+    const el = m.tipo === 'video'
+      ? `<video src="${urlSegura(m.url)}" ${m.poster ? `poster="${urlSegura(m.poster)}"` : ''} muted playsinline loop autoplay></video>`
+      : `<img src="${urlSegura(m.url)}" alt="" draggable="false">`;
+    return `<div class="dzMidia">${el}${vs.length > 1 ? `<div class="dzPontos">${vs.map((_, i) => `<i class="${i === k ? 'on' : ''}"></i>`).join('')}</div>
+      <button type="button" class="dzAntes" data-dztela="-1" aria-label="Tela anterior"></button><button type="button" class="dzDepois" data-dztela="1" aria-label="Próxima tela"></button>` : ''}</div>`;
+  }
+  function cartao(p){
+    const leg = legendaDe(p);
+    const fmt = [p.fmt, p.data ? rotuloData(p.data) : '', p.hora].filter(Boolean).join(' · ');
+    return `<article class="dzCartao" id="dzc" data-dzid="${p.id}">
+      <span class="dzSelo ok">Aprovar</span><span class="dzSelo ajuste">Ajustar</span><span class="dzSelo amei">Amei</span>
+      ${midia(p)}
+      <div class="dzInfo"><b>${esc(p.t)}</b><span>${esc(fmt)}</span>
+        ${!ehTexto(p) && leg ? `<p class="dzLeg">${esc(leg)}</p><button type="button" class="dzLer" data-dzler="1">Ler tudo</button>` : ''}</div>
+    </article>`;
+  }
+  function fim(){
+    const f = Z.feitos;
+    return `<div class="dzFim"><div class="dzFimIc">${ic('checkc', 34)}</div><h2>Tudo decidido</h2>
+      <p>${[f.ok ? `${f.ok} ${f.ok === 1 ? 'aprovada' : 'aprovadas'}` : '', f.amei ? `${f.amei} com elogio` : '', f.ajuste ? `${f.ajuste} com ajuste pedido` : ''].filter(Boolean).join(' · ') || 'Nada decidido desta vez.'}</p>
+      <p class="dzFimSub">A agência já recebeu cada resposta.</p>
+      <button type="button" class="clbtn" data-dzfechar="1">Voltar para as publicações</button></div>`;
+  }
+  function folha(){
+    if(!Z.sheet) return '';
+    const p = cardDe(Z.sheet.id); if(!p) return '';
+    if(Z.sheet.tipo === 'ajuste'){
+      const vs = visuais(p);
+      return `<div class="dzFolha" role="dialog" aria-label="O que precisa mudar"><b>O que precisa mudar em “${esc(p.t)}”?</b>
+        ${vs.length > 1 ? `<div class="dzTelas">${vs.map((_, i) => `<button type="button" data-dztelapede="${i + 1}" class="${S.pcTelas && S.pcTelas.has(i + 1) ? 'on' : ''}">Tela ${i + 1}</button>`).join('')}</div>` : ''}
+        <textarea id="dz-nota" rows="3" placeholder="Com suas palavras. Ex.: a abertura está formal demais."></textarea>
+        <div class="dzFolhaBts"><button type="button" class="clbtn sec" data-dzvolta="1">Voltar</button>
+          <button type="button" class="clbtn chg" data-dzajusteok="${p.id}">Pedir o ajuste</button></div></div>`;
+    }
+    return `<div class="dzFolha amei" role="dialog" aria-label="O que você amou"><b>Aprovada com amor. O que você mais gostou?</b>
+      <div class="dzTelas">${['A arte', 'O texto', 'A ideia', 'Tudo!'].map(t => `<button type="button" data-dzchip="${t}">${t}</button>`).join('')}</div>
+      <textarea id="dz-elogio" rows="3" placeholder="A equipe vai ler isto. Ex.: essa arte ficou a cara da marca!"></textarea>
+      <div class="dzFolhaBts"><button type="button" class="clbtn sec" data-dzpula="1">Pular</button>
+        <button type="button" class="clbtn" data-dzelogio="${p.id}">Mandar o elogio</button></div></div>`;
+  }
+  function desenhar(){
+    if(!Z) return;
+    let el = document.getElementById('v253dz');
+    if(!el){ el = document.createElement('div'); el.id = 'v253dz'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Decidir deslizando'); document.body.appendChild(el); }
+    document.body.classList.add('v253dzAberto');
+    const p = atual();
+    const total = Z.fila.length;
+    el.innerHTML = `<div class="dzTopo"><button type="button" class="dzX" data-dzfechar="1" aria-label="Fechar">×</button>
+        <div class="dzProg"><i style="width:${Math.round(Math.min(Z.i, total) / total * 100)}%"></i></div>
+        <span>${Math.min(Z.i + 1, total)} de ${total}</span></div>
+      <div class="dzPalco">${p ? cartao(p) : fim()}</div>
+      ${p ? `<div class="dzBts">
+        <button type="button" class="dzB ajuste" data-dzacao="ajuste" aria-label="Pedir ajuste">${ic('x', 26)}</button>
+        <button type="button" class="dzB amei" data-dzacao="amei" aria-label="Amei — aprovar com elogio">★</button>
+        <button type="button" class="dzB ok" data-dzacao="ok" aria-label="Aprovar">♥</button></div>
+        <p class="dzDica">Arraste: direita aprova · esquerda pede ajuste · para cima, amei</p>` : ''}
+      ${Z.desfazer ? `<div class="dzDesfaz"><span>${esc(Z.desfazer.txt)}</span><button type="button" data-dzdesfaz="1">Desfazer</button></div>` : ''}
+      ${folha()}`;
+    ligarGestos();
+  }
+  function voar(dir, depois){
+    const c = document.getElementById('dzc');
+    if(!c){ depois(); return; }
+    const alvo = dir === 'ok' ? 'translate(140vw, 40px) rotate(24deg)' : dir === 'ajuste' ? 'translate(-140vw, 40px) rotate(-24deg)' : 'translate(0, -140vh) rotate(0)';
+    c.style.transition = 'transform .32s cubic-bezier(.2,.8,.2,1), opacity .32s'; c.style.transform = alvo; c.style.opacity = '0';
+    setTimeout(depois, 260);
+  }
+  function aprovar(p, comAmor){
+    const antes = faseDe(p);
+    decidirCard(p.id, 'APROVADO');
+    const aprovou = faseDe(p) !== antes;
+    if(!aprovou) return false;
+    Z.feitos[comAmor ? 'amei' : 'ok']++;
+    Z.desfazer = { id: p.id, antes, txt: comAmor ? `“${p.t}” aprovada com amor.` : `“${p.t}” aprovada.`, amor: !!comAmor };
+    clearTimeout(Z.tmDesfaz); Z.tmDesfaz = setTimeout(() => { if(Z){ Z.desfazer = null; desenhar(); } }, 6000);
+    return true;
+  }
+  function seguir(){ Z.i++; Z.tela = 0; Z.sheet = null; desenhar(); }
+  function agir(acao){
+    const p = atual(); if(!p || Z.sheet) return;
+    if(acao === 'ok'){ voar('ok', () => { if(aprovar(p, false)) seguir(); else desenhar(); }); return; }
+    if(acao === 'amei'){ voar('amei', () => { if(aprovar(p, true)){ Z.sheet = { tipo: 'amei', id: p.id }; desenhar(); setTimeout(() => document.getElementById('dz-elogio')?.focus(), 80); } else desenhar(); }); return; }
+    if(acao === 'ajuste'){ voar('ajuste', () => { S.pcTelas = new Set(); Z.sheet = { tipo: 'ajuste', id: p.id }; desenhar(); setTimeout(() => document.getElementById('dz-nota')?.focus(), 80); }); }
+  }
+  function pedirAjuste(id){
+    const nota = String(document.getElementById('dz-nota')?.value || '').trim();
+    if(nota.length < 3){ toast('Escreva o que precisa mudar — a agência precisa saber o quê.'); document.getElementById('dz-nota')?.focus(); return; }
+    decidirCard(id, 'ALTERACAO', nota);
+    Z.feitos.ajuste++; Z.desfazer = null;
+    seguir();
+  }
+  function desfazer(){
+    const d = Z && Z.desfazer; if(!d) return;
+    const p = cardDe(d.id); if(!p) return;
+    porFase(p, faseDe(p) === 'texto_ok' ? 'texto_cli' : 'post_cli');
+    Z.feitos[d.amor ? 'amei' : 'ok'] = Math.max(0, Z.feitos[d.amor ? 'amei' : 'ok'] - 1);
+    Z.i = Math.max(0, Z.fila.indexOf(d.id)); Z.desfazer = null; Z.sheet = null; Z.tela = 0;
+    if(typeof som === 'function') som('toque');
+    render(); desenhar();
+  }
+  async function elogiar(id){
+    const p = cardDe(id); if(!p) return seguir();
+    const chips = [...document.querySelectorAll('#v253dz [data-dzchip].on')].map(b => b.dataset.dzchip);
+    const txt = [chips.join(', '), String(document.getElementById('dz-elogio')?.value || '').trim()].filter(Boolean).join(' — ');
+    if(!txt){ seguir(); return; }
+    p.elogios = Array.isArray(p.elogios) ? p.elogios : [];
+    p.elogios.push({ id: 'el' + Date.now().toString(36), txt: txt.slice(0, 1000), em: Date.now(), por: 'cliente' });
+    seguir();
+    if(LINK && typeof SB === 'object'){
+      try{
+        const r = await fetch(`${SB.url}/rest/v1/rpc/maestro_link_pedir`, { method: 'POST',
+          headers: { apikey: SB.key, Authorization: 'Bearer ' + SB.key, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ p_cli: LINK.cli, p_chave: LINK.chave, p_titulo: ('Elogio · ' + p.t).slice(0, 140), p_formato: 'elogio:' + p.id, p_desc: txt.slice(0, 3000) }) });
+        const d = await r.json().catch(() => null);
+        toast(r.ok && d && d.ok ? 'Elogio enviado — a equipe vai adorar.' : 'Aprovada — o elogio não foi agora, tente mais tarde.');
+      }catch(e){ toast('Aprovada — sem conexão para mandar o elogio.'); }
+    } else toast('Elogio guardado — a equipe vai adorar.');
+  }
+  function ligarGestos(){
+    const c = document.getElementById('dzc'); if(!c) return;
+    let x0 = 0, y0 = 0, dx = 0, dy = 0, ativo = false, id = null;
+    const selo = k => c.querySelector('.dzSelo.' + k);
+    c.addEventListener('pointerdown', e => {
+      if(e.target.closest('button, a, video[controls]') || Z.sheet) return;
+      ativo = true; id = e.pointerId; x0 = e.clientX; y0 = e.clientY; dx = dy = 0;
+      c.setPointerCapture(id); c.style.transition = 'none';
+    });
+    c.addEventListener('pointermove', e => {
+      if(!ativo || e.pointerId !== id) return;
+      dx = e.clientX - x0; dy = e.clientY - y0;
+      c.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx * 0.05}deg)`;
+      const up = dy < 0 && Math.abs(dy) > Math.abs(dx);
+      selo('ok').style.opacity = !up && dx > 0 ? Math.min(1, dx / LIMITE_X) : 0;
+      selo('ajuste').style.opacity = !up && dx < 0 ? Math.min(1, -dx / LIMITE_X) : 0;
+      selo('amei').style.opacity = up ? Math.min(1, -dy / LIMITE_Y) : 0;
+    });
+    const soltar = e => {
+      if(!ativo || e.pointerId !== id) return; ativo = false;
+      const up = dy < 0 && Math.abs(dy) > Math.abs(dx);
+      if(up && -dy > LIMITE_Y) return agir('amei');
+      if(!up && dx > LIMITE_X) return agir('ok');
+      if(!up && dx < -LIMITE_X) return agir('ajuste');
+      c.style.transition = 'transform .35s cubic-bezier(.2,.9,.3,1.2)'; c.style.transform = '';
+      c.querySelectorAll('.dzSelo').forEach(s => { s.style.opacity = 0; });
+      if(Math.abs(dx) < 6 && Math.abs(dy) < 6){
+        const r = c.querySelector('.dzMidia')?.getBoundingClientRect();
+        if(r && e.clientY >= r.top && e.clientY <= r.bottom){ Z.tela += (e.clientX > r.left + r.width / 2 ? 1 : -1); Z.tela = Math.max(0, Math.min(Z.tela, visuais(atual()).length - 1)); desenhar(); }
+      }
+    };
+    c.addEventListener('pointerup', soltar); c.addEventListener('pointercancel', soltar);
+  }
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-dzabrir],[data-dzfechar],[data-dzacao],[data-dztela],[data-dzler],[data-dzvolta],[data-dzajusteok],[data-dzelogio],[data-dzpula],[data-dzdesfaz],[data-dzchip],[data-dztelapede]');
+    if(!t) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    const d = t.dataset;
+    if(d.dzabrir !== undefined) return abrir();
+    if(!Z) return;
+    if(d.dzfechar !== undefined) return fechar();
+    if(d.dzacao) return agir(d.dzacao);
+    if(d.dztela){ Z.tela = Math.max(0, Math.min(Z.tela + +d.dztela, visuais(atual()).length - 1)); return desenhar(); }
+    if(d.dzler !== undefined){ t.closest('.dzInfo').classList.toggle('aberto'); t.textContent = t.closest('.dzInfo').classList.contains('aberto') ? 'Recolher' : 'Ler tudo'; return; }
+    if(d.dzvolta !== undefined){ Z.sheet = null; S.pcTelas = new Set(); return desenhar(); }
+    if(d.dzajusteok) return pedirAjuste(+d.dzajusteok);
+    if(d.dzelogio) return elogiar(+d.dzelogio);
+    if(d.dzpula !== undefined) return seguir();
+    if(d.dzdesfaz !== undefined) return desfazer();
+    if(d.dzchip){ t.classList.toggle('on'); return; }
+    if(d.dztelapede){ const n = +d.dztelapede; S.pcTelas = S.pcTelas || new Set(); S.pcTelas.has(n) ? S.pcTelas.delete(n) : S.pcTelas.add(n); t.classList.toggle('on', S.pcTelas.has(n)); }
+  }, true);
+  addEventListener('keydown', e => {
+    if(!Z || Z.sheet || /INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) return;
+    if(e.key === 'ArrowRight'){ e.preventDefault(); agir('ok'); }
+    else if(e.key === 'ArrowLeft'){ e.preventDefault(); agir('ajuste'); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); agir('amei'); }
+    else if(e.key === 'Escape'){ e.preventDefault(); fechar(); }
+  });
+  render = (function(orig){
+    return function(){
+      try{ if(S.v244 && Array.isArray(S.v244.pedidos)) S.v244.pedidos = S.v244.pedidos.filter(it => !/^elogio:/.test(String(it && it.formato || ''))); }catch(e){}
+      const r = orig.apply(this, arguments);
+      try{
+        if(S.view === 'client' && S.route === 'clpauta' && !document.querySelector('.dzEntrada')){
+          const n = cardsComCliente().length;
+          const h2 = document.querySelector('#root .clbody h2');
+          const alvo = h2 && h2.nextElementSibling && h2.nextElementSibling.tagName === 'P' ? h2.nextElementSibling : h2;
+          if(n >= 1 && alvo) alvo.insertAdjacentHTML('afterend', `<button type="button" class="dzEntrada" data-dzabrir="1">
+            <span class="dzEntradaIc">♥</span><span class="t"><b>Decidir deslizando</b><span>${n === 1 ? 'Uma publicação' : n + ' publicações'}, uma de cada vez</span></span><span class="chev">${ic('chevr')}</span></button>`);
+        }
+        if(Z && (S.view !== 'client' || !['clpauta', 'clcard', 'inicio'].includes(S.route))) fechar();
+      }catch(e){}
+      return r;
+    };
+  })(render);
+  function receberElogios(){
+    if(S.view !== 'agency' || !S.pedidosCli || !S.ensaio) return;
+    let mudou = false;
+    for(const it of Object.values(S.pedidosCli)){
+      const m = /^elogio:(\d{1,18})$/.exec(String(it && it.formato || '')); if(!m) continue;
+      const i = (S.ensaio.tarefas || []).findIndex(t => t.pedidoId === it.id);
+      if(i >= 0){ S.ensaio.tarefas.splice(i, 1); mudou = true; }
+      S.ensaio.pedidosVistos = S.ensaio.pedidosVistos || [];
+      if(!S.ensaio.pedidosVistos.includes(it.id)) S.ensaio.pedidosVistos.push(it.id);
+      const p = ((S.pautas || {})[it.cli] || []).find(x => String(x.id) === m[1]);
+      if(p){
+        p.elogios = Array.isArray(p.elogios) ? p.elogios : [];
+        if(!p.elogios.some(e => e.id === it.id)){
+          p.elogios.push({ id: it.id, txt: String(it.desc || '').slice(0, 1000), em: it.em || Date.now(), por: it.por || 'o cliente' });
+          const c = (typeof CLIS === 'function' ? CLIS() : []).find(x => x.id === it.cli);
+          const quem = (c && c.nome) || 'O cliente';
+          try{ avisar({ para: (S.equipe || []).map(x => membroId(x)), txt: `${quem} amou “${p.t}”`, sub: it.desc || '', chave: 'elogio:' + it.id, autor: '__cliente__' }); }catch(e){}
+          toast(`${quem} amou “${p.t}”.`);
+          mudou = true;
+        }
+      }
+      if(it.st !== 'entregue' && !it._elogioEnviando && typeof _sbLigado !== 'undefined' && _sbLigado && typeof sbCab === 'function'){
+        it._elogioEnviando = true;
+        fetch(`${SB.url}/rest/v1/rpc/maestro_pedido_status`, { method: 'POST', headers: { ...sbCab(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ p_id: it.id, p_st: 'entregue' }) })
+          .then(r => r.json()).then(d => { if(d && d.ok) it.st = 'entregue'; }).catch(() => {}).finally(() => { it._elogioEnviando = false; });
+      }
+    }
+    return mudou;
+  }
+  render = (function(orig){
+    return function(){
+      const mudou = (() => { try{ return receberElogios(); }catch(e){ return false; } })();
+      const r = orig.apply(this, arguments);
+      try{
+        if(S.view === 'agency' && S.route === 'producao') document.querySelectorAll('.enCard[data-entar]').forEach(card => {
+          if(card.querySelector('.dzElogio')) return;
+          const t = (S.ensaio.tarefas || []).find(x => x.id === +card.dataset.entar);
+          const p = t && t.cardId && ((S.pautas || {})[t.cli] || []).find(x => x.id === t.cardId);
+          if(p && Array.isArray(p.elogios) && p.elogios.length){
+            const sel = card.querySelector('.enSelos') || card.querySelector('.meta');
+            if(sel) sel.insertAdjacentHTML('afterbegin', `<span class="dzElogio" title="${esc(p.elogios[p.elogios.length - 1].txt)}">★ o cliente amou</span>`);
+          }
+        });
+      }catch(e){}
+      return r;
+    };
+  })(render);
+  window.MaestroDeslizar = { abrir, fechar, agir, estado: () => Z, receberElogios };
 })();
 </script>

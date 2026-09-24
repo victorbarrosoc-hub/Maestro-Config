@@ -1,0 +1,62 @@
+/* v253 — decidir deslizando. A tela inteira é do cartão: fundo escuro,
+   o cartão grande, três botões redondos embaixo (como o gesto). */
+.dzEntrada{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; margin:4px 0 18px; padding:14px 16px;
+  border-radius:18px; border:0; background:linear-gradient(135deg, rgba(200,150,58,.22), rgba(200,150,58,.08)); color:var(--tx) }
+.dzEntrada .t{ flex:1; display:grid; gap:2px } .dzEntrada .t b{ font-size:15.5px } .dzEntrada .t span{ font-size:13px; color:var(--mut) }
+.dzEntradaIc{ width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:#C8963A; color:#000; font-size:19px; flex:0 0 auto }
+body.v253dzAberto{ overflow:hidden }
+#v253dz{ position:fixed; inset:0; z-index:960; display:flex; flex-direction:column; background:#0B0B0C; color:#F5F5F7;
+  padding:calc(10px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom)); animation:v249fundo .2s ease both; touch-action:none }
+.dzTopo{ display:flex; align-items:center; gap:12px; max-width:460px; width:100%; margin:0 auto }
+.dzTopo span{ font-size:13px; color:#A1A1A6; font-variant-numeric:tabular-nums }
+.dzX{ width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.1); color:#F5F5F7; font-size:20px; line-height:1; flex:0 0 auto }
+.dzProg{ flex:1; height:4px; border-radius:2px; background:rgba(255,255,255,.12); overflow:hidden }
+.dzProg i{ display:block; height:100%; background:#C8963A; transition:width .3s }
+.dzPalco{ flex:1; display:grid; place-items:center; min-height:0; padding:14px 0 10px }
+.dzCartao{ position:relative; width:100%; max-width:430px; max-height:100%; display:flex; flex-direction:column; border-radius:26px; overflow:hidden;
+  background:#1C1C1E; box-shadow:0 30px 80px rgba(0,0,0,.55); user-select:none; -webkit-user-select:none; cursor:grab; will-change:transform }
+.dzCartao:active{ cursor:grabbing }
+.dzMidia{ position:relative; flex:1 1 auto; min-height:0; aspect-ratio:4/5; max-height:62vh; background:#000 }
+.dzMidia img, .dzMidia video{ width:100%; height:100%; object-fit:cover; display:block; pointer-events:none }
+.dzPontos{ position:absolute; top:10px; left:12px; right:12px; display:flex; gap:4px }
+.dzPontos i{ flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.35) } .dzPontos i.on{ background:#fff }
+.dzAntes, .dzDepois{ position:absolute; top:0; bottom:0; width:30%; background:none; border:0 }
+.dzAntes{ left:0 } .dzDepois{ right:0 }
+.dzTexto{ flex:1 1 auto; padding:26px 22px; overflow:auto; max-height:62vh; background:linear-gradient(160deg, #2A2A2E, #1C1C1E) }
+.dzTexto .rot{ font-size:12px; font-weight:650; color:#C8963A } .dzTexto p{ margin:10px 0 0; font-size:17px; line-height:1.55; white-space:pre-wrap; color:#F5F5F7 }
+.dzInfo{ padding:14px 18px 16px; display:grid; gap:4px }
+.dzInfo b{ font-size:17px; font-weight:650; letter-spacing:-.01em } .dzInfo > span{ font-size:12.5px; color:#A1A1A6 }
+.dzLeg{ margin:6px 0 0; font-size:14px; line-height:1.45; color:#D1D1D6; white-space:pre-wrap; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+.dzInfo.aberto .dzLeg{ -webkit-line-clamp:unset; max-height:34vh; overflow:auto }
+.dzLer{ justify-self:start; padding:0; border:0; background:none; color:#C8963A; font-size:13px; font-weight:600 }
+.dzSelo{ position:absolute; top:24px; z-index:3; padding:6px 14px; border-radius:10px; border:3px solid; font-size:22px; font-weight:800; letter-spacing:.04em;
+  text-transform:uppercase; opacity:0; pointer-events:none; background:rgba(0,0,0,.25) }
+.dzSelo.ok{ left:20px; color:#30D158; border-color:#30D158; transform:rotate(-12deg) }
+.dzSelo.ajuste{ right:20px; color:#FF9F0A; border-color:#FF9F0A; transform:rotate(12deg) }
+.dzSelo.amei{ left:50%; top:auto; bottom:40%; transform:translateX(-50%); color:#FFD60A; border-color:#FFD60A }
+.dzBts{ display:flex; justify-content:center; align-items:center; gap:22px; padding:4px 0 2px }
+.dzB{ width:64px; height:64px; border-radius:50%; display:grid; place-items:center; background:#1C1C1E; box-shadow:0 8px 24px rgba(0,0,0,.4);
+  font-size:28px; transition:transform .14s ease }
+.dzB:active{ transform:scale(.9) }
+.dzB.ajuste{ color:#FF9F0A } .dzB.ok{ color:#30D158; font-size:30px } .dzB.amei{ width:52px; height:52px; color:#FFD60A; font-size:24px }
+.dzDica{ margin:8px 0 0; text-align:center; font-size:12px; color:#6E6E73 }
+.dzDesfaz{ position:fixed; left:0; right:0; margin:0 auto; width:max-content; bottom:calc(120px + env(safe-area-inset-bottom)); display:flex; align-items:center; gap:14px;
+  padding:10px 12px 10px 16px; border-radius:999px; background:rgba(44,44,46,.96); box-shadow:0 10px 30px rgba(0,0,0,.4); font-size:13.5px; white-space:nowrap; max-width:92vw; animation:v249janela .2s ease both }
+.dzDesfaz span{ overflow:hidden; text-overflow:ellipsis }
+.dzDesfaz button{ border:0; background:none; color:#C8963A; font-weight:700; font-size:13.5px }
+.dzFolha{ position:fixed; left:0; right:0; bottom:0; z-index:2; display:grid; gap:12px; padding:20px 18px calc(18px + env(safe-area-inset-bottom));
+  border-radius:24px 24px 0 0; background:#1C1C1E; box-shadow:0 -20px 60px rgba(0,0,0,.5); animation:v249folha .3s cubic-bezier(.2,.8,.2,1) both;
+  max-width:560px; margin:0 auto }
+.dzFolha b{ font-size:16.5px } .dzFolha.amei b{ color:#FFD60A }
+.dzFolha textarea{ width:100%; padding:12px; border-radius:14px; border:0; background:#2C2C2E; color:#F5F5F7; font:inherit; font-size:16px; resize:none }
+.dzTelas{ display:flex; flex-wrap:wrap; gap:6px }
+.dzTelas button{ padding:7px 13px; border-radius:999px; border:0; background:#2C2C2E; color:#E5E5EA; font-size:13.5px; font-weight:550 }
+.dzTelas button.on{ background:#F5F5F7; color:#000 }
+.dzFolhaBts{ display:grid; grid-template-columns:1fr 1.4fr; gap:8px } .dzFolhaBts .clbtn{ margin:0 !important }
+.dzFim{ display:grid; justify-items:center; gap:8px; text-align:center; max-width:360px }
+.dzFimIc{ width:74px; height:74px; border-radius:50%; display:grid; place-items:center; background:rgba(48,209,88,.16); color:#30D158; margin-bottom:6px }
+.dzFim h2{ margin:0; font-size:28px; font-weight:700; letter-spacing:-.02em } .dzFim p{ margin:0; color:#D1D1D6 } .dzFim .dzFimSub{ color:#8E8E93; font-size:13.5px; margin-bottom:10px }
+.dzFim .clbtn{ width:100% }
+.dzElogio{ display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px; background:rgba(255,214,10,.14); color:#FFD60A; font-size:11px; font-weight:650 }
+@media(max-height:700px){ .dzMidia{ max-height:50vh } .dzB{ width:56px; height:56px } }
+@media(min-width:861px){ .dzFolha{ bottom:24px; border-radius:24px } }

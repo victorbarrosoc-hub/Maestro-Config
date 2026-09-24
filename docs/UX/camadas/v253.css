@@ -1,0 +1,148 @@
+/* v253 — Negócios, no desenho da v249: superfícies sem contorno, pílulas,
+   uma cor por etapa, e o vermelho só para o que está parado. */
+.crmTela .mtop{ align-items:flex-start }
+.crmResumo{ display:flex; flex-wrap:wrap; gap:4px 16px; margin-top:6px; font-size:14px; color:var(--ink-300) }
+.crmResumo b{ color:var(--ink-50); font-weight:650 }
+.crmResumo .alerta, .crmResumo .alerta b{ color:#FF453A }
+.crmBarra{ display:flex; align-items:center; gap:10px; margin:4px 0 18px; flex-wrap:wrap }
+.crmAbas{ display:inline-flex; gap:2px; padding:3px; border-radius:12px; background:var(--enc); overflow-x:auto; scrollbar-width:none; max-width:100% }
+.crmAbas::-webkit-scrollbar{ display:none }
+.crmAbas button{ flex:0 0 auto; padding:7px 14px; border-radius:9px; font-size:13.5px; font-weight:550; color:var(--ink-200); display:inline-flex; gap:6px; align-items:center }
+.crmAbas button.on{ background:var(--sup); color:var(--ink-50); box-shadow:0 1px 3px rgba(0,0,0,.18) }
+.crmAbas button em{ font-style:normal; font-size:11px; font-weight:700; min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:#FF453A; color:#fff; display:inline-grid; place-items:center }
+.crmMeus{ padding:7px 13px; border-radius:999px; background:var(--enc); color:var(--ink-200); font-size:13px; font-weight:550 }
+.crmMeus.on{ background:var(--prim); color:var(--primT) }
+.crmVazio{ display:grid; gap:8px; justify-items:start; padding:28px; border-radius:20px; background:var(--sup); max-width:560px }
+.crmVazio b{ font-size:17px; color:var(--ink-50) } .crmVazio span{ color:var(--ink-300); font-size:14.5px; line-height:1.5 }
+.crmVazio .b{ margin-top:6px }
+
+/* próximas ações */
+.crmGrupo{ margin:0 0 20px; max-width:860px }
+.crmGrupo h3{ display:flex; align-items:center; gap:8px; margin:0 0 8px 4px; font-size:13px; font-weight:650; color:var(--ink-300); text-transform:none; letter-spacing:0 }
+.crmGrupo h3 span{ font-weight:500; color:var(--ink-400) }
+.crmGrupo.atrasada h3, .crmGrupo.sem h3{ color:#FF453A }
+.crmAcao{ display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:12px; padding:12px 14px; margin-bottom:6px;
+  border-radius:14px; background:var(--sup); cursor:pointer; transition:background-color .18s }
+.crmAcao:hover{ background:var(--sup2) }
+.crmAcao .t{ display:grid; gap:2px; min-width:0 }
+.crmAcao .t b{ font-size:14.5px; font-weight:600; color:var(--ink-50); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.crmAcao .t span{ font-size:12.5px; color:var(--ink-400); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.crmFeito{ width:30px; height:30px; border-radius:50%; display:grid; place-items:center; color:var(--ink-400); background:var(--enc) }
+.crmFeito:hover{ color:#30D158; background:rgba(48,209,88,.14) }
+.crmQuando{ font-size:12.5px; font-weight:600; color:var(--ink-300); white-space:nowrap }
+.crmQuando.atrasada, .crmQuando.sem{ color:#FF453A } .crmQuando.hoje{ color:var(--brass-400) }
+.crmAv, .crmCard .av, .crmAcao .av{ width:24px !important; height:24px !important; font-size:10px !important; flex:0 0 auto; border-radius:50% }
+
+/* o funil */
+.crmFunil{ display:grid; grid-template-columns:repeat(5, minmax(210px, 1fr)); gap:12px; align-items:start }
+.crmCol{ display:flex; flex-direction:column; gap:8px; min-width:0; border-radius:18px; padding:4px; transition:background-color .18s }
+.crmCol.sobre{ background:var(--enc) }
+.crmColHd{ display:flex; align-items:center; gap:7px; padding:4px 6px 0; font-size:14px }
+.crmColHd i{ width:8px; height:8px; border-radius:50% } .crmColHd b{ font-weight:650; color:var(--ink-50) }
+.crmColHd span{ margin-left:auto; color:var(--ink-400); font-size:12.5px }
+.crmCol > small{ padding:0 6px 4px 21px; font-size:12px; color:var(--ink-400) }
+.crmColCorpo{ display:flex; flex-direction:column; gap:8px }
+.crmColVazia{ padding:18px; text-align:center; color:var(--ink-500); border-radius:14px; border:1px dashed var(--fio) }
+.crmCard{ position:relative; display:flex; flex-direction:column; gap:7px; text-align:left; width:100%; padding:13px 13px 12px 17px;
+  border-radius:14px; background:var(--sup); color:var(--ink-100); cursor:grab }
+.crmCard::before{ content:""; position:absolute; left:7px; top:13px; bottom:13px; width:3px; border-radius:2px; background:var(--c) }
+.crmCard:hover{ background:var(--sup2) }
+.crmCard.arrastando{ opacity:.45 }
+.crmCardTopo{ display:flex; align-items:flex-start; gap:8px }
+.crmCardTopo b{ flex:1; font-size:14px; font-weight:650; color:var(--ink-50); line-height:1.3 }
+.crmVal{ font-size:14px; font-weight:650; color:var(--ink-50) } .crmVal small{ font-size:11.5px; font-weight:500; color:var(--ink-400) }
+.crmPx{ font-size:12px; line-height:1.4; color:var(--ink-300) } .crmPx b{ font-weight:650 }
+.crmPx.atrasada, .crmPx.sem{ color:#FF453A } .crmPx.hoje b{ color:var(--brass-400) }
+.crmPx svg{ width:12px; height:12px; vertical-align:-2px }
+.crmMeta{ font-size:11.5px; color:var(--ink-400) } .crmMeta em{ font-style:normal; color:var(--brass-400) }
+.crmFrio{ color:#64D2FF }
+
+/* ganhos: a jornada até o primeiro post no ar */
+.crmGanho, .crmPerdido{ padding:16px 18px; border-radius:18px; background:var(--sup); margin-bottom:10px; cursor:pointer; max-width:980px }
+.crmGanho:hover, .crmPerdido:hover{ background:var(--sup2) }
+.crmGanhoTopo{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:12px }
+.crmGanhoTopo b{ font-size:16px; color:var(--ink-50) }
+.crmTrilha{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(6, 1fr); gap:6px }
+.crmTrilha li{ position:relative; display:grid; gap:2px; padding-top:16px; min-width:0 }
+.crmTrilha li i{ position:absolute; top:0; left:0; right:0; height:5px; border-radius:3px; background:var(--enc2) }
+.crmTrilha li.ok i{ background:#30D158 } .crmTrilha li.agora i{ background:var(--brass-500) }
+.crmTrilha li b{ font-size:12.5px; font-weight:650; color:var(--ink-100) }
+.crmTrilha li span{ font-size:11.5px; color:var(--ink-400); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.crmTrilha li.agora b{ color:var(--brass-400) }
+.crmPerdido{ display:flex; align-items:center; gap:12px } .crmPerdido .t{ flex:1; display:grid; gap:2px }
+.crmPerdido .t b{ color:var(--ink-50) } .crmPerdido .t span{ font-size:12.5px; color:var(--ink-400) }
+
+/* a ficha */
+.crmFicha{ max-width:720px !important }
+/* no computador também: Ganhou/Perdeu à mão, sem rolar a ficha inteira */
+@media(min-width:861px){ .crmFicha > .modalrow:last-child{ position:sticky; bottom:-26px; margin:8px -26px -26px; padding:14px 26px;
+  background:var(--sup); box-shadow:0 -12px 18px -6px var(--sup); z-index:2 } }
+.crmFichaSub{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; margin:-4px 0 14px; font-size:13.5px; color:var(--ink-300) }
+.crmFichaSub .b{ margin-left:auto }
+.crmEtapas{ display:flex; gap:4px; padding:3px; border-radius:12px; background:var(--enc); overflow-x:auto; scrollbar-width:none; margin-bottom:14px }
+.crmEtapas::-webkit-scrollbar{ display:none }
+.crmEtapas button{ flex:1 0 auto; padding:7px 10px; border-radius:9px; font-size:12.5px; font-weight:550; color:var(--ink-300); white-space:nowrap }
+.crmEtapas button.on{ background:var(--sup); color:var(--ink-50); box-shadow:0 1px 3px rgba(0,0,0,.18) }
+.crmSelo{ display:inline-flex; padding:6px 12px; border-radius:999px; font-size:13px; font-weight:650; margin-bottom:14px }
+.crmSelo.ganho{ background:rgba(48,209,88,.16); color:#30D158 } .crmSelo.perdido{ background:var(--enc); color:var(--ink-300) }
+.crmProx{ display:grid; gap:3px; padding:13px 15px; border-radius:14px; background:var(--enc); margin-bottom:12px }
+.crmProx .rot, .crmProxForm .rot{ font-size:11.5px; font-weight:650; color:var(--ink-400); text-transform:none; letter-spacing:0 }
+.crmProx b{ font-size:15px; color:var(--ink-50) } .crmProx span{ font-size:12.5px; color:var(--ink-300) }
+.crmProx.atrasada, .crmProx.sem{ box-shadow:inset 3px 0 0 #FF453A } .crmProx.hoje{ box-shadow:inset 3px 0 0 var(--brass-500) }
+.crmRegistra{ display:grid; gap:10px; padding:14px; border-radius:16px; background:var(--sup2); margin-bottom:16px }
+.crmTipos, .crmServ, .crmDias{ display:flex; flex-wrap:wrap; gap:6px }
+.crmTipos button, .crmServ button, .crmDias button{ padding:6px 12px; border-radius:999px; background:var(--enc); color:var(--ink-200); font-size:12.5px; font-weight:550 }
+.crmTipos button.on, .crmServ button.on{ background:var(--prim); color:var(--primT) }
+.crmDias button{ padding:5px 10px; font-size:12px }
+.crmRegistra textarea, .crmRegistra input, .crmRegistra select, .crmCtForm input{ width:100%; min-width:0; padding:10px 12px; border-radius:11px; border:0;
+  background:var(--enc); color:var(--ink-50); font:inherit; font-size:14.5px }
+.crmProxForm{ display:grid; gap:8px }
+.crmLinha{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+.crmLinha > input, .crmLinha > select{ flex:1 1 140px }
+.crmLinha > select{ flex:0 0 auto; width:auto }
+.crmRegistra .erro, .crmForm .erro{ margin:0; min-height:0; font-size:13px; color:#FF453A }
+.crmRegistra .erro:empty, .crmForm .erro:empty{ display:none }
+.crmRegistra > .b{ justify-self:start }
+.crmSec{ margin-bottom:16px }
+.crmSecHd{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px }
+.crmSecHd b{ font-size:14px; color:var(--ink-50) }
+.crmMais{ font-size:13px; font-weight:600; color:var(--brass-400) }
+.crmContato{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; background:var(--enc); margin-bottom:6px }
+.crmContato .t{ flex:1; display:grid; min-width:0 } .crmContato .t b{ font-size:14px; color:var(--ink-50) } .crmContato .t span{ font-size:12px; color:var(--ink-400) }
+.crmLinks{ display:flex; gap:6px; flex-wrap:wrap }
+.crmLinks a{ padding:5px 10px; border-radius:999px; background:var(--sup); color:var(--ink-100); font-size:12px; font-weight:600; text-decoration:none }
+.crmX{ width:26px; height:26px; border-radius:50%; color:var(--ink-400); font-size:16px }
+.crmCtForm{ display:grid; gap:8px; padding:12px; border-radius:12px; background:var(--sup2) }
+.crmCtForm[hidden]{ display:none }
+.crmCtForm .b{ justify-self:start }
+.crmNada{ font-size:13px; color:var(--ink-400); margin:0 }
+.crmNotas{ margin:0; font-size:14px; color:var(--ink-200); white-space:pre-wrap; line-height:1.5 }
+.crmHist{ list-style:none; margin:0; padding:0; display:grid; gap:2px }
+.crmHist li{ display:grid; grid-template-columns:92px 1fr auto; gap:10px; padding:8px 4px; border-bottom:.5px solid var(--fio); font-size:13px }
+.crmHist li b{ font-weight:600; color:var(--ink-200) } .crmHist li span{ color:var(--ink-100); white-space:pre-wrap }
+.crmHist li small{ color:var(--ink-400); white-space:nowrap }
+.crmHist li.ganho b{ color:#30D158 } .crmHist li.perdido b{ color:var(--ink-400) } .crmHist li.etapa b{ color:var(--brass-400) }
+.crmHist li.nada{ display:block; color:var(--ink-400) }
+.crmConvAviso{ display:flex; gap:8px; align-items:flex-start; padding:10px 12px; border-radius:12px; background:rgba(48,209,88,.12); color:var(--ink-100); font-size:13.5px }
+.crmConvAviso svg{ color:#30D158; flex:0 0 auto; margin-top:2px }
+.crmForm select{ width:100% }
+
+/* o Hoje */
+.crmHoje{ margin:14px 0 18px; padding:14px; border-radius:18px; background:var(--sup) }
+.crmHojeHd{ display:flex; align-items:center; gap:10px; margin:0 2px 10px }
+.crmHojeHd b{ display:inline-flex; align-items:center; gap:6px; font-size:14.5px; color:var(--ink-50) }
+.crmHojeHd span{ font-size:13px; color:var(--ink-400) } .crmHojeHd .crmMais{ margin-left:auto }
+.crmHoje .crmAcao{ background:var(--sup2) } .crmHoje .crmAcao:last-child{ margin-bottom:0 }
+
+@media(max-width:860px){
+  .crmFunil{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; gap:10px; margin:0 -16px; padding:0 16px 8px; scrollbar-width:none }
+  .crmFunil::-webkit-scrollbar{ display:none }
+  .crmCol{ flex:0 0 82vw; scroll-snap-align:start }
+  .crmCard{ cursor:pointer }
+  .crmAcao{ grid-template-columns:auto 1fr auto; padding:12px }
+  .crmAcao > .av{ display:none }
+  .crmTrilha{ grid-template-columns:repeat(3, 1fr); row-gap:12px }
+  .crmHist li{ grid-template-columns:1fr auto } .crmHist li span{ grid-column:1 / -1 }
+  .crmFichaSub .b{ margin-left:0 }
+  .crmTela .mtop > div:last-child .b{ padding:9px 14px }
+}

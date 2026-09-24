@@ -1,9 +1,68 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.66
+Version: 0.5.67
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.67 — 2026-09-24
+
+**Status:** Concluída
+
+### v253 — Negócios, o deslizar e a vitrine com fotos
+
+**1. Negócios: o CRM da agência, dentro da operação.** O desenho e o porquê
+de cada decisão estão em `docs/PRD/NEGOCIOS.md`. Em uma linha:
+- é **um negócio só** (o prospect é a primeira etapa, e os contatos moram
+  dentro dele);
+- **todo negócio aberto tem uma próxima ação com data**: registrar uma
+  conversa exige o próximo passo, e a Proposta ganha o follow-up de 3 dias
+  sozinha;
+- o funil soma o **fee mensal** (valor só para quem tem "financeiro");
+- **perder** pede motivo e marca quando reabordar;
+- **ganhar** abre o MESMO "Novo cliente", preenchido, cria o **kickoff no
+  Ensaio** e passa a mostrar a **jornada até o primeiro post no ar**, lida da
+  operação;
+- o **Hoje** mostra as ações comerciais do dia.
+
+O dado viaja no `__estado__` (revisão, mescla, carimbo de agência), com `id`
+em toda lista e lápide para excluir. A rota nova é `/negocios`, e o
+`vercel.json` ganhou a regra dela. As janelas do CRM guardam o que está
+digitado quando a tela é redesenhada pela sincronização: sem isso, o texto
+da ligação sumiria no meio da frase. 43 provas em
+`web/verificar/v253-negocios.mjs`.
+
+**2. Decidir deslizando.** Ideia do founder: um "Tinder" da aprovação. Nas
+Publicações do cliente, "Decidir deslizando" abre uma pilha:
+- **direita aprova**;
+- **esquerda pede ajuste**, com as telas do carrossel para marcar;
+- **para cima é "amei"**: aprova e pergunta o que o cliente mais gostou.
+
+Tem botões ✕ ★ ♥, teclado no computador, "Desfazer" e o resumo no fim. **O
+gesto chama `decidirCard`, o mesmo funil dos botões**: selo, banco,
+conquista, volta ao Plan e a curtida da v237 passam por ali, e nenhuma
+aprovação sai "por fora". O **elogio** viaja pela porta do "Pedir à
+agência" (v244), marcado `elogio:<card>`, **sem função nova no banco**. Do
+lado da agência ele vira aviso para a equipe e fica no card ("★ o cliente
+amou" no Ensaio). Não vira tarefa, porque isso inflaria os números do
+quadro, e o pedido é dado como entregue, para não ocupar o limite de pedidos
+do cliente. 26 provas em `web/verificar/v253-deslizar.mjs`.
+
+**3. A vitrine com fotos de verdade.** O Higgsfield (Nano Banana Pro) gerou
+os aparelhos de frente, com a tela preta, e as telas **reais** da Maestro
+foram encaixadas por perspectiva: nenhuma interface inventada pela IA. Os
+posts dentro das telas também foram gerados, para uma "Loja Norte" e um
+"Café Aurora" fictícios. Nada de cliente nem de equipe de verdade numa
+página pública. Um dos seis posts veio com uma tela de celular inventada
+dentro e ficou de fora. As fotos moram em `/web/img` (WebP de 23 a 71 KB),
+fora do protótipo. Custo: cerca de 14 créditos. O notebook mostra o Ensaio,
+o celular mostra as Publicações, e a mão mostra o **deslizar**, com o selo
+APROVAR.
+
+**O teto do protótipo** subiu de 2,90 para 3,05 MB, por escrito na suíte da
+v172: o CRM é uma área inteira, e as fotos não entraram no arquivo.
 
 ---
 

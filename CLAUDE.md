@@ -299,6 +299,21 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v253) — Negócios, o deslizar e a vitrine com fotos.**
+(1) **Negócios** (o CRM, em `/negocios`): um negócio só, com os contatos
+dentro; próxima ação obrigatória; follow-up da proposta automático; fee
+mensal (só para quem tem financeiro); perder pede motivo e marca quando
+reabordar; **ganhar abre o "Novo cliente" de sempre e cria o kickoff no
+Ensaio**; a jornada até o post no ar é lida da operação; o Hoje mostra as
+ações do dia. Dados no `__estado__` com `id` em toda lista e lápide. O
+porquê de cada decisão está em `docs/PRD/NEGOCIOS.md`; 43 provas.
+(2) **Decidir deslizando**, no link do cliente: direita aprova, esquerda
+pede ajuste, para cima "amei" com elogio. Tudo passa pelo `decidirCard`, o
+mesmo funil dos botões. O elogio vai pela porta do "Pedir à agência",
+marcado `elogio:<card>`, sem SQL novo, e vira aviso e selo no card, nunca
+tarefa; 26 provas. (3) **Fotos da vitrine** (Higgsfield), com as telas
+REAIS encaixadas e dados fictícios; moram em `/web/img`. Teto do protótipo:
+3,05 MB.
 **Fechado (24 set, v252) — o celular respira, parte 2.** Equipe: permissões
 viram "N de M permissões" no celular (lista inteira em "Editar"); Resultados:
 números ficam, gráfico e quebra por pessoa só no computador. Abas da ficha

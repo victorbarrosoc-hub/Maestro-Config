@@ -50,32 +50,15 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
 .sCta{ display:flex; gap:26px; justify-content:center; align-items:center; flex-wrap:wrap }
 .sLink{ color:var(--brass-400); font-size:17px; text-decoration:none }
 .sLink:hover{ text-decoration:underline }
-/* o quadro, desenhado */
-.sJanela{ position:relative; max-width:1040px; margin:76px auto 0; border-radius:22px 22px 0 0; background:#0C0C0D;
-  box-shadow:0 0 0 .5px rgba(255,255,255,.14), 0 -30px 120px rgba(200,150,58,.10); text-align:left; overflow:hidden;
-  -webkit-mask-image:linear-gradient(#000 70%, transparent); mask-image:linear-gradient(#000 70%, transparent) }
-.sBarra{ display:flex; align-items:center; gap:7px; height:38px; padding:0 16px; border-bottom:.5px solid var(--sFio) }
-.sBarra i{ width:11px; height:11px; border-radius:50%; background:#3A3A3C }
-.sBarra span{ margin-left:12px; font-size:12.5px; font-weight:600; color:var(--sTx2) }
-.sResumo{ padding:18px 20px 4px; font-size:13px; color:var(--sTx2) }
-.sResumo b{ color:var(--sTx) } .sResumo em{ font-style:normal; color:#FF453A }
-.sQuadro{ display:grid; grid-template-columns:repeat(5, minmax(172px, 1fr)); gap:12px; padding:14px 20px 44px }
-.sCol{ display:flex; flex-direction:column; gap:9px; min-width:0 }
-.sCol.sCli{ background:rgba(200,150,58,.07); border-radius:16px; padding:8px; margin:-8px }
-.sColH{ display:flex; align-items:center; gap:7px; font-size:13.5px; font-weight:650 }
-.sColH i{ width:8px; height:8px; border-radius:50% }
-.sCol small{ margin:-6px 0 2px 15px; font-size:11.5px; color:var(--sTx3) }
-.sK{ position:relative; display:flex; flex-direction:column; gap:7px; padding:12px 12px 12px 16px; border-radius:14px; background:var(--sSup2) }
-.sK::before{ content:""; position:absolute; left:6px; top:12px; bottom:12px; width:3px; border-radius:2px; background:var(--f) }
-.sK b{ font-size:13px; font-weight:600; line-height:1.3 }
-.sKm{ display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--sTx2) }
-.sKm i{ width:14px; height:14px; border-radius:50%; opacity:.85 }
-.sKc{ align-self:flex-start; font-size:11px; padding:2px 8px; border-radius:6px; background:rgba(255,255,255,.07); color:var(--sTx2) }
-.sMini{ display:flex; gap:4px; align-items:center }
-.sMini s{ width:30px; height:38px; border-radius:6px; background:linear-gradient(160deg,#2B3A55,#0E1422) }
-.sMini em{ font-style:normal; font-size:11px; color:var(--sTx3) }
-.sReel{ width:40px; height:70px; border-radius:7px; background:linear-gradient(160deg,#3A3F48,#0B0C0E) }
-.sPasso1{ text-align:center; padding:7px; border-radius:9px; background:var(--sTx); color:#000; font-size:12px; font-weight:650 }
+/* v253: o quadro e o celular deixam de ser desenhados — são FOTOS
+   (Higgsfield, Nano Banana Pro) com a tela de verdade da Maestro encaixada.
+   Moram em /web/img, fora do protótipo: o arquivo do app não engorda. */
+.sFoto{ display:block; width:100%; max-width:1080px; height:auto; margin:56px auto 0; position:relative;
+  mix-blend-mode:lighten;   /* o preto da foto deixa o brilho de trás aparecer: sem faixa na emenda */
+  -webkit-mask-image:linear-gradient(to bottom, #000 62%, transparent 96%), linear-gradient(to right, transparent 2%, #000 16%, #000 84%, transparent 98%);
+  -webkit-mask-composite:source-in;
+  mask-image:linear-gradient(to bottom, #000 62%, transparent 96%), linear-gradient(to right, transparent 2%, #000 16%, #000 84%, transparent 98%);
+  mask-composite:intersect }
 /* as seções */
 .sSec{ max-width:1040px; margin:0 auto; padding:130px 22px 0 }
 .sSec h2{ margin:0 0 18px; font-size:clamp(34px, 5.4vw, 60px); line-height:1.06; font-weight:700; letter-spacing:-.04em; color:var(--sTx); max-width:18ch }
@@ -89,22 +72,8 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
 .sLista{ margin:0; padding:0; list-style:none; display:grid; gap:12px; font-size:17px; color:var(--sTx) }
 .sLista li{ display:flex; gap:12px; align-items:baseline }
 .sLista li::before{ content:"✓"; color:var(--brass-400); font-weight:700 }
-/* o celular, desenhado */
-.sFone{ justify-self:center; width:290px; height:600px; border-radius:50px; padding:11px; background:#1C1C1E;
-  box-shadow:0 0 0 .5px rgba(255,255,255,.18), 0 50px 120px rgba(0,0,0,.7) }
-.sTela{ height:100%; border-radius:40px; background:#0A0A0A; overflow:hidden; padding:44px 14px 14px; display:flex; flex-direction:column; gap:12px }
-.sPerfil{ display:flex; align-items:center; gap:10px }
-.sAv{ width:44px; height:44px; border-radius:50%; display:grid; place-items:center; background:linear-gradient(135deg,#C8963A,#7A5A1E); font-size:14px; font-weight:700; color:#000 }
-.sPerfil b{ display:block; font-size:14px } .sPerfil small{ font-size:11.5px; color:var(--sTx3) }
-.sGrade{ display:grid; grid-template-columns:repeat(3, 1fr); gap:2px; border-radius:8px; overflow:hidden }
-.sGrade span{ aspect-ratio:3/4; position:relative }
-.sGrade em{ position:absolute; left:4px; bottom:4px; font-style:normal; font-size:8.5px; font-weight:700; padding:2px 5px; border-radius:5px; background:var(--brass-500); color:#000 }
-.sDecide{ margin-top:auto; padding:10px; border-radius:22px; background:var(--sSup2); display:flex; flex-direction:column; gap:9px }
-.sPost{ height:120px; border-radius:14px; background:linear-gradient(160deg,#C8963A,#3A2A10) }
-.sAcoes{ display:flex; gap:12px; font-size:20px; padding:0 4px; color:var(--sTx) }
-.sBts{ display:grid; grid-template-columns:1fr 1fr; gap:7px }
-.sBts span{ text-align:center; padding:10px 0; border-radius:999px; font-size:12.5px; font-weight:650 }
-.sAjuste{ background:rgba(255,255,255,.08) } .sOk{ background:var(--sTx); color:#000 }
+.sFotoCli{ justify-self:center; display:block; width:100%; max-width:440px; height:auto; border-radius:28px;
+  box-shadow:0 40px 100px rgba(0,0,0,.6) }
 /* o bento */
 .sBento{ display:grid; grid-template-columns:repeat(12, 1fr); gap:14px }
 .sTile{ grid-column:span 3; padding:30px 28px; border-radius:26px; background:var(--sSup); display:flex; flex-direction:column; gap:10px }
@@ -141,7 +110,7 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
 .sRodape .logo b{ font-size:15px; color:var(--sTx3) } .sRodape span:last-child{ margin-left:auto }
 @media(max-width:860px){
   .sHero{ padding-top:72px }
-  .sQuadro{ grid-template-columns:repeat(5, 200px); overflow-x:auto; scrollbar-width:none }
+  .sFoto{ margin-top:40px; width:118%; max-width:none; margin-left:-9% }
   .sPassos{ grid-template-columns:1fr 1fr } .sDividido{ grid-template-columns:1fr; gap:48px }
   .sBento{ grid-template-columns:1fr } .sTile, .sTile.sG{ grid-column:auto; min-height:0 }
   .sSec{ padding-top:96px }

@@ -247,8 +247,12 @@ const textoDaTela = pag => pag.evaluate(() =>
      218 bytes do teto só em código de produto (a mídia que chega ao
      cliente, a ficha do Ensaio, os formatos). Quem guarda contra foto de
      demonstração embutida continua sendo a 6.1, e ela não mudou. */
-  checa('6.3 e o protótipo pesa menos de 2,90 MB',
-        Buffer.byteLength(html) < 2.90 * 1024 * 1024,
+  /* v253: sobe para 3,05 MB, também por escrito. O CRM (Negócios) é uma
+     área inteira de produto — funil, ficha, jornada até o post no ar — e
+     a v252 já estava a 8 KB do teto. As imagens da vitrine NÃO entraram no
+     arquivo: moram em /web/img (a 6.1 continua guardando isso). */
+  checa('6.3 e o protótipo pesa menos de 3,05 MB',
+        Buffer.byteLength(html) < 3.05 * 1024 * 1024,
         (Buffer.byteLength(html) / 1024 / 1024).toFixed(2) + ' MB');
 }
 
