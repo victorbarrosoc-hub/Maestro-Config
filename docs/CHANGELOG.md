@@ -67,7 +67,11 @@ inglês.
 
 39 provas em `web/verificar/v250-a-vitrine-e-a-conta.mjs`. A suíte da
 v233 exigia a vitrine intocada (serifada, sobretítulo em mono) — era a
-condição daquela versão; agora exige a letra da plataforma.
+condição daquela versão; agora exige a letra da plataforma. E sete
+suítes de login (`login-403`, `login-supabase`, `v158`, `v207`, `v208`,
+`v209`, `v215`) abriam o site e esperavam a porta já na tela — agora elas
+tocam em "Entrar" antes, como a pessoa de verdade. O que cada uma cobra
+não mudou.
 
 ---
 

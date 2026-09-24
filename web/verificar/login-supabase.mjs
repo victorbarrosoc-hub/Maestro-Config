@@ -60,6 +60,8 @@ const srv = http.createServer((q, r) => {
   r.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); r.end(html); });
 await new Promise(r => srv.listen(0, r));
 await pag.goto('http://127.0.0.1:' + srv.address().port + '/', { waitUntil: 'load' });
+/* v250: a vitrine não pede login — quem quer entrar toca em "Entrar" */
+await pag.waitForTimeout(300); await pag.evaluate(() => { if(typeof S !== 'undefined' && S.view === 'site' && S.route !== 'entrar') go('site', 'entrar'); }).catch(() => {});
 
 const ok = [], falhou = [];
 const checa = (nome, cond) => (cond ? ok : falhou).push(nome);

@@ -45,6 +45,8 @@ async function abrir(P, prep){
   await pag.route('https://tgrbmdsootnewjqpmeii.supabase.co/**', r =>
     r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
   await pag.goto(P + '/', { waitUntil: 'load' });
+  /* v250: a vitrine não pede login — quem quer entrar toca em "Entrar" */
+  await pag.waitForTimeout(300); await pag.evaluate(() => { if(typeof S !== 'undefined' && S.view === 'site' && S.route !== 'entrar') go('site', 'entrar'); }).catch(() => {});
   await pag.waitForTimeout(900);
   if(prep) await prep(pag);
   return { ctx, pag, erros, loads: () => loads };

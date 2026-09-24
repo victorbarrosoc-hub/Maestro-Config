@@ -61,6 +61,8 @@ async function rodar(cenario){
   });
 
   await pag.goto(ENDERECO, { waitUntil: 'load' });
+  /* v250: a vitrine não pede login — quem quer entrar toca em "Entrar" */
+  await pag.waitForTimeout(300); await pag.evaluate(() => { if(typeof S !== 'undefined' && S.view === 'site' && S.route !== 'entrar') go('site', 'entrar'); }).catch(() => {});
   await pag.waitForSelector('#entrarMaestro', { timeout: 8000 }).catch(() => {});
   if (await pag.locator('#entrarMaestro').count()) {
     await pag.fill('#em-mail', MAIL);

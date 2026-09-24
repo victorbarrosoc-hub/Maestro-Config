@@ -56,6 +56,8 @@ async function casa({ org = null, mudo = false } = {}){
     return j([]);
   });
   await pag.goto('http://127.0.0.1:' + srv.address().port + '/', { waitUntil: 'load' });
+  /* v250: a vitrine não pede login — quem quer entrar toca em "Entrar" */
+  await pag.waitForTimeout(300); await pag.evaluate(() => { if(typeof S !== 'undefined' && S.view === 'site' && S.route !== 'entrar') go('site', 'entrar'); }).catch(() => {});
   await pag.waitForTimeout(1200);
   await pag.evaluate(() => { document.getElementById('abertura')?.remove(); });
   return { ctx, pag, erros };
