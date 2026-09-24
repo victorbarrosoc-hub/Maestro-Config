@@ -306,9 +306,11 @@ lateral `#212124`) — só nos TOKENS da v249, então o app inteiro muda de
 uma vez. A vitrine vai junto; as fotos têm fundo preto e entram com
 `mix-blend-mode:lighten`, então o preto delas vira o grafite sem refazer
 imagem. O deslizar também. Ficam pretos, de propósito: vídeo e o Modo
-Instagram (imita o Instagram). O tema claro não muda. 30 provas em
-`web/verificar/v254-o-escuro-suave.mjs`, que varrem toda área grande
-pintada de preto — contra a v253 a suíte acusa 20.
+Instagram (imita o Instagram). O tema claro não muda. **A suíte da v157 pegou a primeira versão:** a
+abertura nascia preta (o bloquinho do primeiro byte e a `theme-color`) e
+virava grafite — uma piscada nova; agora a primeira pintura e a barra do
+iPhone já são grafite. 32 provas em `web/verificar/v254-o-escuro-suave.mjs`,
+que varrem toda área grande pintada de preto — contra a v253 acusam 20.
 **Fechado (24 set, v253) — Negócios, o deslizar e a vitrine com fotos.**
 (1) **Negócios** (o CRM, em `/negocios`): um negócio só, com os contatos
 dentro; próxima ação obrigatória; follow-up da proposta automático; fee

@@ -32,8 +32,15 @@ escuro, preciso que fique mais opaco, mais suave, assim fica feio demais."*
 - **Ficam pretos, de propósito:** vídeo (o preto é a moldura da
   imagem) e o Modo Instagram (imita o Instagram escuro).
 - **O tema claro não muda.** O título segue acima de 13:1 de contraste.
+- **A piscada que a v157 pegou.** A primeira versão mudou só os tokens, e a
+  abertura nascia preta (o bloquinho do primeiro byte, que existe desde a
+  v137 para matar a piscada branca, e a `theme-color` da barra do iPhone),
+  virando grafite quando o CSS terminava de carregar. A suíte que mede a cor
+  de fundo quadro a quadro na abertura acusou `#000 → #1C1C1F`. Agora os
+  três pontos nascem grafite.
 
-30 provas em `web/verificar/v254-o-escuro-suave.mjs`. A principal varre
+32 provas em `web/verificar/v254-o-escuro-suave.mjs` (inclusive a cor da
+barra do sistema). A principal varre
 **toda área grande pintada de preto** em cinco telas da agência, no link do
 cliente, no deslizar e na vitrine, nos dois tamanhos. Rodada contra a v253,
 a suíte acusa 20 falhas; contra a v254, nenhuma. A suíte da v249 passou a

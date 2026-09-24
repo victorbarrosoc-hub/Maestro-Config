@@ -104,6 +104,10 @@ for(const [q, vp] of [['computador', { width: 1440, height: 900 }], ['celular', 
       suave: card && cs(card.querySelector('small, .enMeta, span') || card).color }; });
   checa(`${q} · o fundo é grafite, não preto (${m.fundo})`, m.fundo === 'rgb(28, 28, 31)', m);
   checa(`${q} · o card continua um degrau acima do fundo`, m.card && lum(m.card) > lum(m.fundo) * 1.15, m);
+  /* a barra do iPhone e a primeira pintura: sem isso a abertura nasce preta e
+     vira grafite (a v157 pegou essa piscada na primeira versão da v254) */
+  const barra = await pg.evaluate(() => document.querySelector('meta[name="theme-color"]')?.content);
+  checa(`${q} · a barra do sistema é grafite também (${barra})`, /^#1C1C1F$/i.test(barra || ''), barra);
   checa(`${q} · o título continua com contraste de sobra (≥ 13:1)`, contraste(m.texto, m.fundo) >= 13, { c: contraste(m.texto, m.fundo).toFixed(1) });
   for(const [nome, fn] of [['Ensaio', () => {}], ['Hoje', () => { S.route = 'dash'; S.hjVista = 'lista'; render(); }], ['Clientes', () => { S.route = 'clientes'; render(); }],
     ['Negócios', () => { S.route = 'crm'; render(); }], ['Conversas', () => { S.route = 'conversas'; render(); }]]){
