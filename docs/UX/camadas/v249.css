@@ -17,11 +17,15 @@
    ===================================================================== */
 :root{
   --ink-50:#F5F5F7; --ink-100:#EBEBF0; --ink-200:#D1D1D6; --ink-300:#AEAEB2; --ink-400:#8E8E93;
-  --ink-500:#727276; --ink-600:#48484A; --ink-700:#3A3A3C; --ink-800:#2C2C2E; --ink-850:#1C1C1E;
-  --ink-870:#18181A; --ink-900:#111113; --ink-950:#000000;
+  --ink-500:#727276; --ink-600:#525256; --ink-700:#444448; --ink-800:#36363A; --ink-850:#27272B;
+  --ink-870:#242427; --ink-900:#212124; --ink-950:#1C1C1F;
   /* o latão é a cor da marca: fica como era */
   --cobalt:#0A84FF; --encore:#30D158; --coral:#FF9F0A; --violet:#BF5AF2; --danger:#FF453A;
-  --fundo:#000000; --sup:#1C1C1E; --sup2:#232325; --lat:rgba(22,22,24,.92); --vidro:rgba(22,22,24,.72);
+  /* v254 — o escuro suave. O preto puro (#000) "fica feio demais", disse o
+     founder: com ele, o card (#1C1C1E) parecia um buraco aceso num poço. O
+     fundo vira grafite e cada camada sobe um degrau a partir dele; o
+     contraste do texto continua acima de 13:1. */
+  --fundo:#1C1C1F; --sup:#27272B; --sup2:#2F2F33; --lat:rgba(33,33,36,.92); --vidro:rgba(33,33,36,.74);
   --enc:rgba(118,118,128,.24); --enc2:rgba(118,118,128,.34); --fio:rgba(255,255,255,.07);
   --sombra:0 0 0 .5px rgba(255,255,255,.06); --sombraAlta:0 24px 60px rgba(0,0,0,.55), 0 0 0 .5px rgba(255,255,255,.08);
   --prim:#F5F5F7; --primT:#000000; --anel:rgba(255,200,87,.32);

@@ -27,10 +27,12 @@
 body.naVitrine .ctx{ display:none }
 body.naVitrine #root{ padding-top:0 }
 body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !important }
-.site.sv{ --sTx:#F5F5F7; --sTx2:#A1A1A6; --sTx3:#6E6E73; --sSup:#161617; --sSup2:#232325; --sFio:rgba(255,255,255,.09);
-  background:#000; color:var(--sTx); font-family:var(--sans); -webkit-font-smoothing:antialiased; overflow-x:hidden }
+/* v254: o grafite do app no lugar do preto puro; as fotos têm fundo preto e
+   entram com "lighten", então o preto delas vira o grafite da página */
+.site.sv{ --sTx:#F5F5F7; --sTx2:#A1A1A6; --sTx3:#76767B; --sSup:#27272B; --sSup2:#303034; --sFio:rgba(255,255,255,.09);
+  background:#1C1C1F; color:var(--sTx); font-family:var(--sans); -webkit-font-smoothing:antialiased; overflow-x:hidden }
 .sv .snav, .sv .snav.scrolled{ position:sticky; top:0; height:52px; padding:0 max(22px, calc(50% - 520px)); gap:28px;
-  background:rgba(0,0,0,.72); backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
+  background:rgba(28,28,31,.78); backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
   box-shadow:none; border-bottom:.5px solid var(--sFio) }
 .sv .logo b{ font-family:var(--sans); font-weight:650; font-size:18px; letter-spacing:-.015em; color:var(--sTx) }
 .sv .snav a{ color:var(--sTx2); font-size:13px }

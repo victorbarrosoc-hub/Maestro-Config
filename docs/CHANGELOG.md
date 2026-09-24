@@ -1,11 +1,43 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.67
+Version: 0.5.68
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.68 — 2026-09-24
+
+**Status:** Concluída
+
+### v254 — o escuro suave
+
+O founder, com print do site e do Ensaio: *"fundo preto profundo, muito
+escuro, preciso que fique mais opaco, mais suave, assim fica feio demais."*
+
+- **O fundo do tema escuro sai do preto puro para grafite** (`#1C1C1F`), e
+  cada camada sobe um degrau a partir dele: lateral `#212124`, card
+  `#27272B`, card sob o cursor `#2F2F33`, fios e chips `#36363A`. Com o
+  `#000`, o card parecia um buraco aceso num poço; agora as camadas se
+  leem pela diferença, não pelo contraste com o nada.
+- **Mudou só nos tokens da v249** (`docs/UX/camadas/v249.css`): o app
+  inteiro muda de uma vez, sem tocar em tela nenhuma.
+- **A vitrine vai junto.** As fotos têm fundo preto e entram com
+  `mix-blend-mode:lighten`, então o preto delas vira o grafite da página
+  sem refazer imagem nenhuma. Os blocos subiram para `#27272B`, e a barra
+  do topo também saiu do preto.
+- **O deslizar do cliente** abre em grafite, com o cartão e a folha um
+  degrau acima.
+- **Ficam pretos, de propósito:** vídeo (o preto é a moldura da
+  imagem) e o Modo Instagram (imita o Instagram escuro).
+- **O tema claro não muda.** O título segue acima de 13:1 de contraste.
+
+30 provas em `web/verificar/v254-o-escuro-suave.mjs`. A principal varre
+**toda área grande pintada de preto** em cinco telas da agência, no link do
+cliente, no deslizar e na vitrine, nos dois tamanhos. Rodada contra a v253,
+a suíte acusa 20 falhas; contra a v254, nenhuma. A suíte da v249 passou a
+esperar o grafite.
 
 ## 0.5.67 — 2026-09-24
 

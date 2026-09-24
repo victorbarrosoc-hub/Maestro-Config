@@ -15990,7 +15990,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v253 · 24 set · negócios e o deslizar';
+const VERSAO_PROTOTIPO = 'v254 · 24 set · o escuro suave';
 
 menuSheet = (function(orig){
   return function(){
@@ -45117,10 +45117,10 @@ body.emEnsaio .enBola:not(.site *){font-size:11px}
 <style id="v249-apple">
 :root{
 --ink-50:#F5F5F7; --ink-100:#EBEBF0; --ink-200:#D1D1D6; --ink-300:#AEAEB2; --ink-400:#8E8E93;
---ink-500:#727276; --ink-600:#48484A; --ink-700:#3A3A3C; --ink-800:#2C2C2E; --ink-850:#1C1C1E;
---ink-870:#18181A; --ink-900:#111113; --ink-950:#000000;
+--ink-500:#727276; --ink-600:#525256; --ink-700:#444448; --ink-800:#36363A; --ink-850:#27272B;
+--ink-870:#242427; --ink-900:#212124; --ink-950:#1C1C1F;
 --cobalt:#0A84FF; --encore:#30D158; --coral:#FF9F0A; --violet:#BF5AF2; --danger:#FF453A;
---fundo:#000000; --sup:#1C1C1E; --sup2:#232325; --lat:rgba(22,22,24,.92); --vidro:rgba(22,22,24,.72);
+--fundo:#1C1C1F; --sup:#27272B; --sup2:#2F2F33; --lat:rgba(33,33,36,.92); --vidro:rgba(33,33,36,.74);
 --enc:rgba(118,118,128,.24); --enc2:rgba(118,118,128,.34); --fio:rgba(255,255,255,.07);
 --sombra:0 0 0 .5px rgba(255,255,255,.06); --sombraAlta:0 24px 60px rgba(0,0,0,.55), 0 0 0 .5px rgba(255,255,255,.08);
 --prim:#F5F5F7; --primT:#000000; --anel:rgba(255,200,87,.32);
@@ -45728,10 +45728,10 @@ body[data-rota="conversas"]{ overscroll-behavior:none }
 body.naVitrine .ctx{ display:none }
 body.naVitrine #root{ padding-top:0 }
 body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !important }
-.site.sv{ --sTx:#F5F5F7; --sTx2:#A1A1A6; --sTx3:#6E6E73; --sSup:#161617; --sSup2:#232325; --sFio:rgba(255,255,255,.09);
-background:#000; color:var(--sTx); font-family:var(--sans); -webkit-font-smoothing:antialiased; overflow-x:hidden }
+.site.sv{ --sTx:#F5F5F7; --sTx2:#A1A1A6; --sTx3:#76767B; --sSup:#27272B; --sSup2:#303034; --sFio:rgba(255,255,255,.09);
+background:#1C1C1F; color:var(--sTx); font-family:var(--sans); -webkit-font-smoothing:antialiased; overflow-x:hidden }
 .sv .snav, .sv .snav.scrolled{ position:sticky; top:0; height:52px; padding:0 max(22px, calc(50% - 520px)); gap:28px;
-background:rgba(0,0,0,.72); backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
+background:rgba(28,28,31,.78); backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
 box-shadow:none; border-bottom:.5px solid var(--sFio) }
 .sv .logo b{ font-family:var(--sans); font-weight:650; font-size:18px; letter-spacing:-.015em; color:var(--sTx) }
 .sv .snav a{ color:var(--sTx2); font-size:13px }
@@ -46685,7 +46685,7 @@ border-radius:18px; border:0; background:linear-gradient(135deg, rgba(200,150,58
 .dzEntrada .t{ flex:1; display:grid; gap:2px } .dzEntrada .t b{ font-size:15.5px } .dzEntrada .t span{ font-size:13px; color:var(--mut) }
 .dzEntradaIc{ width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:#C8963A; color:#000; font-size:19px; flex:0 0 auto }
 body.v253dzAberto{ overflow:hidden }
-#v253dz{ position:fixed; inset:0; z-index:960; display:flex; flex-direction:column; background:#0B0B0C; color:#F5F5F7;
+#v253dz{ position:fixed; inset:0; z-index:960; display:flex; flex-direction:column; background:#18181B; color:#F5F5F7;
 padding:calc(10px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom)); animation:v249fundo .2s ease both; touch-action:none }
 .dzTopo{ display:flex; align-items:center; gap:12px; max-width:460px; width:100%; margin:0 auto }
 .dzTopo span{ font-size:13px; color:#A1A1A6; font-variant-numeric:tabular-nums }
@@ -46694,7 +46694,7 @@ padding:calc(10px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-ins
 .dzProg i{ display:block; height:100%; background:#C8963A; transition:width .3s }
 .dzPalco{ flex:1; display:grid; place-items:center; min-height:0; padding:14px 0 10px }
 .dzCartao{ position:relative; width:100%; max-width:430px; max-height:100%; display:flex; flex-direction:column; border-radius:26px; overflow:hidden;
-background:#1C1C1E; box-shadow:0 30px 80px rgba(0,0,0,.55); user-select:none; -webkit-user-select:none; cursor:grab; will-change:transform }
+background:#27272B; box-shadow:0 30px 80px rgba(0,0,0,.45); user-select:none; -webkit-user-select:none; cursor:grab; will-change:transform }
 .dzCartao:active{ cursor:grabbing }
 .dzMidia{ position:relative; flex:1 1 auto; min-height:0; aspect-ratio:4/5; max-height:62vh; background:#000 }
 .dzMidia img, .dzMidia video{ width:100%; height:100%; object-fit:cover; display:block; pointer-events:none }
@@ -46702,7 +46702,7 @@ background:#1C1C1E; box-shadow:0 30px 80px rgba(0,0,0,.55); user-select:none; -w
 .dzPontos i{ flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.35) } .dzPontos i.on{ background:#fff }
 .dzAntes, .dzDepois{ position:absolute; top:0; bottom:0; width:30%; background:none; border:0 }
 .dzAntes{ left:0 } .dzDepois{ right:0 }
-.dzTexto{ flex:1 1 auto; padding:26px 22px; overflow:auto; max-height:62vh; background:linear-gradient(160deg, #2A2A2E, #1C1C1E) }
+.dzTexto{ flex:1 1 auto; padding:26px 22px; overflow:auto; max-height:62vh; background:linear-gradient(160deg, #323236, #27272B) }
 .dzTexto .rot{ font-size:12px; font-weight:650; color:#C8963A } .dzTexto p{ margin:10px 0 0; font-size:17px; line-height:1.55; white-space:pre-wrap; color:#F5F5F7 }
 .dzInfo{ padding:14px 18px 16px; display:grid; gap:4px }
 .dzInfo b{ font-size:17px; font-weight:650; letter-spacing:-.01em } .dzInfo > span{ font-size:12.5px; color:#A1A1A6 }
@@ -46715,7 +46715,7 @@ text-transform:uppercase; opacity:0; pointer-events:none; background:rgba(0,0,0,
 .dzSelo.ajuste{ right:20px; color:#FF9F0A; border-color:#FF9F0A; transform:rotate(12deg) }
 .dzSelo.amei{ left:50%; top:auto; bottom:40%; transform:translateX(-50%); color:#FFD60A; border-color:#FFD60A }
 .dzBts{ display:flex; justify-content:center; align-items:center; gap:22px; padding:4px 0 2px }
-.dzB{ width:64px; height:64px; border-radius:50%; display:grid; place-items:center; background:#1C1C1E; box-shadow:0 8px 24px rgba(0,0,0,.4);
+.dzB{ width:64px; height:64px; border-radius:50%; display:grid; place-items:center; background:#2A2A2E; box-shadow:0 8px 24px rgba(0,0,0,.35);
 font-size:28px; transition:transform .14s ease }
 .dzB:active{ transform:scale(.9) }
 .dzB.ajuste{ color:#FF9F0A } .dzB.ok{ color:#30D158; font-size:30px } .dzB.amei{ width:52px; height:52px; color:#FFD60A; font-size:24px }
@@ -46725,12 +46725,12 @@ padding:10px 12px 10px 16px; border-radius:999px; background:rgba(44,44,46,.96);
 .dzDesfaz span{ overflow:hidden; text-overflow:ellipsis }
 .dzDesfaz button{ border:0; background:none; color:#C8963A; font-weight:700; font-size:13.5px }
 .dzFolha{ position:fixed; left:0; right:0; bottom:0; z-index:2; display:grid; gap:12px; padding:20px 18px calc(18px + env(safe-area-inset-bottom));
-border-radius:24px 24px 0 0; background:#1C1C1E; box-shadow:0 -20px 60px rgba(0,0,0,.5); animation:v249folha .3s cubic-bezier(.2,.8,.2,1) both;
+border-radius:24px 24px 0 0; background:#27272B; box-shadow:0 -20px 60px rgba(0,0,0,.5); animation:v249folha .3s cubic-bezier(.2,.8,.2,1) both;
 max-width:560px; margin:0 auto }
 .dzFolha b{ font-size:16.5px } .dzFolha.amei b{ color:#FFD60A }
-.dzFolha textarea{ width:100%; padding:12px; border-radius:14px; border:0; background:#2C2C2E; color:#F5F5F7; font:inherit; font-size:16px; resize:none }
+.dzFolha textarea{ width:100%; padding:12px; border-radius:14px; border:0; background:#36363A; color:#F5F5F7; font:inherit; font-size:16px; resize:none }
 .dzTelas{ display:flex; flex-wrap:wrap; gap:6px }
-.dzTelas button{ padding:7px 13px; border-radius:999px; border:0; background:#2C2C2E; color:#E5E5EA; font-size:13.5px; font-weight:550 }
+.dzTelas button{ padding:7px 13px; border-radius:999px; border:0; background:#36363A; color:#E5E5EA; font-size:13.5px; font-weight:550 }
 .dzTelas button.on{ background:#F5F5F7; color:#000 }
 .dzFolhaBts{ display:grid; grid-template-columns:1fr 1.4fr; gap:8px } .dzFolhaBts .clbtn{ margin:0 !important }
 .dzFim{ display:grid; justify-items:center; gap:8px; text-align:center; max-width:360px }

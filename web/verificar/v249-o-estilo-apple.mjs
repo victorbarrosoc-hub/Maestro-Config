@@ -92,7 +92,7 @@ for(const tema of ['escuro', 'claro']){
       botao: b && parseFloat(cs(b).borderTopLeftRadius), siteFundo: getComputedStyle(site).getPropertyValue('--ink-950').trim(),
       grp: cs(document.querySelector('.aside .grp')).textTransform };
     site.remove(); return r; });
-  const esperado = tema === 'claro' ? 'rgb(245, 245, 247)' : 'rgb(0, 0, 0)';
+  const esperado = tema === 'claro' ? 'rgb(245, 245, 247)' : 'rgb(28, 28, 31)';   // v254: grafite, não preto
   checa(`${tema}: o fundo é o da Apple (${esperado})`, m.fundo === esperado && m.main === esperado, m);
   checa(`${tema}: as superfícies flutuam, sem contorno, cantos de 14px ou mais`, m.card && /^0px|none/.test(m.card.borda) && m.card.raio >= 14, m.card);
   if(tema === 'claro') checa('claro: a superfície é branca sobre o cinza', m.card && m.card.bg === 'rgb(255, 255, 255)', m.card);

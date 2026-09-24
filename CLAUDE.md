@@ -299,6 +299,16 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v254) — o escuro suave.** "Fundo preto profundo, muito
+escuro… fica feio demais." O tema escuro troca o `#000` por grafite
+(`#1C1C1F`) e cada camada sobe um degrau a partir dele (card `#27272B`,
+lateral `#212124`) — só nos TOKENS da v249, então o app inteiro muda de
+uma vez. A vitrine vai junto; as fotos têm fundo preto e entram com
+`mix-blend-mode:lighten`, então o preto delas vira o grafite sem refazer
+imagem. O deslizar também. Ficam pretos, de propósito: vídeo e o Modo
+Instagram (imita o Instagram). O tema claro não muda. 30 provas em
+`web/verificar/v254-o-escuro-suave.mjs`, que varrem toda área grande
+pintada de preto — contra a v253 a suíte acusa 20.
 **Fechado (24 set, v253) — Negócios, o deslizar e a vitrine com fotos.**
 (1) **Negócios** (o CRM, em `/negocios`): um negócio só, com os contatos
 dentro; próxima ação obrigatória; follow-up da proposta automático; fee
