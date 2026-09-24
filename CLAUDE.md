@@ -299,6 +299,25 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v263) — as cinco redes num clique.** "Faz o botão
+importar as cinco redes num clique." O importador abre em **Todas as
+redes**: um arraste com os arquivos das cinco, cada peça na rede que o
+conteúdo diz, um card por rede (conta, status, arquivos), um "Conferi" e um
+"Substituir" para todas, e o botão **"Importar as 5 redes"** — cada rede
+numa linha do banco, a que falha não leva as outras, a que não pode entrar
+(mês fora) não segura as outras e fica no modal. **A regra da v262 não
+caiu:** "Visualizações" e "Interações com o conteúdo" têm o mesmo título no
+Instagram e no Facebook, e nunca são decididos em silêncio — ou quem importa
+escolhe (chips com período e SOMA, que é o que reconhece o perfil), ou a
+tela sugere com o motivo (só uma das duas tem outros arquivos · mesmo
+período dos outros · o par do que já foi escolhido) e a sugestão entra no
+"Conferi" com "É do Facebook" ao lado. Com os arquivos reais do Drive: zero
+toques extras (os períodos diferem); exportados no mesmo período: dois
+toques. Conta nova sem pista vira o nome do cliente (editável). Formato
+genérico ("Data,<coluna>") só vale dentro do .zip das irmãs. De quebra: a
+janela do importador piscava a cada toque (a moldura era recriada e a
+animação da v249 recomeçava). 59 provas em
+`web/verificar/v263-as-cinco-redes.mjs`.
 **Fechado (24 set, v262) — Redes em cinco plataformas.** O pedido inteiro
 (quatro fases) com os arquivos REAIS da EJUP como prova
 (`web/verificar/fixtures/redes/`; repositório privado, pasta bloqueada no

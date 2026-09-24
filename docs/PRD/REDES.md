@@ -85,8 +85,12 @@ no lugar. A partir do segundo mês a conta já vem escolhida. Na prática: uma
 seleção de arquivos e um "Importar" por rede. E dá para importar com menos
 arquivos — o que faltar é dito ("Faltam: … Dá para importar sem elas").
 
-**Próximo passo sem depender de ninguém:** "Importar as cinco redes" num
-clique quando as contas já existem (do segundo mês em diante).
+**No ar desde a v263: "Importar as 5 redes".** O importador abre em
+"Todas as redes": um arraste com os arquivos das cinco, um card por rede, um
+"Conferi" e um botão. Os únicos arquivos que podem pedir um toque são os
+gêmeos do Meta ("Visualizações" e "Interações com o conteúdo", mesmo título
+no Instagram e no Facebook): com períodos diferentes, a tela resolve sozinha
+e diz por quê; no mesmo período, dois toques (o par se resolve sozinho).
 
 **O fim dos arquivos: conectar as contas.** Em ordem de facilidade (os
 requisitos das plataformas mudam — conferir na hora de pedir):
@@ -158,6 +162,12 @@ requisitos das plataformas mudam — conferir na hora de pedir):
     agência e, da próxima vez, o arquivo entra sozinho.
 17. **Nada falha em silêncio.** Zip quebrado, `.xls` antigo, PDF, arquivo
     vazio, formato desconhecido: cada um diz o que houve.
+18. **Todas as redes de uma vez (v263)** — o padrão do importador. A regra 1
+    continua: o que casa com mais de uma rede ou é escolhido por quem
+    importa, ou é sugerido com o motivo (só uma das redes tem outros
+    arquivos · mesmo período dos outros · o par do que já foi escolhido) e
+    entra no "Conferi". Cada rede grava na sua linha: a que falha não leva
+    as outras, a que não pode entrar não segura as outras.
 
 ## 5. Arquitetura e dados
 
@@ -195,7 +205,6 @@ requisitos das plataformas mudam — conferir na hora de pedir):
 
 ## 7. O que fica para depois
 
-- "Importar as cinco redes" num clique (do segundo mês em diante).
 - Adaptador do export **por conteúdo** do Meta (precisa de um arquivo real).
 - As conexões por API, na ordem da seção 3.
 - A leitura escrita (resumo do mês em texto) — com o cérebro da marca.

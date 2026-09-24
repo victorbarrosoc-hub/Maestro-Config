@@ -316,7 +316,7 @@ ficam com os nomes de hoje, e o botão de cada card é sempre a próxima porta.
       adaptadores, importador por rede (substitui, nunca soma), relatório do mês
       com o Cronograma embaixo dos picos, XLSX e ZIP. Estudo em
       `docs/PRD/REDES.md`. **Falta daqui:**
-  - [ ] "Importar as cinco redes" num clique, quando as contas já existem
+  - [x] "Importar as cinco redes" num clique (v263)
   - [ ] Adaptador do export **por conteúdo** do Meta (precisa de um arquivo real)
   - [ ] Conexão por API: YouTube Analytics → Meta Graph (mesmo app do WhatsApp) →
         TikTok business → LinkedIn Community Management

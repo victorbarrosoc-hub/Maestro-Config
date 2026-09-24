@@ -138,9 +138,10 @@ const S2 = await abrir();
   await pg.click('.rd2Topo [data-rd2imp]'); await pg.waitForTimeout(200);
   const ini = await pg.evaluate(() => ({ cli: document.querySelector('[data-rd2cli]').value, mes: document.querySelector('[data-rd2mesref]').value,
     plat: document.querySelector('[data-rd2plat][aria-checked="true"]')?.dataset.rd2plat || null }));
-  checa('abre no cliente da ficha e no mês de hoje, SEM plataforma escolhida', ini.cli === 'cj' && ini.mes === '2026-09' && ini.plat === null, ini);
+  /* v263: o padrão é "Todas as redes"; este bloco prova o modo de UMA rede, escolhida no chip */
+  checa('abre no cliente da ficha e no mês de hoje, em "Todas as redes" (v263)', ini.cli === 'cj' && ini.mes === '2026-09' && ini.plat === 'todas', ini);
   const b0 = await botao(pg);
-  checa('sem plataforma, Importar desligado e o porquê à vista', b0.dis && /Escolha a plataforma/.test(b0.pq), b0);
+  checa('sem arquivo, Importar desligado e o porquê à vista', b0.dis && /Solte os arquivos/.test(b0.pq), b0);
   await escolherPlat(pg, 'instagram');
   const slots = await pg.evaluate(() => [...document.querySelectorAll('[data-rd2slot]')].map(s => s.dataset.rd2slot + ':' + (s.classList.contains('cheio') ? 'cheio' : 'pendente')));
   checa('Instagram: seis campos, todos pendentes', slots.length === 6 && slots.every(s => s.endsWith('pendente')), slots);
@@ -148,8 +149,8 @@ const S2 = await abrir();
   const cheios = await pg.evaluate(() => [...document.querySelectorAll('[data-rd2slot].cheio')].map(s => s.dataset.rd2slot));
   const st = await pg.evaluate(() => [...document.querySelectorAll('.rd2Item .rd2St')].map(s => s.textContent));
   checa('soltos todos de uma vez, cada arquivo cai no SEU campo', cheios.length === 6 && st.length === 6 && st.every(s => s === 'lido'), { cheios, st });
-  const b1 = await botao(pg);
-  checa('sem conta ainda: Importar espera o nome do perfil', b1.dis && /conta/.test(b1.pq), b1);
+  const sug = await pg.evaluate(() => document.querySelector('[data-rd2contanova]')?.value);
+  checa('sem conta ainda: o nome do cliente entra como sugestão, editável (v263)', sug === 'Cortez Jurídico', sug);
   await contaNova(pg, '@ejupoficial');
   const b2 = await botao(pg);
   checa('com o perfil, Importar liga', !b2.dis && !b2.pq, b2);

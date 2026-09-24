@@ -10,11 +10,18 @@
        dados NÃO permitem concluir;
      · o inventário do que foi importado e o histórico das importações.
 
-   O modal: cliente, conta, plataforma (sempre escolhida por quem importa,
-   nunca deduzida do arquivo) e mês; os campos vêm do adaptador da rede;
-   "solte tudo aqui" distribui cada arquivo pelo CONTEÚDO; o que for de
-   outra rede fica na bandeja para a próxima; nada é gravado sem mostrar
+   O modal: cliente, conta, plataforma e mês; os campos vêm do adaptador da
+   rede; "solte tudo aqui" distribui cada arquivo pelo CONTEÚDO; o que for
+   de outra rede fica na bandeja para a próxima; nada é gravado sem mostrar
    antes o que vai mudar.
+
+   v263 — "Todas as redes" (o padrão): os arquivos das cinco de uma vez,
+   cada peça na rede que o conteúdo diz. O que o Meta exporta com o MESMO
+   título no Instagram e no Facebook nunca é decidido em silêncio: ou quem
+   importa escolhe, ou a tela sugere com o motivo à vista (os outros
+   arquivos, o período, o par) e a sugestão entra no "Conferi". Um card por
+   rede, uma confirmação e um "Substituir" para todas, e um botão:
+   "Importar as 5 redes".
    ===================================================================== */
 (function(G){
   'use strict';
@@ -300,8 +307,8 @@
   function abrirImportar(opts){
     opts = opts || {};
     const cli = opts.cli || (typeof cliAtual === 'function' ? cliAtual().id : null);
-    Object.assign(I, { aberto: true, cli, plat: opts.plat || null, mes: opts.mes || T.mes[cli] || hoje().slice(0, 7),
-      conta: '', contaNova: '', brutos: [], itens: [], pacote: null, comparacao: null, confirmou: false, substituir: false,
+    Object.assign(I, { aberto: true, cli, plat: opts.plat || TODAS, mes: opts.mes || T.mes[cli] || hoje().slice(0, 7),
+      conta: '', contaNova: '', contas: {}, redes: {}, brutos: [], itens: [], pacote: null, comparacao: null, confirmou: false, substituir: false,
       gravando: false, lendo: 0, erro: null, feito: null, wizard: null });
     if(!estado(cli).carregado) carregar(cli);
     desenhar(true);
@@ -311,24 +318,44 @@
     document.getElementById('rd2Modal')?.remove();
     document.documentElement.classList.remove('rd2ModalAberto');
   }
-  const dadosAtuais = () => estado(I.cli).porPlat[I.plat] || null;
-  function contasExistentes(){
-    const d = dadosAtuais();
+  /* uma rede só (I.plat = 'instagram'…) ou todas de uma vez (I.plat = TODAS) */
+  const TODAS = 'todas';
+  const emLote = () => I.plat === TODAS;
+  const dadosDe = p => estado(I.cli).porPlat[p] || null;
+  const dadosAtuais = () => dadosDe(I.plat);
+  /* a escolha de conta: no modo de uma rede mora no próprio I; no lote, uma por rede */
+  const stConta = p => emLote() ? (I.contas[p] = I.contas[p] || { conta: '', contaNova: '' }) : I;
+  function contasExistentes(p){
+    const d = dadosDe(p || I.plat);
     return d ? Object.entries(d.contas || {}).map(([id, c]) => ({ id, nome: c.nome || id })) : [];
   }
-  function sugestaoConta(){
-    const L = (I.pacote && I.pacote.leituras || []).find(x => x.dica && x.dica.conta);
+  function sugestaoConta(p, pacote){
+    p = p || I.plat;
+    const P = pacote === undefined ? I.pacote : pacote;
+    const L = (P && P.leituras || []).find(x => x.dica && x.dica.conta);
     if(L) return L.dica.conta;
-    const p = A().plataformas[I.plat] || {};
+    const pl = A().plataformas[p] || {};
     const c = cliPorId(I.cli);
-    for(const k of (p.conta && p.conta.doCadastro) || []) if(c[k]) return '@' + String(c[k]).replace(/^@/, '');
-    return '';
+    for(const k of (pl.conta && pl.conta.doCadastro) || []) if(c[k]) return '@' + String(c[k]).replace(/^@/, '');
+    /* sem pista nos arquivos nem no cadastro: o nome do cliente — editável, e não trava a
+       importação (quase todo cliente tem uma conta por rede; o nome é só o rótulo dela) */
+    return c.nome && c.nome !== c.id ? c.nome : '';
   }
-  function contaEscolhida(){
-    const ex = contasExistentes();
-    if(I.conta && I.conta !== '__nova__'){ const c = ex.find(x => x.id === I.conta); if(c) return c; }
-    const nome = (I.contaNova || '').trim();
+  function contaEscolhida(p){
+    p = p || I.plat;
+    const st = stConta(p), ex = contasExistentes(p);
+    if(st.conta && st.conta !== '__nova__'){ const c = ex.find(x => x.id === st.conta); if(c) return c; }
+    const nome = (st.contaNova || '').trim();
     return nome ? { id: D().slugConta(nome), nome } : null;
+  }
+  /* uma conta só daquela rede → ela; nenhuma → "nova", com a sugestão dos arquivos ou do cadastro */
+  function contaPadrao(p, pacote){
+    const st = stConta(p);
+    if(!st.conta && !st.contaNova){
+      const ex = contasExistentes(p);
+      if(ex.length === 1) st.conta = ex[0].id;
+      else if(!ex.length){ st.conta = '__nova__'; st.contaNova = sugestaoConta(p, pacote); }
+    } else if(st.conta === '__nova__' && !st.contaNova) st.contaNova = sugestaoConta(p, pacote);
   }
 
   /* ----- ler arquivos ----- */
@@ -350,6 +377,7 @@
   async function analisarTudo(){
     I.itens = [];
     if(!I.plat){ recalcular(); return; }
+    if(emLote()){ await analisarLote(); recalcular(); return; }
     for(const b of I.brutos){
       if(!b.bytes){ I.itens.push({ uid: b.uid, bruto: b, r: { nome: b.nome, status: 'erro', msgs: [{ nivel: 'erro', texto: b.erro }], leituras: [] } }); continue; }
       const rs = await M().lerArquivo({ nome: b.nome, bytes: b.bytes }, I.plat, T.extras, { hoje: hoje() });
@@ -357,15 +385,136 @@
     }
     recalcular();
   }
+  /* ----- todas as redes: cada peça na rede que o conteúdo diz ----- */
+  /* em que redes a peça casa. Forma genérica ("Data,<qualquer coisa>") só vale
+     se nenhuma específica casar; título que cita uma das redes candidatas decide
+     entre elas ("Cliques no link do Instagram" casa com a forma do Facebook
+     também — é o "do Instagram" que diz de quem é) */
+  function candidatas(peca){
+    if(!peca || peca.tipo === 'erro') return [];
+    const out = [];
+    for(const [p] of plats()){
+      if(peca.tipo === 'xlsx'){ const rs = M().reconhecerAbas(peca, p, T.extras); if(rs.length) out.push({ plat: p, generica: false, citou: null, cat: rs[0].cat.id, rot: rs[0].cat.rotulo }); continue; }
+      const r = M().reconhecer(peca, p, T.extras);
+      if(r) out.push({ plat: p, generica: !!r.generica, citou: r.citou || null, cat: r.cat.id, rot: r.cat.rotulo });
+    }
+    let c = out;
+    if(c.some(x => !x.generica)) c = c.filter(x => !x.generica);
+    const cit = c.find(x => x.citou && c.some(y => y.plat === x.citou));
+    if(cit && c.length > 1) c = c.filter(x => x.plat === cit.citou);
+    return c;
+  }
+  function desconhecida(peca){
+    const nome = peca.origem ? `${peca.origem} › ${peca.nome}` : peca.nome;
+    if(peca.tipo === 'erro') return { peca, nome, leituras: [], status: 'erro', msgs: [{ nivel: 'erro', texto: peca.erro }] };
+    if(peca.tipo === 'xlsx') return { peca, nome, leituras: [], status: 'desconhecido',
+      msgs: [{ nivel: 'erro', texto: `Planilha não reconhecida em nenhuma das cinco redes. Abas: ${(peca.abas || []).map(a => a.nome).join(', ') || '(nenhuma)'}.` }] };
+    return { peca, nome, leituras: [], status: 'desconhecido', previa: peca.previa || [],
+      msgs: [{ nivel: 'erro', texto: 'Formato não reconhecido em nenhuma das cinco redes. As primeiras linhas estão abaixo.' }] };
+  }
+  const somaDe = r => { let t = 0, tem = false;
+    for(const L of (r && r.leituras) || []) for(const S of Object.values(L.series || {})) if(S.nat === 'fluxo') for(const v of Object.values(S.d)) if(typeof v === 'number'){ t += v; tem = true; }
+    return tem ? t : null; };
+  async function analisarLote(){
+    const ctx = { hoje: hoje() };
+    for(const b of I.brutos){
+      if(!b.bytes){ I.itens.push({ uid: b.uid, bruto: b, r: { nome: b.nome, status: 'erro', msgs: [{ nivel: 'erro', texto: b.erro }], leituras: [] } }); continue; }
+      /* aberto uma vez só: escolher a rede de uma peça não reabre os .zip */
+      if(!b.pecas) b.pecas = await M().abrir({ nome: b.nome, bytes: b.bytes });
+      b.escolha = b.escolha || {};
+      b.pecas.forEach((peca, i) => I.itens.push({ uid: b.uid, idx: i, bruto: b, peca, cands: candidatas(peca) }));
+    }
+    const pecas = I.itens.filter(x => x.peca);
+    /* 1. uma rede só casa: é dela */
+    for(const x of pecas) if(x.cands.length === 1 && !x.cands[0].generica) x.plat = x.cands[0].plat;
+    /* 2. forma genérica dentro do mesmo .zip de uma peça decidida vai junto (o Total.csv do
+          YouTube); fora disso, "Data,<qualquer coisa>" não é indício de rede nenhuma (v262) —
+          uma planilha feita à mão não pode aparecer como "é do YouTube?" */
+    for(const x of pecas){
+      if(x.plat || !x.cands.length || !x.cands.every(c => c.generica)) continue;
+      const irma = pecas.find(y => y !== x && y.uid === x.uid && y.plat && x.cands.some(c => c.plat === y.plat));
+      if(irma) x.plat = irma.plat; else x.cands = [];
+    }
+    /* 3. o que quem importa escolheu */
+    for(const x of pecas) if(!x.plat && x.cands.length){
+      const e = x.bruto.escolha[x.idx];
+      if(e && x.cands.some(c => c.plat === e)){ x.plat = e; x.escolhida = true; }
+    }
+    for(const x of pecas) if(x.plat) x.r = M().analisarPeca(x.peca, x.plat, T.extras, ctx);
+    /* 4. o que ficou em dúvida: uma sugestão, com o motivo — nunca em silêncio */
+    const firmes = pecas.filter(x => x.plat && !x.escolhida && x.r && (x.r.status === 'lido' || x.r.status === 'vazio'));
+    const perDe = p => M().juntaPeriodos(firmes.filter(x => x.plat === p).map(x => x.r.periodo || (x.r.leituras[0] && x.r.leituras[0].periodo)).filter(Boolean));
+    const duvida = pecas.filter(x => !x.plat && x.cands.length);
+    for(const x of duvida){
+      const r0 = M().analisarPeca(x.peca, x.cands[0].plat, T.extras, ctx);
+      x.periodo = r0.periodo || (r0.leituras[0] && r0.leituras[0].periodo) || null;
+      x.soma = somaDe(r0);
+      const ps = x.cands.map(c => c.plat);
+      const presentes = ps.filter(p => firmes.some(y => y.plat === p));
+      if(presentes.length === 1){ x.sug = { plat: presentes[0], porque: `só o ${nomePlat(presentes[0])} tem outros arquivos aqui` }; continue; }
+      if(x.periodo){
+        const iguais = ps.filter(p => { const q = perDe(p); return q && q[0] === x.periodo[0] && q[1] === x.periodo[1]; });
+        if(iguais.length === 1){ const q = perDe(iguais[0]); x.sug = { plat: iguais[0], porque: `mesmo período dos outros do ${nomePlat(iguais[0])} (${dm(q[0])} a ${dm(q[1])})` }; }
+      }
+    }
+    /* o par: dois "Visualizações", um já é do Instagram — o outro é do Facebook */
+    for(const x of duvida){
+      if(x.sug) continue;
+      const irmas = duvida.filter(y => y.cands[0].cat === x.cands[0].cat && y.cands.length === x.cands.length);
+      const tomadas = pecas.filter(y => y.escolhida && y.cands.length > 1 && y.cands[0].cat === x.cands[0].cat).map(y => y.plat);
+      const sobra = x.cands.map(c => c.plat).filter(p => !tomadas.includes(p));
+      const semDono = irmas.filter(y => !y.sug);
+      if(tomadas.length && sobra.length === 1 && semDono.length === 1)
+        x.sug = { plat: sobra[0], porque: `o outro "${x.cands[0].rot}" é do ${nomePlat(tomadas[0])}` };
+    }
+    for(const x of duvida) if(x.sug){ x.plat = x.sug.plat; x.r = M().analisarPeca(x.peca, x.plat, T.extras, ctx); }
+    /* 5. o resto: sem rede nenhuma, ou esperando a escolha */
+    for(const x of pecas){
+      if(x.r) continue;
+      if(!x.cands.length) x.r = desconhecida(x.peca);
+      else x.r = { peca: x.peca, nome: x.peca.origem ? `${x.peca.origem} › ${x.peca.nome}` : x.peca.nome, leituras: [], status: 'escolher', msgs: [] };
+    }
+  }
+  const pendentes = () => I.itens.filter(x => x.peca && !x.plat && x.cands && x.cands.length);
+  function recalcularLote(){
+    const grupos = {};
+    for(const x of I.itens) if(x.plat && x.r && (x.r.status === 'lido' || x.r.status === 'vazio')) (grupos[x.plat] = grupos[x.plat] || []).push(x);
+    const redes = {};
+    for(const [p] of plats()){
+      const xs = grupos[p];
+      if(!xs) continue;
+      const pacote = M().montarPacote(xs.flatMap(x => x.r.leituras), { plat: p, mesRef: I.mes, hoje: hoje() });
+      contaPadrao(p, pacote);
+      const conta = contaEscolhida(p);
+      redes[p] = { itens: xs, pacote, comparacao: conta ? D().comparar(dadosDe(p), pacote, conta.id) : null,
+        sugeridas: xs.filter(x => x.sug && !x.escolhida) };
+    }
+    I.redes = redes;
+    I.confirmou = false;
+    desenhar();
+  }
+  function prontas(){
+    const pend = pendentes();
+    return Object.keys(I.redes).filter(p => { const R = I.redes[p];
+      return R.pacote && !R.pacote.bloqueado && R.pacote.leituras.length && contaEscolhida(p) && !pend.some(x => x.cands.some(c => c.plat === p)); });
+  }
+  function motivoEspera(p){
+    const R = I.redes[p];
+    const n = pendentes().filter(x => x.cands.some(c => c.plat === p)).length;
+    if(n) return `escolha a rede de ${n} ${n === 1 ? 'arquivo' : 'arquivos'}`;
+    if(R && R.pacote.bloqueado) return 'o mês de referência não está nos arquivos';
+    if(!contaEscolhida(p)) return 'escolha a conta ou escreva o nome da nova';
+    return '';
+  }
+  const precisaConferir = p => !!(I.redes[p] && (I.redes[p].pacote.confirmar.length || I.redes[p].sugeridas.length));
+  const precisaSubstituir = p => !!(I.redes[p] && I.redes[p].comparacao && I.redes[p].comparacao.existiam);
+
   function recalcular(){
+    if(emLote()) return recalcularLote();
     const validos = I.itens.filter(x => x.r.status === 'lido' || x.r.status === 'vazio');
     const leituras = validos.flatMap(x => x.r.leituras);
     I.pacote = leituras.length ? M().montarPacote(leituras, { plat: I.plat, mesRef: I.mes, hoje: hoje() }) : null;
-    if(!I.conta && !I.contaNova){
-      const ex = contasExistentes();
-      if(ex.length === 1) I.conta = ex[0].id;
-      else if(!ex.length){ I.conta = '__nova__'; I.contaNova = sugestaoConta(); }
-    } else if(I.conta === '__nova__' && !I.contaNova) I.contaNova = sugestaoConta();
+    contaPadrao(I.plat, I.pacote);
     const conta = contaEscolhida();
     I.comparacao = I.pacote && conta ? D().comparar(dadosAtuais(), I.pacote, conta.id) : null;
     I.confirmou = false;
@@ -384,9 +533,15 @@
       document.body.appendChild(el);
       document.documentElement.classList.add('rd2ModalAberto');
     }
-    el.innerHTML = `<div class="modal rd2Fundo"><div class="modalbox wide rd2Imp" role="dialog" aria-modal="true" aria-labelledby="rd2ImpTit">${I.wizard ? wizardHtml() : modalHtml()}</div></div>`;
-    const nb = el.querySelector('.modalbox');
-    if(nb) nb.scrollTop = rol;
+    /* a moldura nasce uma vez: o fundo e a janela têm animação de entrada (v249), e
+       recriá-los a cada toque fazia a janela piscar do zero em todo redesenho */
+    let nb = el.querySelector('.modalbox');
+    if(!nb){
+      el.innerHTML = `<div class="modal rd2Fundo"><div class="modalbox wide rd2Imp" role="dialog" aria-modal="true" aria-labelledby="rd2ImpTit"></div></div>`;
+      nb = el.querySelector('.modalbox');
+    }
+    nb.innerHTML = I.wizard ? wizardHtml() : modalHtml();
+    nb.scrollTop = rol;
     if(foco){ const f = el.querySelector(`[data-rd2foco="${foco}"]`); if(f) try{ f.focus(); }catch(e){} }
     else if(primeira){ const f = el.querySelector('[data-rd2plat]'); if(f) try{ f.focus(); }catch(e){} }
   }
@@ -406,14 +561,21 @@
     }
     const per = r.periodo || (r.leituras[0] && r.leituras[0].periodo);
     const extra = r.leituras.length === 1 && r.leituras[0].nConteudos != null ? ` · ${r.leituras[0].nConteudos} ${r.leituras[0].nConteudos === 1 ? 'conteúdo' : 'conteúdos'}` : '';
+    /* lote: peça que casava com mais de uma rede diz por que está aqui, e troca num toque */
+    const outrasRedes = emLote() && x.cands && x.cands.length > 1 && x.plat ? x.cands.filter(c => c.plat !== x.plat) : [];
+    const porque = outrasRedes.length ? `<p class="rd2DeQual">${x.escolhida ? 'Rede escolhida por você.' : `Sugestão: ${h(x.sug ? x.sug.porque : '')}.`}
+      ${outrasRedes.map(c => `<button class="b gho sm" data-rd2esc="${x.uid}:${x.idx}:${c.plat}">É do ${h(nomePlat(c.plat))}</button>`).join('')}</p>` : '';
+    const csvNovo = x.r.peca && x.r.peca.tipo === 'csv' && !(r.outras || []).length;
+    const registrar = !(r.previa && r.previa.length) || !csvNovo ? ''
+      : emLote() ? `<p class="rd2Registrar">Registrar este formato como: ${plats().map(([k, pl]) => `<button class="b gho sm" data-rd2adaptarp="${x.uid}:${x.idx || 0}:${k}">${h(pl.nome)}</button>`).join('')}</p>`
+      : `<button class="b gho sm" data-rd2adaptar="${x.uid}:${x.idx || 0}">Registrar este formato como novo adaptador…</button>`;
     return `<li class="rd2Item" data-rd2item="${x.uid}">
       <div class="rd2ItemL1"><span class="rd2ItemNome" title="${h(r.nome)}">${h(r.nome)}</span>${statusHtml(r)}
         <button class="rd2Tira" data-rd2tirar="${x.uid}" aria-label="Tirar ${h(r.nome)}">${icone('x', 14)}</button></div>
       ${r.leituras.length ? `<div class="rd2ItemL2">${h(cats.join(' · '))} · ${per ? h(periodoTxt(per)) : 'sem datas'}${h(extra)}</div>` : ''}
-      ${errado}
+      ${errado}${porque}
       ${r.msgs.map(m => `<p class="rd2Msg ${m.nivel}">${h(m.texto)}</p>`).join('')}
-      ${r.previa && r.previa.length ? `<pre class="rd2Previa">${h(r.previa.slice(0, 5).join('\n'))}</pre>
-        ${x.r.peca && x.r.peca.tipo === 'csv' && !(r.outras || []).length ? `<button class="b gho sm" data-rd2adaptar="${x.uid}:${x.idx || 0}">Registrar este formato como novo adaptador…</button>` : ''}` : ''}
+      ${r.previa && r.previa.length ? `<pre class="rd2Previa">${h(r.previa.slice(0, 5).join('\n'))}</pre>${registrar}` : ''}
     </li>`;
   }
   /* o endereço vem da PLANILHA: só vira link se for https do LinkedIn (v225 — `h()` sozinho
@@ -476,7 +638,8 @@
     fora.forEach(x => { const o = x.r.outras[0]; (porRede[o] = porRede[o] || []).push(x); });
     return `<div class="rd2Bandeja"><h4>${icone('stack', 14)} De outras redes — ficam aqui para a próxima</h4>
       ${Object.entries(porRede).map(([p, xs]) => `<div class="rd2BandejaRede"><span><i class="rd2Ponto" style="background:${corPlat(p)}"></i><b>${h(nomePlat(p))}</b>: ${xs.map(x => h(x.r.nome)).join(', ')}</span>
-        <button class="b gho sm" data-rd2trocar="${p}">Importar ${h(nomePlat(p))} agora</button></div>`).join('')}</div>`;
+        <button class="b gho sm" data-rd2trocar="${p}">Importar ${h(nomePlat(p))} agora</button></div>`).join('')}
+      <div class="rd2BandejaRede"><span>Ou todas as que estão aqui, num clique só.</span><button class="b gho sm" data-rd2trocar="${TODAS}">Importar todas de uma vez</button></div></div>`;
   }
   function avisosHtml(){
     const P = I.pacote;
@@ -498,6 +661,13 @@
       ${info.length ? `<details class="rd2Info"${info.length <= 3 ? ' open' : ''}><summary>${info.length} ${info.length === 1 ? 'observação' : 'observações'} da leitura</summary><ul>${info.map(a => `<li>${h(a.texto)}</li>`).join('')}</ul></details>` : ''}`;
   }
   function podeImportar(){
+    if(emLote()){
+      const pr = prontas();
+      if(!I.cli || !I.mes || I.gravando || I.lendo || !pr.length) return false;
+      if(pr.some(precisaConferir) && !I.confirmou) return false;
+      if(pr.some(precisaSubstituir) && !I.substituir) return false;
+      return true;
+    }
     const P = I.pacote;
     if(!I.cli || !I.plat || !I.mes || !P || I.gravando || I.lendo) return false;
     if(!contaEscolhida()) return false;
@@ -508,6 +678,16 @@
     return true;
   }
   function porQueNao(){
+    if(emLote()){
+      if(!I.brutos.length) return I.lendo ? 'Lendo os arquivos…' : 'Solte os arquivos das redes.';
+      const pr = prontas(), redes = Object.keys(I.redes);
+      if(!redes.length) return pendentes().length ? 'Diga de qual rede é cada arquivo marcado.' : 'Nenhum arquivo reconhecido ainda.';
+      if(!pr.length) return redes.map(p => `${nomePlat(p)}: ${motivoEspera(p)}`).join(' · ') + '.';
+      if(pr.some(precisaConferir) && !I.confirmou) return 'Marque "Conferi" depois de ler os avisos.';
+      if(pr.some(precisaSubstituir) && !I.substituir) return 'Confirme a substituição das datas que já existiam.';
+      const esperam = redes.filter(p => !pr.includes(p));
+      return esperam.length ? `${esperam.map(nomePlat).join(', ')} ${esperam.length === 1 ? 'espera' : 'esperam'}: ${motivoEspera(esperam[0])}.` : '';
+    }
     const P = I.pacote;
     if(!I.plat) return 'Escolha a plataforma.';
     if(!P) return I.lendo ? 'Lendo os arquivos…' : 'Envie pelo menos um arquivo válido.';
@@ -517,11 +697,93 @@
     if(I.comparacao && I.comparacao.existiam && !I.substituir) return 'Confirme a substituição das datas que já existiam.';
     return '';
   }
+  function rotuloBotao(){
+    if(I.gravando) return 'Gravando…';
+    if(!emLote()) return 'Importar';
+    const pr = prontas(), n = Object.keys(I.redes).length;
+    if(!pr.length) return 'Importar';
+    if(pr.length === 1) return `Importar ${nomePlat(pr[0])}`;
+    return pr.length === n ? `Importar as ${pr.length} redes` : `Importar ${pr.length} redes`;
+  }
+
+  /* ----- todas as redes: o corpo do modal ----- */
+  function ambiguasHtml(pend){
+    return `<div class="rd2Ambig"><h4>${icone('warn', 14)} Mesmo título em mais de uma rede — de qual é cada arquivo?</h4>
+      <ul>${pend.map(x => `<li><span class="rd2AmbNome"><b title="${h(x.r.nome)}">${h(x.r.nome)}</b><small>${x.periodo ? h(periodoTxt(x.periodo)) : 'sem datas'}${x.soma != null ? ` · soma ${AN().fmt(x.soma)}` : ''}</small></span>
+        <span class="rd2Esc" role="group" aria-label="Rede de ${h(x.r.nome)}">${x.cands.map(c => `<button class="b gho sm" data-rd2esc="${x.uid}:${x.idx}:${c.plat}"><i class="rd2Ponto" style="background:${corPlat(c.plat)}"></i>${h(nomePlat(c.plat))}</button>`).join('')}</span></li>`).join('')}</ul>
+      <small class="rd2Dica">O Meta exporta "Visualizações" e "Interações com o conteúdo" com o mesmo título no Instagram e no Facebook: só você sabe de qual perfil veio. A soma ajuda a reconhecer.</small></div>`;
+  }
+  function redeHtml(p){
+    const R = I.redes[p], P = R.pacote, pl = A().plataformas[p];
+    const pronta = prontas().includes(p), motivo = pronta ? '' : motivoEspera(p);
+    const contas = contasExistentes(p), st = stConta(p);
+    const nArq = new Set(R.itens.map(x => x.uid)).size, nCat = new Set(P.leituras.map(l => l.cat)).size;
+    const bloq = P.avisos.filter(a => a.nivel === 'bloqueio');
+    const info = P.avisos.filter(a => a.nivel === 'info' || a.nivel === 'aviso');
+    const C = R.comparacao;
+    const escolher = contas.length > 1 && !st.conta;
+    return `<div class="rd2Rede ${pronta ? 'pronta' : 'espera'}" data-rd2rede="${p}">
+      <div class="rd2RedeCab"><i class="rd2Ponto" style="background:${corPlat(p)}"></i><b>${h(pl.nome)}</b>
+        <span class="rd2RedeSt">${pronta ? `${icone('checkc', 13)} pronta` : `espera: ${h(motivo)}`}</span></div>
+      <div class="rd2RedeConta"><select data-rd2conta="${p}" data-rd2foco="conta-${p}" aria-label="${h(pl.conta.rotulo)} do ${h(pl.nome)}">
+          ${escolher ? '<option value="" selected disabled>Escolha a conta…</option>' : ''}${contas.map(c => `<option value="${h(c.id)}" ${st.conta === c.id ? 'selected' : ''}>${h(c.nome)}</option>`).join('')}
+          <option value="__nova__" ${st.conta === '__nova__' || !contas.length ? 'selected' : ''}>${contas.length ? 'Outra conta…' : 'Nova conta'}</option></select>
+        ${st.conta === '__nova__' || !contas.length ? `<input data-rd2contanova="${p}" data-rd2foco="contanova-${p}" value="${h(st.contaNova)}" placeholder="${h(pl.conta.exemplo)}" aria-label="Nome da conta do ${h(pl.nome)}">` : ''}</div>
+      <p class="rd2RedeResumo">${nArq} ${nArq === 1 ? 'arquivo' : 'arquivos'} · ${nCat} ${nCat === 1 ? 'categoria' : 'categorias'} · ${h(periodoTxt(P.periodo))}${C && C.existiam ? ` · ${C.existiam} ${C.existiam === 1 ? 'data já existia' : 'datas já existiam'}` : ''}</p>
+      ${bloq.map(a => `<div class="rd2Bloq" role="alert">${icone('warn', 14)}<span>${h(a.texto)}${a.sugestao ? ` <button class="b gho sm" data-rd2usarmes="${h(a.sugestao)}">Usar ${h(M().mesExtenso(a.sugestao))}</button>` : ''}</span></div>`).join('')}
+      <details class="rd2RedeArqs"><summary>Arquivos${info.length ? ` e ${info.length} ${info.length === 1 ? 'observação' : 'observações'}` : ''}</summary>
+        <ul class="rd2Itens">${R.itens.map(x => itemHtml(x, null)).join('')}</ul>
+        ${info.length ? `<ul class="rd2InfoLista">${info.map(a => `<li>${h(a.texto)}</li>`).join('')}</ul>` : ''}</details></div>`;
+  }
+  function avisosLoteHtml(){
+    const redes = Object.keys(I.redes);
+    /* a sugestão é lida aqui — então a troca mora aqui também, não dentro de "Arquivos" fechado */
+    const conf = redes.map(p => ({ p, itens: [
+      ...I.redes[p].sugeridas.map(x => `${h(x.r.nome)} veio para cá: ${h(x.sug.porque)}. ${x.cands.filter(c => c.plat !== x.plat)
+        .map(c => `<button class="b gho sm" data-rd2esc="${x.uid}:${x.idx}:${c.plat}">É do ${h(nomePlat(c.plat))}</button>`).join('')}`),
+      ...I.redes[p].pacote.avisos.filter(a => a.nivel === 'confirmar').map(a => h(a.texto))] })).filter(g => g.itens.length);
+    const sub = redes.filter(precisaSubstituir);
+    return `${conf.length ? `<div class="rd2Conf">${conf.map(g => `<p class="rd2ConfRede"><i class="rd2Ponto" style="background:${corPlat(g.p)}"></i><b>${h(nomePlat(g.p))}</b></p>
+        <ul>${g.itens.map(t => `<li>${t}</li>`).join('')}</ul>`).join('')}
+        <label class="rd2Check"><input type="checkbox" data-rd2conf ${I.confirmou ? 'checked' : ''}> Conferi — importar assim mesmo</label></div>` : ''}
+      ${sub.length ? `<div class="rd2Sobre">${sub.map(p => { const C = I.redes[p].comparacao;
+        return `<p><b>${h(nomePlat(p))}:</b> ${C.existiam} ${C.existiam === 1 ? 'data já existia' : 'datas já existiam'} —
+          ${C.mudaram ? `<b>${C.mudaram}</b> ${C.mudaram === 1 ? 'com valor diferente' : 'com valores diferentes'} do que está guardado` : 'nenhum valor mudou'}.</p>
+          ${C.exemplos.length ? `<ul>${C.exemplos.slice(0, 3).map(e => `<li>${h(e.orig)} em ${dBR(e.data)}: ${AN().fmt(e.antes)} → ${AN().fmt(e.depois)}</li>`).join('')}</ul>` : ''}`; }).join('')}
+        <label class="rd2Check"><input type="checkbox" data-rd2subst ${I.substituir ? 'checked' : ''}> Substituir os valores dessas datas (nada é somado)</label></div>` : ''}`;
+  }
+  function corpoLoteHtml(){
+    const pend = pendentes();
+    const fora = I.itens.filter(x => x.r && (x.r.status === 'desconhecido' || x.r.status === 'erro'));
+    const redes = plats().filter(([p]) => I.redes[p]).map(([p]) => p);
+    return `<div class="rd2Solta" data-rd2solta="1"><input type="file" multiple hidden id="rd2Todos" data-rd2arq="" accept=".csv,.txt,.xlsx,.zip">
+        <b>Solte aqui os arquivos de todas as redes</b> — ou <label for="rd2Todos" class="rd2Link">escolha no aparelho</label>
+        <small>CSV, XLSX ou ZIP, de uma vez. Cada arquivo vai para a rede e a categoria certas pelo conteúdo, não pelo nome.</small>
+        ${I.lendo ? `<p class="rd2Lendo" role="status"><span class="rd2Roda"></span>Lendo ${I.lendo} ${I.lendo === 1 ? 'arquivo' : 'arquivos'}…</p>` : ''}</div>
+      ${pend.length ? ambiguasHtml(pend) : ''}
+      ${redes.length ? `<div class="rd2Redes">${redes.map(redeHtml).join('')}</div>` : ''}
+      ${fora.length ? `<div class="rd2Slot rd2Problema"><div class="rd2SlotCab"><b>Não reconhecidos</b></div><ul class="rd2Itens">${fora.map(x => itemHtml(x, null)).join('')}</ul></div>` : ''}
+      ${avisosLoteHtml()}
+      <details class="rd2Como"><summary>O que exportar de cada rede</summary><ul>${plats().map(([k, pl]) => `<li><b>${h(pl.nome)}</b> — ${h(pl.exportar || '')}</li>`).join('')}</ul></details>`;
+  }
+  function feitoLoteHtml(cabecalho){
+    const f = I.feito, n = f.feitos.length;
+    const titulo = n === 1 ? `${nomePlat(f.feitos[0].plat)} importado` : n === 5 ? 'As 5 redes importadas' : `${n} redes importadas`;
+    const sobra = I.brutos.length;
+    return `${cabecalho}<div class="rd2Feito" role="status">${icone('checkc', 22)}<div><b>${h(titulo)}</b>
+      <ul class="rd2FeitoLista">${f.feitos.map(x => `<li><i class="rd2Ponto" style="background:${corPlat(x.plat)}"></i><b>${h(nomePlat(x.plat))}</b> · ${h(x.conta)} — ${x.n} ${x.n === 1 ? 'arquivo' : 'arquivos'}${x.cats > 1 ? ` (${x.cats} categorias)` : ''} · ${h(periodoTxt(x.periodo))}${x.subst ? ` · ${x.subst} ${x.subst === 1 ? 'data substituída' : 'datas substituídas'}` : ''}</li>`).join('')}</ul>
+      ${f.feitos.some(x => x.subst) ? '<p>O que já existia foi substituído; nada foi somado.</p>' : ''}</div></div>
+      ${f.falhas.map(x => `<div class="rd2Bloq" role="alert">${icone('warn', 14)}<span>${h(nomePlat(x.plat))} não gravou: ${h(x.motivo)}. Nada dele foi alterado — os arquivos continuam aqui.</span></div>`).join('')}
+      ${sobra ? `<p class="rd2Nota">${sobra} ${sobra === 1 ? 'arquivo continua' : 'arquivos continuam'} aqui (${f.falhas.length ? 'a rede que não gravou, ' : ''}o que esperava escolha ou não foi reconhecido).</p>` : ''}
+      <div class="modalrow"><button class="b gho" data-rd2novo="1">Importar mais</button><button class="b pri" data-rd2fechar="1">Ver a análise</button></div>`;
+  }
+
   function modalHtml(){
     const p = I.plat && A().plataformas[I.plat];
     /* o × mora DENTRO do título: no celular o título fica preso no topo da folha (v229) e,
        fora dele, o × rolava junto com o corpo e ficava coberto */
     const cabecalho = `<h3><span id="rd2ImpTit">Importar dados das redes</span><button class="rd2Fechar" data-rd2fechar="1" aria-label="Fechar">${icone('x')}</button></h3>`;
+    if(I.feito && I.feito.lote) return feitoLoteHtml(cabecalho);
     if(I.feito){
       const f = I.feito;
       const prox = bandejaHtml();
@@ -538,9 +800,11 @@
         <label class="fld"><span>Mês de referência</span><input type="month" data-rd2mesref data-rd2foco="mes" value="${h(I.mes)}" required></label>
       </div>
       <div class="fld"><span class="rd2Rot">Plataforma</span><div class="rd2Plats" role="radiogroup" aria-label="Plataforma">
+        <button role="radio" aria-checked="${emLote()}" class="rd2Todas${emLote() ? ' on' : ''}" data-rd2plat="${TODAS}">${icone('stack', 14)}Todas as redes</button>
         ${plats().map(([k, x]) => `<button role="radio" aria-checked="${I.plat === k}" class="${I.plat === k ? 'on' : ''}" data-rd2plat="${k}"><i style="background:${x.cor}"></i>${h(x.nome)}</button>`).join('')}</div>
-        <small class="rd2Dica">Sempre escolhida por você: "Visualizações" e "Alcance" vêm idênticos do Instagram e do Facebook.</small></div>
-      ${!p ? '<p class="rd2Nota">Escolha a plataforma — os campos de envio dependem dela.</p>' : `
+        <small class="rd2Dica">${emLote() ? 'Cada arquivo vai para a rede certa pelo conteúdo. Só o que o Meta exporta com o mesmo título no Instagram e no Facebook pede a sua escolha.'
+          : 'Uma rede só: "Visualizações" e "Interações" vêm com o mesmo título do Instagram e do Facebook — aqui, tudo entra nesta.'}</small></div>
+      ${emLote() ? corpoLoteHtml() : !p ? '<p class="rd2Nota">Escolha a plataforma — os campos de envio dependem dela.</p>' : `
       <div class="fld"><span class="rd2Rot">${h(p.conta.rotulo)}</span><div class="rd2Linha2">
         <select data-rd2conta data-rd2foco="conta">${contas.map(c => `<option value="${h(c.id)}" ${I.conta === c.id ? 'selected' : ''}>${h(c.nome)}</option>`).join('')}
           <option value="__nova__" ${I.conta === '__nova__' || !contas.length ? 'selected' : ''}>${contas.length ? 'Outra conta…' : 'Nova conta'}</option></select>
@@ -556,11 +820,44 @@
       ${I.erro ? `<div class="rd2Bloq" role="alert">${icone('warn', 14)}<span>${h(I.erro)}</span></div>` : ''}
       <div class="modalrow"><span class="rd2PorQue">${h(porQueNao())}</span>
         <button class="b gho" data-rd2fechar="1">Cancelar</button>
-        <button class="b pri" data-rd2importar="1" ${podeImportar() ? '' : 'disabled'}>${I.gravando ? 'Gravando…' : 'Importar'}</button></div>`;
+        <button class="b pri" data-rd2importar="1" ${podeImportar() ? '' : 'disabled'}>${h(rotuloBotao())}</button></div>`;
   }
 
   /* ----- gravar ----- */
+  /* todas as redes prontas, uma linha do banco por rede: a que falhar não leva as outras junto */
+  async function importarLote(){
+    if(!podeImportar()) return;
+    const cli = I.cli, pr = prontas();
+    I.gravando = true; I.erro = null; desenhar();
+    const feitos = [], falhas = [];
+    for(const p of pr){
+      const R = I.redes[p], conta = contaEscolhida(p), P = R.pacote;
+      const meta = { cli, conta, mes: I.mes, por: quemSou(), em: new Date().toISOString() };
+      const res = await D().gravar(cli, p, atual => D().aplicar(atual, P, meta).dados);
+      if(!res.ok){ falhas.push({ plat: p, motivo: res.motivo }); continue; }
+      estado(cli).porPlat[p] = res.dados;
+      feitos.push({ plat: p, uids: new Set(R.itens.map(x => x.uid)), cats: new Set(P.leituras.map(l => l.cat)).size, periodo: P.periodo,
+        conta: conta.nome, subst: (R.comparacao && R.comparacao.existiam) || 0 });
+    }
+    I.gravando = false;
+    if(!feitos.length){
+      I.erro = falhas.map(x => `${nomePlat(x.plat)} não gravou: ${x.motivo}`).join(' · ') + '. Nada foi alterado.';
+      desenhar(); return;
+    }
+    estado(cli).carregado = true;
+    T.mes[cli] = I.mes;
+    /* sai o arquivo que foi gravado; fica o da rede que falhou, o que esperava escolha e o não reconhecido */
+    const gravados = new Set(feitos.flatMap(x => [...x.uids]));
+    I.brutos = I.brutos.filter(b => !gravados.has(b.uid));
+    I.feito = { lote: true, feitos: feitos.map(x => Object.assign(x, { n: x.uids.size })), falhas };
+    I.substituir = false; I.confirmou = false;
+    const n = feitos.length;
+    avisar(n === 1 ? `${nomePlat(feitos[0].plat)} importado.` : `${n === 5 ? 'As 5 redes importadas' : `${n} redes importadas`}.`);
+    await analisarTudo();
+    redesenhar();
+  }
   async function importar(){
+    if(emLote()) return importarLote();
     if(!podeImportar()) return;
     const P = I.pacote, conta = contaEscolhida(), plat = I.plat, cli = I.cli;
     I.gravando = true; I.erro = null; desenhar();
@@ -584,7 +881,7 @@
   }
 
   /* ----- registrar um formato novo (adaptador sem código) ----- */
-  function abrirWizard(uid, idx){
+  function abrirWizard(uid, idx, plat){
     const x = I.itens.find(i => String(i.uid) === String(uid) && String(i.idx || 0) === String(idx));
     if(!x || !x.r.peca || x.r.peca.tipo !== 'csv') return;
     const L = x.r.peca.csv.linhas;
@@ -596,13 +893,13 @@
     const fmtData = /^\d{4}-\d{2}-\d{2}/.test(ex) ? 'iso' : /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(ex) ? 'dd/mm/aaaa' : 'dia_mes';
     const cols = {};
     cab.forEach(c => { if(c !== dataCol) cols[c] = { usar: true, fam: 'exibicoes', nat: 'fluxo' }; });
-    I.wizard = { uid, idx, cab, amostra, nome: '', dataCol, fmtData, cols, arquivo: x.r.nome };
+    I.wizard = { uid, idx, cab, amostra, nome: '', dataCol, fmtData, cols, arquivo: x.r.nome, plat: plat || I.plat };
     desenhar();
   }
   function wizardHtml(){
     const W = I.wizard;
     const fams = Object.entries(A().familias), nats = Object.entries(A().naturezas).filter(([k]) => ['fluxo', 'pessoas', 'estoque', 'saldo'].includes(k));
-    return `<h3 id="rd2ImpTit">Novo formato para ${h(nomePlat(I.plat))}</h3>
+    return `<h3 id="rd2ImpTit">Novo formato para ${h(nomePlat(W.plat))}</h3>
       <p class="rd2Nota">A partir de <b>${h(W.arquivo)}</b>. O formato fica registrado para a agência: da próxima vez, arquivos com este mesmo cabeçalho entram sozinhos — sem código novo.</p>
       <pre class="rd2Previa">${h([W.cab.join(' | '), ...W.amostra.map(l => l.join(' | '))].join('\n'))}</pre>
       <label class="fld"><span>Nome da categoria</span><input data-rd2wnome data-rd2foco="wnome" value="${h(W.nome)}" placeholder="Ex.: Visualizações (planilha tratada)"></label>
@@ -624,12 +921,12 @@
       formas: [{ leitor: 'colunas', cabecalho: W.cab, colunas: W.cab.length, data: { col: W.dataCol, formato: W.fmtData } }],
       metricas: usar.map(([c, o]) => ({ canon: 'x_' + M().slug(c), de: c, orig: c, fam: o.fam, nat: o.nat })) };
     I.gravando = true; I.erro = null; desenhar();
-    const r = await D().gravarAdaptador(I.plat, categoria);
+    const r = await D().gravarAdaptador(W.plat, categoria);
     I.gravando = false;
     if(!r.ok){ I.erro = `Não registrou: ${r.motivo}.`; desenhar(); return; }
     T.extras = (r.dados && r.dados.plataformas) || await D().lerAdaptadores();
     I.wizard = null;
-    avisar(`Formato "${categoria.rotulo}" registrado para ${nomePlat(I.plat)}.`);
+    avisar(`Formato "${categoria.rotulo}" registrado para ${nomePlat(W.plat)}.`);
     await analisarTudo();
   }
 
@@ -637,7 +934,7 @@
   /* eventos                                                            */
   /* ================================================================ */
   document.addEventListener('click', ev => {
-    const t = ev.target.closest && ev.target.closest('[data-rd2imp],[data-rd2mes],[data-rd2filtro],[data-rd2recarregar],[data-rd2fechar],[data-rd2plat],[data-rd2importar],[data-rd2tirar],[data-rd2mover],[data-rd2trocar],[data-rd2novo],[data-rd2usarmes],[data-rd2adaptar],[data-rd2wvoltar],[data-rd2wsalvar]');
+    const t = ev.target.closest && ev.target.closest('[data-rd2imp],[data-rd2mes],[data-rd2filtro],[data-rd2recarregar],[data-rd2fechar],[data-rd2plat],[data-rd2importar],[data-rd2tirar],[data-rd2mover],[data-rd2trocar],[data-rd2novo],[data-rd2usarmes],[data-rd2adaptar],[data-rd2adaptarp],[data-rd2esc],[data-rd2wvoltar],[data-rd2wsalvar]');
     if(!t) return;
     const d = t.dataset;
     const cli = typeof cliAtual === 'function' ? cliAtual().id : null;
@@ -660,6 +957,13 @@
     if(d.rd2novo){ I.feito = null; desenhar(); return; }
     if(d.rd2usarmes){ I.mes = d.rd2usarmes; recalcular(); return; }
     if(d.rd2adaptar){ const [u, i] = d.rd2adaptar.split(':'); abrirWizard(u, i); return; }
+    if(d.rd2adaptarp){ const [u, i, p] = d.rd2adaptarp.split(':'); abrirWizard(u, i, p); return; }
+    if(d.rd2esc){
+      const [u, i, p] = d.rd2esc.split(':');
+      const b = I.brutos.find(x => String(x.uid) === u);
+      if(b){ b.escolha = b.escolha || {}; b.escolha[i] = p; }
+      analisarTudo(); return;
+    }
     if(d.rd2wvoltar){ I.wizard = null; I.erro = null; desenhar(); return; }
     if(d.rd2wsalvar){ salvarWizard(); return; }
   });
@@ -667,9 +971,14 @@
     const t = ev.target;
     if(!I.aberto || !t.closest || !t.closest('#rd2Modal')) return;
     if(t.matches('[data-rd2arq]')){ const pedido = t.getAttribute('data-rd2arq') || null; adicionar(t.files, pedido); return; }
-    if(t.matches('[data-rd2cli]')){ I.cli = t.value; I.conta = ''; I.contaNova = ''; if(!estado(I.cli).carregado) carregar(I.cli).then(recalcular); recalcular(); return; }
+    if(t.matches('[data-rd2cli]')){ I.cli = t.value; I.conta = ''; I.contaNova = ''; I.contas = {}; if(!estado(I.cli).carregado) carregar(I.cli).then(recalcular); recalcular(); return; }
     if(t.matches('[data-rd2mesref]')){ if(t.value) I.mes = t.value; recalcular(); return; }
-    if(t.matches('[data-rd2conta]')){ I.conta = t.value; if(t.value === '__nova__' && !I.contaNova) I.contaNova = sugestaoConta(); recalcular(); return; }
+    if(t.matches('[data-rd2conta]')){
+      const p = t.getAttribute('data-rd2conta') || I.plat, st = stConta(p);
+      st.conta = t.value;
+      if(t.value === '__nova__' && !st.contaNova) st.contaNova = sugestaoConta(p, emLote() ? (I.redes[p] || {}).pacote || null : I.pacote);
+      recalcular(); return;
+    }
     if(t.matches('[data-rd2conf]')){ I.confirmou = t.checked; desenhar(); return; }
     if(t.matches('[data-rd2subst]')){ I.substituir = t.checked; desenhar(); return; }
     if(I.wizard){
@@ -685,12 +994,14 @@
     const t = ev.target;
     if(!I.aberto || !t.closest || !t.closest('#rd2Modal')) return;
     if(t.matches('[data-rd2contanova]')){
-      I.contaNova = t.value;
-      const conta = contaEscolhida();
-      I.comparacao = I.pacote && conta ? D().comparar(dadosAtuais(), I.pacote, conta.id) : null;
+      const p = t.getAttribute('data-rd2contanova') || I.plat;
+      stConta(p).contaNova = t.value;
+      const conta = contaEscolhida(p);
+      if(emLote()){ const R = I.redes[p]; if(R) R.comparacao = conta ? D().comparar(dadosDe(p), R.pacote, conta.id) : null; }
+      else I.comparacao = I.pacote && conta ? D().comparar(dadosAtuais(), I.pacote, conta.id) : null;
       /* sem redesenhar o campo em que se digita: só o rodapé e o comparativo */
       const box = document.querySelector('#rd2Modal .modalbox');
-      const btn = box && box.querySelector('[data-rd2importar]'); if(btn) btn.disabled = !podeImportar();
+      const btn = box && box.querySelector('[data-rd2importar]'); if(btn){ btn.disabled = !podeImportar(); btn.textContent = rotuloBotao(); }
       const pq = box && box.querySelector('.rd2PorQue'); if(pq) pq.textContent = porQueNao();
       return;
     }

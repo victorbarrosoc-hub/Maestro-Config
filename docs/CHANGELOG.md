@@ -1,11 +1,46 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.76
+Version: 0.5.77
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.77 — 2026-09-24
+
+**Status:** Concluída
+
+### v263 — as cinco redes num clique
+
+O founder: *"faz o botão importar as cinco redes num clique"*.
+
+1. **"Todas as redes" é o padrão do importador.** Os arquivos das cinco de
+   uma vez; cada peça vai para a rede que o conteúdo diz (título, cabeçalho,
+   abas; o título que cita a rede decide entre as candidatas). Um card por
+   rede com a conta, o status ("pronta" ou "espera: motivo"), o resumo e os
+   arquivos; um "Conferi" e um "Substituir" para todas; o botão **"Importar
+   as 5 redes"**.
+2. **Os gêmeos do Meta nunca em silêncio.** "Visualizações" e "Interações
+   com o conteúdo" vêm com o mesmo título do Instagram e do Facebook. Ou
+   quem importa escolhe (com período e soma à vista), ou a tela sugere —
+   só uma das redes tem outros arquivos aqui · mesmo período dos outros dela
+   · o par do que já foi escolhido — e a sugestão entra no "Conferi", com o
+   botão para trocar na mesma linha.
+3. **Uma rede não segura nem derruba as outras.** Mês fora dos arquivos: a
+   rede espera, as outras importam ("Importar 3 redes"), e ela fica no modal
+   com "Usar setembro de 2026". Falha ao gravar: as outras ficam gravadas e
+   a que falhou diz que nada dela mudou, com os arquivos ainda ali.
+4. **Conta nova sem pista** (Instagram e Facebook não trazem o perfil no
+   arquivo): o nome do cliente, editável — antes travava a importação.
+5. **Formato genérico** ("Data,<uma coluna>") só conta dentro do .zip das
+   irmãs (o Total do YouTube); sozinho, é "não reconhecido" com "Registrar
+   este formato como: <rede>".
+6. **A janela não pisca mais:** o importador recriava a moldura a cada toque
+   e a animação de entrada (v249) recomeçava.
+
+59 provas em `web/verificar/v263-as-cinco-redes.mjs`, com os 22 arquivos
+reais e o caso difícil (Instagram e Facebook exportados no mesmo período).
 
 ## 0.5.76 — 2026-09-24
 
