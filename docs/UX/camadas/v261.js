@@ -33,15 +33,19 @@
   };
 
   /* o nome que um card DEVERIA ter */
-  function nomePadrao(p, cli){
+  function nomePadrao(p, cli, grafia){
     if(!p || livre(p) || !N()) return null;
-    const tema = N().temaDe(p.t);
+    let tema = N().temaDe(p.t);
+    /* o mesmo tema escrito de outro jeito ("inovação no direito") ganha a
+       grafia mais usada do cliente — padronizar é isso também */
+    if(grafia && tema) tema = grafia.get(tema.toLocaleLowerCase('pt-BR')) || tema;
     if(!tema || tema.length < 2) return null;
     return [cli, formatos(p).join(' + '), tema].filter(Boolean).join(SEP);
   }
+  const grafias = () => new Map(temasDoCliente().map(x => [x.t.toLocaleLowerCase('pt-BR'), x.t]));
   function foraDoPadrao(){
-    const cli = nomeCliente();
-    return (S.pauta || []).map(p => ({ p, novo: nomePadrao(p, cli) }))
+    const cli = nomeCliente(), g = grafias();
+    return (S.pauta || []).map(p => ({ p, novo: nomePadrao(p, cli, g) }))
       .filter(x => x.novo && x.novo !== x.p.t);
   }
 
@@ -61,12 +65,12 @@
     renderLayer();
   }
   function aplicar(){
-    const cli = nomeCliente();
+    const cli = nomeCliente(), g = grafias();
     const ids = new Set([...document.querySelectorAll('[data-v261card]:checked')].map(i => +i.dataset.v261card));
     let n = 0;
     for(const p of (S.pauta || [])){
       if(!ids.has(p.id)) continue;
-      const novo = nomePadrao(p, cli); if(!novo || novo === p.t) continue;
+      const novo = nomePadrao(p, cli, g); if(!novo || novo === p.t) continue;
       p.t = novo; n++;
       /* a tarefa do Ensaio É o card (v227): leva o mesmo nome */
       try{
@@ -103,8 +107,9 @@
     try{
       const topo = document.querySelector('#root .mtop');
       const velho = document.querySelector('[data-v261pad]');
-      const nova = topo && topo.querySelector('[data-ptnew]');
-      if(!nova || S.view !== 'agency'){ velho && velho.remove(); return; }
+      /* o topo do Cronograma: antes do "Mais" (ou do "Nova postagem") */
+      const nova = topo && (topo.querySelector('[data-ptmais]') || topo.querySelector('[data-ptnew]'));
+      if(!nova || S.view !== 'agency' || S.tab !== 'pauta'){ velho && velho.remove(); return; }
       const n = foraDoPadrao().length;
       if(!n){ velho && velho.remove(); return; }
       const rot = `Padronizar nomes (${n})`;
@@ -122,10 +127,16 @@
       let t = N().temaDe(p.t).replace(/\s*\(\d+\)$/, '').trim();
       if(t.length < 2) return;
       const k = t.toLocaleLowerCase('pt-BR');
-      const c = conta.get(k) || { t, n: 0, ult: 0 };
-      c.n++; c.ult = Math.max(c.ult, i); conta.set(k, c);
+      const c = conta.get(k) || { t, n: 0, ult: 0, grafias: new Map() };
+      c.n++; c.ult = Math.max(c.ult, i);
+      /* o mesmo tema escrito de jeitos diferentes: vale a grafia MAIS usada */
+      const g = c.grafias.get(t) || { n: 0, ult: 0 }; g.n++; g.ult = i; c.grafias.set(t, g);
+      conta.set(k, c);
     });
-    return [...conta.values()].sort((a, b) => b.n - a.n || b.ult - a.ult);
+    return [...conta.values()].map(c => {
+      const [melhor] = [...c.grafias.entries()].sort((a, b) => b[1].n - a[1].n || b[1].ult - a[1].ult);
+      return { t: melhor[0], n: c.n, ult: c.ult };
+    }).sort((a, b) => b.n - a.n || b.ult - a.ult);
   }
   function sugestoes(){
     const campo = document.getElementById('v260Tema'); if(!campo) return;

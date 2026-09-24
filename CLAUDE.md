@@ -299,6 +299,12 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v261) — o padrão chega aos cards de antes.** No
+Cronograma, "Padronizar nomes (N)" com antes → depois e caixa por linha (a
+tarefa do Ensaio vai junto; a grafia do tema vira a mais usada do
+cliente); "Já usados" com os temas do cliente embaixo do tema; e no link o
+cliente lê "Carrossel · …" sem o próprio nome na frente (só o desenho).
+20 provas em `web/verificar/v261-o-padrao-chega.mjs`.
 **Fechado (24 set, v260) — o nome do card se monta sozinho.** "Quero um
 padrão: o cliente primeiro, depois o tipo, depois a temática." O nome vira
 `Cliente · Tipo · Tema`: cliente e tipo travados (de onde a pauta abriu e

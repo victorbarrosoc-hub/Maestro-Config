@@ -7,6 +7,29 @@ Nunca apagar versões anteriores.
 
 ---
 
+## 0.5.75 — 2026-09-24
+
+**Status:** Concluída
+
+### v261 — o padrão chega aos cards de antes
+
+As três sugestões da v260, com o "pode seguir" do founder:
+
+1. **Padronizar nomes (N)** no topo do Cronograma, só quando há card fora
+   do padrão. Abre a lista antes → depois, cada linha com caixa; aplica só
+   o que ficou marcado. A tarefa do Ensaio ligada ao card leva o mesmo nome
+   (v227). O tema escrito de outro jeito ("inovação no direito") ganha a
+   grafia mais usada do cliente. Livre e o que já está no padrão ficam fora.
+2. **Temas já usados** embaixo do tema, do mais usado para o menos; digitar
+   filtra, um toque preenche. É o que segura "Inovação no Direito" de virar
+   "Inovação em Direito" no card seguinte.
+3. **O cliente não lê o próprio nome.** No link, "Cortez Jurídico ·
+   Carrossel · …" vira "Carrossel · …" — só o desenho, o dado não muda; e
+   só quando o que vem depois do nome é um TIPO ("Cortez Jurídico, 30 anos"
+   fica inteiro).
+
+20 provas em `web/verificar/v261-o-padrao-chega.mjs`.
+
 ## 0.5.74 — 2026-09-24
 
 **Status:** Concluída

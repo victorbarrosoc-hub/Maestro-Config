@@ -59,7 +59,8 @@ console.log('\n1. padronizar os nomes de antes');
   await pg.click('[data-v261ok]'); await pg.waitForTimeout(400);
   const r = await pg.evaluate(() => ({ t: Object.fromEntries(S.pauta.filter(p => p.id >= 9801 && p.id <= 9806).map(p => [p.id, p.t])),
     tarefa: S.ensaio.tarefas.find(t => t.id === 'tv261').titulo, botao: document.querySelector('[data-v261pad]')?.textContent.trim() || null, modal: !!S.modal }));
-  checa('os marcados entram no padrão', r.t[9801] === `${c} · Story · Autoridade` && r.t[9802] === `${c} · Carrossel · inovação no direito` && r.t[9805] === `${c} · Post · Inovação no Direito`, r.t);
+  checa('os marcados entram no padrão', r.t[9801] === `${c} · Story · Autoridade` && r.t[9802] === `${c} · Carrossel · Inovação no Direito` && r.t[9805] === `${c} · Post · Inovação no Direito`, r.t);
+  checa('e o tema escrito de outro jeito ganha a grafia mais usada do cliente', r.t[9802].endsWith('· Inovação no Direito'), r.t[9802]);
   checa('o desmarcado fica como estava', r.t[9806] === 'Inovação no Direito', r.t[9806]);
   checa('o Livre e o que já estava no padrão não mudam', r.t[9804] === 'Fechar o financeiro' && r.t[9803] === `${c} · Reels · Bastidores`, r.t);
   checa('a tarefa do Ensaio leva o mesmo nome do card', r.tarefa === r.t[9802], r.tarefa);
@@ -100,6 +101,9 @@ console.log('\n3. no link, o cliente não lê o próprio nome');
   };
   const { ctx, pg } = await abrir(BASE + '?aprovar=cj.' + CHAVE, rotas);
   await pg.waitForTimeout(1500);
+  /* os títulos moram em Publicações */
+  await pg.evaluate(() => { const b = [...document.querySelectorAll('button, a')].find(x => /^Publicações/.test(x.textContent.trim())); b && b.click(); });
+  await pg.waitForTimeout(600);
   const r = await pg.evaluate(() => ({ view: S.view, txt: document.body.innerText, dado: (S.pauta || []).find(p => p.id === 7001)?.t }));
   checa('o link abre a tela do cliente', r.view === 'client', r.view);
   checa('o card aparece como "Carrossel · Inovação no Direito"', /Carrossel · Inovação no Direito/.test(r.txt) && !/Cortez Jurídico · Carrossel/.test(r.txt), r.txt.slice(0, 300));
