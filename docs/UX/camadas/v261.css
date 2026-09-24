@@ -1,0 +1,17 @@
+/* v261 — padronizar nomes, temas já usados */
+.v261Temas{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px }
+.v261Temas > span{ font-size:12px; color:var(--ink-400); margin-right:2px }
+.v261Temas button{ display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 11px; border-radius:999px;
+  border:0; background:var(--enc, rgba(255,255,255,.06)); color:var(--ink-100); font-size:12.5px; cursor:pointer }
+.v261Temas button:hover{ background:var(--enc2, rgba(255,255,255,.1)); color:var(--ink-50) }
+.v261Temas button i{ font-style:normal; font-size:11px; color:var(--ink-400) }
+@media(max-width:860px){ .v261Temas button{ height:34px } }
+
+.v261Janela .v261Todos{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-200); margin:4px 0 8px }
+.v261Lista{ display:flex; flex-direction:column; gap:2px; max-height:52vh; overflow:auto; margin-bottom:6px }
+.v261Linha{ display:flex; align-items:flex-start; gap:10px; padding:9px 8px; border-radius:10px; cursor:pointer }
+.v261Linha:hover{ background:var(--enc, rgba(255,255,255,.05)) }
+.v261Linha input{ margin-top:3px; flex:0 0 auto }
+.v261Linha span{ display:flex; flex-direction:column; gap:2px; min-width:0; overflow-wrap:anywhere }
+.v261Linha s{ font-size:12px; color:var(--ink-400) }
+.v261Linha b{ font-size:13.5px; font-weight:600; color:var(--ink-50) }
