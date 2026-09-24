@@ -54,6 +54,14 @@ const ficha = () => pg.evaluate(() => { const m = document.querySelector('.modal
     ajusta: [...(m?.querySelectorAll('[data-v242ajusta]') || [])].map(x => x.textContent.trim()), fora: m?.querySelectorAll('.enPecaItem.v242Fora').length || 0 }; });
 
 console.log('\n  — o arquivo contra o formato —');
+/* o app mede cada imagem quando ela TERMINA de carregar (assíncrono). Com a máquina
+   carregada, 2s fixos às vezes não bastavam e a prova lia o quadro antes da medida —
+   ficava vermelha sem nada ter quebrado. Espera as oito medidas (até 15s), depois desenha. */
+for (let i = 0; i < 150; i++) {
+  const prontas = await pg.evaluate(() => [1, 2, 3, 4].flatMap(id => S.mat[mChave(id, 'cj')] || []).every(m => m.w && m.h));
+  if (prontas) break;
+  await pg.waitForTimeout(100);
+}
 await pg.evaluate(() => render()); await pg.waitForTimeout(500); await pg.evaluate(() => render());
 const quadro = await pg.evaluate(() => Object.fromEntries(S.ensaio.tarefas.filter(t => t.cli === 'cj').map(t => [t.cardId,
   !!document.querySelector(`.enCard[data-entar="${t.id}"] .enMidia .fmt`)])));

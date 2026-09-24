@@ -41,6 +41,9 @@ O founder: *"faz o botão importar as cinco redes num clique"*.
 
 59 provas em `web/verificar/v263-as-cinco-redes.mjs`, com os 22 arquivos
 reais e o caso difícil (Instagram e Facebook exportados no mesmo período).
+A suíte da v242 deixou de julgar no relógio: ela lia o quadro 2s depois de
+semear e, com a máquina carregada, antes de as imagens terem sido medidas
+(a medida é assíncrona) — agora espera as medidas. Regressão: 147/147.
 
 ## 0.5.76 — 2026-09-24
 
