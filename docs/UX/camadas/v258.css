@@ -1,0 +1,9 @@
+/* v258 — o aviso não cobre a barra de baixo. A regra de base usava
+   --tabh, que nunca foi definida: no celular o aviso caía em cima da barra
+   e os ícones pareciam sumir ("Bem-vindo de volta", "Link copiado"). */
+@media(max-width:860px){
+  body:has(nav.tabbar) :is(#layer, #layerAvisos) .toast{ top:auto !important; bottom:calc(88px + env(safe-area-inset-bottom)) !important }
+}
+/* o texto longo do deslizar rola: com a caixa marcada como rolável, o
+   navegador cuida da rolagem vertical e o gesto fica com o lado */
+#v253dz .dzTexto.rola, #v253dz .dzInfo.aberto .dzLeg.rola{ touch-action:pan-y; overscroll-behavior:contain }

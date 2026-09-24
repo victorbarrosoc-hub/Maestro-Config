@@ -7,6 +7,61 @@ Nunca apagar versões anteriores.
 
 ---
 
+## 0.5.73 — 2026-09-24
+
+**Status:** Concluída
+
+### v259 — o menu recua, e a planilha que entra
+
+**O menu recua.** O founder, com a referência do Instagram: *"quero que o
+menu lateral seja recuável, pra quem tem tela menor ter mais espaço,
+principalmente no Ensaio"*. Num notebook de 1280px a lateral ocupava 238px
+e a coluna Concluído do Ensaio ficava cortada. Agora o "‹" ao lado da marca
+recolhe a lateral para uma trilha de ícones de 68px; "›" abre de novo; o
+atalho é `[` (fora de campo de texto). Recolhida, cada ícone diz o nome ao
+passar o mouse (dica que flutua fora da trilha), os títulos de grupo viram
+um fio e a contagem (Conversas: 1) vira um ponto no canto. A escolha fica
+no aparelho (`maestro-menu-recuado-v1`); sem escolha, telas de até 1280px
+abrem recolhidas. No celular nada muda. Fonte em `docs/UX/camadas/v259.*`;
+18 provas em `web/verificar/v259-o-menu-recua.mjs`.
+
+**A planilha que entra.** Na aba Redes, um CSV real parava em *"Não achei a
+coluna de data da publicação"*. O leitor da v238 supunha duas coisas que
+as exportações reais não cumprem: que a LINHA 1 é o cabeçalho (o Meta abre
+com `sep=,` e um título) e que a data tem um nome da lista (e o YouTube a
+escreve por extenso: "Sep 15, 2026", "15 de set. de 2026"). Agora: respeita
+`sep=`; o cabeçalho é a primeira das 12 primeiras linhas com data e número;
+mais nomes de coluna de data; sem nome reconhecido, a coluna em que a
+maioria das linhas é data; datas por extenso (pt/en), ISO com hora,
+dd.mm.aaaa e dd-mm-aaaa. E quando não dá mesmo, o erro **lista as colunas
+que leu** — o próximo print já diz o que falta. 12 provas em
+`web/verificar/v259-a-planilha-que-entra.mjs`; as 28 da v238 seguem verdes.
+Não resolvido aqui: arquivo `.xlsx` (o TikTok às vezes só oferece esse) —
+o app pede para exportar em CSV.
+
+## 0.5.72 — 2026-09-24
+
+**Status:** Concluída
+
+### v258 — uma cara só
+
+A partir das gravações de tela do founder (celular e computador):
+**a cara antiga aparecia ao abrir** — o arquivo tem 3 MB e o navegador
+desenha a tela no meio da leitura, antes das camadas novas; agora a casa
+fica escondida (um ponto de latão pulsa) até o arquivo inteiro chegar, com
+saída de 12s se algo travar, e o link do cliente espera a própria tela em
+vez de piscar a agência e a vitrine. **Logado, o portão antigo não aparece
+mais** (quem pede o portão com sessão vai para dentro). **O dono volta a ser
+Administrador** na lista "Quem está entrando?" (aparecia "Equipe · dono da
+conta"). **O aviso não cobre a barra de baixo** no celular (ele mora em
+`#layerAvisos`; a regra antiga usava `--tabh`, que nunca existiu).
+**O texto longo do deslizar rola no dedo** (`pan-y` na caixa rolável).
+**O ao vivo não mexe na tela**: o redesenho espera o dedo sair e a rolagem
+parar, e devolve a posição de cada caixa rolada. 15 provas em
+`web/verificar/v258-uma-cara-so.mjs`, com o arquivo servido em duas metades.
+**Aberto:** um "Não salvou no banco: o banco respondeu 500" de passagem no
+primeiro vídeo — sem reprodução; olhar os logs da API no Supabase.
+
 ## 0.5.71 — 2026-09-24
 
 **Status:** Concluída

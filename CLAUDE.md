@@ -299,6 +299,24 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v259) — o menu recua, e a planilha que entra.** (1) O
+"‹" ao lado da marca recolhe a lateral para uma trilha de ícones (68px),
+como o Instagram; `[` alterna; dica com o nome no hover; contagem vira
+ponto; a escolha fica no aparelho e, sem escolha, até 1280px abre
+recolhida — o Ensaio passa a caber as seis colunas num notebook. (2) A aba
+Redes lia só CSV com o cabeçalho na linha 1 e data com nome conhecido: o
+Meta abre com `sep=,` + título e o YouTube escreve a data por extenso.
+Agora acha o cabeçalho, acha a data pelo conteúdo, lê "15 de set. de 2026"
+e, quando não dá, o erro lista as colunas lidas. 18 + 12 provas em
+`web/verificar/v259-*.mjs`.
+**Fechado (24 set, v258) — uma cara só.** Das gravações do founder: a cara
+ANTIGA aparecia ao abrir (o arquivo de 3 MB é desenhado no meio da leitura)
+— agora a casa só aparece inteira, com saída em 12s; logado, o portão antigo
+não volta; o dono é Administrador na lista; o aviso não cobre a barra do
+iPhone; o texto do deslizar rola; e o ao vivo não redesenha sob o dedo nem
+perde a rolagem. 15 provas em `web/verificar/v258-uma-cara-so.mjs`.
+**Aberto:** um "o banco respondeu 500" de passagem — ver logs da API no
+Supabase.
 **Fechado (24 set, v257) — ao vivo.** "Demora muito pra atualizar nas
 telas conectadas." Uma tela só buscava novidade ao abrir, no "Atualizar"
 ou antes de gravar — quem só olhava não recebia nada. Agora: (1) quem grava

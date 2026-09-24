@@ -50,7 +50,36 @@
 
   /* ---------- desenhar sem atropelar quem digita ------------------- */
   let desenhoPendente = false;
+  /* v258 — quem está TOCANDO ou ROLANDO não vê a tela mexer: o redesenho
+     espera o dedo sair e a rolagem parar */
+  let dedo = false, rolouEm = 0, tmEspera = 0;
+  addEventListener('pointerdown', () => { dedo = true; }, true);
+  addEventListener('pointerup', () => { dedo = false; }, true);
+  addEventListener('pointercancel', () => { dedo = false; }, true);
+  addEventListener('scroll', () => { rolouEm = Date.now(); }, true);
+  /* e a rolagem volta para onde estava — a da página e a de cada caixa
+     que rola (as colunas do Ensaio, a lista das Conversas) */
+  const caminho = el => { const p = []; for(let e = el; e && e.id !== 'root' && e !== document.body; e = e.parentElement){
+      const i = e.parentElement ? [...e.parentElement.children].indexOf(e) : 0; p.push(e.tagName + '.' + (e.className && e.className.baseVal === undefined ? String(e.className).split(' ')[0] : '') + ':' + i); } return p.join('<'); };
+  function guardarRolagem(){
+    const r = { x: scrollX, y: scrollY, caixas: [] };
+    document.querySelectorAll('#root *').forEach(el => { if(el.scrollTop > 0 || el.scrollLeft > 0) r.caixas.push([caminho(el), el.scrollTop, el.scrollLeft]); });
+    return r;
+  }
+  function voltarRolagem(r){
+    try{
+      if(scrollX !== r.x || scrollY !== r.y) scrollTo(r.x, r.y);
+      if(!r.caixas.length) return;
+      const mapa = new Map(r.caixas.map(c => [c[0], c]));
+      document.querySelectorAll('#root *').forEach(el => { const c = mapa.get(caminho(el)); if(c){ el.scrollTop = c[1]; el.scrollLeft = c[2]; } });
+    }catch(e){}
+  }
   function redesenhar(){
+    if(dedo || Date.now() - rolouEm < 700){ clearTimeout(tmEspera); tmEspera = setTimeout(redesenhar, 450); return; }
+    const rol = guardarRolagem();
+    try{ redesenharJa(); } finally { voltarRolagem(rol); requestAnimationFrame(() => voltarRolagem(rol)); }
+  }
+  function redesenharJa(){
     const a = document.activeElement;
     const digitando = a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range|color|file)$/.test(a.type)) || a.isContentEditable);
     if(!digitando){ try{ render(); }catch(e){} return; }

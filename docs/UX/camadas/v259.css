@@ -1,0 +1,46 @@
+/* v259 — o menu recua. Só no computador: no celular a lateral não existe. */
+@media(min-width:861px){
+  .app.ag{ transition:none }
+  html.v259Anda .app.ag{ transition:grid-template-columns .26s cubic-bezier(.2,.8,.2,1) }
+
+  /* o botão "‹" mora na marca, à direita */
+  .aside .lg{ position:relative }
+  .v259Recua{ margin-left:auto; width:28px; height:28px; display:grid; place-items:center; border-radius:8px;
+    color:var(--ink-400); background:none; border:0; cursor:pointer; flex:0 0 auto }
+  .v259Recua:hover{ background:var(--enc); color:var(--ink-50) }
+  .v259Recua:focus-visible{ outline:2px solid var(--brass-500); outline-offset:1px }
+
+  /* RECOLHIDA: a trilha de ícones */
+  html.v259Recuado .app.ag{ grid-template-columns:68px minmax(0,1fr) !important }
+  html.v259Recuado .app.ag > .aside{ overflow-x:hidden; align-items:center }
+  html.v259Recuado .app.ag > .aside .lg{ flex-direction:column; gap:12px; padding:4px 0 14px !important; width:100% }
+  html.v259Recuado .app.ag > .aside .lg b{ display:none }
+  html.v259Recuado .app.ag > .aside .lg > svg{ width:30px; height:auto }
+  html.v259Recuado .v259Recua{ margin:0; transform:scaleX(-1) }
+
+  /* o título do grupo vira um fio */
+  html.v259Recuado .app.ag > .aside .grp{ font-size:0 !important; padding:0 !important; height:1px; width:28px;
+    margin:10px auto; background:var(--fio); overflow:hidden }
+  html.v259Recuado .app.ag > .aside .grp:first-of-type{ display:none }
+
+  /* o item fica só com o ícone; a contagem vira um ponto no canto */
+  html.v259Recuado .app.ag > .aside .nav{ width:44px !important; height:40px; margin:2px auto !important; padding:0 !important;
+    justify-content:center; font-size:0 !important; gap:0 !important; position:relative }
+  html.v259Recuado .app.ag > .aside .nav svg.i{ font-size:18px !important }
+  html.v259Recuado .app.ag > .aside .nav .bd{ position:absolute; top:6px; right:7px; min-width:8px !important; width:8px;
+    height:8px !important; padding:0 !important; font-size:0 !important; border-radius:50%; margin:0 !important;
+    box-shadow:0 0 0 2px var(--lat) }
+
+  /* a pessoa: só a bolinha */
+  html.v259Recuado .app.ag > .aside > div:has(> .qeAtual){ padding:12px 0 0 !important; width:100% }
+  html.v259Recuado .app.ag > .aside .qeAtual{ font-size:0 !important; justify-content:center; width:44px !important;
+    margin:0 auto; padding:8px 0 !important; gap:0 }
+}
+
+/* a dica que flutua ao lado do ícone */
+#v259Dica{ position:fixed; z-index:3000; transform:translateY(-50%); pointer-events:none; white-space:pre;
+  padding:6px 10px; border-radius:8px; font:500 12.5px/1.2 var(--sans, Inter, system-ui, sans-serif);
+  background:var(--ink-50); color:var(--ink-950); box-shadow:0 6px 20px rgba(0,0,0,.25);
+  animation:v259d .12s ease both }
+@keyframes v259d{ from{ opacity:0; transform:translate(-4px,-50%) } }
+@media(max-width:860px){ #v259Dica{ display:none } }
