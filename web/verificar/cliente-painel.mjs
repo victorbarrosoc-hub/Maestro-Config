@@ -76,7 +76,10 @@ checa('1. o que espera por mim vem primeiro', iEspera >= 0 && iEspera < iOnde);
 checa('2. onde estamos vem depois', iOnde > 0);
 checa('3. quanto do meu tempo custa esta dito', iDias > 0);
 checa('o compasso tem as quatro batidas', await mob.locator('.compasso .bt').count() === 4);
-checa('a batida do cliente e nomeada como a decisao dele', /A sua é a decisão/.test(t1));
+/* v251: a frase "A sua é a decisão" saiu (era texto que explica a tela);
+   quem nomeia a batida dele agora é a própria batida: "· N com você" */
+checa('a batida do cliente e nomeada como a decisao dele',
+      /com você/.test(await mob.locator('.compasso').innerText()));
 checa('o ato atual tem a pergunta-guia', await mob.locator('.atoCard .pergunta').count() === 1
       && (await mob.locator('.atoCard .pergunta').textContent()).trim().endsWith('?'));
 checa('as seis conquistas aparecem, trancadas ate serem ganhas',

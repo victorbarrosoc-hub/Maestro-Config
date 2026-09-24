@@ -1,0 +1,169 @@
+/* ====================================================================
+   v250 — três coisas do vídeo e dos prints do founder
+   ==================================================================== */
+/* 1. a foto de quem tem foto de verdade estourava no seletor de Pessoa:
+      a regra que prende a <img> na bolinha é do botão da lista, e o
+      seletor usa uma CÓPIA da bolinha fora dele */
+.v249Val :is(.respFoto, .cliFoto){ overflow:hidden; border-radius:50% }
+.v249Val :is(.respFoto, .cliFoto) img{ width:100% !important; height:100% !important; object-fit:cover; display:block;
+  max-width:none; border-radius:50% }
+/* 2. os dois atalhos do cliente são CAIXAS de duas linhas, não pílulas:
+      em pílula o texto encostava na curva */
+.clInicioAtalhos{ gap:10px !important }
+.clInicioAtalhos > button:not(.site *){ border:0 !important; background:var(--sup) !important; border-radius:18px !important;
+  padding:16px 18px !important; gap:6px !important; align-content:start; box-shadow:var(--sombra) !important; color:var(--ink-50) !important }
+.clInicioAtalhos > button:not(.site *):hover{ background:var(--sup2) !important }
+.clInicioAtalhos > button b{ display:flex; align-items:center; gap:7px; font-size:15.5px; font-weight:650; letter-spacing:-.01em }
+.clInicioAtalhos > button small{ font-size:13px !important; line-height:1.4; color:var(--ink-300) !important }
+/* 3. Conversas no celular: a página não rola — quem rola é o fio */
+@media(max-width:860px){
+  body[data-rota="conversas"] .main{ padding-bottom:0 !important }
+  body[data-rota="conversas"]{ overscroll-behavior:none }
+}
+
+/* 4. A VITRINE — a página de quem ainda não é cliente, no mesmo desenho da
+      plataforma: preto, texto grande, superfícies sem contorno, uma cor só
+      (o latão da marca) para o que importa */
+body.naVitrine .ctx{ display:none }
+body.naVitrine #root{ padding-top:0 }
+body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !important }
+.site.sv{ --sTx:#F5F5F7; --sTx2:#A1A1A6; --sTx3:#6E6E73; --sSup:#161617; --sSup2:#232325; --sFio:rgba(255,255,255,.09);
+  background:#000; color:var(--sTx); font-family:var(--sans); -webkit-font-smoothing:antialiased; overflow-x:hidden }
+.sv .snav, .sv .snav.scrolled{ position:sticky; top:0; height:52px; padding:0 max(22px, calc(50% - 520px)); gap:28px;
+  background:rgba(0,0,0,.72); backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
+  box-shadow:none; border-bottom:.5px solid var(--sFio) }
+.sv .logo b{ font-family:var(--sans); font-weight:650; font-size:18px; letter-spacing:-.015em; color:var(--sTx) }
+.sv .snav a{ color:var(--sTx2); font-size:13px }
+.sv .snav a:hover{ color:var(--sTx) }
+.sv .b{ border-radius:999px; font-weight:600; letter-spacing:-.005em; box-shadow:none; transition:background-color .18s, transform .14s }
+.sv .b:hover{ transform:none; filter:none }
+.sv .b:active{ transform:scale(.97) }
+.sv .b.pri{ background:var(--sTx); color:#000; padding:13px 24px; font-size:16px }
+.sv .b.pri:hover{ background:#fff }
+.sv .b.pri.sm{ padding:6px 15px; font-size:13px }
+.sOlho{ margin:0 0 14px; font-size:17px; font-weight:600; color:var(--brass-400); letter-spacing:-.01em }
+.sHero{ text-align:center; padding:108px 22px 0; position:relative }
+.sHero::before{ content:""; position:absolute; left:50%; top:320px; width:1100px; height:620px; transform:translateX(-50%);
+  background:radial-gradient(ellipse at center, rgba(200,150,58,.20), transparent 62%); pointer-events:none }
+.sHero h1{ margin:0 auto 20px; font-size:clamp(46px, 8.4vw, 96px); line-height:1.02; font-weight:700; letter-spacing:-.045em; color:var(--sTx) }
+.sLede{ margin:0 auto 34px; max-width:34ch; font-size:clamp(19px, 2.3vw, 24px); line-height:1.4; color:var(--sTx2); letter-spacing:-.012em }
+.sCta{ display:flex; gap:26px; justify-content:center; align-items:center; flex-wrap:wrap }
+.sLink{ color:var(--brass-400); font-size:17px; text-decoration:none }
+.sLink:hover{ text-decoration:underline }
+/* o quadro, desenhado */
+.sJanela{ position:relative; max-width:1040px; margin:76px auto 0; border-radius:22px 22px 0 0; background:#0C0C0D;
+  box-shadow:0 0 0 .5px rgba(255,255,255,.14), 0 -30px 120px rgba(200,150,58,.10); text-align:left; overflow:hidden;
+  -webkit-mask-image:linear-gradient(#000 70%, transparent); mask-image:linear-gradient(#000 70%, transparent) }
+.sBarra{ display:flex; align-items:center; gap:7px; height:38px; padding:0 16px; border-bottom:.5px solid var(--sFio) }
+.sBarra i{ width:11px; height:11px; border-radius:50%; background:#3A3A3C }
+.sBarra span{ margin-left:12px; font-size:12.5px; font-weight:600; color:var(--sTx2) }
+.sResumo{ padding:18px 20px 4px; font-size:13px; color:var(--sTx2) }
+.sResumo b{ color:var(--sTx) } .sResumo em{ font-style:normal; color:#FF453A }
+.sQuadro{ display:grid; grid-template-columns:repeat(5, minmax(172px, 1fr)); gap:12px; padding:14px 20px 44px }
+.sCol{ display:flex; flex-direction:column; gap:9px; min-width:0 }
+.sCol.sCli{ background:rgba(200,150,58,.07); border-radius:16px; padding:8px; margin:-8px }
+.sColH{ display:flex; align-items:center; gap:7px; font-size:13.5px; font-weight:650 }
+.sColH i{ width:8px; height:8px; border-radius:50% }
+.sCol small{ margin:-6px 0 2px 15px; font-size:11.5px; color:var(--sTx3) }
+.sK{ position:relative; display:flex; flex-direction:column; gap:7px; padding:12px 12px 12px 16px; border-radius:14px; background:var(--sSup2) }
+.sK::before{ content:""; position:absolute; left:6px; top:12px; bottom:12px; width:3px; border-radius:2px; background:var(--f) }
+.sK b{ font-size:13px; font-weight:600; line-height:1.3 }
+.sKm{ display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--sTx2) }
+.sKm i{ width:14px; height:14px; border-radius:50%; opacity:.85 }
+.sKc{ align-self:flex-start; font-size:11px; padding:2px 8px; border-radius:6px; background:rgba(255,255,255,.07); color:var(--sTx2) }
+.sMini{ display:flex; gap:4px; align-items:center }
+.sMini s{ width:30px; height:38px; border-radius:6px; background:linear-gradient(160deg,#2B3A55,#0E1422) }
+.sMini em{ font-style:normal; font-size:11px; color:var(--sTx3) }
+.sReel{ width:40px; height:70px; border-radius:7px; background:linear-gradient(160deg,#3A3F48,#0B0C0E) }
+.sPasso1{ text-align:center; padding:7px; border-radius:9px; background:var(--sTx); color:#000; font-size:12px; font-weight:650 }
+/* as seções */
+.sSec{ max-width:1040px; margin:0 auto; padding:130px 22px 0 }
+.sSec h2{ margin:0 0 18px; font-size:clamp(34px, 5.4vw, 60px); line-height:1.06; font-weight:700; letter-spacing:-.04em; color:var(--sTx); max-width:18ch }
+.sSub{ margin:0 0 44px; max-width:44ch; font-size:clamp(17px, 1.9vw, 21px); line-height:1.45; color:var(--sTx2); letter-spacing:-.01em }
+.sPassos{ display:grid; grid-template-columns:repeat(3, 1fr); gap:14px }
+.sPasso{ padding:28px 26px; border-radius:24px; background:var(--sSup) }
+.sPasso i{ display:block; width:10px; height:10px; border-radius:50%; margin-bottom:22px }
+.sPasso h3{ margin:0 0 8px; font-size:22px; font-weight:650; letter-spacing:-.02em }
+.sPasso p{ margin:0; font-size:15.5px; line-height:1.45; color:var(--sTx2) }
+.sDividido{ display:grid; grid-template-columns:1.1fr .9fr; gap:56px; align-items:center }
+.sLista{ margin:0; padding:0; list-style:none; display:grid; gap:12px; font-size:17px; color:var(--sTx) }
+.sLista li{ display:flex; gap:12px; align-items:baseline }
+.sLista li::before{ content:"✓"; color:var(--brass-400); font-weight:700 }
+/* o celular, desenhado */
+.sFone{ justify-self:center; width:290px; height:600px; border-radius:50px; padding:11px; background:#1C1C1E;
+  box-shadow:0 0 0 .5px rgba(255,255,255,.18), 0 50px 120px rgba(0,0,0,.7) }
+.sTela{ height:100%; border-radius:40px; background:#0A0A0A; overflow:hidden; padding:44px 14px 14px; display:flex; flex-direction:column; gap:12px }
+.sPerfil{ display:flex; align-items:center; gap:10px }
+.sAv{ width:44px; height:44px; border-radius:50%; display:grid; place-items:center; background:linear-gradient(135deg,#C8963A,#7A5A1E); font-size:14px; font-weight:700; color:#000 }
+.sPerfil b{ display:block; font-size:14px } .sPerfil small{ font-size:11.5px; color:var(--sTx3) }
+.sGrade{ display:grid; grid-template-columns:repeat(3, 1fr); gap:2px; border-radius:8px; overflow:hidden }
+.sGrade span{ aspect-ratio:3/4; position:relative }
+.sGrade em{ position:absolute; left:4px; bottom:4px; font-style:normal; font-size:8.5px; font-weight:700; padding:2px 5px; border-radius:5px; background:var(--brass-500); color:#000 }
+.sDecide{ margin-top:auto; padding:10px; border-radius:22px; background:var(--sSup2); display:flex; flex-direction:column; gap:9px }
+.sPost{ height:120px; border-radius:14px; background:linear-gradient(160deg,#C8963A,#3A2A10) }
+.sAcoes{ display:flex; gap:12px; font-size:20px; padding:0 4px; color:var(--sTx) }
+.sBts{ display:grid; grid-template-columns:1fr 1fr; gap:7px }
+.sBts span{ text-align:center; padding:10px 0; border-radius:999px; font-size:12.5px; font-weight:650 }
+.sAjuste{ background:rgba(255,255,255,.08) } .sOk{ background:var(--sTx); color:#000 }
+/* o bento */
+.sBento{ display:grid; grid-template-columns:repeat(12, 1fr); gap:14px }
+.sTile{ grid-column:span 3; padding:30px 28px; border-radius:26px; background:var(--sSup); display:flex; flex-direction:column; gap:10px }
+.sTile.sG{ grid-column:span 6; min-height:280px }
+.sTile h3{ margin:0; font-size:22px; font-weight:650; letter-spacing:-.02em; line-height:1.2 }
+.sTile.sG h3{ font-size:clamp(24px, 2.6vw, 30px); max-width:16ch }
+.sTile p{ margin:0; font-size:15.5px; line-height:1.45; color:var(--sTx2) }
+.sSelo, .sVoltas{ margin-top:auto; display:flex; flex-wrap:wrap; gap:8px; align-items:center }
+.sSelo{ align-self:flex-start; padding:9px 14px; border-radius:999px; background:rgba(200,150,58,.14); color:var(--brass-300); font-size:14px; font-weight:600 }
+.sSelo svg{ width:16px; height:16px }
+.sVoltas em{ font-style:normal; padding:9px 14px; border-radius:999px; background:rgba(255,255,255,.07); font-size:14px; font-weight:600 }
+.sVoltas em:first-child{ background:rgba(52,199,89,.16); color:#30D158 }
+.sFrase{ text-align:center } .sFrase h2{ margin:0 auto 20px; max-width:20ch }
+.sFrase h2 em{ font-style:normal; color:var(--brass-400) } .sFrase .sSub{ margin:0 auto }
+.sFim{ text-align:center; padding-bottom:40px } .sFim h2{ margin:0 auto 30px }
+/* os preços, com a cara nova */
+.sv .bill .seg{ background:var(--sSup); border:0; border-radius:999px }
+.sv .bill .seg .thumb{ border-radius:999px; background:var(--sSup2) }
+.sv .bill .seg button{ color:var(--sTx2) } .sv .bill .seg button.on{ color:var(--sTx) }
+.sv .prices{ gap:14px }
+.sv .price{ border:0; border-radius:24px; background:var(--sSup); padding:30px 26px; transition:none }
+.sv .price:hover{ transform:none }
+.sv .price.pop{ box-shadow:inset 0 0 0 1.5px var(--brass-500); background:var(--sSup) }
+.sv .price.pop::after{ border-radius:999px; font-family:var(--sans); letter-spacing:0; text-transform:none; font-size:11.5px; font-weight:650; padding:3px 10px }
+.sv .price h4{ font-family:var(--sans); font-weight:650; font-size:20px; letter-spacing:-.02em; color:var(--sTx) }
+.sv .price .v{ font-family:var(--sans); font-weight:700; font-size:40px; letter-spacing:-.035em; color:var(--sTx) }
+.sv .price .v small{ font-weight:500; color:var(--sTx3); letter-spacing:0 }
+.sv .price .per{ color:var(--sTx3) }
+.sv .price ul{ color:var(--sTx2); font-size:14.5px }
+.sv .price li::before{ color:var(--brass-400) }
+.sv .price.ghost{ background:transparent; box-shadow:inset 0 0 0 1px var(--sFio) }
+.sRodape{ max-width:1040px; margin:110px auto 0; padding:28px 22px 60px; border-top:.5px solid var(--sFio); display:flex; flex-wrap:wrap;
+  gap:10px 24px; align-items:center; font-size:12.5px; color:var(--sTx3) }
+.sRodape .logo b{ font-size:15px; color:var(--sTx3) } .sRodape span:last-child{ margin-left:auto }
+@media(max-width:860px){
+  .sHero{ padding-top:72px }
+  .sQuadro{ grid-template-columns:repeat(5, 200px); overflow-x:auto; scrollbar-width:none }
+  .sPassos{ grid-template-columns:1fr 1fr } .sDividido{ grid-template-columns:1fr; gap:48px }
+  .sBento{ grid-template-columns:1fr } .sTile, .sTile.sG{ grid-column:auto; min-height:0 }
+  .sSec{ padding-top:96px }
+}
+@media(max-width:520px){
+  .sPassos{ grid-template-columns:1fr }
+  .sPasso{ display:grid; grid-template-columns:auto 1fr; column-gap:14px; padding:20px }
+  .sPasso i{ grid-row:span 2; margin:8px 0 0 } .sPasso h3{ font-size:19px; margin-bottom:4px }
+  .sRodape span:last-child{ margin-left:0 }
+}
+
+/* 5. a porta de entrar, no desenho novo — e com volta para o site */
+#entrarMaestro{ background:rgba(0,0,0,.62) !important; backdrop-filter:blur(24px) saturate(140%); -webkit-backdrop-filter:blur(24px) saturate(140%) }
+#entrarMaestro .caixa{ position:relative; border:0 !important; border-radius:24px !important; background:var(--sup) !important;
+  box-shadow:0 30px 90px rgba(0,0,0,.5) !important; padding:34px 28px 26px !important }
+#entrarMaestro h3{ font-family:var(--sans) !important; font-size:24px !important; font-weight:700 !important; letter-spacing:-.025em }
+#entrarMaestro .campo{ border:0 !important; background:var(--enc) !important; border-radius:12px !important }
+#entrarMaestro .campo:focus{ box-shadow:0 0 0 4px var(--anel) }
+.v250Fecha{ position:absolute; top:14px; right:14px; width:30px; height:30px; border-radius:50%; display:grid; place-items:center;
+  background:var(--enc); color:var(--ink-300); font-size:16px; line-height:1 }
+.v250Fecha:hover{ background:var(--enc2); color:var(--ink-50) }
+
+/* 6. trocar e-mail e senha */
+.v250Conta .fld{ margin-bottom:12px }
+.v250Conta .erro{ min-height:18px; margin:0 0 10px; font-size:13px; color:var(--danger) }

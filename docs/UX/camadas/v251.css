@@ -1,0 +1,22 @@
+/* v251 — O CELULAR RESPIRA. O founder, com três prints: "retire esses textos
+   explicativos sobre o que é a aba" e "tô achando muita informação, é muita
+   coisa pra o mobile". A regra: cada tela do celular responde UMA pergunta.
+   O título já diz o que a tela é; o parágrafo embaixo dele repetia. */
+
+/* 1. os textos que explicam a tela saem — em todo tamanho */
+.hjCab + p, .clbody > .kick + h2 + p, .compassoLeg, .clPerfilDica, .batidaCard .l, .v251Some{ display:none !important }
+
+/* 2. no celular fica o que se usa; o que é painel de gestão fica no computador */
+@media(max-width:860px){
+  /* Cronograma: a linha "Nada esperando envio · 2 com o cliente · 32 aprovados"
+     já é o resumo; os quatro quadros de número e a barra da semana repetiam */
+  .ptCheck, .ptCab{ display:none !important }
+  /* a semana cabe numa pílula, não num círculo de três linhas */
+  .ptAbas .lin{ flex-wrap:nowrap !important; overflow-x:auto; scrollbar-width:none }
+  .ptAbas .lin::-webkit-scrollbar{ display:none }
+  .ptAbas .lin button{ white-space:nowrap; flex:0 0 auto; border-radius:999px !important }
+  /* o link do cliente: as conquistas são enfeite — ficam no computador */
+  .conquistas, h3:has(+ .conquistas){ display:none !important }
+  /* o respiro entre blocos encolhe um pouco */
+  .clbody h3{ margin-top:22px }
+}

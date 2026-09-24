@@ -299,6 +299,12 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v251) — o celular respira.** Regra: no celular cada tela
+responde UMA pergunta — explicação sai (em todo tamanho), status fica, painel
+de gestão (os 4 números e a barra do Cronograma, as conquistas do cliente) só
+no computador; semanas viram pílulas. As fontes das camadas v249+ moram em
+`docs/UX/camadas/` (comentadas) e entram no protótipo sem comentário — folga
+de 9 KB no teto. 24 provas em `web/verificar/v251-o-celular-respira.mjs`.
 **Fechado (24 set, v250) — a vitrine e a conta.** (1) O "travando" era
 Conversas no iPhone: a altura do chat media o topo pela TELA e a página
 rolava 10px (respiro da v249) — rolar mudava a altura, que mudava a
@@ -312,7 +318,7 @@ no desenho da plataforma — **sem os depoimentos e números inventados**.
 tarefas; o e-mail novo vira `m.login` da mesma pessoa e
 `MaestroPorta.quem().email` segue sendo a identidade. 39 provas em
 `web/verificar/v250-a-vitrine-e-a-conta.mjs`. **Teto do protótipo:** 3,038
-de 3,041 MB — a próxima leva precisa emagrecer o arquivo antes.
+de 3,041 MB (a v251 abriu 9 KB).
 **Fechado (24 set, v249) — o estilo Apple, no app inteiro.** Da proposta
 aprovada (`docs/UX/proposta-ensaio-clean.html`), por TOKENS: fundo preto /
 `#F5F5F7`, superfícies sem contorno, cantos de 14px+, pílulas, primário

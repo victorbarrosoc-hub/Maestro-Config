@@ -1,9 +1,50 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.64
+Version: 0.5.65
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.65 — 2026-09-24
+
+**Status:** Concluída
+
+### v251 — o celular respira
+
+*"Retire esses textos explicativos sobre o que é a aba"* e *"tô achando
+muita informação, é muita coisa pra o mobile, como eu resolvo isso?"*
+
+**A regra que resolve:** no celular, cada tela responde UMA pergunta. O
+título diz o que a tela é; o parágrafo embaixo dele repetia. Número de
+STATUS fica (quantos esperam, quantos clientes); painel de GESTÃO fica no
+computador; explicação sai.
+
+- **Saem em todo tamanho:** "O que vai ao ar hoje…" (Hoje), "A agência
+  escreveu a pauta…" (Publicações do cliente), "Leva uns N minutos…" e
+  "Cada publicação passa pelas quatro batidas…" (Início do cliente), "Toque
+  num post com a etiqueta dourada…", "o pulso da operação inteira" e "de
+  onde sai o que a equipe consegue entregar" (Resultados), e os cartões
+  "Ninguém começa em tela vazia" e "Uma regra acima de todas".
+- **Ficam só no computador:** os quatro quadros de número do Cronograma
+  (FEITO · NÃO FEITO · tarefas · pendências) e a barra "A semana em
+  compasso" — a linha "Nada esperando envio · 2 com o cliente · 32
+  aprovados" já é o resumo —, e as conquistas no link do cliente.
+- **As semanas** viram pílulas de uma linha, correndo de lado, em vez dos
+  círculos de três linhas do print.
+
+**E o arquivo emagreceu:** as fontes comentadas das camadas v249–v251
+passam a morar em `docs/UX/camadas/`, e o protótipo leva a versão sem
+comentário (conferida com `node --check` na hora de embutir). Folga de 3 KB
+para 9 KB, sem subir o teto.
+
+24 provas em `web/verificar/v251-o-celular-respira.mjs`, nos dois tamanhos —
+incluindo o lado contrário (o status continua; no computador os painéis
+continuam).
+A suíte `cliente-painel` cobrava a frase "A sua é a decisão"; o que ela
+protege (a batida do cliente nomeada como dele) agora é dito pela própria
+batida — "· N com você" — e é isso que ela passa a cobrar.
 
 ---
 

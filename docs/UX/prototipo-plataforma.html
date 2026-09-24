@@ -16001,7 +16001,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v250 · 24 set · a vitrine e a conta';
+const VERSAO_PROTOTIPO = 'v251 · 24 set · o celular respira';
 
 menuSheet = (function(orig){
   return function(){
@@ -45126,61 +45126,41 @@ body.emEnsaio .enBola:not(.site *){font-size:11px}
 
 </style>
 <style id="v249-apple">
-/* =====================================================================
-   v249 — O ESTILO APPLE. Proposta aprovada pelo founder em 24/set
-   ("adorei o estilo, ficou muito bem organizado e intuitivo — pode fazer
-   no site todo"; referência em docs/UX/proposta-ensaio-clean.html).
-   O MÉTODO NÃO MUDA: nenhuma regra de fluxo, nenhum botão sai do lugar.
-   Muda a forma, e ela mora aqui, num bloco só, por cima de tudo:
-     · cores de sistema da Apple nos dois temas (a vitrine .site/.gate
-       continua com as dela);
-     · superfícies que flutuam: fundo calmo, cards sem contorno com
-       sombra quase invisível (no escuro, um fio de luz no lugar dela);
-     · uma cor de destaque só — o latão da marca — para o que está
-       selecionado; o botão principal é a cor do texto (preto no claro,
-       branco no escuro);
-     · rótulos em frase, não em CAIXA ALTA monoespaçada;
-     · movimento: nada pula ao passar o mouse; o toque afunda 3% e a cor
-       troca em 180ms; janelas entram com fade curto (folha no celular).
-   ===================================================================== */
 :root{
-  --ink-50:#F5F5F7; --ink-100:#EBEBF0; --ink-200:#D1D1D6; --ink-300:#AEAEB2; --ink-400:#8E8E93;
-  --ink-500:#727276; --ink-600:#48484A; --ink-700:#3A3A3C; --ink-800:#2C2C2E; --ink-850:#1C1C1E;
-  --ink-870:#18181A; --ink-900:#111113; --ink-950:#000000;
-  /* o latão é a cor da marca: fica como era */
-  --cobalt:#0A84FF; --encore:#30D158; --coral:#FF9F0A; --violet:#BF5AF2; --danger:#FF453A;
-  --fundo:#000000; --sup:#1C1C1E; --sup2:#232325; --lat:rgba(22,22,24,.92); --vidro:rgba(22,22,24,.72);
-  --enc:rgba(118,118,128,.24); --enc2:rgba(118,118,128,.34); --fio:rgba(255,255,255,.07);
-  --sombra:0 0 0 .5px rgba(255,255,255,.06); --sombraAlta:0 24px 60px rgba(0,0,0,.55), 0 0 0 .5px rgba(255,255,255,.08);
-  --prim:#F5F5F7; --primT:#000000; --anel:rgba(255,200,87,.32);
-  --r-card:16px; --r-ctl:10px;
-  --mola:cubic-bezier(.2,.9,.3,1);
+--ink-50:#F5F5F7; --ink-100:#EBEBF0; --ink-200:#D1D1D6; --ink-300:#AEAEB2; --ink-400:#8E8E93;
+--ink-500:#727276; --ink-600:#48484A; --ink-700:#3A3A3C; --ink-800:#2C2C2E; --ink-850:#1C1C1E;
+--ink-870:#18181A; --ink-900:#111113; --ink-950:#000000;
+--cobalt:#0A84FF; --encore:#30D158; --coral:#FF9F0A; --violet:#BF5AF2; --danger:#FF453A;
+--fundo:#000000; --sup:#1C1C1E; --sup2:#232325; --lat:rgba(22,22,24,.92); --vidro:rgba(22,22,24,.72);
+--enc:rgba(118,118,128,.24); --enc2:rgba(118,118,128,.34); --fio:rgba(255,255,255,.07);
+--sombra:0 0 0 .5px rgba(255,255,255,.06); --sombraAlta:0 24px 60px rgba(0,0,0,.55), 0 0 0 .5px rgba(255,255,255,.08);
+--prim:#F5F5F7; --primT:#000000; --anel:rgba(255,200,87,.32);
+--r-card:16px; --r-ctl:10px;
+--mola:cubic-bezier(.2,.9,.3,1);
 }
 html[data-tema="claro"]{
-  --ink-950:#F5F5F7; --ink-900:#FFFFFF; --ink-870:#F2F2F7; --ink-850:#FFFFFF;
-  --ink-800:#E5E5EA; --ink-700:#D1D1D6; --ink-600:#AEAEB2; --ink-500:#8E8E93;
-  --ink-400:#6E6E73; --ink-300:#48484A; --ink-200:#3A3A3C; --ink-100:#1D1D1F; --ink-50:#000000;
-  --cobalt:#0066CC; --encore:#248A3D; --coral:#C93400; --violet:#8944AB; --danger:#D70015;
-  --fundo:#F5F5F7; --sup:#FFFFFF; --sup2:#FBFBFD; --lat:rgba(242,242,245,.9); --vidro:rgba(255,255,255,.78);
-  --enc:rgba(118,118,128,.12); --enc2:rgba(118,118,128,.2); --fio:rgba(0,0,0,.06);
-  --sombra:0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.05);
-  --sombraAlta:0 24px 60px rgba(0,0,0,.18), 0 0 0 .5px rgba(0,0,0,.06);
-  --prim:#1D1D1F; --primT:#FFFFFF; --anel:rgba(192,143,31,.28);
+--ink-950:#F5F5F7; --ink-900:#FFFFFF; --ink-870:#F2F2F7; --ink-850:#FFFFFF;
+--ink-800:#E5E5EA; --ink-700:#D1D1D6; --ink-600:#AEAEB2; --ink-500:#8E8E93;
+--ink-400:#6E6E73; --ink-300:#48484A; --ink-200:#3A3A3C; --ink-100:#1D1D1F; --ink-50:#000000;
+--cobalt:#0066CC; --encore:#248A3D; --coral:#C93400; --violet:#8944AB; --danger:#D70015;
+--fundo:#F5F5F7; --sup:#FFFFFF; --sup2:#FBFBFD; --lat:rgba(242,242,245,.9); --vidro:rgba(255,255,255,.78);
+--enc:rgba(118,118,128,.12); --enc2:rgba(118,118,128,.2); --fio:rgba(0,0,0,.06);
+--sombra:0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.05);
+--sombraAlta:0 24px 60px rgba(0,0,0,.18), 0 0 0 .5px rgba(0,0,0,.06);
+--prim:#1D1D1F; --primT:#FFFFFF; --anel:rgba(192,143,31,.28);
 }
-/* a vitrine e a porta continuam com a paleta delas */
 .site, .gate{
-  --ink-950:#161616; --ink-900:#1C1C1C; --ink-870:#1F1F20; --ink-850:#212122;
-  --ink-800:#29272B; --ink-700:#35333A; --ink-600:#474350; --ink-500:#54505C;
-  --ink-400:#72707A; --ink-300:#A0A0A6; --ink-200:#C7C8CB; --ink-100:#E4E6E6; --ink-50:#F4F7F5;
-  --brass-100:#FFEBC1; --brass-300:#FFDA91; --brass-400:#FFD176; --brass-500:#FFC857;
-  --brass-600:#C99D43; --brass-700:#96752F;
-  --cobalt:#5B8DEF; --encore:#35B87A; --coral:#F0784C; --violet:#8B7BF0; --danger:#E5484D;
+--ink-950:#161616; --ink-900:#1C1C1C; --ink-870:#1F1F20; --ink-850:#212122;
+--ink-800:#29272B; --ink-700:#35333A; --ink-600:#474350; --ink-500:#54505C;
+--ink-400:#72707A; --ink-300:#A0A0A6; --ink-200:#C7C8CB; --ink-100:#E4E6E6; --ink-50:#F4F7F5;
+--brass-100:#FFEBC1; --brass-300:#FFDA91; --brass-400:#FFD176; --brass-500:#FFC857;
+--brass-600:#C99D43; --brass-700:#96752F;
+--cobalt:#5B8DEF; --encore:#35B87A; --coral:#F0784C; --violet:#8B7BF0; --danger:#E5484D;
 }
 html, body{ background:var(--fundo) }
 html[data-tema="claro"] body{ background:var(--fundo); color:var(--ink-100) }
 ::selection{ background:var(--anel) }
 :focus-visible:not(.site *){ outline:none; box-shadow:0 0 0 4px var(--anel) !important; border-radius:10px }
-/* ---------- movimento ------------------------------------------------ */
 @keyframes v249entra{ from{ opacity:0; transform:translateY(6px) } to{ opacity:1; transform:none } }
 @keyframes v249janela{ from{ opacity:0; transform:scale(.97) translateY(6px) } to{ opacity:1; transform:none } }
 @keyframes v249folha{ from{ transform:translateY(100%) } to{ transform:none } }
@@ -45188,20 +45168,19 @@ html[data-tema="claro"] body{ background:var(--fundo); color:var(--ink-100) }
 .app .fu, .cl .fu{ animation:v249entra .32s var(--mola) both }
 .app .venter{ animation:v249entra .28s var(--mola) both }
 :is(.b, .cyBtn, .nav, .tab, .ptChips button, .enCat, .enResp, .enCli2, .seg button, .luz button, .ctxbtn,
-    .row, .tile, .card, .enCard, .hjItem, .agCard, .ptRow, .kcard, .pjCard, .lothub, .qePessoa, .msit,
-    .clrow, .estModelo, .clbtn, #btAtualizar):not(.site *){
-  transition:background-color .18s ease, color .18s ease, border-color .18s ease, box-shadow .2s ease,
-    opacity .18s ease, transform .14s var(--mola), filter .18s ease !important }
+.row, .tile, .card, .enCard, .hjItem, .agCard, .ptRow, .kcard, .pjCard, .lothub, .qePessoa, .msit,
+.clrow, .estModelo, .clbtn, #btAtualizar):not(.site *){
+transition:background-color .18s ease, color .18s ease, border-color .18s ease, box-shadow .2s ease,
+opacity .18s ease, transform .14s var(--mola), filter .18s ease !important }
 :is(.b, .row, .tile, .enCard, .hjItem, .agCard, .ptRow, .kcard, .pjCard, .lothub, .qePessoa, .msit,
-    .clrow, .estModelo, .ptChips button, .ptCal .dd.tem, .cald.tem, .artpick button, .cvFoto, .cvBaixar,
-    #btAtualizar, .clbtn):not(.site *):hover{ transform:none }
+.clrow, .estModelo, .ptChips button, .ptCal .dd.tem, .cald.tem, .artpick button, .cvFoto, .cvBaixar,
+#btAtualizar, .clbtn):not(.site *):hover{ transform:none }
 :is(.b, .cyBtn, .ptChips button, .enCat, .enResp, .enCli2, .clbtn, .tab, .nav, .seg button, .luz button,
-    .ctxbtn):not(.site *):active{ transform:scale(.97) }
+.ctxbtn):not(.site *):active{ transform:scale(.97) }
 :is(.row, .hjItem, .agCard, .ptRow, .kcard, .pjCard, .lothub, .clrow):not(.site *):active{ transform:scale(.99) }
 @media (prefers-reduced-motion:reduce){ :is(.b, .cyBtn, .row, .enCard):not(.site *):active{ transform:none } }
-/* ---------- barra do topo -------------------------------------------- */
 .ctx{ background:var(--vidro) !important; backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
-  border-bottom:.5px solid var(--fio) }
+border-bottom:.5px solid var(--fio) }
 html[data-tema="claro"] .ctx{ background:var(--vidro) !important }
 .ctxbtn{ border-radius:8px; color:var(--ink-300) }
 .ctxbtn:hover{ background:var(--enc); color:var(--ink-50) }
@@ -45210,54 +45189,50 @@ html[data-tema="claro"] .ctx{ background:var(--vidro) !important }
 .luz button{ color:var(--ink-400); border-radius:7px }
 .luz button.on{ background:var(--sup); color:var(--ink-50); box-shadow:0 1px 3px rgba(0,0,0,.14) }
 html:not([data-tema="claro"]) .luz button.on{ background:#636366 }
-/* ---------- a casa: menu lateral e palco ------------------------------ */
 .app.ag{ background:var(--fundo) }
 .aside{ background:var(--lat); border-right:.5px solid var(--fio); padding:16px 0 24px }
 .aside .lg{ padding:4px 22px 18px }
-.aside .lg b{ font-size:19px; color:var(--ink-50) }   /* o nome da marca segue na letra da marca (v233) */
+.aside .lg b{ font-size:19px; color:var(--ink-50) }
 .aside .grp:not(.site *){ font-family:inherit; font-size:11.5px; font-weight:600; letter-spacing:0; text-transform:none;
-  color:var(--ink-400); padding:16px 22px 6px }
+color:var(--ink-400); padding:16px 22px 6px }
 .aside .nav:not(.site *){ width:calc(100% - 20px); margin:1px 10px; padding:7px 12px; border-radius:9px;
-  font-size:13.5px; font-weight:450; color:var(--ink-100); gap:10px }
+font-size:13.5px; font-weight:450; color:var(--ink-100); gap:10px }
 .aside .nav svg.i{ font-size:16px; opacity:1; color:var(--ink-400) }
 .aside .nav:hover{ background:var(--enc); color:var(--ink-50) }
 .aside .nav.on{ background:var(--enc2); color:var(--ink-50); font-weight:600 }
 .aside .nav.on svg.i{ color:var(--brass-500) }
 .aside .nav.on::before{ display:none }
 .aside .nav .bd:not(.site *){ font-family:inherit; font-size:11px; font-weight:650; min-width:18px; height:18px; line-height:18px;
-  text-align:center; padding:0 5px; border-radius:9px; background:var(--brass-500); color:#000 }
+text-align:center; padding:0 5px; border-radius:9px; background:var(--brass-500); color:#000 }
 html[data-tema="claro"] .aside .nav .bd{ color:#fff }
 .main{ padding:30px 28px 56px }
-/* quem está sentado aqui mora no pé do menu, como numa conta da Apple */
 @media(min-width:861px){
-  .aside{ display:flex; flex-direction:column }
-  .aside > *{ flex:0 0 auto }
-  .aside > div:has(> .qeAtual){ order:99; margin-top:auto; padding:12px 10px 0 !important }
+.aside{ display:flex; flex-direction:column }
+.aside > *{ flex:0 0 auto }
+.aside > div:has(> .qeAtual){ order:99; margin-top:auto; padding:12px 10px 0 !important }
 }
 .qeAtual:not(.site *){ display:flex; align-items:center; gap:10px; width:100%; padding:8px 10px; border-radius:12px;
-  border:0 !important; background:none !important; color:var(--ink-100); font-size:13.5px; font-weight:600 }
+border:0 !important; background:none !important; color:var(--ink-100); font-size:13.5px; font-weight:600 }
 .qeAtual:not(.site *):hover{ background:var(--enc) !important }
 .qeAtual .av{ width:28px !important; height:28px !important; font-size:11px !important }
 .mtop{ margin-bottom:24px; align-items:flex-end }
 .mtop h1:not(.site *){ font-family:inherit !important; font-size:32px !important; font-weight:700 !important;
-  letter-spacing:-.025em !important; line-height:1.05; color:var(--ink-50) }
+letter-spacing:-.025em !important; line-height:1.05; color:var(--ink-50) }
 .mtop p:not(.site *){ font-size:14px; color:var(--ink-400); margin-top:7px }
-/* ---------- barra do polegar (celular) -------------------------------- */
 @media(max-width:860px){
-  .main{ padding:18px 16px 104px }
-  .mtop{ margin-bottom:14px }
-  .mtop h1:not(.site *){ font-size:30px !important }
-  .tabbar, nav.tabbar.mnFixa, nav.cltab.mnFixa, html[data-tema="claro"] .tabbar,
-  html[data-tema="claro"] nav.tabbar.mnFixa, html[data-tema="claro"] nav.cltab.mnFixa{
-    background:var(--vidro) !important; backdrop-filter:saturate(180%) blur(20px) !important;
-    -webkit-backdrop-filter:saturate(180%) blur(20px) !important; border-top:.5px solid var(--fio) !important }
-  .tab:not(.site *){ font-size:11px; font-weight:550; color:var(--ink-400); gap:3px }
-  .tab svg.i{ font-size:23px; stroke-width:1.6 }
-  .tab.on{ color:var(--brass-500) }
-  .tab .bd:not(.site *){ font-family:inherit; font-weight:650; font-size:11px; background:#FF3B30; color:#fff;
-    min-width:17px; height:17px; line-height:17px; border-radius:9px; top:-2px }
+.main{ padding:18px 16px 104px }
+.mtop{ margin-bottom:14px }
+.mtop h1:not(.site *){ font-size:30px !important }
+.tabbar, nav.tabbar.mnFixa, nav.cltab.mnFixa, html[data-tema="claro"] .tabbar,
+html[data-tema="claro"] nav.tabbar.mnFixa, html[data-tema="claro"] nav.cltab.mnFixa{
+background:var(--vidro) !important; backdrop-filter:saturate(180%) blur(20px) !important;
+-webkit-backdrop-filter:saturate(180%) blur(20px) !important; border-top:.5px solid var(--fio) !important }
+.tab:not(.site *){ font-size:11px; font-weight:550; color:var(--ink-400); gap:3px }
+.tab svg.i{ font-size:23px; stroke-width:1.6 }
+.tab.on{ color:var(--brass-500) }
+.tab .bd:not(.site *){ font-family:inherit; font-weight:650; font-size:11px; background:#FF3B30; color:#fff;
+min-width:17px; height:17px; line-height:17px; border-radius:9px; top:-2px }
 }
-/* ---------- botões ----------------------------------------------------- */
 .b:not(.site *){ border-radius:999px; padding:10px 18px; font-size:14px; font-weight:600; letter-spacing:-.005em; gap:7px }
 .b.sm:not(.site *){ padding:7px 14px; font-size:13px; border-radius:999px }
 .b.pri:not(.site *), html[data-tema="claro"] .b.pri:not(.site *){ background:var(--prim); color:var(--primT); box-shadow:none; filter:none }
@@ -45266,27 +45241,24 @@ html[data-tema="claro"] .aside .nav .bd{ color:#fff }
 .b.gho:not(.site *):hover{ background:var(--enc2); border:0 }
 .mtop .b.gho.sm:not(.site *){ background:none; color:var(--ink-300); padding:7px 11px }
 .mtop .b.gho.sm:not(.site *):hover{ background:var(--enc); color:var(--ink-50) }
-/* ---------- superfícies ----------------------------------------------- */
 :is(.card, .tile, .row, .kcard, .pjCard, .lothub, .msit, .ptRow, .hjItem, .qePessoa, .estModelo):not(.site *){
-  background:var(--sup); border:0; box-shadow:var(--sombra) }
+background:var(--sup); border:0; box-shadow:var(--sombra) }
 .card:not(.site *){ border-radius:var(--r-card) }
 .tile:not(.site *){ border-radius:14px }
 .row:not(.site *){ border-radius:14px; margin-bottom:8px }
 :is(.row, .tile, .kcard, .pjCard, .lothub, .msit, .ptRow, .hjItem, .qePessoa, .estModelo):not(.site *):hover{
-  background:var(--sup2); border-color:transparent }
+background:var(--sup2); border-color:transparent }
 html[data-tema="claro"] :is(.row, .tile, .kcard, .pjCard, .lothub, .msit, .ptRow, .hjItem, .qePessoa, .estModelo):not(.site *):hover{
-  background:var(--sup); box-shadow:0 2px 4px rgba(0,0,0,.05), 0 12px 32px rgba(0,0,0,.08) }
+background:var(--sup); box-shadow:0 2px 4px rgba(0,0,0,.05), 0 12px 32px rgba(0,0,0,.08) }
 .av:not(.site *){ font-family:inherit; font-weight:650 }
 .pill:not(.site *){ font-family:inherit; font-size:12px; font-weight:550; padding:3px 9px; letter-spacing:0 }
-/* ---------- campos ----------------------------------------------------- */
 .fld label:not(.site *){ font-family:inherit !important; font-size:12.5px !important; font-weight:550; letter-spacing:0 !important;
-  text-transform:none !important; color:var(--ink-400) }
+text-transform:none !important; color:var(--ink-400) }
 :is(.fld input, .fld textarea, .fld select):not(.site *){ background:var(--enc); border:1px solid transparent; border-radius:var(--r-ctl);
-  padding:10px 12px; color:var(--ink-50) }
+padding:10px 12px; color:var(--ink-50) }
 :is(.fld input, .fld textarea, .fld select):not(.site *):focus{ background:var(--sup); border-color:var(--brass-500);
-  box-shadow:0 0 0 4px var(--anel) }
+box-shadow:0 0 0 4px var(--anel) }
 .fhint:not(.site *){ color:var(--ink-400) }
-/* ---------- controles de escolha (abas, filtros) ----------------------- */
 .seg:not(.site *){ background:var(--enc); border:0; border-radius:9px; padding:2px }
 .seg:not(.site *) button{ color:var(--ink-100); font-size:13px; font-weight:500 }
 .seg:not(.site *) button.on{ color:var(--ink-50); font-weight:600 }
@@ -45294,73 +45266,68 @@ html[data-tema="claro"] .seg:not(.site *) button.on{ color:var(--ink-50) }
 .seg:not(.site *) .thumb{ background:var(--sup); box-shadow:0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.04) }
 html:not([data-tema="claro"]) .seg:not(.site *) .thumb{ background:#636366 }
 .ptChips button:not(.site *){ background:var(--enc); border:0 !important; border-radius:999px; color:var(--ink-100);
-  font-size:13px; font-weight:500; padding:6px 13px }
+font-size:13px; font-weight:500; padding:6px 13px }
 .ptChips button:not(.site *):hover{ background:var(--enc2) }
 .ptChips button.on:not(.site *){ background:var(--prim); color:var(--primT) }
-/* ---------- janelas ---------------------------------------------------- */
 .modal:not(.site *){ background:rgba(0,0,0,.42); backdrop-filter:blur(8px) saturate(120%); -webkit-backdrop-filter:blur(8px);
-  animation:v249fundo .2s ease both }
+animation:v249fundo .2s ease both }
 html[data-tema="claro"] .modal:not(.site *){ background:rgba(0,0,0,.22) }
 .modalbox:not(.site *){ background:var(--sup); border:0; border-radius:22px; box-shadow:var(--sombraAlta);
-  animation:v249janela .26s var(--mola) both }
+animation:v249janela .26s var(--mola) both }
 .modalbox h3:not(.site *){ font-family:inherit !important; font-size:21px !important; font-weight:650 !important; letter-spacing:-.015em }
 .modalbox p:not(.site *){ color:var(--ink-400) }
 @media(max-width:760px){
-  /* a folha já nasce no lugar (entra por fade): quem mede ou toca logo
-     depois de abrir acha o botão de salvar onde ele vai ficar (v229) */
-  .modalbox:not(.site *){ border-radius:22px 22px 0 0; animation:v249fundo .22s ease both }
+.modalbox:not(.site *){ border-radius:22px 22px 0 0; animation:v249fundo .22s ease both }
 }
 .toast:not(.site *){ background:var(--vidro) !important; backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
-  color:var(--ink-50) !important; border:0 !important; border-radius:14px !important; box-shadow:var(--sombraAlta) !important }
+color:var(--ink-50) !important; border:0 !important; border-radius:14px !important; box-shadow:var(--sombraAlta) !important }
 #btAtualizar{ background:var(--vidro) !important; backdrop-filter:blur(20px); border:0 !important; box-shadow:var(--sombraAlta) }
-/* ================= ENSAIO ============================================= */
 .enFiltros{ display:flex !important; flex-wrap:wrap; gap:10px 18px !important; margin:0 0 18px !important }
 .enFiltros .linha{ gap:8px; flex:0 1 auto; max-width:100% }
 .enFiltros .rot:not(.site *){ font-family:inherit !important; font-size:12.5px !important; letter-spacing:0 !important;
-  text-transform:none !important; color:var(--ink-400); font-weight:500 }
+text-transform:none !important; color:var(--ink-400); font-weight:500 }
 .enFiltros .rot:not(.site *)::first-letter{ text-transform:uppercase }
 .enFiltros .enClis > .rot{ display:none }
 .enFiltros .fila{ flex:0 1 auto }
 :is(.enCats, .enResps, .enClis, .enOrdem){ display:inline-flex !important; gap:0 !important; padding:2px; border-radius:9px;
-  background:var(--enc); flex-wrap:nowrap !important }
+background:var(--enc); flex-wrap:nowrap !important }
 :is(.enCat, .enResp, .enCli2):not(.site *){ background:none !important; border:0 !important; border-radius:7px !important;
-  padding:5px 11px !important; font-size:13px !important; font-weight:500; color:var(--ink-100) !important; gap:6px !important;
-  box-shadow:none; white-space:nowrap }
+padding:5px 11px !important; font-size:13px !important; font-weight:500; color:var(--ink-100) !important; gap:6px !important;
+box-shadow:none; white-space:nowrap }
 :is(.enCat, .enResp, .enCli2):not(.site *):hover{ color:var(--ink-50) !important }
 :is(.enCat, .enResp, .enCli2).on:not(.site *){ background:var(--sup) !important; color:var(--ink-50) !important; font-weight:600;
-  box-shadow:0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.04) !important }
+box-shadow:0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.04) !important }
 html:not([data-tema="claro"]) :is(.enCat, .enResp, .enCli2).on:not(.site *){ background:#636366 !important }
 :is(.enCat, .enResp, .enCli2) b:not(.site *){ font-family:inherit !important; font-size:12px !important; color:var(--ink-400) !important; font-weight:500 }
 :is(.enCat, .enResp, .enCli2) :is(.respFoto, .cliFoto){ width:22px !important; height:22px !important; font-size:11px !important }
 .enRolo{ gap:10px !important }
 @media(min-width:861px){
-  /* as colunas dividem a largura; a Concluído recolhida vira um trilho fino */
-  .enRolo{ display:flex !important }
-  .enRolo > .enCol{ flex:1 1 0; min-width:168px }
-  .enRolo > .enCol.enRecolhida{ flex:0 0 56px; min-width:56px; padding:12px 6px !important; background:var(--enc) !important; border-radius:18px !important }
-  .enCol.enRecolhida .enColHd{ flex-direction:column; align-items:center; gap:10px !important; padding:0 }
-  .enCol.enRecolhida .enColHd b{ writing-mode:vertical-rl; transform:rotate(180deg); font-size:13px !important; color:var(--ink-300) !important }
-  .enCol.enRecolhida .enColHd i{ display:none }
-  .enCol.enRecolhida .enColSub{ display:none }
+.enRolo{ display:flex !important }
+.enRolo > .enCol{ flex:1 1 0; min-width:168px }
+.enRolo > .enCol.enRecolhida{ flex:0 0 56px; min-width:56px; padding:12px 6px !important; background:var(--enc) !important; border-radius:18px !important }
+.enCol.enRecolhida .enColHd{ flex-direction:column; align-items:center; gap:10px !important; padding:0 }
+.enCol.enRecolhida .enColHd b{ writing-mode:vertical-rl; transform:rotate(180deg); font-size:13px !important; color:var(--ink-300) !important }
+.enCol.enRecolhida .enColHd i{ display:none }
+.enCol.enRecolhida .enColSub{ display:none }
 }
 .enCol:not(.site *){ background:none !important; border:0 !important; border-radius:20px !important; padding:10px 5px 12px !important;
-  box-shadow:none !important }
+box-shadow:none !important }
 .enCol[data-encol="cliente"]:not(.site *), .enCol.travada:not(.site *){ background:rgba(200,150,58,.07) !important;
-  box-shadow:inset 0 0 0 1px rgba(200,150,58,.2) !important }
+box-shadow:inset 0 0 0 1px rgba(200,150,58,.2) !important }
 .enColHd:not(.site *){ margin:0 0 2px !important; padding:0 6px; gap:7px !important }
 .enColHd i{ width:8px !important; height:8px !important }
 .enColHd b:not(.site *){ font-family:inherit !important; font-size:14.5px !important; font-weight:650 !important; letter-spacing:-.01em !important;
-  text-transform:none !important; color:var(--ink-50) !important }
+text-transform:none !important; color:var(--ink-50) !important }
 .enColHd span:not(.site *){ font-family:inherit !important; font-size:13px !important; color:var(--ink-400) !important; font-weight:500 }
 .enColSub:not(.site *){ font-size:12.5px !important; color:var(--ink-400); padding:2px 6px 0 21px !important; margin:0 0 12px !important }
 .enCol[data-encol="cliente"] .enColSub, .enCol.travada .enColSub{ color:var(--brass-500) }
 .enVazia:not(.site *){ border:1.5px dashed var(--fio) !important; background:none !important; border-radius:14px !important;
-  color:var(--ink-500) !important; font-size:12.5px !important }
+color:var(--ink-500) !important; font-size:12.5px !important }
 .enColCorpo{ overflow-anchor:none }
 .enCard:not(.site *){ background:var(--sup) !important; border:0 !important; border-radius:var(--r-card) !important;
-  box-shadow:var(--sombra) !important; padding:12px 12px 11px 15px !important; position:relative }
+box-shadow:var(--sombra) !important; padding:12px 12px 11px 15px !important; position:relative }
 .enCard:not(.site *)::before{ content:""; position:absolute; left:6px; top:15px; bottom:15px; width:3px; border-radius:3px;
-  background:var(--catCor, transparent); pointer-events:none }
+background:var(--catCor, transparent); pointer-events:none }
 .enCard:not(.site *):hover{ box-shadow:0 2px 4px rgba(0,0,0,.05), 0 12px 32px rgba(0,0,0,.08) !important; transform:none }
 html:not([data-tema="claro"]) .enCard:not(.site *):hover{ background:var(--sup2) !important; box-shadow:0 0 0 .5px rgba(255,255,255,.1) !important }
 .enCard.pedido:not(.site *){ box-shadow:var(--sombra), inset 0 0 0 1.5px rgba(229,197,77,.6) !important }
@@ -45369,23 +45336,23 @@ html:not([data-tema="claro"]) .enCard:not(.site *):hover{ background:var(--sup2)
 .enCard .tit:not(.site *){ font-size:14px !important; font-weight:600; letter-spacing:-.008em; line-height:1.3 !important; color:var(--ink-50) }
 .enCard .meta{ margin-top:10px; gap:7px }
 .enCard .cli:not(.site *), .enCard .ptResp:not(.site *){ font-family:inherit !important; font-size:12px !important; letter-spacing:0 !important;
-  text-transform:none !important; color:var(--ink-400) !important; background:none !important; border:0 !important; padding:0 !important }
+text-transform:none !important; color:var(--ink-400) !important; background:none !important; border:0 !important; padding:0 !important }
 .enCard :is(.cliFoto, .respFoto){ width:22px; height:22px; font-size:11px }
 .enCard .enSelos{ gap:5px !important; margin-top:9px !important }
 .enCard .enVolta:not(.site *), .enCard .enSelos .prazo:not(.site *){ font-family:inherit !important; height:21px; padding:0 8px !important;
-  border-radius:6px !important; border:0 !important; background:var(--enc) !important; color:var(--ink-300) !important;
-  font-size:11.5px !important; font-weight:550 !important; letter-spacing:0 !important; display:inline-flex; align-items:center }
+border-radius:6px !important; border:0 !important; background:var(--enc) !important; color:var(--ink-300) !important;
+font-size:11.5px !important; font-weight:550 !important; letter-spacing:0 !important; display:inline-flex; align-items:center }
 .enCard .enVolta.peca:not(.site *){ color:var(--ink-50) !important }
 .enCard .enSelos .prazo.tarde:not(.site *){ background:rgba(255,59,48,.12) !important; color:var(--danger) !important }
 .enCard .acoes{ margin-top:11px !important; gap:6px !important }
 .enCard .cyBtn:not(.site *){ font-family:inherit !important; height:30px !important; border-radius:9px !important; border:0 !important;
-  background:var(--enc) !important; color:var(--ink-100) !important; font-size:12.5px !important; font-weight:600 !important;
-  letter-spacing:0 !important; text-transform:none !important; padding:0 11px !important }
+background:var(--enc) !important; color:var(--ink-100) !important; font-size:12.5px !important; font-weight:600 !important;
+letter-spacing:0 !important; text-transform:none !important; padding:0 11px !important }
 .enCard .cyBtn:not(.site *):hover{ background:var(--enc2) !important; color:var(--ink-50) !important }
 .enCard :is(.cyBtn.pri, .cyBtn.ok, .cyBtn.rev, .enPasso, .conclui):not(.site *){ flex:1 1 100% !important; width:100% !important; order:-1;
-  height:32px !important; font-size:13px !important; justify-content:center; display:inline-flex !important; align-items:center }
+height:32px !important; font-size:13px !important; justify-content:center; display:inline-flex !important; align-items:center }
 .enCard :is(.enPasso, .conclui):not(.site *){ font-family:inherit !important; border:0 !important; border-radius:9px !important; background:var(--enc) !important;
-  color:var(--ink-50) !important; font-weight:600 !important; letter-spacing:0 !important; text-transform:none !important; padding:0 11px !important }
+color:var(--ink-50) !important; font-weight:600 !important; letter-spacing:0 !important; text-transform:none !important; padding:0 11px !important }
 .enCard .cyBtn.pri:not(.site *){ color:var(--ink-50) !important }
 .enCard .cyBtn.ok:not(.site *){ background:var(--prim) !important; color:var(--primT) !important }
 .enCard .cyBtn.ok:not(.site *):hover{ opacity:.86 }
@@ -45394,45 +45361,39 @@ html:not([data-tema="claro"]) .enCard:not(.site *):hover{ background:var(--sup2)
 .enCard .acoes .enMais:not(.site *):hover, .enCard.menuAberto .acoes .enMais:not(.site *){ background:var(--enc) !important; color:var(--ink-50) !important }
 .enCard .enMidia .mn, .enCard .enMidia img{ border-radius:8px }
 @media(max-width:860px){
-  :is(.enCats, .enResps, .enClis, .enOrdem){ max-width:calc(100vw - 32px) }
-  .enFiltros .linha{ flex:1 1 100%; min-width:0 }
-  .enFiltros .fila{ flex:1 1 auto; min-width:0 }
-  .enCard .cyBtn.pri:not(.site *), .enCard .cyBtn.rev:not(.site *), .enCard .cyBtn.ok:not(.site *){ height:40px !important; font-size:14px !important }
-  .enCard:not(.site *){ border-radius:18px !important; padding:15px 15px 14px 18px !important }
+:is(.enCats, .enResps, .enClis, .enOrdem){ max-width:calc(100vw - 32px) }
+.enFiltros .linha{ flex:1 1 100%; min-width:0 }
+.enFiltros .fila{ flex:1 1 auto; min-width:0 }
+.enCard .cyBtn.pri:not(.site *), .enCard .cyBtn.rev:not(.site *), .enCard .cyBtn.ok:not(.site *){ height:40px !important; font-size:14px !important }
+.enCard:not(.site *){ border-radius:18px !important; padding:15px 15px 14px 18px !important }
 }
-/* ================= AS OUTRAS TELAS ======================================
-   Levantado por medição (cada elemento com borda desenhada, tela a tela),
-   não de olho. Dois grupos: o que é ESCOLHA vira pílula preenchida, sem
-   contorno; o que é CAIXA vira superfície que flutua. Ficam com linha só
-   onde a linha diz algo: a cor da rede no card da agenda, a grade de
-   horas e o sublinhado das abas do cliente. */
 :is(.atalhos, .ptFiltros, .ptFiltro, .rtPer, .v242Vistas, .clFiltros, .cliTroca, .estClis,
-    .clNav, .arChips, .mdTempChips, .enApagar) > button:not(.site *),
+.clNav, .arChips, .mdTempChips, .enApagar) > button:not(.site *),
 :is(.cchip, .fdRede, .mdCli, .ptAtualiza, .sbBadge, .estXp, .v243BtIg, .rvChave, .tipoCli, .clbtn.sec):not(.site *){
-  border:0 !important; background:var(--enc) !important; border-radius:999px !important; color:var(--ink-100) !important;
-  box-shadow:none !important; font-weight:500 }
+border:0 !important; background:var(--enc) !important; border-radius:999px !important; color:var(--ink-100) !important;
+box-shadow:none !important; font-weight:500 }
 :is(.atalhos, .ptFiltros, .ptFiltro, .rtPer, .v242Vistas, .clFiltros, .cliTroca, .estClis,
-    .clNav, .arChips, .mdTempChips, .enApagar) > button:not(.site *):hover,
+.clNav, .arChips, .mdTempChips, .enApagar) > button:not(.site *):hover,
 :is(.cchip, .fdRede, .mdCli, .ptAtualiza, .sbBadge, .estXp, .v243BtIg, .rvChave, .tipoCli, .clbtn.sec):not(.site *):hover{
-  background:var(--enc2) !important; color:var(--ink-50) !important }
+background:var(--enc2) !important; color:var(--ink-50) !important }
 :is(.atalhos, .ptFiltros, .ptFiltro, .rtPer, .v242Vistas, .clFiltros, .cliTroca, .estClis, .arChips, .mdTempChips) > button:is(.on, .pri):not(.site *),
 :is(.cchip, .mdCli, .tipoCli, .rvChave):is(.on, .ativo):not(.site *){
-  background:var(--prim) !important; color:var(--primT) !important }
+background:var(--prim) !important; color:var(--primT) !important }
 .atalhos .rot:not(.site *){ text-transform:none !important; letter-spacing:0 !important; font-family:inherit !important;
-  font-size:12.5px !important; color:var(--ink-400) }
+font-size:12.5px !important; color:var(--ink-400) }
 .atalhos .rot:not(.site *)::first-letter{ text-transform:uppercase }
 .agNav > button:not(.site *), .enDobra:not(.site *){ border:0 !important; background:var(--enc) !important; border-radius:50% !important; color:var(--ink-100) !important }
 .agNav > button:not(.site *):hover, .enDobra:not(.site *):hover{ background:var(--enc2) !important }
 :is(.permchips, .enFichaTopo, .plats, .cvDia) > span:not(.site *), :is(.tag, .rvSelo, .cvTag):not(.site *){
-  border:0 !important; background:var(--enc) !important; border-radius:7px !important }
+border:0 !important; background:var(--enc) !important; border-radius:7px !important }
 button.ver:not(.site *){ border:0 !important; background:none !important; color:var(--brass-500) !important }
 :is(.hjPill, .ptCheckC, .rtNum, .rtBloco, .planc, .batidaCard, .atoCard, .proxima, .clPasso, .envioBar, .cq, .bt,
-    .clrow, .arItem, .rvMarca, .mbAcoes, .mdSabe, .enComo, .ptCab):not(.site *){
-  border-color:transparent !important; background:var(--sup) !important; box-shadow:var(--sombra) !important; border-radius:14px !important }
+.clrow, .arItem, .rvMarca, .mbAcoes, .mdSabe, .enComo, .ptCab):not(.site *){
+border-color:transparent !important; background:var(--sup) !important; box-shadow:var(--sombra) !important; border-radius:14px !important }
 :is(.hjPill, .ptCheckC, .rtNum):not(.site *){ border-radius:16px !important }
 :is(.card, .modalbox, .enFicha, .clficha, .larga) :is(.rvMarca, .mbAcoes, .hxSecao, .cq, .bt, .clPasso, .envioBar, .check):not(.site *),
 .clficha > div:not(.site *), :is(.hxSecao, .larga, .atoDias, .cyAgenda):not(.site *){
-  border-color:transparent !important; background:var(--enc) !important; box-shadow:none !important; border-radius:12px !important }
+border-color:transparent !important; background:var(--enc) !important; box-shadow:none !important; border-radius:12px !important }
 .enMidia .mn:not(.site *), .clThumb:not(.site *), .mtMini:not(.site *){ border-color:var(--fio) !important }
 :is(.agRolo, .agCantoCab, .agCabCol):not(.site *){ border-color:var(--fio) !important }
 .agRolo:not(.site *){ background:var(--sup) !important; border-radius:16px !important; box-shadow:var(--sombra) }
@@ -45440,33 +45401,31 @@ button.ver:not(.site *){ border:0 !important; background:none !important; color:
 .tabs.tabsCli:not(.site *){ border-bottom-color:var(--fio) !important }
 .hjBar:not(.site *){ background:var(--enc) !important; border-radius:3px; height:4px; border:0 }
 .hjCab h1:not(.site *){ font-family:inherit !important; font-size:32px !important; font-weight:700 !important; letter-spacing:-.025em !important }
-/* ---------- Ensaio no iPhone: abas de coluna e topo enxuto ------------ */
 .v249Abas{ display:none }
 @media(max-width:860px){
-  .v249Abas{ display:flex; gap:8px; overflow-x:auto; padding:2px 0 12px; margin:0 -16px 0 0; scrollbar-width:none }
-  .v249Abas::-webkit-scrollbar{ display:none }
-  .v249Abas button{ flex:0 0 auto; height:34px; padding:0 13px; border-radius:17px; background:var(--enc); color:var(--ink-100);
-    font-size:14px; font-weight:550; display:inline-flex; align-items:center; gap:6px; white-space:nowrap }
-  .v249Abas button i{ width:7px; height:7px; border-radius:50% }
-  .v249Abas button em{ font-style:normal; color:var(--ink-400); font-weight:500 }
-  .v249Abas button.on{ background:var(--prim); color:var(--primT) }
-  .v249Abas button.on em{ color:inherit; opacity:.6 }
-  body.emEnsaio .mtop{ flex-wrap:nowrap !important; align-items:center }
-  body.emEnsaio .mtop > div:last-child{ flex-wrap:nowrap !important; gap:4px !important; margin-left:auto }
-  .mtop .b.gho.sm:is([data-enlixeira], [data-enranking], [data-enimp]):not(.site *){ font-size:0 !important; gap:0 !important;
-    width:38px; height:38px; padding:0 !important; border-radius:50% !important; background:var(--enc) !important; color:var(--ink-100) !important }
-  .mtop .b.gho.sm:is([data-enlixeira], [data-enranking], [data-enimp]) svg.i{ width:18px; height:18px }
-  body.emEnsaio .mtop [data-ennova]{ height:38px }
-  .enFiltros{ gap:6px !important; margin-bottom:12px !important }
-  :is(.enCat, .enResp, .enCli2):not(.site *){ padding:5px 10px !important }
+.v249Abas{ display:flex; gap:8px; overflow-x:auto; padding:2px 0 12px; margin:0 -16px 0 0; scrollbar-width:none }
+.v249Abas::-webkit-scrollbar{ display:none }
+.v249Abas button{ flex:0 0 auto; height:34px; padding:0 13px; border-radius:17px; background:var(--enc); color:var(--ink-100);
+font-size:14px; font-weight:550; display:inline-flex; align-items:center; gap:6px; white-space:nowrap }
+.v249Abas button i{ width:7px; height:7px; border-radius:50% }
+.v249Abas button em{ font-style:normal; color:var(--ink-400); font-weight:500 }
+.v249Abas button.on{ background:var(--prim); color:var(--primT) }
+.v249Abas button.on em{ color:inherit; opacity:.6 }
+body.emEnsaio .mtop{ flex-wrap:nowrap !important; align-items:center }
+body.emEnsaio .mtop > div:last-child{ flex-wrap:nowrap !important; gap:4px !important; margin-left:auto }
+.mtop .b.gho.sm:is([data-enlixeira], [data-enranking], [data-enimp]):not(.site *){ font-size:0 !important; gap:0 !important;
+width:38px; height:38px; padding:0 !important; border-radius:50% !important; background:var(--enc) !important; color:var(--ink-100) !important }
+.mtop .b.gho.sm:is([data-enlixeira], [data-enranking], [data-enimp]) svg.i{ width:18px; height:18px }
+body.emEnsaio .mtop [data-ennova]{ height:38px }
+.enFiltros{ gap:6px !important; margin-bottom:12px !important }
+:is(.enCat, .enResp, .enCli2):not(.site *){ padding:5px 10px !important }
 }
-/* ---------- a barra do Ensaio: abas + seletores ------------------------ */
 body.emEnsaio .mtop > div:first-child > p{ display:none }
 .v249Resumo{ margin-top:8px; font-size:14px; color:var(--ink-400); display:flex; gap:14px; flex-wrap:wrap }
 .v249Resumo b{ color:var(--ink-50); font-weight:600 }
 .v249Resumo .alerta b{ color:var(--danger) }
 .v249Busca{ display:flex; align-items:center; gap:7px; width:220px; height:36px; padding:0 12px; border-radius:10px;
-  background:var(--enc); color:var(--ink-400); cursor:text }
+background:var(--enc); color:var(--ink-400); cursor:text }
 .v249Busca svg{ width:15px; height:15px; flex:0 0 auto; fill:none; stroke:currentColor; stroke-width:1.8 }
 .v249Busca input{ flex:1; min-width:0; border:0; background:none; outline:none; color:var(--ink-50); font:inherit; font-size:13.5px }
 .v249Busca input::placeholder{ color:var(--ink-400) }
@@ -45475,11 +45434,11 @@ body.emEnsaio .mtop > div:first-child > p{ display:none }
 .v249MaisBt{ width:36px; height:36px; border-radius:50%; background:var(--enc); color:var(--ink-300); font-size:12px; letter-spacing:1px; font-weight:700 }
 .v249MaisBt:hover, .v249Mais.aberto .v249MaisBt{ background:var(--enc2); color:var(--ink-50) }
 .v249Menu{ display:none; position:absolute; top:calc(100% + 8px); right:0; z-index:60; min-width:220px; padding:6px;
-  background:var(--sup); border-radius:14px; box-shadow:var(--sombraAlta); flex-direction:column; gap:2px;
-  animation:v249janela .18s var(--mola) both }
+background:var(--sup); border-radius:14px; box-shadow:var(--sombraAlta); flex-direction:column; gap:2px;
+animation:v249janela .18s var(--mola) both }
 .v249Mais.aberto .v249Menu{ display:flex }
 .v249Menu .b.gho.sm:not(.site *){ justify-content:flex-start; width:100%; border-radius:9px !important; background:none !important;
-  color:var(--ink-100) !important; padding:9px 11px !important; font-size:13.5px !important; font-weight:500 }
+color:var(--ink-100) !important; padding:9px 11px !important; font-size:13.5px !important; font-weight:500 }
 .v249Menu .b.gho.sm:not(.site *):hover{ background:var(--enc) !important }
 .v249Fora{ display:none !important }
 .enFiltros{ align-items:center }
@@ -45490,7 +45449,7 @@ body.emEnsaio .mtop > div:first-child > p{ display:none }
 .enFiltros .linha:is([data-v249="pessoa"], [data-v249="cliente"], [data-v249="ordem"]) > .rot{ display:none }
 .enFiltros .linha:is([data-v249="pessoa"], [data-v249="cliente"], [data-v249="ordem"]) .fila{ overflow:visible !important; flex:0 0 auto }
 .v249Sel{ height:32px; padding:0 10px; border-radius:9px; display:inline-flex; align-items:center; gap:7px;
-  font-size:13.5px; color:var(--ink-50); font-weight:500; white-space:nowrap }
+font-size:13.5px; color:var(--ink-50); font-weight:500; white-space:nowrap }
 .v249Sel:hover, .v249Aberta .v249Sel{ background:var(--enc) }
 .v249Rot{ color:var(--ink-400) }
 .v249Val{ display:inline-flex; align-items:center; gap:6px; font-weight:600 }
@@ -45503,11 +45462,11 @@ body.emEnsaio .mtop > div:first-child > p{ display:none }
 .v249Seta{ width:12px !important; height:12px !important; color:var(--ink-400); stroke-width:2.2 !important; transition:transform .2s var(--mola) }
 .v249Aberta .v249Seta{ transform:rotate(180deg) }
 .enFiltros .v249Lista{ display:none !important; position:absolute; top:calc(100% + 6px); right:0; z-index:60; min-width:240px; max-height:min(60vh, 420px);
-  overflow-y:auto; padding:6px !important; background:var(--sup) !important; border-radius:14px !important; box-shadow:var(--sombraAlta);
-  flex-direction:column !important; gap:2px !important; animation:v249janela .18s var(--mola) both }
+overflow-y:auto; padding:6px !important; background:var(--sup) !important; border-radius:14px !important; box-shadow:var(--sombraAlta);
+flex-direction:column !important; gap:2px !important; animation:v249janela .18s var(--mola) both }
 .enFiltros .v249Aberta .v249Lista{ display:flex !important }
 .v249Lista :is(.enCat, .enResp, .enCli2):not(.site *){ width:100%; justify-content:flex-start; padding:8px 10px !important; border-radius:9px !important;
-  font-size:13.5px !important; box-shadow:none !important; background:none !important }
+font-size:13.5px !important; box-shadow:none !important; background:none !important }
 .v249Lista :is(.enCat, .enResp, .enCli2):not(.site *):hover{ background:var(--enc) !important }
 html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *){ background:none !important; color:var(--ink-50) !important; font-weight:650 }
 html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *):hover{ background:var(--enc) !important }
@@ -45515,57 +45474,51 @@ html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *):hover{ 
 .v249Lista :is(.enCat, .enResp, .enCli2) b{ margin-left:auto }
 .v249Lista :is(.enCat, .enResp, .enCli2).on b{ margin-left:8px }
 @media(max-width:860px){
-  .v249Busca{ display:none }
-  .v249MaisBt{ width:38px; height:38px }
-  .enFiltros .linha[data-v249="frente"]{ flex:1 1 100% }
-  .enFiltros .linha[data-v249="pessoa"]{ margin-left:0 }
-  .enFiltros{ column-gap:8px !important }
-  .enFiltros .linha:is([data-v249="pessoa"], [data-v249="cliente"], [data-v249="ordem"]){ flex:0 1 auto !important; min-width:0 }
-  .enFiltros .linha:is([data-v249="pessoa"], [data-v249="cliente"], [data-v249="ordem"]) .fila{ flex:0 1 auto; min-width:0; max-width:100% }
-  .v249Sel{ background:var(--enc); border-radius:17px; height:34px; padding:0 12px; font-size:14px; max-width:100%; min-width:0 }
-  .v249Rot{ display:none }
-  /* os três cabem numa linha: a pilha de rostos já diz "pessoa", o ícone diz "ordem" */
-  .v249Val{ min-width:0 }
-  .v249Txt{ overflow:hidden; text-overflow:ellipsis; min-width:0 }
-  .v249Val:has(.v249Pilha) .v249Txt{ display:none }
-  .v249Sel[data-todos="1"][data-v249sel="cliente"] .v249Val{ display:none }
-  .v249Longo{ display:none } .v249Curto{ display:inline }
-  .v249Ic{ display:inline-block !important }
-  /* no iPhone a lista sobe de baixo, como uma folha da Apple */
-  .enFiltros .v249Lista{ position:fixed; left:8px; right:8px; top:auto; bottom:calc(8px + env(safe-area-inset-bottom)); min-width:0; max-width:none;
-    max-height:60vh; border-radius:18px !important; padding:8px !important; z-index:950; animation:v249folha .3s var(--mola) both }
-  .v249Lista :is(.enCat, .enResp, .enCli2):not(.site *){ padding:12px 12px !important; font-size:16px !important }
-  body.v249ComLista::after{ content:""; position:fixed; inset:0; z-index:940; background:rgba(0,0,0,.28); animation:v249fundo .2s ease both }
+.v249Busca{ display:none }
+.v249MaisBt{ width:38px; height:38px }
+.enFiltros .linha[data-v249="frente"]{ flex:1 1 100% }
+.enFiltros .linha[data-v249="pessoa"]{ margin-left:0 }
+.enFiltros{ column-gap:8px !important }
+.enFiltros .linha:is([data-v249="pessoa"], [data-v249="cliente"], [data-v249="ordem"]){ flex:0 1 auto !important; min-width:0 }
+.enFiltros .linha:is([data-v249="pessoa"], [data-v249="cliente"], [data-v249="ordem"]) .fila{ flex:0 1 auto; min-width:0; max-width:100% }
+.v249Sel{ background:var(--enc); border-radius:17px; height:34px; padding:0 12px; font-size:14px; max-width:100%; min-width:0 }
+.v249Rot{ display:none }
+.v249Val{ min-width:0 }
+.v249Txt{ overflow:hidden; text-overflow:ellipsis; min-width:0 }
+.v249Val:has(.v249Pilha) .v249Txt{ display:none }
+.v249Sel[data-todos="1"][data-v249sel="cliente"] .v249Val{ display:none }
+.v249Longo{ display:none } .v249Curto{ display:inline }
+.v249Ic{ display:inline-block !important }
+.enFiltros .v249Lista{ position:fixed; left:8px; right:8px; top:auto; bottom:calc(8px + env(safe-area-inset-bottom)); min-width:0; max-width:none;
+max-height:60vh; border-radius:18px !important; padding:8px !important; z-index:950; animation:v249folha .3s var(--mola) both }
+.v249Lista :is(.enCat, .enResp, .enCli2):not(.site *){ padding:12px 12px !important; font-size:16px !important }
+body.v249ComLista::after{ content:""; position:fixed; inset:0; z-index:940; background:rgba(0,0,0,.28); animation:v249fundo .2s ease both }
 }
 @media(min-width:861px){
-  .enFiltros{ column-gap:6px !important }
-  .enFiltros .linha[data-v249="frente"]{ margin-right:8px }
-  .linha[data-v249="pessoa"] .v249Rot{ display:none }
-  .v249Sel{ padding:0 8px }
-  .enCats .enCat:not(.site *){ padding:5px 10px !important }
+.enFiltros{ column-gap:6px !important }
+.enFiltros .linha[data-v249="frente"]{ margin-right:8px }
+.linha[data-v249="pessoa"] .v249Rot{ display:none }
+.v249Sel{ padding:0 8px }
+.enCats .enCat:not(.site *){ padding:5px 10px !important }
 }
 .v249Pilha .respFoto:not(:has(img)){ background:var(--enc2) !important; color:var(--ink-100) !important; border-radius:50%;
-  display:inline-grid !important; place-items:center; font-weight:650 }
+display:inline-grid !important; place-items:center; font-weight:650 }
 @media(max-width:860px){
-  body.emEnsaio .mtop{ display:grid !important; grid-template-columns:1fr auto; align-items:center; row-gap:4px }
-  body.emEnsaio .mtop > div:first-child{ display:contents }
-  body.emEnsaio .mtop h1{ grid-column:1; grid-row:1 }
-  body.emEnsaio .mtop > div:last-child{ grid-column:2; grid-row:1 }
-  body.emEnsaio .mtop .v249Resumo{ grid-column:1 / -1; grid-row:2; margin-top:0; font-size:13.5px; gap:12px; flex-wrap:nowrap; white-space:nowrap }
-  .v249Sel[data-todos="1"][data-v249sel="cliente"] .v249Rot{ display:inline; color:var(--ink-100) }
+body.emEnsaio .mtop{ display:grid !important; grid-template-columns:1fr auto; align-items:center; row-gap:4px }
+body.emEnsaio .mtop > div:first-child{ display:contents }
+body.emEnsaio .mtop h1{ grid-column:1; grid-row:1 }
+body.emEnsaio .mtop > div:last-child{ grid-column:2; grid-row:1 }
+body.emEnsaio .mtop .v249Resumo{ grid-column:1 / -1; grid-row:2; margin-top:0; font-size:13.5px; gap:12px; flex-wrap:nowrap; white-space:nowrap }
+.v249Sel[data-todos="1"][data-v249sel="cliente"] .v249Rot{ display:inline; color:var(--ink-100) }
 }
 .mtop > div:has(> .v249Mais){ overflow:visible !important }
 @media(max-width:860px){
-  .v249Menu .b.gho.sm:is([data-enlixeira], [data-enranking], [data-enimp]):not(.site *){ font-size:15px !important; gap:10px !important;
-    width:100%; height:auto; padding:12px !important; border-radius:10px !important; background:none !important; justify-content:flex-start }
-  .v249Menu{ min-width:230px }
+.v249Menu .b.gho.sm:is([data-enlixeira], [data-enranking], [data-enimp]):not(.site *){ font-size:15px !important; gap:10px !important;
+width:100%; height:auto; padding:12px !important; border-radius:10px !important; background:none !important; justify-content:flex-start }
+.v249Menu{ min-width:230px }
 }
 </style>
-<script>
-/* v249 — no iPhone, o quadro do Ensaio mostra UMA coluna por vez (a v129
-   encaixa a rolagem). Faltava saber onde se está e pular para outra sem
-   deslizar cinco vezes: as abas de cima fazem isso, com a conta de cada
-   coluna. Montadas por DOM, com textContent (a regra da v225). */
+<script data-camada="v249">
 (function(){
   function abas(){
     const rolo = document.querySelector('.enRolo');
@@ -45611,7 +45564,6 @@ html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *):hover{ 
     rolo.addEventListener('scroll', () => { cancelAnimationFrame(quadro); quadro = requestAnimationFrame(marcar); }, { passive: true });
     marcar();
   }
-  /* os três botões que viram só ícone no celular continuam com nome */
   function nomear(){
     document.querySelectorAll('.mtop .b.gho.sm:is([data-enlixeira], [data-enranking], [data-enimp])').forEach(b => {
       if(!b.getAttribute('aria-label')) b.setAttribute('aria-label', b.textContent.trim());
@@ -45625,15 +45577,6 @@ html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *):hover{ 
     };
   })(render);
 })();
-
-/* v249 — A BARRA DO ENSAIO, como na proposta que o founder aprovou: "o que
-   está agora tem muita coisa; pode colocar os filtros em aba que você
-   seleciona a opção". A Frente fica à vista, em abas; Pessoa, Cliente e
-   Ordem viram SELETORES que mostram a escolha e abrem a lista das opções.
-   Nada da lógica muda: as opções são os MESMOS botões de sempre
-   (data-enresp2, data-encli2, data-enordem), só que dentro da lista — o
-   clique segue indo para quem sempre filtrou. Lixeira, Ranking e Importar
-   vão para o "•••"; o cabeçalho ganha o resumo e a busca no quadro. */
 (function(){
   const SELETORES = { pessoa: '.enResps', cliente: '.enClis', ordem: '.enOrdem' };
   const NOME = { pessoa: 'Pessoa', cliente: 'Cliente', ordem: 'Ordem' };
@@ -45642,10 +45585,7 @@ html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *):hover{ 
     s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('class', 'i v249Seta'); s.setAttribute('aria-hidden', 'true');
     const p = document.createElementNS(ns, 'path'); p.setAttribute('d', d); s.append(p); return s; };
   const sem = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-
-  /* nomes curtos nas abas de frente, como na proposta; o nome inteiro fica no title */
   const CURTO = { 'Todas as frentes': 'Todas', 'Pessoas e Conhecimento': 'Pessoas' };
-  /* no celular a ordem cabe numa palavra, com o ícone de ordenar na frente */
   const CURTO_ORDEM = { 'Mexidos primeiro': 'Mexidos', 'Por prazo': 'Prazo', 'Por chegada': 'Chegada' };
   function encurtar(){
     document.querySelectorAll('.enFiltros .enCats .enCat').forEach(b => {
@@ -45698,12 +45638,10 @@ html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *):hover{ 
       b.setAttribute('aria-expanded', aberto === k ? 'true' : 'false');
     });
   }
-
   function acoes(){
     const mtop = document.querySelector('body.emEnsaio .mtop') || document.querySelector('.mtop');
     if(!mtop || !document.querySelector('[data-ennova]')) return;
     const caixa = document.querySelector('[data-ennova]').parentElement; if(!caixa || caixa.querySelector('.v249Mais')) return;
-    /* o resumo: o que o quadro mostra agora */
     const cab = mtop.firstElementChild;
     if(cab && !cab.querySelector('.v249Resumo')){
       const vivos = [...document.querySelectorAll('.enRolo .enCol:not([data-encol="feito"]) .enCard[data-entar]')];
@@ -45717,14 +45655,12 @@ html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *):hover{ 
       if(cli) item(cli, 'com o cliente');
       cab.append(res);
     }
-    /* a busca no quadro */
     const campo = document.createElement('label'); campo.className = 'v249Busca';
     campo.append(svg('M11 4.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zM16 16l4 4'));
     const inp = document.createElement('input'); inp.type = 'search'; inp.id = 'v249busca';
     inp.placeholder = 'Buscar no quadro'; inp.setAttribute('aria-label', 'Buscar no quadro'); inp.value = busca;
     inp.addEventListener('input', () => { busca = inp.value; filtrar(); });
     campo.append(inp);
-    /* o "•••" com o que se usa pouco */
     const mais = document.createElement('div'); mais.className = 'v249Mais' + (maisAberto ? ' aberto' : '');
     const bm = document.createElement('button'); bm.type = 'button'; bm.className = 'v249MaisBt';
     bm.setAttribute('aria-label', 'Lixeira, ranking e importar planilha'); bm.setAttribute('aria-haspopup', 'menu');
@@ -45734,7 +45670,6 @@ html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *):hover{ 
     mais.append(bm, menu);
     caixa.prepend(campo, mais);
   }
-
   function filtrar(){
     const q = sem(busca).trim();
     document.querySelectorAll('.enRolo .enCard[data-entar]').forEach(c => {
@@ -45742,26 +45677,19 @@ html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *):hover{ 
       c.classList.toggle('v249Fora', !!q && !t.includes(q));
     });
   }
-
   document.addEventListener('click', e => {
     if(!e.target.closest) return;
     const sel = e.target.closest('.v249Sel');
     if(sel){ e.preventDefault(); aberto = aberto === sel.dataset.v249sel ? null : sel.dataset.v249sel; maisAberto = false; pintarAberto(); return; }
     if(e.target.closest('.v249MaisBt')){ maisAberto = !maisAberto; aberto = null; pintarAberto(); return; }
-    /* escolher uma opção fecha a lista (o próprio botão filtra, como sempre) */
     if(e.target.closest('.v249Lista button, .v249Menu button')){ aberto = null; maisAberto = false; setTimeout(pintarAberto, 0); return; }
     if((aberto || maisAberto) && !e.target.closest('.v249Lista, .v249Menu')){ aberto = null; maisAberto = false; pintarAberto(); }
   }, true);
-  /* os botões de filtro ouvem o clique na JANELA e cortam a propagação — o
-     clique nunca chega aqui. O dedo levantado chega antes: marca a lista como
-     fechada e deixa o redesenho do próprio filtro pintá-la (fechar já, antes
-     do clique, faria o toque cair no que está atrás da folha). */
   addEventListener('pointerup', e => {
     if(!e.target.closest || !e.target.closest('.v249Lista button, .v249Menu button')) return;
     aberto = null; maisAberto = false; setTimeout(pintarAberto, 400);
   }, true);
   document.addEventListener('keydown', e => { if(e.key === 'Escape' && (aberto || maisAberto)){ aberto = null; maisAberto = false; pintarAberto(); } });
-  /* o que está escolhido agora num seletor (para o teclado, que não passa pelo dedo) */
   function escolha(k){
     const on = document.querySelector('.enFiltros ' + SELETORES[k] + ' .on');
     return on ? JSON.stringify(on.dataset) : '';
@@ -45774,7 +45702,6 @@ html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *):hover{ 
       const b = m.querySelector('.v249MaisBt'); if(b) b.setAttribute('aria-expanded', maisAberto ? 'true' : 'false'); });
     document.body.classList.toggle('v249ComLista', !!aberto);
   }
-
   render = (function(orig){
     return function(){
       const ativo = document.activeElement, eraBusca = ativo && ativo.id === 'v249busca';
@@ -45796,39 +45723,27 @@ html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *):hover{ 
 })();
 </script>
 <style id="v250-vitrine">
-/* ====================================================================
-   v250 — três coisas do vídeo e dos prints do founder
-   ==================================================================== */
-/* 1. a foto de quem tem foto de verdade estourava no seletor de Pessoa:
-      a regra que prende a <img> na bolinha é do botão da lista, e o
-      seletor usa uma CÓPIA da bolinha fora dele */
 .v249Val :is(.respFoto, .cliFoto){ overflow:hidden; border-radius:50% }
 .v249Val :is(.respFoto, .cliFoto) img{ width:100% !important; height:100% !important; object-fit:cover; display:block;
-  max-width:none; border-radius:50% }
-/* 2. os dois atalhos do cliente são CAIXAS de duas linhas, não pílulas:
-      em pílula o texto encostava na curva */
+max-width:none; border-radius:50% }
 .clInicioAtalhos{ gap:10px !important }
 .clInicioAtalhos > button:not(.site *){ border:0 !important; background:var(--sup) !important; border-radius:18px !important;
-  padding:16px 18px !important; gap:6px !important; align-content:start; box-shadow:var(--sombra) !important; color:var(--ink-50) !important }
+padding:16px 18px !important; gap:6px !important; align-content:start; box-shadow:var(--sombra) !important; color:var(--ink-50) !important }
 .clInicioAtalhos > button:not(.site *):hover{ background:var(--sup2) !important }
 .clInicioAtalhos > button b{ display:flex; align-items:center; gap:7px; font-size:15.5px; font-weight:650; letter-spacing:-.01em }
 .clInicioAtalhos > button small{ font-size:13px !important; line-height:1.4; color:var(--ink-300) !important }
-/* 3. Conversas no celular: a página não rola — quem rola é o fio */
 @media(max-width:860px){
-  body[data-rota="conversas"] .main{ padding-bottom:0 !important }
-  body[data-rota="conversas"]{ overscroll-behavior:none }
+body[data-rota="conversas"] .main{ padding-bottom:0 !important }
+body[data-rota="conversas"]{ overscroll-behavior:none }
 }
-/* 4. A VITRINE — a página de quem ainda não é cliente, no mesmo desenho da
-      plataforma: preto, texto grande, superfícies sem contorno, uma cor só
-      (o latão da marca) para o que importa */
 body.naVitrine .ctx{ display:none }
 body.naVitrine #root{ padding-top:0 }
 body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !important }
 .site.sv{ --sTx:#F5F5F7; --sTx2:#A1A1A6; --sTx3:#6E6E73; --sSup:#161617; --sSup2:#232325; --sFio:rgba(255,255,255,.09);
-  background:#000; color:var(--sTx); font-family:var(--sans); -webkit-font-smoothing:antialiased; overflow-x:hidden }
+background:#000; color:var(--sTx); font-family:var(--sans); -webkit-font-smoothing:antialiased; overflow-x:hidden }
 .sv .snav, .sv .snav.scrolled{ position:sticky; top:0; height:52px; padding:0 max(22px, calc(50% - 520px)); gap:28px;
-  background:rgba(0,0,0,.72); backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
-  box-shadow:none; border-bottom:.5px solid var(--sFio) }
+background:rgba(0,0,0,.72); backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
+box-shadow:none; border-bottom:.5px solid var(--sFio) }
 .sv .logo b{ font-family:var(--sans); font-weight:650; font-size:18px; letter-spacing:-.015em; color:var(--sTx) }
 .sv .snav a{ color:var(--sTx2); font-size:13px }
 .sv .snav a:hover{ color:var(--sTx) }
@@ -45841,16 +45756,15 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
 .sOlho{ margin:0 0 14px; font-size:17px; font-weight:600; color:var(--brass-400); letter-spacing:-.01em }
 .sHero{ text-align:center; padding:108px 22px 0; position:relative }
 .sHero::before{ content:""; position:absolute; left:50%; top:320px; width:1100px; height:620px; transform:translateX(-50%);
-  background:radial-gradient(ellipse at center, rgba(200,150,58,.20), transparent 62%); pointer-events:none }
+background:radial-gradient(ellipse at center, rgba(200,150,58,.20), transparent 62%); pointer-events:none }
 .sHero h1{ margin:0 auto 20px; font-size:clamp(46px, 8.4vw, 96px); line-height:1.02; font-weight:700; letter-spacing:-.045em; color:var(--sTx) }
 .sLede{ margin:0 auto 34px; max-width:34ch; font-size:clamp(19px, 2.3vw, 24px); line-height:1.4; color:var(--sTx2); letter-spacing:-.012em }
 .sCta{ display:flex; gap:26px; justify-content:center; align-items:center; flex-wrap:wrap }
 .sLink{ color:var(--brass-400); font-size:17px; text-decoration:none }
 .sLink:hover{ text-decoration:underline }
-/* o quadro, desenhado */
 .sJanela{ position:relative; max-width:1040px; margin:76px auto 0; border-radius:22px 22px 0 0; background:#0C0C0D;
-  box-shadow:0 0 0 .5px rgba(255,255,255,.14), 0 -30px 120px rgba(200,150,58,.10); text-align:left; overflow:hidden;
-  -webkit-mask-image:linear-gradient(#000 70%, transparent); mask-image:linear-gradient(#000 70%, transparent) }
+box-shadow:0 0 0 .5px rgba(255,255,255,.14), 0 -30px 120px rgba(200,150,58,.10); text-align:left; overflow:hidden;
+-webkit-mask-image:linear-gradient(#000 70%, transparent); mask-image:linear-gradient(#000 70%, transparent) }
 .sBarra{ display:flex; align-items:center; gap:7px; height:38px; padding:0 16px; border-bottom:.5px solid var(--sFio) }
 .sBarra i{ width:11px; height:11px; border-radius:50%; background:#3A3A3C }
 .sBarra span{ margin-left:12px; font-size:12.5px; font-weight:600; color:var(--sTx2) }
@@ -45873,7 +45787,6 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
 .sMini em{ font-style:normal; font-size:11px; color:var(--sTx3) }
 .sReel{ width:40px; height:70px; border-radius:7px; background:linear-gradient(160deg,#3A3F48,#0B0C0E) }
 .sPasso1{ text-align:center; padding:7px; border-radius:9px; background:var(--sTx); color:#000; font-size:12px; font-weight:650 }
-/* as seções */
 .sSec{ max-width:1040px; margin:0 auto; padding:130px 22px 0 }
 .sSec h2{ margin:0 0 18px; font-size:clamp(34px, 5.4vw, 60px); line-height:1.06; font-weight:700; letter-spacing:-.04em; color:var(--sTx); max-width:18ch }
 .sSub{ margin:0 0 44px; max-width:44ch; font-size:clamp(17px, 1.9vw, 21px); line-height:1.45; color:var(--sTx2); letter-spacing:-.01em }
@@ -45886,9 +45799,8 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
 .sLista{ margin:0; padding:0; list-style:none; display:grid; gap:12px; font-size:17px; color:var(--sTx) }
 .sLista li{ display:flex; gap:12px; align-items:baseline }
 .sLista li::before{ content:"✓"; color:var(--brass-400); font-weight:700 }
-/* o celular, desenhado */
 .sFone{ justify-self:center; width:290px; height:600px; border-radius:50px; padding:11px; background:#1C1C1E;
-  box-shadow:0 0 0 .5px rgba(255,255,255,.18), 0 50px 120px rgba(0,0,0,.7) }
+box-shadow:0 0 0 .5px rgba(255,255,255,.18), 0 50px 120px rgba(0,0,0,.7) }
 .sTela{ height:100%; border-radius:40px; background:#0A0A0A; overflow:hidden; padding:44px 14px 14px; display:flex; flex-direction:column; gap:12px }
 .sPerfil{ display:flex; align-items:center; gap:10px }
 .sAv{ width:44px; height:44px; border-radius:50%; display:grid; place-items:center; background:linear-gradient(135deg,#C8963A,#7A5A1E); font-size:14px; font-weight:700; color:#000 }
@@ -45902,7 +45814,6 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
 .sBts{ display:grid; grid-template-columns:1fr 1fr; gap:7px }
 .sBts span{ text-align:center; padding:10px 0; border-radius:999px; font-size:12.5px; font-weight:650 }
 .sAjuste{ background:rgba(255,255,255,.08) } .sOk{ background:var(--sTx); color:#000 }
-/* o bento */
 .sBento{ display:grid; grid-template-columns:repeat(12, 1fr); gap:14px }
 .sTile{ grid-column:span 3; padding:30px 28px; border-radius:26px; background:var(--sSup); display:flex; flex-direction:column; gap:10px }
 .sTile.sG{ grid-column:span 6; min-height:280px }
@@ -45917,7 +45828,6 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
 .sFrase{ text-align:center } .sFrase h2{ margin:0 auto 20px; max-width:20ch }
 .sFrase h2 em{ font-style:normal; color:var(--brass-400) } .sFrase .sSub{ margin:0 auto }
 .sFim{ text-align:center; padding-bottom:40px } .sFim h2{ margin:0 auto 30px }
-/* os preços, com a cara nova */
 .sv .bill .seg{ background:var(--sSup); border:0; border-radius:999px }
 .sv .bill .seg .thumb{ border-radius:999px; background:var(--sSup2) }
 .sv .bill .seg button{ color:var(--sTx2) } .sv .bill .seg button.on{ color:var(--sTx) }
@@ -45934,43 +45844,34 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
 .sv .price li::before{ color:var(--brass-400) }
 .sv .price.ghost{ background:transparent; box-shadow:inset 0 0 0 1px var(--sFio) }
 .sRodape{ max-width:1040px; margin:110px auto 0; padding:28px 22px 60px; border-top:.5px solid var(--sFio); display:flex; flex-wrap:wrap;
-  gap:10px 24px; align-items:center; font-size:12.5px; color:var(--sTx3) }
+gap:10px 24px; align-items:center; font-size:12.5px; color:var(--sTx3) }
 .sRodape .logo b{ font-size:15px; color:var(--sTx3) } .sRodape span:last-child{ margin-left:auto }
 @media(max-width:860px){
-  .sHero{ padding-top:72px }
-  .sQuadro{ grid-template-columns:repeat(5, 200px); overflow-x:auto; scrollbar-width:none }
-  .sPassos{ grid-template-columns:1fr 1fr } .sDividido{ grid-template-columns:1fr; gap:48px }
-  .sBento{ grid-template-columns:1fr } .sTile, .sTile.sG{ grid-column:auto; min-height:0 }
-  .sSec{ padding-top:96px }
+.sHero{ padding-top:72px }
+.sQuadro{ grid-template-columns:repeat(5, 200px); overflow-x:auto; scrollbar-width:none }
+.sPassos{ grid-template-columns:1fr 1fr } .sDividido{ grid-template-columns:1fr; gap:48px }
+.sBento{ grid-template-columns:1fr } .sTile, .sTile.sG{ grid-column:auto; min-height:0 }
+.sSec{ padding-top:96px }
 }
 @media(max-width:520px){
-  .sPassos{ grid-template-columns:1fr }
-  .sPasso{ display:grid; grid-template-columns:auto 1fr; column-gap:14px; padding:20px }
-  .sPasso i{ grid-row:span 2; margin:8px 0 0 } .sPasso h3{ font-size:19px; margin-bottom:4px }
-  .sRodape span:last-child{ margin-left:0 }
+.sPassos{ grid-template-columns:1fr }
+.sPasso{ display:grid; grid-template-columns:auto 1fr; column-gap:14px; padding:20px }
+.sPasso i{ grid-row:span 2; margin:8px 0 0 } .sPasso h3{ font-size:19px; margin-bottom:4px }
+.sRodape span:last-child{ margin-left:0 }
 }
-/* 5. a porta de entrar, no desenho novo — e com volta para o site */
 #entrarMaestro{ background:rgba(0,0,0,.62) !important; backdrop-filter:blur(24px) saturate(140%); -webkit-backdrop-filter:blur(24px) saturate(140%) }
 #entrarMaestro .caixa{ position:relative; border:0 !important; border-radius:24px !important; background:var(--sup) !important;
-  box-shadow:0 30px 90px rgba(0,0,0,.5) !important; padding:34px 28px 26px !important }
+box-shadow:0 30px 90px rgba(0,0,0,.5) !important; padding:34px 28px 26px !important }
 #entrarMaestro h3{ font-family:var(--sans) !important; font-size:24px !important; font-weight:700 !important; letter-spacing:-.025em }
 #entrarMaestro .campo{ border:0 !important; background:var(--enc) !important; border-radius:12px !important }
 #entrarMaestro .campo:focus{ box-shadow:0 0 0 4px var(--anel) }
 .v250Fecha{ position:absolute; top:14px; right:14px; width:30px; height:30px; border-radius:50%; display:grid; place-items:center;
-  background:var(--enc); color:var(--ink-300); font-size:16px; line-height:1 }
+background:var(--enc); color:var(--ink-300); font-size:16px; line-height:1 }
 .v250Fecha:hover{ background:var(--enc2); color:var(--ink-50) }
-/* 6. trocar e-mail e senha */
 .v250Conta .fld{ margin-bottom:12px }
 .v250Conta .erro{ min-height:18px; margin:0 0 10px; font-size:13px; color:var(--danger) }
 </style>
-<script>
-/* v250 — A VITRINE NÃO PEDE LOGIN. O founder: "não precisa aparecer de
-   cara pra logar no login da agência, pode ser só quando aparece a opção
-   pra entrar". A porta nascia sozinha porque o banco responde vazio para
-   quem não entrou (v91) — e isso continua certo DENTRO do app. Na vitrine
-   ela só fica escondida: tocar em "Entrar" é o que a mostra. Ela não é
-   removida, porque a porta se lembra de que está aberta (`pedindo`), e
-   apagar por fora a deixaria sem jeito de voltar. */
+<script data-camada="v250">
 (function(){
   const naVitrine = () => S.view === 'site' && S.route !== 'entrar';
   function fecharPorta(porta){
@@ -46004,12 +45905,6 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
   try{ new MutationObserver(marcar).observe(document.body, { childList: true }); }catch(e){}
   marcar();
 })();
-
-/* v250 — TROCAR A SENHA E O E-MAIL, na Conta. As duas pedem a senha atual
-   antes (conferida no banco, sem mexer na sessão): aparelho destravado na
-   mesa não é dono da conta. O e-mail novo vira o LOGIN da mesma pessoa —
-   a identidade na equipe continua a de sempre (ver `identidade()` na
-   porta), porque é dela que as tarefas se lembram. */
 (function(){
   if(typeof agConta !== 'function') return;
   const quem = () => { try{ return window.MaestroPorta && MaestroPorta.quem(); }catch(e){ return null; } };
@@ -46025,7 +45920,6 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
       return html.replace(/(<button class="row" data-sairmaestro="1"[\s\S]*?<\/button>)/, '$1' + linhas);
     };
   })(agConta);
-
   function abrir(tipo){
     const q = quem(); if(!q){ toast('Entre na sua conta antes.'); return; }
     const senha = tipo === 'senha';
@@ -46048,7 +45942,6 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
     renderLayer();
     setTimeout(() => { try{ document.getElementById('v250-novo').focus(); }catch(e){} }, 60);
   }
-
   const BANCO = {
     same_password: 'A senha nova é igual à atual.',
     weak_password: 'O banco achou a senha fraca. Use pelo menos 8 caracteres, com letras e números.',
@@ -46057,7 +45950,6 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
     reauthentication_needed: 'O banco pede uma confirmação por e-mail antes de trocar a senha (opção "Secure password change" do Supabase).',
     over_email_send_rate_limit: 'O banco mandou e-mails demais agora. Tente de novo em alguns minutos.'
   };
-
   async function salvar(tipo, bt){
     const q = quem(); const erro = document.getElementById('v250-erro');
     const dizer = t => { if(erro) erro.textContent = t; };
@@ -46080,7 +45972,6 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
     bt.disabled = true; const rot = bt.textContent; bt.textContent = 'Salvando…'; dizer('');
     const volta = t => { bt.disabled = false; bt.textContent = rot; dizer(t); };
     try{
-      /* a senha atual é conferida num pedido à parte: a sessão não muda */
       const r0 = await fetch(`${SB.url}/auth/v1/token?grant_type=password`, { method: 'POST',
         headers: { apikey: SB.key, 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: q.login || q.email, password: atual }) });
@@ -46096,7 +45987,6 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
         return volta(BANCO[cod] || `O banco recusou (${r.status})${j && (j.msg || j.message) ? ': ' + (j.msg || j.message) : ''}.`);
       }
       if(tipo === 'email'){
-        /* o login novo passa a apontar para a MESMA pessoa da equipe */
         const eu = (S.equipe || []).find(m => m && String(m.mail || '').trim().toLowerCase() === String(q.email || '').trim().toLowerCase());
         if(eu){ eu.login = novo; try{ if(typeof salvarLocal === 'function') salvarLocal(); }catch(e){} }
       }
@@ -46106,7 +45996,6 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
         : (j && j.new_email ? `Confirme no link que chegou em ${esc(novo)} — a troca vale depois dele.` : `Pronto: agora você entra com ${esc(novo)}.`));
     }catch(e){ volta('Não consegui falar com o banco agora.'); }
   }
-
   addEventListener('click', e => {
     const a = e.target.closest && e.target.closest('[data-v250conta]');
     if(a){ e.stopImmediatePropagation(); abrir(a.dataset.v250conta); return; }
@@ -46117,5 +46006,31 @@ body.naVitrine :is(#entrarMaestro, #quemEsta, #btAtualizar){ display:none !impor
     if(e.key !== 'Enter' || !(e.target && e.target.closest && e.target.closest('.v250Conta'))) return;
     const s = document.querySelector('[data-v250salva]'); if(s && !s.disabled){ e.preventDefault(); s.click(); }
   });
+})();
+</script>
+<style id="v251-celular">
+.hjCab + p, .clbody > .kick + h2 + p, .compassoLeg, .clPerfilDica, .batidaCard .l, .v251Some{ display:none !important }
+@media(max-width:860px){
+.ptCheck, .ptCab{ display:none !important }
+.ptAbas .lin{ flex-wrap:nowrap !important; overflow-x:auto; scrollbar-width:none }
+.ptAbas .lin::-webkit-scrollbar{ display:none }
+.ptAbas .lin button{ white-space:nowrap; flex:0 0 auto; border-radius:999px !important }
+.conquistas, h3:has(+ .conquistas){ display:none !important }
+.clbody h3{ margin-top:22px }
+}
+</style>
+<script data-camada="v251">
+(function(){
+  const CARTOES = ['Ninguém começa em tela vazia', 'Uma regra acima de todas'];
+  const SUBS = ['o pulso da operação inteira', 'de onde sai o que a equipe consegue entregar'];
+  function marcar(){
+    document.querySelectorAll('.card > h4').forEach(h => {
+      if(CARTOES.includes(h.textContent.trim())) h.parentElement.classList.add('v251Some'); });
+    document.querySelectorAll('.mtop p, .rtCab p, h1 + p, h2 + p').forEach(p => {
+      if(SUBS.includes(p.textContent.replace(/\s+/g, ' ').trim())) p.classList.add('v251Some'); });
+  }
+  render = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); try{ marcar(); }catch(e){} return r; };
+  })(render);
 })();
 </script>

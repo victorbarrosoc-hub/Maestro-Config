@@ -1,0 +1,452 @@
+/* =====================================================================
+   v249 — O ESTILO APPLE. Proposta aprovada pelo founder em 24/set
+   ("adorei o estilo, ficou muito bem organizado e intuitivo — pode fazer
+   no site todo"; referência em docs/UX/proposta-ensaio-clean.html).
+   O MÉTODO NÃO MUDA: nenhuma regra de fluxo, nenhum botão sai do lugar.
+   Muda a forma, e ela mora aqui, num bloco só, por cima de tudo:
+     · cores de sistema da Apple nos dois temas (a vitrine .site/.gate
+       continua com as dela);
+     · superfícies que flutuam: fundo calmo, cards sem contorno com
+       sombra quase invisível (no escuro, um fio de luz no lugar dela);
+     · uma cor de destaque só — o latão da marca — para o que está
+       selecionado; o botão principal é a cor do texto (preto no claro,
+       branco no escuro);
+     · rótulos em frase, não em CAIXA ALTA monoespaçada;
+     · movimento: nada pula ao passar o mouse; o toque afunda 3% e a cor
+       troca em 180ms; janelas entram com fade curto (folha no celular).
+   ===================================================================== */
+:root{
+  --ink-50:#F5F5F7; --ink-100:#EBEBF0; --ink-200:#D1D1D6; --ink-300:#AEAEB2; --ink-400:#8E8E93;
+  --ink-500:#727276; --ink-600:#48484A; --ink-700:#3A3A3C; --ink-800:#2C2C2E; --ink-850:#1C1C1E;
+  --ink-870:#18181A; --ink-900:#111113; --ink-950:#000000;
+  /* o latão é a cor da marca: fica como era */
+  --cobalt:#0A84FF; --encore:#30D158; --coral:#FF9F0A; --violet:#BF5AF2; --danger:#FF453A;
+  --fundo:#000000; --sup:#1C1C1E; --sup2:#232325; --lat:rgba(22,22,24,.92); --vidro:rgba(22,22,24,.72);
+  --enc:rgba(118,118,128,.24); --enc2:rgba(118,118,128,.34); --fio:rgba(255,255,255,.07);
+  --sombra:0 0 0 .5px rgba(255,255,255,.06); --sombraAlta:0 24px 60px rgba(0,0,0,.55), 0 0 0 .5px rgba(255,255,255,.08);
+  --prim:#F5F5F7; --primT:#000000; --anel:rgba(255,200,87,.32);
+  --r-card:16px; --r-ctl:10px;
+  --mola:cubic-bezier(.2,.9,.3,1);
+}
+html[data-tema="claro"]{
+  --ink-950:#F5F5F7; --ink-900:#FFFFFF; --ink-870:#F2F2F7; --ink-850:#FFFFFF;
+  --ink-800:#E5E5EA; --ink-700:#D1D1D6; --ink-600:#AEAEB2; --ink-500:#8E8E93;
+  --ink-400:#6E6E73; --ink-300:#48484A; --ink-200:#3A3A3C; --ink-100:#1D1D1F; --ink-50:#000000;
+  --cobalt:#0066CC; --encore:#248A3D; --coral:#C93400; --violet:#8944AB; --danger:#D70015;
+  --fundo:#F5F5F7; --sup:#FFFFFF; --sup2:#FBFBFD; --lat:rgba(242,242,245,.9); --vidro:rgba(255,255,255,.78);
+  --enc:rgba(118,118,128,.12); --enc2:rgba(118,118,128,.2); --fio:rgba(0,0,0,.06);
+  --sombra:0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.05);
+  --sombraAlta:0 24px 60px rgba(0,0,0,.18), 0 0 0 .5px rgba(0,0,0,.06);
+  --prim:#1D1D1F; --primT:#FFFFFF; --anel:rgba(192,143,31,.28);
+}
+/* a vitrine e a porta continuam com a paleta delas */
+.site, .gate{
+  --ink-950:#161616; --ink-900:#1C1C1C; --ink-870:#1F1F20; --ink-850:#212122;
+  --ink-800:#29272B; --ink-700:#35333A; --ink-600:#474350; --ink-500:#54505C;
+  --ink-400:#72707A; --ink-300:#A0A0A6; --ink-200:#C7C8CB; --ink-100:#E4E6E6; --ink-50:#F4F7F5;
+  --brass-100:#FFEBC1; --brass-300:#FFDA91; --brass-400:#FFD176; --brass-500:#FFC857;
+  --brass-600:#C99D43; --brass-700:#96752F;
+  --cobalt:#5B8DEF; --encore:#35B87A; --coral:#F0784C; --violet:#8B7BF0; --danger:#E5484D;
+}
+html, body{ background:var(--fundo) }
+html[data-tema="claro"] body{ background:var(--fundo); color:var(--ink-100) }
+::selection{ background:var(--anel) }
+:focus-visible:not(.site *){ outline:none; box-shadow:0 0 0 4px var(--anel) !important; border-radius:10px }
+
+/* ---------- movimento ------------------------------------------------ */
+@keyframes v249entra{ from{ opacity:0; transform:translateY(6px) } to{ opacity:1; transform:none } }
+@keyframes v249janela{ from{ opacity:0; transform:scale(.97) translateY(6px) } to{ opacity:1; transform:none } }
+@keyframes v249folha{ from{ transform:translateY(100%) } to{ transform:none } }
+@keyframes v249fundo{ from{ opacity:0 } to{ opacity:1 } }
+.app .fu, .cl .fu{ animation:v249entra .32s var(--mola) both }
+.app .venter{ animation:v249entra .28s var(--mola) both }
+:is(.b, .cyBtn, .nav, .tab, .ptChips button, .enCat, .enResp, .enCli2, .seg button, .luz button, .ctxbtn,
+    .row, .tile, .card, .enCard, .hjItem, .agCard, .ptRow, .kcard, .pjCard, .lothub, .qePessoa, .msit,
+    .clrow, .estModelo, .clbtn, #btAtualizar):not(.site *){
+  transition:background-color .18s ease, color .18s ease, border-color .18s ease, box-shadow .2s ease,
+    opacity .18s ease, transform .14s var(--mola), filter .18s ease !important }
+:is(.b, .row, .tile, .enCard, .hjItem, .agCard, .ptRow, .kcard, .pjCard, .lothub, .qePessoa, .msit,
+    .clrow, .estModelo, .ptChips button, .ptCal .dd.tem, .cald.tem, .artpick button, .cvFoto, .cvBaixar,
+    #btAtualizar, .clbtn):not(.site *):hover{ transform:none }
+:is(.b, .cyBtn, .ptChips button, .enCat, .enResp, .enCli2, .clbtn, .tab, .nav, .seg button, .luz button,
+    .ctxbtn):not(.site *):active{ transform:scale(.97) }
+:is(.row, .hjItem, .agCard, .ptRow, .kcard, .pjCard, .lothub, .clrow):not(.site *):active{ transform:scale(.99) }
+@media (prefers-reduced-motion:reduce){ :is(.b, .cyBtn, .row, .enCard):not(.site *):active{ transform:none } }
+
+/* ---------- barra do topo -------------------------------------------- */
+.ctx{ background:var(--vidro) !important; backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:.5px solid var(--fio) }
+html[data-tema="claro"] .ctx{ background:var(--vidro) !important }
+.ctxbtn{ border-radius:8px; color:var(--ink-300) }
+.ctxbtn:hover{ background:var(--enc); color:var(--ink-50) }
+.kbd{ font-family:inherit; border:0; background:var(--enc); color:var(--ink-400) }
+.luz{ border:0; background:var(--enc); border-radius:9px; padding:2px }
+.luz button{ color:var(--ink-400); border-radius:7px }
+.luz button.on{ background:var(--sup); color:var(--ink-50); box-shadow:0 1px 3px rgba(0,0,0,.14) }
+html:not([data-tema="claro"]) .luz button.on{ background:#636366 }
+
+/* ---------- a casa: menu lateral e palco ------------------------------ */
+.app.ag{ background:var(--fundo) }
+.aside{ background:var(--lat); border-right:.5px solid var(--fio); padding:16px 0 24px }
+.aside .lg{ padding:4px 22px 18px }
+.aside .lg b{ font-size:19px; color:var(--ink-50) }   /* o nome da marca segue na letra da marca (v233) */
+.aside .grp:not(.site *){ font-family:inherit; font-size:11.5px; font-weight:600; letter-spacing:0; text-transform:none;
+  color:var(--ink-400); padding:16px 22px 6px }
+.aside .nav:not(.site *){ width:calc(100% - 20px); margin:1px 10px; padding:7px 12px; border-radius:9px;
+  font-size:13.5px; font-weight:450; color:var(--ink-100); gap:10px }
+.aside .nav svg.i{ font-size:16px; opacity:1; color:var(--ink-400) }
+.aside .nav:hover{ background:var(--enc); color:var(--ink-50) }
+.aside .nav.on{ background:var(--enc2); color:var(--ink-50); font-weight:600 }
+.aside .nav.on svg.i{ color:var(--brass-500) }
+.aside .nav.on::before{ display:none }
+.aside .nav .bd:not(.site *){ font-family:inherit; font-size:11px; font-weight:650; min-width:18px; height:18px; line-height:18px;
+  text-align:center; padding:0 5px; border-radius:9px; background:var(--brass-500); color:#000 }
+html[data-tema="claro"] .aside .nav .bd{ color:#fff }
+.main{ padding:30px 28px 56px }
+/* quem está sentado aqui mora no pé do menu, como numa conta da Apple */
+@media(min-width:861px){
+  .aside{ display:flex; flex-direction:column }
+  .aside > *{ flex:0 0 auto }
+  .aside > div:has(> .qeAtual){ order:99; margin-top:auto; padding:12px 10px 0 !important }
+}
+.qeAtual:not(.site *){ display:flex; align-items:center; gap:10px; width:100%; padding:8px 10px; border-radius:12px;
+  border:0 !important; background:none !important; color:var(--ink-100); font-size:13.5px; font-weight:600 }
+.qeAtual:not(.site *):hover{ background:var(--enc) !important }
+.qeAtual .av{ width:28px !important; height:28px !important; font-size:11px !important }
+.mtop{ margin-bottom:24px; align-items:flex-end }
+.mtop h1:not(.site *){ font-family:inherit !important; font-size:32px !important; font-weight:700 !important;
+  letter-spacing:-.025em !important; line-height:1.05; color:var(--ink-50) }
+.mtop p:not(.site *){ font-size:14px; color:var(--ink-400); margin-top:7px }
+
+/* ---------- barra do polegar (celular) -------------------------------- */
+@media(max-width:860px){
+  .main{ padding:18px 16px 104px }
+  .mtop{ margin-bottom:14px }
+  .mtop h1:not(.site *){ font-size:30px !important }
+  .tabbar, nav.tabbar.mnFixa, nav.cltab.mnFixa, html[data-tema="claro"] .tabbar,
+  html[data-tema="claro"] nav.tabbar.mnFixa, html[data-tema="claro"] nav.cltab.mnFixa{
+    background:var(--vidro) !important; backdrop-filter:saturate(180%) blur(20px) !important;
+    -webkit-backdrop-filter:saturate(180%) blur(20px) !important; border-top:.5px solid var(--fio) !important }
+  .tab:not(.site *){ font-size:11px; font-weight:550; color:var(--ink-400); gap:3px }
+  .tab svg.i{ font-size:23px; stroke-width:1.6 }
+  .tab.on{ color:var(--brass-500) }
+  .tab .bd:not(.site *){ font-family:inherit; font-weight:650; font-size:11px; background:#FF3B30; color:#fff;
+    min-width:17px; height:17px; line-height:17px; border-radius:9px; top:-2px }
+}
+
+/* ---------- botões ----------------------------------------------------- */
+.b:not(.site *){ border-radius:999px; padding:10px 18px; font-size:14px; font-weight:600; letter-spacing:-.005em; gap:7px }
+.b.sm:not(.site *){ padding:7px 14px; font-size:13px; border-radius:999px }
+.b.pri:not(.site *), html[data-tema="claro"] .b.pri:not(.site *){ background:var(--prim); color:var(--primT); box-shadow:none; filter:none }
+.b.pri:not(.site *):hover{ opacity:.86; filter:none }
+.b.gho:not(.site *){ border:0; background:var(--enc); color:var(--ink-50) }
+.b.gho:not(.site *):hover{ background:var(--enc2); border:0 }
+.mtop .b.gho.sm:not(.site *){ background:none; color:var(--ink-300); padding:7px 11px }
+.mtop .b.gho.sm:not(.site *):hover{ background:var(--enc); color:var(--ink-50) }
+
+/* ---------- superfícies ----------------------------------------------- */
+:is(.card, .tile, .row, .kcard, .pjCard, .lothub, .msit, .ptRow, .hjItem, .qePessoa, .estModelo):not(.site *){
+  background:var(--sup); border:0; box-shadow:var(--sombra) }
+.card:not(.site *){ border-radius:var(--r-card) }
+.tile:not(.site *){ border-radius:14px }
+.row:not(.site *){ border-radius:14px; margin-bottom:8px }
+:is(.row, .tile, .kcard, .pjCard, .lothub, .msit, .ptRow, .hjItem, .qePessoa, .estModelo):not(.site *):hover{
+  background:var(--sup2); border-color:transparent }
+html[data-tema="claro"] :is(.row, .tile, .kcard, .pjCard, .lothub, .msit, .ptRow, .hjItem, .qePessoa, .estModelo):not(.site *):hover{
+  background:var(--sup); box-shadow:0 2px 4px rgba(0,0,0,.05), 0 12px 32px rgba(0,0,0,.08) }
+.av:not(.site *){ font-family:inherit; font-weight:650 }
+.pill:not(.site *){ font-family:inherit; font-size:12px; font-weight:550; padding:3px 9px; letter-spacing:0 }
+
+/* ---------- campos ----------------------------------------------------- */
+.fld label:not(.site *){ font-family:inherit !important; font-size:12.5px !important; font-weight:550; letter-spacing:0 !important;
+  text-transform:none !important; color:var(--ink-400) }
+:is(.fld input, .fld textarea, .fld select):not(.site *){ background:var(--enc); border:1px solid transparent; border-radius:var(--r-ctl);
+  padding:10px 12px; color:var(--ink-50) }
+:is(.fld input, .fld textarea, .fld select):not(.site *):focus{ background:var(--sup); border-color:var(--brass-500);
+  box-shadow:0 0 0 4px var(--anel) }
+.fhint:not(.site *){ color:var(--ink-400) }
+
+/* ---------- controles de escolha (abas, filtros) ----------------------- */
+.seg:not(.site *){ background:var(--enc); border:0; border-radius:9px; padding:2px }
+.seg:not(.site *) button{ color:var(--ink-100); font-size:13px; font-weight:500 }
+.seg:not(.site *) button.on{ color:var(--ink-50); font-weight:600 }
+html[data-tema="claro"] .seg:not(.site *) button.on{ color:var(--ink-50) }
+.seg:not(.site *) .thumb{ background:var(--sup); box-shadow:0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.04) }
+html:not([data-tema="claro"]) .seg:not(.site *) .thumb{ background:#636366 }
+.ptChips button:not(.site *){ background:var(--enc); border:0 !important; border-radius:999px; color:var(--ink-100);
+  font-size:13px; font-weight:500; padding:6px 13px }
+.ptChips button:not(.site *):hover{ background:var(--enc2) }
+.ptChips button.on:not(.site *){ background:var(--prim); color:var(--primT) }
+
+/* ---------- janelas ---------------------------------------------------- */
+.modal:not(.site *){ background:rgba(0,0,0,.42); backdrop-filter:blur(8px) saturate(120%); -webkit-backdrop-filter:blur(8px);
+  animation:v249fundo .2s ease both }
+html[data-tema="claro"] .modal:not(.site *){ background:rgba(0,0,0,.22) }
+.modalbox:not(.site *){ background:var(--sup); border:0; border-radius:22px; box-shadow:var(--sombraAlta);
+  animation:v249janela .26s var(--mola) both }
+.modalbox h3:not(.site *){ font-family:inherit !important; font-size:21px !important; font-weight:650 !important; letter-spacing:-.015em }
+.modalbox p:not(.site *){ color:var(--ink-400) }
+@media(max-width:760px){
+  /* a folha já nasce no lugar (entra por fade): quem mede ou toca logo
+     depois de abrir acha o botão de salvar onde ele vai ficar (v229) */
+  .modalbox:not(.site *){ border-radius:22px 22px 0 0; animation:v249fundo .22s ease both }
+}
+.toast:not(.site *){ background:var(--vidro) !important; backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
+  color:var(--ink-50) !important; border:0 !important; border-radius:14px !important; box-shadow:var(--sombraAlta) !important }
+#btAtualizar{ background:var(--vidro) !important; backdrop-filter:blur(20px); border:0 !important; box-shadow:var(--sombraAlta) }
+
+/* ================= ENSAIO ============================================= */
+.enFiltros{ display:flex !important; flex-wrap:wrap; gap:10px 18px !important; margin:0 0 18px !important }
+.enFiltros .linha{ gap:8px; flex:0 1 auto; max-width:100% }
+.enFiltros .rot:not(.site *){ font-family:inherit !important; font-size:12.5px !important; letter-spacing:0 !important;
+  text-transform:none !important; color:var(--ink-400); font-weight:500 }
+.enFiltros .rot:not(.site *)::first-letter{ text-transform:uppercase }
+.enFiltros .enClis > .rot{ display:none }
+.enFiltros .fila{ flex:0 1 auto }
+:is(.enCats, .enResps, .enClis, .enOrdem){ display:inline-flex !important; gap:0 !important; padding:2px; border-radius:9px;
+  background:var(--enc); flex-wrap:nowrap !important }
+:is(.enCat, .enResp, .enCli2):not(.site *){ background:none !important; border:0 !important; border-radius:7px !important;
+  padding:5px 11px !important; font-size:13px !important; font-weight:500; color:var(--ink-100) !important; gap:6px !important;
+  box-shadow:none; white-space:nowrap }
+:is(.enCat, .enResp, .enCli2):not(.site *):hover{ color:var(--ink-50) !important }
+:is(.enCat, .enResp, .enCli2).on:not(.site *){ background:var(--sup) !important; color:var(--ink-50) !important; font-weight:600;
+  box-shadow:0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.04) !important }
+html:not([data-tema="claro"]) :is(.enCat, .enResp, .enCli2).on:not(.site *){ background:#636366 !important }
+:is(.enCat, .enResp, .enCli2) b:not(.site *){ font-family:inherit !important; font-size:12px !important; color:var(--ink-400) !important; font-weight:500 }
+:is(.enCat, .enResp, .enCli2) :is(.respFoto, .cliFoto){ width:22px !important; height:22px !important; font-size:11px !important }
+
+.enRolo{ gap:10px !important }
+@media(min-width:861px){
+  /* as colunas dividem a largura; a Concluído recolhida vira um trilho fino */
+  .enRolo{ display:flex !important }
+  .enRolo > .enCol{ flex:1 1 0; min-width:168px }
+  .enRolo > .enCol.enRecolhida{ flex:0 0 56px; min-width:56px; padding:12px 6px !important; background:var(--enc) !important; border-radius:18px !important }
+  .enCol.enRecolhida .enColHd{ flex-direction:column; align-items:center; gap:10px !important; padding:0 }
+  .enCol.enRecolhida .enColHd b{ writing-mode:vertical-rl; transform:rotate(180deg); font-size:13px !important; color:var(--ink-300) !important }
+  .enCol.enRecolhida .enColHd i{ display:none }
+  .enCol.enRecolhida .enColSub{ display:none }
+}
+.enCol:not(.site *){ background:none !important; border:0 !important; border-radius:20px !important; padding:10px 5px 12px !important;
+  box-shadow:none !important }
+.enCol[data-encol="cliente"]:not(.site *), .enCol.travada:not(.site *){ background:rgba(200,150,58,.07) !important;
+  box-shadow:inset 0 0 0 1px rgba(200,150,58,.2) !important }
+.enColHd:not(.site *){ margin:0 0 2px !important; padding:0 6px; gap:7px !important }
+.enColHd i{ width:8px !important; height:8px !important }
+.enColHd b:not(.site *){ font-family:inherit !important; font-size:14.5px !important; font-weight:650 !important; letter-spacing:-.01em !important;
+  text-transform:none !important; color:var(--ink-50) !important }
+.enColHd span:not(.site *){ font-family:inherit !important; font-size:13px !important; color:var(--ink-400) !important; font-weight:500 }
+.enColSub:not(.site *){ font-size:12.5px !important; color:var(--ink-400); padding:2px 6px 0 21px !important; margin:0 0 12px !important }
+.enCol[data-encol="cliente"] .enColSub, .enCol.travada .enColSub{ color:var(--brass-500) }
+.enVazia:not(.site *){ border:1.5px dashed var(--fio) !important; background:none !important; border-radius:14px !important;
+  color:var(--ink-500) !important; font-size:12.5px !important }
+.enColCorpo{ overflow-anchor:none }
+
+.enCard:not(.site *){ background:var(--sup) !important; border:0 !important; border-radius:var(--r-card) !important;
+  box-shadow:var(--sombra) !important; padding:12px 12px 11px 15px !important; position:relative }
+.enCard:not(.site *)::before{ content:""; position:absolute; left:6px; top:15px; bottom:15px; width:3px; border-radius:3px;
+  background:var(--catCor, transparent); pointer-events:none }
+.enCard:not(.site *):hover{ box-shadow:0 2px 4px rgba(0,0,0,.05), 0 12px 32px rgba(0,0,0,.08) !important; transform:none }
+html:not([data-tema="claro"]) .enCard:not(.site *):hover{ background:var(--sup2) !important; box-shadow:0 0 0 .5px rgba(255,255,255,.1) !important }
+.enCard.pedido:not(.site *){ box-shadow:var(--sombra), inset 0 0 0 1.5px rgba(229,197,77,.6) !important }
+.enCard.doCliente:not(.site *){ box-shadow:var(--sombra), inset 0 0 0 1px rgba(255,149,0,.4) !important }
+.enCard.lote:not(.site *){ box-shadow:var(--sombra), inset 0 0 0 1px rgba(200,150,58,.35) !important }
+.enCard .tit:not(.site *){ font-size:14px !important; font-weight:600; letter-spacing:-.008em; line-height:1.3 !important; color:var(--ink-50) }
+.enCard .meta{ margin-top:10px; gap:7px }
+.enCard .cli:not(.site *), .enCard .ptResp:not(.site *){ font-family:inherit !important; font-size:12px !important; letter-spacing:0 !important;
+  text-transform:none !important; color:var(--ink-400) !important; background:none !important; border:0 !important; padding:0 !important }
+.enCard :is(.cliFoto, .respFoto){ width:22px; height:22px; font-size:11px }
+.enCard .enSelos{ gap:5px !important; margin-top:9px !important }
+.enCard .enVolta:not(.site *), .enCard .enSelos .prazo:not(.site *){ font-family:inherit !important; height:21px; padding:0 8px !important;
+  border-radius:6px !important; border:0 !important; background:var(--enc) !important; color:var(--ink-300) !important;
+  font-size:11.5px !important; font-weight:550 !important; letter-spacing:0 !important; display:inline-flex; align-items:center }
+.enCard .enVolta.peca:not(.site *){ color:var(--ink-50) !important }
+.enCard .enSelos .prazo.tarde:not(.site *){ background:rgba(255,59,48,.12) !important; color:var(--danger) !important }
+.enCard .acoes{ margin-top:11px !important; gap:6px !important }
+.enCard .cyBtn:not(.site *){ font-family:inherit !important; height:30px !important; border-radius:9px !important; border:0 !important;
+  background:var(--enc) !important; color:var(--ink-100) !important; font-size:12.5px !important; font-weight:600 !important;
+  letter-spacing:0 !important; text-transform:none !important; padding:0 11px !important }
+.enCard .cyBtn:not(.site *):hover{ background:var(--enc2) !important; color:var(--ink-50) !important }
+.enCard :is(.cyBtn.pri, .cyBtn.ok, .cyBtn.rev, .enPasso, .conclui):not(.site *){ flex:1 1 100% !important; width:100% !important; order:-1;
+  height:32px !important; font-size:13px !important; justify-content:center; display:inline-flex !important; align-items:center }
+.enCard :is(.enPasso, .conclui):not(.site *){ font-family:inherit !important; border:0 !important; border-radius:9px !important; background:var(--enc) !important;
+  color:var(--ink-50) !important; font-weight:600 !important; letter-spacing:0 !important; text-transform:none !important; padding:0 11px !important }
+.enCard .cyBtn.pri:not(.site *){ color:var(--ink-50) !important }
+.enCard .cyBtn.ok:not(.site *){ background:var(--prim) !important; color:var(--primT) !important }
+.enCard .cyBtn.ok:not(.site *):hover{ opacity:.86 }
+.enCard .acoes > button:not(.cyBtn):not(.enMais):not(.site *){ border:0 !important; background:var(--enc) !important; border-radius:9px !important; color:var(--ink-300) !important }
+.enCard .acoes .enMais:not(.site *){ border:0 !important; background:none !important; color:var(--ink-400) !important; border-radius:8px !important }
+.enCard .acoes .enMais:not(.site *):hover, .enCard.menuAberto .acoes .enMais:not(.site *){ background:var(--enc) !important; color:var(--ink-50) !important }
+.enCard .enMidia .mn, .enCard .enMidia img{ border-radius:8px }
+@media(max-width:860px){
+  :is(.enCats, .enResps, .enClis, .enOrdem){ max-width:calc(100vw - 32px) }
+  .enFiltros .linha{ flex:1 1 100%; min-width:0 }
+  .enFiltros .fila{ flex:1 1 auto; min-width:0 }
+  .enCard .cyBtn.pri:not(.site *), .enCard .cyBtn.rev:not(.site *), .enCard .cyBtn.ok:not(.site *){ height:40px !important; font-size:14px !important }
+  .enCard:not(.site *){ border-radius:18px !important; padding:15px 15px 14px 18px !important }
+}
+
+/* ================= AS OUTRAS TELAS ======================================
+   Levantado por medição (cada elemento com borda desenhada, tela a tela),
+   não de olho. Dois grupos: o que é ESCOLHA vira pílula preenchida, sem
+   contorno; o que é CAIXA vira superfície que flutua. Ficam com linha só
+   onde a linha diz algo: a cor da rede no card da agenda, a grade de
+   horas e o sublinhado das abas do cliente. */
+:is(.atalhos, .ptFiltros, .ptFiltro, .rtPer, .v242Vistas, .clFiltros, .cliTroca, .estClis,
+    .clNav, .arChips, .mdTempChips, .enApagar) > button:not(.site *),
+:is(.cchip, .fdRede, .mdCli, .ptAtualiza, .sbBadge, .estXp, .v243BtIg, .rvChave, .tipoCli, .clbtn.sec):not(.site *){
+  border:0 !important; background:var(--enc) !important; border-radius:999px !important; color:var(--ink-100) !important;
+  box-shadow:none !important; font-weight:500 }
+:is(.atalhos, .ptFiltros, .ptFiltro, .rtPer, .v242Vistas, .clFiltros, .cliTroca, .estClis,
+    .clNav, .arChips, .mdTempChips, .enApagar) > button:not(.site *):hover,
+:is(.cchip, .fdRede, .mdCli, .ptAtualiza, .sbBadge, .estXp, .v243BtIg, .rvChave, .tipoCli, .clbtn.sec):not(.site *):hover{
+  background:var(--enc2) !important; color:var(--ink-50) !important }
+:is(.atalhos, .ptFiltros, .ptFiltro, .rtPer, .v242Vistas, .clFiltros, .cliTroca, .estClis, .arChips, .mdTempChips) > button:is(.on, .pri):not(.site *),
+:is(.cchip, .mdCli, .tipoCli, .rvChave):is(.on, .ativo):not(.site *){
+  background:var(--prim) !important; color:var(--primT) !important }
+.atalhos .rot:not(.site *){ text-transform:none !important; letter-spacing:0 !important; font-family:inherit !important;
+  font-size:12.5px !important; color:var(--ink-400) }
+.atalhos .rot:not(.site *)::first-letter{ text-transform:uppercase }
+.agNav > button:not(.site *), .enDobra:not(.site *){ border:0 !important; background:var(--enc) !important; border-radius:50% !important; color:var(--ink-100) !important }
+.agNav > button:not(.site *):hover, .enDobra:not(.site *):hover{ background:var(--enc2) !important }
+:is(.permchips, .enFichaTopo, .plats, .cvDia) > span:not(.site *), :is(.tag, .rvSelo, .cvTag):not(.site *){
+  border:0 !important; background:var(--enc) !important; border-radius:7px !important }
+button.ver:not(.site *){ border:0 !important; background:none !important; color:var(--brass-500) !important }
+
+:is(.hjPill, .ptCheckC, .rtNum, .rtBloco, .planc, .batidaCard, .atoCard, .proxima, .clPasso, .envioBar, .cq, .bt,
+    .clrow, .arItem, .rvMarca, .mbAcoes, .mdSabe, .enComo, .ptCab):not(.site *){
+  border-color:transparent !important; background:var(--sup) !important; box-shadow:var(--sombra) !important; border-radius:14px !important }
+:is(.hjPill, .ptCheckC, .rtNum):not(.site *){ border-radius:16px !important }
+:is(.card, .modalbox, .enFicha, .clficha, .larga) :is(.rvMarca, .mbAcoes, .hxSecao, .cq, .bt, .clPasso, .envioBar, .check):not(.site *),
+.clficha > div:not(.site *), :is(.hxSecao, .larga, .atoDias, .cyAgenda):not(.site *){
+  border-color:transparent !important; background:var(--enc) !important; box-shadow:none !important; border-radius:12px !important }
+.enMidia .mn:not(.site *), .clThumb:not(.site *), .mtMini:not(.site *){ border-color:var(--fio) !important }
+:is(.agRolo, .agCantoCab, .agCabCol):not(.site *){ border-color:var(--fio) !important }
+.agRolo:not(.site *){ background:var(--sup) !important; border-radius:16px !important; box-shadow:var(--sombra) }
+.selectrole:not(.site *){ border:0 !important; background:var(--enc) !important; border-radius:9px !important; color:var(--ink-100) }
+.tabs.tabsCli:not(.site *){ border-bottom-color:var(--fio) !important }
+.hjBar:not(.site *){ background:var(--enc) !important; border-radius:3px; height:4px; border:0 }
+.hjCab h1:not(.site *){ font-family:inherit !important; font-size:32px !important; font-weight:700 !important; letter-spacing:-.025em !important }
+
+/* ---------- Ensaio no iPhone: abas de coluna e topo enxuto ------------ */
+.v249Abas{ display:none }
+@media(max-width:860px){
+  .v249Abas{ display:flex; gap:8px; overflow-x:auto; padding:2px 0 12px; margin:0 -16px 0 0; scrollbar-width:none }
+  .v249Abas::-webkit-scrollbar{ display:none }
+  .v249Abas button{ flex:0 0 auto; height:34px; padding:0 13px; border-radius:17px; background:var(--enc); color:var(--ink-100);
+    font-size:14px; font-weight:550; display:inline-flex; align-items:center; gap:6px; white-space:nowrap }
+  .v249Abas button i{ width:7px; height:7px; border-radius:50% }
+  .v249Abas button em{ font-style:normal; color:var(--ink-400); font-weight:500 }
+  .v249Abas button.on{ background:var(--prim); color:var(--primT) }
+  .v249Abas button.on em{ color:inherit; opacity:.6 }
+  body.emEnsaio .mtop{ flex-wrap:nowrap !important; align-items:center }
+  body.emEnsaio .mtop > div:last-child{ flex-wrap:nowrap !important; gap:4px !important; margin-left:auto }
+  .mtop .b.gho.sm:is([data-enlixeira], [data-enranking], [data-enimp]):not(.site *){ font-size:0 !important; gap:0 !important;
+    width:38px; height:38px; padding:0 !important; border-radius:50% !important; background:var(--enc) !important; color:var(--ink-100) !important }
+  .mtop .b.gho.sm:is([data-enlixeira], [data-enranking], [data-enimp]) svg.i{ width:18px; height:18px }
+  body.emEnsaio .mtop [data-ennova]{ height:38px }
+  .enFiltros{ gap:6px !important; margin-bottom:12px !important }
+  :is(.enCat, .enResp, .enCli2):not(.site *){ padding:5px 10px !important }
+}
+
+/* ---------- a barra do Ensaio: abas + seletores ------------------------ */
+body.emEnsaio .mtop > div:first-child > p{ display:none }
+.v249Resumo{ margin-top:8px; font-size:14px; color:var(--ink-400); display:flex; gap:14px; flex-wrap:wrap }
+.v249Resumo b{ color:var(--ink-50); font-weight:600 }
+.v249Resumo .alerta b{ color:var(--danger) }
+.v249Busca{ display:flex; align-items:center; gap:7px; width:220px; height:36px; padding:0 12px; border-radius:10px;
+  background:var(--enc); color:var(--ink-400); cursor:text }
+.v249Busca svg{ width:15px; height:15px; flex:0 0 auto; fill:none; stroke:currentColor; stroke-width:1.8 }
+.v249Busca input{ flex:1; min-width:0; border:0; background:none; outline:none; color:var(--ink-50); font:inherit; font-size:13.5px }
+.v249Busca input::placeholder{ color:var(--ink-400) }
+.v249Busca:focus-within{ box-shadow:0 0 0 4px var(--anel); background:var(--sup) }
+.v249Mais{ position:relative }
+.v249MaisBt{ width:36px; height:36px; border-radius:50%; background:var(--enc); color:var(--ink-300); font-size:12px; letter-spacing:1px; font-weight:700 }
+.v249MaisBt:hover, .v249Mais.aberto .v249MaisBt{ background:var(--enc2); color:var(--ink-50) }
+.v249Menu{ display:none; position:absolute; top:calc(100% + 8px); right:0; z-index:60; min-width:220px; padding:6px;
+  background:var(--sup); border-radius:14px; box-shadow:var(--sombraAlta); flex-direction:column; gap:2px;
+  animation:v249janela .18s var(--mola) both }
+.v249Mais.aberto .v249Menu{ display:flex }
+.v249Menu .b.gho.sm:not(.site *){ justify-content:flex-start; width:100%; border-radius:9px !important; background:none !important;
+  color:var(--ink-100) !important; padding:9px 11px !important; font-size:13.5px !important; font-weight:500 }
+.v249Menu .b.gho.sm:not(.site *):hover{ background:var(--enc) !important }
+.v249Fora{ display:none !important }
+
+.enFiltros{ align-items:center }
+.enFiltros .linha[data-v249="frente"] > .rot{ display:none }
+.enFiltros .linha[data-v249="frente"]{ flex:0 1 auto; min-width:0 }
+.enFiltros .linha[data-v249="pessoa"]{ margin-left:auto }
+.enFiltros .linha:is([data-v249="pessoa"], [data-v249="cliente"], [data-v249="ordem"]){ position:relative; flex:0 0 auto }
+.enFiltros .linha:is([data-v249="pessoa"], [data-v249="cliente"], [data-v249="ordem"]) > .rot{ display:none }
+.enFiltros .linha:is([data-v249="pessoa"], [data-v249="cliente"], [data-v249="ordem"]) .fila{ overflow:visible !important; flex:0 0 auto }
+.v249Sel{ height:32px; padding:0 10px; border-radius:9px; display:inline-flex; align-items:center; gap:7px;
+  font-size:13.5px; color:var(--ink-50); font-weight:500; white-space:nowrap }
+.v249Sel:hover, .v249Aberta .v249Sel{ background:var(--enc) }
+.v249Rot{ color:var(--ink-400) }
+.v249Val{ display:inline-flex; align-items:center; gap:6px; font-weight:600 }
+.v249Val :is(.respFoto, .cliFoto){ width:22px !important; height:22px !important; font-size:11px !important; letter-spacing:-.02em; flex:0 0 auto }
+.v249Pilha{ display:inline-flex; gap:2px }
+.v249Txt{ white-space:nowrap }
+.v249Curto, .v249Ic{ display:none }
+.v249Ic{ width:14px !important; height:14px !important; color:var(--ink-300); stroke-width:2 !important; flex:0 0 auto }
+.enFiltros .enCats .enCat b{ display:none }
+.v249Seta{ width:12px !important; height:12px !important; color:var(--ink-400); stroke-width:2.2 !important; transition:transform .2s var(--mola) }
+.v249Aberta .v249Seta{ transform:rotate(180deg) }
+.enFiltros .v249Lista{ display:none !important; position:absolute; top:calc(100% + 6px); right:0; z-index:60; min-width:240px; max-height:min(60vh, 420px);
+  overflow-y:auto; padding:6px !important; background:var(--sup) !important; border-radius:14px !important; box-shadow:var(--sombraAlta);
+  flex-direction:column !important; gap:2px !important; animation:v249janela .18s var(--mola) both }
+.enFiltros .v249Aberta .v249Lista{ display:flex !important }
+.v249Lista :is(.enCat, .enResp, .enCli2):not(.site *){ width:100%; justify-content:flex-start; padding:8px 10px !important; border-radius:9px !important;
+  font-size:13.5px !important; box-shadow:none !important; background:none !important }
+.v249Lista :is(.enCat, .enResp, .enCli2):not(.site *):hover{ background:var(--enc) !important }
+html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *){ background:none !important; color:var(--ink-50) !important; font-weight:650 }
+html .enFiltros .v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *):hover{ background:var(--enc) !important }
+.v249Lista :is(.enCat, .enResp, .enCli2).on:not(.site *)::after{ content:"✓"; margin-left:auto; padding-left:12px; color:var(--brass-500); font-weight:700 }
+.v249Lista :is(.enCat, .enResp, .enCli2) b{ margin-left:auto }
+.v249Lista :is(.enCat, .enResp, .enCli2).on b{ margin-left:8px }
+@media(max-width:860px){
+  .v249Busca{ display:none }
+  .v249MaisBt{ width:38px; height:38px }
+  .enFiltros .linha[data-v249="frente"]{ flex:1 1 100% }
+  .enFiltros .linha[data-v249="pessoa"]{ margin-left:0 }
+  .enFiltros{ column-gap:8px !important }
+  .enFiltros .linha:is([data-v249="pessoa"], [data-v249="cliente"], [data-v249="ordem"]){ flex:0 1 auto !important; min-width:0 }
+  .enFiltros .linha:is([data-v249="pessoa"], [data-v249="cliente"], [data-v249="ordem"]) .fila{ flex:0 1 auto; min-width:0; max-width:100% }
+  .v249Sel{ background:var(--enc); border-radius:17px; height:34px; padding:0 12px; font-size:14px; max-width:100%; min-width:0 }
+  .v249Rot{ display:none }
+  /* os três cabem numa linha: a pilha de rostos já diz "pessoa", o ícone diz "ordem" */
+  .v249Val{ min-width:0 }
+  .v249Txt{ overflow:hidden; text-overflow:ellipsis; min-width:0 }
+  .v249Val:has(.v249Pilha) .v249Txt{ display:none }
+  .v249Sel[data-todos="1"][data-v249sel="cliente"] .v249Val{ display:none }
+  .v249Longo{ display:none } .v249Curto{ display:inline }
+  .v249Ic{ display:inline-block !important }
+  /* no iPhone a lista sobe de baixo, como uma folha da Apple */
+  .enFiltros .v249Lista{ position:fixed; left:8px; right:8px; top:auto; bottom:calc(8px + env(safe-area-inset-bottom)); min-width:0; max-width:none;
+    max-height:60vh; border-radius:18px !important; padding:8px !important; z-index:950; animation:v249folha .3s var(--mola) both }
+  .v249Lista :is(.enCat, .enResp, .enCli2):not(.site *){ padding:12px 12px !important; font-size:16px !important }
+  body.v249ComLista::after{ content:""; position:fixed; inset:0; z-index:940; background:rgba(0,0,0,.28); animation:v249fundo .2s ease both }
+}
+@media(min-width:861px){
+  .enFiltros{ column-gap:6px !important }
+  .enFiltros .linha[data-v249="frente"]{ margin-right:8px }
+  .linha[data-v249="pessoa"] .v249Rot{ display:none }
+  .v249Sel{ padding:0 8px }
+  .enCats .enCat:not(.site *){ padding:5px 10px !important }
+}
+.v249Pilha .respFoto:not(:has(img)){ background:var(--enc2) !important; color:var(--ink-100) !important; border-radius:50%;
+  display:inline-grid !important; place-items:center; font-weight:650 }
+@media(max-width:860px){
+  body.emEnsaio .mtop{ display:grid !important; grid-template-columns:1fr auto; align-items:center; row-gap:4px }
+  body.emEnsaio .mtop > div:first-child{ display:contents }
+  body.emEnsaio .mtop h1{ grid-column:1; grid-row:1 }
+  body.emEnsaio .mtop > div:last-child{ grid-column:2; grid-row:1 }
+  body.emEnsaio .mtop .v249Resumo{ grid-column:1 / -1; grid-row:2; margin-top:0; font-size:13.5px; gap:12px; flex-wrap:nowrap; white-space:nowrap }
+  .v249Sel[data-todos="1"][data-v249sel="cliente"] .v249Rot{ display:inline; color:var(--ink-100) }
+}
+.mtop > div:has(> .v249Mais){ overflow:visible !important }
+@media(max-width:860px){
+  .v249Menu .b.gho.sm:is([data-enlixeira], [data-enranking], [data-enimp]):not(.site *){ font-size:15px !important; gap:10px !important;
+    width:100%; height:auto; padding:12px !important; border-radius:10px !important; background:none !important; justify-content:flex-start }
+  .v249Menu{ min-width:230px }
+}
+
