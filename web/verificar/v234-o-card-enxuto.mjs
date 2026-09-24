@@ -70,7 +70,10 @@ const LER = () => {
       mais: vis(c.querySelector('[data-enmais]')),
       passo: bt('[data-cycheck],[data-cysobe],[data-cyok],[data-cyajuste],[data-jbpasso],[data-enfim],[data-cyabre]').filter(vis).map(x => x.textContent.trim()),
       maisUmCard: vis(c.querySelector('[data-cymais]')),
-      filete: getComputedStyle(c).borderLeftWidth + ' ' + getComputedStyle(c).borderLeftColor,
+      /* v249: o filete pode ser a borda ou a faixa de 3px por dentro (::before) — o que se exige é a cor da frente */
+      filete: (() => { const a = getComputedStyle(c, '::before');
+        return parseFloat(getComputedStyle(c).borderLeftWidth) >= 3 ? getComputedStyle(c).borderLeftWidth + ' ' + getComputedStyle(c).borderLeftColor
+          : (a.content !== 'none' ? a.width + ' ' + a.backgroundColor : '0px'); })(),
     };
   });
 };

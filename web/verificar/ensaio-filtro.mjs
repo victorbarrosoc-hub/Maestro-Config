@@ -62,6 +62,12 @@ const naTela = async () => (await pag.$$eval('.enCard .tit',
   ns => ns.map(n => n.textContent.trim()))).sort();
 const chip = id => pag.locator(`[data-enresp2="${id}"]`);
 const conta = async id => (await chip(id).locator('b').textContent()).trim();
+/* v249: as pessoas moram no seletor "Todos ▾" — abre antes de escolher, como quem usa */
+const escolhe = async id => {
+  if(await pag.locator('.enFiltros .linha.v249Aberta[data-v249="pessoa"]').count() === 0)
+    await pag.locator('[data-v249sel="pessoa"]').click();
+  await chip(id).click();
+};
 
 // 1. a fila existe, com todo mundo
 checa('a fila de responsaveis aparece no Ensaio',
@@ -81,7 +87,7 @@ checa('a contagem de "Sem dono" bate',
       (await conta('__sem')) === String(esperado.semDono.length || ''));
 
 // 3. filtrar por outra pessoa
-await chip(ids.outra).click(); await pag.waitForTimeout(350);
+await escolhe(ids.outra); await pag.waitForTimeout(350);
 checa('filtrar por uma pessoa mostra exatamente os cards dela',
       iguais(await naTela(), esperado.outra));
 checa('o chip da pessoa fica marcado',
@@ -90,14 +96,14 @@ checa('o "Todos" deixa de estar marcado',
       !(await chip('').evaluate(b => b.classList.contains('on'))));
 
 // 4. a fatia que o quadro responde melhor que relatorio
-await chip('__sem').click(); await pag.waitForTimeout(350);
+await escolhe('__sem'); await pag.waitForTimeout(350);
 const semDono = await naTela();
 checa('"Sem dono" mostra exatamente o que nao tem responsavel',
       iguais(semDono, esperado.semDono));
 checa('"Sem dono" nao mostra nada que tenha dono', semDono.every(t => !/^ZZ Card (meu|da outra)/.test(t)));
 
 // 5. tocar de novo volta a Todos
-await chip('__sem').click(); await pag.waitForTimeout(350);
+await escolhe('__sem'); await pag.waitForTimeout(350);
 checa('tocar no mesmo chip de novo volta para Todos',
       iguais(await naTela(), esperado.todos) &&
       await chip('').evaluate(b => b.classList.contains('on')));
@@ -108,7 +114,7 @@ checa('a fila comeca por Todos e Sem dono, e eu venho antes da equipe',
         const bs = [...document.querySelectorAll('[data-enresp2]')]
           .map(b => b.dataset.enresp2);
         return bs[0] === '' && bs[1] === '__sem' && bs[2] === 'victorbarrosoc'; }));
-await chip(ids.eu).click(); await pag.waitForTimeout(350);
+await escolhe(ids.eu); await pag.waitForTimeout(350);
 checa('o meu chip faz o que o "So as minhas" fazia',
       iguais(await naTela(), esperado.eu));
 checa('nao sobrou um segundo controle "So as minhas"',

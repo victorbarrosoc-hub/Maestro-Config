@@ -1,9 +1,80 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.62
+Version: 0.5.63
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.63 — 2026-09-24
+
+**Status:** Concluída
+
+### v249 — o estilo Apple
+
+*"Pode fazer no site todo, adorei o estilo. Gostei da organização em abas,
+pode organizar o que precisar, menu lateral, no mobile também deixar de
+forma fácil."* E, com a proposta do Ensaio na mão: *"O que está agora tem
+muita coisa, pode colocar os filtros em aba que você seleciona a opção."*
+
+A proposta aprovada é `docs/UX/proposta-ensaio-clean.html`. A condição da
+v233 continua valendo e foi respeitada: **o método não muda** — as seis
+colunas, os nomes, as portas e os botões de cada passo são os de sempre.
+Só a forma mudou.
+
+**A base, no app inteiro (por tokens, não tela a tela).** As cores de
+sistema da Apple: fundo preto no escuro e `#F5F5F7` no claro, superfícies
+que flutuam sem contorno (branco sobre o cinza no claro), cantos de 14px
+ou mais, botões em pílula, o primário em preto/branco. **O latão fica**:
+é a cor da marca, não da interface. A vitrine (`.site`) e o portão de
+entrada mantêm a paleta deles pelo escopo das variáveis.
+
+**O movimento.** Nada levanta no hover (card e botão ficam onde estão — só
+a cor troca, em até 0,2s); o toque encolhe de leve, como no iPhone; as
+janelas entram com mola. No celular a janela aparece por esmaecer, não
+deslizando — a prova da v229 mede o botão de salvar no instante em que a
+janela abre, e deslizar o tiraria do lugar nesse instante.
+
+**A navegação.** O menu lateral agrupa em frase (não em CAIXA ALTA), com
+itens arredondados e a pessoa no pé; no iPhone a barra de baixo é de vidro
+e a contagem de não lidas é o ponto vermelho do sistema.
+
+**A barra do Ensaio, como na proposta:**
+
+- **Frente** fica à vista, em abas segmentadas ("Todas", "Pessoas" curtos;
+  o nome inteiro no `title`);
+- **Pessoa, Cliente e Ordem** viram seletores: mostram a escolha (a pilha
+  de rostos, a logo do cliente) e abrem a lista das opções. **As opções são
+  os MESMOS botões de sempre** — o clique segue indo para quem sempre
+  filtrou; nenhuma regra de filtro foi reescrita;
+- **Lixeira, Ranking e Importar planilha** vão para o "•••";
+- o cabeçalho ganha o **resumo** (em curso · atrasados · com o cliente) e a
+  **busca no quadro**, que ignora acento e sobrevive à sincronização
+  (texto, foco e cursor).
+
+**No iPhone:** as colunas ganham **abas com a conta** (Plan 0 · Do 3 ·
+Check 1…) — tocar leva à coluna e a aba acesa acompanha a rolagem; os três
+seletores cabem numa linha (a pilha de rostos já diz "pessoa", o ícone de
+ordenar diz "ordem"); e a lista das opções sobe de baixo, como uma folha,
+com alvo de dedo de 44px.
+
+**O que a prova pegou no caminho:** os botões de filtro ouvem o clique na
+JANELA e cortam a propagação, então escolher uma opção nunca avisava a
+lista para fechar — ela ficava aberta por cima do quadro filtrado. O dedo
+levantado (`pointerup`) chega antes do clique e marca a lista como
+fechada; quem a pinta fechada é o redesenho do próprio filtro. Fechar já,
+antes do clique, faria o toque cair no card que está atrás da folha — há
+prova disso também.
+
+40 provas em `web/verificar/v249-o-estilo-apple.mjs` (cores e superfícies
+nos dois temas, movimento, a barra inteira, busca, iPhone). Sete suítes
+aprenderam o caminho novo sem mudar o que exigem: as de filtro abrem o
+seletor antes de escolher (`ensaio-filtro`, `ensaio-filtro-cliente`,
+`ensaio-ordem`), a da revisão abre o "•••" antes da Lixeira, duas leem a
+cor de sistema nova (`v142`, `v157`), e a do card enxuto aceita o filete
+como faixa por dentro (`::before`) — o que ela cobra, a cor da frente,
+continua cobrado.
 
 ---
 

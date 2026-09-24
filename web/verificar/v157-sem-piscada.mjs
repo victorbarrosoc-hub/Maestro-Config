@@ -104,7 +104,7 @@ async function abertura(tema){
              guardado: localStorage.getItem('maestro-luz-v1') };
   });
   checa('4.1 trocar para claro marca o tema, a barra e o esquema do sistema',
-        depois.tema === 'claro' && depois.barra === '#FBFAF6' && depois.sistema === 'light', depois);
+        depois.tema === 'claro' && depois.barra === '#F5F5F7' /* v249: as cores de sistema */ && depois.sistema === 'light', depois);
   checa('4.2 e fica guardado para a próxima abertura', depois.guardado === 'claro', depois);
   checa('4.3 sem erro de página', erros.length === 0, erros);
   await ctx.close();

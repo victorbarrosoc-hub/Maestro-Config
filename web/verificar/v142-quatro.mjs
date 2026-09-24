@@ -127,7 +127,7 @@ async function abrir(vp, rota, prep){
   checa('2.4 a marca de tema fica no html',
         await pag.evaluate(() => document.documentElement.dataset.tema) === 'claro');
   checa('2.5 a barra do navegador acompanha',
-        (await pag.evaluate(() => document.querySelector('meta[name="theme-color"]').content)).toUpperCase() === '#FBFAF6');
+        (await pag.evaluate(() => document.querySelector('meta[name="theme-color"]').content)).toUpperCase() === '#F5F5F7');  /* v249: as cores de sistema */
   /* a vitrine continua escura */
   await pag.evaluate(() => { go('site', 'home'); }); await pag.waitForTimeout(500);
   checa('2.6 o site continua escuro, mesmo no modo claro', claroDe(await fundo('.site')) < 60, await fundo('.site'));

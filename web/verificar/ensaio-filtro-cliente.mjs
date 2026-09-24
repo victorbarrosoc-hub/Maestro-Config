@@ -15,6 +15,12 @@ let ok = 0, falhou = 0;
 const checa = (nome, cond, extra) => { cond ? ok++ : falhou++;
   console.log(`  ${cond ? 'ok   ' : 'FALHA'} ${nome}${!cond && extra !== undefined ? '  → ' + JSON.stringify(extra) : ''}`); };
 const erros = [];
+/* v249: os clientes moram no seletor "Cliente ▾" — abre antes de escolher, como quem usa */
+const escolhe = async sel => {
+  if(await pg.locator('.enFiltros .linha.v249Aberta[data-v249="cliente"]').count() === 0)
+    await pg.locator('[data-v249sel="cliente"]').click();
+  await pg.click(sel);
+};
 
 const pg = await b.newPage({ viewport: { width: 1280, height: 950 } });
 await pg.route('https://tgrbmdsootnewjqpmeii.supabase.co/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
@@ -74,7 +80,7 @@ const contaLN = await pg.evaluate(() => {
 checa('a conta do chip bate com o que existe de verdade', contaLN.chip === contaLN.real && contaLN.chip >= 2, contaLN);
 
 /* ---------- 2. filtrar mostra só aquele cliente ---------- */
-await pg.click('.enClis .enCli2:nth-of-type(2)'); await pg.waitForTimeout(600);
+await escolhe('.enClis .enCli2:nth-of-type(2)'); await pg.waitForTimeout(600);
 const filtrado = await pg.evaluate(() => {
   const cards = [...document.querySelectorAll('.enCard[data-entar]')]
     .map(c => S.ensaio.tarefas.find(t => t.id === +c.dataset.entar))
@@ -127,12 +133,12 @@ checa('o botão do aviso devolve todos os clientes', solto.filtro === null && !s
 checa('e o quadro volta com todo mundo', solto.cards > filtrado.nCards, { antes: filtrado.nCards, agora: solto.cards });
 
 /* tocar duas vezes no mesmo chip também solta */
-await pg.click('.enClis .enCli2:nth-of-type(2)'); await pg.waitForTimeout(400);
-await pg.click('.enClis .enCli2:nth-of-type(2)'); await pg.waitForTimeout(400);
+await escolhe('.enClis .enCli2:nth-of-type(2)'); await pg.waitForTimeout(400);
+await escolhe('.enClis .enCli2:nth-of-type(2)'); await pg.waitForTimeout(400);
 checa('tocar de novo no mesmo cliente tira o filtro', await pg.evaluate(() => S.enCli2 === null));
 
 /* ---------- 5. sem cliente, e nas outras frentes ---------- */
-await pg.click('[data-encli2="__sem"]'); await pg.waitForTimeout(600);
+await escolhe('[data-encli2="__sem"]'); await pg.waitForTimeout(600);
 const semCli = await pg.evaluate(() => {
   const cards = [...document.querySelectorAll('.enCard[data-entar]')]
     .map(c => S.ensaio.tarefas.find(t => t.id === +c.dataset.entar)).filter(Boolean);

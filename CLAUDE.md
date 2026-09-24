@@ -4,7 +4,7 @@ Version: 0.5
 Status: Implementação — blocos 1, 2, 3 e 5 da API prontos, verificados por HTTP
         · D-080 resolvida (a fase substitui o status): blocos 4, 6, 7 e 8 liberados
 Codename: Project Symphony
-Última atualização: 2026-09-23
+Última atualização: 2026-09-24
 
 > **Retomando o projeto? Leia [`docs/HANDOFF.md`](docs/HANDOFF.md) primeiro.**
 > Ele é o mapa: estado do código, o que já foi verificado, o que está aberto
@@ -299,6 +299,22 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v249) — o estilo Apple, no app inteiro.** Da proposta
+aprovada (`docs/UX/proposta-ensaio-clean.html`), por TOKENS: fundo preto /
+`#F5F5F7`, superfícies sem contorno, cantos de 14px+, pílulas, primário
+preto/branco; o latão fica (é a marca) e a vitrine mantém a paleta dela.
+Nada levanta no hover, o toque encolhe, janela com mola (no celular,
+esmaece — a v229 mede o salvar no instante em que abre). No Ensaio: Frente
+em abas; Pessoa, Cliente e Ordem viram SELETORES cujas opções são os
+MESMOS botões de sempre (nenhuma regra de filtro reescrita); Lixeira,
+Ranking e Importar no "•••"; resumo e "Buscar no quadro". No iPhone: abas
+das colunas com a conta, os três seletores numa linha, lista em folha de
+baixo. **O método não muda** (condição da v233). **Lição:** os filtros
+ouvem o clique na JANELA e cortam a propagação — a lista nunca sabia que
+uma opção fora escolhida; o `pointerup` chega antes, e fechar só no
+redesenho evita o toque cair no card atrás da folha. 40 provas em
+`web/verificar/v249-o-estilo-apple.mjs`; sete suítes aprenderam a abrir o
+seletor/"•••" antes de escolher.
 **Fechado (24 set, v248) — a logo do cliente.** A Agenda e a Lista do Hoje e
 o hub do lote montavam o círculo do cliente à mão, só com as iniciais —
 nunca a logo, de nenhum cliente. Agora todo círculo passa por `avCliente`.

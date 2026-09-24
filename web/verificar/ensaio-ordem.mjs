@@ -7,6 +7,12 @@
       e do quadro; trocar de tela ainda sobe ao topo;
    3. com o dedo como ponteiro, campos têm 16px e o toque duplo não é zoom. */
 import { chromium } from 'playwright';
+/* v249: a ordem mora no seletor "Ordem ▾" — abre antes de escolher, como quem usa */
+const escolheOrdem = async (pag, k) => {
+  if(await pag.locator('.enFiltros .linha.v249Aberta[data-v249="ordem"]').count() === 0)
+    await pag.locator('[data-v249sel="ordem"]').click();
+  await pag.locator(`[data-enordem="${k}"]`).click();
+};
 
 /* v234: setas, cronômetro, "abrir o card" e lixeira moram atrás do "•••"
    do card — quem usa toca nele primeiro, e a prova faz o mesmo gesto. */
@@ -122,14 +128,14 @@ async function abrir(opts){
         (await pag.locator('.enCard[data-entar="9903"] .enMov').textContent()).includes('20 min'));
 
   /* trocar a ordem na barra */
-  await pag.locator('[data-enordem="prazo"]').click(); await pag.waitForTimeout(300);
+  await escolheOrdem(pag, 'prazo'); await pag.waitForTimeout(300);
   checa('1.11 "Por prazo": vence antes fica no topo, sem prazo por último',
         JSON.stringify(await ordemDe('plan')) === JSON.stringify([9902, 9901, 9903])
         && await pag.locator('[data-enordem="prazo"].on').count() === 1);
-  await pag.locator('[data-enordem="chegada"]').click(); await pag.waitForTimeout(300);
+  await escolheOrdem(pag, 'chegada'); await pag.waitForTimeout(300);
   checa('1.12 "Por chegada": a ordem em que nasceram',
         JSON.stringify(await ordemDe('plan')) === JSON.stringify([9901, 9902, 9903]));
-  await pag.locator('[data-enordem="movimento"]').click(); await pag.waitForTimeout(300);
+  await escolheOrdem(pag, 'movimento'); await pag.waitForTimeout(300);
   checa('1.13 a lista de verdade continua inteira depois do desenho',
         await pag.evaluate(() => S.ensaio.tarefas.filter(t => t.id >= 9901 && t.id <= 9903).length) === 3);
   checa('1.14 sem erro de página na ordem', erros.length === 0);

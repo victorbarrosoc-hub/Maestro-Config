@@ -7,6 +7,12 @@
    5. segurança: toast escapado, src com urlSegura, token forte, chave
       da IA fora do DOM. */
 import { chromium } from 'playwright';
+/* v249: a lixeira mora no "•••" do Ensaio — abre antes, como quem usa */
+const abreLixeira = async pag => {
+  if(await pag.locator('.v249Mais.aberto').count() === 0 && await pag.locator('.v249MaisBt').count())
+    await pag.locator('.v249MaisBt').click();
+  await pag.locator('[data-enlixeira]').click();
+};
 
 /* v234: setas, cronômetro, "abrir o card" e lixeira moram atrás do "•••"
    do card — quem usa toca nele primeiro, e a prova faz o mesmo gesto. */
@@ -64,7 +70,7 @@ async function abrir(opts, rota){
 {
   const { pag, erros } = await abrir({ viewport: { width: 1400, height: 1000 } }, 'producao');
   checa('1.1 o quadro tem o botão da lixeira', await pag.locator('[data-enlixeira]').count() === 1);
-  await pag.locator('[data-enlixeira]').click(); await pag.waitForTimeout(250);
+  await abreLixeira(pag); await pag.waitForTimeout(250);
   checa('1.2 vazia, ela diz que está vazia',
         (await pag.locator('.modalbox').textContent()).includes('vazia'));
   await pag.locator('[data-modalno]').click(); await pag.waitForTimeout(200);
@@ -110,7 +116,7 @@ async function abrir(opts, rota){
   }
   /* espera o "desfazer" do toast passar, para o caminho de volta ser só a lixeira */
   await pag.waitForTimeout(8300);
-  await pag.locator('[data-enlixeira]').click(); await pag.waitForTimeout(250);
+  await abreLixeira(pag); await pag.waitForTimeout(250);
   checa('1.7 a lixeira lista a tarefa da casa e o card da pauta, em seções',
         await pag.locator('.enLxSec').count() === 2
         && (await pag.locator('.modalbox').textContent()).includes('ZZ Tarefa que vai para a lixeira')
@@ -139,7 +145,7 @@ async function abrir(opts, rota){
 
   /* esvaziar com confirmação */
   await pag.evaluate(id => { S.ensaio.lixo.unshift({ tarefa: { id: 9702, titulo:'ZZ some de vez', col:'plan', cat:'marketing' }, quando: Date.now() }); render(); }, tid);
-  await pag.locator('[data-enlixeira]').click(); await pag.waitForTimeout(200);
+  await abreLixeira(pag); await pag.waitForTimeout(200);
   await pag.locator('[data-enlxfim]').click(); await pag.waitForTimeout(200);
   checa('1.13 esvaziar pede confirmação', await pag.locator('[data-enlxfimok]').count() === 1);
   await pag.locator('[data-enlxnao]').click(); await pag.waitForTimeout(200);
