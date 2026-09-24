@@ -1,11 +1,107 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.69
+Version: 0.5.71
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.71 — 2026-09-24
+
+**Status:** Concluída
+
+### v257 — ao vivo
+
+O founder: *"a plataforma demora pra atualizar as informações nas telas
+conectadas… queria que fosse em tempo real quase"*.
+
+**Por que demorava.** Uma tela só buscava o que os outros aparelhos mudaram
+em quatro momentos: ao abrir, no botão "Atualizar", antes de gravar e ao
+reconectar. Quem só estava olhando (o Ensaio aberto na mesa, o Hoje no
+celular) não recebia nada até mexer em alguma coisa.
+
+**Agora, em duas camadas:**
+1. **O sinal.** Todo aparelho que grava uma linha avisa os outros pelo canal
+   ao vivo do Supabase (Realtime, broadcast): "mudou a linha X". O aviso leva
+   só o nome da linha, nenhum dado, então não precisa de SQL nem de política
+   nova. Quem recebe busca só aquela linha, com a mescla de três lados de
+   sempre.
+2. **A rede de segurança.** A cada 3s, com a tela à vista, uma única consulta
+   mínima pergunta ao banco as revisões de cada linha (bytes, não a pauta).
+   Se o canal cair (rede, ou o iPhone suspendendo a aba), a tela ainda chega
+   em segundos. Voltar para a aba puxa na hora.
+
+**Medido em dois navegadores contra um banco:**
+
+| O que mudou | Tempo até a outra tela |
+|---|---|
+| Card novo na pauta do cliente | ~0,3s |
+| Tarefa nova no Ensaio | ~0,3s |
+| Card novo, com o canal ao vivo caído | ~0,4s |
+
+**Não atropela quem digita.** O campo em foco guarda o texto e o cursor
+(provado no compositor das Conversas). Se o campo não pode ser achado de
+novo, o redesenho espera a pessoa sair dele.
+
+**Dois achados que a prova pegou:**
+- **O laço do pacote da casa.** A conferência "estou igual ao banco?"
+  comparava o texto com a ordem das chaves, e o jsonb do Postgres reordena.
+  O pacote nunca "batia" e era regravado igual: uma escrita inútil por
+  abertura desde sempre, e com duas telas ao vivo um laço, uma respondendo à
+  outra (8 gravações em 9s com as duas paradas). Agora a comparação é por
+  conteúdo (`canon`), como as linhas dos clientes já faziam. Paradas, as duas
+  telas fazem 0 gravações em 12s.
+- **A carga inteira na hora errada.** A primeira versão recarregava tudo
+  quando o `__config__` mudava, e isso no meio de uma mudança local devolvia
+  a tarefa para trás (a v151 pegou, cenários 1 e 3). As linhas laterais
+  (cadastro dos clientes, perfil da agência) seguem o caminho de antes: a
+  abertura, a volta para a aba e a leitura antes de gravar.
+
+**Também na v256, achado pela regressão:** o reconhecimento que repete
+depois da carga não age com "Quem está entrando?" aberto (a pessoa está
+escolhendo; a `v175` pegou).
+
+11 provas em `web/verificar/v257-ao-vivo.mjs`, com dois navegadores, o canal
+simulado e o canal caído.
+
+## 0.5.70 — 2026-09-24
+
+**Status:** Concluída
+
+### v256 — a entrada na ordem certa
+
+O founder, numa janela anônima, viu a tela antiga "Entrar na sua agência" e,
+**antes de qualquer login**, "Quem está entrando?" com a equipe **de
+fábrica**: Victor, Anna e Roberto, sem a Gabi, sem a Agência EJUP e sem
+cadeados. Depois disse: *"voltou, mas demorou muito"*.
+
+**Três portas abriam a lista cedo:**
+- um relógio de 3,4s (v33), que abre a lista quando ninguém está
+  identificado, com ou sem login;
+- "Continuar sem entrar — só neste aparelho", que desenhava a casa inteira
+  a partir da semente do código;
+- "Entrar como agência", no portão antigo.
+
+**No endereço de produção, agora:**
+- **sem login, não há lista:** quem pede a lista recebe o login;
+- **"Continuar sem entrar" some;**
+- **com login, a lista espera o banco,** com "Carregando a sua agência…"
+  no lugar, e quem o banco reconhece nem vê a lista.
+
+**O achado maior, que a prova pegou ao simular rede lenta.** Com a sessão
+aberta, o app procura a pessoa pelo e-mail logo depois da primeira leitura.
+Com o banco lento, a equipe ainda não chegou: o app não acha a pessoa,
+apaga o crachá (a regra da v207) e **nunca tenta de novo**. A pessoa ficava
+logada e sem nome. Agora a procura repete quando o banco termina, e só casa
+pelo e-mail da sessão.
+
+**Em obra (localhost/127.x) nada muda.** Doze suítes usam "Continuar sem
+entrar" como bancada; a prova força produção com a chave
+`maestro-producao-v1`.
+
+15 provas em `web/verificar/v256-a-entrada-na-ordem.mjs`, nos dois tamanhos,
+com banco lento. Contra a v255 elas acusam 13 falhas.
 
 ## 0.5.69 — 2026-09-24
 

@@ -1,0 +1,10 @@
+/* v256 — a espera curta enquanto o banco diz quem é a equipe */
+#v256Espera{ position:fixed; inset:0; z-index:990; display:grid; place-items:center; background:var(--fundo, #1C1C1F);
+  animation:v249fundo .2s ease both }
+#v256Espera .caixa{ display:grid; justify-items:center; gap:8px; text-align:center; padding:28px }
+#v256Espera b{ font-size:17px; font-weight:650; color:var(--ink-50) }
+#v256Espera span:not(.v256Roda){ font-size:13px; color:var(--ink-400) }
+.v256Roda{ width:26px; height:26px; margin-bottom:6px; border-radius:50%; border:2.5px solid var(--enc2, rgba(118,118,128,.34));
+  border-top-color:var(--brass-500); animation:v256gira .8s linear infinite }
+@keyframes v256gira{ to{ transform:rotate(360deg) } }
+@media (prefers-reduced-motion: reduce){ .v256Roda{ animation-duration:2.4s } }

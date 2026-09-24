@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-24 15:10 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-24 16:26 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -16058,7 +16058,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v255 · 24 set · a equipe que se entende';
+const VERSAO_PROTOTIPO = 'v257 · 24 set · ao vivo';
 
 menuSheet = (function(orig){
   return function(){
@@ -32930,7 +32930,12 @@ addEventListener('click', e => {
     let igual = true;
     for(const k of new Set([...Object.keys(agora), ...Object.keys(deLa)])){
       if(passageiro(k)) continue;
-      if(json(agora[k]) !== json(deLa[k])){ igual = false; break; }
+      /* v257: por CONTEÚDO (canon), como as linhas dos clientes já faziam.
+         O jsonb devolve as chaves em outra ordem; comparando o texto, o
+         pacote nunca "batia" com o banco e era regravado igualzinho — uma
+         escrita inútil por abertura, e com duas telas ao vivo um laço
+         sem fim, uma respondendo à outra a cada 3s. */
+      if(canon(agora[k] === undefined ? null : agora[k]) !== canon(deLa[k] === undefined ? null : deLa[k])){ igual = false; break; }
     }
     _espelhoEstado = igual ? json(agora) : null;
     _jaBuscou = true;
@@ -47283,5 +47288,242 @@ background:var(--enc); font-size:13px; font-weight:700; color:var(--ink-100) }
       setTimeout(() => toast(`${nome1(m)} continua sem papel — escolha um na ficha.`), 0);
   }, true);
   window.MaestroEquipe = { papelConhecido, redes };
+})();
+</script>
+<style id="v256-entrada">
+#v256Espera{ position:fixed; inset:0; z-index:990; display:grid; place-items:center; background:var(--fundo, #1C1C1F);
+animation:v249fundo .2s ease both }
+#v256Espera .caixa{ display:grid; justify-items:center; gap:8px; text-align:center; padding:28px }
+#v256Espera b{ font-size:17px; font-weight:650; color:var(--ink-50) }
+#v256Espera span:not(.v256Roda){ font-size:13px; color:var(--ink-400) }
+.v256Roda{ width:26px; height:26px; margin-bottom:6px; border-radius:50%; border:2.5px solid var(--enc2, rgba(118,118,128,.34));
+border-top-color:var(--brass-500); animation:v256gira .8s linear infinite }
+@keyframes v256gira{ to{ transform:rotate(360deg) } }
+@media (prefers-reduced-motion: reduce){ .v256Roda{ animation-duration:2.4s } }
+</style>
+<script data-camada="v256">
+(function(){
+  const obra = () => {
+    try{ if(localStorage.getItem('maestro-producao-v1') === '1') return false; }catch(e){}
+    return /^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(location.hostname);
+  };
+  const logado = () => { try{ return !!(window.MaestroPorta && MaestroPorta.quem()); }catch(e){ return false; } };
+  const bancoLeu = () => !!(window.Sincro && window.Sincro.lido);
+  const pessoaDefinida = () => !!(S.usuario && S.usuario.tipo === 'agencia');
+  const ESPERA_MAX = 12000;
+  function tirarEspera(){ document.getElementById('v256Espera')?.remove(); }
+  function mostrarEspera(){
+    if(document.getElementById('v256Espera')) return;
+    const el = document.createElement('div');
+    el.id = 'v256Espera'; el.setAttribute('role', 'status');
+    el.innerHTML = `<div class="caixa"><span class="v256Roda" aria-hidden="true"></span>
+      <b>Carregando a sua agência…</b><span>A equipe vem do banco, não deste aparelho.</span></div>`;
+    document.body.appendChild(el);
+  }
+  function porta(orig){
+    return function(){
+      if(obra() || S.viaLink || S.soVer) return orig.apply(this, arguments);
+      if(!logado()){
+        document.getElementById('quemEsta')?.remove();
+        if(window.MaestroPorta && typeof MaestroPorta.pedir === 'function') MaestroPorta.pedir();
+        return;
+      }
+      if(!bancoLeu()){
+        mostrarEspera();
+        const args = arguments, self = this, t0 = Date.now();
+        const tinha = pessoaDefinida();
+        let leuEm = 0;
+        const tique = setInterval(() => {
+          if(!bancoLeu() && Date.now() - t0 < ESPERA_MAX) return;
+          if(!leuEm) leuEm = Date.now();
+          if(!tinha && !pessoaDefinida() && Date.now() - leuEm < 1800) return;
+          clearInterval(tique); tirarEspera();
+          if(!tinha && pessoaDefinida() && bancoLeu()) return;
+          orig.apply(self, args);
+        }, 150);
+        return;
+      }
+      tirarEspera();
+      return orig.apply(this, arguments);
+    };
+  }
+  if(typeof abrirQuemEsta === 'function') abrirQuemEsta = porta(abrirQuemEsta);
+  if(typeof abrirQuemAgencia === 'function') abrirQuemAgencia = porta(abrirQuemAgencia);
+  function limparPorta(){
+    if(obra()) return;
+    const fora = document.getElementById('em-fora');
+    if(fora) fora.remove();
+    if(!logado() && !S.viaLink && !S.soVer) document.getElementById('quemEsta')?.remove();
+  }
+  try{
+    new MutationObserver(limparPorta).observe(document.body, { childList: true });
+  }catch(e){}
+  limparPorta();
+  function reconhecer(){
+    try{
+      if(S.viaLink || S.soVer || pessoaDefinida() || !bancoLeu()) return;
+      if(document.getElementById('quemEsta')) return;
+      const q = window.MaestroPorta && MaestroPorta.quem();
+      const mail = q && String(q.email || '').trim().toLowerCase(); if(!mail) return;
+      const m = (S.equipe || []).find(x => x && String(x.mail || '').trim().toLowerCase() === mail);
+      if(!m) return;
+      S.usuario = { tipo: 'agencia', id: membroId(m) };
+      try{ localStorage.setItem('maestro-usuario-v1', JSON.stringify(S.usuario)); }catch(e){}
+      document.getElementById('quemEsta')?.remove(); tirarEspera();
+      if(typeof render === 'function') render();
+    }catch(e){}
+  }
+  setInterval(reconhecer, 500);
+  window.MaestroEntrada = { obra, logado, bancoLeu, reconhecer };
+})();
+</script>
+<style id="v257-ao-vivo">
+
+</style>
+<script data-camada="v257">
+(function(){
+  if(typeof SB === 'undefined' || !window.Sincro) return;
+  const Sin = window.Sincro;
+  const CADA = 3000;
+  const ORDINAIS = '__estado__';
+  const vivo = { canal: null, ws: null, conectado: false, ultimoPuxar: 0, avisos: 0, puxadas: 0, mudancas: 0 };
+  const revs = {};
+  const diario = [];
+  const anota = (...x) => { diario.push([Date.now() % 100000, ...x]); if(diario.length > 60) diario.shift(); };
+  let primeira = true, puxando = false, deNovo = false;
+  const ligado = () => typeof _sbLigado !== 'undefined' && _sbLigado;
+  const soLeitura = () => !!(S.viaLink || S.soVer || S.soFluxo);
+  const pendente = () => { try{ return typeof Sin.temPendencia === 'function' && Sin.temPendencia(); }catch(e){ return false; } };
+  const ocupado = () => Sin.carregando > 0 || Sin.enviando || Object.values(Sin.gravando || {}).some(Boolean) || !Sin.lido || pendente();
+  const org = () => { try{ return window.MaestroAgencia && MaestroAgencia.org; }catch(e){ return null; } };
+  const clientes = () => new Set((typeof CLIS === 'function' ? CLIS() : []).map(c => c.id));
+  const cab = () => (typeof sbCab === 'function' ? sbCab() : {});
+  let desenhoPendente = false;
+  function redesenhar(){
+    const a = document.activeElement;
+    const digitando = a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range|color|file)$/.test(a.type)) || a.isContentEditable);
+    if(!digitando){ try{ render(); }catch(e){} return; }
+    if(a.closest && a.closest('#layer, .modal')){ try{ render(); }catch(e){} return; }
+    if(!a.id){ desenhoPendente = true; return; }
+    const id = a.id, valor = a.value, ini = a.selectionStart, fim = a.selectionEnd;
+    try{ render(); }catch(e){}
+    const b = document.getElementById(id);
+    if(b && b !== a){
+      try{ if(valor !== undefined) b.value = valor; b.focus({ preventScroll: true }); if(ini != null) b.setSelectionRange(ini, fim); }catch(e){}
+    }
+  }
+  addEventListener('focusout', () => { if(desenhoPendente){ desenhoPendente = false; setTimeout(() => { try{ render(); }catch(e){} }, 0); } }, true);
+  async function puxar(motivo){
+    if(!ligado() || soLeitura()) return false;
+    if(document.visibilityState === 'hidden' && motivo === 'relogio') return false;
+    if(puxando){ deNovo = true; return false; }
+    try{ if(typeof Sin.carimbar === 'function') Sin.carimbar(); }catch(e){}
+    if(ocupado()){ anota('ocupado', motivo, pendente()); setTimeout(() => puxar('espera'), 700); return false; }
+    puxando = true; vivo.puxadas++; vivo.ultimoPuxar = Date.now();
+    let mudou = false;
+    try{
+      const r = await fetch(`${SB.url}/rest/v1/pauta?select=cliente,rev:dados->>rev,atualizado_em`, { headers: cab() });
+      if(!r.ok) return false;
+      const linhas = await r.json();
+      const conhecidos = clientes();
+      for(const l of (linhas || [])){
+        if(!l || !l.cliente) continue;
+        const assin = `${l.rev == null ? '' : l.rev}|${l.atualizado_em || ''}`;
+        const antes = revs[l.cliente]; revs[l.cliente] = assin;
+        const rev = (l.rev === null || l.rev === undefined || !Number.isFinite(+l.rev)) ? 0 : +l.rev;
+        if(l.cliente === ORDINAIS){
+          if(Sin.rev !== undefined && rev !== Sin.rev){ anota('estado', motivo, Sin.rev, '→', rev, pendente()); if(typeof buscarEstado === 'function') await buscarEstado(); mudou = true; }
+          continue;
+        }
+        if(conhecidos.has(l.cliente)){
+          const L = Sin.linhas[l.cliente];
+          if(L && L.rev !== undefined && rev !== L.rev && !Sin.gravando[l.cliente]){
+            const g = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.${encodeURIComponent(l.cliente)}&select=dados`, { headers: cab() });
+            anota('linha', l.cliente, L.rev, '→', rev);
+            if(g.ok){ const [x] = await g.json(); if(x && x.dados && Sin.aplicarLinha(l.cliente, x.dados)) mudou = true; }
+          }
+          continue;
+        }
+        if(l.cliente === '__pedidos__'){
+          if(!primeira && antes !== undefined && antes !== assin && window.MaestroPedidos){ try{ await MaestroPedidos.lerPedidos(); }catch(e){} mudou = true; }
+          continue;
+        }
+      }
+      primeira = false;
+      if(mudou){ vivo.mudancas++; redesenhar(); }
+      return mudou;
+    }catch(e){ return false; }
+    finally{
+      puxando = false;
+      if(deNovo){ deNovo = false; setTimeout(() => puxar('de novo'), 120); }
+    }
+  }
+  setInterval(() => puxar('relogio'), CADA);
+  addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible'){ puxar('voltou'); conectar(); } });
+  addEventListener('focus', () => puxar('voltou'));
+  addEventListener('online', () => { puxar('voltou'); conectar(); });
+  let ref = 0, batida = 0, tmReconecta = 0, tentativas = 0, tmPuxar = 0, conectando = false;
+  const topico = () => `realtime:maestro-${org()}`;
+  const mandar = (msg) => { try{ if(vivo.ws && vivo.ws.readyState === 1) vivo.ws.send(JSON.stringify(Object.assign({ ref: String(++ref) }, msg))); }catch(e){} };
+  async function conectar(){
+    if(soLeitura() || !org() || typeof WebSocket === 'undefined') return;
+    if(conectando || (vivo.ws && vivo.ws.readyState <= 1)) return;
+    clearTimeout(tmReconecta); tmReconecta = 0;
+    conectando = true;
+    let token = null;
+    try{ token = window.MaestroPorta && MaestroPorta.token ? await MaestroPorta.token() : null; }catch(e){}
+    finally{ conectando = false; }
+    if(vivo.ws && vivo.ws.readyState <= 1) return;
+    const url = SB.url.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(SB.key) + '&vsn=1.0.0';
+    let ws;
+    try{ ws = new WebSocket(url); }catch(e){ return; }
+    vivo.ws = ws; vivo.canal = topico();
+    ws.onopen = () => {
+      tentativas = 0;
+      const payload = { config: { broadcast: { self: false, ack: false }, presence: { key: '' }, postgres_changes: [], private: false } };
+      if(token) payload.access_token = token;
+      mandar({ topic: vivo.canal, event: 'phx_join', payload, join_ref: '1' });
+      clearInterval(batida);
+      batida = setInterval(() => mandar({ topic: 'phoenix', event: 'heartbeat', payload: {} }), 25000);
+    };
+    ws.onmessage = ev => {
+      let m; try{ m = JSON.parse(ev.data); }catch(e){ return; }
+      if(m.event === 'phx_reply' && m.topic === vivo.canal && m.payload){ vivo.conectado = m.payload.status === 'ok'; return; }
+      if(m.event === 'broadcast' && m.payload && m.payload.event === 'mudou'){
+        vivo.avisos++;
+        clearTimeout(tmPuxar); tmPuxar = setTimeout(() => puxar('aviso'), 150);
+      }
+    };
+    ws.onclose = () => {
+      vivo.conectado = false; clearInterval(batida);
+      if(vivo.ws === ws) vivo.ws = null;
+      tentativas++;
+      tmReconecta = setTimeout(() => { tmReconecta = 0; conectar(); }, Math.min(30000, 1000 * Math.pow(2, Math.min(tentativas, 5))));
+    };
+    ws.onerror = () => { try{ ws.close(); }catch(e){} };
+  }
+  const _fetch = window.fetch;
+  const avisados = {};
+  window.fetch = async function(u, o){
+    const r = await _fetch.apply(this, arguments);
+    try{
+      const url = String((u && u.url) || u || '');
+      const met = String((o && o.method) || (u && u.method) || 'GET').toUpperCase();
+      if(r.ok && met !== 'GET' && url.startsWith(SB.url + '/rest/v1/pauta')){
+        let linha = (/[?&]cliente=eq\.([^&]+)/.exec(url) || [])[1];
+        if(!linha && o && typeof o.body === 'string'){ try{ const b = JSON.parse(o.body); linha = (Array.isArray(b) ? b[0] : b).cliente; }catch(e){} }
+        if(linha){
+          linha = decodeURIComponent(linha);
+          delete revs[linha];
+          clearTimeout(avisados[linha]);
+          avisados[linha] = setTimeout(() => mandar({ topic: vivo.canal, event: 'broadcast', payload: { type: 'broadcast', event: 'mudou', payload: { linha } } }), 60);
+        }
+      }
+    }catch(e){}
+    return r;
+  };
+  const espera = setInterval(() => { if(ligado()){ clearInterval(espera); puxar('abertura'); } }, 800);
+  setInterval(() => { if(ligado() && org() && !(vivo.ws && vivo.ws.readyState <= 1) && !tmReconecta) conectar(); }, 2000);
+  window.MaestroAoVivo = { puxar, conectar, diario, estado: () => ({ conectado: vivo.conectado, avisos: vivo.avisos, puxadas: vivo.puxadas, mudancas: vivo.mudancas, canal: vivo.canal }) };
 })();
 </script>

@@ -299,6 +299,38 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (24 set, v257) — ao vivo.** "Demora muito pra atualizar nas
+telas conectadas." Uma tela só buscava novidade ao abrir, no "Atualizar"
+ou antes de gravar — quem só olhava não recebia nada. Agora: (1) quem grava
+AVISA os outros por Realtime broadcast (`realtime:maestro-<org>`, evento
+`mudou`, payload só com o NOME da linha — sem SQL novo) e quem recebe
+busca só aquela linha, pela mescla de sempre; (2) rede de segurança: a
+cada 3s, com a tela à vista, UMA consulta mínima de revisões
+(`select=cliente,rev:dados->>rev,atualizado_em`). Medido em dois
+navegadores: card novo em ~0,3s, tarefa do Ensaio em ~0,3s, sem o canal em
+~0,4s. Não redesenha por cima de quem digita (o campo em foco guarda texto
+e cursor). **Dois achados que a prova pegou:** (a) o pacote da casa
+comparava o texto COM a ordem das chaves — o jsonb reordena, então nunca
+"batia" com o banco e era regravado igual: uma escrita inútil por abertura,
+e com duas telas ao vivo um LAÇO (8 gravações em 9s parado). Agora compara
+por conteúdo (`canon`), como as linhas dos clientes já faziam; parado: 0
+gravações. (b) a primeira versão chamava a carga inteira quando o
+`__config__` mudava, e a carga no meio de uma mudança local devolvia a
+tarefa para trás (v151, cenários 1 e 3) — laterais agora seguem o caminho
+de antes. 11 provas em `web/verificar/v257-ao-vivo.mjs`.
+**Fechado (24 set, v256) — a entrada na ordem certa.** Numa janela
+anônima o founder viu "Quem está entrando?" com a equipe DE FÁBRICA antes
+de qualquer login, e depois "voltou, mas demorou". Três portas abriam a
+lista cedo: o relógio de 3,4s (v33), "Continuar sem entrar" e o portão
+antigo. Em produção agora: sem login não há lista (pedir a lista dá o
+login), "Continuar sem entrar" some, e com login a lista ESPERA o banco
+("Carregando a sua agência…"). **E o achado maior:** com rede lenta, a
+sessão procurava a pessoa pelo e-mail ANTES de a equipe chegar, não
+achava, apagava o crachá e nunca tentava de novo — logado e sem nome.
+Agora a procura repete quando o banco termina. Em obra (127.x) nada muda:
+12 suítes usam "Continuar sem entrar" como bancada; a prova força produção
+com `maestro-producao-v1`. 15 provas em
+`web/verificar/v256-a-entrada-na-ordem.mjs` (contra a v255: 13 falhas).
 **Fechado (24 set, v255) — a Equipe que se entende.** "A aba da equipe não
 está abrindo mais." Quem entra com uma conta que não está na Equipe, numa
 agência com dono, nasce com papel "Equipe" (v219) — que NÃO existia no
