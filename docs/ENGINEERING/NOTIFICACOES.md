@@ -23,7 +23,7 @@
 | Lote para aprovar → e-mail para o cliente | **de pé** na v164 |
 | Decisão do cliente → e-mail para a equipe | a fazer |
 | Push com o app fechado (VAPID) | a fazer |
-| WhatsApp (Cloud API) | a fazer — falta o chip dedicado |
+| WhatsApp (Cloud API) | a fazer — **chip dedicado comprado em 24/set**; falta registrar na Cloud API |
 
 **O primeiro e-mail saiu em 6 de setembro, 12h42**, para
 `victorbarrosoc@gmail.com`, e caiu na caixa de entrada.
@@ -160,7 +160,28 @@ sem precisar de caixa postal nova.
 
 Passo a passo em `docs/ENGINEERING/EMAIL_DOMINIO.md`.
 
-### WhatsApp: parado, de propósito
+### WhatsApp: o chip chegou (24 set)
+
+O founder comprou o chip dedicado da Maestro em 24/set (DDD 84). O número
+**não está escrito aqui** e não vai estar: ele entra nos secrets do
+Supabase quando a Cloud API for ligada. Próximos passos, todos do dono da
+conta Meta:
+
+1. **Não ativar o WhatsApp comum nem o Business App nesse chip.** Número
+   registrado num app precisa ser apagado dele antes de entrar na Cloud
+   API — mais simples nunca registrar.
+2. Meta Business (business.facebook.com) → verificação da empresa (CNPJ).
+3. developers.facebook.com → criar app do tipo *Business* → produto
+   **WhatsApp** → adicionar o número (chega um código por SMS ou ligação
+   no chip) e escolher o nome de exibição ("Maestro").
+4. Criar os templates de utilidade (o primeiro: *lote para aprovar*, com o
+   link) e esperar a aprovação.
+5. Gerar um token de **usuário do sistema** (não o temporário de 24 h) e
+   guardar nos secrets do Supabase: `WHATSAPP_TOKEN`,
+   `WHATSAPP_PHONE_ID`. O carteiro `enviar-avisos` ganha o canal
+   `whatsapp` — a fila já tem a coluna.
+
+### WhatsApp: parado, de propósito (até 24 set)
 
 O número que o founder informou é o **pessoal dele**, e o número que
 entra na Cloud API sai do WhatsApp comum. Ele decidiu adiar até ter um
