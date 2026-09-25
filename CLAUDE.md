@@ -299,6 +299,26 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (25 set) — a Gestão (MPGP), num link à parte: `/gestao`.** Pedido:
+"uma estrutura nova… conectar o que já tem (Produção) com o MPGP… quando eu
+movimente um cliente, ele já entra no CRM, no Financeiro, na etapa da jornada…
+crie separado." Fonte: o *Manual de Gestão da EJUP no ClickUp*. Arquivos em
+`web/gestao/`; **nenhuma linha da plataforma mudou**. O centro é o CLIENTE e a
+**esteira** (Prospecção → Negociação → Proposta → Fechamento → Onboarding → Em
+execução → Renovação → Base & Indicações), e a etapa é LIDA dos registros —
+mover é fazer a ação da etapa, com a prévia do que nasce ("Marcar como ganho"
+cria contrato, parcelas, jornada e tarefas). As 5 áreas do manual = as 5
+frentes do Ensaio (mesmos ids); a Produção do manual É a Maestro, lida só
+lendo. Todas as réguas, evidências, automações (seções 8/10), painéis e
+rituais; as 12 inconsistências da seção 11 resolvidas no desenho. **Dados:**
+linhas `__gestao__:<coleção>` com a marca `maestroRedes` (a carga geral e o
+"ao vivo" da plataforma não as veem), gravação por OPERAÇÃO com trava de
+revisão, sessão própria (`maestro-gestao-sessao-v1`). Sem conta: empresa de
+exemplo gerada pelo próprio motor. 66 provas em
+`web/verificar/gestao-fluxo.mjs` (separação byte a byte, dois aparelhos, sem
+rede, o fluxo inteiro pela tela, celular). Desenho e plano da mescla em
+`docs/PRD/GESTAO.md`. **Aberto para o founder:** quem entra com o login da
+agência vê o financeiro (RBAC por área entra na mescla).
 **Fechado (24 set, v263) — as cinco redes num clique.** "Faz o botão
 importar as cinco redes num clique." O importador abre em **Todas as
 redes**: um arraste com os arquivos das cinco, cada peça na rede que o

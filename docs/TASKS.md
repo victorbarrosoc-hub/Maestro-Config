@@ -203,6 +203,20 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 
 ---
 
+## Gestão (MPGP) — em `/gestao`, à parte · 🟡 No ar para aprovação
+
+Desenho e estado em `docs/PRD/GESTAO.md`; 66 provas em `web/verificar/gestao-fluxo.mjs`.
+- [x] Modelo do manual (réguas, evidências, campos), esteira lida, motor de automações
+- [x] Banco separado (`__gestao__:*`), sessão própria, fila sem rede, ao vivo
+- [x] Telas: Hoje, Esteira, Clientes, página do cliente, seis áreas, pipelines, painéis
+- [x] Empresa de exemplo gerada pelo motor; primeira carga a partir da Maestro
+- [ ] O founder usar com a conta da agência e aprovar
+- [ ] Mescla: tarefas nascem no Ensaio; "Novo cliente" cria o da Maestro; o
+      Pipeline substitui o CRM Negócios; telas no menu; RBAC por área (financeiro)
+- [ ] Contas a pagar recorrentes (lançamento automático do mês)
+
+---
+
 ## Revisão geral de 19/set — o que ficou ABERTO
 
 Detalhe, causa e o caminho de conserto em

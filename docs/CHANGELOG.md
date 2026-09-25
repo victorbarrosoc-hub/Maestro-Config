@@ -1,9 +1,47 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.83
+Version: 0.5.84
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.84 — 2026-09-25
+
+**Status:** Concluída (à parte, para aprovar antes da mescla)
+
+### Gestão (MPGP) — a empresa inteira num fluxo só, em `/gestao`
+
+Do *Manual de Gestão da EJUP no ClickUp*: o PDCA distribuído em cinco áreas, em
+que cada conclusão numa área gera trabalho na seguinte — no ClickUp isso ficou
+só no texto. Aqui é o sistema. Construído SEPARADO (`web/gestao/`, link
+`/gestao`), sem tocar em nenhuma linha da plataforma.
+
+- **O cliente é o centro, e a esteira é lida, não digitada.** Oito etapas, da
+  prospecção à indicação. A etapa sai dos registros (oportunidade, contrato,
+  jornada, renovação): nunca "a jornada diz ativo mas o contrato venceu".
+  Arrastar um cliente executa a ação da etapa, com a lista do que vai nascer à
+  vista; pular etapa é recusado dizendo o próximo passo.
+- **As passagens do manual, automáticas:** ganho B2B/Expert → contrato,
+  parcelas, jornada (Expert com as 12 entregas do Mês 1 ao 6) e tarefas; ganho
+  B2C → pós-matrícula, recebimento e pedido de indicação; proposta enviada →
+  follow-up em 3 dias; assinado (só com o link) → onboarding e kickoff; parcela
+  vencida → Atrasado pela data; parcela paga de oferta de Expert → repasse;
+  contrato a ≤ 60 dias → renovação; renovado → aditivo e parcelas; não renovado
+  → base e depoimento; TAP assinado → entregas viram tarefas; ata → decisões
+  viram tarefas; lição → SOP; candidato apto → onboarding; obrigação anual →
+  a do ano seguinte.
+- **A produção É a Maestro:** a gestão lê a pauta, o Ensaio por frente, a
+  equipe e os Negócios, e liga cada cliente ao da Maestro. "Trazer para a
+  gestão" e "Trazer os negócios do CRM" fazem a primeira carga.
+- **Separado de verdade:** linhas `__gestao__:<coleção>` com a marca que a carga
+  geral da plataforma ignora; escrita por operação com a trava de revisão da
+  v151; sessão própria; fila no aparelho sem rede.
+- Painéis Comercial, Financeiro e Institucional; rituais no Hoje com a ata já
+  com a pauta e os números; tema escuro e claro; celular e computador.
+
+66 provas em `web/verificar/gestao-fluxo.mjs`. Desenho em `docs/PRD/GESTAO.md`.
 
 ---
 
