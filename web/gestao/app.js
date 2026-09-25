@@ -8,6 +8,12 @@
   const { esc, icone, toast } = U;
   const app = document.getElementById('app');
   const TEMA = 'maestro-gestao-tema', MODO = 'maestro-gestao-modo';
+  /* no artifact (fora do site) o banco não é alcançável: só o exemplo, e
+     entrar de verdade é um link para o site */
+  const ARTEFATO = G.GESTAO_ARTEFATO || null;
+  const ORIGEM = GE.origem();
+  const entrarHtml = (cls, txt) => ARTEFATO ? `<a class="${cls}" href="${esc(ORIGEM)}/gestao" target="_blank" rel="noopener">${txt}</a>` : `<button class="${cls}" type="button" data-entrar="1">${txt}</button>`;
+  let armadoZerar = 0;
   let tela = 'porta', erroPorta = '', entrando = false;
 
   /* ---------------- tema ---------------- */
@@ -68,12 +74,12 @@
       <div class="navGrupo">Áreas</div>
       ${GM.AREAS.map(A => `<a class="nav${r.a === 'area' && r.b === A.id ? ' on' : ''}" href="#/area/${esc(A.id)}">${icone(A.id === 'financeiro' ? 'financeiro' : A.id)}<span>${esc(A.nome)}</span><span class="bola" style="margin-left:auto;background:${esc((GM.FRENTE[A.frente] || {}).cor)}"></span></a>`).join('')}
       <div class="pe">
-        <a class="nav" href="/" target="_blank" rel="noopener">${icone('fora')}<span>Abrir a Maestro</span></a>
+        <a class="nav" href="${esc(ORIGEM)}/" target="_blank" rel="noopener">${icone('fora')}<span>Abrir a Maestro</span></a>
         <button class="nav" type="button" data-tema="1">${icone(document.documentElement.dataset.tema === 'claro' ? 'lua' : 'sol')}<span>${document.documentElement.dataset.tema === 'claro' ? 'Tema escuro' : 'Tema claro'}</span></button>
         <span class="selo ${esc(selo)}"><i></i>${esc(txtSelo)}${B().pendentes() ? ` · ${B().pendentes()} na fila` : ''}</span>
         ${B().modo === 'real' ? `<div class="quem">${U.avPessoa(eu)}<div><b>${esc(pessoa ? pessoa.nome : (q && q.email) || '')}</b><small>${esc((q && q.email) || '')}</small></div>
           <button class="b p gho" type="button" data-sair="1" aria-label="Sair da gestão" title="Sair da gestão">${icone('sair')}</button></div>`
-          : `<button class="b" type="button" data-entrar="1">Entrar com a conta da agência</button>`}
+          : entrarHtml('b', 'Entrar com a conta da agência')}
       </div>`;
   }
   function barraCel(r){
@@ -84,7 +90,7 @@
   }
   function faixa(){
     if(B().modo === 'demo') return `<div class="faixa"><span><b>Exemplo</b><span class="longo"> — empresa, pessoas e valores inventados. Nada aqui vai para o banco.</span><span class="curto"> · nada vai ao banco</span></span>
-      <button class="b p gho" type="button" data-zerar="1">Recomeçar</button><button class="b p pri" type="button" data-entrar="1"><span class="longo">Entrar com a conta da agência</span><span class="curto">Entrar</span></button></div>`;
+      <button class="b p gho" type="button" data-zerar="1">${armadoZerar && Date.now() - armadoZerar < 5000 ? 'Toque de novo para recomeçar' : 'Recomeçar'}</button>${entrarHtml('b p pri', '<span class="longo">Entrar com a conta da agência</span><span class="curto">Entrar</span>')}</div>`;
     if(B().selo === 'erro') return `<div class="faixa" style="background:color-mix(in srgb,var(--ruim) 16%,var(--sup))"><span><b>Não consegui gravar.</b> ${esc(B().erro || '')} — o que você fez está guardado neste aparelho e sobe sozinho.</span>
       <button class="b p" type="button" data-reenviar="1">Tentar agora</button></div>`;
     return '';
@@ -255,7 +261,9 @@
     if(d.sair !== undefined){ F.fecharTudo(); B().sair(); try{ localStorage.removeItem(MODO); }catch(err){} tela = 'porta'; erroPorta = ''; desenhar(); return; }
     if(d.entrar !== undefined){ F.fecharTudo(); tela = 'porta'; erroPorta = ''; try{ localStorage.removeItem(MODO); }catch(err){} desenhar(); return; }
     if(d.exemplo !== undefined){ abrirExemplo(); return; }
-    if(d.zerar !== undefined){ if(!confirm('Recomeçar o exemplo? O que você mudou nele some.')) return; F.fecharTudo(); B().zerarExemplo(GD.semente); desenhar(); toast('Exemplo recomeçado.'); return; }
+    if(d.zerar !== undefined){
+      if(!armadoZerar || Date.now() - armadoZerar > 5000){ armadoZerar = Date.now(); t.textContent = 'Toque de novo para recomeçar'; toast('O que você mudou no exemplo some.'); return; }
+      armadoZerar = 0; F.fecharTudo(); B().zerarExemplo(GD.semente); desenhar(); toast('Exemplo recomeçado.'); return; }
     if(d.reenviar !== undefined){ B().enviarAgora(); return; }
   });
   /* teclado: Enter/Espaço em cartão, Esc fecha */
@@ -306,7 +314,7 @@
   /* ---------------- partida ---------------- */
   const pede = new URLSearchParams(location.search);
   let modo = null; try{ modo = localStorage.getItem(MODO); }catch(e){}
-  if(pede.has('exemplo')) abrirExemplo();
+  if(ARTEFATO || pede.has('exemplo')) abrirExemplo();
   else if(B().temSessao()) iniciarReal();
   else if(modo === 'demo') abrirExemplo();
   else { tela = 'porta'; desenhar(); }

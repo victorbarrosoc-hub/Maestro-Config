@@ -3,6 +3,9 @@
 Status: **construído e no ar à parte**, em `sejamaestro.com.br/gestao` (arquivos
 em `web/gestao/`), sem tocar no código da plataforma. 66 provas em
 `web/verificar/gestao-fluxo.mjs`. Quando estiver aprovado, mescla (seção 10).
+Artifact (empresa de exemplo, para ver no celular):
+`claude.ai/artifact/4BwcrJKpWshAYkLt1PHhwa` — montado por
+`python3 web/gestao/montar-artefato.py <saída.html>` e republicado no mesmo link.
 Fonte: *Manual de Gestão da EJUP no ClickUp* (25/set/2026, Dr. Pivôtto).
 
 ---

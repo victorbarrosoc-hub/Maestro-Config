@@ -561,7 +561,14 @@
     const s = F.atual; if(!s || s.kind !== 'ficha') return;
     const x = B().item(s.col, s.id); if(!x) return;
     const t = GM.TIPOS[s.col]; const m = M();
-    if(!confirm(`Apagar ${t.um} "${m.rotulo(s.col, x)}"? O histórico fica guardado.`)) return;
+    /* confirmação na própria janela: o primeiro toque arma, o segundo apaga */
+    if(!s.armadoApagar || Date.now() - s.armadoApagar > 5000){
+      s.armadoApagar = Date.now();
+      const b = document.querySelector('#folhas [data-apagar]'); if(b) b.innerHTML = `${icone('lixo')} Toque de novo para apagar`;
+      setTimeout(() => { if(s.armadoApagar && Date.now() - s.armadoApagar >= 5000){ s.armadoApagar = 0; const b2 = document.querySelector('#folhas [data-apagar]'); if(b2) b2.innerHTML = `${icone('lixo')} Apagar`; } }, 5100);
+      return;
+    }
+    s.armadoApagar = 0;
     s.mudou.clear();
     const ops = [{ c: s.col, id: s.id, del: true }, m.ev(`Apagou ${t.um}: ${m.rotulo(s.col, x)}`, { contaId: x.contaId || null, ref: s.col + '/' + s.id, tipo:'exclusao' })];
     B().aplicar(ops);

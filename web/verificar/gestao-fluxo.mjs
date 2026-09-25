@@ -357,6 +357,15 @@ console.log('\nB · o fluxo único');
   await pg.click('#folhas footer button:has-text("Pronto")'); await pg.waitForTimeout(60);
   checa('58. fechar registra "editou" na linha do tempo — uma vez', await pg.evaluate(id => GMotor.eventos(e => e.contaId === id && /editou Segmento/.test(e.texto)).length === 1, id));
 
+  /* 17b) apagar pede dois toques, na própria janela (confirm() não aparece em todo lugar) */
+  await pg.evaluate(() => GB.aplicar([{ c:'tickets', id:'tk-apagar', set:{ titulo:'Para apagar', status:'novo' } }]));
+  await pg.evaluate(() => GF.abrirFicha('tickets', 'tk-apagar')); await pg.waitForTimeout(80);
+  await pg.click('#folhas [data-apagar]'); await pg.waitForTimeout(60);
+  const armado = await pg.textContent('#folhas [data-apagar]');
+  checa('58b. o primeiro toque em Apagar só arma (e diz)', /Toque de novo/.test(armado) && await pg.evaluate(() => !!GB.item('tickets', 'tk-apagar')), armado);
+  await pg.click('#folhas [data-apagar]'); await pg.waitForTimeout(60);
+  checa('58c. o segundo apaga — com lápide, e a linha do tempo registra', await pg.evaluate(() => !GB.item('tickets', 'tk-apagar') && GB.apagados('tickets').some(x => x.id === 'tk-apagar') && GMotor.eventos(e => /Apagou ticket: Para apagar/.test(e.texto)).length === 1));
+
   /* 18) o Hoje junta o que pede ação */
   await pg.goto(BASE + '/gestao?exemplo#/hoje'); await pg.waitForTimeout(200);
   const hj = await pg.textContent('#principal');

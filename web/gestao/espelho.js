@@ -109,9 +109,11 @@
   }
 
   /* o card na Maestro: o mesmo endereço que o Cronograma copia (v235) */
-  const linkCard = (cli, id) => `/#post=${encodeURIComponent(cli)}:${encodeURIComponent(id)}`;
-  const linkEnsaio = () => '/ensaio';
-  const linkClientes = () => '/clientes';
+  /* fora do site (o artifact), os links vão para o site de verdade */
+  const origem = () => (G.GESTAO_ARTEFATO && G.GESTAO_ARTEFATO.origem) || '';
+  const linkCard = (cli, id) => `${origem()}/#post=${encodeURIComponent(cli)}:${encodeURIComponent(id)}`;
+  const linkEnsaio = () => origem() + '/ensaio';
+  const linkClientes = () => origem() + '/clientes';
 
-  G.GE = { FASES, FASE, COLS, faseDe, frenteDe, membroId, montar, producaoDe, tarefasPorFrente, linkCard, linkEnsaio, linkClientes, hojeISO };
+  G.GE = { FASES, FASE, COLS, faseDe, frenteDe, membroId, montar, producaoDe, tarefasPorFrente, linkCard, linkEnsaio, linkClientes, origem, hojeISO };
 })(typeof window !== 'undefined' ? window : globalThis);
