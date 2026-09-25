@@ -27,6 +27,11 @@ e a mescla de três lados leu "apaguei 34 aqui". A v177 barrou a pauta.
 1. **v208:** com o carimbo da agência batendo, outro login é a mesma casa — só
    anota o dono. Quando limpa de verdade, a base da sincronização vai junto
    (localStorage e IndexedDB): estado sem base, nunca base sem estado.
+   **E a regressão pegou a primeira versão:** logo depois de um login novo,
+   `MaestroAgencia.org` ainda é a resposta do login ANTERIOR — uma agência de
+   fora no mesmo aparelho passava por "mesma agência" e via a casa do outro
+   (v209). A sondagem agora anota para quem respondeu (`sondadoPara`), e a
+   v208 só decide com a resposta deste login.
 2. **O Ensaio lê do lugar certo:** a cópia do quadro no `__config__` é legado.
    Com o `__estado__` tendo quadro, ela não entra (a v266 trocou "substituir"
    por "juntar", e juntar com cópia velha ressuscita tarefa). Sem quadro no

@@ -37705,7 +37705,11 @@ sbGravar = (function(orig){
   A.sondar = function(){
     if(A.sondando) return A.sondando;
     A.sondando = (async () => {
-      if(!logado()){ A.org = null; A.chave2 = false; A.sabemos = false; A.sondado = true; return A; }
+      /* v269: de QUEM é a resposta — sem isto, logo depois de outro login,
+         a agência do login anterior passava pela do novo */
+      let para = null;
+      try{ const q = window.MaestroPorta && MaestroPorta.quem(); para = q && q.email ? String(q.email).trim().toLowerCase() : null; }catch(e){}
+      if(!logado()){ A.org = null; A.chave2 = false; A.sabemos = false; A.sondado = true; A.sondadoPara = null; return A; }
       const o = await rpc('maestro_org');
       /* o banco só respondeu de fato se veio um texto ou um null explícito */
       const respondeu = !!o && ('valor' in o)
@@ -37717,7 +37721,7 @@ sbGravar = (function(orig){
         const p = await rpc('maestro_pronto');
         A.chave2 = !!(p && p.valor === true);
       } else A.chave2 = false;
-      A.sondado = true;
+      A.sondado = true; A.sondadoPara = para;
       return A;
     })().finally(() => { A.sondando = null; });
     return A.sondando;
@@ -39253,7 +39257,13 @@ sbGravar = (function(orig){
        vazia contra base cheia: "Não gravei: isto apagaria 34 publicações", e
        no Ensaio tarefas recriadas por cima das que existiam (card duplicado). */
     try{
-      const org = A() && A().org, carimbo = localStorage.getItem('maestro-agencia-do-aparelho-v1');
+      const a = A();
+      /* a resposta tem de ser DESTE login; se for do anterior, pergunta de novo e espera */
+      if(a && a.sondadoPara !== eu){
+        if(!a.sondando && typeof a.sondar === 'function'){ a.sondado = false; a.sondar(); }
+        return;
+      }
+      const org = a && a.org, carimbo = localStorage.getItem('maestro-agencia-do-aparelho-v1');
       if(org && carimbo && String(org) === String(carimbo)){ grave(DONO, eu); return; }
     }catch(e){}
 
