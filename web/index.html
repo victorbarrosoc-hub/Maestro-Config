@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-24 23:54 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-25 00:49 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -16099,7 +16099,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v263 · 24 set · as cinco redes num clique';
+const VERSAO_PROTOTIPO = 'v265 · 25 set · a aba Redes com exemplo';
 
 menuSheet = (function(orig){
   return function(){
@@ -48110,7 +48110,7 @@ animation:v262g .8s linear infinite; display:inline-block }
 <script data-camada="v262">
 (function(){
   const VERSAO = (typeof VERSAO_PROTOTIPO === 'string' ? VERSAO_PROTOTIPO.split(' ')[0] : 'v262');
-  const ARQS = ['adaptadores.js', 'motor.js', 'dados.js', 'analise.js', 'tela.js'];
+  const ARQS = ['adaptadores.js', 'motor.js', 'dados.js', 'analise.js', 'exemplo.js', 'tela.js'];
   const base = () => {
     if(location.protocol === 'file:'){
       if(/\/docs\/UX\/[^/]*$/.test(location.pathname)) return new URL('../../web/redes/', location.href).href;
@@ -48173,5 +48173,94 @@ animation:v262g .8s linear infinite; display:inline-block }
   document.addEventListener('click', e => {
     if(e.target.closest && e.target.closest('[data-v262tentar]')){ fase = 'nada'; carregar(); }
   });
+})();
+</script>
+<style id="v264-conta">
+#v264Conta{ position:fixed; z-index:980; min-width:240px; max-width:300px; padding:6px; border-radius:14px;
+background:var(--sup, #27272B); box-shadow:0 12px 36px rgba(0,0,0,.35); border:1px solid var(--fio, rgba(255,255,255,.08)) }
+.v264Quem{ display:flex; gap:10px; align-items:center; padding:8px 8px 10px; border-bottom:1px solid var(--fio, rgba(255,255,255,.08)); margin-bottom:4px }
+.v264Quem b{ display:block; font-size:13.5px; color:var(--ink-50) }
+.v264Quem small{ display:block; font-size:11.5px; color:var(--ink-400); overflow-wrap:anywhere }
+.v264Av{ flex:0 0 34px; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; background:var(--enc, rgba(255,255,255,.08)); color:var(--ink-100); font-weight:700; font-size:12px }
+#v264Conta button{ display:flex; align-items:center; gap:10px; width:100%; height:38px; padding:0 10px; border:0; border-radius:9px;
+background:none; color:var(--ink-100); font-size:13.5px; cursor:pointer; text-align:left }
+#v264Conta button:hover, #v264Conta button:focus-visible{ background:var(--enc, rgba(255,255,255,.06)); outline:none }
+#v264Conta button svg{ width:15px; height:15px; color:var(--ink-300) }
+#v264Conta .v264Sair{ color:var(--danger, #E5484D) } #v264Conta .v264Sair svg{ color:inherit }
+</style>
+<script data-camada="v264">
+(function(){
+  const FLAG = 'maestro-v264-abrir-login';
+  const logado = () => { try{ return !!(window.MaestroPorta && MaestroPorta.quem && MaestroPorta.quem()); }catch(e){ return false; } };
+  let aberto = false;
+  function euMembro(){
+    try{
+      const id = S.usuario && S.usuario.id;
+      return (S.equipe || []).find(m => typeof membroId === 'function' && membroId(m) === id) || null;
+    }catch(e){ return null; }
+  }
+  function fechar(){ aberto = false; document.getElementById('v264Conta')?.remove(); }
+  function abrir(ancora){
+    fechar(); aberto = true;
+    const m = euMembro(), q = logado() ? MaestroPorta.quem() : null;
+    const nome = (m && m.n) || (S.usuario && S.usuario.id) || 'Você';
+    const ini = nome.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+    const el = document.createElement('div');
+    el.id = 'v264Conta'; el.setAttribute('role', 'menu'); el.setAttribute('aria-label', 'Sua conta');
+    el.innerHTML = `
+      <div class="v264Quem"><span class="v264Av">${esc(ini)}</span>
+        <span><b>${esc(nome)}</b>${q && q.email ? `<small>${esc(q.email)}</small>` : ''}${m && m.papel ? `<small>${esc(m.papel)}${m.dono ? ' · dono' : ''}</small>` : ''}</span></div>
+      ${logado() ? `
+        <button role="menuitem" data-v264="conta">${ic('person', 15)}<span>Conta e senha</span></button>
+        <button role="menuitem" data-v264="trocar">${ic('refresh', 15)}<span>Trocar de conta</span></button>
+        <button role="menuitem" data-v264="sair" class="v264Sair">${ic('arrowl', 15)}<span>Sair</span></button>`
+      : `<button role="menuitem" data-v264="entrar">${ic('unlock', 15)}<span>Entrar</span></button>`}`;
+    document.body.appendChild(el);
+    const r = ancora.getBoundingClientRect();
+    const w = el.offsetWidth, h = el.offsetHeight;
+    el.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
+    el.style.top = Math.max(8, r.top - h - 8) + 'px';
+    el.querySelector('[data-v264]')?.focus();
+  }
+  async function subirTudo(){
+    const ps = [];
+    try{ if(window.Sincro && typeof Sincro.enviar === 'function') ps.push(Sincro.enviar()); }catch(e){}
+    try{ if(window.Sincro && typeof Sincro.gravar === 'function' && typeof CLIS === 'function') for(const c of CLIS()) ps.push(Sincro.gravar(c.id, true)); }catch(e){}
+    try{ if(typeof sbGravarConfig === 'function'){ clearTimeout(sbGravarConfig._t); ps.push(sbGravarConfig()); } }catch(e){}
+    await Promise.race([Promise.allSettled(ps), new Promise(r => setTimeout(r, 5000))]);
+  }
+  async function sair(trocar){
+    fechar();
+    try{ toast('Guardando o que está pendente…'); }catch(e){}
+    await subirTudo();
+    if(trocar){ try{ sessionStorage.setItem(FLAG, '1'); }catch(e){} }
+    try{ MaestroPorta.sair(); }catch(e){}
+  }
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-trocausr]');
+    if(!t || (S.view && S.view !== 'agency')) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    if(aberto) fechar(); else abrir(t);
+  }, true);
+  addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('#v264Conta [data-v264]');
+    if(!b){ if(aberto && !(e.target.closest && e.target.closest('#v264Conta'))) fechar(); return; }
+    e.stopImmediatePropagation(); e.preventDefault();
+    const a = b.dataset.v264;
+    if(a === 'sair') return sair(false);
+    if(a === 'trocar') return sair(true);
+    fechar();
+    if(a === 'conta'){ try{ go('agency', 'conta'); }catch(err){} return; }
+    if(a === 'entrar'){ try{ MaestroPorta.pedir(); }catch(err){} }
+  }, true);
+  addEventListener('keydown', e => { if(e.key === 'Escape' && aberto){ e.stopImmediatePropagation(); fechar(); } }, true);
+  addEventListener('resize', () => { if(aberto) fechar(); });
+  try{
+    if(sessionStorage.getItem(FLAG)){
+      sessionStorage.removeItem(FLAG);
+      setTimeout(() => { try{ if(!logado()) MaestroPorta.pedir(); }catch(e){} }, 700);
+    }
+  }catch(e){}
+  window.MaestroConta = { abrir, fechar, subirTudo };
 })();
 </script>
