@@ -13469,7 +13469,11 @@ sbCarregar = (function(orig){
         try{
           const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__config__&select=dados`,{headers:sbCab()});
           if(r.ok){ const [l] = await r.json();
-            if(l && l.dados && l.dados.estudio && !abertoPorLink()){
+            /* v269: com a sincronização ligada, o quadro vem do __estado__ (com base,
+               mescla de três lados e lápides). A cópia do __config__ é legado: juntá-la
+               ressuscitava tarefa velha; substituir por ela apagava (v266). Só serve
+               a quem não tem sincronização. */
+            if(l && l.dados && l.dados.estudio && !abertoPorLink() && !window.Sincro){
               /* v266: era `S.ensaio = l.dados.estudio` — o quadro do banco por
                  cima do deste aparelho, inteiro. Com o __config__ vazio ou
                  velho, o aparelho "apagava" tudo e a mescla da v151 levava a
@@ -16043,7 +16047,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v268 · 25 set · o login é da agência';
+const VERSAO_PROTOTIPO = 'v269 · 25 set · mesma agência, outro login';
 
 menuSheet = (function(orig){
   return function(){
@@ -36554,7 +36558,21 @@ sbCarregar = (function(orig){
           if(r.ok){
             const [l] = await r.json();
             const doBanco = l && l.dados && l.dados.estudio;
-            if(doBanco){ S.ensaio = mesclarEstudio(S.ensaio, doBanco); render(); }
+            /* v269: com a sincronização, o quadro vem do __estado__. A cópia do
+               __config__ só entra se o __estado__ do banco NÃO tem quadro (dado de
+               antes da v151) — junto com um quadro de verdade, ela ressuscitava
+               tarefa velha. */
+            if(doBanco && !window.Sincro){ S.ensaio = mesclarEstudio(S.ensaio, doBanco); render(); }
+            else if(doBanco){
+              const t0 = Date.now();
+              const decidir = () => {
+                const Sin = window.Sincro;
+                if(!(Sin && Sin.lido) && Date.now() - t0 < 12000) return setTimeout(decidir, 150);
+                if(Sin && Sin.base && Sin.base.ensaio) return;         /* o __estado__ tem quadro: ele manda */
+                S.ensaio = mesclarEstudio(S.ensaio, doBanco); render();
+              };
+              decidir();
+            }
           }
         }
       }catch(e){}
@@ -39227,12 +39245,27 @@ sbGravar = (function(orig){
 
     if(dono === eu) return;               /* a casa é de quem está aqui */
 
+    /* v269 — MESMA AGÊNCIA, OUTRO LOGIN, NÃO É OUTRA CASA. Com o login da
+       agência (v268), o mesmo aparelho alterna entre o e-mail da pessoa e o
+       da agência. Os dois veem a MESMA agência (a v220 carimba qual): o que
+       está guardado é dela. Limpar aqui apagava o estado DEPOIS de a primeira
+       leitura ter guardado a base da sincronização — ao recarregar, pauta
+       vazia contra base cheia: "Não gravei: isto apagaria 34 publicações", e
+       no Ensaio tarefas recriadas por cima das que existiam (card duplicado). */
+    try{
+      const org = A() && A().org, carimbo = localStorage.getItem('maestro-agencia-do-aparelho-v1');
+      if(org && carimbo && String(org) === String(carimbo)){ grave(DONO, eu); return; }
+    }catch(e){}
+
     /* é outra pessoa. A casa guardada não é dela. */
     if(leia(JAFEZ, true) === eu) return;  /* já limpei nesta aba, não insisto */
     grave(JAFEZ, eu, true);
-    for(const k of PACOTE){ try{ localStorage.removeItem(k); }catch(e){} }
+    /* v269: e a base da sincronização vai junto — estado sem base, nunca base sem estado */
+    for(const k of PACOTE.concat(['maestro-sincro-v2', 'maestro-sincro-bases-v1'])){ try{ localStorage.removeItem(k); }catch(e){} }
     grave(DONO, eu);
-    try{ location.reload(); }catch(e){}
+    const idb = (window.Sincro && Sincro.basesIdb && Sincro.basesIdb.apagar) ? Sincro.basesIdb.apagar() : Promise.resolve();
+    Promise.race([Promise.resolve(idb).catch(() => {}), new Promise(r => setTimeout(r, 1500))])
+      .then(() => { try{ location.reload(); }catch(e){} });
   }
 
   setInterval(conferir, 800);

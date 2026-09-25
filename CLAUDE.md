@@ -344,6 +344,17 @@ moldura da v240** (troca de cliente, abas que quebram no celular) — ela
 agora é `MaestroMolduraCliente(html)`, e quem desenha aba por fora a chama.
 Suíte que abre a aba Redes por um servidor próprio precisa servir
 `/web/redes/` (a v240 aprendeu).
+**Fechado (25 set, v269) — mesma agência, outro login.** "Não gravei: isto
+apagaria 34 publicações de EJUP." A v208 limpava o aparelho quando o E-MAIL
+mudava — com o login da agência, o mesmo celular alterna entre o e-mail da
+pessoa e o da agência, na MESMA agência — e apagava o estado deixando a base
+da sincronização: pauta vazia contra base cheia (a v177 barrou). Agora, com o
+carimbo da agência (v220) batendo, só anota o dono; e quando limpa, a base vai
+junto. O Ensaio não junta mais a cópia do `__config__` quando o `__estado__`
+tem quadro. 19 provas em `web/verificar/v269-mesma-agencia-outro-login.mjs`.
+**Lição, a v247 de novo:** toda limpeza de estado leva a base junto — estado
+sem base, nunca base sem estado. **Aberto:** o card duplicado (sem
+reprodução; pedidos os prints da ficha e do histórico).
 **Fechado (25 set, v268) — o login é da agência.** Vídeo do founder: com
 `ejup.mkt` ("não é equipe, é a agência") a lista nunca vinha e o Hoje
 piscava. A v219 transformava o login em pessoa ("Ejup Mkt"), escolhia por

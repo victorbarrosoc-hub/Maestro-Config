@@ -174,7 +174,10 @@ cenarios.push(['1. o buraco: um cliente que este aparelho não conhecia', async 
   await esperarQuieto(A.pag, 3200);
   const tarefas = await A.pag.evaluate(() => S.ensaio.tarefas.map(t => t.titulo));
   checa('1.7 a tarefa criada aqui sem rede sobrevive à recarga que trouxe o __config__', tarefas.includes('Minha, sem subir'), tarefas);
-  checa('1.8 e a que veio do banco também entrou', tarefas.includes('Vinda do config'), tarefas);
+  /* v269: com o __estado__ já tendo quadro, a cópia do __config__ é legado — uma
+     tarefa que só existe nela é sobra de versão antiga, e juntá-la ressuscitava
+     tarefa velha (o card duplicado do founder, 25/set). Quem manda é o __estado__. */
+  checa('1.8 a cópia legada do __config__ não entra por cima do quadro do __estado__', !tarefas.includes('Vinda do config'), tarefas);
   const estadoBanco = banco.ler('__estado__');
   checa('1.9 e a minha subiu para o pacote quando a rede voltou', ((estadoBanco.s || {}).ensaio || {}).tarefas?.some(t => t.titulo === 'Minha, sem subir'), (estadoBanco.s.ensaio || {}).tarefas?.map(t => t.titulo));
   await A.ctx.close();

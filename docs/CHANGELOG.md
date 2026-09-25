@@ -1,11 +1,43 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.82
+Version: 0.5.83
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.83 — 2026-09-25
+
+**Status:** Concluída
+
+### v269 — mesma agência, outro login, não é outra casa
+
+O founder, depois da v268: *"Não gravei: isto apagaria 34 publicações de
+EJUP"* e, no Ensaio, *"ele duplicou o card… caiu pra Do, e tá na primeira
+volta"*.
+
+**Reproduzido** (contra a v268: "apagaria 40 publicações de EJUP", no celular e
+no computador): o aparelho tinha a sessão do Victor (estado, base da
+sincronização, carimbo da agência); a sessão expira e quem entra é o login da
+agência. A v220 vê a MESMA agência e não mexe — mas a v208, que olha o E-MAIL,
+apagava o estado e deixava a base. Ao recarregar: pauta vazia contra base cheia,
+e a mescla de três lados leu "apaguei 34 aqui". A v177 barrou a pauta.
+
+1. **v208:** com o carimbo da agência batendo, outro login é a mesma casa — só
+   anota o dono. Quando limpa de verdade, a base da sincronização vai junto
+   (localStorage e IndexedDB): estado sem base, nunca base sem estado.
+2. **O Ensaio lê do lugar certo:** a cópia do quadro no `__config__` é legado.
+   Com o `__estado__` tendo quadro, ela não entra (a v266 trocou "substituir"
+   por "juntar", e juntar com cópia velha ressuscita tarefa). Sem quadro no
+   `__estado__` (dado de antes da v151), ela segue sendo a fonte.
+
+19 provas em `web/verificar/v269-mesma-agencia-outro-login.mjs` (contra a v268:
+2 falhas, as do aviso). A v151 (prova 1.8) passou a cobrar a regra nova.
+
+**Aberto — o card duplicado:** não reproduzido com os dados de prova. Pedido
+ao founder: não apagar os dois cards e mandar print da ficha e do histórico
+de cada um (a lição do card do Marco Bruno, v199).
 
 ## 0.5.82 — 2026-09-25
 
