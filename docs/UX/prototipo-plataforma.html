@@ -15234,11 +15234,26 @@ const pedidoAberto = p => temPedido(p) && !comCliente(p) && !!p.ajustePendente;
 
 /* Enviar exige texto e um card que não esteja com o cliente nem já
    aprovado. Tarefa interna nunca vai — é assunto da agência. */
+/* v270 — "este card tem conteúdo?" tem UMA resposta. Oito portas do fluxo
+   (o botão "para o Check", o Check, o lote, o envio, o devolver) olhavam só
+   `p.texto` — e card de vídeo guarda o conteúdo em `roteiro` (gancho,
+   desenvolvimento, CTA), corte de podcast em `corte`, story em `telas`, e há
+   card só com legenda. Esses ficavam presos: sem botão de liberar e com
+   "Falta o texto" — o que, de fora, parece texto que sumiu. */
+function conteudoDe(p){
+  if(!p) return '';
+  const t = v => String(v == null ? '' : v).trim();
+  const r = p.roteiro || {}, c = p.corte || {};
+  return t(p.texto) || t(p.legenda)
+    || [r.hook, r.des, r.cta].map(t).filter(Boolean).join('\n')
+    || [t(c.ep)].concat((c.tcs || []).map(x => x ? [t(x.de), t(x.ate)].filter(Boolean).join('–') : '')).filter(Boolean).join(' ')
+    || (Array.isArray(p.telas) ? p.telas.map(x => t(typeof x === 'object' && x ? (x.texto || x.t || '') : x)).filter(Boolean).join('\n') : '');
+}
 function podeEnviar(p){
   if(p.tarefa || comCliente(p)) return false;
   const f = faseDe(p);
   if(f==='aprovado' || f==='agendado' || f==='postado') return false;
-  return (p.texto||'').trim().length > 0;
+  return conteudoDe(p).length > 0;
 }
 /* Antes do texto aprovado, o que vai ao cliente é o TEXTO. Depois, a
    postagem pronta. É o ciclo de dois lotes (D-042) no card. */
@@ -16047,7 +16062,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v269 · 25 set · mesma agência, outro login';
+const VERSAO_PROTOTIPO = 'v270 · 25 set · vídeo e corte passam no Check';
 
 menuSheet = (function(orig){
   return function(){
@@ -16726,7 +16741,7 @@ function moverJob(p, col){
   if(col==='inbox'){
     toast('Card de conteúdo não volta para o Inbox — ele nasce na pauta.'); return; }
   if(col==='cliente'){
-    if(!(p.texto||'').trim()){
+    if(!conteudoDe(p)){
       toast('Falta o texto. O cliente precisa de algo para ler.'); return; }
     porFase(p, destinoDoEnvio(p));
     p.enviadoEm = Date.now(); p.ajustePendente = false;
@@ -23022,7 +23037,7 @@ moverJob = (function(orig){
       return;
     }
     if(col === 'check'){
-      if(!(p.texto || '').trim()){ toast('Falta o texto. O Check precisa de algo para ler.'); return; }
+      if(!conteudoDe(p)){ toast('Falta o texto. O Check precisa de algo para ler.'); return; }
       p.ajusteInterno = false;
     }
     return orig.apply(this, arguments);
@@ -23032,13 +23047,13 @@ moverJob = (function(orig){
 /* ---------- 4. enviar é mandar o LOTE ------------------------------- */
 podeEnviar = function(p){
   if(p.tarefa) return false;
-  return noLote(p) && (p.texto || '').trim().length > 0;
+  return noLote(p) && conteudoDe(p).length > 0;
 };
 const porqueNaoVai = p => {
   const f = faseDe(p);
   if(EM_CHECK.includes(f)) return 'Está no Check: o revisor libera para o lote, e daí vai.';
   if(NO_CLIENTE.includes(f)) return 'Já está com o cliente.';
-  if(!(p.texto || '').trim()) return 'Falta o texto.';
+  if(!conteudoDe(p)) return 'Falta o texto.';
   if(f === 'aprovado' || f === 'agendado' || f === 'postado') return 'O cliente já aprovou este.';
   return 'Passa pelo Check antes: mande para a aprovação interna.';
 };
@@ -23164,7 +23179,7 @@ function mandarParaCheck(tid){
   const t = S.ensaio.tarefas.find(x => x.id === +tid); if(!t) return;
   const p = cardDaTarefa(t);
   if(!p){ toast('Estruture a pauta primeiro.'); return; }
-  if(!(p.texto || '').trim()){ toast('Falta o texto. O Check precisa de algo para ler.'); return; }
+  if(!conteudoDe(p)){ toast('Falta o texto. O Check precisa de algo para ler.'); return; }
   const v = voltaDe(faseDe(p));
   comHistorico(() => { porFase(p, v === 1 ? 'revisao' : 'revisao2'); p.ajusteInterno = false; });
   som('toque'); render();
@@ -23209,7 +23224,7 @@ function pintarCiclo(){
       if(/Helena pediu/.test(b.textContent)) b.textContent = `${quem.split(' ')[0]} pediu:`; });
 
     const f = faseDe(p), v = voltaDe(f);
-    const temTexto = !!(p.texto || '').trim();
+    const temTexto = !!conteudoDe(p);
     if(p.ajusteInterno && p.revisao){
       card.classList.add('pedido');
       antes(`<div class="enPedido">${ic('warn',12)} <span><b>Revisor pediu:</b> ${esc(p.revisao.nota)}</span></div>`);
@@ -36736,7 +36751,7 @@ sbGravar = (function(orig){
     texto_cli: 'cliente', post_cli:   'cliente'
   };
   const RECADO = {
-    Check:   p => (p.texto || '').trim()
+    Check:   p => conteudoDe(p)
       ? 'O Check é do revisor. Mande pelo quadro — arraste para Check, ou use o botão do card.'
       : 'Falta o texto. O Check precisa de algo para ler.',
     lote:    () => 'Quem libera para o lote é o revisor, no Check.',
@@ -37116,7 +37131,7 @@ sbGravar = (function(orig){
 
   function porqueNaoDevolve(p){
     if(!ehVolta(p)) return null;                       /* o botão nem aparece */
-    if(!(p.texto || '').trim()) return 'Falta o texto. O cliente precisa de algo para ler.';
+    if(!conteudoDe(p)) return 'Falta o texto. O cliente precisa de algo para ler.';
     if(destinoDoEnvio(p) === 'post_cli'
        && typeof clVisuais === 'function' && !clVisuais(p).length)
       return 'A arte ainda não está no card. Sem ela o cliente aprovaria só o texto de novo.';
