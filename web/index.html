@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-25 03:12 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-25 04:03 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -16111,7 +16111,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v267 · 25 set · a pessoa se escolhe depois';
+const VERSAO_PROTOTIPO = 'v268 · 25 set · o login é da agência';
 
 menuSheet = (function(orig){
   return function(){
@@ -17708,6 +17708,7 @@ addEventListener('click', e => {
   const v = e.target.closest && e.target.closest('[data-qevoltar]');
   if(!v) return;
   e.stopImmediatePropagation();
+  window.__qeFechouEm = Date.now();   /* v268: quem fecha é a pessoa — a lista do login não volta sozinha */
   document.getElementById('quemEsta')?.remove();
 }, true);
 
@@ -20411,7 +20412,8 @@ telaConversas = (function(orig){
       if(typeof sbCarregar === 'function') await sbCarregar();
       if(typeof buscarEstado === 'function') await buscarEstado();
       assumirPessoa();                       /* v200 — com a equipe do banco */
-      document.getElementById('quemEsta')?.remove();
+      /* v268: a lista que o login da agência abriu é a pessoa escolhendo — não se fecha por ela */
+      { const qe = document.getElementById('quemEsta'); if(qe && qe.dataset.v267 !== '1') qe.remove(); }
       render();
     })();
   }
@@ -40761,6 +40763,17 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
          devolvido ao dono da conta 900ms depois. Depois de entrar, quem
          manda na identidade é a porta (v200/v207) e o seletor. */
       let acabouDeEntrar = false;
+      /* v268 — O LOGIN DA AGÊNCIA NÃO É UMA PESSOA. O founder: "EJUP.mkt não
+         é equipe, é a agência". Com a equipe já cadastrada, um login que não
+         está nela é o login da agência (compartilhado): quem é a pessoa se
+         escolhe na lista. Criar "Ejup Mkt" aqui escolhia pela pessoa, fechava
+         a lista — e, a cada vez que a equipe voltava do banco sem ele, fazia
+         tudo de novo (a tela que piscava no vídeo de 25/set). A regra da
+         v215/v219 fica para a casa VAZIA: quem cria a agência entra nela. */
+      /* casa COM dono: o login de fora da equipe é o da agência. Casa sem dono
+         (recém-criada, ou a ZRO da v219): quem entra pela conta vira membro — sem
+         isso o dono não entraria na própria casa */
+      if(!m && S.equipe.some(x => x && x.dono && !x.entrouPelaConta)) return;
       if(!m){
         const temDono = S.equipe.some(x => x && x.dono);
         const nome = eu.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -48366,6 +48379,8 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
     if(document.getElementById('quemEsta')){ marcarLogin(); return true; }
     if(typeof abrirQuemAgencia !== 'function') return false;
     abrirQuemAgencia();
+    const el = document.getElementById('quemEsta');
+    if(el) el.dataset.v267 = '1';
     marcarLogin();
     return true;
   }
@@ -48385,6 +48400,10 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
   try{ new MutationObserver(() => { if(document.getElementById('quemEsta')) marcarLogin(); })
     .observe(document.body, { childList: true }); }catch(e){}
   let viuForm = false, depoisDoLogin = false, desde = 0, loginTerminou = false;
+  const PEDE = 'maestro-v268-pede-lista';
+  try{
+    if(sessionStorage.getItem(PEDE) && logado() && !noLink()){ depoisDoLogin = true; desde = Date.now(); loginTerminou = true; }
+  }catch(e){}
   if(typeof toast === 'function') toast = (function(orig){
     return function(msg){
       try{
@@ -48403,6 +48422,7 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
     viuForm = false;
     if(!logado() || noLink()) return;
     depoisDoLogin = true; desde = Date.now(); loginTerminou = false;
+    try{ sessionStorage.setItem(PEDE, '1'); }catch(e){}
     esperando();
     try{ if(S.view === 'site' && typeof render === 'function') render(); }catch(e){}
   }
@@ -48487,6 +48507,32 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
     if(t.hasAttribute('data-v267trocar')) abrirLista();
     else if(window.MaestroConta && MaestroConta.sair) MaestroConta.sair(false);
   }, true);
+  let fechouPorEscolha = 0, reaberturas = 0, tinhaLista = false;
+  addEventListener('click', e => {
+    if(e.target.closest && e.target.closest('#quemEsta [data-qeag], #quemEsta [data-qevoltar]')){
+      fechouPorEscolha = Date.now();
+      try{ sessionStorage.removeItem(PEDE); }catch(er){}
+    }
+  }, true);
+  try{ new MutationObserver(() => {
+    const el = document.getElementById('quemEsta');
+    if(el){ tinhaLista = el.dataset.v267 === '1' || tinhaLista; return; }
+    if(!tinhaLista) return;
+    tinhaLista = false;
+    if(window.__qeFechouEm && Date.now() - window.__qeFechouEm < 30000){ try{ sessionStorage.removeItem(PEDE); }catch(e){} return; }
+    if(Date.now() - fechouPorEscolha < 30000) return;
+    if(!logado() || noLink() || reaberturas >= 10) return;
+    let pede = false; try{ pede = !!sessionStorage.getItem(PEDE); }catch(e){}
+    if(!pede) return;
+    reaberturas++;
+    setTimeout(() => { if(!document.getElementById('quemEsta')) abrirLista(); }, 60);
+  }).observe(document.body, { childList: true }); }catch(e){}
+  if(window.MaestroPorta && typeof MaestroPorta.sair === 'function') MaestroPorta.sair = (function(orig){
+    return function(){
+      try{ localStorage.removeItem('maestro-v267-escolha'); sessionStorage.removeItem(PEDE); }catch(e){}
+      return orig.apply(this, arguments);
+    };
+  })(MaestroPorta.sair);
   window.MaestroQuemEntra = { abrirLista, marcarLogin };
 })();
 </script>
