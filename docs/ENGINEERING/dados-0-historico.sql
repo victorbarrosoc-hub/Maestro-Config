@@ -183,7 +183,7 @@ begin
     dados = atual || jsonb_build_object('pauta', nova, 'mats', mats, 'refs', refs, 'rev', rev,
       -- fora da lixeira do cliente, senão a plataforma o tira de novo
       'lixeira', coalesce((select jsonb_agg(l) from jsonb_array_elements(case when jsonb_typeof(atual -> 'lixeira') = 'array' then atual -> 'lixeira' else '[]'::jsonb end) l
-                            where coalesce(l ->> 'id', l -> 'card' ->> 'id', l -> 'p' ->> 'id', '') <> p_card), '[]'::jsonb)),
+                            where coalesce(l -> 'item' ->> 'id', l ->> 'id', l -> 'card' ->> 'id', l -> 'p' ->> 'id', '') <> p_card), '[]'::jsonb)),
     atualizado_em = now()
   where org = minha and cliente = p_cliente;
 

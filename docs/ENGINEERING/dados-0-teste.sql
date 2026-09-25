@@ -99,14 +99,15 @@ begin
   -- card na lixeira do cliente e com lápide no Ensaio: volta e fica
   update public.pauta set dados = dados
       || jsonb_build_object('pauta', (select jsonb_agg(c) from jsonb_array_elements(dados -> 'pauta') c where c ->> 'id' <> '3'))
-      || '{"lixeira":[{"id":3,"t":"EJUP · Post · Agenda"}]}'
+      || '{"lixeira":[{"item":{"id":3,"t":"EJUP · Post · Agenda"},"idx":2,"quando":1790000000000},{"item":{"id":77,"t":"outro apagado"},"idx":0,"quando":1790000000001}]}'
    where org='maestro' and cliente='n0';
   update public.pauta set dados = jsonb_set(dados, '{s,ensaio,apagadas}', '[{"id":"c:n0|3"},{"id":"555"}]') where org='maestro' and cliente='__estado__';
   select id into hid from public.pauta_historico where cliente='n0' and resumo -> 'sumiram' ? '3' order by id desc limit 1;
   r := public.maestro_restaurar_card('n0', '3', hid);
   select dados into d from public.pauta where org='maestro' and cliente='n0';
   perform pg_temp.checa(exists(select 1 from jsonb_array_elements(d -> 'pauta') c where c ->> 'id' = '3')
-                        and jsonb_array_length(d -> 'lixeira') = 0, '18 card da lixeira volta e sai da lixeira');
+                        and jsonb_array_length(d -> 'lixeira') = 1 and d -> 'lixeira' -> 0 -> 'item' ->> 'id' = '77',
+                        '18 card da lixeira volta e sai da lixeira (formato real {item,idx,quando}); o outro apagado fica');
   select dados into d from public.pauta where org='maestro' and cliente='__estado__';
   perform pg_temp.checa(d -> 's' -> 'ensaio' -> 'apagadas' = '[{"id":"555"}]',
     '19 a lápide do Ensaio sai (só a dele — a da tarefa 555 fica)');
