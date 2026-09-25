@@ -120,7 +120,7 @@ console.log('\n1. o motor desce só quando a aba abre, e a carga geral não traz
   checa('o banco devolveu a linha sem marca, e a marcada nem desceu', geral && geral.n === 2, geral);
   const abriu = await irRedes(pg);
   const js = pedidos.filter(p => p.startsWith('/web/redes/')).map(p => p.replace('/web/redes/', '')).sort();
-  checa('ao abrir: os cinco scripts e o estilo, uma vez', abriu && JSON.stringify(js) === JSON.stringify(['adaptadores.js', 'analise.js', 'dados.js', 'motor.js', 'tela.css', 'tela.js']), js);
+  checa('ao abrir: os seis scripts (v265: + exemplo) e o estilo, uma vez', abriu && JSON.stringify(js) === JSON.stringify(['adaptadores.js', 'analise.js', 'dados.js', 'exemplo.js', 'motor.js', 'tela.css', 'tela.js']), js);
   const lidas = B.leituras.filter(l => /cliente=in\./.test(decodeURIComponent(l.url))).map(l => decodeURIComponent(l.url));
   checa('a aba lê as cinco linhas DESTE cliente, pelo nome', lidas.length >= 1 && ['instagram', 'facebook', 'youtube', 'tiktok', 'linkedin'].every(p => lidas[0].includes(`__redes__:cj:${p}`)), lidas);
   const t = await pg.evaluate(() => document.querySelector('.rd2').innerText);
