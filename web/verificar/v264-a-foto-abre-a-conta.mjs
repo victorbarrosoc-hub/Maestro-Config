@@ -79,13 +79,14 @@ console.log('\n2. Sair sobe o pendente antes de limpar');
   await ctx.close();
 }
 
-console.log('\n3. Trocar de conta: sai e o login já vem aberto');
+console.log('\n3. Trocar de usuário (v267): a lista da equipe, sem sair da agência');
 {
   const { ctx, pg } = await abrir();
   await pg.click('.qeAtual'); await pg.click('#v264Conta [data-v264="trocar"]');
-  await pg.waitForTimeout(4500);
-  const d = await pg.evaluate(() => ({ sessao: localStorage.getItem('maestro.sessao.v1'), login: !!document.getElementById('entrarMaestro') && getComputedStyle(document.getElementById('entrarMaestro')).display !== 'none' }));
-  checa('sem sessão, e com o login aberto para a outra conta', !d.sessao && d.login, d);
+  await pg.waitForTimeout(1500);
+  const d = await pg.evaluate(() => ({ sessao: !!localStorage.getItem('maestro.sessao.v1'), lista: !!document.getElementById('quemEsta'),
+    login: !!document.getElementById('entrarMaestro') }));
+  checa('a sessão continua, a lista de pessoas abre, o login não', d.sessao && d.lista && !d.login, d);
   await ctx.close();
 }
 

@@ -1,11 +1,52 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.80
+Version: 0.5.81
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.81 — 2026-09-25
+
+**Status:** Concluída
+
+### v267 — o login é da agência; a pessoa se escolhe depois
+
+O founder: *"o trocar de conta no avatar é pra trocar de usuário, não de
+agência"*, *"não tá aparecendo mais os usuários pra logar na conta de cada
+usuário, só aparece entrar na agência"* e *"tem bug de tela de novo, não
+aceito isso mais"*. Medido em modo de produção, login pelo formulário,
+banco lento, com foto de cada passo:
+
+1. **O bug de tela:** depois do login, o portão antigo ("Entrar na sua
+   agência · Sou a agência", barra "protótipo navegável") ficava à vista
+   enquanto o banco respondia — a v258 só o atravessava no desenho seguinte.
+   Agora o desenho sai no mesmo instante e, no lugar, "Carregando a sua
+   agência…".
+2. **A lista de pessoas volta:** a v256 escolhia sozinha quem tinha o
+   e-mail do login. Todo login feito no aparelho termina em "Quem está
+   entrando?" (a equipe do banco), com o dono do e-mail primeiro e marcado
+   "este login". Reabrir o app não pergunta de novo.
+3. **Trocar de usuário, não de agência:** o avatar abre a lista sem sair;
+   "Sair da agência" continua saindo. No celular (sem lateral), o rodapé do
+   Menu ganhou quem está e "Trocar de usuário", e o sair de lá passa pelo
+   caminho que guarda o pendente antes (v264).
+4. **Três defeitos que a prova achou no caminho:**
+   - o login termina DEPOIS do que parece (lê o banco e escolhe a pessoa
+     pelo e-mail no fim): com rede lenta, desfazia a pessoa escolhida na
+     lista. A lista espera o fim, e a escolha feita nela não é desfeita por
+     escolha automática;
+   - ao recarregar, a pessoa escolhida voltava a ser o dono do login. A
+     escolha fica guardada com o e-mail do login e é restaurada antes de
+     cada desenho;
+   - uma leitura que saía antes do login e voltava depois fazia a v91 abrir
+     o login POR CIMA da sessão aberta (1 em 6 entradas, com a tela presa
+     em "Carregando…"). A v91 pergunta de novo antes de abrir a porta.
+
+30 provas em `web/verificar/v267-a-pessoa-se-escolhe.mjs` (três rodadas
+seguidas verdes); 14 entradas seguidas sem trava. A suíte da v264 passou a
+cobrar a regra nova do "Trocar".
 
 ## 0.5.80 — 2026-09-25
 

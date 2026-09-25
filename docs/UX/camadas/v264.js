@@ -12,6 +12,9 @@
    está pendente sobe para o banco: pacote, linhas dos clientes e o
    __config__ (onde mora o Ensaio). Sair nunca pode ser o jeito de perder
    trabalho.
+
+   v267: "Trocar de conta" virou "Trocar de usuário" (a lista da equipe,
+   sem sair) e "Sair" virou "Sair da agência". Ver docs/UX/camadas/v267.js.
    ===================================================================== */
 (function(){
   const FLAG = 'maestro-v264-abrir-login';
@@ -34,11 +37,11 @@
     el.id = 'v264Conta'; el.setAttribute('role', 'menu'); el.setAttribute('aria-label', 'Sua conta');
     el.innerHTML = `
       <div class="v264Quem"><span class="v264Av">${esc(ini)}</span>
-        <span><b>${esc(nome)}</b>${q && q.email ? `<small>${esc(q.email)}</small>` : ''}${m && m.papel ? `<small>${esc(m.papel)}${m.dono ? ' · dono' : ''}</small>` : ''}</span></div>
+        <span><b>${esc(nome)}</b>${(m && m.mail) || (q && q.email) ? `<small>${esc((m && m.mail) || q.email)}</small>` : ''}${m && m.papel ? `<small>${esc(m.papel)}${m.dono ? ' · dono' : ''}</small>` : ''}</span></div>
       ${logado() ? `
         <button role="menuitem" data-v264="conta">${ic('person', 15)}<span>Conta e senha</span></button>
-        <button role="menuitem" data-v264="trocar">${ic('refresh', 15)}<span>Trocar de conta</span></button>
-        <button role="menuitem" data-v264="sair" class="v264Sair">${ic('arrowl', 15)}<span>Sair</span></button>`
+        <button role="menuitem" data-v264="trocar">${ic('refresh', 15)}<span>Trocar de usuário</span></button>
+        <button role="menuitem" data-v264="sair" class="v264Sair">${ic('arrowl', 15)}<span>Sair da agência</span></button>`
       : `<button role="menuitem" data-v264="entrar">${ic('unlock', 15)}<span>Entrar</span></button>`}`;
     document.body.appendChild(el);
     const r = ancora.getBoundingClientRect();
@@ -77,8 +80,9 @@
     e.stopImmediatePropagation(); e.preventDefault();
     const a = b.dataset.v264;
     if(a === 'sair') return sair(false);
-    if(a === 'trocar') return sair(true);
     fechar();
+    /* v267: trocar é de USUÁRIO — a lista da equipe, sem sair da agência */
+    if(a === 'trocar'){ try{ window.MaestroQuemEntra && MaestroQuemEntra.abrirLista(); }catch(err){} return; }
     if(a === 'conta'){ try{ go('agency', 'conta'); }catch(err){} return; }
     if(a === 'entrar'){ try{ MaestroPorta.pedir(); }catch(err){} }
   }, true);
@@ -92,5 +96,5 @@
       setTimeout(() => { try{ if(!logado()) MaestroPorta.pedir(); }catch(e){} }, 700);
     }
   }catch(e){}
-  window.MaestroConta = { abrir, fechar, subirTudo };
+  window.MaestroConta = { abrir, fechar, subirTudo, sair };
 })();

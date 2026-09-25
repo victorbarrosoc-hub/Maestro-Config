@@ -344,6 +344,21 @@ moldura da v240** (troca de cliente, abas que quebram no celular) — ela
 agora é `MaestroMolduraCliente(html)`, e quem desenha aba por fora a chama.
 Suíte que abre a aba Redes por um servidor próprio precisa servir
 `/web/redes/` (a v240 aprendeu).
+**Fechado (25 set, v267) — o login é da agência; a pessoa se escolhe
+depois.** "Trocar de conta é pra trocar de usuário, não de agência"; "não
+aparece mais a lista de usuários"; "bug de tela de novo". (1) Depois do
+login o portão antigo ficava à vista enquanto o banco respondia — agora sai
+no mesmo instante, com "Carregando a sua agência…". (2) Todo login pelo
+formulário termina em "Quem está entrando?", o dono do e-mail primeiro e
+marcado "este login"; reabrir não pergunta. (3) Avatar: "Trocar de usuário"
+(a lista, sem sair) e "Sair da agência"; no celular, no rodapé do Menu.
+**Armadilhas que a prova pegou:** o login TERMINA depois do que parece (no
+fim escolhe a pessoa pelo e-mail) e desfazia a escolha com rede lenta; a
+escolha não sobrevivia a recarregar (agora `maestro-v267-escolha`, com o
+e-mail do login); e a v91 abria o login POR CIMA da sessão quando uma
+leitura de antes do login voltava depois (1 em 6, tela presa) — conserto
+na origem. 30 provas em `web/verificar/v267-a-pessoa-se-escolhe.mjs`,
+banco lento de propósito, três rodadas verdes.
 **Fechado (25 set, v266) — o quadro não encolhe sozinho.** O Ensaio perdeu
 as tarefas da casa e as concluídas; o banco confirmou que ninguém apagou
 (lixeira vazia). Reproduzido: a carga da v54 fazia

@@ -1,0 +1,15 @@
+/* v267 — a marca "este login" na lista de quem está entrando */
+#quemEsta .v267Login{ display:inline-block; margin-left:8px; font-style:normal; font-size:11px; font-weight:600;
+  color:var(--brass-500); background:color-mix(in srgb, var(--brass-500) 14%, transparent); border-radius:999px; padding:1px 8px; vertical-align:1px }
+/* a etiqueta cabe na linha do nome, sem empurrar o cargo */
+#quemEsta .qePessoa b:has(+ .v267Login){ display:inline }
+#quemEsta .v267Login + span{ display:block }
+/* no rodapé do Menu (celular): quem está, e trocar */
+.v267Troca{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:12px 14px; margin:6px 0 10px;
+  border:0; border-radius:14px; background:var(--sup); color:var(--ink-50); cursor:pointer; font:inherit }
+.v267Troca .av{ width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:600;
+  background:var(--enc); color:var(--ink-100); flex:0 0 auto }
+.v267Troca .t{ flex:1; min-width:0 }
+.v267Troca b{ display:block; font-size:14px }
+.v267Troca .t span{ display:block; font-size:12px; color:var(--ink-400) }
+.v267Troca:active{ transform:scale(.98) }
