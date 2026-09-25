@@ -80,9 +80,6 @@
   })(toast);
   function olhar(){
     const form = document.getElementById('entrarMaestro');
-    /* com a sessão aberta, o formulário de login não tem o que fazer ali:
-       é sobra de uma leitura atrasada (ver a v91, corrigida na origem) */
-    if(form && logado() && !noLink()){ form.remove(); try{ MaestroPorta._pedindoLimpo && MaestroPorta._pedindoLimpo(); }catch(e){} return; }
     if(form){ viuForm = true; return; }
     if(!viuForm) return;
     viuForm = false;
@@ -108,7 +105,8 @@
     if(!depoisDoLogin) return;
     if(Date.now() - desde > 20000){ depoisDoLogin = false; document.getElementById('v256Espera')?.remove(); return; }
     if(!logado() || noLink()){ depoisDoLogin = false; return; }
-    if(document.getElementById('entrarMaestro')) return;
+    /* um formulário aberto (alguém pediu o login de novo): a espera não fica por cima dele */
+    if(document.getElementById('entrarMaestro')){ document.getElementById('v256Espera')?.remove(); return; }
     if(!bancoLeu()){ esperando(); return; }
     if(!loginTerminou && Date.now() - desde < 12000){ esperando(); return; }
     if(!(S.equipe || []).length){ esperando(); return; }

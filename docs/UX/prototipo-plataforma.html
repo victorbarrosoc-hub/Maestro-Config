@@ -20352,8 +20352,6 @@ telaConversas = (function(orig){
   /* v250: quem pergunta "quem entrou" recebe a IDENTIDADE (o e-mail com
      que a pessoa está na equipe); o e-mail de verdade do login vai em `login` */
   window.MaestroPorta = { pedir, sair, entrar, token,
-    /* v267: quem tirar o formulário de fora solta a trava junto */
-    _pedindoLimpo: () => { pedindo = false; },
     quem: () => sessao ? Object.assign({}, sessao, { email: identidade(sessao), login: sessao.email }) : sessao };
 
 })();
@@ -48332,7 +48330,6 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
   })(toast);
   function olhar(){
     const form = document.getElementById('entrarMaestro');
-    if(form && logado() && !noLink()){ form.remove(); try{ MaestroPorta._pedindoLimpo && MaestroPorta._pedindoLimpo(); }catch(e){} return; }
     if(form){ viuForm = true; return; }
     if(!viuForm) return;
     viuForm = false;
@@ -48353,7 +48350,7 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
     if(!depoisDoLogin) return;
     if(Date.now() - desde > 20000){ depoisDoLogin = false; document.getElementById('v256Espera')?.remove(); return; }
     if(!logado() || noLink()){ depoisDoLogin = false; return; }
-    if(document.getElementById('entrarMaestro')) return;
+    if(document.getElementById('entrarMaestro')){ document.getElementById('v256Espera')?.remove(); return; }
     if(!bancoLeu()){ esperando(); return; }
     if(!loginTerminou && Date.now() - desde < 12000){ esperando(); return; }
     if(!(S.equipe || []).length){ esperando(); return; }

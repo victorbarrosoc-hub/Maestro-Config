@@ -52,7 +52,10 @@ async function abrir(){
     if(u.includes('/rpc/maestro_pronto')) return j(true);
     return j([]);
   });
-  await pag.addInitScript(d => { try{ localStorage.setItem('maestro.sessao.v1', JSON.stringify(d));
+  /* semeia a sessão só na PRIMEIRA carga: sair recarrega a página (v264/v267), e
+     semear de novo ali faria a sessão "voltar" pela mão da própria prova */
+  await pag.addInitScript(d => { try{ if(sessionStorage.getItem('v218-semeado')) return; sessionStorage.setItem('v218-semeado', '1');
+    localStorage.setItem('maestro.sessao.v1', JSON.stringify(d));
     localStorage.setItem('maestro-dono-do-aparelho-v1', d.email); }catch(e){} },
     { access:'t', refresh:'r', email: EU, expira: Date.now() + 3600000 });
   await pag.goto(BASE, { waitUntil:'load' });
@@ -205,17 +208,21 @@ console.log('\n8. o Sair no Menu');
 {
   await pag.evaluate(() => { S.menu = true; renderLayer(); });
   await pag.waitForTimeout(200);
-  ok(await pag.evaluate(() => !!document.querySelector('.msheet .msfoot [data-sairmaestro]')), 'o rodapé do Menu tem "Sair da conta"');
-  ok(await pag.evaluate(() => /Sair da conta/.test(document.querySelector('.msheet .msfoot').textContent)), 'com esse nome, sem rodeio');
-  await pag.click('.msheet .msfoot [data-sairmaestro]');
+  /* v267: o sair do rodapé é o mesmo do computador (v264) — guarda o
+     pendente, limpa o aparelho e recarrega; e chama-se "Sair da agência" */
+  ok(await pag.evaluate(() => !!document.querySelector('.msheet .msfoot [data-v267sair]')), 'o rodapé do Menu tem "Sair da agência"');
+  ok(await pag.evaluate(() => /Sair da agência/.test(document.querySelector('.msheet .msfoot').textContent)), 'com esse nome, sem rodeio');
+  await pag.click('.msheet .msfoot [data-v267sair]');
   await pag.waitForTimeout(700);
-  ok(await pag.evaluate(() => !MaestroPorta.quem()), 'tocar sai da conta de verdade');
   ok(await pag.evaluate(() => !S.menu && !document.querySelector('.msheet')), 'e o Menu fecha junto');
-  ok(await pag.evaluate(() => !!document.getElementById('entrarMaestro')), 'e a porta de entrar volta à frente');
+  await pag.waitForLoadState('load').catch(() => {});
+  await pag.waitForTimeout(6500);
+  ok(await pag.evaluate(() => !MaestroPorta.quem() && !localStorage.getItem('maestro.sessao.v1')), 'tocar sai da conta de verdade');
+  ok(await pag.evaluate(() => S.view === 'site' || !!document.getElementById('entrarMaestro')), 'e volta para fora (vitrine ou porta de entrar)');
   /* quem veio por link não tem de onde sair */
   await pag.evaluate(() => { document.getElementById('entrarMaestro')?.remove(); S.viaLink = true; S.menu = true; renderLayer(); });
   await pag.waitForTimeout(200);
-  ok(await pag.evaluate(() => !document.querySelector('.msheet .msfoot [data-sairmaestro]')), 'quem chegou por link não vê "Sair"');
+  ok(await pag.evaluate(() => !document.querySelector('.msheet .msfoot [data-sairmaestro], .msheet .msfoot [data-v267sair]')), 'quem chegou por link não vê "Sair"');
 }
 
 ok(erros.length === 0, 'nenhum erro de página (' + (erros[0] || '') + ')');

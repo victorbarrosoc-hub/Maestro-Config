@@ -101,8 +101,11 @@ checa('as chamadas ao banco levam o apikey (o Supabase exige)',
       depois.length > 0 && depois.every(c => c.apikey));
 
 // 6. Uma porta so
+/* v267: depois do login vem, DE PROPÓSITO, "Quem está entrando?" (a
+   pessoa se escolhe depois do login da agência). O que esta prova guarda
+   é não haver um segundo formulário de login */
 checa('existe uma tela de login so (sem duplicata)',
-      await pag.locator('#quemEsta').count() === 0);
+      await pag.locator('#entrarMaestro').count() === 0);
 
 checa('nenhum erro de JavaScript', erros.length === 0);
 
