@@ -322,8 +322,15 @@ de todas as áreas, o projeto MPGP de F1 ao TAP, roteiro de oito passos no
 Hoje); o exemplo é versionado (`DEMO_VERSAO` em `banco.js`) — mudou a semente,
 sobe o número. O exemplo pegou duas regras: termo de uso de imagem não é venda
 (não volta para Fechamento) e upsell não é renovação. Desenho e plano da mescla em
-`docs/PRD/GESTAO.md`. **Aberto para o founder:** quem entra com o login da
-agência vê o financeiro (RBAC por área entra na mescla).
+`docs/PRD/GESTAO.md`. **O Início é uma conversa** (`web/gestao/comando.js`):
+"recebi da Construtora Vale", "fechamos com a X, R$ 7.800 por 12 meses", "o
+Dr. Marcos assinou o contrato <link>", "como está a Y?", "lembrar de…" — a frase
+vira uma das AÇÕES da esteira (o mesmo motor), a resposta mostra o que vai
+mudar e só grava ao Confirmar; cliente ambíguo vira pergunta, ação fora da
+etapa é explicada, faltou dado abre a janela da ação preenchida. Intérprete
+local (sem servidor, funciona no demo); porta única `interpretar()` para um
+modelo de linguagem entrar na mescla. 95 provas. **Aberto para o founder:**
+quem entra com o login da agência vê o financeiro (RBAC por área entra na mescla).
 **Fechado (24 set, v263) — as cinco redes num clique.** "Faz o botão
 importar as cinco redes num clique." O importador abre em **Todas as
 redes**: um arraste com os arquivos das cinco, cada peça na rede que o

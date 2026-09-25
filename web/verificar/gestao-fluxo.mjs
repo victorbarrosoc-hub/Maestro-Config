@@ -100,6 +100,7 @@ console.log('\nA · separado da plataforma');
   const lProd = B.leituras.find(l => /maestroRedes=is\.null/.test(decodeURIComponent(l.url)));
   checa('3. lê a produção pela mesma consulta da carga geral (só GET)', !!lProd && lProd.n === 4, lProd);
 
+  await pg.evaluate(() => { location.hash = '#/hoje'; }); await pg.waitForTimeout(150);
   const cc = await pg.textContent('#principal');
   checa('3b. a primeira vez, o Hoje oferece trazer os 2 clientes e os Negócios da Maestro', /Trazer os 2 clientes da Maestro/.test(cc) && /Trazer o negócio do CRM/.test(cc), cc.slice(0, 200));
   /* um lead novo pela tela */
@@ -405,6 +406,7 @@ console.log('\nD · o demo');
   checa('71. o projeto MPGP está completo: F1 a F7, Canvas, TAP assinado e as entregas viradas tarefas', pj.st === 'execucao' && pj.f && pj.tap && pj.bmc === 9 && pj.tar === 4, pj);
   checa('72. regra: termo de uso de imagem não põe ex-cliente em Fechamento', await pg.evaluate(() => GMotor.etapaDaConta(GB.lista('contas').find(c => c.nome === 'Café Raiz')).etapa === 'base'));
   checa('73. regra: upsell em negociação não move o cliente para Renovação', await pg.evaluate(() => GMotor.etapaDaConta(GB.lista('contas').find(c => c.nome === 'Construtora Vale')).etapa === 'execucao'));
+  await pg.evaluate(() => { location.hash = '#/hoje'; }); await pg.waitForTimeout(150);
   const passos = await pg.$$eval('.roteiro .passo', xs => xs.length);
   checa('74. o Hoje do exemplo abre com o roteiro de oito passos', passos === 8, passos);
   await pg.click('.roteiro .passo >> nth=2'); await pg.waitForTimeout(150);
@@ -415,7 +417,69 @@ console.log('\nD · o demo');
   await pg.click('#folhas [data-fechar]');
   await pg.click('[data-semroteiro]'); await pg.waitForTimeout(100);
   await pg.reload(); await esperar(pg, () => window.GB && document.querySelector('.casa'));
+  await pg.evaluate(() => { location.hash = '#/hoje'; }); await pg.waitForTimeout(150);
   checa('77. esconder o roteiro fica guardado', !(await pg.$('.roteiro')));
+  await ctx.close();
+}
+
+/* =================================================================
+   E. O INÍCIO: dizer o que mudou, e a gestão atualiza
+   ================================================================= */
+console.log('\nE · o Início em conversa');
+{
+  const { ctx, pg } = await contexto();
+  await pg.goto(BASE + '/gestao/demo'); await esperar(pg, () => window.GB && GB.modo === 'demo' && document.getElementById('cmdTexto'));
+  checa('78. o Início é a primeira tela, com a conversa e a caixa de escrever', await pg.evaluate(() => location.hash === '' && !!document.querySelector('.conversa .msg.gestao')));
+  const diz = async (t) => { await pg.fill('#cmdTexto', t); await pg.press('#cmdTexto', 'Enter'); await pg.waitForTimeout(150); };
+  const ultima = () => pg.evaluate(() => { const ms = document.querySelectorAll('.conversa .msg.gestao'); return ms[ms.length - 1].textContent; });
+  const vale = await pg.evaluate(() => GB.lista('contas').find(c => c.nome === 'Construtora Vale').id);
+  const antesPago = await pg.evaluate(id => GB.lista('receber').filter(r => r.contaId === id && GMotor.statusDe('receber', r) === 'pago').length, vale);
+
+  await diz('Recebi o pagamento da Construtora Vale');
+  const u1 = await ultima();
+  checa('79. "recebi da X" mostra o que vai mudar e ainda não grava', /Parcela de R\$\s5\.200/.test(u1) && /Confirmar/.test(u1)
+    && await pg.evaluate(([id, n]) => GB.lista('receber').filter(r => r.contaId === id && GMotor.statusDe('receber', r) === 'pago').length === n, [vale, antesPago]), u1.slice(0, 200));
+  await pg.click('.conversa .msg.gestao:last-child [data-cmdconfirmar]'); await pg.waitForTimeout(150);
+  checa('80. confirmar grava: a parcela atrasada mais antiga vira Paga', await pg.evaluate(([id, n]) => GB.lista('receber').filter(r => r.contaId === id && GMotor.statusDe('receber', r) === 'pago').length === n + 1, [vale, antesPago])
+    && /Feito/.test(await ultima()));
+
+  await diz('Fechamos com a Rede Farma Vida, R$ 7.800 por 12 meses');
+  checa('81. "fechamos com X, R$ …" monta o ganho com o valor e os meses da frase', /Marcar como ganho/.test(await ultima()) && /12 parcelas de R\$\s7\.800/.test(await ultima()));
+  await pg.click('.conversa .msg.gestao:last-child [data-cmdconfirmar]'); await pg.waitForTimeout(150);
+  const farma = await pg.evaluate(() => { const c = GB.lista('contas').find(x => x.nome === 'Rede Farma Vida'); return { e: GMotor.etapaDaConta(c).etapa, rc: GB.lista('receber').filter(r => r.contaId === c.id).length }; });
+  checa('82. …e confirmado, o cliente anda na esteira com contrato e parcelas', farma.e === 'fechamento' && farma.rc === 12 && /Fechamento/.test(await ultima()), farma);
+
+  await diz('O Dr. Marcos assinou o contrato');
+  checa('83. faltou o link do contrato: a conversa pede, e oferece completar', /falta: Link do contrato assinado/.test(await ultima()) && await pg.$('.conversa .msg.gestao:last-child [data-cmdajustar]'));
+  await pg.click('.conversa .msg.gestao:last-child [data-cmdajustar]'); await pg.waitForTimeout(120);
+  checa('84. "Completar" abre a janela da ação, já no cliente certo', /Contrato assinado/.test(await pg.textContent('#folhaTit')) && /Dr\. Marcos/.test(await pg.textContent('#folhas .sub')));
+  await pg.click('#folhas [data-fechar]');
+
+  await diz('Fechamos com a Clínica');
+  checa('85. cliente ambíguo vira pergunta, com as opções', /Qual deles/.test(await ultima()) && (await pg.$$('.conversa .msg.gestao:last-child [data-cmdescolher]')).length >= 2);
+
+  await diz('Mandei a proposta para o Hotel Mar Azul');
+  checa('86. ação que não vale na etapa é explicada, com o próximo passo certo', /não vale daqui/.test(await ultima()) && /Marcar como ganho/.test(await ultima()));
+
+  await diz('Como está a Dra. Helena?');
+  checa('87. "como está X?" responde com etapa, contrato, parcelas e produção', /Em execução/.test(await ultima()) && /parcela/.test(await ultima()) && /Produção/.test(await ultima()));
+
+  await diz('Lembrar de cobrar a NF da Dra. Helena amanhã');
+  await pg.click('.conversa .msg.gestao:last-child [data-cmdconfirmar]'); await pg.waitForTimeout(120);
+  checa('88. "lembrar de…" cria a tarefa no Financeiro, para amanhã', await pg.evaluate(() => GB.lista('tarefas').some(t => t.titulo === 'Cobrar a NF da Dra. Helena' && t.prazo === '2026-09-26' && t.frente === 'estrategico')));
+
+  await diz('Anota na Construtora Vale: pediu reunião às terças');
+  await pg.click('.conversa .msg.gestao:last-child [data-cmdcancelar]'); await pg.waitForTimeout(100);
+  checa('89. cancelar não grava nada', await pg.evaluate(() => !GMotor.eventos(e => /pediu reunião às terças/.test(e.texto)).length) && /Cancelado/.test(await ultima()));
+
+  await diz('bom dia, tudo certo?');
+  checa('90. o que não se entende vira exemplos do que dá para dizer', /Não entendi/.test(await ultima()) && (await pg.$$('.conversa .msg.gestao:last-child [data-cmdexemplo]')).length >= 3);
+
+  await diz('<img src=x onerror="window.__xss2=1"> novo lead: <b>Teste</b>');
+  checa('91. o que se escreve nunca vira HTML', await pg.evaluate(() => !window.__xss2 && !document.querySelector('.conversa b b')));
+  await pg.reload(); await esperar(pg, () => window.GB && document.querySelector('.conversa'));
+  const exp = await pg.evaluate(() => document.querySelectorAll('.conversa [data-cmdconfirmar]').length);
+  checa('92. a conversa fica guardada; plano não confirmado antes de recarregar não se confirma às cegas', exp === 0 && /Fechamos com a Rede Farma Vida/.test(await pg.textContent('.conversa')), exp);
   await ctx.close();
 }
 

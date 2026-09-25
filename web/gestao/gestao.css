@@ -333,3 +333,26 @@ select.in{ appearance:none; -webkit-appearance:none; background-image:linear-gra
 .cabConta .av{ width:52px; height:52px; font-size:18px; border-radius:16px }
 .ficha{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:6px 16px; font-size:14px }
 .ficha dt{ color:var(--t3); font-size:12.5px } .ficha dd{ margin:0 0 8px; overflow-wrap:anywhere }
+
+/* ---------- Início: a conversa ---------- */
+.conversa{ display:flex; flex-direction:column; gap:12px; max-width:820px; padding-bottom:12px }
+.msg{ display:flex; gap:10px; align-items:flex-end; animation:veu .2s ease-out }
+.msg.eu{ justify-content:flex-end }
+.msg .balao{ max-width:min(640px, 88%); padding:11px 14px; border-radius:18px; font-size:14.5px; line-height:1.45; overflow-wrap:anywhere }
+.msg.eu .balao{ background:var(--prim); color:var(--primT); border-bottom-right-radius:6px; white-space:pre-wrap }
+.msg.gestao .balao{ background:var(--sup); box-shadow:var(--sombra); border-bottom-left-radius:6px }
+.gestoMini{ width:26px; height:26px; border-radius:8px; background:var(--latao); color:var(--lataoT); font-weight:700; font-size:13px; display:grid; place-items:center; flex:0 0 auto }
+.cmdTit{ display:block; font-size:15px; margin-bottom:6px }
+.cmdLinhas{ margin:0; padding:0 0 0 18px; color:var(--t2); font-size:13.5px } .cmdLinhas li + li{ margin-top:3px }
+.cmdAcoes{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
+.cmdItem{ display:block; width:100%; text-align:left; padding:8px 10px; margin-top:6px; border-radius:10px; background:var(--enc); font-size:13.5px; border-left:3px solid var(--t4) }
+.cmdItem.ruim{ border-left-color:var(--ruim) } .cmdItem.aviso{ border-left-color:var(--aviso) }
+.cmdItem[data-alvo]:hover{ background:var(--enc2) } .cmdItem[disabled]{ cursor:default; opacity:1 }
+.ok2{ margin:10px 0 0; color:var(--ok); font-weight:600; font-size:13.5px; display:flex; gap:6px; align-items:center }
+.msg .chip{ height:auto; min-height:30px; padding:6px 11px; white-space:normal; text-align:left }
+.compositor{ position:sticky; bottom:12px; display:flex; gap:8px; align-items:flex-end; max-width:820px; margin-top:8px; padding:8px; border-radius:22px;
+  background:var(--vidro); -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px); box-shadow:var(--sombraAlta); z-index:5 }
+.compositor textarea{ min-height:44px; max-height:160px; resize:none; border-radius:16px; background:var(--enc) }
+.compositor .b{ width:44px; height:44px; padding:0; flex:0 0 auto; border-radius:50% }
+.cmdPe{ max-width:820px; margin:8px 0 0 }
+@media (max-width: 820px){ .compositor{ bottom:calc(76px + env(safe-area-inset-bottom)) } .msg .balao{ max-width:90% } }

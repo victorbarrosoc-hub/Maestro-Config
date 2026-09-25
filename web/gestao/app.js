@@ -36,12 +36,12 @@
   function rota(){
     const h = (location.hash || '').replace(/^#\/?/, '');
     const [a, b, c] = h.split('/').map(x => { try{ return decodeURIComponent(x || ''); }catch(e){ return x || ''; } });
-    return { a: a || 'hoje', b, c };
+    return { a: a || 'inicio', b, c };
   }
   function tituloDe(r){
     if(r.a === 'conta'){ const c = B().item('contas', r.b); return c ? c.nome : 'Cliente'; }
     if(r.a === 'area'){ const A = GM.AREAS.find(x => x.id === r.b); return A ? A.nome : 'Área'; }
-    return ({ hoje:'Hoje', esteira:'Esteira', clientes:'Clientes', paineis:'Painéis' })[r.a] || 'Gestão';
+    return ({ inicio:'Início', hoje:'Hoje', esteira:'Esteira', clientes:'Clientes', paineis:'Painéis' })[r.a] || 'Gestão';
   }
   function principal(r){
     switch(r.a){
@@ -50,7 +50,8 @@
       case 'conta': return T.conta(r.b);
       case 'area': return T.area(r.b, r.c);
       case 'paineis': return T.paineis(r.b);
-      default: return T.hoje();
+      case 'hoje': return T.hoje();
+      default: return T.inicio();
     }
   }
 
@@ -67,6 +68,7 @@
     return `
       <a class="marca" href="#/hoje"><span class="gesto">M</span><div><b>Maestro</b><small>Gestão · MPGP</small></div></a>
       <button class="b gho p fecharMenu" type="button" data-menu="0" style="display:none;position:absolute;right:14px;top:max(16px,env(safe-area-inset-top))" aria-label="Fechar o menu">${icone('x')}</button>
+      ${item('#/inicio', 'conversa', 'Início', r.a === 'inicio')}
       ${item('#/hoje', 'hoje', 'Hoje', r.a === 'hoje', nRuim ? `<span class="cont q">${nRuim}</span>` : '')}
       ${item('#/esteira', 'esteira', 'Esteira', r.a === 'esteira')}
       ${item('#/clientes', 'clientes', 'Clientes', r.a === 'clientes' || r.a === 'conta', `<span class="cont">${ativos}</span>`)}
@@ -85,7 +87,7 @@
   function barraCel(r){
     const nRuim = M().alertas().filter(a => a.nivel === 'ruim').length;
     const it = (href, ic, nome, on, pt) => `<a class="${on ? 'on' : ''}" href="${href}">${icone(ic)}<span>${esc(nome)}</span>${pt ? `<span class="pt">${pt}</span>` : ''}</a>`;
-    return it('#/hoje', 'hoje', 'Hoje', r.a === 'hoje', nRuim) + it('#/esteira', 'esteira', 'Esteira', r.a === 'esteira') + it('#/clientes', 'clientes', 'Clientes', r.a === 'clientes' || r.a === 'conta')
+    return it('#/inicio', 'conversa', 'Início', r.a === 'inicio') + it('#/hoje', 'hoje', 'Hoje', r.a === 'hoje', nRuim) + it('#/esteira', 'esteira', 'Esteira', r.a === 'esteira')
       + it('#/paineis', 'paineis', 'Painéis', r.a === 'paineis') + `<button type="button" data-menu="1" class="${r.a === 'area' ? 'on' : ''}">${icone('menu')}<span>Áreas</span></button>`;
   }
   function faixa(){
@@ -152,7 +154,7 @@
       const digitando = a && a.closest && a.closest('#folhas') && /INPUT|TEXTAREA|SELECT/.test(a.tagName);
       const r = rota(); const v = guardarVista();
       document.getElementById('lateral').innerHTML = lateral(r);
-      if(!(a && a.dataset && a.dataset.busca)) document.getElementById('principal').innerHTML = faixa() + principal(r);
+      if(!(a && ((a.dataset && a.dataset.busca) || a.id === 'cmdTexto'))) document.getElementById('principal').innerHTML = faixa() + principal(r);
       document.getElementById('barraCel').innerHTML = barraCel(r);
       devolverVista(v, 'principal');
       const s = F.F.atual;
@@ -196,6 +198,15 @@
     B().abrirExemplo(GD.semente);
     app.innerHTML = casca(); desenhar();
   }
+  function rolarConversa(){ if(!document.getElementById('conversa')) return; requestAnimationFrame(() => scrollTo({ top: document.documentElement.scrollHeight, behavior:'smooth' })); }
+  function enviarCmd(){
+    const el = document.getElementById('cmdTexto'); if(!el || !el.value.trim()) return;
+    T.falar(el.value); desenhar(); rolarConversa();
+    const n = document.getElementById('cmdTexto'); if(n) n.focus();
+  }
+  document.addEventListener('submit', e => { if(e.target.id === 'cmdForm'){ e.preventDefault(); enviarCmd(); } });
+  document.addEventListener('keydown', e => { if(e.target && e.target.id === 'cmdTexto' && e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); enviarCmd(); } });
+  document.addEventListener('input', e => { if(e.target && e.target.id === 'cmdTexto'){ T.E_.rascunhoCmd = e.target.value; e.target.style.height = 'auto'; e.target.style.height = Math.min(160, e.target.scrollHeight) + 'px'; } });
   document.addEventListener('submit', async e => {
     if(e.target.id !== 'formEntrar') return;
     e.preventDefault();
@@ -256,6 +267,13 @@
     if(d.etapacli){ T.E_.etapaCli = d.etapacli; desenhar(); return; }
     if(d.vista){ const [k, v] = d.vista.split(':'); T.E_.vista[k] = v; desenhar(); return; }
     if(d.sub){ const [k, v] = d.sub.split(':'); T.E_.sub[k] = v; desenhar(); return; }
+    /* ---- a conversa do Início ---- */
+    if(d.cmdconfirmar !== undefined){ const e = T.confirmarCmd(+d.cmdconfirmar); if(e) toast(e); else toast('Feito.'); desenhar(); rolarConversa(); return; }
+    if(d.cmdcancelar !== undefined){ const m = T.conversa()[+d.cmdcancelar]; if(m && !m.estado){ m.estado = 'cancelado'; delete m.ops; T.guardarConversa(); } desenhar(); return; }
+    if(d.cmdajustar !== undefined){ const m = T.conversa()[+d.cmdajustar]; if(m && m.acao && m.contaId){ if(m.tipo === 'plano'){ m.estado = 'cancelado'; delete m.ops; } else m.estado = 'ajustado'; T.guardarConversa(); F.abrirAcao(m.acao, m.contaId, m.valores || {}); } return; }
+    if(d.cmdescolher !== undefined){ const [i, id] = d.cmdescolher.split(':'); T.escolherCmd(+i, id); desenhar(); rolarConversa(); return; }
+    if(d.cmdexemplo !== undefined){ const el = document.getElementById('cmdTexto'); if(el){ el.value = d.cmdexemplo; T.E_.rascunhoCmd = el.value; el.focus(); } return; }
+    if(d.cmdlimpar !== undefined){ T.E_.conversa = []; T.guardarConversa(); desenhar(); return; }
     if(d.periodo){ const [k, v] = d.periodo.split(':'); T.E_.periodo[k] = v; desenhar(); return; }
     if(d.verfechados){ T.E_.verFechados[d.verfechados] = !T.E_.verFechados[d.verfechados]; desenhar(); return; }
     if(d.dobra){ const sec = t.closest('.coluna'); const fech = !(sec && sec.classList.contains('fechada')); T.E_.fechadas[d.dobra] = fech; if(sec) sec.classList.toggle('fechada', fech); return; }
@@ -314,7 +332,7 @@
   }
   G.GApp = { soltar, desenhar };
 
-  addEventListener('hashchange', () => { if(tela !== 'app') return; menu(false); if(F.F.atual) F.fecharTudo(); desenhar(); scrollTo(0, 0); });
+  addEventListener('hashchange', () => { if(tela !== 'app') return; menu(false); if(F.F.atual) F.fecharTudo(); desenhar(); scrollTo(0, 0); if(rota().a === 'inicio') rolarConversa(); });
 
   /* ---------------- partida ---------------- */
   const pede = new URLSearchParams(location.search);

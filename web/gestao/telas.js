@@ -57,6 +57,102 @@
   }
 
   /* ================================================================
+     INÍCIO — a conversa: você diz o que mudou, a gestão atualiza
+     ================================================================ */
+  const CONVERSA = () => 'maestro-gestao-conversa-' + (B().modo || 'x') + ':' + (B().org || '');
+  function conversa(){
+    if(!E_.conversa){
+      try{ E_.conversa = JSON.parse(localStorage.getItem(CONVERSA()) || '[]'); }catch(e){ E_.conversa = []; }
+      /* plano de antes de recarregar não se confirma às cegas: o dado pode ter mudado */
+      E_.conversa.forEach(m => { if(m.tipo === 'plano' && !m.estado){ m.estado = 'expirado'; delete m.ops; } });
+    }
+    return E_.conversa;
+  }
+  function guardarConversa(){
+    try{ localStorage.setItem(CONVERSA(), JSON.stringify(conversa().slice(-60).map(m => Object.assign({}, m, { ops: undefined })))); }catch(e){}
+  }
+  function msgHtml(m, i){
+    const mm = M();
+    if(m.de === 'eu') return `<div class="msg eu"><div class="balao">${esc(m.texto)}</div></div>`;
+    const cli = m.contaId && B().item('contas', m.contaId);
+    const linkCli = cli ? `<a class="lnk" href="#/conta/${esc(cli.id)}">${esc(cli.nome)}</a>` : '';
+    let corpo = '';
+    if(m.tipo === 'plano'){
+      const fim = m.estado === 'feito' ? `<p class="ok2">${icone('check')} Feito${m.resultado ? ' · ' + esc(m.resultado) : ''}</p>`
+        : m.estado === 'cancelado' ? `<p class="dica" style="margin:8px 0 0">Cancelado — nada mudou.</p>`
+        : m.estado === 'expirado' ? `<p class="dica" style="margin:8px 0 0">Não confirmado. Escreva de novo para refazer com os dados de agora.</p>`
+        : `<div class="cmdAcoes"><button class="b pri p" type="button" data-cmdconfirmar="${i}">Confirmar</button>${m.acao ? `<button class="b p" type="button" data-cmdajustar="${i}">Ajustar</button>` : ''}<button class="b gho p" type="button" data-cmdcancelar="${i}">Cancelar</button></div>`;
+      corpo = `<b class="cmdTit">${esc(m.titulo)}${cli ? ' · ' : ''}${linkCli}</b><ul class="cmdLinhas">${(m.linhas || []).map(l => `<li>${esc(l)}</li>`).join('')}</ul>${fim}`;
+    } else if(m.tipo === 'escolher'){
+      corpo = `<p style="margin:0 0 8px">${esc(m.texto)}</p><div class="chips">${(m.opcoes || []).map(o => `<button class="chip" type="button" data-cmdescolher="${i}:${esc(o.id)}"${m.estado ? ' disabled' : ''}>${esc(o.nome)}</button>`).join('')}</div>`;
+    } else if(m.tipo === 'falta'){
+      corpo = `<p style="margin:0">${esc(m.texto)}</p>${m.estado ? '' : `<div class="cmdAcoes"><button class="b pri p" type="button" data-cmdajustar="${i}">Completar</button></div>`}`;
+    } else if(m.tipo === 'nao_entendi' || m.tipo === 'boas'){
+      corpo = `${m.titulo ? `<b class="cmdTit">${esc(m.titulo)}</b>` : ''}<p style="margin:0 0 8px">${esc(m.texto)}</p>${(m.itens || []).map(it => `<button type="button" class="cmdItem ${esc(it.nivel || '')}" ${it.alvo ? `data-alvo="${esc(it.alvo)}"` : 'disabled'}>${esc(it.texto)}</button>`).join('')}
+        <div class="chips" style="margin-top:8px">${(m.exemplos || []).map(x => `<button class="chip" type="button" data-cmdexemplo="${esc(x)}">${esc(x)}</button>`).join('')}</div>`;
+    } else {
+      corpo = `<b class="cmdTit">${cli && m.texto === cli.nome ? linkCli : esc(m.texto)}</b>${(m.itens || []).map(it => `<button type="button" class="cmdItem ${esc(it.nivel || '')}" ${it.alvo ? `data-alvo="${esc(it.alvo)}"` : 'disabled'}>${esc(it.texto)}</button>`).join('')}
+        ${(m.acoes || []).length ? `<div class="cmdAcoes">${m.acoes.map(a => `<button class="b p" type="button" data-acao="${esc(a.acao)}" data-conta="${esc(a.contaId)}">${esc(a.nome)}</button>`).join('')}</div>` : ''}`;
+    }
+    return `<div class="msg gestao"><span class="gestoMini" aria-hidden="true">M</span><div class="balao">${corpo}</div></div>`;
+  }
+  function boasVindas(){
+    const mm = M(); const al = mm.alertas();
+    const hora = new Date().getHours();
+    return { de:'gestao', tipo:'boas', titulo: (hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite') + '. O que mudou?',
+      texto: 'Escreva do jeito que você falaria. Eu mostro o que vai mudar na gestão e só gravo quando você confirmar.' + (al.length ? ` Enquanto isso, ${al.length} coisas pedem atenção — as primeiras:` : ''),
+      itens: al.slice(0, 3).map(a => ({ texto: a.texto, alvo: a.alvo, nivel: a.nivel })),
+      exemplos: ['Recebi o pagamento da Construtora Vale', 'Fechamos com a Rede Farma Vida, R$ 7.800 por 12 meses', 'Como está a Dra. Helena?', 'O que está atrasado?'] };
+  }
+  function inicio(){
+    const msgs = conversa();
+    const todas = [boasVindas()].concat(msgs);
+    return `<div class="topo" style="margin-bottom:12px"><div><div class="migalha">${esc(dataLonga())}</div><h1>Início</h1>
+      <div class="sub fica">Conte o que mudou com um cliente. A gestão atualiza a esteira, o financeiro e a jornada.</div></div>
+      <div class="acoes">${msgs.length ? `<button class="b gho" type="button" data-cmdlimpar="1">Limpar a conversa</button>` : ''}<button class="b pri" type="button" data-novocliente="lead">${icone('mais')} Novo cliente</button></div></div>
+    ${comeco()}
+    <div class="conversa" id="conversa" aria-live="polite">${todas.map((m, i) => msgHtml(m, i - 1)).join('')}</div>
+    <form class="compositor" id="cmdForm" autocomplete="off">
+      <label class="sr" for="cmdTexto">O que mudou?</label>
+      <textarea class="in" id="cmdTexto" rows="1" placeholder="O que mudou?">${esc(E_.rascunhoCmd || '')}</textarea>
+      <button class="b pri" type="submit" aria-label="Enviar">${icone('seta')}</button>
+    </form>
+    <p class="dica cmdPe">Ajuda com: fechamento, proposta, contrato assinado, pagamento, renovação, perda, novo lead, tarefa, anotação e "como está…".</p>`;
+  }
+  /* o que a conversa faz */
+  function falar(texto){
+    const t = String(texto || '').trim(); if(!t) return;
+    const msgs = conversa();
+    msgs.push({ de:'eu', texto: t });
+    let r; try{ r = G.GC.interpretar(t); }catch(e){ r = { tipo:'nao_entendi', texto:'Algo deu errado ao ler isso. Tente de outro jeito.' }; }
+    msgs.push(Object.assign({ de:'gestao', texto0: t }, r));
+    E_.rascunhoCmd = ''; guardarConversa();
+  }
+  function confirmarCmd(i){
+    const m = conversa()[i]; if(!m || m.tipo !== 'plano' || m.estado) return null;
+    const mm = M(); const c = m.contaId && B().item('contas', m.contaId);
+    const antes = c ? mm.etapaDaConta(c).etapa : null;
+    /* ação da esteira: refaz o plano com os dados de agora */
+    let ops = m.ops;
+    if(m.acao && c){ const p = mm.ACOES[m.acao].plano(c, Object.assign({}, m.valores)); if(p.erro){ m.estado = 'expirado'; guardarConversa(); return p.erro; } ops = p.ops; }
+    if(!ops || !ops.length){ m.estado = 'expirado'; guardarConversa(); return 'Este plano expirou. Escreva de novo.'; }
+    B().aplicar(ops);
+    const c2 = m.contaId && B().item('contas', m.contaId);
+    const depois = c2 ? mm.etapaDaConta(c2).etapa : null;
+    m.estado = 'feito'; m.resultado = c2 && antes !== depois ? `${c2.nome} → ${mm.nomeEtapa(depois)}` : (c2 ? c2.nome : '');
+    delete m.ops; guardarConversa();
+    return null;
+  }
+  function escolherCmd(i, contaId){
+    const m = conversa()[i]; if(!m || m.estado) return;
+    m.estado = 'escolhido';
+    const c = B().item('contas', contaId);
+    conversa().push({ de:'eu', texto: c ? c.nome : contaId });
+    conversa().push(Object.assign({ de:'gestao', texto0: m.texto0 }, G.GC.comCliente(m.texto0, contaId)));
+    guardarConversa();
+  }
+
+  /* ================================================================
      HOJE
      ================================================================ */
   function hoje(){
@@ -526,6 +622,6 @@
     </div>`;
   }
 
-  G.GT = { E_, hoje, esteira, clientes, conta, area, tipo, pipeline, producao, paineis, painelComercial, painelFinanceiro, painelInstitucional,
+  G.GT = { E_, inicio, falar, confirmarCmd, escolherCmd, conversa, guardarConversa, hoje, esteira, clientes, conta, area, tipo, pipeline, producao, paineis, painelComercial, painelFinanceiro, painelInstitucional,
     resumo, cartaoRegistro, campoTitulo, linhaTarefa, COR_TIPO, corFrente, novoRotulo };
 })(typeof window !== 'undefined' ? window : globalThis);

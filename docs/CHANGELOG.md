@@ -47,7 +47,15 @@ oito passos no Hoje. Encher o exemplo achou duas regras erradas no motor, já
 corrigidas: um termo de uso de imagem punha um ex-cliente em Fechamento, e um
 upsell em negociação punha o cliente em Renovação.
 
-80 provas em `web/verificar/gestao-fluxo.mjs`. Desenho em `docs/PRD/GESTAO.md`.
+**O Início em conversa:** escreva o que mudou com um cliente ("recebi da
+Construtora Vale", "fechamos com a Rede Farma Vida, R$ 7.800 por 12 meses", "o
+Dr. Marcos assinou o contrato <link>", "perdemos a X por preço", "como está a
+Dra. Helena?", "o que está atrasado?", "lembrar de cobrar a NF amanhã"). A
+frase vira uma das ações da esteira, a resposta mostra o que vai mudar, e só
+grava ao confirmar. Cliente ambíguo vira pergunta; ação que não vale na etapa é
+explicada com o próximo passo; faltou dado, "Completar" abre a janela da ação.
+
+95 provas em `web/verificar/gestao-fluxo.mjs`. Desenho em `docs/PRD/GESTAO.md`.
 
 ---
 

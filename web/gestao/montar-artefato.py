@@ -13,7 +13,7 @@ import base64, pathlib, sys
 
 AQUI = pathlib.Path(__file__).resolve().parent
 ORIGEM = 'https://www.sejamaestro.com.br'
-SCRIPTS = ['modelo', 'espelho', 'banco', 'motor', 'demo', 'ui', 'telas', 'folhas', 'app']
+SCRIPTS = ['modelo', 'espelho', 'banco', 'motor', 'demo', 'comando', 'ui', 'telas', 'folhas', 'app']
 
 def main(saida):
     css = (AQUI / 'gestao.css').read_text(encoding='utf-8')

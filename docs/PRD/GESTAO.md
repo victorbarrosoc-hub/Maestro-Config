@@ -176,6 +176,18 @@ tarefas, dados e a linha do tempo inteira) · as seis áreas com todas as régua
 do manual · Pipeline B2B / Experts e B2C (SQL pede BANT) · Painéis Comercial,
 Financeiro e Institucional.
 
+**O Início é uma conversa** (`web/gestao/comando.js`). Diz-se o que mudou, em
+português do dia a dia; a frase vira uma das ações da esteira (o mesmo motor,
+as mesmas travas), a resposta mostra o que vai mudar e só grava ao
+"Confirmar". Entende: fechamento (com valor e meses), proposta, contrato
+assinado (com o link), pagamento recebido, onboarding concluído, renovação,
+não renovação, perda (com motivo), novo lead, primeiro contato (com a próxima
+ação e o dia), tarefa ("lembrar de… amanhã", na frente certa), anotação na
+linha do tempo, "como está X?" e "o que está atrasado?". O intérprete é local —
+sem servidor, funciona no demo e sem rede —, e `interpretar(texto)` é a porta
+única: na mescla, um modelo de linguagem (por uma Edge Function com a chave no
+servidor) entra no lugar sem mudar a tela nem as travas.
+
 **Como entrar:** a mesma conta da agência. **O demo tem endereço próprio:
 `sejamaestro.com.br/gestao/demo`** — abre direto, sem login, com uma empresa
 inventada que já usa a gestão há meses: 28 clientes em todas as etapas, o funil
