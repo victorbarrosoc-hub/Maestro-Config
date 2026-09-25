@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-09-25 01:28 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-09-25 03:12 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -16111,7 +16111,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v266 · 25 set · o quadro não encolhe';
+const VERSAO_PROTOTIPO = 'v267 · 25 set · a pessoa se escolhe depois';
 
 menuSheet = (function(orig){
   return function(){
@@ -20532,6 +20532,11 @@ telaConversas = (function(orig){
 
       const txt = await r.clone().text();
       if(txt.replace(/\s/g, '') !== '[]') return r;
+      /* v267: a leitura saiu ANTES do login e voltou depois dele — ler o
+         corpo leva um instante, e nesse instante a pessoa entrou. Abrir a
+         porta agora punha o login por cima de uma sessão já aberta (a tela
+         ficava em "Carregando a sua agência…" para sempre). Pergunta de novo. */
+      if(entrou()) return r;
 
       /* vazio e ninguém entrou: é a porta fechada, não um banco novo.
 
@@ -48221,11 +48226,11 @@ background:none; color:var(--ink-100); font-size:13.5px; cursor:pointer; text-al
     el.id = 'v264Conta'; el.setAttribute('role', 'menu'); el.setAttribute('aria-label', 'Sua conta');
     el.innerHTML = `
       <div class="v264Quem"><span class="v264Av">${esc(ini)}</span>
-        <span><b>${esc(nome)}</b>${q && q.email ? `<small>${esc(q.email)}</small>` : ''}${m && m.papel ? `<small>${esc(m.papel)}${m.dono ? ' · dono' : ''}</small>` : ''}</span></div>
+        <span><b>${esc(nome)}</b>${(m && m.mail) || (q && q.email) ? `<small>${esc((m && m.mail) || q.email)}</small>` : ''}${m && m.papel ? `<small>${esc(m.papel)}${m.dono ? ' · dono' : ''}</small>` : ''}</span></div>
       ${logado() ? `
         <button role="menuitem" data-v264="conta">${ic('person', 15)}<span>Conta e senha</span></button>
-        <button role="menuitem" data-v264="trocar">${ic('refresh', 15)}<span>Trocar de conta</span></button>
-        <button role="menuitem" data-v264="sair" class="v264Sair">${ic('arrowl', 15)}<span>Sair</span></button>`
+        <button role="menuitem" data-v264="trocar">${ic('refresh', 15)}<span>Trocar de usuário</span></button>
+        <button role="menuitem" data-v264="sair" class="v264Sair">${ic('arrowl', 15)}<span>Sair da agência</span></button>`
       : `<button role="menuitem" data-v264="entrar">${ic('unlock', 15)}<span>Entrar</span></button>`}`;
     document.body.appendChild(el);
     const r = ancora.getBoundingClientRect();
@@ -48260,8 +48265,8 @@ background:none; color:var(--ink-100); font-size:13.5px; cursor:pointer; text-al
     e.stopImmediatePropagation(); e.preventDefault();
     const a = b.dataset.v264;
     if(a === 'sair') return sair(false);
-    if(a === 'trocar') return sair(true);
     fechar();
+    if(a === 'trocar'){ try{ window.MaestroQuemEntra && MaestroQuemEntra.abrirLista(); }catch(err){} return; }
     if(a === 'conta'){ try{ go('agency', 'conta'); }catch(err){} return; }
     if(a === 'entrar'){ try{ MaestroPorta.pedir(); }catch(err){} }
   }, true);
@@ -48273,7 +48278,7 @@ background:none; color:var(--ink-100); font-size:13.5px; cursor:pointer; text-al
       setTimeout(() => { try{ if(!logado()) MaestroPorta.pedir(); }catch(e){} }, 700);
     }
   }catch(e){}
-  window.MaestroConta = { abrir, fechar, subirTudo };
+  window.MaestroConta = { abrir, fechar, subirTudo, sair };
 })();
 </script>
 <style id="v266-quadro">
@@ -48334,5 +48339,154 @@ background:none; color:var(--ink-100); font-size:13.5px; cursor:pointer; text-al
       });
     };
   })(sbCarregar);
+})();
+</script>
+<style id="v267-quem-entra">
+#quemEsta .v267Login{ display:inline-block; margin-left:8px; font-style:normal; font-size:11px; font-weight:600;
+color:var(--brass-500); background:color-mix(in srgb, var(--brass-500) 14%, transparent); border-radius:999px; padding:1px 8px; vertical-align:1px }
+#quemEsta .qePessoa b:has(+ .v267Login){ display:inline }
+#quemEsta .v267Login + span{ display:block }
+.v267Troca{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:12px 14px; margin:6px 0 10px;
+border:0; border-radius:14px; background:var(--sup); color:var(--ink-50); cursor:pointer; font:inherit }
+.v267Troca .av{ width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:600;
+background:var(--enc); color:var(--ink-100); flex:0 0 auto }
+.v267Troca .t{ flex:1; min-width:0 }
+.v267Troca b{ display:block; font-size:14px }
+.v267Troca .t span{ display:block; font-size:12px; color:var(--ink-400) }
+.v267Troca:active{ transform:scale(.98) }
+</style>
+<script data-camada="v267">
+(function(){
+  const logado = () => { try{ return !!(window.MaestroPorta && MaestroPorta.quem()); }catch(e){ return false; } };
+  const bancoLeu = () => !!(window.Sincro && window.Sincro.lido);
+  const noLink = () => { try{ return !!(S.viaLink || S.soVer || S.soFluxo); }catch(e){ return false; } };
+  const emailLogin = () => { try{ const q = MaestroPorta.quem(); return String((q && q.email) || '').trim().toLowerCase(); }catch(e){ return ''; } };
+  function abrirLista(){
+    if(noLink() || !logado()) return false;
+    if(document.getElementById('quemEsta')){ marcarLogin(); return true; }
+    if(typeof abrirQuemAgencia !== 'function') return false;
+    abrirQuemAgencia();
+    marcarLogin();
+    return true;
+  }
+  function marcarLogin(){
+    const cx = document.querySelector('#quemEsta .caixa'); if(!cx) return;
+    const mail = emailLogin(); if(!mail) return;
+    const m = (S.equipe || []).find(x => x && String(x.mail || '').trim().toLowerCase() === mail);
+    if(!m || typeof membroId !== 'function') return;
+    const bt = cx.querySelector(`[data-qeag="${CSS.escape(membroId(m))}"]`); if(!bt) return;
+    const primeiro = cx.querySelector('[data-qeag]');
+    if(primeiro && primeiro !== bt) primeiro.before(bt);
+    if(!bt.querySelector('.v267Login')){
+      const b = bt.querySelector('b');
+      if(b) b.insertAdjacentHTML('afterend', '<i class="v267Login">este login</i>');
+    }
+  }
+  try{ new MutationObserver(() => { if(document.getElementById('quemEsta')) marcarLogin(); })
+    .observe(document.body, { childList: true }); }catch(e){}
+  let viuForm = false, depoisDoLogin = false, desde = 0, loginTerminou = false;
+  if(typeof toast === 'function') toast = (function(orig){
+    return function(msg){
+      try{
+        if(depoisDoLogin && /^(Bem-vindo de volta|Você entrou)/.test(String(msg))){
+          loginTerminou = true;
+          return;
+        }
+      }catch(e){}
+      return orig.apply(this, arguments);
+    };
+  })(toast);
+  function olhar(){
+    const form = document.getElementById('entrarMaestro');
+    if(form){ viuForm = true; return; }
+    if(!viuForm) return;
+    viuForm = false;
+    if(!logado() || noLink()) return;
+    depoisDoLogin = true; desde = Date.now(); loginTerminou = false;
+    esperando();
+    try{ if(S.view === 'site' && typeof render === 'function') render(); }catch(e){}
+  }
+  try{ new MutationObserver(olhar).observe(document.body, { childList: true }); }catch(e){}
+  function esperando(){
+    if(document.getElementById('v256Espera') || document.getElementById('quemEsta')) return;
+    const el = document.createElement('div');
+    el.id = 'v256Espera'; el.setAttribute('role', 'status');
+    el.innerHTML = '<div class="caixa"><span class="v256Roda" aria-hidden="true"></span><b>Carregando a sua agência…</b><span>Em seguida, você escolhe quem está entrando.</span></div>';
+    document.body.appendChild(el);
+  }
+  setInterval(() => {
+    if(!depoisDoLogin) return;
+    if(Date.now() - desde > 20000){ depoisDoLogin = false; document.getElementById('v256Espera')?.remove(); return; }
+    if(!logado() || noLink()){ depoisDoLogin = false; return; }
+    if(document.getElementById('entrarMaestro')){ document.getElementById('v256Espera')?.remove(); return; }
+    if(!bancoLeu()){ esperando(); return; }
+    if(!loginTerminou && Date.now() - desde < 12000){ esperando(); return; }
+    if(!(S.equipe || []).length){ esperando(); return; }
+    depoisDoLogin = false;
+    document.getElementById('v256Espera')?.remove();
+    abrirLista();
+  }, 150);
+  const CH = 'maestro-v267-escolha';
+  const lerEscolha = () => { try{ const v = JSON.parse(localStorage.getItem(CH) || 'null'); return v && v.id ? v : null; }catch(e){ return null; } };
+  const guardarEscolha = id => { try{ localStorage.setItem(CH, JSON.stringify({ id, login: emailLogin() })); }catch(e){} };
+  addEventListener('click', e => {
+    if(!(e.target.closest && e.target.closest('#quemEsta [data-qeag]'))) return;
+    setTimeout(function ler(n){
+      if(S.usuario && S.usuario.id && !document.getElementById('quemEsta')){ guardarEscolha(S.usuario.id); return; }
+      if((n || 0) < 400 && document.getElementById('quemEsta')) setTimeout(() => ler((n || 0) + 1), 150);
+    }, 0);
+  }, true);
+  function manter(){
+    try{
+      if(!logado()){ if(lerEscolha() && window.MaestroPorta && !MaestroPorta.quem()) localStorage.removeItem(CH); return false; }
+      if(noLink() || document.getElementById('quemEsta')) return false;
+      const esc0 = lerEscolha(); if(!esc0) return false;
+      const mail = emailLogin();
+      if(!mail || esc0.login !== mail){ return false; }
+      const u = S.usuario;
+      if(u && u.id === esc0.id) return false;
+      if(!(S.equipe || []).some(m => m && typeof membroId === 'function' && membroId(m) === esc0.id)) return false;
+      if(u && u.id){
+        const auto = (S.equipe || []).find(m => m && membroId(m) === u.id);
+        if(!auto || String(auto.mail || '').trim().toLowerCase() !== mail) return false;
+      }
+      S.usuario = { tipo: 'agencia', id: esc0.id };
+      try{ localStorage.setItem('maestro-usuario-v1', JSON.stringify(S.usuario)); }catch(e){}
+      return true;
+    }catch(e){ return false; }
+  }
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ manter(); return orig.apply(this, arguments); };
+  })(render);
+  setInterval(() => { if(manter()) try{ render(); }catch(e){} }, 200);
+  function pessoaAtual(){
+    try{ const id = S.usuario && S.usuario.id; return (S.equipe || []).find(m => typeof membroId === 'function' && membroId(m) === id) || null; }catch(e){ return null; }
+  }
+  if(typeof menuSheet === 'function') menuSheet = (function(orig){
+    return function(){
+      let h = orig.apply(this, arguments);
+      if(!h || !logado() || noLink()) return h;
+      try{
+        const m = pessoaAtual();
+        const nome = (m && m.n) || 'Escolher quem é você';
+        const ini = m ? String(m.n).split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase() : '?';
+        const troca = `<button type="button" class="v267Troca" data-v267trocar="1"><span class="av">${esc(ini)}</span>
+          <span class="t"><b>${esc(nome)}</b><span>Trocar de usuário</span></span>${ic('chevr', 14)}</button>`;
+        h = h.replace(/<button[^>]*data-sairmaestro="1"[^>]*>[\s\S]*?<\/button>/,
+          `<button type="button" class="b gho sm msSair" data-v267sair="1">${ic('arrowl', 13)} Sair da agência</button>`);
+        h = h.replace(/(<div class="msfoot">)/, troca + '$1');
+      }catch(e){}
+      return h;
+    };
+  })(menuSheet);
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-v267trocar],[data-v267sair]');
+    if(!t) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    try{ S.menu = false; if(typeof render === 'function') render(); }catch(er){}
+    if(t.hasAttribute('data-v267trocar')) abrirLista();
+    else if(window.MaestroConta && MaestroConta.sair) MaestroConta.sair(false);
+  }, true);
+  window.MaestroQuemEntra = { abrirLista, marcarLogin };
 })();
 </script>
