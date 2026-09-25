@@ -88,7 +88,7 @@ console.log('\n3. A rede: o quadro some da memória sem ninguém apagar');
   await A.pg.waitForTimeout(1500);
   checa('3.1 o banco não perdeu', igual(noBanco(B), tudo), noBanco(B));
   checa('3.2 a tela voltou a mostrar tudo', igual(await naTela(A.pg), tudo), await naTela(A.pg));
-  const aviso = await A.pg.evaluate(() => ({ n: window.MaestroQuadroDevolvidas || 0, t: document.body.innerText.includes('Elas voltaram') }));
+  const aviso = await A.pg.evaluate(() => ({ n: window.MaestroQuadroDevolvidas || 0, t: document.body.innerText.includes('sem ninguém apagar e voltaram') }));
   checa('3.3 e disse o que houve (6 devolvidas, aviso na tela)', aviso.n === 6 && aviso.t, aviso);
   const col = await A.pg.evaluate(() => S.ensaio.tarefas.map(t => t.titulo + '@' + t.col).sort());
   checa('3.4 cada uma na coluna em que estava', igual(col, ['Orçamento do evento@do', 'Plano de conteúdo de outubro@plan', 'Relatório da EJUP@do', 'Roteiro do podcast@plan']), col);

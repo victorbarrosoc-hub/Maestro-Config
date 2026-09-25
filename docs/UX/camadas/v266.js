@@ -54,7 +54,7 @@
       e.prox = Math.max(+e.prox || 0, ...sumiram.map(x => (+x.t.id || 0) + 1));
       try{ if(typeof ligarTarefaAoCard === 'function') e.tarefas.forEach(ligarTarefaAoCard); }catch(er){}
       try{ console.warn('[v266] o quadro ia perder ' + sumiram.length + ' tarefa(s) sem ninguém apagar — devolvidas.'); }catch(er){}
-      try{ if(typeof toast === 'function') toast(`O Ensaio ia perder ${sumiram.length} tarefas sem ninguém apagar. Elas voltaram.`); }catch(er){}
+      try{ if(typeof toast === 'function') toast(`${sumiram.length} tarefas sumiram sem ninguém apagar e voltaram`); }catch(er){}
       window.MaestroQuadroDevolvidas = (window.MaestroQuadroDevolvidas || 0) + sumiram.length;
       return sumiram.length;
     }catch(er){ return 0; }
