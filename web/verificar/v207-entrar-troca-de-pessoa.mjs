@@ -107,8 +107,12 @@ console.log('\n1. o caminho do founder: entrar com um e-mail de fora');
      v205 e na v209. */
   ok(!(depois.usuario && depois.usuario.id === 'victorbarrosoc'),
      'entrar com outro e-mail apaga o crachá anterior (' + JSON.stringify(depois.usuario) + ')');
-  ok(!!depois.usuario && depois.usuario.id === 'zro.contato',
-     'e, como o banco afirma que a conta é desta agência, entra como ela mesma');
+  /* v268: a casa tem dono (o Victor) — um login de fora da equipe é o login
+     da AGÊNCIA ("EJUP.mkt não é equipe, é a agência"): não vira pessoa, e
+     quem entra se escolhe na lista */
+  const lista = await pag.evaluate(() => !!document.getElementById('quemEsta'));
+  ok(!(depois.usuario && depois.usuario.id === 'zro.contato') && lista,
+     'e, sendo o login da agência, não vira pessoa: a lista de quem entra abre (' + JSON.stringify(depois.usuario) + ', lista ' + lista + ')');
   ok(!(depois.guardado && /victorbarrosoc/.test(JSON.stringify(depois.guardado))),
      'e o aparelho não guarda o crachá velho para o próximo carregamento');
   ok(erros.length === 0, 'nenhum erro de página' + (erros.length ? ': ' + erros[0] : ''));

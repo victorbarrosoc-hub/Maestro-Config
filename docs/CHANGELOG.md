@@ -1,11 +1,47 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.81
+Version: 0.5.82
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.82 — 2026-09-25
+
+**Status:** Concluída
+
+### v268 — o login é da agência
+
+Vídeo do founder no iPhone, logo depois da v267: entrou com
+`ejup.mkt@gmail.com`, viu "Carregando a sua agência…" e depois NUNCA a lista
+— só o Hoje piscando entre dois estados, com quadros pretos. "Nem consegui
+abrir." E: *"EJUP.mkt não é equipe, é a agência."*
+
+Reproduzido (produção, login pelo formulário, aparelho usado antes pelo
+Victor, banco recusando gravação, equipe gravando a cada 2s): contra a v267,
+4 recarregamentos, nenhuma lista, e "Ejup Mkt" criado e escolhido sozinho.
+
+1. **O login da agência não é uma pessoa.** A v219 punha na equipe todo
+   login que o banco afirmava ser da agência, escolhia essa pessoa e fechava
+   a lista — e, a cada vez que a equipe voltava do banco sem ela (gravação
+   recusada), fazia tudo de novo, brigando com a escolha da v267: a piscada.
+   Agora, em casa COM dono, um login de fora da equipe é o da agência. Casa
+   sem dono segue a v219 (quem cria entra).
+2. **A pergunta sobrevive a um recarregar.** A troca de dono do aparelho
+   (v208) limpa e recarrega logo depois do login; a lista, que só existia na
+   memória, se perdia. Fica pendente na aba até a escolha.
+3. **A lista do login só fecha por escolha** (um nome ou "Voltar"): a
+   abertura com sessão guardada não a fecha mais, e se alguém a tirar por
+   fora, ela volta.
+4. Sair da agência apaga a escolha guardada.
+
+15 provas em `web/verificar/v268-o-login-e-da-agencia.mjs` (três rodadas
+verdes; contra a v267, falham 1, 2, 4 e 5). v219 (prova 2) e v207 (prova 1)
+passaram a cobrar a regra nova.
+
+**Se a Equipe tiver uma pessoa "Ejup Mkt"** (nascida da regra antiga), ela
+pode ser removida na Equipe: o login da agência não precisa de pessoa.
 
 ## 0.5.81 — 2026-09-25
 

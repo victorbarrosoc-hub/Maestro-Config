@@ -39,6 +39,8 @@
     if(document.getElementById('quemEsta')){ marcarLogin(); return true; }
     if(typeof abrirQuemAgencia !== 'function') return false;
     abrirQuemAgencia();
+    const el = document.getElementById('quemEsta');
+    if(el) el.dataset.v267 = '1';
     marcarLogin();
     return true;
   }
@@ -62,6 +64,14 @@
 
   /* ---------- 1 e 2: o momento em que o login acontece ---------- */
   let viuForm = false, depoisDoLogin = false, desde = 0, loginTerminou = false;
+  /* v268: a pergunta sobrevive a um recarregar. Logo depois do login, a
+     troca de dono do aparelho (v208) ou de agência (v220) limpa e RECARREGA
+     a página — e a lista, que só existia na memória, nunca vinha (o vídeo
+     do founder: "nem consegui abrir"). Fica pendente na aba até a escolha. */
+  const PEDE = 'maestro-v268-pede-lista';
+  try{
+    if(sessionStorage.getItem(PEDE) && logado() && !noLink()){ depoisDoLogin = true; desde = Date.now(); loginTerminou = true; }
+  }catch(e){}
   /* O LOGIN TERMINA DEPOIS DO QUE PARECE. O formulário some logo, mas o
      login continua: lê o banco e, no fim, escolhe a pessoa pelo e-mail e
      diz "Bem-vindo de volta". Com rede lenta, esse fim chegava DEPOIS de a
@@ -86,6 +96,7 @@
     if(!logado() || noLink()) return;
     /* o formulário saiu com a sessão aberta: foi um login, agora */
     depoisDoLogin = true; desde = Date.now(); loginTerminou = false;
+    try{ sessionStorage.setItem(PEDE, '1'); }catch(e){}
     esperando();                                         /* já no mesmo quadro em que o formulário sai */
     try{ if(S.view === 'site' && typeof render === 'function') render(); }catch(e){}
   }
@@ -189,6 +200,40 @@
     if(t.hasAttribute('data-v267trocar')) abrirLista();
     else if(window.MaestroConta && MaestroConta.sair) MaestroConta.sair(false);
   }, true);
+
+  /* v268 — A LISTA DO LOGIN SÓ FECHA POR ESCOLHA. Outras camadas fecham
+     "Quem está entrando?" quando acham que já sabem quem é (a v219 ao pôr
+     alguém na equipe, a abertura com sessão guardada). Depois de um login
+     da agência, quem sabe é a pessoa: a lista só sai por um nome ou por
+     "Voltar", e volta se alguém a tirar por fora. */
+  let fechouPorEscolha = 0, reaberturas = 0, tinhaLista = false;
+  addEventListener('click', e => {
+    if(e.target.closest && e.target.closest('#quemEsta [data-qeag], #quemEsta [data-qevoltar]')){
+      fechouPorEscolha = Date.now();
+      try{ sessionStorage.removeItem(PEDE); }catch(er){}
+    }
+  }, true);
+  try{ new MutationObserver(() => {
+    const el = document.getElementById('quemEsta');
+    if(el){ tinhaLista = el.dataset.v267 === '1' || tinhaLista; return; }
+    if(!tinhaLista) return;
+    tinhaLista = false;
+    if(window.__qeFechouEm && Date.now() - window.__qeFechouEm < 30000){ try{ sessionStorage.removeItem(PEDE); }catch(e){} return; }
+    if(Date.now() - fechouPorEscolha < 30000) return;  /* a chave da pessoa pode demorar a ser digitada */
+    if(!logado() || noLink() || reaberturas >= 10) return;
+    let pede = false; try{ pede = !!sessionStorage.getItem(PEDE); }catch(e){}
+    if(!pede) return;
+    reaberturas++;
+    setTimeout(() => { if(!document.getElementById('quemEsta')) abrirLista(); }, 60);
+  }).observe(document.body, { childList: true }); }catch(e){}
+
+  /* sair da agência apaga a escolha e a pergunta pendente */
+  if(window.MaestroPorta && typeof MaestroPorta.sair === 'function') MaestroPorta.sair = (function(orig){
+    return function(){
+      try{ localStorage.removeItem('maestro-v267-escolha'); sessionStorage.removeItem(PEDE); }catch(e){}
+      return orig.apply(this, arguments);
+    };
+  })(MaestroPorta.sair);
 
   window.MaestroQuemEntra = { abrirLista, marcarLogin };
 })();

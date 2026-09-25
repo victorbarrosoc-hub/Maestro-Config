@@ -344,6 +344,16 @@ moldura da v240** (troca de cliente, abas que quebram no celular) — ela
 agora é `MaestroMolduraCliente(html)`, e quem desenha aba por fora a chama.
 Suíte que abre a aba Redes por um servidor próprio precisa servir
 `/web/redes/` (a v240 aprendeu).
+**Fechado (25 set, v268) — o login é da agência.** Vídeo do founder: com
+`ejup.mkt` ("não é equipe, é a agência") a lista nunca vinha e o Hoje
+piscava. A v219 transformava o login em pessoa ("Ejup Mkt"), escolhia por
+ela e fechava a lista — de novo a cada volta da equipe do banco, brigando
+com a escolha da v267. Agora, em casa COM dono, login de fora da equipe é o
+da agência; a pergunta sobrevive ao recarregar da v208 (`sessionStorage`);
+a lista do login só fecha por escolha. 15 provas em
+`web/verificar/v268-o-login-e-da-agencia.mjs` (contra a v267: 4 falhas).
+**Lição:** eu testei o login com o e-mail de uma PESSOA; o founder usa o
+da AGÊNCIA. Prova de entrada tem de cobrir os dois.
 **Fechado (25 set, v267) — o login é da agência; a pessoa se escolhe
 depois.** "Trocar de conta é pra trocar de usuário, não de agência"; "não
 aparece mais a lista de usuários"; "bug de tela de novo". (1) Depois do

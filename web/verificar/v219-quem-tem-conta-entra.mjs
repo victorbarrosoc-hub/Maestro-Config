@@ -75,15 +75,18 @@ console.log('\n1. o caso dele: a ZRO tem só a Gabi, sem dono, e ele entra');
   await ctx.close();
 }
 
-console.log('\n2. a casa já tem dono: quem entra pela conta entra como Equipe, não como dono');
+console.log('\n2. a casa já tem dono: o login de fora da equipe é o da AGÊNCIA (v268)');
 {
+  /* v268 — o founder: "EJUP.mkt não é equipe, é a agência". Numa casa que já
+     tem dono, um login que não está na equipe é o login compartilhado da
+     agência: não vira pessoa, e quem entra se escolhe na lista. (Casa SEM
+     dono segue a regra da v219: a prova 1.) */
   const DONA = { n:'Ana Dona', mail:'ana@zro.com.br', papel:'Administrador', dono:true };
   const { ctx, pag, erros } = await abrir({ email:'novo@zro.com.br', org:'zro', equipe:[DONA, GABI] });
   const e = await estado(pag);
-  const eu = e.equipe.find(m => m.mail === 'novo@zro.com.br');
-  ok(!!eu && !eu.dono && eu.papel === 'Equipe', 'entrou como "Equipe", sem virar dono (' + JSON.stringify(e.equipe) + ')');
+  ok(!e.equipe.some(m => m.mail === 'novo@zro.com.br'), 'o login da agência não vira pessoa (' + JSON.stringify(e.equipe) + ')');
   ok(e.equipe.filter(m => m.dono).length === 1 && e.equipe.find(m => m.dono).mail === 'ana@zro.com.br', 'a dona continua sendo a dona');
-  ok(e.usuario && e.usuario.id === 'novo', 'e está logado como ele');
+  ok(!(e.usuario && e.usuario.id === 'novo'), 'e ninguém é escolhido pelo login');
   ok(erros.length === 0, 'nenhum erro de página');
   await ctx.close();
 }
