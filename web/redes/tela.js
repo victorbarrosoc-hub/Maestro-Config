@@ -55,7 +55,7 @@
   /* ================================================================ */
   /* estado da aba                                                      */
   /* ================================================================ */
-  const T = { cli: {}, mes: {}, filtro: {}, extras: null };
+  const T = { cli: {}, mes: {}, filtro: {}, extras: null, exemplo: {} };
   const estado = cli => T.cli[cli] = T.cli[cli] || { carregado: false, carregando: false, erro: null, porPlat: {} };
   async function carregar(cli, forcar){
     const e = estado(cli);
@@ -76,7 +76,8 @@
   /* a aba                                                              */
   /* ================================================================ */
   function html(cli){
-    const e = estado(cli);
+    const ex = T.exemplo[cli];
+    const e = ex && ex.porPlat ? { carregado: true, porPlat: ex.porPlat, exemplo: true } : estado(cli);
     if(!e.carregado && !e.carregando && !e.erro) setTimeout(() => carregar(cli), 0);
     const topo = mes => `
       <div class="rd2Topo">
@@ -85,11 +86,14 @@
           <b>${h(mesTxt(mes))}</b>
           <button class="rd2Seta" data-rd2mes="1" aria-label="Mês seguinte">${icone('arrowr')}</button></div>` : ''}
         <span class="rd2Sp"></span>
+        ${e.exemplo ? `<button class="b gho sm" data-rd2exemplo="sair">Sair do exemplo</button>` : ''}
         <button class="b pri sm" data-rd2imp="1">${icone('doc')} Importar dados</button>
-      </div>`;
+      </div>
+      ${e.exemplo ? `<div class="rd2Exemplo" role="note">${icone('warn', 14)}<span><b>Exemplo — números fictícios.</b> É assim que a aba fica depois de importar o que o Instagram e o Facebook exportam. Nada disto é do cliente, nada foi gravado.</span></div>` : ''}`;
     if(!e.carregado){
       if(e.erro) return `<div class="rd2">${topo('')}<div class="rd2Vazio"><b>Não consegui ler os dados das redes</b>
-        <p>${h(e.erro)}.</p><button class="b gho sm" data-rd2recarregar="1">${icone('refresh')} Tentar de novo</button></div></div>`;
+        <p>${h(e.erro)}.</p><button class="b gho sm" data-rd2recarregar="1">${icone('refresh')} Tentar de novo</button>
+        ${botaoExemplo(cli)}</div></div>`;
       return `<div class="rd2">${topo('')}<div class="rd2Carregando" role="status"><span class="rd2Roda"></span>Carregando os dados das redes…</div></div>`;
     }
     const meses = AN().mesesComDados(e.porPlat);
@@ -99,7 +103,7 @@
     T.mes[cli] = mes;
     const nLeg = legado(cli);
     const aviso = nLeg ? `<div class="rd2Legado">${icone('warn', 14)}<span>${nLeg} ${nLeg === 1 ? 'publicação importada' : 'publicações importadas'} pela versão anterior da aba continuam guardadas, mas não entram nesta análise (aquela versão deduzia a rede pelo arquivo). Reimporte pelos arquivos de cada rede.</span></div>` : '';
-    if(!temAlgo) return `<div class="rd2">${topo('')}${aviso}${vazioHtml()}</div>`;
+    if(!temAlgo) return `<div class="rd2">${topo('')}${aviso}${vazioHtml(cli)}</div>`;
     const R = AN().resumoCliente(e.porPlat, mes);
     const filtro = T.filtro[cli] || 'todas';
     const redesNoMes = [...new Set(R.resumos.map(r => r.plat))];
@@ -114,15 +118,33 @@
         : `<div class="rd2Vazio"><b>Nada de ${h(mesTxt(mes).toLowerCase())} ${filtro === 'todas' ? '' : 'no ' + h(nomePlat(filtro))}</b>
            <p>Há dados de ${meses.map(m => h(M().mesExtenso(m))).join(', ')}. Use as setas ou importe este mês.</p></div>`}
       ${lista.filter(r => r.estado === 'nao_importado').map(r => `<div class="rd2Aviso">${icone('warn', 14)}<span>${h(nomePlat(r.plat))} · ${h(r.nome)}: ${h(r.alertas[0] || 'sem dados neste mês')}</span></div>`).join('')}`;
-    return `<div class="rd2">${topo(mes)}${chips}${aviso}${corpo}
-      ${inventarioHtml(e.porPlat)}${historicoHtml(e.porPlat)}</div>`;
+    return `<div class="rd2${e.exemplo ? ' rd2EhExemplo' : ''}">${topo(mes)}${chips}${e.exemplo ? '' : aviso}${corpo}
+      ${e.exemplo ? '' : inventarioHtml(e.porPlat) + historicoHtml(e.porPlat)}</div>`;
   }
 
-  function vazioHtml(){
+  function botaoExemplo(cli){
+    const ex = T.exemplo[cli];
+    if(ex && ex.erro) return `<p class="rd2ExErro">Não consegui montar o exemplo: ${h(ex.erro)}.</p>`;
+    return `<button class="b gho" data-rd2exemplo="ver" ${ex && ex.montando ? 'disabled' : ''}>${ex && ex.montando ? 'Montando o exemplo…' : 'Ver com números de exemplo'}</button>`;
+  }
+  async function verExemplo(cli){
+    const ex = T.exemplo[cli] = { montando: true };
+    redesenhar();
+    try{
+      if(!G.MaestroRedesExemplo) throw new Error('o arquivo do exemplo não carregou');
+      ex.porPlat = await G.MaestroRedesExemplo.montar(cli, hoje(), cliPorId(cli).nome);
+      if(!Object.keys(ex.porPlat).length) throw new Error('nenhuma rede montou');
+      T.mes[cli] = null; T.filtro[cli] = 'todas';
+    }catch(err){ ex.erro = err && err.message || 'erro'; ex.porPlat = null; }
+    ex.montando = false;
+    redesenhar();
+  }
+  function vazioHtml(cli){
     return `<div class="rd2Vazio rd2Comeco"><div class="rd2VazioIc">${icone('chart')}</div>
       <b>Nenhum número de rede ainda</b>
       <p>Importe o que cada rede exporta — CSV, XLSX ou ZIP. Cada arquivo é reconhecido pelo conteúdo; nada é somado entre redes; importar de novo substitui, nunca soma.</p>
-      <button class="b pri" data-rd2imp="1">${icone('doc')} Importar dados</button>
+      <div class="rd2VazioBotoes"><button class="b pri" data-rd2imp="1">${icone('doc')} Importar dados</button>
+      ${botaoExemplo(cli)}</div>
       <details class="rd2Como"><summary>O que exportar de cada rede</summary><ul>
         ${plats().map(([k, p]) => `<li><b>${h(p.nome)}</b> — ${h(p.exportar || '')}</li>`).join('')}</ul></details></div>`;
   }
@@ -849,6 +871,7 @@
     /* sai o arquivo que foi gravado; fica o da rede que falhou, o que esperava escolha e o não reconhecido */
     const gravados = new Set(feitos.flatMap(x => [...x.uids]));
     I.brutos = I.brutos.filter(b => !gravados.has(b.uid));
+    if(feitos.length) delete T.exemplo[I.cli];
     I.feito = { lote: true, feitos: feitos.map(x => Object.assign(x, { n: x.uids.size })), falhas };
     I.substituir = false; I.confirmou = false;
     const n = feitos.length;
@@ -874,6 +897,7 @@
        leituras, e quatro exportações do Content do TikTok viram uma lista só */
     const nArq = new Set(I.itens.filter(x => x.r.leituras.length && !(x.r.status === 'desconhecido' && (x.r.outras || []).length)).map(x => x.uid)).size;
     const nCat = new Set(P.leituras.map(l => l.cat)).size;
+    delete T.exemplo[I.cli];
     I.feito = { plat, n: nArq, cats: nCat, periodo: P.periodo, conta: conta.nome, subst: (I.comparacao && I.comparacao.existiam) || 0 };
     avisar(`${nomePlat(plat)} importado: ${nArq} ${nArq === 1 ? 'arquivo' : 'arquivos'}, ${periodoTxt(P.periodo)}.`);
     I.substituir = false; I.confirmou = false;
@@ -934,11 +958,15 @@
   /* eventos                                                            */
   /* ================================================================ */
   document.addEventListener('click', ev => {
-    const t = ev.target.closest && ev.target.closest('[data-rd2imp],[data-rd2mes],[data-rd2filtro],[data-rd2recarregar],[data-rd2fechar],[data-rd2plat],[data-rd2importar],[data-rd2tirar],[data-rd2mover],[data-rd2trocar],[data-rd2novo],[data-rd2usarmes],[data-rd2adaptar],[data-rd2adaptarp],[data-rd2esc],[data-rd2wvoltar],[data-rd2wsalvar]');
+    const t = ev.target.closest && ev.target.closest('[data-rd2imp],[data-rd2exemplo],[data-rd2mes],[data-rd2filtro],[data-rd2recarregar],[data-rd2fechar],[data-rd2plat],[data-rd2importar],[data-rd2tirar],[data-rd2mover],[data-rd2trocar],[data-rd2novo],[data-rd2usarmes],[data-rd2adaptar],[data-rd2adaptarp],[data-rd2esc],[data-rd2wvoltar],[data-rd2wsalvar]');
     if(!t) return;
     const d = t.dataset;
     const cli = typeof cliAtual === 'function' ? cliAtual().id : null;
     if(d.rd2imp){ ev.preventDefault(); abrirImportar({ cli }); return; }
+    if(d.rd2exemplo){ ev.preventDefault();
+      if(d.rd2exemplo === 'sair'){ delete T.exemplo[cli]; T.mes[cli] = null; redesenhar(); }
+      else verExemplo(cli);
+      return; }
     if(d.rd2mes){
       const e = estado(cli); const atual = T.mes[cli] || hoje().slice(0, 7);
       T.mes[cli] = +d.rd2mes < 0 ? AN().mesAnterior(atual) : AN().mesSeguinte(atual);

@@ -215,3 +215,12 @@ html.rd2ModalAberto{ overflow:hidden }
   .rd2Imp > .modalrow .rd2PorQue{ flex:1 1 100% }
   .rd2Imp > .modalrow .rd2PorQue:empty{ display:none }
 }
+
+/* v265 — números de exemplo */
+.rd2VazioBotoes{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap }
+.rd2Vazio > .b.gho[data-rd2exemplo]{ margin-left:8px }
+.rd2ExErro{ color:var(--ink-200); font-size:12.5px; margin-top:10px }
+.rd2Exemplo{ display:flex; gap:8px; align-items:flex-start; font-size:12.5px; line-height:1.45; color:var(--ink-100);
+  background:color-mix(in srgb, var(--brass-500) 14%, var(--sup)); border-radius:12px; padding:10px 12px; margin-bottom:12px }
+.rd2Exemplo svg{ color:var(--brass-500); flex:0 0 auto; margin-top:2px }
+.rd2Exemplo b{ color:var(--ink-50) }

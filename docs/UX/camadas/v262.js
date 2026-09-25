@@ -12,7 +12,7 @@
    ===================================================================== */
 (function(){
   const VERSAO = (typeof VERSAO_PROTOTIPO === 'string' ? VERSAO_PROTOTIPO.split(' ')[0] : 'v262');
-  const ARQS = ['adaptadores.js', 'motor.js', 'dados.js', 'analise.js', 'tela.js'];
+  const ARQS = ['adaptadores.js', 'motor.js', 'dados.js', 'analise.js', 'exemplo.js', 'tela.js'];
   /* no ar: /web/redes/; aberto do disco (provas): relativo ao arquivo */
   const base = () => {
     if(location.protocol === 'file:'){

@@ -1,11 +1,44 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.77
+Version: 0.5.79
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.79 — 2026-09-25
+
+**Status:** Concluída
+
+### v265 — a aba Redes com exemplo
+
+O founder: *"não consigo visualizar nada na aba Redes… nem em demo?"*. A aba
+só desenha depois de uma importação, e os números da v238 não entram na
+análise nova — então quem chegava via "Nenhum número de rede ainda" e, sem
+banco, só um erro. O vazio e o erro agora oferecem **"Ver com números de
+exemplo"**: arquivos no formato do Meta (Instagram e Facebook, 70 dias até
+ontem, números fictícios e sempre os mesmos) passam pelo MESMO caminho de
+uma importação — reconhecer, extrair, montar, aplicar — em memória. Faixa
+"Exemplo — números fictícios… nada foi gravado", "Sair do exemplo", e uma
+importação de verdade tira o exemplo. Inventário e histórico não aparecem
+no exemplo (não há o que apagar). Motor em `web/redes/exemplo.js`. 21 provas
+em `web/verificar/v265-redes-exemplo.mjs` (nada de `__redes__` no banco,
+nada no aparelho, celular sem rolagem de lado).
+
+## 0.5.78 — 2026-09-25
+
+**Status:** Concluída
+
+### v264 — a foto abre a conta
+
+O founder: *"quando clica na foto do meu nome lá embaixo, não faz nada…
+seria interessante ter trocar de conta e sair"*. A foto do rodapé do menu
+abre um cartão com quem está dentro (nome, e-mail, papel) e três saídas:
+**Minha conta**, **Trocar de conta** e **Sair**. Sair e trocar primeiro
+sobem o que está pendente (pauta, quadro, cadastro; no máximo 5s) e só
+depois limpam o aparelho; trocar reabre o login. 11 provas em
+`web/verificar/v264-a-foto-abre-a-conta.mjs`.
 
 ## 0.5.77 — 2026-09-24
 

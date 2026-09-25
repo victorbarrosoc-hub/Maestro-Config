@@ -4,7 +4,7 @@ Version: 0.5
 Status: Implementação — blocos 1, 2, 3 e 5 da API prontos, verificados por HTTP
         · D-080 resolvida (a fase substitui o status): blocos 4, 6, 7 e 8 liberados
 Codename: Project Symphony
-Última atualização: 2026-09-24
+Última atualização: 2026-09-25
 
 > **Retomando o projeto? Leia [`docs/HANDOFF.md`](docs/HANDOFF.md) primeiro.**
 > Ele é o mapa: estado do código, o que já foi verificado, o que está aberto
@@ -344,6 +344,16 @@ moldura da v240** (troca de cliente, abas que quebram no celular) — ela
 agora é `MaestroMolduraCliente(html)`, e quem desenha aba por fora a chama.
 Suíte que abre a aba Redes por um servidor próprio precisa servir
 `/web/redes/` (a v240 aprendeu).
+**Fechado (25 set, v265) — a aba Redes com exemplo.** "Não consigo
+visualizar nada na aba Redes, nem em demo." A aba só desenha depois de
+importar (e o que a v238 gravou não entra na análise nova). O vazio e o
+erro ganham "Ver com números de exemplo": arquivos no formato do Meta,
+fictícios, pelo MESMO caminho da importação, em memória — nada vai ao
+banco nem ao aparelho. 21 provas em `web/verificar/v265-redes-exemplo.mjs`.
+**Fechado (25 set, v264) — a foto abre a conta.** A foto do rodapé do menu
+abre quem está dentro, "Minha conta", "Trocar de conta" e "Sair"; sair e
+trocar sobem o pendente antes de limpar o aparelho. 11 provas em
+`web/verificar/v264-a-foto-abre-a-conta.mjs`.
 **Fechado (24 set, v261) — o padrão chega aos cards de antes.** No
 Cronograma, "Padronizar nomes (N)" com antes → depois e caixa por linha (a
 tarefa do Ensaio vai junto; a grafia do tema vira a mais usada do
