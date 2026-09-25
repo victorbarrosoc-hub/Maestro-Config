@@ -203,6 +203,18 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 
 ---
 
+## Dados em tempo real — `docs/ENGINEERING/DADOS_TEMPO_REAL.md` · 🟡 Em andamento
+
+- [x] v270 — vídeo, corte, story e legenda passam no Check
+- [x] Etapa 0 — histórico, restaurar card, cópia diária (31 provas)
+- [ ] Etapa 0 — founder roda `dados-0-historico.sql`, liga `pg_cron` e o backup do plano
+- [x] Etapa 1 — banco: `cards`, `card_midias`, escrita por campo, Realtime, espelho e trava (38 provas)
+- [ ] Etapa 1 — app: ler das tabelas, gravar por campo, `postgres_changes`, posição, fila sem rede, portão de versão
+- [ ] Etapa 1 — ligar (`maestro_cards_ligar`) junto com o app no ar
+- [ ] Etapa 2 — tarefas do Ensaio em tabela
+- [ ] Etapa 3 — o resto do `__estado__`
+- Feature nova na plataforma congelada durante as etapas 1 e 2
+
 ## Gestão (MPGP) — em `/gestao`, à parte · 🟡 No ar para aprovação
 
 Desenho e estado em `docs/PRD/GESTAO.md`; 66 provas em `web/verificar/gestao-fluxo.mjs`.

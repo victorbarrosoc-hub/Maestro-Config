@@ -299,6 +299,21 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Em andamento (25 set) — dados em tempo real.** "Cards que apaguei
+voltando, mídia sumindo, card mudando de posição, texto sumindo… tá
+resetando?" Não é reset nem limite (o do navegador fechou na v247): é o
+documento inteiro por cliente mesclado no navegador — 79 pontos de mescla, 19
+consertos de perda de dado desde a v151. Plano em
+`docs/ENGINEERING/DADOS_TEMPO_REAL.md`. **v270** (no ar): vídeo, corte, story e
+legenda passam no Check (`conteudoDe`; nove portas só olhavam `texto`).
+**Etapa 0** (`dados-0-historico.sql`, 31 provas): histórico de toda gravação,
+restaurar um card, cópia diária — **o founder roda no SQL Editor** e liga
+`pg_cron`. **Etapa 1, banco** (`dados-1-cards.sql`, 38 provas): `cards` e
+`card_midias`, escrita por campo com conflito em vez de apagar, Realtime,
+espelho na `pauta` (link do cliente intacto) e trava que traduz gravação
+antiga em diferença por campo; **ligar só junto com o app da Etapa 1**. Regra
+tirada das provas: cópia velha é igual a restauração pela pauta — a exclusão
+vence. **Feature nova na plataforma fica congelada nas etapas 1 e 2.**
 **Fechado (25 set) — a Gestão (MPGP), num link à parte: `/gestao`.** Pedido:
 "uma estrutura nova… conectar o que já tem (Produção) com o MPGP… quando eu
 movimente um cliente, ele já entra no CRM, no Financeiro, na etapa da jornada…

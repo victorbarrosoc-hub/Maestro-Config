@@ -1,9 +1,43 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.84
+Version: 0.5.85
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.85 — 2026-09-25
+
+**Status:** v270 no ar · Etapa 0 e banco da Etapa 1 prontos (a rodar no Supabase)
+
+### v270 — vídeo e corte passam no Check
+
+Do print do founder ("Falta o texto. O Check precisa de algo para ler." num
+card de vídeo com roteiro). Nove portas perguntavam só por `p.texto`; roteiro,
+corte, telas do story e legenda não contavam. Agora uma regra só,
+`conteudoDe(p)`, decide se há o que ler — em `podeEnviar`, `moverJob`, no
+botão "para o Check →", no recado do Check e no "porque não devolve". 11
+provas em `web/verificar/v270-video-passa-no-check.mjs` (contra a v269: falham).
+
+### Dados — do documento inteiro para a linha que mudou
+
+"Cards que apaguei voltando… mídia sumindo… card mudando de posição… texto
+sumindo… tá resetando?" Não é reset nem limite: é o documento inteiro por
+cliente, mesclado no navegador (79 pontos de mescla, 19 consertos de perda de
+dado desde a v151). Desenho e plano em `docs/ENGINEERING/DADOS_TEMPO_REAL.md`.
+
+- **Etapa 0** (`dados-0-historico.sql`, 31 provas): histórico de toda gravação
+  com o que sumiu, restaurar UM card com a mídia, cópia diária de 14 dias.
+- **Etapa 1, banco** (`dados-1-cards.sql`, 38 provas): `cards` e
+  `card_midias` com versão por campo, posição guardada e apagar como marca;
+  escrita por campo que devolve conflito em vez de apagar; Realtime nas duas;
+  espelho na `pauta` (o link do cliente não muda) e trava que traduz gravação
+  antiga em diferença por campo. Ligar e desligar reversível.
+- **Dois defeitos que as provas pegaram antes do ar:** a restauração da
+  Etapa 0 procurava o card da lixeira no formato errado (é `{item, idx,
+  quando}`); e uma cópia velha é idêntica a uma restauração feita pela pauta —
+  a exclusão vence, restaurar é pela porta.
 
 ---
 
