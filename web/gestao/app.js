@@ -188,9 +188,11 @@
       erroPorta = 'O banco não respondeu (' + (e.message || e) + '). Tente de novo ou veja o exemplo.'; B().sair(); tela = 'porta'; desenhar();
     }
   }
+  const NO_DEMO = () => /^\/gestao\/(demo|exemplo)\/?$/.test(location.pathname);
   function abrirExemplo(){
+    /* no site, o exemplo tem endereço próprio: dá para mandar o link */
+    if(!ARTEFATO && !NO_DEMO() && /^\/gestao\/?$/.test(location.pathname)){ location.href = '/gestao/demo' + (location.hash || ''); return; }
     tela = 'app';
-    try{ localStorage.setItem(MODO, 'demo'); }catch(e){}
     B().abrirExemplo(GD.semente);
     app.innerHTML = casca(); desenhar();
   }
@@ -259,7 +261,10 @@
     if(d.dobra){ const sec = t.closest('.coluna'); const fech = !(sec && sec.classList.contains('fechada')); T.E_.fechadas[d.dobra] = fech; if(sec) sec.classList.toggle('fechada', fech); return; }
     if(d.tema !== undefined){ const novo = document.documentElement.dataset.tema === 'claro' ? 'escuro' : 'claro'; try{ localStorage.setItem(TEMA, novo); }catch(err){} aplicarTema(novo); desenhar(); return; }
     if(d.sair !== undefined){ F.fecharTudo(); B().sair(); try{ localStorage.removeItem(MODO); }catch(err){} tela = 'porta'; erroPorta = ''; desenhar(); return; }
-    if(d.entrar !== undefined){ F.fecharTudo(); tela = 'porta'; erroPorta = ''; try{ localStorage.removeItem(MODO); }catch(err){} desenhar(); return; }
+    if(d.entrar !== undefined){ F.fecharTudo();
+      if(NO_DEMO()){ location.href = '/gestao'; return; }
+      tela = 'porta'; erroPorta = ''; try{ localStorage.removeItem(MODO); }catch(err){} desenhar(); return; }
+    if(d.semroteiro !== undefined){ T.E_.semRoteiro = true; try{ localStorage.setItem('maestro-gestao-roteiro', 'fora'); }catch(err){} desenhar(); return; }
     if(d.exemplo !== undefined){ abrirExemplo(); return; }
     if(d.zerar !== undefined){
       if(!armadoZerar || Date.now() - armadoZerar > 5000){ armadoZerar = Date.now(); t.textContent = 'Toque de novo para recomeçar'; toast('O que você mudou no exemplo some.'); return; }
@@ -314,8 +319,7 @@
   /* ---------------- partida ---------------- */
   const pede = new URLSearchParams(location.search);
   let modo = null; try{ modo = localStorage.getItem(MODO); }catch(e){}
-  if(ARTEFATO || pede.has('exemplo')) abrirExemplo();
+  if(ARTEFATO || NO_DEMO() || pede.has('exemplo')) abrirExemplo();
   else if(B().temSessao()) iniciarReal();
-  else if(modo === 'demo') abrirExemplo();
   else { tela = 'porta'; desenhar(); }
 })(window);

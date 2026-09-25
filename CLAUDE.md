@@ -316,7 +316,12 @@ linhas `__gestao__:<coleção>` com a marca `maestroRedes` (a carga geral e o
 revisão, sessão própria (`maestro-gestao-sessao-v1`). Sem conta: empresa de
 exemplo gerada pelo próprio motor. 66 provas em
 `web/verificar/gestao-fluxo.mjs` (separação byte a byte, dois aparelhos, sem
-rede, o fluxo inteiro pela tela, celular). Desenho e plano da mescla em
+rede, o fluxo inteiro pela tela, celular) — 80 com o demo. **Demo com tudo
+preenchido: `/gestao/demo`** (28 clientes em todas as etapas, todas as listas
+de todas as áreas, o projeto MPGP de F1 ao TAP, roteiro de oito passos no
+Hoje); o exemplo é versionado (`DEMO_VERSAO` em `banco.js`) — mudou a semente,
+sobe o número. O exemplo pegou duas regras: termo de uso de imagem não é venda
+(não volta para Fechamento) e upsell não é renovação. Desenho e plano da mescla em
 `docs/PRD/GESTAO.md`. **Aberto para o founder:** quem entra com o login da
 agência vê o financeiro (RBAC por área entra na mescla).
 **Fechado (24 set, v263) — as cinco redes num clique.** "Faz o botão

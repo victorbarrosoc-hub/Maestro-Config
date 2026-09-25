@@ -118,8 +118,11 @@
     const jns = daConta('jornadas', id);
     const jAtiva = jns.filter(j => !fechado('jornadas', j)).sort((a, b) => (b._cri || 0) - (a._cri || 0))[0];
     const ctAss = cts.filter(c => c.status === 'assinado').sort((a, b) => String(b.fim || '').localeCompare(String(a.fim || '')));
-    const ctAb = cts.find(c => CT_ABERTO.includes(c.status || 'a_elaborar'));
-    const rnAb = daConta('renovacoes', id).find(r => !['renovado', 'nao_renovado'].includes(r.status || 'a_avaliar'));
+    /* só contrato de VENDA põe em Fechamento: termo, aditivo ou distrato em
+       andamento não é venda nova. E só renovação move para Renovação — um
+       upsell em negociação é oportunidade, o cliente segue onde está. */
+    const ctAb = cts.find(c => CT_ABERTO.includes(c.status || 'a_elaborar') && (!c.tipo || c.tipo === 'Contrato'));
+    const rnAb = daConta('renovacoes', id).find(r => r.tipo !== 'Upsell' && !['renovado', 'nao_renovado'].includes(r.status || 'a_avaliar'));
 
     if(jAtiva || ctAss.length){
       if(ctAb && !ctAss.length) return { etapa:'fechamento', motivo:'contrato para assinar: ' + nomeStatus('contratos', ctAb) };
@@ -320,11 +323,11 @@
     } };
 
   ACOES.assinar = { nome:'Contrato assinado', curto:'Assinado', de:['fechamento'], para:'onboarding',
-    campos: conta => { const ct = daConta('contratos', conta.id).find(c => CT_ABERTO.includes(c.status || 'a_elaborar')); return [
+    campos: conta => { const ct = daConta('contratos', conta.id).find(c => CT_ABERTO.includes(c.status || 'a_elaborar') && (!c.tipo || c.tipo === 'Contrato')); return [
       { k:'link', rot:'Link do contrato assinado', t:'url', obrig:true, padrao: ct && ct.link || '', ajuda:'é a evidência de conclusão que o manual exige' },
       { k:'assinadoEm', rot:'Assinado em', t:'data', padrao: hoje() } ]; },
     plano(conta, v){
-      const ct = daConta('contratos', conta.id).find(c => CT_ABERTO.includes(c.status || 'a_elaborar'));
+      const ct = daConta('contratos', conta.id).find(c => CT_ABERTO.includes(c.status || 'a_elaborar') && (!c.tipo || c.tipo === 'Contrato'));
       if(!ct) return { erro:'Não há contrato para assinar.' };
       if(!urlOk(v.link)) return { erro:'Cole o link do contrato assinado (http…).' };
       const ops = [ set('contratos', ct.id, { status:'assinado', link: v.link, assinadoEm: v.assinadoEm || hoje() }),
@@ -833,7 +836,7 @@
       if(e.etapa === 'renovacao' && !daConta('renovacoes', c.id).some(x => !['renovado', 'nao_renovado'].includes(x.status || 'a_avaliar')))
         add('aviso', `${c.nome}: ${e.motivo} — abrir a renovação`, 'conta/' + c.id, { area:'acompanhamento', acao:'abrirRenovacao', contaId: c.id, resp: c.responsavel });
       if(e.etapa === 'fechamento'){
-        const ct = daConta('contratos', c.id).find(x => CT_ABERTO.includes(x.status || 'a_elaborar'));
+        const ct = daConta('contratos', c.id).find(x => CT_ABERTO.includes(x.status || 'a_elaborar') && (!x.tipo || x.tipo === 'Contrato'));
         if(ct && ct._cri && dias(iso(new Date(ct._cri)), h) >= 7) add('aviso', `${c.nome}: contrato "${nomeStatus('contratos', ct)}" ${haDias(dias(iso(new Date(ct._cri)), h))}`, 'conta/' + c.id, { area:'estrategico' });
       }
     });

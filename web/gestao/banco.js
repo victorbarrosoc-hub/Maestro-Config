@@ -33,6 +33,8 @@
   const PREFIXO = '__gestao__:';
   const MARCA = 'gestao';
   const CADA = 4000;
+  /* sobe quando o exemplo muda: quem abriu o antigo ganha o novo */
+  const DEMO_VERSAO = 2;
 
   const ls = {
     ler(k){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }catch(e){ return null; } },
@@ -209,7 +211,7 @@
         ops.forEach(op => aplicarEm(itens, op));
       }
       B.pend = {};
-      ls.gravar(DEMO, { remoto: B.remoto, espelho: B.brutasProducao, v: 1 });
+      ls.gravar(DEMO, { remoto: B.remoto, espelho: B.brutasProducao, v: DEMO_VERSAO });
       return;
     }
     if(B.modo === 'real' && B.org)
@@ -222,8 +224,8 @@
   B.abrirExemplo = function(semente){
     B.modo = 'demo'; B.org = null; parar();
     const g = ls.ler(DEMO);
-    if(g && g.remoto && g.v === 1){ B.remoto = g.remoto; B.brutasProducao = g.espelho || {}; }
-    else { const s = semente(); B.remoto = s.remoto; B.brutasProducao = s.producao; ls.gravar(DEMO, { remoto: B.remoto, espelho: B.brutasProducao, v: 1 }); }
+    if(g && g.remoto && g.v === DEMO_VERSAO){ B.remoto = g.remoto; B.brutasProducao = g.espelho || {}; }
+    else { const s = semente(); B.remoto = s.remoto; B.brutasProducao = s.producao; ls.gravar(DEMO, { remoto: B.remoto, espelho: B.brutasProducao, v: DEMO_VERSAO }); }
     B.pend = {}; B.revs = {};
     recomporTudo();
     B.selo = 'exemplo';

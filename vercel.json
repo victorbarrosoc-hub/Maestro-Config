@@ -306,6 +306,10 @@
       "destination": "/web/gestao/index.html"
     },
     {
+      "source": "/gestao/(.*)",
+      "destination": "/web/gestao/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/web/$1"
     }
@@ -784,6 +788,15 @@
     },
     {
       "source": "/web/gestao/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate, max-age=0"
+        }
+      ]
+    },
+    {
+      "source": "/gestao/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

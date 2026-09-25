@@ -25,7 +25,7 @@ const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const TIPOS = { '.js':'text/javascript; charset=utf-8', '.css':'text/css', '.html':'text/html; charset=utf-8', '.woff2':'font/woff2', '.png':'image/png' };
 const srv = http.createServer((q, r) => {
   let u = decodeURIComponent(q.url.split('?')[0]);
-  if(u === '/gestao' || u === '/gestao/') u = '/web/gestao/index.html';
+  if(/^\/gestao(\/.*)?$/.test(u)) u = '/web/gestao/index.html';
   const f = path.join(RAIZ, u);
   if(/^\/web\/(gestao|icones)\/[\w.@-]+$/.test(u) && fs.existsSync(f)){ r.writeHead(200, { 'Content-Type': TIPOS[path.extname(f)] || 'application/octet-stream' }); r.end(fs.readFileSync(f)); return; }
   r.writeHead(404); r.end();
@@ -43,6 +43,7 @@ async function esperar(pg, fn, arg, ms){
   return false;
 }
 const HOJE = new Date('2026-09-25T10:00:00-03:00');
+const GM_ETAPAS = ['prospeccao', 'negociacao', 'proposta', 'fechamento', 'onboarding', 'execucao', 'renovacao', 'base'];
 
 /* a plataforma, como o banco de verdade guarda */
 const PLATAFORMA = {
@@ -177,9 +178,9 @@ console.log('\nB · o fluxo único');
 {
   const { ctx, pg } = await contexto();
   await pg.goto(BASE + '/gestao?exemplo'); await esperar(pg, () => window.GB && GB.modo === 'demo' && document.querySelector('.casa'));
-  checa('20. o exemplo nasce pelo próprio motor: 13 clientes em todas as etapas', await pg.evaluate(() => {
+  checa('20. o exemplo nasce pelo próprio motor: mais de 20 clientes, em todas as etapas', await pg.evaluate(() => {
     const et = new Set(GB.lista('contas').map(c => GMotor.etapaDaConta(c).etapa));
-    return GB.lista('contas').length === 13 && ['prospeccao', 'negociacao', 'proposta', 'fechamento', 'onboarding', 'execucao', 'renovacao', 'base', 'perdido'].every(e => et.has(e)); }));
+    return GB.lista('contas').length > 20 && ['prospeccao', 'negociacao', 'proposta', 'fechamento', 'onboarding', 'execucao', 'renovacao', 'base', 'perdido'].every(e => et.has(e)); }));
 
   /* 1) lead */
   await pg.click('.topo [data-novocliente]');
@@ -380,6 +381,41 @@ console.log('\nB · o fluxo único');
   await pg.evaluate(() => GB.aplicar([{ c:'propostas', id:'pr-js', set:{ contaId:'ct-xss', titulo:'x', link:'javascript:alert(1)', status:'elaboracao' } }]));
   await pg.evaluate(() => GF.abrirFicha('propostas', 'pr-js')); await pg.waitForTimeout(80);
   checa('62. link "javascript:" não vira href', await pg.evaluate(() => ![...document.querySelectorAll('#folhas a')].some(a => /^javascript:/i.test(a.getAttribute('href') || ''))));
+  await ctx.close();
+}
+
+/* =================================================================
+   D. O DEMO: um endereço próprio, com tudo preenchido
+   ================================================================= */
+console.log('\nD · o demo');
+{
+  const { ctx, pg } = await contexto();
+  await pg.goto(BASE + '/gestao'); await pg.waitForSelector('#formEntrar');
+  await pg.click('[data-exemplo]'); await esperar(pg, () => location.pathname === '/gestao/demo' && window.GB && GB.modo === 'demo' && document.querySelector('.casa'));
+  checa('66. "Ver com uma empresa de exemplo" leva ao endereço próprio /gestao/demo', await pg.evaluate(() => location.pathname === '/gestao/demo' && GB.modo === 'demo'));
+  await pg.goto(BASE + '/gestao/demo'); await esperar(pg, () => window.GB && GB.modo === 'demo' && document.querySelector('.casa'));
+  checa('67. /gestao/demo abre direto no exemplo, sem pedir login', await pg.evaluate(() => GB.modo === 'demo' && !document.getElementById('formEntrar')));
+  const vazios = await pg.evaluate(() => Object.keys(GM.TIPOS).filter(k => GB.lista(k).length < 2));
+  checa('68. todas as listas de todas as áreas têm registros (duas ou mais)', !vazios.length, vazios);
+  const etapas = await pg.evaluate(() => { const r = {}; GB.lista('contas').forEach(c => { const e = GMotor.etapaDaConta(c).etapa; r[e] = (r[e] || 0) + 1; }); return r; });
+  checa('69. a esteira tem clientes em todas as oito etapas (e perdidos)', GM_ETAPAS.every(e => etapas[e] > 0) && etapas.perdido > 0, etapas);
+  const funil = await pg.evaluate(() => GM.FUNIS.b2b.etapas.filter(([id]) => !GB.lista('oportunidades').some(o => (o.funil || 'b2b') === 'b2b' && o.resultado === 'aberta' && o.etapa === id)).map(e => e[0]));
+  checa('70. o Pipeline B2B tem oportunidade em cada etapa', !funil.length, funil);
+  const pj = await pg.evaluate(() => { const p = GB.item('projetos', 'pj-b2c'); return { st: p.status, f: GM.MPGP.every(f => (p.fases[f.id] || {}).status === 'finalizado'), tap: p.tap.assinado, bmc: Object.keys(p.bmc).length, tar: GB.lista('tarefas').filter(t => t.origem === 'projetos/pj-b2c').length }; });
+  checa('71. o projeto MPGP está completo: F1 a F7, Canvas, TAP assinado e as entregas viradas tarefas', pj.st === 'execucao' && pj.f && pj.tap && pj.bmc === 9 && pj.tar === 4, pj);
+  checa('72. regra: termo de uso de imagem não põe ex-cliente em Fechamento', await pg.evaluate(() => GMotor.etapaDaConta(GB.lista('contas').find(c => c.nome === 'Café Raiz')).etapa === 'base'));
+  checa('73. regra: upsell em negociação não move o cliente para Renovação', await pg.evaluate(() => GMotor.etapaDaConta(GB.lista('contas').find(c => c.nome === 'Construtora Vale')).etapa === 'execucao'));
+  const passos = await pg.$$eval('.roteiro .passo', xs => xs.length);
+  checa('74. o Hoje do exemplo abre com o roteiro de oito passos', passos === 8, passos);
+  await pg.click('.roteiro .passo >> nth=2'); await pg.waitForTimeout(150);
+  checa('75. o passo "Feche uma venda" abre o ganho da Rede Farma Vida, com a prévia', /Marcar como ganho/.test(await pg.textContent('#folhaTit')) && /O que vai acontecer/.test(await pg.textContent('#previa')));
+  await pg.click('#folhas [data-fechar]');
+  await pg.click('.roteiro .passo >> nth=6'); await pg.waitForTimeout(150);
+  checa('76. o passo "Um projeto MPGP" abre o projeto', /Plataforma B2C de cursos/.test(await pg.textContent('#folhaTit')));
+  await pg.click('#folhas [data-fechar]');
+  await pg.click('[data-semroteiro]'); await pg.waitForTimeout(100);
+  await pg.reload(); await esperar(pg, () => window.GB && document.querySelector('.casa'));
+  checa('77. esconder o roteiro fica guardado', !(await pg.$('.roteiro')));
   await ctx.close();
 }
 

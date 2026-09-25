@@ -78,7 +78,7 @@
     <div class="topo"><div><div class="migalha">${esc(dataLonga())}</div><h1>${esc(saud)}</h1>
       <div class="sub fica">${ruins ? `${ruins} ${ruins > 1 ? 'coisas pedem' : 'coisa pede'} ação agora` : 'Nada urgente. O que está no ritmo, segue.'}</div></div>
       <div class="acoes"><button class="b pri" type="button" data-novocliente="lead">${icone('mais')} Novo cliente</button></div></div>
-    ${comeco()}
+    ${roteiro()}${comeco()}
     <div class="nums">
       <a class="num lat" href="#/paineis/institucional"><small>Receita recorrente</small><b>${esc(m.moeda(k.mrr))}</b><em>por mês, contratos assinados</em></a>
       <a class="num" href="#/area/financeiro/painel_financeiro"><small>A receber em 30 dias</small><b>${esc(m.moeda(f.receber30))}</b><em>${f.nReceber30} parcelas</em></a>
@@ -109,6 +109,27 @@
         </div>
       </div>
     </div>`;
+  }
+  /* o roteiro do exemplo: os passos para ver o fluxo acontecer */
+  function roteiro(){
+    if(B().modo !== 'demo') return '';
+    try{ if(localStorage.getItem('maestro-gestao-roteiro') === 'fora') E_.semRoteiro = true; }catch(e){}
+    if(E_.semRoteiro) return '';
+    const m = M(); const id = n => (m.L('contas').find(c => c.nome === n) || {}).id || '';
+    const passos = [
+      ['Veja a esteira', 'Cada cliente numa etapa, do primeiro contato à indicação. Arraste um cartão: a ação da etapa abre.', `data-ir="#/esteira"`],
+      ['Abra um cliente', 'Construtora Vale: comercial, contrato, parcelas, jornada, produção e a linha do tempo, num lugar só.', `data-ir="#/conta/${esc(id('Construtora Vale'))}"`],
+      ['Feche uma venda', 'Rede Farma Vida: antes de confirmar, a lista do que nasce — contrato, parcelas, jornada, tarefas.', `data-acao="ganho" data-conta="${esc(id('Rede Farma Vida'))}"`],
+      ['Assine um contrato', 'Dr. Marcos Tavares: sem o link do contrato, não avança. Assinado, vai para Onboarding.', `data-acao="assinar" data-conta="${esc(id('Dr. Marcos Tavares'))}"`],
+      ['Qualifique um lead', 'No Pipeline, arraste para SQL: o BANT é pedido antes.', `data-ir="#/area/comercial/pipeline"`],
+      ['Veja o dinheiro', 'Parcelas, atrasados, repasses e a previsão dos próximos meses.', `data-ir="#/paineis/financeiro"`],
+      ['Um projeto MPGP', 'Da F1 ao TAP assinado, com as entregas viradas tarefas nas frentes.', `data-abrir="projetos/pj-b2c"`],
+      ['A produção na Maestro', 'O andamento dos cards de cada cliente — só lendo, direto da plataforma.', `data-ir="#/area/producao"`]
+    ];
+    return `<div class="card roteiro" style="margin-bottom:18px"><h2 class="cabCard">Roteiro do exemplo <small>oito passos, na ordem do fluxo</small>
+        <button class="b p gho" style="margin-left:auto" type="button" data-semroteiro="1">Esconder</button></h2>
+      <ol class="passos">${passos.map(([t, d, alvo], i) => `<li><button type="button" class="passo" ${alvo}><span class="npasso">${i + 1}</span><span><b>${esc(t)}</b><small>${esc(d)}</small></span></button></li>`).join('')}</ol>
+      <p class="dica" style="margin:10px 0 0">Tudo aqui é inventado e fica só neste aparelho. "Recomeçar", na faixa de cima, volta ao começo.</p></div>`;
   }
   /* a primeira vez, com a conta real: a gestão nasce do que a Maestro já tem */
   function comeco(){

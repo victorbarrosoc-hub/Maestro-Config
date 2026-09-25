@@ -41,7 +41,13 @@ só no texto. Aqui é o sistema. Construído SEPARADO (`web/gestao/`, link
 - Painéis Comercial, Financeiro e Institucional; rituais no Hoje com a ata já
   com a pauta e os números; tema escuro e claro; celular e computador.
 
-66 provas em `web/verificar/gestao-fluxo.mjs`. Desenho em `docs/PRD/GESTAO.md`.
+**Demo em `/gestao/demo`:** tudo preenchido (28 clientes em todas as etapas,
+todas as listas das seis áreas, o projeto MPGP de F1 ao TAP) e um roteiro de
+oito passos no Hoje. Encher o exemplo achou duas regras erradas no motor, já
+corrigidas: um termo de uso de imagem punha um ex-cliente em Fechamento, e um
+upsell em negociação punha o cliente em Renovação.
+
+80 provas em `web/verificar/gestao-fluxo.mjs`. Desenho em `docs/PRD/GESTAO.md`.
 
 ---
 

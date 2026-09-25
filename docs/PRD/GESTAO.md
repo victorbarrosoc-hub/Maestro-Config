@@ -176,8 +176,13 @@ tarefas, dados e a linha do tempo inteira) · as seis áreas com todas as régua
 do manual · Pipeline B2B / Experts e B2C (SQL pede BANT) · Painéis Comercial,
 Financeiro e Institucional.
 
-**Como entrar:** a mesma conta da agência. Sem conta, "Ver com uma empresa de
-exemplo". Na primeira vez com a conta real a gestão está vazia, e o Hoje
+**Como entrar:** a mesma conta da agência. **O demo tem endereço próprio:
+`sejamaestro.com.br/gestao/demo`** — abre direto, sem login, com uma empresa
+inventada que já usa a gestão há meses: 28 clientes em todas as etapas, o funil
+B2B com oportunidade em cada etapa, todas as listas das seis áreas preenchidas,
+o projeto MPGP completo (F1 a F7, Canvas, MoSCoW, TAP assinado e as entregas
+viradas tarefas) e um roteiro de oito passos no Hoje. O exemplo fica só no
+aparelho; "Recomeçar" volta ao começo. Na primeira vez com a conta real a gestão está vazia, e o Hoje
 oferece trazer os clientes que já estão na Maestro (entram Em execução, ligados,
 com a tarefa de registrar o contrato vigente) e os Negócios do CRM (viram
 oportunidades; importar de novo não duplica).
