@@ -344,6 +344,19 @@ moldura da v240** (troca de cliente, abas que quebram no celular) — ela
 agora é `MaestroMolduraCliente(html)`, e quem desenha aba por fora a chama.
 Suíte que abre a aba Redes por um servidor próprio precisa servir
 `/web/redes/` (a v240 aprendeu).
+**Fechado (25 set, v266) — o quadro não encolhe sozinho.** O Ensaio perdeu
+as tarefas da casa e as concluídas; o banco confirmou que ninguém apagou
+(lixeira vazia). Reproduzido: a carga da v54 fazia
+`S.ensaio = __config__.estudio` — cópia vazia/velha por cima do quadro do
+aparelho, e a mescla da v151 lia isso como exclusão e gravava no
+`__estado__`. Agora a carga JUNTA (só a semente é substituída), e antes de
+subir o estado a rede devolve tarefa da casa ou concluída que sumiu sem
+lixeira nem lápide (≥3 e ≥ um terço), com aviso. 16 provas em
+`web/verificar/v266-o-quadro-nao-encolhe.mjs` (contra a v265: 8 falhas).
+**Lição, que é a v177 de novo:** ausência não é exclusão — e toda carga
+que SUBSTITUI em vez de juntar é uma exclusão disfarçada para a mescla de
+três lados. **Não devolve o já perdido:** resgate por
+`/web/resgate.html` (cópia de algum aparelho) ou backup do Supabase.
 **Fechado (25 set, v265) — a aba Redes com exemplo.** "Não consigo
 visualizar nada na aba Redes, nem em demo." A aba só desenha depois de
 importar (e o que a v238 gravou não entra na análise nova). O vazio e o

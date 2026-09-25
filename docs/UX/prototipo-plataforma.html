@@ -13400,7 +13400,8 @@ function kbSemente(){
           col:'inbox', criada:Date.now(), prazo:p.data||null, tempoMs:0, desde:null, cardId:p.id });
     }
   }
-  return { prox:n, tarefas:t, feitas:[] };
+  /* v266: marca de semente — a carga do banco SUBSTITUI a semente, mas JUNTA com quadro de verdade */
+  return { prox:n, tarefas:t, feitas:[], semente:true };
 }
 sbGravarConfig = (function(){
   /* o Ensaio viaja junto no __config__ — reescreve a função inteira
@@ -13443,6 +13444,9 @@ sbGravarConfig = (function(){
                  : (S.ensaio || la.estudio || null),
       versao: 54
     } : meu;
+    /* v266: gravou, deixou de ser semente — daqui em diante a carga junta */
+    if(dados.estudio && dados.estudio.semente){ dados.estudio = { ...dados.estudio }; delete dados.estudio.semente; }
+    if(S.ensaio && S.ensaio.semente) delete S.ensaio.semente;
     /* o aparelho passa a enxergar o que juntou — senão a gravação
        seguinte recomeça do cadastro velho e o conserto dura um ciclo */
     S.cliEdit = dados.cliEdit; S.cliFora = dados.cliFora;
@@ -13465,7 +13469,15 @@ sbCarregar = (function(orig){
         try{
           const r = await fetch(`${SB.url}/rest/v1/pauta?cliente=eq.__config__&select=dados`,{headers:sbCab()});
           if(r.ok){ const [l] = await r.json();
-            if(l && l.dados && l.dados.estudio && !abertoPorLink()) S.ensaio = l.dados.estudio; }
+            if(l && l.dados && l.dados.estudio && !abertoPorLink()){
+              /* v266: era `S.ensaio = l.dados.estudio` — o quadro do banco por
+                 cima do deste aparelho, inteiro. Com o __config__ vazio ou
+                 velho, o aparelho "apagava" tudo e a mescla da v151 levava a
+                 perda para o __estado__. Juntar, nunca substituir. */
+              const la = l.dados.estudio;
+              S.ensaio = (!S.ensaio || S.ensaio.semente) ? la
+                : (typeof mesclarEstudio === 'function' ? mesclarEstudio(S.ensaio, la) : S.ensaio);
+            } }
         }catch(e){}
       }
       if(!S.ensaio) S.ensaio = kbSemente();
@@ -16031,7 +16043,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v265 · 25 set · a aba Redes com exemplo';
+const VERSAO_PROTOTIPO = 'v266 · 25 set · o quadro não encolhe';
 
 menuSheet = (function(orig){
   return function(){
@@ -48194,5 +48206,65 @@ background:none; color:var(--ink-100); font-size:13.5px; cursor:pointer; text-al
     }
   }catch(e){}
   window.MaestroConta = { abrir, fechar, subirTudo };
+})();
+</script>
+<style id="v266-quadro">
+
+</style>
+<script data-camada="v266">
+(function(){
+  const MIN = 3, PARTE = 0.34;
+  const ids = l => (Array.isArray(l) ? l : []).filter(t => t && t.id != null);
+  const daCasa = t => t && t.cardId == null;
+  function explicados(e){
+    const x = new Set();
+    for(const it of (e.lixo || [])) if(it && it.tarefa && it.tarefa.id != null) x.add(String(it.tarefa.id));
+    const F = window.MaestroFaxinaEnsaio;
+    return { tem: id => x.has(String(id)) || !!(F && F.temLapide && F.temLapide(String(id))) };
+  }
+  function consertar(){
+    try{
+      if(typeof S !== 'object' || !S || !S.ensaio) return 0;
+      if(typeof abertoPorLink === 'function' && abertoPorLink()) return 0;
+      const Sin = window.Sincro, base = Sin && Sin.base && Sin.base.ensaio;
+      if(!base) return 0;
+      const e = S.ensaio;
+      e.tarefas = Array.isArray(e.tarefas) ? e.tarefas : [];
+      e.feitas = Array.isArray(e.feitas) ? e.feitas : [];
+      const agora = new Set([...ids(e.tarefas), ...ids(e.feitas)].map(t => String(t.id)));
+      const antes = [...ids(base.tarefas).filter(daCasa).map(t => ({ t, onde: 'tarefas' })),
+                     ...ids(base.feitas).map(t => ({ t, onde: 'feitas' }))];
+      if(antes.length < MIN) return 0;
+      const ex = explicados(e);
+      const sumiram = antes.filter(x => !agora.has(String(x.t.id)) && !ex.tem(x.t.id));
+      if(sumiram.length < MIN || sumiram.length / antes.length < PARTE) return 0;
+      for(const x of sumiram) e[x.onde].push(JSON.parse(JSON.stringify(x.t)));
+      e.prox = Math.max(+e.prox || 0, ...sumiram.map(x => (+x.t.id || 0) + 1));
+      try{ if(typeof ligarTarefaAoCard === 'function') e.tarefas.forEach(ligarTarefaAoCard); }catch(er){}
+      try{ console.warn('[v266] o quadro ia perder ' + sumiram.length + ' tarefa(s) sem ninguém apagar — devolvidas.'); }catch(er){}
+      try{ if(typeof toast === 'function') toast(`O Ensaio ia perder ${sumiram.length} tarefas sem ninguém apagar. Elas voltaram.`); }catch(er){}
+      window.MaestroQuadroDevolvidas = (window.MaestroQuadroDevolvidas || 0) + sumiram.length;
+      return sumiram.length;
+    }catch(er){ return 0; }
+  }
+  window.MaestroQuadroNaoEncolhe = { consertar };
+  function embrulhar(){
+    const Sin = window.Sincro;
+    if(!Sin || typeof Sin.enviar !== 'function' || Sin.enviar._v266) return !!(Sin && Sin.enviar && Sin.enviar._v266);
+    const orig = Sin.enviar;
+    const novo = function(){ if(consertar()){ try{ if(S.modal == null && !S.full) render(); }catch(er){} } return orig.apply(this, arguments); };
+    novo._v266 = true;
+    Sin.enviar = novo;
+    return true;
+  }
+  if(!embrulhar()){ let n = 0; const t = setInterval(() => { if(embrulhar() || ++n > 50) clearInterval(t); }, 200); }
+  if(typeof sbCarregar === 'function') sbCarregar = (function(orig){
+    return function(){
+      return Promise.resolve(orig.apply(this, arguments)).then(ok => {
+        if(consertar()){ try{ render(); }catch(er){} }
+        return ok;
+      });
+    };
+  })(sbCarregar);
 })();
 </script>

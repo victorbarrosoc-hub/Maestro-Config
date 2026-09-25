@@ -1,11 +1,48 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.79
+Version: 0.5.80
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.80 — 2026-09-25
+
+**Status:** Concluída
+
+### v266 — o quadro não encolhe sozinho
+
+O founder: *"sumiu algumas coisas minhas que estavam em plan e sumiu tbm os
+que estavam em concluído"*. O banco confirmou (consulta de leitura rodada
+por ele): `__estado__` com 10 tarefas, **nenhuma da casa, nenhuma
+concluída, lixeira vazia** — ninguém apagou; sobraram só as tarefas que o
+repositor recria a partir dos cards. O `__config__` estava com o Ensaio
+vazio.
+
+**Reproduzido.** A carga da v54 fazia `S.ensaio = __config__.estudio`:
+o quadro do banco POR CIMA do deste aparelho, inteiro. Com essa cópia
+vazia ou velha, o aparelho que reabria "tinha apagado" tudo — e a mescla de
+três lados da v151 fez o certo com o dado errado: base cheia, local vazio,
+logo exclusão, gravada no `__estado__` e daí em todos os aparelhos.
+
+1. **A carga junta, nunca substitui** (`mesclarEstudio`, a mesma da v176).
+   Só a semente de um aparelho sem quadro (`kbSemente`, agora marcada) é
+   substituída — e deixa de ser semente na primeira gravação.
+2. **A rede** (`docs/UX/camadas/v266.js`), a ideia da v177 para o quadro:
+   antes de subir o estado, tarefa da casa ou concluída que sumiu **sem
+   lixeira e sem lápide** volta para o lugar em que estava, com aviso na
+   tela. Edição pequena (até 2, ou menos de um terço) passa; exclusão pela
+   lixeira passa em qualquer quantidade; tarefa de card fica de fora (o
+   repositor e as faxinas cuidam dela).
+
+16 provas em `web/verificar/v266-o-quadro-nao-encolhe.mjs`; contra a v265,
+8 falham — exatamente o que o founder viu.
+
+**O que a v266 NÃO devolve:** o que já foi perdido. A base de todo aparelho
+aberto depois da perda já é o quadro curto. As fontes de resgate são uma
+cópia antiga em algum aparelho (`/web/resgate.html`, v265) e o backup do
+Supabase.
 
 ## 0.5.79 — 2026-09-25
 
