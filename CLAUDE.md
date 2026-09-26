@@ -310,7 +310,7 @@ Rodada 3 do teste com clientes.
   com a hora de agora e sem id.
 - **Tarefa de produção sem card ia ao Check pela seta:** agora para no Do,
   e a tela diz por quê.
-- 18 provas em `web/verificar/v272-o-login-fica.mjs` (contra a v271, 13
+- 18 provas em `web/verificar/v272-o-login-fica.mjs` (contra a v271, 11
   falham).
 - **Lição:** a prova da sessão só reproduziu quando o relógio andou uma hora
   nas duas abas. Mexer na validade guardada não bastava, porque o código

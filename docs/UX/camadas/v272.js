@@ -28,7 +28,7 @@
       const era = antes[t.id];
       if(semCard(t) && COLS_DE_CARD.includes(t.col) && era && !COLS_DE_CARD.includes(era)){
         t.col = era;
-        if(typeof toast === 'function') toast('Sem card não passa do Do. Estruture a pauta primeiro.');
+        if(typeof toast === 'function') toast('Sem card não passa do Do: estruture a pauta.');
       }
       antes[t.id] = t.col;
     }

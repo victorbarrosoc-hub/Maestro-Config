@@ -22,7 +22,11 @@ Dos dois vídeos do founder (26/set, 06h20), quatro defeitos:
    - só uma aba renova por vez (`navigator.locks`);
    - a aba lê o que a outra já renovou antes de pedir;
    - as abas se avisam pelo evento `storage`;
-   - recusa com um token mais novo já guardado não é sessão morta.
+   - recusa com um token mais novo já guardado não é sessão morta: a aba
+     espera até ~1,5s pelo token da outra, porque cada aba é um processo e o
+     que uma grava leva um instante para a outra ler;
+   - num 401, a renovação é de verdade. A primeira versão reaproveitava
+     uma sessão "ainda válida", e o `login-403` pegou.
 
    Reproduzido com duas abas e o relógio uma hora à frente (o celular que
    dormiu): na v271 a sessão some; na v272 fica, com uma renovação só.
@@ -40,7 +44,7 @@ Dos dois vídeos do founder (26/set, 06h20), quatro defeitos:
    tela diz por quê. A que já estava lá não é mexida e ganha a linha
    "Sem card. O Check libera card — estruture a pauta."
 
-18 provas em `web/verificar/v272-o-login-fica.mjs`; contra a v271, 13
+18 provas em `web/verificar/v272-o-login-fica.mjs`; contra a v271, 11
 falham. Fonte da camada em `docs/UX/camadas/v272.js`.
 
 ---

@@ -20119,20 +20119,25 @@ telaConversas = (function(orig){
      Agora: uma renovação por vez no aparelho (navigator.locks), a aba lê
      o que a outra já renovou antes de pedir, e recusa com outro token
      guardado não é sessão morta. */
-  const outra = () => { const g = ler(); return g && g.refresh && g.expira > Date.now() + 60000 ? g : null; };
+
   addEventListener('storage', e => { if(e.key === GUARDA) sessao = ler(); });
   async function renovar(){
     if(!sessao || !sessao.refresh) return null;
     if(renovando) return renovando;               /* uma de cada vez */
+    const pedido = sessao.refresh;                /* outra aba renovou depois disto? usa a dela */
     const faz = async () => {
-      const g = outra(); if(g){ sessao = g; return g; }
-      const usado = sessao.refresh;
+      const g = ler(); if(g && g.refresh && g.refresh !== pedido){ sessao = g; return g; }
+      const usado = pedido;
       const r = await fetch(`${SB.url}/auth/v1/token?grant_type=refresh_token`, {
         method:'POST', headers: cabAuth(),
         body: JSON.stringify({ refresh_token: usado }) });
       const j = await r.json().catch(() => null);
       if(!r.ok || !j || !j.access_token){
-        const g2 = ler(); if(g2 && g2.refresh && g2.refresh !== usado){ sessao = g2; return g2; }
+        /* o que a outra aba grava leva um instante para chegar aqui */
+        for(let i = 0; i < 6; i++){
+          const g2 = ler(); if(g2 && g2.refresh && g2.refresh !== usado){ sessao = g2; return g2; }
+          await new Promise(ok => setTimeout(ok, 250));
+        }
         gravar(null); return null;
       }
       return guardarResposta(j);
@@ -48547,7 +48552,7 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
 })();
 </script>
 <script data-camada="v272">(function(){const C=['check','cliente','act'],B='A casa nova está de pé. Cada canal é um assunto — e o cliente só vê o canal dele.',A={},sc=t=>t&&catIdDe(t)==='producao'&&!cardDaTarefa(t);
-render=(o=>function(){try{for(const t of(S.ensaio&&S.ensaio.tarefas)||[]){const e=A[t.id];if(sc(t)&&C.includes(t.col)&&e&&!C.includes(e)){t.col=e;toast('Sem card não passa do Do. Estruture a pauta primeiro.')}A[t.id]=t.col}
+render=(o=>function(){try{for(const t of(S.ensaio&&S.ensaio.tarefas)||[]){const e=A[t.id];if(sc(t)&&C.includes(t.col)&&e&&!C.includes(e)){t.col=e;toast('Sem card não passa do Do: estruture a pauta.')}A[t.id]=t.col}
 const g=S.chat&&(S.chat.canais||[]).find(c=>c.id==='geral');if(g&&g.msgs){let v=0;const n=g.msgs.filter(m=>!m||m.txt!==B||!v++);if(n.length<g.msgs.length)g.msgs=n}}catch(e){}
 const r=o.apply(this,arguments);try{document.querySelectorAll('.enCard[data-entar]').forEach(c=>{const t=S.ensaio.tarefas.find(x=>x.id==+c.dataset.entar),a=c.querySelector('.acoes');if(sc(t)&&C.includes(t.col)&&a&&!c.querySelector('.v272'))a.insertAdjacentHTML('beforebegin','<div class="cyEtapa v272"><span><b>Sem card.</b> O Check libera card — estruture a pauta.</span></div>')})}catch(e){}return r})(render)})();</script>
 <script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v271').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}}).catch(()=>{})</script>
