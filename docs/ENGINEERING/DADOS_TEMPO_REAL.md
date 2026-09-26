@@ -1,6 +1,6 @@
 # Dados em tempo real — do documento inteiro para a linha que mudou
 
-Status: Etapa 0 aplicada no banco (26 set) · Etapa 1 pronta e provada; app v271 no ar em 26 set · falta o SQL e ligar
+Status: Etapa 0 aplicada no banco (26 set) · Etapa 1 LIGADA em 26 set (48 cards, 109 mídias; cópia em pauta_antes_dados1)
 Data: 25 set 2026
 
 ## O pedido

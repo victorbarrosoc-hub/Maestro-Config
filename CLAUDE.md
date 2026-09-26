@@ -311,8 +311,11 @@ documento inteiro por cliente mesclado no navegador. Plano e como ligar em
   - Cópia diária às 6h (`maestro-copia-diaria`, com `pg_cron`); a primeira
     cópia bateu com o número de linhas.
   - Cópia manual de antes em `pauta_antes_dados0`: não apagar ainda.
-- **Etapa 1: app v271 NO AR em 26/set** (liberado pelo founder); falta ele
-  rodar o SQL e ligar.
+- **Etapa 1: LIGADA no banco de produção em 26/set.** App v271 no ar;
+  `dados-1-cards.sql` rodado; `maestro_cards_ligar('maestro')`: 48 cards
+  (48 antes, 48 depois) e 109 mídias; `cards` e `card_midias` no Realtime.
+  Cópia de antes em `pauta_antes_dados1` (não apagar ainda). Falta o teste do
+  founder com dois aparelhos.
   - Banco: `dados-1-cards.sql`, 44 provas.
   - App: v271, `web/dados/tempo-real.js`, carregado à parte porque o
     protótipo está no teto. É inerte sem a agência ligada.
