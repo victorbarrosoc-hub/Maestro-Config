@@ -311,8 +311,8 @@ documento inteiro por cliente mesclado no navegador. Plano e como ligar em
   - Cópia diária às 6h (`maestro-copia-diaria`, com `pg_cron`); a primeira
     cópia bateu com o número de linhas.
   - Cópia manual de antes em `pauta_antes_dados0`: não apagar ainda.
-- **Etapa 1 pronta, NÃO publicada**. O founder pediu "não suba até eu dizer
-  que pode subir", e a v271 está só na branch.
+- **Etapa 1: app v271 NO AR em 26/set** (liberado pelo founder); falta ele
+  rodar o SQL e ligar.
   - Banco: `dados-1-cards.sql`, 44 provas.
   - App: v271, `web/dados/tempo-real.js`, carregado à parte porque o
     protótipo está no teto. É inerte sem a agência ligada.
