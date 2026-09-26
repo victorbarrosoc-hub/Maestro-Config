@@ -299,6 +299,24 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (26 set, v272) — o login fica.** Dos vídeos do founder.
+- **A sessão caía com várias abas:** o refresh token vale uma vez e a aba
+  que perdia a corrida apagava a sessão do aparelho. Agora uma renovação por
+  vez (`navigator.locks`), a aba lê a da outra, e as abas se ouvem por
+  `storage`.
+- **A lista voltava depois da chave:** a janela da chave cortava o clique e
+  a v268 não sabia da escolha.
+- **"A casa nova está de pé" nascia de novo a cada login:** era a semente,
+  com a hora de agora e sem id.
+- **Tarefa de produção sem card ia ao Check pela seta:** agora para no Do,
+  e a tela diz por quê.
+- 18 provas em `web/verificar/v272-o-login-fica.mjs` (contra a v271, 13
+  falham).
+- **Lição:** a prova da sessão só reproduziu quando o relógio andou uma hora
+  nas duas abas. Mexer na validade guardada não bastava, porque o código
+  velho olhava a da memória.
+- **Teto do protótipo:** sobram ~540 bytes; a próxima camada precisa ir
+  para arquivo à parte.
 **Em andamento (26 set) — dados em tempo real.** "Cards que apaguei
 voltando, mídia sumindo, card mudando de posição, texto sumindo… tá
 resetando?" Não é reset nem limite (o do navegador fechou na v247): é o

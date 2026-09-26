@@ -1,9 +1,47 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.86
+Version: 0.5.87
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.87 — 2026-09-26
+
+**Status:** Concluída
+
+### v272 — o login fica
+
+Dos dois vídeos do founder (26/set, 06h20), quatro defeitos:
+
+1. **A sessão caía com várias abas abertas.** O refresh token do Supabase
+   vale uma vez, e cada aba guardava o seu na memória. Quando uma aba
+   renovava, a outra tentava com o token já usado, levava recusa e apagava a
+   sessão do aparelho. Todas as abas caíam no login. Agora:
+   - só uma aba renova por vez (`navigator.locks`);
+   - a aba lê o que a outra já renovou antes de pedir;
+   - as abas se avisam pelo evento `storage`;
+   - recusa com um token mais novo já guardado não é sessão morta.
+
+   Reproduzido com duas abas e o relógio uma hora à frente (o celular que
+   dormiu): na v271 a sessão some; na v272 fica, com uma renovação só.
+2. **A lista "Quem está entrando?" voltava depois da chave de acesso.** A
+   janela da chave corta o clique (`stopImmediatePropagation`), então a
+   v268 não sabia que a pessoa tinha escolhido e reabria a lista. Agora a
+   chave avisa (`__qeFechouEm`) e guarda a escolha, então reabrir o app
+   também não pergunta de novo.
+3. **"A casa nova está de pé…" a cada login.** A mensagem da semente nascia
+   com a hora de agora e sem id, cada vez que as Conversas recomeçavam, e
+   avisava "Alguém escreveu em Geral". A semente não traz mais mensagem, e
+   as repetidas saem (fica a primeira).
+4. **Tarefa de produção sem card chegava ao Check pela seta**, onde só havia
+   "estruturar a pauta" e nenhum "liberar". Agora ela não passa do Do e a
+   tela diz por quê. A que já estava lá não é mexida e ganha a linha
+   "Sem card. O Check libera card — estruture a pauta."
+
+18 provas em `web/verificar/v272-o-login-fica.mjs`; contra a v271, 13
+falham. Fonte da camada em `docs/UX/camadas/v272.js`.
 
 ---
 
