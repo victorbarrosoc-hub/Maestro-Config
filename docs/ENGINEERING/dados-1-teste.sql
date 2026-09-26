@@ -165,6 +165,23 @@ begin
                         and (select dados ->> 'id' from public.cards where cliente='n0' and id=(r ->> 'id')::bigint) = r ->> 'id',
     '21 card novo ganha número do banco, sem colidir com os antigos (v199)');
 
+  r := public.maestro_card_criar('n0', '{"t":"do aparelho","fase":"rascunho"}', null, 1790000000123);
+  perform pg_temp.checa((r ->> 'id') = '1790000000123', '21b card novo pode nascer com o número que o aparelho deu (a tarefa já aponta para ele)');
+  r := public.maestro_card_criar('n0', '{"t":"repetido"}', null, 1790000000123);
+  perform pg_temp.checa(r ->> 'erro' = 'id_existe', '21c número que já existe é recusado, nunca funde dois cards (v199)');
+  r := public.maestro_card_criar('cj', '{"t":"repetido em outro cliente"}', null, 2);
+  perform pg_temp.checa(r ->> 'erro' = 'id_existe', '21d nem em outro cliente da mesma agência');
+
+  -- o APP NOVO grava a linha sem as chaves de card (só projetos, painel…)
+  update public.pauta set dados = jsonb_build_object('rev', 99, 'projetos', '[{"id":"pj1"},{"id":"pj2"}]'::jsonb, 'painel', '{"x":1}'::jsonb)
+   where org='maestro' and cliente='n0';
+  select dados into d from public.pauta where org='maestro' and cliente='n0';
+  perform pg_temp.checa(jsonb_array_length(d -> 'projetos') = 2 and d -> 'painel' ->> 'x' = '1'
+                        and jsonb_array_length(d -> 'pauta') >= 3 and jsonb_array_length(d -> 'mats' -> '2') = 3
+                        and (select count(*) from public.card_midias where cliente='n0' and card_id=2 and tipo='mat' and apagado_em is null) = 3
+                        and (select count(*) from public.cards where cliente='n0' and apagado_em is null) >= 3,
+    '21e gravação sem as chaves de card muda o resto da linha e não toca em card, mídia nem lixeira');
+
   -- restaurar e varrer
   r := public.maestro_card_restaurar('n0', 3);
   select dados into d from public.pauta where org='maestro' and cliente='n0';
@@ -176,6 +193,9 @@ begin
   perform pg_temp.checa(jsonb_array_length(d -> 'lixeira') = 0 and exists (select 1 from public.cards where cliente='n0' and id=4),
     '23 esvaziar a lixeira tira da lixeira, e a linha fica');
 
+  perform pg_temp.checa((select atualizado_em > now() - interval '1 minute' from public.cards where cliente='n0' and id=4)
+                        and (select atualizado_em >= criado_em from public.card_midias where id = mid),
+    '23b varrer e tirar mídia também carimbam a hora (o aparelho sem canal pergunta por ela)');
   perform pg_temp.checa((select count(*) from pg_publication_tables where pubname='supabase_realtime' and tablename in ('cards','card_midias')) = 2,
     '24 as duas tabelas estão no Realtime');
   perform pg_temp.checa((select count(*) from public.cards_historico where card_id=2 and quem='ana@ejup.com') >= 3,
@@ -216,7 +236,7 @@ do $$ declare r jsonb; antes int; begin
   -- ligar de novo não duplica
   select count(*) into antes from public.card_midias;
   r := public.maestro_cards_ligar('maestro');
-  perform pg_temp.checa((select count(*) from public.card_midias) = antes and (select count(*) from public.cards where org='maestro') = 7,
+  perform pg_temp.checa((select count(*) from public.card_midias) = antes and (select count(*) from public.cards where org='maestro') = 8,
     '34 ligar de novo não duplica card nem mídia');
   -- linhas da casa passam direto pela trava
   update public.pauta set dados = dados || '{"x":1}' where org='maestro' and cliente='__config__';
@@ -229,7 +249,7 @@ do $$ declare r jsonb; antes int; begin
   r := public.maestro_cards_desligar('maestro');
   update public.pauta set dados = dados || '{"pauta":[]}' where org='maestro' and cliente='cj';
   perform pg_temp.checa((select jsonb_array_length(dados -> 'pauta') from public.pauta where org='maestro' and cliente='cj') = 0
-                        and (select jsonb_array_length(dados -> 'pauta') from public.pauta where org='maestro' and cliente='n0') = 4,
+                        and (select jsonb_array_length(dados -> 'pauta') from public.pauta where org='maestro' and cliente='n0') = 5,
     '37 desligar devolve a pauta ao jeito antigo, com tudo o que foi feito ligado');
 end $$;
 

@@ -237,18 +237,32 @@ begin
   return minha;
 end $$;
 
-create or replace function public.maestro_card_criar(p_cliente text, p_dados jsonb, p_posicao numeric default null)
+-- p_id: o número que o aparelho já deu ao card (a tarefa do Ensaio e o
+--   link já apontam para ele). Número que já existe na agência é recusado
+--   (`id_existe`) e o aparelho pede outro; sem p_id, o banco escolhe.
+drop function if exists public.maestro_card_criar(text, jsonb, numeric);
+create or replace function public.maestro_card_criar(p_cliente text, p_dados jsonb, p_posicao numeric default null, p_id bigint default null)
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare o text := public.maestro_cards_porta(p_cliente); novo bigint;
 begin
   if o is null then return jsonb_build_object('ok', false, 'erro', 'sem_acesso'); end if;
-  -- o número vem do banco: dois aparelhos nunca chegam ao mesmo (v199)
-  novo := nextval('public.cards_id_seq');
+  if p_id is not null then
+    if p_id <= 0 then return jsonb_build_object('ok', false, 'erro', 'formato'); end if;
+    if exists (select 1 from public.cards where org = o and id = p_id) then
+      return jsonb_build_object('ok', false, 'erro', 'id_existe');
+    end if;
+    novo := p_id;
+  else
+    -- o número vem do banco: dois aparelhos nunca chegam ao mesmo (v199)
+    novo := nextval('public.cards_id_seq');
+  end if;
   insert into public.cards(org, cliente, id, dados, posicao, criado_por, atualizado_por)
   values (o, p_cliente, novo, coalesce(p_dados, '{}'::jsonb) || jsonb_build_object('id', novo),
           coalesce(p_posicao, (select coalesce(max(posicao), 0) + 1 from public.cards where org = o and cliente = p_cliente)),
           public.maestro_cards_quem(), public.maestro_cards_quem());
   return jsonb_build_object('ok', true, 'id', novo, 'versao', 1);
+exception when unique_violation then
+  return jsonb_build_object('ok', false, 'erro', 'id_existe');
 end $$;
 
 create or replace function public.maestro_card_mudar(
@@ -359,6 +373,21 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------
+-- toda mudança carimba a hora: é por ela que o aparelho sem o canal ao
+-- vivo pergunta "o que mudou desde X?" (apagar e tirar mídia inclusive)
+-- ---------------------------------------------------------------------
+create or replace function public.maestro_cards_carimbo() returns trigger
+language plpgsql as $$ begin new.atualizado_em := clock_timestamp(); return new; end $$;
+drop trigger if exists cards_carimbo on public.cards;
+create trigger cards_carimbo before update on public.cards
+  for each row execute function public.maestro_cards_carimbo();
+drop trigger if exists card_midias_carimbo on public.card_midias;
+create trigger card_midias_carimbo before update on public.card_midias
+  for each row execute function public.maestro_cards_carimbo();
+create index if not exists cards_org_atualizado on public.cards(org, atualizado_em);
+create index if not exists card_midias_org_atualizado on public.card_midias(org, atualizado_em);
+
+-- ---------------------------------------------------------------------
 -- histórico por campo e espelho, depois de toda mudança
 -- ---------------------------------------------------------------------
 create or replace function public.maestro_cards_depois() returns trigger
@@ -442,14 +471,17 @@ begin
   select coalesce(array_agg(coalesce(l -> 'item' ->> 'id', l ->> 'id')), '{}') into lx_depois
     from jsonb_array_elements(case when jsonb_typeof(depois -> 'lixeira') = 'array' then depois -> 'lixeira' else '[]' end) l;
 
-  -- o que entrou na lixeira agora
+  -- o que entrou na lixeira agora (só se a gravação trouxe a lixeira:
+  -- o app novo grava a linha SEM as chaves de card, e aí nada aqui muda)
+  if not (depois ? 'lixeira') then lx_depois := lx_antes; end if;
   foreach idt in array lx_depois loop
     continue when idt is null or idt !~ '^[0-9]{1,18}$' or idt = any(lx_antes);
     update public.cards set apagado_em = now(), apagado_por = p_quem, versao = versao + 1
      where org = p_org and cliente = p_cli and id = idt::bigint and apagado_em is null;
   end loop;
 
-  for n in select x from jsonb_array_elements(case when jsonb_typeof(depois -> 'pauta') = 'array' then depois -> 'pauta' else '[]' end) x loop
+  for n in select x from jsonb_array_elements(case when jsonb_typeof(depois -> 'pauta') = 'array' then depois -> 'pauta' else '[]' end) x
+           where depois ? 'pauta' loop
     i := i + 1;
     idt := n ->> 'id';
     continue when idt is null or idt !~ '^[0-9]{1,18}$';
@@ -490,6 +522,7 @@ begin
       d jsonb := case when jsonb_typeof(depois -> chave) = 'object' then depois -> chave else '{}' end;
       cid text; item jsonb; ch text; pos int;
     begin
+      continue when not (depois ? chave);    -- a gravação não trouxe esta chave: não é mudança
       for cid in select jsonb_object_keys(d) union select jsonb_object_keys(a) loop
         continue when cid !~ '^[0-9]{1,18}$';
         continue when not exists (select 1 from public.cards where org = p_org and cliente = p_cli and id = cid::bigint);
@@ -626,12 +659,12 @@ revoke all on function public.maestro_cards_ligar(text), public.maestro_cards_de
   public.maestro_cards_mudar_nucleo(text, text, bigint, int, jsonb, text[], numeric, text),
   public.maestro_cards_espelhar(text, text), public.maestro_cards_porta(text)
   from public, anon, authenticated;
-revoke all on function public.maestro_card_criar(text, jsonb, numeric), public.maestro_card_mudar(text, bigint, int, jsonb, text[], numeric),
+revoke all on function public.maestro_card_criar(text, jsonb, numeric, bigint), public.maestro_card_mudar(text, bigint, int, jsonb, text[], numeric),
   public.maestro_card_apagar(text, bigint), public.maestro_card_restaurar(text, bigint), public.maestro_card_varrer(text, bigint[]),
   public.maestro_midia_por(text, bigint, jsonb, text, numeric), public.maestro_midia_mudar(text, text, jsonb),
   public.maestro_midia_tirar(text, text), public.maestro_midia_devolver(text, text), public.maestro_midia_ordenar(text, bigint, text[])
   from public, anon;
-grant execute on function public.maestro_card_criar(text, jsonb, numeric), public.maestro_card_mudar(text, bigint, int, jsonb, text[], numeric),
+grant execute on function public.maestro_card_criar(text, jsonb, numeric, bigint), public.maestro_card_mudar(text, bigint, int, jsonb, text[], numeric),
   public.maestro_card_apagar(text, bigint), public.maestro_card_restaurar(text, bigint), public.maestro_card_varrer(text, bigint[]),
   public.maestro_midia_por(text, bigint, jsonb, text, numeric), public.maestro_midia_mudar(text, text, jsonb),
   public.maestro_midia_tirar(text, text), public.maestro_midia_devolver(text, text), public.maestro_midia_ordenar(text, bigint, text[])
