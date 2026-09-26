@@ -867,6 +867,9 @@
     return function(){ const r = orig.apply(this, arguments); medir(); return r; };
   })(render);
   addEventListener('resize', medir);
+  /* a barra do topo muda de altura quando a página rola: mede de novo */
+  let qm = 0;
+  addEventListener('scroll', e => { if(e.target === document){ cancelAnimationFrame(qm); qm = requestAnimationFrame(medir); } }, { passive: true });
   medir();
   let ultima = null, tm = 0;
   function colunaAtiva(rolo){

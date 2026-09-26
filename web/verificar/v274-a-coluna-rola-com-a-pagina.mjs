@@ -72,6 +72,11 @@ async function pagina(ctx, A){
     S.view = 'agency'; S.route = 'producao'; render();
   });
   await pg.waitForTimeout(600);
+  /* a porta de login do banco de mentira cobre a tela e trava a rolagem na
+     bancada (quem usa está logado): sai antes de medir */
+  await pg.evaluate(async () => { for(let i = 0; i < 10; i++){ const p = document.getElementById('entrarMaestro');
+    if(p){ p.remove(); document.body.style.overflow = ''; document.documentElement.style.overflow = ''; }
+    document.querySelectorAll('.toast').forEach(e => e.remove()); await new Promise(r => setTimeout(r, 100)); } });
   return pg;
 }
 const irPara = (pg, col) => pg.evaluate(async col => {
@@ -97,23 +102,21 @@ checa('1.2 quem rola é a página', m.doc > m.win + 400, m);
 console.log('\n2. a posição sobrevive');
 const r2 = await pg.evaluate(async () => {
   const espera = ms => new Promise(r => setTimeout(r, ms));
-  scrollTo(0, 600); await espera(100);
+  scrollTo(0, 1200); await espera(150);
   const y0 = scrollY;
   render(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   const y1 = scrollY;
   const rolo = document.querySelector('.enRolo'); const L = rolo.scrollLeft;
   /* a barra do Safari: a janela muda de altura durante a rolagem */
   dispatchEvent(new Event('resize')); await espera(100);
-  const y2 = scrollY, h2 = rolo.getBoundingClientRect().height;
+  const y2 = scrollY, h2 = document.querySelector('.enRolo').getBoundingClientRect().height;
   dispatchEvent(new Event('resize')); await espera(100);
-  /* a porta de login do banco de mentira cobre a tela na bancada */
-  document.querySelectorAll('#entrarMaestro, .toast').forEach(e => e.remove());
   const ab = document.querySelector('.v249Abas'), abas = ab.getBoundingClientRect();
   const ctx = document.getElementById('ctx'), ctxB = ctx ? ctx.getBoundingClientRect().bottom : 0;
   const quem = document.elementFromPoint(abas.left + 60, abas.top + abas.height / 2);
   return { ctxB, abasVisiveis: !!(quem && ab.contains(quem)), y0, y1, y2, L, L2: document.querySelector('.enRolo').scrollLeft, h2, h3: document.querySelector('.enRolo').getBoundingClientRect().height, abasTop: abas.top, abasH: abas.height };
 });
-checa('2.1 um redesenho não tira a página do lugar', Math.abs(r2.y1 - r2.y0) < 2 && r2.y0 > 500, r2);
+checa('2.1 um redesenho não tira a página do lugar', Math.abs(r2.y1 - r2.y0) < 2 && r2.y0 > 1100, r2);
 checa('2.2 nem a coluna de lado', r2.L2 === r2.L && r2.L > 0, r2);
 checa('2.3 a janela mudando de altura (barra do Safari) não mexe na rolagem nem na altura', Math.abs(r2.y2 - r2.y0) < 2 && r2.h2 === r2.h3, r2);
 checa('2.4 as abas das colunas ficam presas logo abaixo da barra do topo, sem nada por cima', Math.abs(r2.abasTop - r2.ctxB) <= 3 && r2.abasVisiveis, r2);
