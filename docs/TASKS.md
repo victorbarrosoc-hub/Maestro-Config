@@ -203,14 +203,15 @@ Status do Projeto: 🟢 Sprints 0–2, 4, 6 e 7 concluídos · 🟡 8 e 9 inicia
 
 ---
 
-## Dados em tempo real — `docs/ENGINEERING/DADOS_TEMPO_REAL.md` · 🟡 Em andamento
+## Dados em tempo real — `docs/ENGINEERING/DADOS_TEMPO_REAL.md` · 🟡 Etapa 1 pronta, falta ligar
 
 - [x] v270 — vídeo, corte, story e legenda passam no Check
 - [x] Etapa 0 — histórico, restaurar card, cópia diária (31 provas)
-- [ ] Etapa 0 — founder roda `dados-0-historico.sql`, liga `pg_cron` e o backup do plano
-- [x] Etapa 1 — banco: `cards`, `card_midias`, escrita por campo, Realtime, espelho e trava (38 provas)
-- [ ] Etapa 1 — app: ler das tabelas, gravar por campo, `postgres_changes`, posição, fila sem rede, portão de versão
-- [ ] Etapa 1 — ligar (`maestro_cards_ligar`) junto com o app no ar
+- [x] Etapa 0 — aplicada no banco em 26/set (histórico, cópia diária às 6h com `pg_cron`); backup do plano: opcional
+- [x] Etapa 1 — banco: `cards`, `card_midias`, escrita por campo, Realtime, espelho e trava (44 provas)
+- [x] Etapa 1 — app v271 (`web/dados/tempo-real.js`): ler das tabelas, gravar por campo, conflito com "Recuperar a minha", `postgres_changes` + olhada de 4s, lixeira, fila sem rede (51 provas)
+- [ ] Etapa 1 — ordem arrastada à mão (vai com a Etapa 2) e portão que recarrega o app antigo
+- [ ] Etapa 1 — founder roda `dados-1-cards.sql`, app v271 no ar, depois `maestro_cards_ligar('maestro')`
 - [ ] Etapa 2 — tarefas do Ensaio em tabela
 - [ ] Etapa 3 — o resto do `__estado__`
 - Feature nova na plataforma congelada durante as etapas 1 e 2

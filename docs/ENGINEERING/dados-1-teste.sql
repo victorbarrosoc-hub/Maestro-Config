@@ -61,6 +61,17 @@ begin
   r := public.maestro_card_mudar('n0', 2, 1, '{"texto":"x"}');
   perform pg_temp.checa(r ->> 'erro' = 'sem_acesso', '2 sem ligar, as portas novas não abrem');
 
+  -- ligar com um card sem número: recusa, diz qual, e não muda nada
+  update public.pauta set dados = jsonb_set(dados, '{pauta}', (dados -> 'pauta') || '[{"id":"abc","t":"sem número"}]') where org='maestro' and cliente='cj';
+  begin
+    perform public.maestro_cards_ligar('maestro');
+    perform pg_temp.checa(false, '2b ligar recusa card sem número');
+  exception when others then
+    perform pg_temp.checa(sqlerrm like '%cj:abc%' and not exists (select 1 from public.maestro_cards_ligado) and (select count(*) from public.cards) = 0,
+      '2b ligar RECUSA quando há card sem número (o espelho o perderia), diz qual, e não muda nada');
+  end;
+  update public.pauta set dados = jsonb_set(dados, '{pauta}', (select jsonb_agg(c) from jsonb_array_elements(dados -> 'pauta') c where c ->> 'id' <> 'abc')) where org='maestro' and cliente='cj';
+
   -- LIGAR
   r := public.maestro_cards_ligar('maestro');
   perform pg_temp.checa((r ->> 'cards')::int = 6 and (r ->> 'midias')::int = 3,

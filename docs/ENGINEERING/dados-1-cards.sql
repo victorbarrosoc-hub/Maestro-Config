@@ -592,7 +592,18 @@ create trigger pauta_trava before insert or update on public.pauta
 create or replace function public.maestro_cards_ligar(p_org text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare r record; apagadas text[]; varridas text[]; n_cards int; n_midias int; antes_cfg text := coalesce(current_setting('maestro.espelho', true), '');
+  estranhos text;
 begin
+  /* antes de tudo: card sem número não cabe na tabela — e o espelho, que
+     passa a ser montado dela, o perderia. Então não liga, e diz quais. */
+  select string_agg(p.cliente || ':' || coalesce(c ->> 'id', '(sem id)'), ', ') into estranhos
+    from public.pauta p,
+         jsonb_array_elements(case when jsonb_typeof(p.dados -> 'pauta') = 'array' then p.dados -> 'pauta' else '[]' end
+                           || coalesce((select jsonb_agg(l -> 'item') from jsonb_array_elements(case when jsonb_typeof(p.dados -> 'lixeira') = 'array' then p.dados -> 'lixeira' else '[]' end) l where l ? 'item'), '[]')) c
+   where p.org = p_org and p.cliente not like '\_\_%' and coalesce(c ->> 'id', '') !~ '^[0-9]{1,18}$';
+  if estranhos is not null then
+    raise exception 'não liguei: há cards sem número válido (%). Mande esta mensagem para arrumar antes.', left(estranhos, 500);
+  end if;
   select coalesce(array_agg(coalesce(a ->> 'id', a #>> '{}')), '{}') into apagadas
     from public.pauta p, jsonb_array_elements(case when jsonb_typeof(p.dados -> 's' -> 'ensaio' -> 'apagadas') = 'array' then p.dados -> 's' -> 'ensaio' -> 'apagadas' else '[]' end) a
    where p.org = p_org and p.cliente = '__estado__';

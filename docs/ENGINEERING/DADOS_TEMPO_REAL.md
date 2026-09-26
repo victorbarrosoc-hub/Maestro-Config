@@ -1,6 +1,6 @@
 # Dados em tempo real — do documento inteiro para a linha que mudou
 
-Status: Etapa 0 e o banco da Etapa 1 prontos e provados · app da Etapa 1 a fazer
+Status: Etapa 0 aplicada no banco (26 set) · Etapa 1 pronta e provada (banco + app v271) · falta ligar
 Data: 25 set 2026
 
 ## O pedido
@@ -64,7 +64,7 @@ sem rede (fila de mudanças por campo), nunca para decidir o que é verdade.
 
 ## As etapas
 
-### Etapa 0 — rede de segurança (pronta · `dados-0-historico.sql`, 31 provas)
+### Etapa 0 — rede de segurança (APLICADA no banco em 26 set · `dados-0-historico.sql`, 31 provas)
 
 - `pauta_historico` registra toda gravação: quem, revisão, e o que sumiu,
   esvaziou ou perdeu mídia. Em perigo, guarda sempre a cópia de antes.
@@ -72,7 +72,7 @@ sem rede (fila de mudanças por campo), nunca para decidir o que é verdade.
   mídia, sem tocar nos outros. `maestro_restaurar_linha` devolve a linha inteira.
 - `pauta_copias` faz uma cópia diária por 14 dias, com `pg_cron`.
 
-### Etapa 1 — card e mídia em tabela (banco pronto · `dados-1-cards.sql`, 38 provas)
+### Etapa 1 — card e mídia em tabela (pronta, falta ligar · `dados-1-cards.sql`, 44 provas + app v271, 51 provas)
 
 - **Tabelas.** `cards` guarda `versao` por card e `campos_versao` por campo,
   `posicao` e `apagado_em` / `varrido_em`. `card_midias` separa `mat` (peça) e
@@ -107,22 +107,56 @@ sem rede (fila de mudanças por campo), nunca para decidir o que é verdade.
   lixeira e de volta na lista, é **idêntica** a uma restauração feita pela
   pauta. Na dúvida, a exclusão vence: restaurar é pela porta ou pelo histórico.
 
-**No app (a fazer):**
+**No app (v271, `web/dados/tempo-real.js`):**
 
-1. Ler `cards` e `card_midias` e montar `S.pautas` e `S.mat` a partir delas.
-   As telas não mudam.
-2. Trocar `sbGravar(cliente)` por chamadas de campo. Cada tela que edita um
-   card manda só os campos que mudaram, com a `versao` que abriu. Conflito vira
-   aviso: "Fulano mudou a legenda agora — ficar com a dele ou a sua?".
-3. Assinar `postgres_changes` em `cards` e `card_midias` no canal que a v257
-   já abre (hoje `postgres_changes: []`) e aplicar a linha recebida.
-4. Mover no Ensaio e no Cronograma grava `posicao` (meio entre vizinhos).
-5. Fila sem rede: as mudanças por campo ficam guardadas e sobem na ordem ao
-   voltar a rede, e o conflito aparece do mesmo jeito.
-6. Portão de versão: o app antigo, numa agência ligada, recarrega. A trava
-   protege o banco enquanto isso.
-7. A mescla de três lados **sai** para cards e mídia. É o que tira de cena as
-   causas da maioria dos 19 consertos.
+A camada é carregada à parte, porque o protótipo está no teto de 3,05 MB. Ela
+só liga quando a agência está virada no banco; sem isso, ou sem o arquivo, o
+app é exatamente o de antes (provas 10.1 a 10.4). As telas não mudaram:
+`S.pautas`, `S.mat`, `S.refs` e `S.lixeira` seguem sendo o que elas desenham.
+O que mudou é quem enche e quem esvazia essas listas.
+
+1. **Lê das tabelas.** Na carga, `cards` e `card_midias` montam as quatro
+   listas, na ordem guardada.
+2. **Grava por campo.** Antes de cada gravação do `Sincro`, cada card manda só
+   os campos que mudaram, com a versão que a tela conhecia. No conflito, a
+   tela mostra o que está no banco e avisa "Outra pessoa mudou X agora". O
+   botão "Recuperar a minha" devolve a versão de quem perdeu.
+3. **O formulário velho não apaga.** Um editor aberto antes de uma mudança
+   remota devolve o valor antigo ao salvar. A camada reconhece esse eco e
+   mantém o que chegou (prova 2b, pelo editor de verdade).
+4. **Tempo real.** `postgres_changes` em `cards` e `card_midias`, filtrado
+   pela agência, entrega a mudança em milissegundos. Sem o canal, a camada
+   pergunta a cada 4s "o que mudou desde X?".
+5. **Lixeira.** Pôr na lixeira apaga, "Resgatar" restaura, "Esvaziar" varre.
+   Card apagado não volta, nem por tela velha nem por app antigo.
+6. **Ausência não é exclusão.** Card que some da tela sem ir à lixeira volta.
+7. **Sem rede.** O que mudou fica numa fila, só com os campos, e sobe sozinho
+   quando a rede volta, mesmo depois de fechar o app.
+8. **A linha `pauta` do app vai sem as chaves de card.** O resto dela
+   (projetos, painel) segue pelo `Sincro`; o banco remonta o espelho, e o link
+   do cliente continua lendo dele.
+
+Provas: `web/verificar/v271-o-card-em-tempo-real.mjs`, 51 provas. Dois
+navegadores de verdade contra um Postgres com os dois arquivos SQL de
+verdade; a suíte só faz o papel do PostgREST e do Realtime.
+
+**Ficou para depois, de propósito:**
+- A ordem arrastada à mão dentro de uma coluna. O Ensaio ordena as
+  **tarefas**, e tarefa é a Etapa 2.
+- O portão que recarrega o app antigo. Até lá, a trava protege o banco. Num
+  aparelho com o app antigo, resgatar da lixeira não funciona até recarregar.
+
+**Como ligar (na ordem):**
+1. Rodar `dados-1-cards.sql` no SQL Editor. Ele só cria tabelas e funções;
+   nada muda enquanto a agência não for ligada.
+2. Publicar o app v271. Ele também não muda nada enquanto a agência não for
+   ligada.
+3. `select public.maestro_cards_ligar('maestro');`. Se houver card sem número
+   válido, ele recusa e diz quais.
+4. Abrir o app de novo em cada aparelho.
+
+Para voltar atrás: `select public.maestro_cards_desligar('maestro');`. A pauta
+está completa, porque o espelho nunca parou.
 
 ### Etapa 2 — tarefas do Ensaio em tabela
 

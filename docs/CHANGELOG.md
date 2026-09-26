@@ -1,9 +1,55 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.85
+Version: 0.5.86
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.86 — 2026-09-26
+
+**Status:** Etapa 0 aplicada no banco · v271 (Etapa 1 no app) pronta, aguardando o founder liberar a publicação
+
+### Etapa 0 no banco de produção
+
+O founder rodou `dados-0-historico.sql` em 26/set, com uma cópia manual antes
+(`pauta_antes_dados0`). A primeira cópia diária bateu com o número de linhas,
+e a cópia automática ficou agendada às 6h (`maestro-copia-diaria`, `0 9 * * *`
+UTC).
+
+### v271 — o card em tempo real
+
+`web/dados/tempo-real.js`, carregado à parte (o protótipo está no teto) e
+ativo só com a agência ligada no banco:
+- lê cards e mídias das tabelas;
+- grava por campo, com a versão que a tela conhecia;
+- avisa o conflito com "Recuperar a minha";
+- não deixa o formulário velho apagar o que chegou;
+- recebe a linha pelo Realtime, e olha a cada 4s sem ele;
+- mantém card apagado apagado e devolve o card ausente;
+- guarda o que não subiu sem rede, mesmo fechando o app.
+
+51 provas com dois navegadores contra um Postgres de verdade
+(`web/verificar/v271-o-card-em-tempo-real.mjs`). Sem a agência ligada, o app é
+o de antes (provas 10.x).
+
+- **SQL** (`dados-1-cards.sql`, 44 provas):
+  - o card nasce com o número que o aparelho deu;
+  - gravação sem as chaves de card não mexe em card;
+  - toda mudança carimba a hora;
+  - `maestro_cards_ligar` recusa, e diz quais, quando há card sem número.
+- **Três coisas que as provas pegaram:**
+  1. **A resposta chegava antes do aviso.** A resposta da minha gravação
+     podia chegar antes do aviso da gravação do outro, e o aviso era
+     descartado como eco. Agora, quando a versão pula, o card é buscado
+     inteiro.
+  2. **O arquivo novo quebrava as outras suítes.** Uma tag
+     `<script src>` receberia HTML nas suítes (e em qualquer página de
+     fallback) e quebraria as outras 155. O carregador agora confere se
+     é JavaScript antes de rodar.
+  3. **O `org` some por um instante.** A agência fica vazia enquanto o app
+     pergunta de novo ao banco, e isso não é trocar de agência.
 
 ---
 

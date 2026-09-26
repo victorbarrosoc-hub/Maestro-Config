@@ -299,21 +299,33 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
-**Em andamento (25 set) — dados em tempo real.** "Cards que apaguei
+**Em andamento (26 set) — dados em tempo real.** "Cards que apaguei
 voltando, mídia sumindo, card mudando de posição, texto sumindo… tá
 resetando?" Não é reset nem limite (o do navegador fechou na v247): é o
-documento inteiro por cliente mesclado no navegador — 79 pontos de mescla, 19
-consertos de perda de dado desde a v151. Plano em
-`docs/ENGINEERING/DADOS_TEMPO_REAL.md`. **v270** (no ar): vídeo, corte, story e
-legenda passam no Check (`conteudoDe`; nove portas só olhavam `texto`).
-**Etapa 0** (`dados-0-historico.sql`, 31 provas): histórico de toda gravação,
-restaurar um card, cópia diária — **o founder roda no SQL Editor** e liga
-`pg_cron`. **Etapa 1, banco** (`dados-1-cards.sql`, 38 provas): `cards` e
-`card_midias`, escrita por campo com conflito em vez de apagar, Realtime,
-espelho na `pauta` (link do cliente intacto) e trava que traduz gravação
-antiga em diferença por campo; **ligar só junto com o app da Etapa 1**. Regra
-tirada das provas: cópia velha é igual a restauração pela pauta — a exclusão
-vence. **Feature nova na plataforma fica congelada nas etapas 1 e 2.**
+documento inteiro por cliente mesclado no navegador. Plano e como ligar em
+`docs/ENGINEERING/DADOS_TEMPO_REAL.md`.
+
+- **v270** (no ar): vídeo, corte, story e legenda passam no Check.
+- **Etapa 0: APLICADA no banco de produção em 26/set.**
+  - Histórico de toda gravação e restaurar um card.
+  - Cópia diária às 6h (`maestro-copia-diaria`, com `pg_cron`); a primeira
+    cópia bateu com o número de linhas.
+  - Cópia manual de antes em `pauta_antes_dados0`: não apagar ainda.
+- **Etapa 1 pronta, NÃO publicada**. O founder pediu "não suba até eu dizer
+  que pode subir", e a v271 está só na branch.
+  - Banco: `dados-1-cards.sql`, 44 provas.
+  - App: v271, `web/dados/tempo-real.js`, carregado à parte porque o
+    protótipo está no teto. É inerte sem a agência ligada.
+  - 51 provas com dois navegadores contra um Postgres de verdade, em
+    `web/verificar/v271-o-card-em-tempo-real.mjs`.
+  - Para ligar, na ordem: SQL → app no ar → `maestro_cards_ligar('maestro')`.
+- **Regras tiradas das provas:**
+  - uma cópia velha é igual a uma restauração feita pela pauta, então a
+    exclusão vence;
+  - versão que pula mais de um é gravação alheia no meio, então o card é
+    buscado de novo;
+  - formulário velho devolve valor antigo, e isso é eco, não edição.
+- **Feature nova na plataforma fica congelada nas etapas 1 e 2.**
 **Fechado (25 set) — a Gestão (MPGP), num link à parte: `/gestao`.** Pedido:
 "uma estrutura nova… conectar o que já tem (Produção) com o MPGP… quando eu
 movimente um cliente, ele já entra no CRM, no Financeiro, na etapa da jornada…
