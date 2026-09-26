@@ -299,6 +299,14 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (26 set, v274) — no celular, a coluna rola com a página.** Vídeo do
+founder: a coluna do Ensaio rolava numa janelinha, voltava ao topo e o quadro
+escorregava de lado. Eram duas rolagens verticais uma dentro da outra, a altura
+medida pela janela (que no Safari muda durante a rolagem), o redesenho zerando
+a coluna e o *scroll anchoring* tirando 7px por desenho. No celular agora quem
+rola é a página, as abas ficam presas sob a barra do topo e trocar de coluna
+volta ao começo dela; o computador não muda. Fim de `web/dados/tempo-real.js`;
+11 provas em `web/verificar/v274-a-coluna-rola-com-a-pagina.mjs`.
 **Fechado (26 set, v273) — a tarefa acha o card.** "Ainda tem card escrito
 estruturar pauta no check e na aba enviada pro cliente." A v272 só dizia "Sem
 card"; agora a tarefa de produção sem card no Check, Cliente ou Act religa ao

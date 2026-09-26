@@ -1,9 +1,49 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.88
+Version: 0.5.89
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.89 — 2026-09-26
+
+**Status:** Concluída
+
+### v274 — no celular, a coluna rola com a página
+
+Vídeo do founder (26/set, 10h53): "tem um bug de rolagem nas colunas". No
+iPhone a coluna do Ensaio rolava numa janelinha de ~330px, voltava ao topo
+sozinha e o quadro escorregava de lado no meio do gesto. Medido num iPhone
+de 390px, eram quatro coisas somadas:
+
+- **duas rolagens verticais, uma dentro da outra**: o corpo da coluna e a
+  página. Quando uma chegava ao fim, o dedo passava para a outra;
+- **a altura da coluna era medida pela janela a cada `resize`**. No Safari,
+  a barra de endereço cresce e encolhe durante a rolagem, então a altura
+  mudava sob o dedo (e às vezes caía para "auto");
+- **todo redesenho recriava o corpo da coluna** e a rolagem dele voltava a
+  zero (medido: 400 → 0);
+- **o *scroll anchoring* do navegador** corrigia a rolagem da página depois
+  de o redesenho devolvê-la: 7px a menos por desenho.
+
+No celular (≤860px), agora:
+
+- a coluna tem a altura do que ela tem e quem rola é a **página**, cuja
+  posição todo redesenho já devolve;
+- as abas das colunas ficam **presas logo abaixo da barra do topo**;
+- trocar de coluna com a página lá embaixo **volta ao começo** da coluna nova
+  (senão a coluna curta aparecia vazia);
+- o *scroll anchoring* sai do Ensaio.
+
+No computador nada muda: lá a coluna com rolagem própria é o desenho.
+
+Mora no fim de `web/dados/tempo-real.js` (o protótipo está no teto). 11
+provas em `web/verificar/v274-a-coluna-rola-com-a-pagina.mjs`, que medem a
+tela: o corpo da coluna mostra tudo, a página não sai do lugar num redesenho
+nem com a janela mudando de altura, as abas ficam à vista sem nada por cima,
+e o computador segue igual.
 
 ---
 

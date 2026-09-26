@@ -818,3 +818,80 @@
   }
   setInterval(() => { try{ if(olhar()) redesenhar(); }catch(e){} }, 2500);
 })();
+
+/* =====================================================================
+   v274 — no celular, a coluna rola com a página
+   ---------------------------------------------------------------------
+   Vídeo do founder (26/set, 10h53): no iPhone a coluna do Ensaio rolava
+   numa janelinha de ~330px, voltava ao topo sozinha e o quadro escorregava
+   de lado no meio do gesto. Três causas somadas:
+     * DUAS rolagens verticais, uma dentro da outra: o corpo da coluna e a
+       página. No fim de uma, o dedo passava para a outra;
+     * a altura da coluna era medida pela janela a cada `resize` — e no
+       Safari a barra de endereço cresce e encolhe DURANTE a rolagem, então
+       a altura mudava sob o dedo (e às vezes caía para "auto");
+     * todo redesenho recriava o corpo da coluna, e a rolagem dele não era
+       devolvida.
+   No celular (≤860px) agora: a coluna tem a altura do que ela tem, quem
+   rola é a PÁGINA (cuja posição todo redesenho já devolve), as abas das
+   colunas ficam presas logo abaixo da barra fixa, trocar de coluna volta
+   ao começo dela, e o "scroll anchoring" do navegador sai do Ensaio (ele
+   corrigia a rolagem DEPOIS de o redesenho devolvê-la: 7px por desenho).
+   No computador nada muda: lá a coluna com rolagem própria é o desenho.
+   ===================================================================== */
+(function(){
+  'use strict';
+  if(window.MaestroRolagem || typeof document === 'undefined') return;
+  const celular = () => matchMedia('(max-width: 860px)').matches;
+  const css = document.createElement('style');
+  css.id = 'v274-rolagem';
+  css.textContent = '@media(max-width:860px){'
+    + 'html:has(body.emEnsaio),body.emEnsaio,body.emEnsaio *{overflow-anchor:none}'
+    + 'body.emEnsaio .enRolo{height:auto!important;align-items:start!important;overflow-y:visible!important;overscroll-behavior-x:contain}'
+    + 'body.emEnsaio .enColCorpo{overflow:visible!important;flex:none!important}'
+    + 'body.emEnsaio .v249Abas{position:sticky;top:var(--v274topo,0px);z-index:6;background:var(--fundo,var(--ink-950));margin-top:-2px;padding-top:6px}'
+    + '}';
+  document.head.appendChild(css);
+
+  const R = window.MaestroRolagem = { voltas: 0 };
+  /* a barra fixa do topo (#ctx) cobre o que prende em top:0 — as abas
+     prendem logo abaixo dela */
+  const topoFixo = () => {
+    const c = document.getElementById('ctx');
+    if(!c) return 0;
+    const p = getComputedStyle(c).position;
+    return (p === 'fixed' || p === 'sticky') ? Math.max(0, Math.round(c.getBoundingClientRect().bottom)) : 0;
+  };
+  const medir = () => { try{ if(celular()) document.documentElement.style.setProperty('--v274topo', topoFixo() + 'px'); }catch(e){} };
+  if(typeof render === 'function') render = (function(orig){
+    return function(){ const r = orig.apply(this, arguments); medir(); return r; };
+  })(render);
+  addEventListener('resize', medir);
+  medir();
+  let ultima = null, tm = 0;
+  function colunaAtiva(rolo){
+    const x0 = rolo.getBoundingClientRect().left;
+    let melhor = null, d = Infinity;
+    rolo.querySelectorAll(':scope > .enCol').forEach(c => { const e = Math.abs(c.getBoundingClientRect().left - x0); if(e < d){ d = e; melhor = c; } });
+    return melhor ? melhor.dataset.encol || '' : null;
+  }
+  /* trocou de coluna com a página lá embaixo: a coluna nova começa do
+     começo (senão a curta aparece vazia, abaixo do fim dela) */
+  function aoParar(){
+    if(!celular()) return;
+    const rolo = document.querySelector('.enRolo'); if(!rolo) return;
+    const col = colunaAtiva(rolo);
+    if(col == null || col === ultima){ ultima = col; return; }
+    const antes = ultima; ultima = col;
+    if(antes == null) return;
+    const abas = document.querySelector('.v249Abas');
+    const topo = rolo.getBoundingClientRect().top + scrollY - (abas ? abas.offsetHeight + 4 : 0) - topoFixo();
+    if(scrollY > topo + 2){ scrollTo({ top: Math.max(0, topo), behavior: 'auto' }); R.voltas++; }
+  }
+  addEventListener('scroll', e => {
+    const t = e.target;
+    if(!(t && t.classList && t.classList.contains('enRolo'))) return;
+    clearTimeout(tm); tm = setTimeout(aoParar, 140);
+  }, true);
+  R.aoParar = aoParar;
+})();
