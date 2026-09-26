@@ -4,7 +4,7 @@ Version: 0.5
 Status: Implementação — blocos 1, 2, 3 e 5 da API prontos, verificados por HTTP
         · D-080 resolvida (a fase substitui o status): blocos 4, 6, 7 e 8 liberados
 Codename: Project Symphony
-Última atualização: 2026-09-25
+Última atualização: 2026-09-26
 
 > **Retomando o projeto? Leia [`docs/HANDOFF.md`](docs/HANDOFF.md) primeiro.**
 > Ele é o mapa: estado do código, o que já foi verificado, o que está aberto
@@ -299,6 +299,15 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (26 set, v273) — a tarefa acha o card.** "Ainda tem card escrito
+estruturar pauta no check e na aba enviada pro cliente." A v272 só dizia "Sem
+card"; agora a tarefa de produção sem card no Check, Cliente ou Act religa ao
+card (pelo número por valor, ou pelo nome a um card livre do cliente — a clone
+do repositor cede), sai se for repetida sem nada de seu, ou volta ao Plan.
+Depois que o banco falou e por duas olhadas. Causa provável: a faxina da v199
+solta a tarefa e deixa a coluna velha quando ela voltou do banco como campo.
+Mora no fim de `web/dados/tempo-real.js`. 25 provas em
+`web/verificar/v273-a-tarefa-acha-o-card.mjs`.
 **Fechado (26 set, v272) — o login fica.** Dos vídeos do founder.
 - **A sessão caía com várias abas:** o refresh token vale uma vez e a aba
   que perdia a corrida apagava a sessão do aparelho. Agora uma renovação por

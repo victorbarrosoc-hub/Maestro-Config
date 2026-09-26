@@ -221,6 +221,7 @@
       if(p) reaplicar(cli, p, antes);
     }
     anota('carregou', cards.length, midias.length);
+    D.carregouEm = Date.now();
     return true;
   }
   D.carregar = carregar;
@@ -691,4 +692,129 @@
 
   D.estado = () => ({ ligado: D.ligado, org: D.org, conectado: D.conectado, gravacoes: D.gravacoes,
     recebidas: D.recebidas, conflitos: D.conflitos, fila: Object.keys(D.fila).filter(k => D.fila[k]) });
+})();
+
+/* =====================================================================
+   v273 — a tarefa de produção reencontra o card (ou volta ao Plan)
+   ---------------------------------------------------------------------
+   O print do founder (26/set): "EJUP · Post · Story de divulgação do
+   teaser" em "Com o cliente", dizendo "Sem card — estruture a pauta".
+   O nome é o que a v260 monta a partir do CARD, então essa tarefa já
+   teve card. Como perde:
+     * a faxina da v199 (duas tarefas no mesmo card) solta a mais nova e
+       só a devolve ao Plan quando a coluna é leitura da fase — depois de
+       uma viagem pelo banco a coluna é campo puro, e a tarefa fica em
+       Check ou "Com o cliente", sem card;
+     * número do card como texto de um lado e número do outro (`===`).
+   No Check, no Cliente e no Act não há o que fazer sem card: lá não se
+   estrutura pauta. Então, para cada tarefa de produção sem card nessas
+   colunas, depois que o banco falou e por duas olhadas seguidas:
+     1. o número bate por valor → a tarefa volta a apontar para o card;
+     2. um card do mesmo cliente, livre, com o mesmo nome → religa;
+     3. o card do mesmo nome já tem a tarefa dele e esta não tem nada de
+        seu (tempo, descrição, pedido) → é repetida: sai, com lápide;
+     4. o resto volta ao Plan, que é onde se estrutura a pauta.
+   Nada é apagado de card, e a pauta vazia (ainda carregando) não conta.
+   ===================================================================== */
+(function(){
+  'use strict';
+  if(window.MaestroReliga || typeof S === 'undefined') return;
+  const COLS = ['check', 'cliente', 'act'];
+  const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+  const ultimo = s => { const p = String(s || '').split(' · '); return norm(p[p.length - 1]); };
+  const vistas = new Map();                 // id da tarefa -> quantas olhadas seguidas sem card
+  const R = window.MaestroReliga = { religadas: 0, repetidas: 0, aoPlan: 0, tipos: 0, diario: [] };
+  const anota = (...x) => { R.diario.push(x); if(R.diario.length > 40) R.diario.shift(); };
+
+  function pronto(){
+    try{
+      if(!S.ensaio || !Array.isArray(S.ensaio.tarefas) || !S.pautas) return false;
+      if(S.viaLink || S.soVer || S.soFluxo) return false;
+      if(typeof abertoPorLink === 'function' && abertoPorLink()) return false;
+      if(typeof _sbLigado !== 'undefined' && _sbLigado){
+        const Sin = window.Sincro;
+        if(Sin && ((Sin.carregando > 0) || !Sin.lido)) return false;
+      }
+      const D = window.MaestroDados;
+      if(D && D.ligado && !D.carregouEm) return false;
+      return true;
+    }catch(e){ return false; }
+  }
+  const producao = t => t && (typeof catIdDe === 'function' ? catIdDe(t) === 'producao' : t.cat === 'producao');
+  const temCard = t => typeof cardDaTarefa === 'function' && !!cardDaTarefa(t);
+  const deAlguem = t => !!((t.desc || '').trim() || t.pedido || t.doCliente || t.desde || (+t.tempoMs || 0) > 0
+    || (t.anexos && t.anexos.length) || (t.hist && t.hist.length > 1));
+
+  function religar(t, p){
+    t.cardId = p.id; t.job = true; t.cat = 'producao';
+    delete t.conflitoCard;
+    try{ if(typeof ligarTarefaAoCard === 'function') ligarTarefaAoCard(t); }catch(e){}
+  }
+  function aoPlan(t){
+    try{
+      const d = Object.getOwnPropertyDescriptor(t, 'col');
+      if(d && d.get){ delete t.col; }
+    }catch(e){}
+    t.col = 'plan'; t._col = 'plan';
+  }
+
+  function olhar(){
+    if(!pronto()) return 0;
+    const E = S.ensaio;
+    let n = 0;
+    /* 1. o número por valor, em todas as tarefas (é barato e é a causa mais silenciosa) */
+    for(const t of E.tarefas){
+      if(!t || t.cardId == null || temCard(t)) continue;
+      const p = (S.pautas[t.cli] || []).find(x => x && x.id != null && +x.id === +t.cardId);
+      if(p && p.id !== t.cardId){ religar(t, p); R.tipos++; n++; anota('tipo', t.id, p.id); }
+    }
+    const presas = E.tarefas.filter(t => t && producao(t) && COLS.includes(t.col) && !temCard(t));
+    const ids = new Set(presas.map(t => t.id));
+    for(const id of [...vistas.keys()]) if(!ids.has(id)) vistas.delete(id);
+    for(const t of presas){
+      const pauta = S.pautas[t.cli] || [];
+      if(!pauta.length) continue;                          // ainda chegando: não se decide
+      const v = (vistas.get(t.id) || 0) + 1; vistas.set(t.id, v);
+      /* duas olhadas seguidas, nunca uma; quem ainda aponta para um número
+         espera mais (o card pode estar a caminho, vindo de outro aparelho) */
+      if(v < (t.cardId == null ? 2 : 4)) continue;
+      vistas.delete(t.id);
+      const nomes = new Set([norm(t.titulo), t.conflitoCard && norm(t.conflitoCard.titulo)].filter(Boolean));
+      const fim = ultimo(t.titulo);
+      const casa = pauta.filter(p => p && p.t && (nomes.has(norm(p.t)) || (fim && fim.length >= 6 && ultimo(p.t) === fim)));
+      const donas = p => E.tarefas.filter(x => x && x !== t && String(x.cli) === String(t.cli) && x.cardId != null && +x.cardId === +p.id);
+      /* a clone que o repositor criou para o card (carimbo `reposta`) cede o
+         lugar à tarefa de verdade, entregando o tempo que contou (v224) */
+      const livres = casa.filter(p => donas(p).every(x => x.reposta === true));
+      if(livres.length === 1){
+        const p = livres[0];
+        for(const x of donas(p)){
+          t.tempoMs = (+t.tempoMs || 0) + (+x.tempoMs || 0);
+          if(x.desde && !t.desde) t.desde = x.desde;
+          if(!t.resp && x.resp) t.resp = x.resp;
+          const i = E.tarefas.indexOf(x); if(i >= 0) E.tarefas.splice(i, 1);
+          try{ window.MaestroFaxinaEnsaio && window.MaestroFaxinaEnsaio.enterrar(x.id); }catch(e){}
+        }
+        religar(t, p); R.religadas++; n++; anota('religou', t.id, p.id); continue;
+      }
+      if(casa.length && !livres.length && !deAlguem(t)){
+        const i = E.tarefas.indexOf(t); if(i >= 0) E.tarefas.splice(i, 1);
+        try{ window.MaestroFaxinaEnsaio && window.MaestroFaxinaEnsaio.enterrar(t.id); }catch(e){}
+        R.repetidas++; n++; anota('repetida', t.id); continue;
+      }
+      aoPlan(t); R.aoPlan++; n++; anota('plan', t.id, casa.length, livres.length);
+    }
+    return n;
+  }
+  R.olhar = olhar;
+
+  function redesenhar(){
+    try{
+      if(S.view !== 'agency' || S.modal) return;
+      const a = document.activeElement;
+      if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+      if(typeof render === 'function') render();
+    }catch(e){}
+  }
+  setInterval(() => { try{ if(olhar()) redesenhar(); }catch(e){} }, 2500);
 })();

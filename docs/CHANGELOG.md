@@ -1,9 +1,53 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.87
+Version: 0.5.88
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.88 — 2026-09-26
+
+**Status:** Concluída
+
+### v273 — a tarefa acha o card
+
+Do print do founder: "Ainda tem card escrito estruturar pauta no check e na
+aba enviada pro cliente". A v272 só **dizia** "Sem card" nas tarefas que já
+estavam lá; ele não quer o aviso, quer a tarefa no lugar certo.
+
+**O que o print mostrava.** "EJUP · Post · Story de divulgação do teaser" em
+"Com o cliente", sem card. O nome é o que a v260 monta a partir do CARD, então
+essa tarefa já teve card e perdeu o elo. Dois caminhos que fazem isso:
+
+- a faxina da v199 (duas tarefas apontando para o mesmo card) solta a mais
+  nova e só a devolve ao Plan quando a coluna ainda é leitura da fase. Depois
+  de uma viagem pelo banco a coluna é campo puro, e a tarefa fica em Check ou
+  "Com o cliente", sem card;
+- o número do card como texto de um lado e número do outro (`===`).
+
+**A regra** (fim de `web/dados/tempo-real.js`, arquivo à parte — o protótipo
+está no teto). Para cada tarefa de produção sem card no Check, no Cliente ou no
+Act, depois que o banco falou e por duas olhadas seguidas:
+
+1. o número bate por valor → volta a apontar para o card;
+2. um card do mesmo cliente com o mesmo nome, livre (ou segurado só por uma
+   clone do repositor, que cede o lugar e entrega o tempo) → religa, e a
+   coluna volta a ser a da fase;
+3. o card do mesmo nome já tem a tarefa dele e esta não tem nada de seu →
+   é repetida: sai, com lápide;
+4. o resto volta ao Plan, que é onde se estrutura a pauta.
+
+Não decide com o banco falando, com a pauta do cliente vazia, nem numa olhada
+só; quem aponta para um card que ainda não chegou espera quatro. Nenhum card
+é tocado.
+
+**O que a prova pegou:** a primeira versão apagava a tarefa da PESSOA e
+deixava a clone que o repositor tinha criado para o card órfão. É a v224 de
+novo: a clone cede, nunca a de gente.
+
+25 provas em `web/verificar/v273-a-tarefa-acha-o-card.mjs`.
 
 ---
 
