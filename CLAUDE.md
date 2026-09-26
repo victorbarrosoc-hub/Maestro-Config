@@ -1196,8 +1196,9 @@ parte 2 rodaram contra um Postgres montado a partir DESTES arquivos — ele tinh
 tudo o que os arquivos dizem e nada do que o banco real acumulou fora deles.
 Antes de mexer em chave, índice ou política: listar o que o banco DE VERDADE tem
 (a primeira consulta da parte 3 faz isso) e migrar contra aquilo.
-**Aberto:** `roberto.ejup@gmail.com` tem login de agência; se for o cliente, sai
-de `maestro_membros` junto com a parte 2 (ele aprova por link, sem conta).
+**Fechado (26 set):** `roberto.ejup@gmail.com` é da EQUIPE (Administrador),
+confirmado pelo founder — fica em `maestro_membros`; a chave dele é criada na
+ficha.
 **Fechado (9 set, v196):** esvaziar a lixeira não grudava — esvazia 7, atualiza,
 volta 7 — e card apagado ia ao cliente de novo. A v195 curou UMA lista; as outras
 três do mesmo assunto (`S.ensaio.lixo`, `S.lixeira[cli]`, `S.ensaio.naoRecriar`)
