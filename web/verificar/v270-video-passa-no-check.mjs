@@ -76,7 +76,7 @@ const mov = await pg.evaluate(() => {
 checa('9. o vídeo entra no Check', mov.video === 'revisao', mov);
 checa('10. o vazio é barrado com "Falta o texto"', mov.vazio === 'criado' && mov.toasts.some(t => /Falta o texto/.test(t)), mov);
 const ver = await pg.evaluate(() => VERSAO_PROTOTIPO);
-checa('11. a versão do rodapé é a v270', /^v270/.test(ver), ver);
+checa('11. a versão do rodapé é a v270 ou mais nova', +((/^v(\d+)/.exec(ver) || [])[1] || 0) >= 270, ver);
 
 console.log(`\n${ok} passaram · ${falhou} falharam${erros.length ? ' · erros: ' + erros.slice(0, 3).join(' | ') : ''}`);
 await b.close(); srv.close(); process.exit(falhou || erros.length ? 1 : 0);
