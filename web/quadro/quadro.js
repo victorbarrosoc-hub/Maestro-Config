@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v282', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v283', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -1536,7 +1536,7 @@
     .qdQuadro.entra-dir .qdCol{ animation:qdEntraDir .22s ease-out }
     .qdColDescM{ display:block; margin:-4px 0 12px; font-size:12.5px; color:var(--mut, #999) }
     .qdCard{ background:var(--sup, rgba(255,255,255,.05)) }
-    html[data-tema="claro"] .qdCard{ background:#fff }
+    html[data-tema="claro"] .qdCard{ background:#FCFBF9 }
     html[data-tema="claro"] .qdQuadro .qdCol{ background:transparent }
     .qdOla h2{ font-size:28px }
     .qdEntrada input{ font-size:16px }
@@ -1565,22 +1565,33 @@
   /* v281 — o latão é a cor de AÇÃO (decisão do founder, proposta A). O que é
      principal e clicável fica amarelo com texto escuro; nada vira fundo de
      painel (a regra dos 10% do manual da marca). */
-  .qdBt, .qdProxBt, .qdAbas button.on, .qdSubs button.on, .qdPil.on, .qdChipN.on, .qdAbaCol.on{ background:var(--brass-500) !important; color:#1C1C1F !important }
-  .qdProxBt:hover, .qdBt:hover{ background:var(--brass-400) !important; color:#1C1C1F !important }
-  .qdBarra i{ background:var(--brass-500) }
+  :root{ --latao:#FFC857; --latao2:#FFD176 }   /* o amarelo da marca, igual nos dois temas */
+  .qdBt, .qdProxBt, .qdAbas button.on, .qdSubs button.on, .qdPil.on, .qdChipN.on, .qdAbaCol.on{ background:var(--latao) !important; color:#1C1C1F !important }
+  .qdProxBt:hover, .qdBt:hover{ background:var(--latao2) !important; color:#1C1C1F !important }
+  .qdBarra i{ background:var(--latao) }
   .qdDia.hoje, .qdDd.hoje{ box-shadow:inset 0 0 0 1.5px var(--brass-500) }
   .qdDd.hoje .qdDdN, .qdAgDia.hoje .qdAgN b{ color:var(--brass-500) }
-  .qdDia header em{ background:var(--brass-500); color:#1C1C1F }
+  .qdDia header em{ background:var(--latao); color:#1C1C1F }
   .qdOk:hover{ border-color:var(--brass-500) }
-  .qdLin.feita .qdOk, .qdMini.feita .qdOk, .qdFCkL.ok .qdOk{ background:var(--brass-500); border-color:var(--brass-500); color:#1C1C1F }
+  .qdLin.feita .qdOk, .qdMini.feita .qdOk, .qdFCkL.ok .qdOk{ background:var(--latao); border-color:var(--latao); color:#1C1C1F }
   .qdEntrada:focus-within{ box-shadow:inset 0 0 0 1.5px var(--brass-500) }
   .app.ag button.nav.on{ color:var(--brass-300) !important }
   .app.ag button.nav.on svg{ color:var(--brass-500) !important }
   /* só no app da agência: a vitrine tem a paleta dela, e o "Aprovar" do cliente segue verde */
-  .app.ag .b.pri, body:has(.app.ag) #layer .b.pri{ background:var(--brass-500) !important; color:#1C1C1F !important; border-color:var(--brass-500) !important }
+  .app.ag .b.pri, body:has(.app.ag) #layer .b.pri{ background:var(--latao) !important; color:#1C1C1F !important; border-color:var(--latao) !important }
   html[data-tema="claro"] .app.ag button.nav.on{ color:var(--brass-700) !important }
-  html[data-tema="claro"] .qdCol{ background:var(--enc, rgba(118,118,128,.12)) }
-  html[data-tema="claro"] .qdCard{ background:#fff }
+  html[data-tema="claro"] .app.ag button.nav.on svg{ color:#C9921E !important }
+  html[data-tema="claro"] .qdDia.hoje, html[data-tema="claro"] .qdDd.hoje{ box-shadow:inset 0 0 0 1.5px #E0A93A }
+  /* v283 — o tema claro "Linho": sem branco puro, para o amarelo da marca
+     ter contraste sem precisar escurecer (decisão do founder). Só no app da
+     agência: a vitrine e o link do cliente têm cores próprias. */
+  :root[data-tema="claro"] body:has(.app.ag){ --fundo:#EFEEEA; --ink-950:#EFEEEA; --ink-900:#F8F7F4; --ink-870:#EAE8E3; --ink-850:#F5F4F0; --ink-800:#DDDBD4;
+    --sup:#F8F7F4; --sup2:#FCFBF9; --lat:rgba(233,231,226,.94); --enc:rgba(90,86,76,.08); --enc2:rgba(90,86,76,.14); --fio:rgba(30,28,20,.07); --vidro:rgba(248,247,244,.82) }
+  html[data-tema="claro"] body:has(.app.ag), html[data-tema="claro"] .app.ag, html[data-tema="claro"] .emEnsaio, html[data-tema="claro"] .pronto{ background:#EFEEEA !important }
+  html[data-tema="claro"] .app.ag .aside{ background:#E8E6E1 !important }
+  html[data-tema="claro"] body:has(.app.ag) .ctx, html[data-tema="claro"] .app.ag ~ .tabbar, html[data-tema="claro"] body:has(.app.ag) .tabbar{ background:rgba(239,238,234,.9) !important }
+  html[data-tema="claro"] .qdCol{ background:rgba(90,86,76,.07) }
+  html[data-tema="claro"] .qdCard{ background:#FCFBF9 }
   html[data-tema="claro"] .qdFolhaFundo{ background:rgba(0,0,0,.18) }
   #btAtualizar{ display:none !important }
   .qdPagina [data-qdkey]{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none }

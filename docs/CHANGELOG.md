@@ -1,16 +1,48 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.97
+Version: 0.5.98
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
 
+## 0.5.98 — 2026-09-28
+
+**Status:** Concluída — publicada com a autorização do founder em 28/set,
+junto com a v281 (o latão) e a v282 (deslizar).
+
+### v283 — o tema claro "Linho", com o mesmo amarelo
+
+O founder: "No branco, o amarelo trocou de cor. Não é esse, qualquer coisa
+deixe o background do tema claro menos branco puro… mas elegante."
+
+- **O mesmo amarelo nos dois temas.** O tema claro trocava o `--brass-500`
+  por um dourado escuro (`#C08F1F`) para não sumir no branco. Agora os
+  botões e as seleções usam `--latao: #FFC857` nos dois temas, com texto
+  escuro.
+- **Sem branco puro.** Foram mostradas duas opções, Marfim e Linho, lado a
+  lado com o atual, e o founder escolheu o **Linho**:
+  - fundo `#EFEEEA`;
+  - superfícies `#F8F7F4`;
+  - cards `#FCFBF9`;
+  - lateral `#E8E6E1`.
+
+  O texto continua escuro.
+- **Só no app da agência** (`body:has(.app.ag)`). A vitrine e o link do
+  cliente mantêm as cores deles, conferido em print.
+- **Armadilha:** a camada de cor entra no `<head>`, antes do CSS do app. Com o
+  mesmo peso de seletor, o app vencia, e o primeiro teste mostrou o fundo
+  inalterado. Por isso a regra usa `:root[data-tema="claro"]` e pinta
+  `.app.ag` direto.
+- **Provas:** 92 de 92 na `v277-o-quadro.mjs`. A 15.1d confere o fundo Linho e
+  o `#FFC857` no botão do tema claro.
+
+---
+
 ## 0.5.97 — 2026-09-28
 
-**Status:** Na branch, com provas. NÃO publicado: aguarda a autorização do
-founder (sobe junto com a v281).
+**Status:** Concluída — publicada com a autorização do founder em 28/set.
 
 ### v282 — deslizar para o lado troca de coluna (celular)
 
@@ -35,7 +67,7 @@ outra aba."
 
 ## 0.5.96 — 2026-09-28
 
-**Status:** Na branch, com provas. NÃO publicado: aguarda a autorização do founder.
+**Status:** Concluída — publicada com a autorização do founder em 28/set.
 
 ### v281 — o latão é a cor de ação (proposta A)
 
