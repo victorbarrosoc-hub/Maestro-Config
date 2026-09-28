@@ -299,6 +299,18 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Pronta, esperando autorização (28 set, v275) — sem cópia de card, e o
+material sobe dentro da pauta.** O founder pediu: **"suba tudo de uma vez… e
+só subir quando eu autorizar"** — então a v275 está SÓ na branch. (1) A
+camada da Etapa 1 aceitava gravação antes de ler as tabelas; um aparelho com
+a pauta velha guardada, ao abrir, criava CÓPIAS dos cards (número recusado →
+número novo) e apontava a tarefa do Ensaio para a cópia — daí os duplicados
+no Cronograma e as tarefas que sumiam. Agora nada sobe antes da carga, e
+número que já é do mesmo cliente não vira card novo. O que já duplicou:
+`docs/ENGINEERING/dados-1b-duplicados-consulta.sql` (só leitura). (2) "Subir
+material" em "Estruturar a pauta" não fecha mais a janela e aceita vários
+arquivos de uma vez. Provas: seção 13 da v271 (56) e
+`web/verificar/v275-material-na-pauta.mjs` (15).
 **Fechado (26 set, v274) — no celular, a coluna rola com a página.** Vídeo do
 founder: a coluna do Ensaio rolava numa janelinha, voltava ao topo e o quadro
 escorregava de lado. Eram duas rolagens verticais uma dentro da outra, a altura

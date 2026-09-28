@@ -89,7 +89,7 @@ const A = auth();
 console.log('\n1. iPhone: uma rolagem vertical só');
 const ctx = await nav.newContext({ viewport: { width: 390, height: 664 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
 const pg = await pagina(ctx, A);
-checa('1.0 a camada da v274 chegou pelo arquivo à parte', await pg.evaluate(() => !!window.MaestroRolagem && /^v274/.test(VERSAO_PROTOTIPO)));
+checa('1.0 a camada da v274 chegou pelo arquivo à parte', await pg.evaluate(() => !!window.MaestroRolagem && /^v27[4-9]/.test(VERSAO_PROTOTIPO)));
 await irPara(pg, 'do');
 const m = await pg.evaluate(() => {
   const corpo = document.querySelector('.enCol[data-encol="do"] .enColCorpo');

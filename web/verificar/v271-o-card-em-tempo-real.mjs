@@ -481,6 +481,38 @@ console.log('\n  — 12. sem rede —');
   checa('12.5 a fila esvazia depois de subir', !fila2, fila2);
 }
 
+console.log('\n  — 13. v275: o aparelho com a cópia velha não duplica o card —');
+{
+  const conta = () => doBanco(`select count(*)::int from public.cards where org='maestro' and cliente='cj'`);
+  const antes = conta();
+  /* o outro computador abrindo: a tela ainda tem a pauta GUARDADA nele (com o
+     nome antigo) e ainda não leu as tabelas — e algo grava nesse instante */
+  const r = await noAparelho(A, async () => {
+    const D = MaestroDados;
+    D.carregouEm = null; D.srv = {}; D.base = {};
+    const p = S.pautas.cj.find(x => +x.id === 601); p.t = 'Nome velho guardado no aparelho';
+    const ok = await Sincro.gravar('cj', true);
+    return { ok, esperou: D.diario.some(x => x[1] === 'esperou-carga') };
+  });
+  checa('13.1 antes de ler as tabelas, nada de card sobe (fica na fila)', r.esperou && conta() === antes, { r, antes, agora: conta() });
+  await noAparelho(A, () => MaestroDados.iniciar());
+  await A.pag.waitForTimeout(800);
+  checa('13.2 depois da carga, nenhum card a mais no banco', conta() === antes, { antes, agora: conta() });
+  const nome = await card(A, 601);
+  checa('13.3 e a tela mostra o nome do banco, não a cópia velha', nome && nome.t !== 'Nome velho guardado no aparelho', nome && nome.t);
+  /* o banco já tem o número, deste mesmo cliente, e a tela não sabia */
+  const r2 = await noAparelho(A, async () => {
+    const D = MaestroDados;
+    const antesX = { srv: [...D.srv.cj.keys()], base: [...D.base.cj.keys()], arr: S.pautas.cj.map(p => +p.id), lx: (S.lixeira.cj || []).map(e => e.item && e.item.id), dia: D.diario.slice(-6) };
+    D.srv.cj.delete(602); D.base.cj.delete(602);
+    await D.enviar('cj');
+    return { antesX, dia2: D.diario.slice(-6), nao: D.naoDuplicou || 0, ids: S.pautas.cj.map(p => +p.id).sort().join() };
+  });
+  checa('13.4 número que já é deste cliente não vira card novo', r2.nao >= 1 && conta() === antes && r2.ids === r2.antesX.arr.slice().sort().join(), { r2, agora: conta() });
+  const tarefasOk = await noAparelho(A, () => (S.ensaio && S.ensaio.tarefas || []).every(t => !t.cardId || +t.cardId < 1e12));
+  checa('13.5 nenhuma tarefa foi apontada para um número novo', tarefasOk);
+}
+
 console.log('\n  — 9. parado, ninguém grava —');
 {
   /* cada tela desenha, preenche o que o app preenche sozinho (o `pilar`

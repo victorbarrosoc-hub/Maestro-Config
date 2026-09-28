@@ -91,7 +91,7 @@
     /* a agência some por um instante enquanto o app pergunta de novo ao
        banco (MaestroAgencia.sondar): isso não é trocar de agência */
     if(!o) return D.ligado;
-    if(D.org && o !== D.org){ D.ligado = false; D.checado = null; D.srv = {}; D.base = {}; D.mid = {}; D.midBase = {}; D.lixBase = {}; D.ultimo = null; }
+    if(D.org && o !== D.org){ D.ligado = false; D.checado = null; D.carregouEm = null; D.srv = {}; D.base = {}; D.mid = {}; D.midBase = {}; D.lixBase = {}; D.ultimo = null; }
     if(D.checado && D.org === o) return D.checado;
     D.org = o;
     D.checado = (async () => {
@@ -263,6 +263,12 @@
   const gravando = {}, deNovo = {};
   async function enviar(cli){
     if(!D.ligado || soLeitura()) return true;
+    /* v275: antes de ler as tabelas, a tela ainda mostra a pauta guardada
+       NESTE aparelho — cada card dela pareceria novo, o banco recusaria o
+       número e o card ganharia um número novo: uma CÓPIA, com a tarefa do
+       Ensaio apontada para ela. Então nada sobe antes da carga; fica na
+       fila e sobe logo depois dela. */
+    if(!D.carregouEm){ D.fila[cli] = true; anota('esperou-carga', cli); return true; }
     if(gravando[cli]){ deNovo[cli] = true; return gravando[cli]; }
     gravando[cli] = (async () => {
       try{ await enviarJa(cli); D.fila[cli] = false; anotarFila(cli); return true; }
@@ -344,7 +350,15 @@
       if(!s){
         const dados = clone(p); delete dados.mod;
         let r = await rpc('maestro_card_criar', { p_cliente: cli, p_dados: dados, p_id: id });
-        if(r && r.erro === 'id_existe'){ const novo = renumerar(cli, p); r = await rpc('maestro_card_criar', { p_cliente: cli, p_dados: Object.assign(dados, { id: novo }), p_id: novo }); }
+        if(r && r.erro === 'id_existe'){
+          /* v275: o número já existe. Se é DESTE cliente, o card não é novo —
+             a tela só não o tinha lido ainda: busca e segue sem criar nada.
+             Renumerar só quando o número é de OUTRO cliente. */
+          let meu = null;
+          try{ [meu] = await ler('cards', `select=org,cliente,id,dados,versao,posicao,apagado_em,varrido_em,atualizado_em&cliente=eq.${encodeURIComponent(cli)}&id=eq.${id}`); }catch(e){ throw new Error('criar: conferir'); }
+          if(meu){ receberCard(meu); anota('nao-duplicou', cli, id); D.naoDuplicou = (D.naoDuplicou || 0) + 1; continue; }
+          const novo = renumerar(cli, p); r = await rpc('maestro_card_criar', { p_cliente: cli, p_dados: Object.assign(dados, { id: novo }), p_id: novo });
+        }
         if(!r || !r.ok) throw new Error('criar: ' + ((r && r.erro) || '?'));
         const d = clone(p);
         SRV.set(+p.id, { dados: d, versao: r.versao || 1, posicao: null, apagado: false, varrido: false });
@@ -897,4 +911,74 @@
     clearTimeout(tm); tm = setTimeout(aoParar, 140);
   }, true);
   R.aoParar = aoParar;
+})();
+
+/* =====================================================================
+   v275 — subir material sem sair de "Estruturar a pauta"
+   ---------------------------------------------------------------------
+   "Quando clica em subir material em estruturar pauta, ele fecha." O botão
+   trocava a janela da pauta pela janela de material, e o que estava
+   digitado e não salvo ia junto. Agora, dentro da pauta, o botão abre o
+   seletor de arquivos direto, os arquivos vão para a peça do card pelo
+   mesmo caminho de sempre (`guardarArquivos`, que sobe para a nuvem), e a
+   janela da pauta fica aberta, com o que foi digitado.
+   ===================================================================== */
+(function(){
+  'use strict';
+  if(window.MaestroMaterialNaPauta || typeof document === 'undefined') return;
+  const R = window.MaestroMaterialNaPauta = { enviados: 0 };
+  const naPauta = el => { const box = el.closest('.modalbox'); return !!(box && box.querySelector('#pt-t')); };
+  /* o que está digitado na janela, por id, para devolver se algo redesenhar */
+  function fotografar(box){
+    const f = {};
+    box.querySelectorAll('input[id], textarea[id], select[id]').forEach(el => {
+      if(el.type === 'file') return;
+      f[el.id] = (el.type === 'checkbox' || el.type === 'radio') ? { c: el.checked } : { v: el.value };
+    });
+    return f;
+  }
+  function devolver(f, velho){
+    const box = document.querySelector('#layer .modalbox'); if(!box || !box.querySelector('#pt-t')) return;
+    if(box === velho) return;                 // nada redesenhou: o que está na tela é o de agora
+    Object.entries(f).forEach(([id, x]) => {
+      const el = box.querySelector('#' + CSS.escape(id)); if(!el) return;
+      if('c' in x){ if(el.checked !== x.c) el.checked = x.c; }
+      else if(el.value !== x.v){ el.value = x.v; el.dispatchEvent(new Event('input', { bubbles: true })); }
+    });
+  }
+  function rotular(btn, id, cli){
+    try{
+      const p = typeof cardDe === 'function' ? cardDe(id, cli) : null;
+      const n = p && typeof materiaisDe === 'function' ? materiaisDe(p).length : 0;
+      if(btn && btn.isConnected && n) btn.innerHTML = (typeof ic === 'function' ? ic('img', 13) : '') + ' Material (' + n + ')';
+    }catch(e){}
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-mtabrir]');
+    if(!b || !naPauta(b)) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    const a = typeof lerAlvo === 'function' ? lerAlvo(b.dataset.mtabrir) : { id: +b.dataset.mtabrir, cli: null };
+    const box = b.closest('.modalbox');
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.multiple = true; inp.accept = 'video/*,image/*,audio/*,.pdf';
+    inp.style.display = 'none';
+    document.body.appendChild(inp);
+    inp.addEventListener('change', () => {
+      const foto = fotografar(box);
+      try{
+        S.mtId = a.id; S.mtCli = a.cli;
+        const n = typeof guardarArquivos === 'function' ? guardarArquivos(a.id, inp.files, a.cli) : 0;
+        if(n){
+          R.enviados += n;
+          try{ if(typeof somMaterial === 'function') somMaterial(); }catch(x){}
+          if(typeof toast === 'function') toast(`${n} arquivo${n > 1 ? 's anexados' : ' anexado'} à peça.`);
+        }
+      }catch(x){}
+      inp.remove();
+      /* o aviso redesenha a camada: o que estava digitado volta */
+      requestAnimationFrame(() => { devolver(foto, box); rotular(document.querySelector('#layer .modalbox [data-mtabrir]'), a.id, a.cli); });
+      setTimeout(() => devolver(foto, box), 300);
+    });
+    inp.click();
+  }, true);
 })();

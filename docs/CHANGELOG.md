@@ -1,9 +1,56 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.89
+Version: 0.5.90
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.90 — 2026-09-28
+
+**Status:** Pronta na branch — **aguardando a autorização do founder para subir**
+("quero que suba tudo de uma vez… e só subir quando eu autorizar").
+
+### v275 — sem cópia de card, e o material sobe dentro da pauta
+
+**1. O card duplicado no Cronograma e a tarefa que sumia do Ensaio.** Prints
+do founder: "EJUP · Story · Curadoria de leituras - Projeto Amaro" (Story,
+15:00, Anna) e, no mesmo dia, "Curadoria de leituras" (Post, 18:30, sem
+dono); e o Vorcaro no Cronograma sem tarefa no Ensaio, "quando outro
+computador logou na conta". A causa era da camada da Etapa 1:
+
+- ela passava a aceitar gravações assim que sabia que a agência estava
+  ligada, **antes de ler as tabelas**;
+- nessa janela a tela tinha a pauta GUARDADA naquele aparelho. Se algo
+  gravava (o outro computador abrindo), cada card dela parecia novo;
+- o banco recusava o número (`id_existe`), e a camada dava ao card um
+  número NOVO: uma cópia, com o nome e os dados velhos daquele aparelho;
+- e a tarefa do Ensaio era apontada para a cópia. Apagar a cópia no
+  Cronograma levava a tarefa para a lixeira do Ensaio (v202).
+
+Agora, duas travas:
+
+- **nada de card sobe antes da carga**; fica na fila e sobe logo depois dela;
+- **número que já é do mesmo cliente não vira card novo**: a camada busca
+  o card e segue. Renumerar só quando o número é de outro cliente.
+
+O que já duplicou no banco não se desfaz sozinho:
+`docs/ENGINEERING/dados-1b-duplicados-consulta.sql` (só leitura) lista os
+cards nascidos depois de ligar a Etapa 1 e o original de cada cópia.
+
+**2. "Subir material" fechava "Estruturar a pauta".** O botão trocava a
+janela da pauta pela de material, e o digitado e não salvo ia junto. Agora
+abre o seletor direto, aceita **vários arquivos de uma vez**, os arquivos
+entram na peça pelo caminho de sempre (`guardarArquivos`), e a janela da
+pauta fica aberta com o que foi digitado.
+
+Provas:
+
+- seção 13 nova em `web/verificar/v271-o-card-em-tempo-real.mjs` (56
+  provas contra Postgres de verdade);
+- 15 provas em `web/verificar/v275-material-na-pauta.mjs`, no computador e
+  no iPhone (contra a v274: 12 falhas).
 
 ---
 
