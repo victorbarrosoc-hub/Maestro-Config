@@ -299,8 +299,8 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
-**Na branch (28 set, v279), NÃO publicado: aguarda o founder autorizar —
-o padrão do nome na hora de criar.** Ao escrever um card aparecem os botões
+**Fechado (28 set, v279, NO AR com autorização do founder) — o padrão do
+nome na hora de criar.** Ao escrever um card aparecem os botões
 de cliente e formato e a prévia "Cliente · Formato · Tema"; a ficha tem
 "Padronizar" para card antigo. 70 provas na `v277-o-quadro.mjs`.
 **Fechado (28 set, v277–v278, NO AR com autorização do founder) — o Quadro

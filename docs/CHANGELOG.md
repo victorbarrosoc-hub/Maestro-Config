@@ -9,7 +9,7 @@ Nunca apagar versões anteriores.
 
 ## 0.5.94 — 2026-09-28
 
-**Status:** Na branch, com provas. NÃO publicado: aguarda a autorização do founder.
+**Status:** Concluída — publicada com a autorização do founder em 28/set.
 
 ### v279 — o padrão do nome, na hora de criar
 
