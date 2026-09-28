@@ -1,11 +1,40 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.104
+Version: 0.5.105
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.105 — 2026-09-28
+
+**Status:** No ar.
+
+### v290 — a coluna recolhe, 10 de cada vez, e o filtro de prazo
+
+- **"Essa coluna de concluído precisa urgente recolher, se não a página vai
+  descer até o infinito."**
+  - Toda coluna mostra no máximo 10 cards, com "Mostrar mais 10 · N
+    escondidos" e, depois de abrir, "Mostrar só 10".
+  - Publicado passa a mostrar o mais recente primeiro — os 10 que aparecem
+    são os que se procuram.
+  - No computador, a seta no cabeçalho recolhe qualquer coluna numa faixa
+    estreita com o nome e a conta; tocar na faixa abre de novo; dá para
+    arrastar um card para uma coluna recolhida. **Publicado nasce
+    recolhida.** A escolha fica guardada no aparelho.
+  - No celular, que já mostra uma coluna por vez, não há recolher: vale o
+    limite de 10.
+- **"Bota um filtro no Quadro pra visualizar os cards por prazo."** Ao lado
+  de pessoa e cliente: Qualquer prazo · Atrasados · Para hoje · Esta semana ·
+  Próxima semana · Sem prazo, cada um com a conta. O prazo é o "Entregar
+  até". Atrasado e sem prazo só contam o que ainda está por fazer (Pauta,
+  A fazer, Fazendo) — o que já foi entregue atrasado não aparece como
+  atrasado. Com o filtro ligado, o seletor fica amarelo e cada coluna ordena
+  pelo prazo mais próximo.
+- `web/verificar/v290-a-coluna-recolhe.mjs`: 21 provas.
+- Instável conhecido: 13.12–13.14 da `v277-o-quadro.mjs` (deslizar no
+  celular, por CDP) falham de vez em quando e passam na rodada seguinte.
 
 ## 0.5.104 — 2026-09-28
 

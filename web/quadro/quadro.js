@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v289', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v290', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -496,15 +496,38 @@
     </article>`;
   }
 
-  function filtrados(){
+  /* v290 — "bota um filtro no Quadro pra visualizar os cards por prazo".
+     O prazo é o "Entregar até" do card; atrasado e sem prazo só contam
+     para o que ainda está por fazer (Pauta, A fazer, Fazendo). */
+  const PRAZOS = [['todos', 'Qualquer prazo'], ['atrasados', 'Atrasados'], ['hoje', 'Para hoje'], ['semana', 'Esta semana'], ['proxima', 'Próxima semana'], ['sem', 'Sem prazo']];
+  function passaPrazo(x, f){
+    f = f || Q.filtroPrazo || 'todos';
+    if(f === 'todos') return true;
+    const pz = x.p.prazo || '', h = hoje(), ini = segunda(h);
+    if(f === 'sem') return !pz && PENDENTES.includes(x.col);
+    if(!pz) return false;
+    if(f === 'atrasados') return pz < h && PENDENTES.includes(x.col);
+    if(f === 'hoje') return pz === h;
+    if(f === 'semana') return pz >= ini && pz <= soma(ini, 6);
+    if(f === 'proxima') return pz >= soma(ini, 7) && pz <= soma(ini, 13);
+    return true;
+  }
+  Q.passaPrazo = passaPrazo;
+  function semPrazoFiltro(){
     return todos().filter(x => (Q.filtroCli === 'todos' || x.cli === Q.filtroCli)
       && (Q.filtroPessoa === 'todos' || (Q.filtroPessoa === 'ninguem' ? !x.p.resp : x.p.resp === Q.filtroPessoa)));
   }
+  function filtrados(){ return semPrazoFiltro().filter(x => passaPrazo(x)); }
   function vistaQuadro(){
     const itens = filtrados();
     const porCol = Object.fromEntries(COLS.map(([k]) => [k, []]));
     itens.forEach(x => porCol[x.col].push(x));
     Object.values(porCol).forEach(l => l.sort((a, b) => chaveOrdem(a.p) - chaveOrdem(b.p)));
+    /* com o filtro de prazo ligado, o mais urgente em cima */
+    if((Q.filtroPrazo || 'todos') !== 'todos') Object.values(porCol).forEach(l => l.sort((a, b) =>
+      String(a.p.prazo || '9999').localeCompare(String(b.p.prazo || '9999')) || String(a.p.prazoHora || '99').localeCompare(String(b.p.prazoHora || '99'))));
+    /* v290 — o que já foi ao ar: o mais recente primeiro (são esses que se procuram) */
+    porCol.publicado.sort((a, b) => String(b.p.data || '').localeCompare(String(a.p.data || '')) || ((b.p.feitoEm || b.p.mod || 0) - (a.p.feitoEm || a.p.mod || 0)));
     const pes = pessoas();
     const filtroP = `<div class="qdFiltros" role="group" aria-label="Filtrar por pessoa">
       <button type="button" class="qdPil ${Q.filtroPessoa === 'todos' ? 'on' : ''}" data-qdfp="todos">Todos</button>
@@ -515,16 +538,25 @@
         <option value="${AG}" ${Q.filtroCli === AG ? 'selected' : ''}>Agência</option>
         ${clientes().map(c => `<option value="${esc_(c.id)}" ${Q.filtroCli === c.id ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}
       </select>
+      ${(() => { const base = semPrazoFiltro(); const fp = Q.filtroPrazo || 'todos';
+        return `<select class="qdSel${fp !== 'todos' ? ' ligado' : ''}" data-qdprazo="1" aria-label="Filtrar por prazo">${PRAZOS.map(([k, n]) => {
+          const c = k === 'todos' ? '' : ` (${base.filter(x => passaPrazo(x, k)).length})`;
+          return `<option value="${k}" ${fp === k ? 'selected' : ''}>${n}${c}</option>`; }).join('')}</select>`; })()}
     </div>`;
     const entrou = Q.entrada; Q.entrada = null;
-    const colunas = COLS.map(([k, n, c]) => `<section class="qdCol" data-qdcol="${k}" style="--qdc:${c}">
-        <header class="qdColHd"><i></i><b>${n}</b><span>${porCol[k].length}</span></header>
+    /* v290 — "a página vai descer até o infinito": 10 cards por coluna, e
+       "Mostrar mais 10"; e a coluna recolhe (no computador). */
+    const colunas = COLS.map(([k, n, c]) => { const l = porCol[k], ver = quantosVer(k), rec = recolhida(k), resta = l.length - ver;
+      return `<section class="qdCol${rec ? ' recolhida' : ''}" data-qdcol="${k}" style="--qdc:${c}">
+        <header class="qdColHd"><i></i><b>${n}</b><span>${l.length}</span><button type="button" class="qdRecolhe" data-qdrecolhe="${k}" aria-expanded="${!rec}" aria-label="${rec ? 'Abrir' : 'Recolher'} a coluna ${esc_(n)}" title="${rec ? 'Abrir' : 'Recolher'}">${rec ? '›' : '‹'}</button></header>
         <p class="qdColDesc">${DESC[k]}</p>
-        <div class="qdColCorpo">${porCol[k].map(cartao).join('') || `<p class="qdVazio">${k === 'pauta' ? 'Tudo distribuído.' : ''}</p>`}</div>
+        <div class="qdColCorpo">${l.slice(0, ver).map(cartao).join('') || `<p class="qdVazio">${k === 'pauta' ? 'Tudo distribuído.' : ''}</p>`}
+          ${resta > 0 ? `<button type="button" class="qdMais" data-qdmais="${k}">Mostrar mais ${Math.min(LIMITE, resta)} <span>· ${resta} ${resta === 1 ? 'escondido' : 'escondidos'}</span></button>` : ''}
+          ${ver > LIMITE ? `<button type="button" class="qdMenos" data-qdmenos="${k}">Mostrar só 10</button>` : ''}</div>
         <div class="qdAdd" data-qdaddwrap="${k}">
           <button type="button" class="qdAddBt" data-qdadd="${k}">+ Adicionar</button>
         </div>
-      </section>`).join('');
+      </section>`; }).join('');
     if(!Q.colMovel || !COL[Q.colMovel]) Q.colMovel = ['afazer', 'fazendo', 'pauta', 'revisao', 'cliente'].find(k => porCol[k].length) || 'afazer';
     const abas = COLS.map(([k, n, c]) => `<button type="button" class="qdAbaCol ${Q.colMovel === k ? 'on' : ''}" data-qdcolmovel="${k}" style="--qdc:${c}">${n} <span>${porCol[k].length}</span></button>`).join('');
     return `${filtroP}
@@ -532,6 +564,18 @@
       <p class="qdColDescM">${DESC[Q.colMovel] || ''}</p>
       <div class="qdQuadro${entrou ? ' entra-' + entrou : ''}" data-colmovel="${Q.colMovel || 'pauta'}">${colunas}</div>`;
   }
+
+  const LIMITE = 10;
+  function quantosVer(k){ return (Q.verMais && Q.verMais[k]) || LIMITE; }
+  const RECOLHE_CHAVE = 'maestro-quadro-recolhidas-v1';
+  function recolhidas(){
+    if(!Q.recolhidas){ let v = null; try{ v = JSON.parse(localStorage.getItem(RECOLHE_CHAVE) || 'null'); }catch(e){}
+      Q.recolhidas = new Set(Array.isArray(v) ? v : ['publicado']); }   /* sem escolha: Publicado nasce recolhida */
+    return Q.recolhidas;
+  }
+  const recolhida = k => !umaColunaPorVez() && recolhidas().has(k);
+  function alternarRecolhida(k){ const r = recolhidas(); r.has(k) ? r.delete(k) : r.add(k); try{ localStorage.setItem(RECOLHE_CHAVE, JSON.stringify([...r])); }catch(e){} }
+  Q.LIMITE = LIMITE;
 
   /* --- Minha lista (DEICHECK) --- */
   function inicioSemana(){ return segunda(hoje()); }
@@ -1116,12 +1160,17 @@
     }
     const px = e.target.closest('[data-qdprox]');
     if(px){ e.stopPropagation(); executar(px.dataset.qdprox, px.dataset.qdacao, px); return; }
-    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome]');
+    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome],[data-qdmais],[data-qdmenos],[data-qdrecolhe]');
     if(!e.target.closest('#qdPop')) document.getElementById('qdPop')?.remove();
+    const rc = !alvo && e.target.closest && e.target.closest('#root .qdCol.recolhida');
+    if(rc){ alternarRecolhida(rc.dataset.qdcol); render(); return; }
     if(!alvo) return;
     const d = alvo.dataset;
     if(d.qdabaid){ Q.aba = d.qdabaid; try{ localStorage.setItem('maestro-quadro-aba', Q.aba); }catch(x){} fecharFolha(); render(); window.scrollTo(0, 0); return; }
     if(d.qdfp){ Q.filtroPessoa = d.qdfp; render(); return; }
+    if(d.qdmais){ Q.verMais = Q.verMais || {}; Q.verMais[d.qdmais] = quantosVer(d.qdmais) + LIMITE; render(); return; }
+    if(d.qdmenos){ if(Q.verMais) delete Q.verMais[d.qdmenos]; render(); const c = document.querySelector(`#root .qdCol[data-qdcol="${d.qdmenos}"]`); if(c && c.getBoundingClientRect().top < 0) c.scrollIntoView({ block: 'start' }); return; }
+    if(d.qdrecolhe){ e.stopPropagation(); alternarRecolhida(d.qdrecolhe); render(); return; }
     if(d.qdsub){ Q.sub = d.qdsub; render(); return; }
     if(d.qdlista){ Q.lista = d.qdlista; render(); return; }
     if(d.qdsem !== undefined){ Q.semana = d.qdsem === '0' ? 0 : (Q.semana || 0) + (+d.qdsem); render(); return; }
@@ -1202,6 +1251,7 @@
     if(c.matches && c.matches('#qdFolha [data-qf]')){ gravarCampo(c, true); return; }
     if(c.matches && c.matches('#qdFolha [data-qfbool]') && Q.folha){ const [cli, id] = Q.folha.split('|'); mudar(cli, id, { [c.dataset.qfbool]: c.checked || null }); redesenharPagina(); return; }
     if(c.dataset && c.dataset.qdfc){ Q.filtroCli = c.value; render(); return; }
+    if(c.dataset && c.dataset.qdprazo){ Q.filtroPrazo = c.value; if(Q.verMais) Q.verMais = {}; render(); return; }
     if(c.dataset && c.dataset.qdpessoa){ Q.pessoa = c.value; render(); return; }
   }, true);
   document.addEventListener('input', e => {
@@ -1634,6 +1684,20 @@
   .qdIn{ font:inherit; font-size:14px; color:var(--tx, #fff); background:var(--sup, rgba(255,255,255,.06)); border:0; border-radius:10px; padding:8px 10px; min-height:36px; box-sizing:border-box; width:100% }
   .qdArea{ resize:vertical; line-height:1.45 }
   .qdFBloco{ margin:0 0 16px }
+  .qdSel.ligado{ background:var(--latao, #FFC857) !important; color:#1C1C1F !important; font-weight:600 }
+  .qdMais, .qdMenos{ display:block; width:100%; margin:4px 0 0; border:0; border-radius:10px; padding:9px 10px; font:inherit; font-size:13px; font-weight:600; cursor:pointer; background:var(--sup, rgba(255,255,255,.06)); color:var(--tx, #fff) }
+  .qdMais span{ font-weight:400; color:var(--mut, #999) }
+  .qdMenos{ background:transparent; color:var(--mut, #999); font-weight:500 }
+  .qdRecolhe{ margin-left:auto; border:0; background:transparent; color:var(--mut, #999); width:26px; height:26px; border-radius:8px; cursor:pointer; font-size:16px; line-height:1 }
+  .qdRecolhe:hover{ background:var(--sup, rgba(255,255,255,.06)) }
+  @media (min-width:861px){
+    .qdCol.recolhida{ flex:0 0 52px !important; width:52px !important; min-width:52px !important; max-width:52px !important; padding-left:6px !important; padding-right:6px !important; cursor:pointer }
+    .qdCol.recolhida .qdColDesc, .qdCol.recolhida .qdColCorpo, .qdCol.recolhida .qdAdd{ display:none }
+    .qdCol.recolhida .qdColHd{ flex-direction:column; align-items:center; gap:10px }
+    .qdCol.recolhida .qdColHd b{ writing-mode:vertical-rl; transform:rotate(180deg); white-space:nowrap }
+    .qdCol.recolhida .qdRecolhe{ margin:0; order:-1 }
+  }
+  @media (max-width:860px){ .qdRecolhe{ display:none } }
   .qdFMatDica{ margin:0 0 8px; font-size:12px; color:var(--mut, #999) }
   .qdFMatI{ display:flex; flex-direction:column; align-items:center; gap:3px }
   .qdFMatVer{ position:relative; display:block; padding:0; border:0; background:none; cursor:zoom-in; border-radius:10px; overflow:hidden; font:inherit; color:inherit }

@@ -299,6 +299,21 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (28 set, v290, NO AR) — a coluna recolhe, mostra 10 de cada vez, e
+o filtro de prazo.** "Essa coluna de concluído precisa urgente recolher, se
+não a página vai descer até o infinito… um limite de 10, e mais 10 num
+botão." Toda coluna mostra 10 cards e "Mostrar mais 10 · N escondidos" (e
+"Mostrar só 10"); Publicado mostra o mais recente primeiro. No computador,
+toda coluna recolhe numa faixa de 52px com o nome e a conta (seta no
+cabeçalho; tocar na faixa abre; arrastar para ela funciona) e **Publicado
+nasce recolhida**; a escolha fica no aparelho (`maestro-quadro-recolhidas-v1`).
+No celular (uma coluna por vez) não há recolher, só o limite. E "bota um
+filtro pra ver os cards por prazo": Qualquer prazo · Atrasados · Para hoje ·
+Esta semana · Próxima semana · Sem prazo, com a conta de cada um; atrasado e
+sem prazo só contam o que está por fazer; ligado, fica amarelo e ordena pelo
+mais urgente. 21 provas em `web/verificar/v290-a-coluna-recolhe.mjs`.
+**Instável conhecido:** 13.12–13.14 da v277 (deslizar no celular, por CDP)
+falham de vez em quando e passam na rodada seguinte.
 **Fechado (28 set, v289, NO AR) — o Ensaio sai de vez, o arraste no
 computador, a peça que se vê e o cliente que abre qualquer post.** Cinco
 pedidos do founder numa leva:
