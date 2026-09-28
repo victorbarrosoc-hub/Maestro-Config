@@ -1,15 +1,39 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.92
+Version: 0.5.93
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
 
+## 0.5.93 — 2026-09-28
+
+**Status:** Concluída — publicada com a autorização do founder.
+
+### v278 — arrastar no celular, e sai o botão fixo de atualizar
+
+O founder pediu: "Tire o botão de refresh de baixo que está fixo, consigo
+movimentar os cards segurando neles e arrastando?"
+
+- **O botão fixo de atualizar (`#btAtualizar`) some.** Recarregar a página
+  continua trazendo tudo.
+- **No computador,** o arraste já existia.
+- **No celular, segurar o card por ~0,4s o levanta.**
+  - No Quadro, aparece embaixo uma faixa com as oito colunas; soltar numa
+    delas move o card.
+  - Na Semana e no Calendário, solta-se no dia.
+  - Mexer o dedo antes do tempo continua sendo rolar.
+  - Perto da borda, a página rola sozinha.
+  - Soltar não abre a ficha.
+- **Provas:** 5 novas na `v277-o-quadro.mjs`, com toque de verdade (CDP), e
+  61 de 61 no total.
+
+---
+
 ## 0.5.92 — 2026-09-28
 
-**Status:** Na branch, com provas. NÃO publicado: aguarda a autorização do founder.
+**Status:** Concluída — publicada com a autorização do founder em 28/set.
 
 ### v277 — o Quadro: um card só, três jeitos de ver
 

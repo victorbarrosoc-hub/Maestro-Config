@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v277', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v278', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -567,7 +567,7 @@
       const dia = `${mes}-${D2(d)}`; const l = doDia(dia);
       if(!l.length && dia !== h) continue;
       const dt = doISO(dia);
-      agenda += `<div class="qdAgDia ${dia === h ? 'hoje' : ''}"><div class="qdAgN"><b>${d}</b><span>${DIAS3[dt.getDay()]}</span></div>
+      agenda += `<div class="qdAgDia ${dia === h ? 'hoje' : ''}" data-qddia="${dia}" data-qddiaque="data"><div class="qdAgN"><b>${d}</b><span>${DIAS3[dt.getDay()]}</span></div>
         <div class="qdAgL">${l.map(chip).join('') || '<span class="qdMut">nada neste dia</span>'}</div></div>`;
     }
     const semData = itens.filter(x => !x.p.data && !['publicado'].includes(x.col));
@@ -981,13 +981,25 @@
     if(!Q.arrastando) return;
     const a = alvoDoArraste(e); if(!a) return;
     e.preventDefault();
-    const [cli, id] = Q.arrastando.split('|');
+    soltar(Q.arrastando, a, e.clientY);
+    Q.arrastando = null;
+    document.querySelectorAll('#root .qdSobre').forEach(x => x.classList.remove('qdSobre'));
+    render();
+  });
+  function soltar(key, a, y){
+    const [cli, id] = key.split('|');
     const p = achar(cli, id);
-    if(p && a.dataset.qdcol){
+    if(p && a.dataset.qdsoltar){
+      const col = a.dataset.qdsoltar;
+      if(PENDENTES.includes(colunaDe(p)) && (col === 'revisao' || col === 'publicado') && p.resp) mudar(cli, id, { feitoEm: Date.now(), feitoPor: p.resp });
+      else if(PENDENTES.includes(col) && p.feitoEm) mudar(cli, id, { feitoEm: null, feitoPor: null });
+      if(colunaDe(p) !== col) mover(cli, id, col);
+      Q.colMovel = col;
+    } else if(p && a.dataset.qdcol){
       const col = a.dataset.qdcol;
       /* a posição: antes do primeiro card cuja metade fica abaixo do ponteiro */
-      const cards = [...a.querySelectorAll('.qdCard')].filter(x => x.dataset.qdkey !== Q.arrastando);
-      const i = cards.findIndex(x => { const r = x.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
+      const cards = [...a.querySelectorAll('.qdCard')].filter(x => x.dataset.qdkey !== key);
+      const i = cards.findIndex(x => { const r = x.getBoundingClientRect(); return y < r.top + r.height / 2; });
       const chave = el => { const [c2, i2] = el.dataset.qdkey.split('|'); const q = achar(c2, i2); return q ? chaveOrdem(q) : 0; };
       let ordem;
       if(!cards.length) ordem = 1;
@@ -1002,10 +1014,76 @@
       if(a.dataset.qddiaque === 'data'){ if(cli !== AG) mudar(cli, id, d ? { data: d, dia: (doISO(d).getDay() + 6) % 7, hora: p.hora || '18:30' } : { data: null }); }
       else mudar(cli, id, { prazo: d });
     }
-    Q.arrastando = null;
-    document.querySelectorAll('#root .qdSobre').forEach(x => x.classList.remove('qdSobre'));
-    render();
-  });
+  }
+
+  /* ---------------- arrastar no celular: segurar e arrastar ----------------
+     O arrastar nativo não existe no toque. Segurar o card ~0,4s o levanta;
+     no Quadro aparece embaixo a faixa com as oito colunas (no celular só uma
+     coluna está à vista); no Calendário e na Semana, solta-se no dia. Mexer
+     o dedo antes do tempo é rolar a página, como sempre. */
+  const T = { timer: 0, key: null, x: 0, y: 0, fantasma: null, alvo: null, engolirClique: false, rolar: 0 };
+  function alvoNoPonto(x, y){
+    const el = document.elementFromPoint(x, y);
+    return el && el.closest('[data-qdsoltar], #root [data-qdcol], #root [data-qddia]');
+  }
+  function comecarToque(){
+    const c = document.querySelector(`#root [data-qdkey="${CSS.escape(T.key)}"]`); if(!c) return;
+    Q.arrastando = T.key;
+    try{ navigator.vibrate && navigator.vibrate(12); }catch(e){}
+    const r = c.getBoundingClientRect();
+    const f = c.cloneNode(true); f.id = 'qdFantasma';
+    f.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;z-index:960;pointer-events:none;opacity:.92;transform:scale(1.03) rotate(-1.5deg);box-shadow:0 18px 40px rgba(0,0,0,.45);transition:none`;
+    f.dataset.dx = T.x - r.left; f.dataset.dy = T.y - r.top;
+    document.body.appendChild(f); T.fantasma = f;
+    c.classList.add('arrastando');
+    if(Q.aba === 'quadro'){
+      const b = document.createElement('div'); b.id = 'qdSoltar';
+      b.innerHTML = `<p>Soltar em</p><div>${COLS.map(([k, n, cor]) => `<span data-qdsoltar="${k}" style="--qdc:${cor}">${n}</span>`).join('')}</div>`;
+      document.body.appendChild(b);
+    }
+    document.body.classList.add('qdArrastandoToque');
+  }
+  function acabarToque(soltou){
+    clearTimeout(T.timer); cancelAnimationFrame(T.rolar); T.rolar = 0;
+    const tinha = !!Q.arrastando;
+    if(tinha && soltou && T.alvo) soltar(T.key, T.alvo, T.yUlt || 0);
+    document.getElementById('qdFantasma')?.remove(); document.getElementById('qdSoltar')?.remove();
+    document.querySelectorAll('.qdSobre, .arrastando').forEach(x => x.classList.remove('qdSobre', 'arrastando'));
+    document.body.classList.remove('qdArrastandoToque');
+    T.key = null; T.alvo = null; T.fantasma = null;
+    if(tinha){ T.engolirClique = true; setTimeout(() => { T.engolirClique = false; }, 400); Q.arrastando = null; Q.pend = false; render(); }
+  }
+  document.addEventListener('pointerdown', e => {
+    if(e.pointerType === 'mouse') return;
+    const c = e.target.closest && e.target.closest('#root .qdPagina [data-qdkey]');
+    if(!c || e.target.closest('button:not([data-qdabre]), input, textarea, select')) return;
+    if(Q.aba === 'lista' && Q.sub !== 'semana') return;          /* ali não há onde soltar */
+    T.key = c.dataset.qdkey; T.x = e.clientX; T.y = e.clientY;
+    clearTimeout(T.timer);
+    T.timer = setTimeout(comecarToque, 420);
+  }, true);
+  document.addEventListener('pointermove', e => {
+    if(!T.key || e.pointerType === 'mouse') return;
+    if(!Q.arrastando){ if(Math.abs(e.clientX - T.x) > 8 || Math.abs(e.clientY - T.y) > 8){ clearTimeout(T.timer); T.key = null; } return; }
+    const f = T.fantasma;
+    if(f){ f.style.left = (e.clientX - +f.dataset.dx) + 'px'; f.style.top = (e.clientY - +f.dataset.dy) + 'px'; }
+    T.yUlt = e.clientY;
+    const a = alvoNoPonto(e.clientX, e.clientY);
+    if(a !== T.alvo){ document.querySelectorAll('.qdSobre').forEach(x => x.classList.remove('qdSobre')); if(a) a.classList.add('qdSobre'); T.alvo = a; }
+    /* perto da borda, a página rola sozinha */
+    const borda = 70, h = innerHeight;
+    const v = e.clientY < borda + 50 ? -12 : (e.clientY > h - borda - (document.getElementById('qdSoltar') ? 150 : 0) && !(a && a.dataset.qdsoltar) ? 12 : 0);
+    cancelAnimationFrame(T.rolar); T.rolar = 0;
+    if(v){ const passo = () => { scrollBy(0, v); T.rolar = requestAnimationFrame(passo); }; T.rolar = requestAnimationFrame(passo); }
+  }, true);
+  document.addEventListener('pointerup', e => { if(T.key && e.pointerType !== 'mouse') acabarToque(true); }, true);
+  document.addEventListener('pointercancel', e => { if(T.key && e.pointerType !== 'mouse'){ if(Q.arrastando) return; acabarToque(false); } }, true);
+  /* com o card levantado, o dedo não rola a página nem abre o menu do sistema */
+  document.addEventListener('touchmove', e => { if(Q.arrastando && T.key) e.preventDefault(); }, { passive: false, capture: true });
+  document.addEventListener('touchend', () => { if(Q.arrastando && T.key) acabarToque(true); }, true);
+  document.addEventListener('contextmenu', e => { if(T.key && e.target.closest && e.target.closest('#root .qdPagina [data-qdkey]')) e.preventDefault(); }, true);
+  document.addEventListener('click', e => { if(T.engolirClique){ e.stopPropagation(); e.preventDefault(); T.engolirClique = false; } }, true);
+  Q.toque = T;
   document.addEventListener('dragend', () => {
     if(!Q.arrastando && !Q.pend) return;
     Q.arrastando = null;
@@ -1247,6 +1325,14 @@
     .qdIn, .qdSel{ font-size:16px }
   }
   body.qdFolhaAberta{ overflow:hidden }
+  #btAtualizar{ display:none !important }
+  .qdPagina [data-qdkey]{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none }
+  body.qdArrastandoToque{ touch-action:none }
+  #qdSoltar{ position:fixed; left:10px; right:10px; bottom:calc(84px + env(safe-area-inset-bottom)); z-index:955; background:var(--sup2, #2a2a2e); border-radius:18px; padding:10px; box-shadow:0 14px 40px rgba(0,0,0,.45) }
+  #qdSoltar p{ margin:0 4px 8px; font-size:12px; color:var(--mut, #999) }
+  #qdSoltar div{ display:grid; grid-template-columns:repeat(4, 1fr); gap:6px }
+  #qdSoltar span{ text-align:center; font-size:12.5px; padding:12px 4px; border-radius:12px; background:color-mix(in srgb, var(--qdc) 18%, transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--qdc) 45%, transparent) }
+  #qdSoltar span.qdSobre{ background:var(--qdc); color:#111; font-weight:600; outline:none }
   `;
   document.head.appendChild(st);
 

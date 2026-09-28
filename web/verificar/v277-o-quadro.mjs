@@ -556,10 +556,38 @@ console.log('\n  — 13. o celular —');
   const f = await Q(M, () => { const r = document.querySelector('#qdFolha .qdFolhaIn').getBoundingClientRect(); const x = document.querySelector('#qdFolha .qdFechar').getBoundingClientRect();
     return { l: r.left, w: r.width, fechar: x.top >= 0 && document.elementFromPoint(x.left + x.width / 2, x.top + x.height / 2) === document.querySelector('#qdFolha .qdFechar') }; });
   checa('13.4 a ficha abre como folha da tela inteira, com o fechar à mão', f.l === 0 && f.w >= 389 && f.fechar, f);
-  await Q(M, () => { MaestroQuadro.aba = 'lista'; render(); });
+  await Q(M, () => { MaestroQuadro.fecharFolha(); MaestroQuadro.aba = 'lista'; render(); });
   const l = await Q(M, () => ({ lado: document.documentElement.scrollWidth > innerWidth + 1, campo: !!document.getElementById('qdNovo') }));
   checa('13.5 a Minha lista cabe no celular', !l.lado && l.campo, l);
-  checa('13.6 nenhum erro de página no celular', M.erros.length === 0, M.erros);
+  /* segurar e arrastar, com toque de verdade (CDP), não clique */
+  await Q(M, () => { MaestroQuadro.aba = 'quadro'; MaestroQuadro.colMovel = 'revisao'; render(); });
+  const cdp = await M.ctx.newCDPSession(M.pag);
+  const toque = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+  const alvoCard = await Q(M, () => { const c = document.querySelector('.qdCol[data-qdcol="revisao"] .qdCard'); const r = c.getBoundingClientRect(); return { key: c.dataset.qdkey, x: r.left + 40, y: r.top + 30 }; });
+  /* um toque rápido que se mexe é rolagem, não arraste */
+  await toque('touchStart', alvoCard.x, alvoCard.y); await toque('touchMove', alvoCard.x, alvoCard.y + 40); await esperar(600);
+  const naoLevantou = await Q(M, () => !document.getElementById('qdFantasma') && !MaestroQuadro.arrastando);
+  await toque('touchEnd');
+  checa('13.6 arrastar o dedo logo de cara continua sendo rolar', naoLevantou);
+  await esperar(300);
+  Object.assign(alvoCard, await Q(M, () => { scrollTo(0, 0); const c = document.querySelector('.qdCol[data-qdcol="revisao"] .qdCard'); const r = c.getBoundingClientRect(); return { key: c.dataset.qdkey, x: r.left + 40, y: r.top + 30 }; }));
+  if(process.env.DEPURAR) await Q(M, () => { window.__ev = []; for(const t of ['pointerdown','pointermove','pointercancel','touchstart']) document.addEventListener(t, e => window.__ev.push(t + ':' + (e.pointerType || '') + ':' + (e.target.className || e.target.tagName)), true); });
+  await toque('touchStart', alvoCard.x, alvoCard.y); await esperar(650);
+  if(process.env.DEPURAR) console.log('   ', JSON.stringify(await Q(M, () => ({ ev: window.__ev, T: { key: MaestroQuadro.toque.key }, el: (document.elementFromPoint(0,0)||{}).className }))), JSON.stringify(alvoCard));
+  const lev = await Q(M, () => ({ f: !!document.getElementById('qdFantasma'), barra: document.querySelectorAll('#qdSoltar [data-qdsoltar]').length }));
+  checa('13.7 segurar o card o levanta, e aparece a faixa com as oito colunas', lev.f && lev.barra === 8, lev);
+  const dest = await Q(M, () => { const r = document.querySelector('#qdSoltar [data-qdsoltar="cliente"]').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  for(let i = 1; i <= 6; i++) await toque('touchMove', alvoCard.x + (dest.x - alvoCard.x) * i / 6, alvoCard.y + (dest.y - alvoCard.y) * i / 6);
+  await esperar(100);
+  await toque('touchEnd');
+  await esperar(1200);
+  const [cliM, idM] = alvoCard.key.split('|');
+  const depoisM = await Q(M, ([c, i]) => ({ col: MaestroQuadro.colunaDe(S.pautas[c].find(p => +p.id === +i)), folha: !!document.getElementById('qdFolha'), sobra: !!document.getElementById('qdFantasma') || !!document.getElementById('qdSoltar') }), [cliM, idM]);
+  checa('13.8 soltar em "Com o cliente" move o card (e não abre a ficha nem deixa sobra)', depoisM.col === 'cliente' && !depoisM.folha && !depoisM.sobra, depoisM);
+  checa('13.9 e vai para o banco', noBanco(cliM, idM).dados.coluna === 'cliente', noBanco(cliM, idM).dados.coluna);
+  const bt = await Q(M, () => { const b = document.getElementById('btAtualizar'); return b ? getComputedStyle(b).display : 'sem'; });
+  checa('13.10 o botão fixo de atualizar não aparece', bt === 'none' || bt === 'sem', bt);
+  checa('13.11 nenhum erro de página no celular', M.erros.length === 0, M.erros);
   await M.ctx.close();
 }
 

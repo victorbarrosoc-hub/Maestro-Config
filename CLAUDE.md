@@ -299,8 +299,9 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
-**Na branch (28 set, v277), NÃO publicado: aguarda o founder autorizar.
-O Quadro substitui o Ensaio.** O founder disse: "vou abandonar essa aba
+**Fechado (28 set, v277–v278, NO AR com autorização do founder) — o Quadro
+substitui o Ensaio.** v278: segurar e arrastar no celular (faixa com as oito
+colunas); o botão fixo de atualizar saiu. O founder disse: "vou abandonar essa aba
 ensaio e o código dela de junção com o cronograma". A raiz dos defeitos era
 haver duas coisas para um trabalho só: a tarefa no `__estado__` e o card.
 Agora existe uma, o card (tabela `cards`, gravado por campo).
