@@ -708,6 +708,14 @@ console.log('\n  — 13. o celular —');
   checa('13.13 deslizar para a direita volta (Fazendo → A fazer), sem abrir card', d2.col === 'afazer' && !d2.folha, d2);
   await toque('touchStart', 200, pt.y); for(let i = 1; i <= 5; i++) await toque('touchMove', 200 + i * 6, pt.y - i * 40); await toque('touchEnd'); await esperar(300);
   checa('13.14 arrastar para cima continua sendo rolar (não troca de coluna)', (await colVis()).col === 'afazer');
+  /* coluna vazia: deslizar no espaço em branco também troca */
+  await Q(M, () => { const ks = ['pauta','afazer','fazendo','revisao','cliente','aprovado','agendado','publicado'];
+    const vazia = ks.find(k => !MaestroQuadro.todos().some(x => x.col === k)); MaestroQuadro.colMovel = vazia; render(); scrollTo(0, 0); window.__vazia = vazia; });
+  const vazia = await Q(M, () => window.__vazia);
+  const yv = await Q(M, () => Math.min(innerHeight - 140, document.querySelector('.qdQuadro').getBoundingClientRect().top + 200));
+  await toque('touchStart', 320, yv); for(let i = 1; i <= 5; i++) await toque('touchMove', 320 - i * 50, yv + i); await toque('touchEnd'); await esperar(350);
+  const dv = await colVis();
+  checa(`13.15 coluna vazia (${vazia}): deslizar no espaço em branco passa para a próxima`, dv.col && dv.col !== vazia, { vazia, dv });
   const bt = await Q(M, () => { const b = document.getElementById('btAtualizar'); return b ? getComputedStyle(b).display : 'sem'; });
   checa('13.10 o botão fixo de atualizar não aparece', bt === 'none' || bt === 'sem', bt);
   checa('13.11 nenhum erro de página no celular', M.erros.length === 0, M.erros);

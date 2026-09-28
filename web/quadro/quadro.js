@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v283', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v284', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -1263,8 +1263,11 @@
   document.addEventListener('touchstart', e => {
     DZ.ativo = false;
     if(!umaColunaPorVez() || Q.aba !== 'quadro' || e.touches.length !== 1) return;
-    const alvo = e.target.closest && e.target.closest('#root .qdQuadro, #root .qdColDescM');
-    if(!alvo || e.target.closest('input, textarea, select, .qdAddForm')) return;
+    /* vale em qualquer lugar da tela do Quadro — inclusive o espaço vazio de
+       uma coluna sem card —, menos nas fileiras que já rolam para o lado */
+    const alvo = e.target.closest && e.target.closest('#root');
+    if(!alvo || !document.querySelector('#root .qdPagina[data-qdaba="quadro"]')) return;
+    if(e.target.closest('input, textarea, select, .qdAddForm, .qdFiltros, .qdAbasCol, .qdAbas, .tabbar, .ctx, #qdFolha')) return;
     DZ.x = e.touches[0].clientX; DZ.y = e.touches[0].clientY; DZ.t = Date.now(); DZ.ativo = true;
   }, { passive: true, capture: true });
   document.addEventListener('touchend', e => {
@@ -1531,7 +1534,7 @@
     .qdQuadro[data-colmovel="cliente"] .qdCol[data-qdcol="cliente"], .qdQuadro[data-colmovel="aprovado"] .qdCol[data-qdcol="aprovado"],
     .qdQuadro[data-colmovel="agendado"] .qdCol[data-qdcol="agendado"], .qdQuadro[data-colmovel="publicado"] .qdCol[data-qdcol="publicado"]{ display:block }
     .qdQuadro .qdColHd, .qdQuadro .qdColDesc{ display:none }
-    .qdQuadro{ touch-action:pan-y }
+    .qdQuadro{ touch-action:pan-y; min-height:calc(100dvh - 330px) }
     .qdQuadro.entra-esq .qdCol{ animation:qdEntraEsq .22s ease-out }
     .qdQuadro.entra-dir .qdCol{ animation:qdEntraDir .22s ease-out }
     .qdColDescM{ display:block; margin:-4px 0 12px; font-size:12.5px; color:var(--mut, #999) }
