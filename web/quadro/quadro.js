@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v280', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v281', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -48,11 +48,11 @@
   const COLS = [
     ['pauta',     'Pauta',         '#8E8E93'],
     ['afazer',    'A fazer',       '#5B8DEF'],
-    ['fazendo',   'Fazendo',       '#FF9F0A'],
+    ['fazendo',   'Fazendo',       '#2EC4B6'],
     ['revisao',   'Revisão',       '#BF5AF2'],
     ['cliente',   'Com o cliente', '#FF7A45'],
     ['aprovado',  'Aprovado',      '#30D158'],
-    ['agendado',  'Agendado',      '#40C8E0'],
+    ['agendado',  'Agendado',      '#8B7BF0'],
     ['publicado', 'Publicado',     '#98989D'],
   ];
   const COL = Object.fromEntries(COLS.map(([k, n, c]) => [k, { k, n, c }]));
@@ -1261,7 +1261,10 @@
   st.id = 'qd-estilo';
   st.textContent = `
   #layer .toast, #layerAvisos .toast, body > .toast { display:none !important }
-  .qdPagina{ --qdl:var(--fio, rgba(255,255,255,.08)); color:var(--tx, inherit) }
+  /* as cores do Quadro vêm da escala de tinta do app, que troca sozinha no
+     tema claro (v281: antes caíam no reserva escuro e o claro quebrava) */
+  .qdPagina, #qdFolha, #qdPop, #qdSoltar, #qdFantasma{ --tx:var(--ink-50); --mut:var(--ink-300); --bg:var(--fundo, var(--ink-950)); --qdl:var(--fio, rgba(255,255,255,.08)) }
+  .qdPagina{ color:var(--tx) }
   .qdTopo{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:4px 0 16px }
   .qdTopo h1{ font-size:26px; line-height:1.1; margin:0; letter-spacing:-.01em }
   .qdAbas{ display:inline-flex; gap:2px; padding:3px; border-radius:999px; background:var(--sup, rgba(255,255,255,.06)) }
@@ -1311,7 +1314,7 @@
   .qdFProxL .qdProx{ margin:0 }
   .qdPede{ outline:2px solid var(--coral, #FF9F0A) !important }
   .qdVazio{ color:var(--mut, #999); font-size:12.5px; margin:4px; min-height:4px }
-  .qdCard{ background:var(--bg, #1c1c1f); border-radius:12px; padding:10px 11px; cursor:pointer; box-shadow:0 1px 0 var(--qdl); outline:none }
+  .qdCard{ background:var(--sup2, #2F2F33); border-radius:12px; padding:10px 11px; cursor:pointer; box-shadow:var(--sombra, 0 1px 0 var(--qdl)); outline:none }
   .qdCard:focus-visible{ outline:2px solid var(--cobalt, #5B8DEF) }
   .qdCard.imp{ box-shadow:inset 3px 0 0 var(--coral, #FF9F0A) }
   .qdCard.arrastando{ opacity:.4 }
@@ -1330,7 +1333,7 @@
   .qdAdd{ margin-top:8px }
   .qdAddBt{ width:100%; text-align:left; border:0; background:transparent; color:var(--mut, #999); font:inherit; font-size:13px; padding:8px 6px; border-radius:10px; cursor:pointer; min-height:34px }
   .qdAddBt:hover{ background:var(--sup2, rgba(255,255,255,.06)); color:var(--tx, #fff) }
-  .qdAddForm textarea{ width:100%; box-sizing:border-box; font:inherit; font-size:14px; color:var(--tx, #fff); background:var(--bg, #1c1c1f); border:1px solid var(--qdl); border-radius:10px; padding:8px 10px; resize:none }
+  .qdAddForm textarea{ width:100%; box-sizing:border-box; font:inherit; font-size:14px; color:var(--tx, #fff); background:var(--sup2, #1c1c1f); border:1px solid var(--qdl); border-radius:10px; padding:8px 10px; resize:none }
   .qdAddForm .qdAddBts{ display:flex; gap:6px; margin-top:6px }
   .qdNome{ flex-basis:100%; margin:4px 0 2px; display:flex; flex-direction:column; gap:6px; min-width:0 }
   .qdNome[hidden], .qdNomeL[hidden]{ display:none }
@@ -1491,6 +1494,8 @@
     .qdQuadro .qdColHd, .qdQuadro .qdColDesc{ display:none }
     .qdColDescM{ display:block; margin:-4px 0 12px; font-size:12.5px; color:var(--mut, #999) }
     .qdCard{ background:var(--sup, rgba(255,255,255,.05)) }
+    html[data-tema="claro"] .qdCard{ background:#fff }
+    html[data-tema="claro"] .qdQuadro .qdCol{ background:transparent }
     .qdOla h2{ font-size:28px }
     .qdEntrada input{ font-size:16px }
     .qdEntrada .qdBt{ display:none }
@@ -1512,6 +1517,26 @@
     .qdIn, .qdSel{ font-size:16px }
   }
   body.qdFolhaAberta{ overflow:hidden }
+  /* v281 — o latão é a cor de AÇÃO (decisão do founder, proposta A). O que é
+     principal e clicável fica amarelo com texto escuro; nada vira fundo de
+     painel (a regra dos 10% do manual da marca). */
+  .qdBt, .qdProxBt, .qdAbas button.on, .qdSubs button.on, .qdPil.on, .qdChipN.on, .qdAbaCol.on{ background:var(--brass-500) !important; color:#1C1C1F !important }
+  .qdProxBt:hover, .qdBt:hover{ background:var(--brass-400) !important; color:#1C1C1F !important }
+  .qdBarra i{ background:var(--brass-500) }
+  .qdDia.hoje, .qdDd.hoje{ box-shadow:inset 0 0 0 1.5px var(--brass-500) }
+  .qdDd.hoje .qdDdN, .qdAgDia.hoje .qdAgN b{ color:var(--brass-500) }
+  .qdDia header em{ background:var(--brass-500); color:#1C1C1F }
+  .qdOk:hover{ border-color:var(--brass-500) }
+  .qdLin.feita .qdOk, .qdMini.feita .qdOk, .qdFCkL.ok .qdOk{ background:var(--brass-500); border-color:var(--brass-500); color:#1C1C1F }
+  .qdEntrada:focus-within{ box-shadow:inset 0 0 0 1.5px var(--brass-500) }
+  .app.ag button.nav.on{ color:var(--brass-300) !important }
+  .app.ag button.nav.on svg{ color:var(--brass-500) !important }
+  /* só no app da agência: a vitrine tem a paleta dela, e o "Aprovar" do cliente segue verde */
+  .app.ag .b.pri, body:has(.app.ag) #layer .b.pri{ background:var(--brass-500) !important; color:#1C1C1F !important; border-color:var(--brass-500) !important }
+  html[data-tema="claro"] .app.ag button.nav.on{ color:var(--brass-700) !important }
+  html[data-tema="claro"] .qdCol{ background:var(--enc, rgba(118,118,128,.12)) }
+  html[data-tema="claro"] .qdCard{ background:#fff }
+  html[data-tema="claro"] .qdFolhaFundo{ background:rgba(0,0,0,.18) }
   #btAtualizar{ display:none !important }
   .qdPagina [data-qdkey]{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none }
   body.qdArrastandoToque{ touch-action:none }

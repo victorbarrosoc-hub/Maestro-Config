@@ -1,9 +1,42 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.95
+Version: 0.5.96
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.96 — 2026-09-28
+
+**Status:** Na branch, com provas. NÃO publicado: aguarda a autorização do founder.
+
+### v281 — o latão é a cor de ação (proposta A)
+
+O founder pediu o amarelo da marca mais presente. Foram mostradas duas
+propostas lado a lado com o atual:
+
+- **A:** o latão como cor de ação;
+- **B:** mais presença, chegando perto do limite de 10% do manual da marca.
+
+Ele escolheu a **A**.
+
+- **O que fica em latão, com texto escuro:** tudo o que é principal e
+  clicável. Isso inclui o botão do próximo passo, "Adicionar", a aba e o
+  filtro escolhidos, e os botões principais das janelas do app da agência.
+- **Também em latão:** a barra da semana, o "hoje" no Calendário e na
+  Semana, o círculo de feito e o item ativo do menu.
+- **Nada vira fundo de painel:** a regra de 10% do manual segue valendo.
+- **Fora da mudança, de propósito:** a vitrine continua com a paleta dela, e
+  o "Aprovar" do cliente segue verde. A regra vale só dentro de `.app.ag`.
+- **Duas colunas mudam de cor** para não se confundirem com o botão:
+  - **Fazendo:** laranja → verde-água (`#2EC4B6`);
+  - **Agendado:** ciano → índigo (`#8B7BF0`).
+- **Tema claro do Quadro consertado.** O Quadro usava `--tx`, `--mut` e
+  `--bg`, que só existem na tela do cliente. No app da agência essas cores
+  caíam no valor reserva escuro: card preto e título invisível no claro.
+  Agora elas vêm da escala `--ink-*`, que troca sozinha entre os temas.
+- **Provas:** 2 novas, 88 de 88 na `v277-o-quadro.mjs`.
 
 ---
 
