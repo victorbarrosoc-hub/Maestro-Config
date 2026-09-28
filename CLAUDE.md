@@ -299,9 +299,9 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
-**Pronta, esperando autorização (28 set, v275) — sem cópia de card, e o
-material sobe dentro da pauta.** O founder pediu: **"suba tudo de uma vez… e
-só subir quando eu autorizar"** — então a v275 está SÓ na branch. (1) A
+**Fechado (28 set, v275, NO AR com autorização do founder) — sem cópia de
+card, e o material sobe dentro da pauta.** O founder pediu: **"suba tudo de
+uma vez… e só subir quando eu autorizar"**; autorizou em 28/set. (1) A
 camada da Etapa 1 aceitava gravação antes de ler as tabelas; um aparelho com
 a pauta velha guardada, ao abrir, criava CÓPIAS dos cards (número recusado →
 número novo) e apontava a tarefa do Ensaio para a cópia — daí os duplicados

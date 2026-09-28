@@ -9,7 +9,7 @@ Nunca apagar versões anteriores.
 
 ## 0.5.90 — 2026-09-28
 
-**Status:** Pronta na branch — **aguardando a autorização do founder para subir**
+**Status:** Concluída — publicada com a autorização do founder em 28/set
 ("quero que suba tudo de uma vez… e só subir quando eu autorizar").
 
 ### v275 — sem cópia de card, e o material sobe dentro da pauta
