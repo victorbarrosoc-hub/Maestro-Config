@@ -299,8 +299,8 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
-**Pronta, esperando autorização (28 set, v276) — as cópias saem e a tarefa
-volta.** O banco confirmou 48 cópias de 26/09 (12:13 e 13:40, login
+**Fechado (28 set, v276, NO AR com autorização do founder) — as cópias
+saem e a tarefa volta.** Falta o founder rodar o `dados-1c`. O banco confirmou 48 cópias de 26/09 (12:13 e 13:40, login
 `ejup.mkt`); 37 vivas. `docs/ENGINEERING/dados-1c-limpar-copias.sql` (o
 founder roda): cópia de segurança, mapa `cards_copias` e cópias vivas para a
 LIXEIRA (trava: >60 recusa). O app reaponta a tarefa presa numa cópia e

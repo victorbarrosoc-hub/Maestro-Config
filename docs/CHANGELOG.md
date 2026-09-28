@@ -9,7 +9,7 @@ Nunca apagar versões anteriores.
 
 ## 0.5.91 — 2026-09-28
 
-**Status:** Pronta na branch — **aguardando a autorização do founder para subir**.
+**Status:** Concluída — publicada com a autorização do founder em 28/set. Falta o founder rodar o `dados-1c`.
 
 ### v276 — as cópias saem, e a tarefa volta para o card certo
 
