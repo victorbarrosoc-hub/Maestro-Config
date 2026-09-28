@@ -299,6 +299,8 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Na branch (28 set, v282), NÃO publicado: sobe junto com a v281 —
+deslizar para o lado troca de coluna no celular.** 91 provas.
 **Na branch (28 set, v281), NÃO publicado: aguarda o founder autorizar — o
 latão é a cor de ação (proposta A).** Botões principais, abas e seleções em
 latão com texto escuro, só no app da agência (vitrine e "Aprovar" do cliente

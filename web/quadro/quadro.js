@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v281', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v282', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -516,6 +516,7 @@
         ${clientes().map(c => `<option value="${esc_(c.id)}" ${Q.filtroCli === c.id ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}
       </select>
     </div>`;
+    const entrou = Q.entrada; Q.entrada = null;
     const colunas = COLS.map(([k, n, c]) => `<section class="qdCol" data-qdcol="${k}" style="--qdc:${c}">
         <header class="qdColHd"><i></i><b>${n}</b><span>${porCol[k].length}</span></header>
         <p class="qdColDesc">${DESC[k]}</p>
@@ -529,7 +530,7 @@
     return `${filtroP}
       <div class="qdAbasCol" role="tablist" aria-label="Colunas">${abas}</div>
       <p class="qdColDescM">${DESC[Q.colMovel] || ''}</p>
-      <div class="qdQuadro" data-colmovel="${Q.colMovel || 'pauta'}">${colunas}</div>`;
+      <div class="qdQuadro${entrou ? ' entra-' + entrou : ''}" data-colmovel="${Q.colMovel || 'pauta'}">${colunas}</div>`;
   }
 
   /* --- Minha lista (DEICHECK) --- */
@@ -1236,6 +1237,44 @@
   document.addEventListener('contextmenu', e => { if(T.key && e.target.closest && e.target.closest('#root .qdPagina [data-qdkey]')) e.preventDefault(); }, true);
   document.addEventListener('click', e => { if(T.engolirClique){ e.stopPropagation(); e.preventDefault(); T.engolirClique = false; } }, true);
   Q.toque = T;
+
+  /* ---------------- deslizar para o lado troca de coluna (celular) ----------------
+     "Quero que quando arraste pra o lado no mobile, passe pra outra aba."
+     Só no celular (uma coluna por vez). Um gesto conta como deslizar quando é
+     mais de lado do que para baixo e anda pelo menos 60px; o card levantado
+     (segurar) e os campos de texto ficam de fora. */
+  const DZ = { x: 0, y: 0, t: 0, ativo: false };
+  const umaColunaPorVez = () => typeof matchMedia === 'function' && matchMedia('(max-width:860px)').matches;
+  function irColuna(passo){
+    const ks = COLS.map(c => c[0]);
+    const i = ks.indexOf(Q.colMovel || 'afazer');
+    const j = Math.max(0, Math.min(ks.length - 1, i + passo));
+    if(j === i) return false;
+    Q.colMovel = ks[j];
+    Q.entrada = passo > 0 ? 'esq' : 'dir';
+    render();
+    const aba = document.querySelector(`#root .qdAbaCol[data-qdcolmovel="${ks[j]}"]`);
+    if(aba && aba.scrollIntoView) aba.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    const topo = document.querySelector('#root .qdAbasCol');
+    if(topo && topo.getBoundingClientRect().top < 0) scrollTo(0, scrollY + topo.getBoundingClientRect().top - 60);
+    return true;
+  }
+  Q.irColuna = irColuna;
+  document.addEventListener('touchstart', e => {
+    DZ.ativo = false;
+    if(!umaColunaPorVez() || Q.aba !== 'quadro' || e.touches.length !== 1) return;
+    const alvo = e.target.closest && e.target.closest('#root .qdQuadro, #root .qdColDescM');
+    if(!alvo || e.target.closest('input, textarea, select, .qdAddForm')) return;
+    DZ.x = e.touches[0].clientX; DZ.y = e.touches[0].clientY; DZ.t = Date.now(); DZ.ativo = true;
+  }, { passive: true, capture: true });
+  document.addEventListener('touchend', e => {
+    if(!DZ.ativo) return; DZ.ativo = false;
+    if(Q.arrastando || T.engolirClique) return;                 /* era o card levantado, não um deslizar */
+    const t = e.changedTouches && e.changedTouches[0]; if(!t) return;
+    const dx = t.clientX - DZ.x, dy = t.clientY - DZ.y;
+    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5 || Date.now() - DZ.t > 900) return;
+    if(irColuna(dx < 0 ? 1 : -1)){ T.engolirClique = true; setTimeout(() => { T.engolirClique = false; }, 350); }
+  }, { capture: true });
   document.addEventListener('dragend', () => {
     if(!Q.arrastando && !Q.pend) return;
     Q.arrastando = null;
@@ -1492,6 +1531,9 @@
     .qdQuadro[data-colmovel="cliente"] .qdCol[data-qdcol="cliente"], .qdQuadro[data-colmovel="aprovado"] .qdCol[data-qdcol="aprovado"],
     .qdQuadro[data-colmovel="agendado"] .qdCol[data-qdcol="agendado"], .qdQuadro[data-colmovel="publicado"] .qdCol[data-qdcol="publicado"]{ display:block }
     .qdQuadro .qdColHd, .qdQuadro .qdColDesc{ display:none }
+    .qdQuadro{ touch-action:pan-y }
+    .qdQuadro.entra-esq .qdCol{ animation:qdEntraEsq .22s ease-out }
+    .qdQuadro.entra-dir .qdCol{ animation:qdEntraDir .22s ease-out }
     .qdColDescM{ display:block; margin:-4px 0 12px; font-size:12.5px; color:var(--mut, #999) }
     .qdCard{ background:var(--sup, rgba(255,255,255,.05)) }
     html[data-tema="claro"] .qdCard{ background:#fff }
@@ -1517,6 +1559,9 @@
     .qdIn, .qdSel{ font-size:16px }
   }
   body.qdFolhaAberta{ overflow:hidden }
+  @keyframes qdEntraEsq{ from{ transform:translateX(40px); opacity:.3 } to{ transform:none; opacity:1 } }
+  @keyframes qdEntraDir{ from{ transform:translateX(-40px); opacity:.3 } to{ transform:none; opacity:1 } }
+  @media (prefers-reduced-motion:reduce){ .qdQuadro .qdCol{ animation:none !important } }
   /* v281 — o latão é a cor de AÇÃO (decisão do founder, proposta A). O que é
      principal e clicável fica amarelo com texto escuro; nada vira fundo de
      painel (a regra dos 10% do manual da marca). */

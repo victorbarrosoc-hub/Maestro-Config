@@ -1,9 +1,35 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.96
+Version: 0.5.97
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.97 — 2026-09-28
+
+**Status:** Na branch, com provas. NÃO publicado: aguarda a autorização do
+founder (sobe junto com a v281).
+
+### v282 — deslizar para o lado troca de coluna (celular)
+
+O founder pediu: "Quero que quando arraste pra o lado no mobile, passe pra
+outra aba."
+
+- **No celular, o Quadro mostra uma coluna por vez**, e deslizar o dedo muda
+  de coluna:
+  - **para a esquerda,** vai para a próxima (A fazer → Fazendo);
+  - **para a direita,** volta para a anterior.
+- **A aba de cima acompanha** e rola para ficar à vista. A coluna nova entra
+  deslizando; com "reduzir movimento" ligado, ela entra sem animação.
+- **Quando conta como deslizar:** o gesto é mais de lado do que para baixo
+  (1,5×), anda pelo menos 60px e dura no máximo 0,9s.
+- **O que continua igual:** para cima e para baixo segue sendo rolar a página.
+  Segurar o card continua levantando ele, e o toque que termina o deslizar não
+  abre a ficha.
+- **Provas:** 3 novas, com toque de verdade (CDP), e 91 de 91 na
+  `v277-o-quadro.mjs`.
 
 ---
 
