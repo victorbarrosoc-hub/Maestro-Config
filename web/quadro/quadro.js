@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v290', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v291', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -906,11 +906,28 @@
       ${area('recursos', 'Recursos / produção', 'O que a produção precisa ter à mão.')}
       <label class="qdFChk"><input type="checkbox" data-qfbool="caixinha" ${p.caixinha ? 'checked' : ''}> Com caixinha de perguntas</label></div>` : ''}
     <div class="qdFBloco"><h4>Plataformas</h4><div class="qdFPlats">${Object.entries(plats).map(([k, v]) => `<button type="button" class="qdPil ${on.has(k) ? 'on' : ''}" data-qdplat="${esc_(k)}"><i style="background:${esc_(v.c)}"></i>${esc_(v.n)}</button>`).join('')}</div></div>
+    ${(() => { const pil = (typeof PILAR_COR === 'object' && PILAR_COR) || {}; const ks = Object.keys(pil); if(!ks.length) return '';
+      return `<div class="qdFBloco"><h4>Pilar <span>a que eixo editorial serve</span></h4><div class="qdFPlats">${ks.map(k => `<button type="button" class="qdPil ${p.pilar === k ? 'on' : ''}" data-qdpilar="${esc_(k)}"><i style="background:${esc_(pil[k])}"></i>${esc_(k)}</button>`).join('')}</div></div>`; })()}
     ${p.cta ? `<div class="qdFBloco"><h4>CTA</h4><textarea class="qdIn qdArea" data-qf="cta" rows="2">${esc_(p.cta)}</textarea></div>` : ''}
     <div class="qdFBloco"><h4>Observação</h4><textarea class="qdIn qdArea" data-qf="obs" rows="2" placeholder="Recado para quem for executar: contexto, cuidado, detalhe">${esc_(p.obs || '')}</textarea></div>
     ${p.pend ? `<div class="qdFBloco"><h4>Pendência</h4><textarea class="qdIn qdArea" data-qf="pend" rows="2">${esc_(p.pend)}</textarea></div>` : ''}`;
   }
   Q.blocosConteudo = blocosConteudo;
+  /* v291 — "quero preencher na ficha o que tem dentro do Editor completo":
+     o formato (mais de um: Reels + Vídeo), o pilar e as referências. */
+  const fmtsDe = p => { const f = (Array.isArray(p.fmts) && p.fmts.length ? p.fmts : [p.fmt]).filter(Boolean); return f.length ? f : ['Post']; };
+  function blocoFormato(p){
+    const tem = fmtsDe(p);
+    const lista = FORMATOS.filter(f => f !== 'Tarefa').concat(tem.filter(f => !FORMATOS.includes(f)));
+    return `<div class="qdFBloco"><h4>Formato <span>pode marcar mais de um</span></h4><div class="qdFPlats">${lista.map(f => `<button type="button" class="qdPil ${tem.includes(f) ? 'on' : ''}" data-qdfmt="${esc_(f)}">${esc_(f)}</button>`).join('')}</div></div>`;
+  }
+  const refsDoCard = (cli, id) => { try{ return (S.refs && S.refs[cli + '|' + id]) || []; }catch(e){ return []; } };
+  function blocoRefs(cli, p){
+    const rs = refsDoCard(cli, p.id);
+    return `<div class="qdFBloco"><h4>Referências <span>${rs.length || ''}</span></h4>
+      ${rs.map((r, i) => { const u = url_(r.url || ''); return `<div class="qdFRef">${u ? `<a href="${u}" target="_blank" rel="noopener noreferrer">${esc_(r.nome || r.url)}</a>` : `<span>${esc_(r.nome || 'arquivo')}</span>`}<button type="button" class="qdX" data-qdrefx="${i}" aria-label="Tirar referência">×</button></div>`; }).join('')}
+      <form class="qdFCkNovo" data-qdrefnovo="1" autocomplete="off"><input type="text" inputmode="url" class="qdIn" placeholder="+ colar link de referência (https://…)" aria-label="Nova referência"></form></div>`;
+  }
   function desenharFolha(inteira){
     if(!Q.folha) return;
     const [cli, id] = Q.folha.split('|');
@@ -937,12 +954,12 @@
         <button type="button" class="qdPil" data-qdajok="1">Ajuste feito</button></div>` : ''}
       <div class="qdFGrade">
         <label>Quem faz<select class="qdSel" data-qf="resp"><option value="">Ninguém ainda</option>${pes.map(x => `<option value="${esc_(x.id)}" ${p.resp === x.id ? 'selected' : ''}>${esc_(x.n)}</option>`).join('')}</select></label>
-        ${ehAg ? '' : `<label>Formato<select class="qdSel" data-qf="fmt">${FORMATOS.filter(f => f !== 'Tarefa').concat(FORMATOS.includes(p.fmt) || !p.fmt ? [] : [p.fmt]).map(f => `<option ${p.fmt === f ? 'selected' : ''}>${esc_(f)}</option>`).join('')}</select></label>`}
         <label>Entregar até<input type="date" class="qdIn" data-qf="prazo" value="${esc_(p.prazo || '')}"></label>
         <label>Hora<input type="time" class="qdIn" data-qf="prazoHora" value="${esc_(p.prazoHora || '')}"></label>
         ${ehAg ? '' : `<label>Publica em<input type="date" class="qdIn" data-qf="data" value="${esc_(p.data || '')}"></label>
         <label>Às<input type="time" class="qdIn" data-qf="hora" value="${esc_(p.hora || '')}"></label>`}
       </div>
+      ${ehAg ? '' : blocoFormato(p)}
       <div class="qdFBloco"><h4>Checklist ${ck.length ? `<span>${ck.filter(c => c && c.ok).length}/${ck.length}</span>` : ''}</h4>
         <div class="qdFCk">${ck.map(c => `<div class="qdFCkL ${c.ok ? 'ok' : ''}"><button type="button" class="qdOk mini" data-qdck="${esc_(c.id)}" aria-label="${c.ok ? 'Desmarcar' : 'Marcar'}">${c.ok ? ic_('checkc', 11) : ''}</button>
           <span>${esc_(c.t)}</span><button type="button" class="qdX" data-qdckx="${esc_(c.id)}" aria-label="Tirar item">×</button></div>`).join('')}</div>
@@ -959,7 +976,8 @@
             ${ms.length > 1 ? `<span class="qdFMatMv"><button type="button" data-qdmv="${i}|-1" aria-label="Uma posição antes" ${i === 0 ? 'disabled' : ''}>‹</button><button type="button" data-qdmv="${i}|1" aria-label="Uma posição depois" ${i === ms.length - 1 ? 'disabled' : ''}>›</button></span>` : ''}</span>`; }).join('')}</div>
         <div class="qdFMatBts">${ms.length > 1 ? `<button type="button" class="qdPil" data-qdmatnome="1">Ordenar por nome</button>` : ''}<button type="button" class="qdPil" data-qdsubir="1">${ic_('clipe', 12)} Subir material</button>
           <button type="button" class="qdPil" data-qdeditor="1">${ic_('pencil', 12)} Editor completo</button></div>
-        <input type="file" id="qdArquivo" multiple hidden></div>`}
+        <input type="file" id="qdArquivo" multiple hidden></div>
+      ${blocoRefs(cli, p)}`}
       <div class="qdFPe">
         ${Q.folhaApagar ? `<span>Mandar para a lixeira?</span><button type="button" class="qdPil" data-qdapagarnao="1">Não</button><button type="button" class="qdPil perigo" data-qdapagarsim="1">Sim, apagar</button>`
           : `<button type="button" class="qdPil perigo" data-qdapagar="1">${ic_('lixo', 12)} Apagar</button>`}
@@ -971,7 +989,7 @@
   /* o que, mudando, pede a ficha desenhada de novo. Guardada a cada desenho
      inteiro: sem isso, o primeiro campo gravado depois de trocar o tipo ou
      pôr um trecho redesenhava tudo e tirava o cursor de quem digitava. */
-  const assinaturaFolha = (cli, p) => JSON.stringify([p.check || [], materiais(cli, p.id).map(m => (m && (m.url || m.nome)) || '').join('|'), !!p.ajustePendente, linhas(p, 'tcs'), linhas(p, 'telas'), p.plats || [], tipoDaFolha(p), ehStory(p)]);
+  const assinaturaFolha = (cli, p) => JSON.stringify([p.check || [], materiais(cli, p.id).map(m => (m && (m.url || m.nome)) || '').join('|'), !!p.ajustePendente, linhas(p, 'tcs'), linhas(p, 'telas'), p.plats || [], tipoDaFolha(p), ehStory(p), fmtsDe(p), p.pilar || '', refsDoCard(cli, p.id).length]);
   function ajustarAltura(t){ t.style.height = 'auto'; t.style.height = Math.min(160, t.scrollHeight) + 'px'; }
   const valorDoCampo = (p, cli, k) => k === 'tema' ? tema(p, cli) : pegar(p, k);
   function atualizarCampos(el, cli, p){
@@ -1111,6 +1129,9 @@
     const esc = Q.esc[alvo] || {};
     if(alvo.startsWith('cal:') && !interpretar(txt).cli && !base.cli && !esc.cli){ t.setCustomValidity('Escolha o cliente'); t.reportValidity(); return; }
     const r = criarDoTexto(txt, base, esc);
+    /* v291 — o que veio da Mandala ou do Estúdio (briefing, passos) entra no card que nasceu */
+    const ex = Q.extra && Q.extra.alvo === alvo ? Q.extra : null;
+    if(r && ex){ Q.extra = null; try{ if(ex.campos) mudar(r.cli, r.p.id, ex.campos); if(ex.depois) ex.depois(r); }catch(x){} }
     if(Q.esc[alvo]) delete Q.esc[alvo].fmt;           /* o cliente fica escolhido para o próximo; o formato, não */
     if(r && alvo.startsWith('cal:') && r.cli !== AG) mudar(r.cli, r.p.id, { data: alvo.slice(4), dia: (doISO(alvo.slice(4)).getDay() + 6) % 7, hora: r.p.hora || '18:30' });
     t.value = '';
@@ -1118,6 +1139,108 @@
     const w = document.querySelector(`#root [data-qdaddwrap="${CSS.escape(alvo)}"]`);
     if(w){ abrirAdd(w); }
   }
+  /* v291 — "Nova postagem" no Hoje, "Estruturar card" no Estúdio e "Mandar
+     para o Inbox" na Mandala abriam o painel antigo (e os dois últimos
+     gravavam no Ensaio, que não aparece mais em lugar nenhum). Agora todos
+     abrem a criação do Quadro: o campo de baixo da coluna, que vai
+     aparecendo conforme se preenche, já com o que se sabe. */
+  function novoPeloQuadro(o){
+    o = o || {};
+    const col = o.col || 'pauta';
+    try{ S.modal = null; if(typeof renderLayer === 'function') renderLayer(); }catch(e){}
+    Q.aba = 'quadro'; Q.colMovel = col; Q.filtroPrazo = 'todos';
+    if(recolhidas().has(col)) alternarRecolhida(col);
+    Q.esc[col] = Object.assign({}, Q.esc[col] || {}, o.cli ? { cli: o.cli } : {}, o.fmt ? { fmt: o.fmt } : {});
+    Q.extra = (o.campos || o.depois) ? { alvo: col, campos: o.campos || null, depois: o.depois || null } : null;
+    if(S.view !== 'agency' || S.route !== 'producao'){ if(typeof go === 'function') go('agency', 'producao'); else { S.view = 'agency'; S.route = 'producao'; } }
+    render();
+    const abrir = (n) => {
+      const w = document.querySelector(`#root [data-qdaddwrap="${col}"]`);
+      if(!w){ if(n > 0) setTimeout(() => abrir(n - 1), 120); return; }
+      abrirAdd(w);
+      const ta = w.querySelector('textarea');
+      if(ta && o.tema){ ta.value = String(o.tema).slice(0, 200); atualizarNome(w.querySelector('form')); ta.setSelectionRange(ta.value.length, ta.value.length); }
+      if(ta){ ta.focus(); ta.scrollIntoView({ block: 'center' }); }
+    };
+    setTimeout(() => abrir(20), 30);
+  }
+  Q.novoPeloQuadro = novoPeloQuadro;
+  function ligarEntradas(){
+    /* Hoje: os atalhos "Nova postagem" e "Nova tarefa" */
+    if(typeof atalhosHtml === 'function' && !atalhosHtml.__qd){
+      const orig = atalhosHtml;
+      atalhosHtml = function(){ return orig.apply(this, arguments).replace('data-atalho="post"', 'data-qdnovo="post"').replace('data-atalho="tarefa"', 'data-qdnovo="tarefa"'); };
+      atalhosHtml.__qd = true;
+    }
+    if(typeof atNovaPostagem === 'function' && !atNovaPostagem.__qd){
+      atNovaPostagem = function(cliId){ novoPeloQuadro({ cli: cliId }); }; atNovaPostagem.__qd = true;
+    }
+    /* Mandala: a ideia vira card no Quadro */
+    if(typeof mdParaInbox === 'function' && !mdParaInbox.__qd){
+      mdParaInbox = function(id){
+        const i = typeof mdAchar === 'function' ? mdAchar(id) : null; if(!i) return;
+        const cli = i.cli || (typeof mdCli === 'function' ? (mdCli() || {}).id : null);
+        let desc = ''; try{ desc = typeof mdTextoDaIdeia === 'function' ? mdTextoDaIdeia(i) : ''; }catch(e){ desc = [i.abertura, i.porque].filter(Boolean).join('\n'); }
+        const fmt = FORMATOS.find(f => new RegExp('^' + f, 'i').test(String(i.formato || ''))) || null;
+        novoPeloQuadro({ cli, fmt, tema: i.titulo, campos: Object.assign({ objetivo: desc || null, legenda: i.legenda || null },
+          i.fase || i.gancho ? { mandala: { fase: i.fase || null, temp: i.temp || null, gancho: i.gancho || null } } : {}),
+          depois: () => { i.noInbox = true; try{ if(typeof sbGravarConfig === 'function') sbGravarConfig(); }catch(e){} } });
+      };
+      mdParaInbox.__qd = true;
+    }
+    /* Estúdio: as notas escolhidas viram card — a nota-chave é o tema e o briefing, as outras, a checklist */
+    if(typeof estModalCard === 'function' && !estModalCard.__qd){
+      estModalCard = function(){
+        const notas = typeof estNotasDoCard === 'function' ? estNotasDoCard() : [];
+        const q = typeof estQuadro === 'function' ? estQuadro() : null;
+        const chave = notas.find(n => n.fixa) || notas[0];
+        const tema = ((chave ? chave.txt : (q ? q.nome : '')) || '').split('\n')[0].slice(0, 90);
+        const passos = notas.filter(n => n !== chave).map(n => String(n.txt || '').split('\n')[0].slice(0, 300)).filter(Boolean);
+        const cli = (typeof estClisEscolhidos === 'function' ? estClisEscolhidos()[0] : null) || S.cli || null;
+        setTimeout(() => novoPeloQuadro({ cli, tema, campos: { objetivo: chave ? chave.txt : null,
+          check: passos.length ? passos.map((t, k) => ({ id: 'e' + Date.now().toString(36) + k, t, ok: false })) : null,
+          estudio: q ? { quadro: q.id, nome: q.nome } : null },
+          depois: () => { try{ if(q) q.enviados = (q.enviados || 0) + 1; if(S.est) S.est.sel = []; if(typeof estGravar === 'function') estGravar(); }catch(e){} } }), 0);
+        return null;
+      };
+      estModalCard.__qd = true;
+    }
+  }
+  ligarEntradas();
+
+  /* v291 — "preciso mostrar as informações-chave pro cliente ver no link dele".
+     Ele já via texto, legenda, CTA, roteiro, corte, telas, data e redes; faltavam
+     o que também vai ao ar: todos os formatos (Reels + Vídeo) e a interação
+     (sticker, caixinha). O que é da casa (observação, pendência, recursos,
+     checklist, referências) continua fora, de propósito (v230). */
+  if(typeof clCard === 'function' && !clCard.__qd){
+    const origCl = clCard;
+    clCard = function(){
+      let h = origCl.apply(this, arguments);
+      try{
+        const p = h && S.view === 'client' && (S.pauta || []).find(x => x.id === S.pcSel);
+        if(!p) return h;
+        const f = fmtsDe(p);
+        if(f.length > 1) h = h.replace(/(<span class="cltag">[\s\S]*?<\/svg>\s*)([^·<]+?)(\s*·)/, (m0, a1, a2, a3) => a1 + esc_(f.join(' + ')) + a3);
+        const inter = [p.sticker ? esc_(p.sticker) : '', p.caixinha ? 'Com caixinha de perguntas' : ''].filter(Boolean);
+        if(inter.length && h.indexOf('data-qdinter') < 0){
+          const bloco = `<div class="clcap leitura" data-qdinter="1"><div class="caplbl">Interação</div><div class="clleitura">${inter.join('<br>')}</div></div>`;
+          const i = h.indexOf('<div class="clcap leitura">');
+          h = i >= 0 ? h.slice(0, i) + bloco + h.slice(i) : h;
+        }
+      }catch(e){}
+      return h;
+    };
+    clCard.__qd = true;
+    if(typeof ROTAS_CL_PAUTA !== 'undefined') ROTAS_CL_PAUTA.clcard = () => clCard();
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-qdnovo]'); if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    if(typeof som === 'function') try{ som('toque'); }catch(x){}
+    if(b.dataset.qdnovo === 'tarefa') novoPeloQuadro({ cli: AG }); else novoPeloQuadro({});
+  }, true);
+
   function marcarFeito(key){
     const [cli, id] = key.split('|');
     const p = achar(cli, id); if(!p) return;
@@ -1160,7 +1283,7 @@
     }
     const px = e.target.closest('[data-qdprox]');
     if(px){ e.stopPropagation(); executar(px.dataset.qdprox, px.dataset.qdacao, px); return; }
-    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome],[data-qdmais],[data-qdmenos],[data-qdrecolhe]');
+    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome],[data-qdmais],[data-qdmenos],[data-qdrecolhe],[data-qdfmt],[data-qdpilar],[data-qdrefx]');
     if(!e.target.closest('#qdPop')) document.getElementById('qdPop')?.remove();
     const rc = !alvo && e.target.closest && e.target.closest('#root .qdCol.recolhida');
     if(rc){ alternarRecolhida(rc.dataset.qdcol); render(); return; }
@@ -1208,6 +1331,14 @@
     if(d.qdck){ const p = achar(cli, id); if(!p) return; mudar(cli, id, { check: (p.check || []).map(c => c.id === d.qdck ? Object.assign({}, c, { ok: !c.ok }) : c) }); desenharFolha(true); redesenharPagina(); return; }
     if(d.qdckx){ const p = achar(cli, id); if(!p) return; mudar(cli, id, { check: (p.check || []).filter(c => c.id !== d.qdckx) }); desenharFolha(true); redesenharPagina(); return; }
     if(d.qdtipo){ Q.folhaTipo = { key, t: d.qdtipo }; desenharFolha(true); return; }
+    if(d.qdfmt){ const p = achar(cli, id); if(!p) return; const f = fmtsDe(p);
+      const nova = f.includes(d.qdfmt) ? f.filter(x => x !== d.qdfmt) : f.concat(d.qdfmt);
+      if(!nova.length) return;                                  /* ao menos um formato */
+      const tm = tema(p, cli);
+      mudar(cli, id, { fmts: nova, fmt: nova[0], t: segueOPadrao(p, cli) ? titulo(cli, nova[0], tm) : p.t });
+      desenharFolha(true); redesenharPagina(); return; }
+    if(d.qdpilar){ const p = achar(cli, id); if(!p) return; mudar(cli, id, { pilar: p.pilar === d.qdpilar ? null : d.qdpilar }); desenharFolha(true); redesenharPagina(); return; }
+    if(d.qdrefx !== undefined){ const rs = refsDoCard(cli, id); rs.splice(+d.qdrefx, 1); salvar(cli); desenharFolha(true); return; }
     if(d.qdver !== undefined){ verPeca(cli, id, +d.qdver); return; }
     if(d.qdmv){ const [i, dd] = d.qdmv.split('|'); moverMaterial(cli, id, +i, +dd); return; }
     if(d.qdmatnome){ ordenarMaterialPorNome(cli, id); return; }
@@ -1285,6 +1416,16 @@
       mudar(cli, id, { check: [...(p.check || []), { id: 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t: t.slice(0, 300), ok: false }] });
       desenharFolha(true); redesenharPagina();
       const n = document.querySelector('#qdFolha [data-qdcknovo] input'); if(n) n.focus();
+    }
+    if(f.matches('[data-qdrefnovo]') && Q.folha){
+      e.preventDefault();
+      const i = f.querySelector('input'); let u = (i.value || '').trim(); if(!u) return;
+      if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+      if(!url_(u) || !/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(u)){ i.setCustomValidity('Isso não parece um link'); i.reportValidity(); return; }
+      const [cli, id] = Q.folha.split('|'); const k = cli + '|' + id;
+      S.refs = S.refs || {}; (S.refs[k] = S.refs[k] || []).push({ tipo: 'link', nome: u, url: u });
+      salvar(cli); desenharFolha(true);
+      const n = document.querySelector('#qdFolha [data-qdrefnovo] input'); if(n) n.focus();
     }
   }, true);
   document.addEventListener('keydown', e => {
@@ -1684,6 +1825,9 @@
   .qdIn{ font:inherit; font-size:14px; color:var(--tx, #fff); background:var(--sup, rgba(255,255,255,.06)); border:0; border-radius:10px; padding:8px 10px; min-height:36px; box-sizing:border-box; width:100% }
   .qdArea{ resize:vertical; line-height:1.45 }
   .qdFBloco{ margin:0 0 16px }
+  .qdFRef{ display:flex; align-items:center; gap:8px; margin:0 0 6px; font-size:13px; min-width:0 }
+  .qdFRef a, .qdFRef span{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--tx, #fff) }
+  .qdFRef a{ text-decoration:underline; text-underline-offset:2px }
   .qdSel.ligado{ background:var(--latao, #FFC857) !important; color:#1C1C1F !important; font-weight:600 }
   .qdMais, .qdMenos{ display:block; width:100%; margin:4px 0 0; border:0; border-radius:10px; padding:9px 10px; font:inherit; font-size:13px; font-weight:600; cursor:pointer; background:var(--sup, rgba(255,255,255,.06)); color:var(--tx, #fff) }
   .qdMais span{ font-weight:400; color:var(--mut, #999) }

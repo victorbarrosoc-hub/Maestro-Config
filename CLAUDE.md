@@ -299,6 +299,20 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (28 set, v291, NO AR) — criar é sempre do jeito do Quadro, a ficha
+tem tudo, e o cliente vê o que vai ao ar.** (1) A ficha ganhou o que só o
+Editor completo tinha: **Formato** com mais de um (Reels + Vídeo; o nome segue
+o primeiro, nunca fica sem), **Pilar** e **Referências** (colar link, abre em
+outra aba, `javascript:` não entra). (2) "Nova postagem" e "Nova tarefa" no
+Hoje, "Mandar para o Inbox" na Mandala e "Estruturar card" no Estúdio abriam
+o painel antigo — e os dois últimos gravavam no Ensaio, que não aparece mais
+(a ideia sumia). Agora todos abrem o campo de criar do Quadro já preenchido
+(`MaestroQuadro.novoPeloQuadro`): a ideia da Mandala leva o texto inteiro ao
+briefing e a legenda ao lugar dela; no Estúdio a nota-chave é o tema e as
+outras viram a checklist. (3) No link, o cliente passa a ver todos os
+formatos e a interação (sticker, caixinha); o que é da casa (observação,
+pendência, recursos, checklist, referências) continua fora. 22 provas em
+`web/verificar/v291-criar-e-ficha.mjs`.
 **Fechado (28 set, v290, NO AR) — a coluna recolhe, mostra 10 de cada vez, e
 o filtro de prazo.** "Essa coluna de concluído precisa urgente recolher, se
 não a página vai descer até o infinito… um limite de 10, e mais 10 num

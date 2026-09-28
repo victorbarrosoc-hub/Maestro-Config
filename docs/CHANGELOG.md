@@ -1,11 +1,40 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.105
+Version: 0.5.106
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.106 — 2026-09-28
+
+**Status:** No ar.
+
+### v291 — criar do jeito do Quadro, a ficha com tudo, e o que o cliente vê
+
+- **A ficha tem o que tinha no Editor completo.** Formato vira botões e aceita
+  mais de um (Reels + Vídeo) — o nome do card segue o primeiro, e não dá para
+  ficar sem formato. Entram o Pilar (tocar de novo tira) e as Referências:
+  colar um link (o https:// entra sozinho), ele abre em outra aba, e o que não
+  é link (inclusive `javascript:`) é recusado.
+- **Criar é sempre pelo Quadro.** "Nova postagem" e "Nova tarefa" no Hoje,
+  "Mandar para o Inbox" na Mandala e "Estruturar card" no Estúdio abriam o
+  painel antigo. Pior: os dois últimos gravavam no Ensaio, que não aparece
+  mais — a ideia enviada sumia. Agora todos levam ao campo de criar embaixo
+  da coluna Pauta, já preenchido:
+  - Hoje: "Nova postagem" pede o cliente nos botões; "Nova tarefa" já nasce
+    da agência;
+  - Mandala: o título da ideia no campo; ao adicionar, o texto inteiro da
+    ideia vai para o briefing, a legenda para a legenda e o formato é o da
+    ideia; a ideia fica marcada como enviada;
+  - Estúdio: a nota-chave é o tema e o briefing; as outras notas viram a
+    checklist do card.
+- **O cliente vê as informações-chave.** No link, passa a ver todos os
+  formatos ("Reels + Vídeo") e a interação (sticker, caixinha de perguntas).
+  Continua fora, de propósito: observação, pendência, recursos, checklist e
+  referências.
+- `web/verificar/v291-criar-e-ficha.mjs`: 22 provas.
 
 ## 0.5.105 — 2026-09-28
 
