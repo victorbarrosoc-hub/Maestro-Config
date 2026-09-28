@@ -1,11 +1,49 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.103
+Version: 0.5.104
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.104 — 2026-09-28
+
+**Status:** No ar.
+
+### v289 — sem o Ensaio; arrastar no computador; ver e ordenar as peças; o cliente abre qualquer post
+
+- **O Ensaio não aparece mais, nem de relance.** "A aba Ensaio abre de
+  relance quando vou pra aba Quadro ou quando atualizo a página." O Quadro
+  (`web/quadro`) chega depois da página; nesse intervalo a camada antiga do
+  Ensaio desenhava a rota e o menu dizia "Ensaio". Agora:
+  - a camada só desenha quando `window.MaestroQuadro` existe; antes disso,
+    a moldura com "Carregando o quadro…";
+  - o menu, a barra e as permissões nascem "Quadro";
+  - o endereço é `/quadro`; um `/ensaio` guardado abre o Quadro e o endereço
+    vira `/quadro` (rota nova no `vercel.json`).
+  - A primeira tentativa pôs a trava no fim do arquivo e não pegou: a
+    primeira pintura acontece no meio da leitura dos 3 MB. A prova
+    (`v289-sem-o-ensaio.mjs`, 10) serve o quadro.js com 2,5 s de atraso e
+    vigia cada mudança da tela; `v146-url` passou a cobrar `/quadro`.
+- **Arrastar no computador.** O card do Quadro nunca teve `draggable` —
+  só as linhas do calendário e da lista tinham. Agora tem, onde há mouse.
+  Seção 17 da `v277-o-quadro.mjs`.
+- **Ver cada peça e mudar a ordem, na ficha.** Peças numeradas; tocar abre
+  em tela cheia (imagem, vídeo com controles, link ou arquivo), com setas e
+  "2 / 3"; setas ‹ › para mudar a posição e "Ordenar por nome" (tela2 antes
+  de tela10). A ordem vai ao banco e é a que o cliente vê. Seção 18 da
+  `v277-o-quadro.mjs` (7 provas, com o segundo aparelho recebendo a ordem).
+  A prova pegou um detalhe: o Esc da peça fechava a ficha junto.
+- **O cliente abre qualquer post da grade.** Antes só o post "Aprovar"
+  (e "Em ajuste") era botão; Agendado e No ar eram blocos mortos. Agora todo
+  post abre a publicação, pelo mesmo caminho do Modo Instagram: as peças na
+  ordem da agência, com "1/3", e tocar abre em tela cheia, com o vídeo
+  tocando. Post já aprovado sem texto não mostra mais "avise a agência
+  antes de decidir".
+- **O anel do Início do cliente** ficava por cima do "Decidir agora" desde
+  que a explicação saiu (v251). A linha do número tem a altura do anel.
+- `v289-o-cliente-ve.mjs`: 15 provas, computador e celular.
 
 ## 0.5.103 — 2026-09-28
 

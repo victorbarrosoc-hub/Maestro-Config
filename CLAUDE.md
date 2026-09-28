@@ -299,6 +299,33 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (28 set, v289, NO AR) — o Ensaio sai de vez, o arraste no
+computador, a peça que se vê e o cliente que abre qualquer post.** Cinco
+pedidos do founder numa leva:
+- **"A aba Ensaio abre de relance."** O Quadro chega por arquivo à parte, e
+  até ele chegar a camada antiga desenhava o Ensaio e o menu dizia "Ensaio".
+  Agora ela só desenha com `window.MaestroQuadro` (antes: só a moldura, com
+  "Carregando o quadro…"), o menu nasce "Quadro" e o endereço é `/quadro`
+  (`/ensaio` guardado abre o Quadro e vira `/quadro`; `vercel.json` ganhou a
+  rota). **A primeira trava, no fim do arquivo, não pegou:** a primeira
+  pintura acontece NO MEIO da leitura dos 3 MB — a prova que serve o
+  quadro.js com 2,5 s de atraso mostrou. 10 provas em
+  `web/verificar/v289-sem-o-ensaio.mjs`.
+- **"Não consigo arrastar pelo computador."** O card do Quadro nunca teve
+  `draggable` (só as linhas do calendário). Seção 17 da v277.
+- **"Não consigo visualizar o que subiu… sumiu o botão de organizar a
+  ordem… se é vídeo, reproduzir."** Na ficha: toda peça numerada, tocar abre
+  em tela cheia (vídeo com controles, setas, "2 / 3", Esc fecha só a peça),
+  setas ‹ › de ordem e "Ordenar por nome"; a ordem vai ao banco
+  (`maestro_midia_ordenar`) e é a que o cliente vê. Seção 18 da v277.
+- **"Não consigo clicar em nenhum post, só no que espera aprovação."** A
+  grade do perfil do cliente só fazia botão do post dourado. Agora todo post
+  abre a publicação (o mesmo caminho do Modo Instagram), com as peças na
+  ordem, e o vídeo toca na tela cheia. Post já aprovado sem texto não diz
+  mais "avise a agência antes de decidir".
+- **O anel 36/37 por cima do "Decidir agora".** A explicação saiu na v251 e
+  o botão subiu para baixo do anel; a linha do número tem a altura do anel.
+  15 provas em `web/verificar/v289-o-cliente-ve.mjs`.
 **Fechado (28 set, v288, NO AR) — a ficha mostra o card inteiro.** "Aqui eu
 não consigo visualizar o conteúdo do card inteiro, só quando clico em editor
 completo." A ficha do Quadro passa a ter tudo o que o editor completo grava:

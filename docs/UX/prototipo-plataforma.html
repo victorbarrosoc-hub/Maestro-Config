@@ -13546,7 +13546,8 @@ function agEnsaio(){
 render = (function(orig){
   return function(){
     if(S.view==='agency' && S.route==='producao' && !S.skel){
-      document.getElementById('root').innerHTML = agEnsaio();
+      /* v289: o Ensaio saiu; até o Quadro (web/quadro) chegar, só a moldura. Em obra sem Quadro, bancada das suítes */
+      document.getElementById('root').innerHTML = window.MaestroQuadro || window.__semQuadro && /^(localhost|127\.|$)/.test(location.hostname) ? agEnsaio() : agShell('<p class="qdEspera">Carregando o quadro…</p>');
       renderLayer(); ctxBar(); posRender();
       return;
     }
@@ -13555,8 +13556,8 @@ render = (function(orig){
 })(render);
 /* o nome no menu acompanha */
 (function(){
-  const n1 = AGNAV.find(x=>x.r==='producao'); if(n1) n1.n = 'Ensaio';
-  MENU_AG.forEach(g=>(g.it||[]).forEach(it=>{ if(it[0]==='producao') it[1]='Ensaio'; }));
+  const n1 = AGNAV.find(x=>x.r==='producao'); if(n1) n1.n = 'Quadro';
+  MENU_AG.forEach(g=>(g.it||[]).forEach(it=>{ if(it[0]==='producao') it[1]='Quadro'; }));
 })();
 
 /* ---------- ações ---------------------------------------------------- */
@@ -16061,7 +16062,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v288 · 28 set · a ficha inteira';
+const VERSAO_PROTOTIPO = 'v289 · 28 set · sem o Ensaio';
 
 menuSheet = (function(orig){
   return function(){
@@ -16103,7 +16104,7 @@ AGTABS.length = 0;
 AGTABS.push(
   {r:'dash',     n:'Hoje',     icn:'home'},
   {r:'clientes', n:'Clientes', icn:'users'},
-  {r:'producao', n:'Ensaio',   icn:'kanban'},
+  {r:'producao', n:'Quadro',   icn:'kanban'},
   {r:'feed',     n:'Feed',     icn:'img'}
 );
 /* a Conta sai da doca mas não pode sumir: entra no grupo do menu */
@@ -21789,7 +21790,7 @@ const CAPACIDADES = [
   ['clientes',   'Clientes e briefing',   'criar, editar e excluir cliente'],
   ['pauta',      'Pauta e calendário',    'criar e mexer nos cards da pauta'],
   ['enviar',     'Enviar para aprovação', 'mandar texto e peça para o cliente'],
-  ['ensaio',     'Ensaio',                'mover cards, contar tempo, concluir'],
+  ['ensaio',     'Quadro',                'mover cards, contar tempo, concluir'],
   ['financeiro', 'Valores e financeiro',  'ver e lançar valores nas frentes'],
   ['equipe',     'Equipe e papéis',       'convidar, editar e definir permissões'],
   ['plano',      'Plano e faturamento',   'trocar de plano, ver a cobrança'],
@@ -31970,7 +31971,7 @@ modalTarefa = (function(orig){
 
 /* ---------- 1. o endereço de cada tela ------------------------------ */
 const URL_AG = {
-  dash:'hoje', clientes:'clientes', clientedet:'cliente', producao:'ensaio',
+  dash:'hoje', clientes:'clientes', clientedet:'cliente', producao:'quadro',
   feed:'feed', resultados:'resultados', conversas:'conversas', mandala:'mandala',
   estudio:'estudio', equipe:'equipe', planos:'planos', conta:'conta',
   pauta:'pauta', agenda:'agenda', projeto:'projeto', conteudos:'conteudos',
@@ -32021,7 +32022,7 @@ function estadoDaUrl(caminho){
     S.tab = partes[2] || 'pauta';
     return true;
   }
-  const rota = Object.keys(URL_AG).find(k => URL_AG[k] === partes[0]);
+  const rota = Object.keys(URL_AG).find(k => URL_AG[k] === (partes[0] === 'ensaio' ? 'quadro' : partes[0]));
   if(!rota) return false;
   S.view = 'agency'; S.route = rota;
   return true;
@@ -32071,7 +32072,7 @@ addEventListener('popstate', () => {
   if(/[?&](ver|aprovar)=/.test(location.search)) return;   /* leitura por link */
   if(!estadoDaUrl(location.pathname)) return;
   S.seen = { ...(S.seen || {}), [S.view]: true };           /* sem esqueleto ao voltar */
-  _urlUltima = urlDoEstado();
+  _urlUltima = location.pathname;
   const pintar = () => { try { render(); } catch(e){} };
   pintar();
   setTimeout(pintar, 60);
@@ -36828,7 +36829,7 @@ sbGravar = (function(orig){
       return function(){
         let html = orig.apply(this, arguments);
         const p = S.pauta.find(x => x.id === S.pcSel);
-        if(!html || !p || (p.texto || '').trim()) return html;
+        if(!html || !p || (p.texto || '').trim() || !comCliente(p)) return html;   /* v289: só o que espera decisão */
         html = html.replace(
           /(<div class="clcap leitura"><div class="caplbl">Texto da publicação<\/div>\s*<div class="clleitura">)[^<]*(<\/div>)/,
           '$1<span style="color:var(--ink-400)">O texto ainda não chegou aqui. ' +
@@ -42756,8 +42757,8 @@ button.clPost:active{ transform:scale(.98) }
       const [cls, rot] = estado(p);
       const arte = temArte(p);
       const fundo = typeof capaDoCard === 'function' ? capaDoCard(p) : cor;
-      /* só é botão o que tem linha na lista: o toque é repassado para ela */
-      const tag = esperando(p) || emAjuste(p) ? 'button' : 'div';
+      /* todo post abre (v289): o que tem linha na lista repassa o toque; o resto abre a peça */
+      const tag = 'button';
       return `<${tag} class="clPost ${cls} ${arte ? 'comArte' : ''}" data-pid="${p.id}" ${tag === 'button' ? `type="button" data-clperfil="${p.id}"` : ''}
         style="background:${fundo}" title="${esc(p.t || '')}">
         <span class="st ${cls}">${rot}</span><span class="tt">${esc(p.t || '')}</span></${tag}>`;
@@ -42771,7 +42772,7 @@ button.clPost:active{ transform:scale(.98) }
       </div>
       <div class="clPerfilAba">Como o seu feed vai ficar</div>
       <div class="clGrade">${cards.map(post).join('')}</div>
-      <div class="clPerfilDica">Toque num post com a etiqueta dourada para decidir.</div>
+      <div class="clPerfilDica">Toque num post para ver. Os dourados esperam você.</div>
     </section>`;
   };
 
@@ -42793,7 +42794,7 @@ button.clPost:active{ transform:scale(.98) }
     if(!t) return;
     e.stopImmediatePropagation(); e.preventDefault();
     const linha = document.querySelector(`[data-clcard="${t.dataset.clperfil}"]`);
-    if(linha) linha.click();
+    if(linha) linha.click(); else { S.pcSel = +t.dataset.clperfil; S.pcPedindo = false; S.route = 'clcard'; scrollTo(0, 0); render(); }
   }, true);
   window.MaestroPerfilDoCliente = { perfil, daGrade };
 })();
@@ -48554,4 +48555,4 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
 render=(o=>function(){try{for(const t of(S.ensaio&&S.ensaio.tarefas)||[]){const e=A[t.id];if(sc(t)&&C.includes(t.col)&&e&&!C.includes(e)){t.col=e;toast('Sem card não passa do Do: estruture a pauta.')}A[t.id]=t.col}
 const g=S.chat&&(S.chat.canais||[]).find(c=>c.id==='geral');if(g&&g.msgs){let v=0;const n=g.msgs.filter(m=>!m||m.txt!==B||!v++);if(n.length<g.msgs.length)g.msgs=n}}catch(e){}
 const r=o.apply(this,arguments);try{document.querySelectorAll('.enCard[data-entar]').forEach(c=>{const t=S.ensaio.tarefas.find(x=>x.id==+c.dataset.entar),a=c.querySelector('.acoes');if(sc(t)&&C.includes(t.col)&&a&&!c.querySelector('.v272'))a.insertAdjacentHTML('beforebegin','<div class="cyEtapa v272"><span><b>Sem card.</b> O Check libera card — estruture a pauta.</span></div>')})}catch(e){}return r})(render)})();</script>
-<script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v288').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}}).catch(()=>{})</script>
+<script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v289').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}else throw 0}).catch(()=>{window.__semQuadro=1;if(S.route==='producao')render()})</script>

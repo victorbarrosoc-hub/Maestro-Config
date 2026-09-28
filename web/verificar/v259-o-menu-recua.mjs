@@ -68,7 +68,7 @@ console.log('\n2. o botão alterna, e a escolha fica');
   const a = await medir(pg);
   checa('"›" abre a lateral inteira, com os nomes', !a.recuado && a.lateral >= 230 && a.rotulo === 'Recolher o menu', a);
   const nomes = await pg.evaluate(() => document.querySelector('.app.ag > .aside').innerText);
-  checa('com Hoje, Ensaio e Equipe escritos', /Hoje/.test(nomes) && /Ensaio/.test(nomes) && /Equipe/.test(nomes));
+  checa('com Hoje, Quadro e Equipe escritos (v289: o Ensaio saiu)', /Hoje/.test(nomes) && /Quadro/.test(nomes) && /Equipe/.test(nomes));
   await pg.reload(); await pg.waitForTimeout(2500); await entrar(pg);
   const b = await medir(pg);
   checa('recarregar mantém aberta (a escolha é do aparelho)', !b.recuado && b.lateral >= 230, b);

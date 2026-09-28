@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v288', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v289', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -478,7 +478,7 @@
     const feitos = ck.filter(c => c && c.ok).length;
     const nm = materiais(cli, p.id).length;
     const cp = capa(cli, p.id);
-    return `<article class="qdCard${p.importante ? ' imp' : ''}" data-qdabre="${esc_(key)}" data-qdkey="${esc_(key)}" tabindex="0">
+    return `<article class="qdCard${p.importante ? ' imp' : ''}" data-qdabre="${esc_(key)}" data-qdkey="${esc_(key)}" ${arrastavel()} tabindex="0">
       ${cp ? `<div class="qdCapa" style="background-image:url('${cp.replace(/'/g, '%27')}')"></div>` : ''}
       <div class="qdCTopo">${avCli(cli)}<span class="qdCli">${esc_(cliente(cli).nome)}</span>${cli !== AG && p.fmt ? `<span class="qdFmt">${esc_(p.fmt)}</span>` : ''}</div>
       <div class="qdTit">${esc_(tema(p, cli))}</div>
@@ -763,6 +763,52 @@
     document.body.classList.remove('qdFolhaAberta');
   }
   Q.abrirFolha = abrirFolha; Q.fecharFolha = fecharFolha;
+  /* v289 — ver cada peça e mudar a ordem, na ficha. "Não consigo visualizar
+     o que subiu pro card… não tem mais aquele botão de organizar a ordem…
+     se é vídeo preciso reproduzir." A ordem é a mesma lista (S.mat) que vai
+     ao banco e ao link do cliente. */
+  function moverMaterial(cli, id, i, d){
+    const arr = materiais(cli, id); const j = i + d;
+    if(!arr[i] || !arr[j]) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    salvar(cli); desenharFolha(true); redesenharPagina();
+  }
+  function ordenarMaterialPorNome(cli, id){
+    const arr = materiais(cli, id); if(arr.length < 2) return;
+    arr.sort((a, b) => String((a && a.nome) || '').localeCompare(String((b && b.nome) || ''), 'pt-BR', { numeric: true, sensitivity: 'base' }));
+    salvar(cli); desenharFolha(true); redesenharPagina();
+  }
+  function verPeca(cli, id, i){
+    const ms = materiais(cli, id); if(!ms.length) return fecharVer();
+    i = Math.max(0, Math.min(ms.length - 1, i));
+    Q.ver = { cli, id, i };
+    const m = ms[i] || {};
+    const u = url_(m.url || '');
+    const corpo = m.tipo === 'imagem' && (u || url_(m.capa || '')) ? `<img src="${u || url_(m.capa)}" alt="${esc_(m.nome || '')}">`
+      : m.tipo === 'video' && u ? `<video src="${u}" ${url_(m.capa || m.poster || '') ? `poster="${url_(m.capa || m.poster)}"` : ''} controls playsinline preload="metadata"></video>`
+      : `<div class="qdVerOutro"><p>${esc_(m.nome || (m.tipo === 'link' ? 'Link' : 'Arquivo'))}</p>${u ? `<a class="qdPil" href="${u}" target="_blank" rel="noopener">Abrir ${m.tipo === 'link' ? 'o link' : 'o arquivo'}</a>` : '<p class="qdMut">Ainda não subiu para a nuvem.</p>'}</div>`;
+    let el = document.getElementById('qdVer');
+    if(!el){ el = document.createElement('div'); el.id = 'qdVer'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); document.body.appendChild(el); }
+    el.innerHTML = `<div class="qdVerFundo" data-qdverfechar="1"></div>
+      <div class="qdVerIn"><div class="qdVerTopo"><span>${ms.length > 1 ? `${i + 1} / ${ms.length}` : ''}</span><b>${esc_(m.nome || '')}</b><button type="button" class="qdFechar" data-qdverfechar="1" aria-label="Fechar">×</button></div>
+        <div class="qdVerPalco">${corpo}</div>
+        ${ms.length > 1 ? `<button type="button" class="qdVerSeta ant" data-qdverir="-1" aria-label="Anterior" ${i === 0 ? 'disabled' : ''}>‹</button><button type="button" class="qdVerSeta prox" data-qdverir="1" aria-label="Próxima" ${i === ms.length - 1 ? 'disabled' : ''}>›</button>` : ''}</div>`;
+  }
+  function fecharVer(){ Q.ver = null; const el = document.getElementById('qdVer'); if(el) el.remove(); }
+  Q.verPeca = verPeca; Q.fecharVer = fecharVer;
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('#qdVer [data-qdverfechar], #qdVer [data-qdverir]');
+    if(!b || !Q.ver) return;
+    e.preventDefault(); e.stopPropagation();
+    if(b.dataset.qdverfechar) fecharVer(); else verPeca(Q.ver.cli, Q.ver.id, Q.ver.i + +b.dataset.qdverir);
+  }, true);
+  /* na janela, e não no documento: o Esc da ficha também escuta, e fecharia a ficha junto */
+  window.addEventListener('keydown', e => {
+    if(!Q.ver) return;
+    if(e.key === 'Escape'){ e.preventDefault(); e.stopImmediatePropagation(); fecharVer(); }
+    else if(e.key === 'ArrowLeft' || e.key === 'ArrowRight'){ e.preventDefault(); verPeca(Q.ver.cli, Q.ver.id, Q.ver.i + (e.key === 'ArrowRight' ? 1 : -1)); }
+  }, true);
+
   /* v288 — tudo o que o card tem, na ficha. "Não consigo visualizar o
      conteúdo do card inteiro, só quando clico em Editor completo." O roteiro,
      o corte, as telas do story, as plataformas, a observação: os mesmos
@@ -862,10 +908,12 @@
       <div class="qdFBloco"><h4>Legenda</h4><textarea class="qdIn qdArea" data-qf="legenda" rows="4" placeholder="O texto que vai publicado">${esc_(p.legenda || '')}</textarea></div>
       ${blocosConteudo(p)}
       <div class="qdFBloco"><h4>Material <span>${ms.length || ''}</span></h4>
-        <div class="qdFMat">${ms.slice(0, 12).map(m => {
-          const u = url_(m.tipo === 'imagem' ? (m.url || m.capa) : (m.capa || ''));
-          return `<span class="qdFMatI">${u ? `<img src="${u}" alt="">` : `<i>${esc_(m.tipo === 'video' ? 'vídeo' : m.tipo === 'link' ? 'link' : 'arquivo')}</i>`}</span>`; }).join('')}</div>
-        <div class="qdFMatBts"><button type="button" class="qdPil" data-qdsubir="1">${ic_('clipe', 12)} Subir material</button>
+        ${ms.length > 1 ? `<p class="qdFMatDica">A ordem daqui é a que o cliente vê. Toque numa peça para ver.</p>` : ''}
+        <div class="qdFMat">${ms.map((m, i) => {
+          const u = url_(m.tipo === 'imagem' ? (m.url || m.capa) : (m.capa || m.poster || ''));
+          return `<span class="qdFMatI"><button type="button" class="qdFMatVer" data-qdver="${i}" aria-label="Ver ${esc_(m.nome || 'a peça ' + (i + 1))}" title="${esc_(m.nome || '')}">${u ? `<img src="${u}" alt="" loading="lazy">` : `<i>${esc_(m.tipo === 'video' ? 'vídeo' : m.tipo === 'link' ? 'link' : 'arquivo')}</i>`}${m.tipo === 'video' ? `<b class="qdFMatPlay" aria-hidden="true">▶</b>` : ''}${ms.length > 1 ? `<em>${i + 1}</em>` : ''}</button>
+            ${ms.length > 1 ? `<span class="qdFMatMv"><button type="button" data-qdmv="${i}|-1" aria-label="Uma posição antes" ${i === 0 ? 'disabled' : ''}>‹</button><button type="button" data-qdmv="${i}|1" aria-label="Uma posição depois" ${i === ms.length - 1 ? 'disabled' : ''}>›</button></span>` : ''}</span>`; }).join('')}</div>
+        <div class="qdFMatBts">${ms.length > 1 ? `<button type="button" class="qdPil" data-qdmatnome="1">Ordenar por nome</button>` : ''}<button type="button" class="qdPil" data-qdsubir="1">${ic_('clipe', 12)} Subir material</button>
           <button type="button" class="qdPil" data-qdeditor="1">${ic_('pencil', 12)} Editor completo</button></div>
         <input type="file" id="qdArquivo" multiple hidden></div>`}
       <div class="qdFPe">
@@ -879,7 +927,7 @@
   /* o que, mudando, pede a ficha desenhada de novo. Guardada a cada desenho
      inteiro: sem isso, o primeiro campo gravado depois de trocar o tipo ou
      pôr um trecho redesenhava tudo e tirava o cursor de quem digitava. */
-  const assinaturaFolha = (cli, p) => JSON.stringify([p.check || [], materiais(cli, p.id).length, !!p.ajustePendente, linhas(p, 'tcs'), linhas(p, 'telas'), p.plats || [], tipoDaFolha(p), ehStory(p)]);
+  const assinaturaFolha = (cli, p) => JSON.stringify([p.check || [], materiais(cli, p.id).map(m => (m && (m.url || m.nome)) || '').join('|'), !!p.ajustePendente, linhas(p, 'tcs'), linhas(p, 'telas'), p.plats || [], tipoDaFolha(p), ehStory(p)]);
   function ajustarAltura(t){ t.style.height = 'auto'; t.style.height = Math.min(160, t.scrollHeight) + 'px'; }
   const valorDoCampo = (p, cli, k) => k === 'tema' ? tema(p, cli) : pegar(p, k);
   function atualizarCampos(el, cli, p){
@@ -1068,7 +1116,7 @@
     }
     const px = e.target.closest('[data-qdprox]');
     if(px){ e.stopPropagation(); executar(px.dataset.qdprox, px.dataset.qdacao, px); return; }
-    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax]');
+    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome]');
     if(!e.target.closest('#qdPop')) document.getElementById('qdPop')?.remove();
     if(!alvo) return;
     const d = alvo.dataset;
@@ -1111,6 +1159,9 @@
     if(d.qdck){ const p = achar(cli, id); if(!p) return; mudar(cli, id, { check: (p.check || []).map(c => c.id === d.qdck ? Object.assign({}, c, { ok: !c.ok }) : c) }); desenharFolha(true); redesenharPagina(); return; }
     if(d.qdckx){ const p = achar(cli, id); if(!p) return; mudar(cli, id, { check: (p.check || []).filter(c => c.id !== d.qdckx) }); desenharFolha(true); redesenharPagina(); return; }
     if(d.qdtipo){ Q.folhaTipo = { key, t: d.qdtipo }; desenharFolha(true); return; }
+    if(d.qdver !== undefined){ verPeca(cli, id, +d.qdver); return; }
+    if(d.qdmv){ const [i, dd] = d.qdmv.split('|'); moverMaterial(cli, id, +i, +dd); return; }
+    if(d.qdmatnome){ ordenarMaterialPorNome(cli, id); return; }
     if(d.qdplat){ const p = achar(cli, id); if(!p) return; const on = new Set(Array.isArray(p.plats) ? p.plats : []); on.has(d.qdplat) ? on.delete(d.qdplat) : on.add(d.qdplat);
       mudar(cli, id, { plats: [...on] }); desenharFolha(true); redesenharPagina(); return; }
     if(d.qdtcmais){ const p = achar(cli, id); if(p) porMais('tcs', mais('tcs') + 1); desenharFolha(true); return; }
@@ -1583,6 +1634,27 @@
   .qdIn{ font:inherit; font-size:14px; color:var(--tx, #fff); background:var(--sup, rgba(255,255,255,.06)); border:0; border-radius:10px; padding:8px 10px; min-height:36px; box-sizing:border-box; width:100% }
   .qdArea{ resize:vertical; line-height:1.45 }
   .qdFBloco{ margin:0 0 16px }
+  .qdFMatDica{ margin:0 0 8px; font-size:12px; color:var(--mut, #999) }
+  .qdFMatI{ display:flex; flex-direction:column; align-items:center; gap:3px }
+  .qdFMatVer{ position:relative; display:block; padding:0; border:0; background:none; cursor:zoom-in; border-radius:10px; overflow:hidden; font:inherit; color:inherit }
+  .qdFMatVer img{ display:block }
+  .qdFMatPlay{ position:absolute; inset:0; display:grid; place-items:center; font-size:16px; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.6); pointer-events:none }
+  .qdFMatVer em{ position:absolute; left:4px; top:4px; min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:rgba(0,0,0,.6); color:#fff; font-size:10px; font-style:normal; font-weight:600; line-height:16px; text-align:center }
+  .qdFMatMv{ display:flex; gap:2px }
+  .qdFMatMv button{ border:0; background:var(--sup, rgba(255,255,255,.06)); color:var(--tx, #fff); width:26px; height:22px; border-radius:7px; cursor:pointer; font-size:14px; line-height:1 }
+  .qdFMatMv button:disabled{ opacity:.3; cursor:default }
+  #qdVer{ position:fixed; inset:0; z-index:1200; display:grid; place-items:center }
+  .qdVerFundo{ position:absolute; inset:0; background:rgba(0,0,0,.82) }
+  .qdVerIn{ position:relative; width:min(92vw, 900px); max-height:92dvh; display:flex; flex-direction:column; gap:10px }
+  .qdVerTopo{ display:flex; align-items:center; gap:10px; color:#fff; font-size:13px }
+  .qdVerTopo b{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; opacity:.8 }
+  .qdVerTopo .qdFechar{ color:#fff }
+  .qdVerPalco{ display:grid; place-items:center; min-height:0 }
+  .qdVerPalco img, .qdVerPalco video{ max-width:100%; max-height:calc(92dvh - 60px); border-radius:12px; background:#000; display:block }
+  .qdVerOutro{ background:#1C1C1F; color:#fff; padding:28px; border-radius:14px; text-align:center }
+  .qdVerSeta{ position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:50%; border:0; background:rgba(255,255,255,.14); color:#fff; font-size:24px; cursor:pointer }
+  .qdVerSeta.ant{ left:-6px } .qdVerSeta.prox{ right:-6px }
+  .qdVerSeta:disabled{ opacity:.25; cursor:default }
   .qdFCampo{ display:block; font-size:12px; color:var(--mut, #999); margin:10px 0 0 }
   .qdFCampo > .qdIn{ margin-top:5px; display:block }
   .qdFTipos, .qdFPlats{ display:flex; flex-wrap:wrap; gap:6px }
@@ -1600,8 +1672,8 @@
   .qdFCkL span{ flex:1 }
   .qdX{ border:0; background:transparent; color:var(--mut, #888); font-size:17px; cursor:pointer; width:28px; height:28px; border-radius:50% }
   .qdFMat{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px }
-  .qdFMatI{ width:64px; height:64px; border-radius:10px; overflow:hidden; background:var(--sup2, #333); display:grid; place-items:center; font-size:11px; color:var(--mut, #aaa) }
-  .qdFMatI img{ width:100%; height:100%; object-fit:cover }
+  .qdFMatVer{ width:64px; height:64px; background:var(--sup2, #333); display:grid; place-items:center; font-size:11px; color:var(--mut, #aaa) }
+  .qdFMatVer img{ width:100%; height:100%; object-fit:cover }
   .qdFMatBts{ display:flex; gap:6px; flex-wrap:wrap }
   .qdFPe{ display:flex; gap:8px; align-items:center; border-top:1px solid var(--qdl); padding-top:14px; margin-top:6px; font-size:13.5px }
   #qdPop{ position:fixed; z-index:930; background:var(--sup2, #2a2a2e); border-radius:14px; padding:6px; box-shadow:0 12px 40px rgba(0,0,0,.4); min-width:200px; max-height:60vh; overflow:auto }

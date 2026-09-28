@@ -41,12 +41,19 @@ async function abrir(caminho, vp){
 
 /* ---------- 1. abrir direto num endereço ---------- */
 {
-  const { pag, erros } = await abrir('/ensaio');
+  const { pag, erros } = await abrir('/quadro');
   const st = await pag.evaluate(() => ({ view:S.view, route:S.route, url:location.pathname }));
-  checa('1.1 abrir /ensaio cai no Ensaio, não na home',
+  checa('1.1 abrir /quadro cai no Quadro, não na home',
         st.view === 'agency' && st.route === 'producao', st);
-  checa('1.2 e o endereço continua /ensaio', st.url === '/ensaio', st);
+  checa('1.2 e o endereço continua /quadro', st.url === '/quadro', st);
   checa('1.3 sem erro de página', erros.length === 0, erros.slice(0, 3));
+  await pag.close();
+}
+{
+  /* v289: o Ensaio saiu; o endereço antigo guardado ainda abre o Quadro */
+  const { pag } = await abrir('/ensaio');
+  const st = await pag.evaluate(() => ({ route:S.route, url:location.pathname }));
+  checa('1.4 o /ensaio antigo abre o Quadro e o endereço vira /quadro', st.route === 'producao' && st.url === '/quadro', st);
   await pag.close();
 }
 {
@@ -90,13 +97,13 @@ async function abrir(caminho, vp){
   const a = await pag.evaluate(() => location.pathname);
   await pag.evaluate(() => go('agency', 'clientes')); await pag.waitForTimeout(300);
   const b = await pag.evaluate(() => location.pathname);
-  checa('2.1 cada tela escreve o seu endereço', a === '/ensaio' && b === '/clientes', { a, b });
+  checa('2.1 cada tela escreve o seu endereço', a === '/quadro' && b === '/clientes', { a, b });
   await pag.goBack();
   await pag.waitForFunction(() => typeof S !== 'undefined' && typeof render === 'function');
   await pag.waitForTimeout(600);
   const volta = await pag.evaluate(() => ({ route:S.route, url:location.pathname }));
   checa('2.2 o voltar do navegador volta uma tela, sem recarregar',
-        volta.route === 'producao' && volta.url === '/ensaio', volta);
+        volta.route === 'producao' && volta.url === '/quadro', volta);
   await pag.goForward();
   await pag.waitForFunction(() => typeof S !== 'undefined' && typeof render === 'function');
   await pag.waitForTimeout(600);

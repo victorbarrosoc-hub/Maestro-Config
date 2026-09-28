@@ -150,6 +150,14 @@
       "destination": "/web/index.html"
     },
     {
+      "source": "/quadro",
+      "destination": "/web/index.html"
+    },
+    {
+      "source": "/quadro/(.*)",
+      "destination": "/web/index.html"
+    },
+    {
       "source": "/ensaio",
       "destination": "/web/index.html"
     },
@@ -428,6 +436,24 @@
     },
     {
       "source": "/clientes/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate, max-age=0"
+        }
+      ]
+    },
+    {
+      "source": "/quadro",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate, max-age=0"
+        }
+      ]
+    },
+    {
+      "source": "/quadro/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

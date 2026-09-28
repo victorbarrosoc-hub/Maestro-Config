@@ -70,8 +70,9 @@ const est = Object.fromEntries(g.estados.map(([t, s]) => [t, String(s).replace(/
 checa('cada post diz o estado: Aprovar · Aprovado · No ar',
       est['Texto com o cliente'] === 'Aprovar' && est['Peça com o cliente'] === 'Aprovar'
       && est['Aprovado antes'] === 'Aprovado' && est['Já no ar'] === 'No ar', est);
-checa('só é botão o que espera decisão (aprovado e no ar não fingem ser tocáveis)',
-      g.estados.every(([t, s, tag]) => (s === 'Aprovar') === (tag === 'BUTTON')), g.estados);
+/* v289: "não to conseguindo clicar em nenhum post desse, só no que tá esperando aprovação" — todo post abre */
+checa('todo post é tocável: o que espera leva à decisão, os outros abrem a publicação',
+      g.estados.every(([t, s, tag]) => tag === 'BUTTON'), g.estados);
 checa('as contas do perfil batem: 5 publicações · 3 para você · 2 aprovadas',
       /5 publicações/.test(g.nums) && /3 para você/.test(g.nums) && /2 aprovadas/.test(g.nums), g.nums);
 checa('a lista de sempre continua lá, embaixo do perfil', g.lista >= 3 && g.perfilAntesDaLista, g);

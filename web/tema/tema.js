@@ -19,7 +19,7 @@
 (function(){
   'use strict';
   if(window.MaestroTema) return;
-  const T = window.MaestroTema = { versao: 'v288' };
+  const T = window.MaestroTema = { versao: 'v289' };
 
   const LUZ = 'maestro-luz-v1';
   const claro = () => document.documentElement.getAttribute('data-tema') === 'claro';
@@ -109,6 +109,9 @@
   html[data-tema="claro"] .sv .sPasso, html[data-tema="claro"] .sv .sTile, html[data-tema="claro"] .sv .price{ box-shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px -12px rgba(40,30,10,.12) }
   html[data-tema="claro"] .sv .seg button.on{ background:#FFC857 !important; color:#1C1C1F !important }
 
+  /* v289 — o Início do cliente: sem a explicação (v251), o botão subia para baixo
+     do anel. A linha do número tem a altura do anel e deixa o canto dele livre. */
+  .cl .batidaCard .n{ min-height:64px; padding-right:80px; margin-bottom:12px; display:flex; align-items:center; box-sizing:border-box }
   /* v286 — o método na vitrine são as oito colunas do Quadro: quatro por linha no computador */
   @media(min-width:861px){ .sv .sPassos{ grid-template-columns:repeat(4, 1fr) } }
   :root .sv .sVoltas em:first-child{ background:rgba(255,255,255,.07); color:inherit }

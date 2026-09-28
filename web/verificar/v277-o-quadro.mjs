@@ -563,6 +563,59 @@ console.log('\n  — 16. a ficha mostra o card inteiro (v288) —');
   await Q(A, () => MaestroQuadro.fecharFolha());
 }
 
+console.log('\n  — 17. arrastar com o mouse, no computador (v289) —');
+{
+  await Q(A, () => { MaestroQuadro.fecharFolha(); MaestroQuadro.aba = 'quadro'; MaestroQuadro.filtroCli = 'todos'; MaestroQuadro.pessoa = null; render(); });
+  const alvo = await Q(A, () => { const c = [...document.querySelectorAll('#root .qdCol[data-qdcol="afazer"] .qdCard, #root .qdCol[data-qdcol="pauta"] .qdCard')][0]; return c ? { key: c.dataset.qdkey, drag: c.getAttribute('draggable') } : null; });
+  checa('17.1 o card do Quadro pode ser pego com o mouse (antes: só as linhas do calendário)', alvo && alvo.drag === 'true', alvo);
+  if(alvo){
+    await A.pag.locator(`#root .qdCard[data-qdkey="${alvo.key}"]`).dragTo(A.pag.locator('#root .qdCol[data-qdcol="fazendo"]'));
+    await esperar(1200);
+    const [c, i] = alvo.key.split('|');
+    const r = await Q(A, ([c, i]) => ({ col: MaestroQuadro.colunaDe(S.pautas[c].find(p => +p.id === +i)), folha: !!document.getElementById('qdFolha') }), [c, i]);
+    checa('17.2 arrastar até "Fazendo" move o card, sem abrir a ficha', r.col === 'fazendo' && !r.folha, r);
+    checa('17.3 e vai para o banco', noBanco(c, i).dados.coluna === 'fazendo', noBanco(c, i).dados.coluna);
+  }
+}
+
+console.log('\n  — 18. ver cada peça e mudar a ordem, na ficha (v289) —');
+{
+  const ordemNoBanco = () => (doBanco(`select coalesce(jsonb_agg(dados->>'nome' order by posicao), '[]'::jsonb) from public.card_midias where org='maestro' and cliente='cj' and card_id=601 and tipo='mat' and apagado_em is null`) || []).join();
+  await Q(A, async () => { MaestroQuadro.fecharFolha(); S.mat = S.mat || {};
+    S.mat['cj|601'] = [{ tipo: 'imagem', nome: 'tela10.png', nuvem: true, url: location.origin + '/web/img/vitrine-cliente-600.webp' },
+      { tipo: 'imagem', nome: 'tela2.png', nuvem: true, url: location.origin + '/web/img/vitrine-fone-860.webp' },
+      { tipo: 'video', nome: 'corte.mp4', nuvem: true, url: 'https://exemplo.invalid/corte.mp4' }];
+    return Sincro.gravar('cj', true); });
+  await ate(A, async () => ordemNoBanco() === 'tela10.png,tela2.png,corte.mp4', 6000);
+  checa('18.0 as três peças estão no banco, na ordem em que subiram', ordemNoBanco() === 'tela10.png,tela2.png,corte.mp4', ordemNoBanco());
+  await Q(A, () => MaestroQuadro.abrirFolha('cj|601'));
+  await esperar(250);
+  const g = await Q(A, () => { const f = document.getElementById('qdFolha');
+    return { n: f.querySelectorAll('[data-qdver]').length, nums: [...f.querySelectorAll('.qdFMatVer em')].map(e => e.textContent).join(), play: f.querySelectorAll('.qdFMatPlay').length,
+      setas: f.querySelectorAll('[data-qdmv]').length, porNome: !!f.querySelector('[data-qdmatnome]') }; });
+  checa('18.1 todas as peças na ficha, numeradas, com o vídeo marcado, setas de ordem e "Ordenar por nome"', g.n === 3 && g.nums === '1,2,3' && g.play === 1 && g.setas === 6 && g.porNome, g);
+  await A.pag.click('#qdFolha [data-qdver="2"]');
+  await esperar(200);
+  const v = await Q(A, () => { const el = document.getElementById('qdVer'); const vd = el && el.querySelector('video');
+    return { aberto: !!el, video: !!vd, controles: vd && vd.controls, src: vd && vd.getAttribute('src'), conta: el && el.querySelector('.qdVerTopo span').textContent, prox: el && el.querySelector('[data-qdverir="1"]').disabled }; });
+  checa('18.2 tocar no vídeo abre a peça grande, com o vídeo pronto para tocar (controles)', v.aberto && v.video && v.controles && /corte\.mp4/.test(v.src) && v.conta === '3 / 3' && v.prox, v);
+  await A.pag.click('#qdVer [data-qdverir="-1"]');
+  const img = await Q(A, () => { const el = document.getElementById('qdVer'); const i = el.querySelector('.qdVerPalco img'); return { img: !!i, conta: el.querySelector('.qdVerTopo span').textContent }; });
+  await A.pag.keyboard.press('Escape');
+  const fechou = await Q(A, () => !document.getElementById('qdVer') && !!document.getElementById('qdFolha'));
+  checa('18.3 a seta passa para a peça anterior (imagem), e Esc fecha só a peça', img.img && img.conta === '2 / 3' && fechou, { img, fechou });
+  await A.pag.click('#qdFolha [data-qdmv="0|1"]');
+  await ate(A, async () => ordemNoBanco() === 'tela2.png,tela10.png,corte.mp4', 6000);
+  checa('18.4 a seta muda a ordem, e a ordem vai para o banco (é a que o cliente vê)', ordemNoBanco() === 'tela2.png,tela10.png,corte.mp4', ordemNoBanco());
+  await A.pag.click('#qdFolha [data-qdmv="2|-1"]');
+  await A.pag.click('#qdFolha [data-qdmatnome]');
+  await ate(A, async () => ordemNoBanco() === 'corte.mp4,tela2.png,tela10.png', 6000);
+  checa('18.5 "Ordenar por nome" põe tela2 antes de tela10', ordemNoBanco() === 'corte.mp4,tela2.png,tela10.png', ordemNoBanco());
+  const msB = await ate(B, async () => (await Q(B, () => ((S.mat || {})['cj|601'] || []).map(m => m.nome).join())) === 'corte.mp4,tela2.png,tela10.png', 6000);
+  checa('18.6 e o outro aparelho recebe a ordem nova', msB >= 0, msB);
+  await Q(A, () => MaestroQuadro.fecharFolha());
+}
+
 console.log('\n  — 12. recarregar: o que está no banco é o que se vê —');
 {
   const antes = await Q(A, () => MaestroQuadro.todos().map(x => x.cli + '|' + x.p.id + ':' + x.col).sort());
