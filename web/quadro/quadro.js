@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v279', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v280', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -56,6 +56,17 @@
     ['publicado', 'Publicado',     '#98989D'],
   ];
   const COL = Object.fromEntries(COLS.map(([k, n, c]) => [k, { k, n, c }]));
+  /* uma linha que diz o que o card faz ali — quem abre pela primeira vez entende sem perguntar */
+  const DESC = {
+    pauta: 'Ideias sem responsável. Escolha quem faz.',
+    afazer: 'Tem dono e prazo. Ainda não começou.',
+    fazendo: 'Em produção agora.',
+    revisao: 'Alguém da casa confere antes do cliente.',
+    cliente: 'No link do cliente, esperando a decisão.',
+    aprovado: 'O cliente aprovou. Falta agendar.',
+    agendado: 'Programado para ir ao ar.',
+    publicado: 'No ar.' };
+  Q.DESC = DESC;
   const PENDENTES = ['pauta', 'afazer', 'fazendo'];
   const FORMATOS = ['Post', 'Carrossel', 'Reels', 'Story', 'Shorts', 'Vídeo', 'Artigo', 'Tarefa'];
 
@@ -392,6 +403,51 @@
   }
   Q.atualizarNome = atualizarNome;
 
+  /* ---------------- o próximo passo de cada coluna ----------------
+     Não é trava: é um atalho para mover. Arrastar continua valendo. */
+  const revisores = () => pessoas().filter(x => { try{ return typeof podeMembro === 'function' ? podeMembro(x.m, 'revisar') : /admin|gestor|revisor/i.test(x.m.papel || ''); }catch(e){ return false; } });
+  Q.revisores = revisores;
+  function diasDesde(t){ if(!t) return null; const d = Math.floor((Date.now() - +t) / 864e5); return d < 0 ? 0 : d; }
+  function proximo(cli, p, col){
+    const ag = cli === AG;
+    switch(col){
+      case 'pauta': return { bts: [['atribuir', 'Atribuir']] };
+      case 'afazer': return { bts: [['fazendo', 'Começar']] };
+      case 'fazendo': return { bts: [['revisao', 'Mandar para revisão']] };
+      case 'revisao': return { bts: ag ? [['publicado', 'Concluir'], ['devolver', 'Devolver']] : [['cliente', 'Enviar ao cliente'], ['devolver', 'Devolver']] };
+      case 'cliente': { const d = diasDesde(p.faseEm); return { info: 'Aguardando o cliente' + (d == null ? '' : d === 0 ? ' · desde hoje' : d === 1 ? ' · há 1 dia' : ` · há ${d} dias`) }; }
+      case 'aprovado': return { bts: [['agendar', 'Agendar']] };
+      case 'agendado': return { bts: [['publicado', 'Publiquei']] };
+      default: return null;
+    }
+  }
+  function blocoProximo(key, cli, p, col, cls){
+    const px = proximo(cli, p, col); if(!px) return '';
+    if(px.info) return `<div class="${cls || 'qdProx'}"><span class="qdProxInfo">${esc_(px.info)}</span></div>`;
+    return `<div class="${cls || 'qdProx'}">${px.bts.map(([a, r], i) => `<button type="button" class="${i ? 'qdProxSec' : 'qdProxBt'}" data-qdprox="${esc_(key)}" data-qdacao="${a}">${esc_(r)}${i ? '' : ' →'}</button>`).join('')}</div>`;
+  }
+  function executar(key, acao, bt){
+    const [cli, id] = key.split('|');
+    const p = achar(cli, id); if(!p) return;
+    const col = colunaDe(p);
+    if(acao === 'atribuir'){ popResp(bt, key); return; }
+    if(acao === 'agendar' && !p.data && cli !== AG){
+      /* sem data de publicação não dá para agendar: abre a ficha no campo */
+      abrirFolha(key);
+      setTimeout(() => { const c = document.querySelector('#qdFolha [data-qf="data"]'); if(c){ c.focus(); c.scrollIntoView({ block: 'center' }); c.classList.add('qdPede'); } }, 60);
+      return;
+    }
+    const destino = acao === 'devolver' ? 'fazendo' : acao === 'agendar' ? 'agendado' : acao;
+    if(!COL[destino]) return;
+    if(PENDENTES.includes(col) && (destino === 'revisao' || destino === 'publicado') && p.resp) mudar(cli, id, { feitoEm: Date.now(), feitoPor: p.resp });
+    else if(PENDENTES.includes(destino) && p.feitoEm) mudar(cli, id, { feitoEm: null, feitoPor: null });
+    mover(cli, id, destino);
+    try{ if(typeof som === 'function') som(destino === 'fazendo' && acao === 'devolver' ? 'ajuste' : 'toque'); }catch(e){}
+    if(Q.folha === key) desenharFolha(true);
+    redesenharPagina();
+  }
+  Q.executar = executar;
+
   /* ---------------- desenho ---------------- */
   function avCli(cli, cls){
     if(cli === AG) return `<span class="${cls || 'qdAvC'} qdAvAg" aria-hidden="true">AG</span>`;
@@ -427,14 +483,16 @@
       <div class="qdCTopo">${avCli(cli)}<span class="qdCli">${esc_(cliente(cli).nome)}</span>${cli !== AG && p.fmt ? `<span class="qdFmt">${esc_(p.fmt)}</span>` : ''}</div>
       <div class="qdTit">${esc_(tema(p, cli))}</div>
       ${p.ajustePendente ? `<div class="qdAjuste">Ajuste pedido pelo cliente</div>` : ''}
+      ${col === 'revisao' && revisores().length ? `<div class="qdRevisa"><span>Revisa</span>${revisores().slice(0, 3).map(x => avPes(x.id, 'qdAvP mini')).join('')}<em>${esc_(revisores().slice(0, 2).map(x => String(x.n).split(/\s+/)[0]).join(', '))}${revisores().length > 2 ? '…' : ''}</em></div>` : ''}
       <div class="qdMeta">
         ${chipPrazo(p, col)}
         ${p.data && cli !== AG ? `<span class="qdChip" title="Publica em">${ic_('cal', 11)}${esc_(ddmm(p.data))}</span>` : ''}
         ${ck.length ? `<span class="qdChip ${feitos === ck.length ? 'ok' : ''}" title="Checklist">${ic_('checkc', 11)}${feitos}/${ck.length}</span>` : ''}
         ${nm ? `<span class="qdChip" title="Material">${ic_('clipe', 11)}${nm}</span>` : ''}
         <span class="qdSp"></span>
-        <button type="button" class="qdResp" data-qdresp="${esc_(key)}" aria-label="${p.resp ? 'Responsável: ' + esc_((pessoa(p.resp) || {}).n || p.resp) : 'Escolher quem faz'}">${avPes(p.resp)}</button>
+        ${!p.resp && col === 'pauta' ? '' : `<button type="button" class="qdResp" data-qdresp="${esc_(key)}" aria-label="${p.resp ? 'Responsável: ' + esc_((pessoa(p.resp) || {}).n || p.resp) : 'Escolher quem faz'}">${avPes(p.resp)}</button>`}
       </div>
+      ${blocoProximo(key, cli, p, col)}
     </article>`;
   }
 
@@ -460,6 +518,7 @@
     </div>`;
     const colunas = COLS.map(([k, n, c]) => `<section class="qdCol" data-qdcol="${k}" style="--qdc:${c}">
         <header class="qdColHd"><i></i><b>${n}</b><span>${porCol[k].length}</span></header>
+        <p class="qdColDesc">${DESC[k]}</p>
         <div class="qdColCorpo">${porCol[k].map(cartao).join('') || `<p class="qdVazio">${k === 'pauta' ? 'Tudo distribuído.' : ''}</p>`}</div>
         <div class="qdAdd" data-qdaddwrap="${k}">
           <button type="button" class="qdAddBt" data-qdadd="${k}">+ Adicionar</button>
@@ -469,6 +528,7 @@
     const abas = COLS.map(([k, n, c]) => `<button type="button" class="qdAbaCol ${Q.colMovel === k ? 'on' : ''}" data-qdcolmovel="${k}" style="--qdc:${c}">${n} <span>${porCol[k].length}</span></button>`).join('');
     return `${filtroP}
       <div class="qdAbasCol" role="tablist" aria-label="Colunas">${abas}</div>
+      <p class="qdColDescM">${DESC[Q.colMovel] || ''}</p>
       <div class="qdQuadro" data-colmovel="${Q.colMovel || 'pauta'}">${colunas}</div>`;
   }
 
@@ -499,6 +559,16 @@
       </div>
     </div>`;
   }
+  function linhaRevisar(x){
+    const { cli, p } = x; const key = cli + '|' + p.id;
+    return `<div class="qdLin" data-qdkey="${esc_(key)}">
+      <div class="qdLinTxt" data-qdabre="${esc_(key)}" role="button" tabindex="0">
+        <div class="qdLinTit">${esc_(tema(p, cli))}</div>
+        <div class="qdLinMeta"><span>${esc_(cliente(cli).nome)}${cli !== AG && p.fmt ? ' · ' + esc_(p.fmt) : ''}</span>${p.resp ? `<span>feito por ${esc_(primeiroNome(p.resp))}</span>` : ''}</div>
+        ${blocoProximo(key, cli, p, 'revisao', 'qdProx qdProxLin')}
+      </div>
+    </div>`;
+  }
   function grupos(pend){
     const h = hoje(), am = soma(h, 1), fimSem = soma(inicioSemana(), 6);
     const G = [['atrasadas', 'Atrasadas', []], ['hoje', 'Hoje', []], ['amanha', 'Amanhã', []], ['semana', 'Esta semana', []], ['depois', 'Depois', []], ['sem', 'Sem prazo', []]];
@@ -521,6 +591,8 @@
     const pid = Q.pessoa || eu();
     const quem = pessoa(pid);
     const { pend, feitasSemana } = listaDaPessoa(pid);
+    const souRevisor = revisores().some(x => x.id === pid);
+    const paraRevisar = souRevisor ? todos().filter(x => x.col === 'revisao') : [];
     const h = hoje(), fimSem = soma(inicioSemana(), 6);
     const daSemana = pend.filter(x => prazoDe(x.p) && prazoDe(x.p) <= fimSem).length;
     const total = feitasSemana.length + daSemana;
@@ -555,8 +627,8 @@
     else if(Q.sub === 'listas') corpo = subListas(pend);
     else{
       const G = grupos(pend).filter(g => g[2].length);
-      corpo = G.map(([k, n, l]) => `<h3 class="qdGrupo ${k}">${n} <span>${l.length}</span></h3><div class="qdCaixa">${l.map(x => linha(x, false)).join('')}</div>`).join('')
-        || `<p class="qdNada">Nada para fazer por aqui. ${souEu ? 'Escreva acima o que vem pela frente.' : ''}</p>`;
+      corpo = (paraRevisar.length ? `<h3 class="qdGrupo revisar">Para revisar <span>${paraRevisar.length}</span></h3><div class="qdCaixa">${paraRevisar.map(linhaRevisar).join('')}</div>` : '') + G.map(([k, n, l]) => `<h3 class="qdGrupo ${k}">${n} <span>${l.length}</span></h3><div class="qdCaixa">${l.map(x => linha(x, false)).join('')}</div>`).join('')
+        || (paraRevisar.length ? '' : `<p class="qdNada">Nada para fazer por aqui. ${souEu ? 'Escreva acima o que vem pela frente.' : ''}</p>`);
       if(feitasSemana.length){
         corpo += `<details class="qdFeitas" ${Q.feitasAberto ? 'open' : ''} data-qdfeitas="1"><summary>${ic_('checkc', 13)} Concluídas nesta semana <span>${feitasSemana.length}</span></summary>
           <div class="qdCaixa">${feitasSemana.sort((a, b) => (b.p.feitoEm || 0) - (a.p.feitoEm || 0)).map(x => linha(x, true)).join('')}</div></details>`;
@@ -660,7 +732,7 @@
   function pagina(){
     if(!Q.aba) Q.aba = abaPadrao();
     if(!Q.pessoa || !pessoa(Q.pessoa)) Q.pessoa = eu() || (pessoas()[0] || {}).id || null;
-    const n = listaDaPessoa(eu()).pend.length;
+    const n = listaDaPessoa(eu()).pend.length + (revisores().some(x => x.id === eu()) ? todos().filter(x => x.col === 'revisao').length : 0);
     const abas = [['quadro', 'Quadro', 'kanban'], ['lista', 'Minha lista', 'checkc'], ['calendario', 'Calendário', 'cal']];
     const corpo = Q.aba === 'lista' ? vistaLista() : Q.aba === 'calendario' ? vistaCalendario() : vistaQuadro();
     return `<div class="qdPagina" data-qdaba="${Q.aba}">
@@ -711,6 +783,7 @@
       ${ehAg ? '' : `<p class="qdFNome">${segueOPadrao(p, cli) ? `Nome: <b data-qdfnome="1">${esc_(p.t)}</b>` : `Fora do padrão. <button type="button" class="qdPil" data-qdpadrao="1">Padronizar: ${esc_(titulo(cli, p.fmt || 'Post', limparTema(tema(p, cli), p.fmt)))}</button>`}</p>`}
       <div class="qdFCols" role="group" aria-label="Coluna">${COLS.filter(([k]) => !ehAg || !['cliente', 'aprovado', 'agendado'].includes(k)).map(([k, n, c]) =>
         `<button type="button" class="qdFCol ${col === k ? 'on' : ''}" style="--qdc:${c}" data-qdfcol="${k}">${ehAg && k === 'publicado' ? 'Feito' : n}</button>`).join('')}</div>
+      ${(() => { const b = blocoProximo(Q.folha, cli, p, col, 'qdProx qdFProx'); return b ? `<div class="qdFProxL"><span>Próximo passo</span>${b}</div>` : ''; })()}
       ${p.ajustePendente ? `<div class="qdFAjuste"><b>O cliente pediu ajuste</b>${(Array.isArray(p.alteracoes) ? p.alteracoes : []).slice(-1).map(a => `<p>${esc_(a.oque || '')}${a.por ? ` <span class="qdMut">— ${esc_(a.por)}</span>` : ''}</p>`).join('')}
         <button type="button" class="qdPil" data-qdajok="1">Ajuste feito</button></div>` : ''}
       <div class="qdFGrade">
@@ -781,6 +854,7 @@
         const tm = tema(p, cli);
         mudar(cli, id, { fmt: v, t: segueOPadrao(p, cli) ? titulo(cli, v, tm) : p.t });
       } else if(k === 'data'){
+        c.classList.remove('qdPede');
         mudar(cli, id, v ? { data: v, dia: (doISO(v).getDay() + 6) % 7, hora: p.hora || '18:30' } : { data: null });
       } else if(k === 'resp'){
         const col = colunaDe(p);
@@ -920,6 +994,8 @@
       const c = f.querySelector('input[type=text], textarea'); if(c) c.focus();
       return;
     }
+    const px = e.target.closest('[data-qdprox]');
+    if(px){ e.stopPropagation(); executar(px.dataset.qdprox, px.dataset.qdacao, px); return; }
     const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel]');
     if(!e.target.closest('#qdPop')) document.getElementById('qdPop')?.remove();
     if(!alvo) return;
@@ -1218,6 +1294,22 @@
   .qdColHd i{ width:9px; height:9px; border-radius:50%; background:var(--qdc) }
   .qdColHd span{ color:var(--mut, #999); font-size:12.5px }
   .qdColCorpo{ display:flex; flex-direction:column; gap:8px; min-height:8px }
+  .qdColDesc{ margin:-6px 4px 10px; font-size:12px; color:var(--mut, #999); line-height:1.35 }
+  .qdColDescM{ display:none }
+  .qdProx{ display:flex; gap:6px; margin-top:9px; flex-wrap:wrap }
+  .qdProxBt{ border:0; font:inherit; font-size:12.5px; font-weight:600; padding:6px 11px; border-radius:999px; background:var(--sup2, rgba(255,255,255,.1)); color:var(--tx, #fff); cursor:pointer; min-height:30px }
+  .qdProxBt:hover{ background:var(--tx, #fff); color:var(--bg, #111) }
+  .qdProxSec{ border:0; font:inherit; font-size:12.5px; padding:6px 10px; border-radius:999px; background:transparent; color:var(--mut, #aaa); cursor:pointer; min-height:30px }
+  .qdProxSec:hover{ color:var(--tx, #fff) }
+  .qdProxInfo{ font-size:12px; color:var(--coral, #FF9F0A) }
+  .qdRevisa{ display:flex; align-items:center; gap:4px; font-size:11.5px; color:var(--mut, #999); margin:-2px 0 8px }
+  .qdRevisa span{ margin-right:2px }
+  .qdRevisa em{ font-style:normal; margin-left:3px }
+  .qdGrupo.revisar{ color:#BF5AF2 }
+  .qdProxLin{ margin-top:8px }
+  .qdFProxL{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:-4px 0 14px; font-size:12px; color:var(--mut, #999) }
+  .qdFProxL .qdProx{ margin:0 }
+  .qdPede{ outline:2px solid var(--coral, #FF9F0A) !important }
   .qdVazio{ color:var(--mut, #999); font-size:12.5px; margin:4px; min-height:4px }
   .qdCard{ background:var(--bg, #1c1c1f); border-radius:12px; padding:10px 11px; cursor:pointer; box-shadow:0 1px 0 var(--qdl); outline:none }
   .qdCard:focus-visible{ outline:2px solid var(--cobalt, #5B8DEF) }
@@ -1396,7 +1488,8 @@
     .qdQuadro[data-colmovel="fazendo"] .qdCol[data-qdcol="fazendo"], .qdQuadro[data-colmovel="revisao"] .qdCol[data-qdcol="revisao"],
     .qdQuadro[data-colmovel="cliente"] .qdCol[data-qdcol="cliente"], .qdQuadro[data-colmovel="aprovado"] .qdCol[data-qdcol="aprovado"],
     .qdQuadro[data-colmovel="agendado"] .qdCol[data-qdcol="agendado"], .qdQuadro[data-colmovel="publicado"] .qdCol[data-qdcol="publicado"]{ display:block }
-    .qdQuadro .qdColHd{ display:none }
+    .qdQuadro .qdColHd, .qdQuadro .qdColDesc{ display:none }
+    .qdColDescM{ display:block; margin:-4px 0 12px; font-size:12.5px; color:var(--mut, #999) }
     .qdCard{ background:var(--sup, rgba(255,255,255,.05)) }
     .qdOla h2{ font-size:28px }
     .qdEntrada input{ font-size:16px }

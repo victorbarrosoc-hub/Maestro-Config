@@ -580,6 +580,64 @@ console.log('\n  — 14. o padrão do nome, na hora de criar —');
   checa('14.9 o "+ Adicionar" das colunas mostra o mesmo padrão', r5 === 'EJUP · Story · Enquete', r5);
 }
 
+console.log('\n  — 15. o ciclo: cada card diz o próximo passo —');
+{
+  await Q(A, () => { MaestroQuadro.fecharFolha(); MaestroQuadro.aba = 'quadro'; MaestroQuadro.filtroCli = 'todos'; MaestroQuadro.filtroPessoa = 'todos'; render(); });
+  const desc = await Q(A, () => [...document.querySelectorAll('.qdCol .qdColDesc')].map(x => x.textContent.trim()).filter(Boolean).length);
+  checa('15.1 toda coluna tem a linha que diz o que o card faz ali', desc === 8, desc);
+  const id = await Q(A, () => { const x = MaestroQuadro.criarDoTexto('ciclo inteiro #cortez', { coluna: 'pauta' }); render(); return x.p.id; });
+  const key = 'cj|' + id;
+  const bt = async () => Q(A, (key) => [...document.querySelectorAll(`[data-qdkey="${key}"] [data-qdprox]`)].map(b => b.dataset.qdacao + ':' + b.textContent.trim()), key);
+  const col = async () => Q(A, ([c, i]) => MaestroQuadro.colunaDe(S.pautas[c].find(p => +p.id === +i)), ['cj', id]);
+  checa('15.2 na Pauta, o card oferece "Atribuir"', (await bt()).join() === 'atribuir:Atribuir →', await bt());
+  await A.pag.click(`[data-qdkey="${key}"] [data-qdacao="atribuir"]`);
+  await A.pag.click('#qdPop [data-qdpoppes]');
+  await esperar(300);
+  checa('15.3 atribuir leva a A fazer, e o botão vira "Começar"', (await col()) === 'afazer' && (await bt())[0] === 'fazendo:Começar →', [await col(), await bt()]);
+  const seq = [['fazendo', 'fazendo', 'revisao:Mandar para revisão →'], ['revisao', 'revisao', 'cliente:Enviar ao cliente →'], ['cliente', 'cliente', null]];
+  for(const [acao, esperado, prox] of seq){
+    await A.pag.click(`[data-qdkey="${key}"] [data-qdacao="${acao}"]`);
+    await esperar(250);
+    const b = await bt();
+    checa(`15.4 "${acao}" leva a ${esperado}` + (prox ? ` e oferece ${prox.split(':')[1]}` : ''), (await col()) === esperado && (prox ? b[0] === prox : true), [await col(), b]);
+  }
+  const info = await Q(A, (key) => (document.querySelector(`[data-qdkey="${key}"] .qdProxInfo`) || {}).textContent || '', key);
+  checa('15.5 com o cliente, o card diz há quanto tempo espera (e não tem botão)', /Aguardando o cliente/.test(info) && (await bt()).length === 0, info);
+  const f = noBanco('cj', id).dados.fase;
+  checa('15.6 e está no link do cliente (uma volta só: texto ou peça)', f === 'texto_cli' || f === 'post_cli', f);
+  /* o cliente aprova → Aprovado → Agendar sem data pede a data */
+  await Q(A, ([c, i]) => { const p = S.pautas[c].find(p => +p.id === +i); p.fase = 'texto_ok'; delete p.data; render(); }, ['cj', id]);
+  checa('15.7 aprovado pelo cliente (mesmo só o texto) vai para Aprovado', (await col()) === 'aprovado', await col());
+  await A.pag.click(`[data-qdkey="${key}"] [data-qdacao="agendar"]`);
+  await esperar(250);
+  const pede = await Q(A, () => ({ folha: !!document.getElementById('qdFolha'), foco: document.activeElement && document.activeElement.dataset.qf }));
+  checa('15.8 "Agendar" sem data de publicação abre a ficha no campo da data', pede.folha && pede.foco === 'data' && (await col()) === 'aprovado', pede);
+  await A.pag.fill('#qdFolha [data-qf="data"]', '2026-10-09');
+  await A.pag.click('#qdFolha [data-qdacao="agendar"]');
+  await esperar(300);
+  checa('15.9 com a data, o "Agendar" da ficha agenda', (await col()) === 'agendado', await col());
+  await A.pag.click('#qdFolha [data-qdacao="publicado"]');
+  await esperar(900);
+  checa('15.10 "Publiquei" fecha o ciclo, no banco', noBanco('cj', id).dados.fase === 'postado', noBanco('cj', id).dados.fase);
+  await Q(A, () => MaestroQuadro.fecharFolha());
+  /* devolver da revisão */
+  await Q(A, ([c, i]) => MaestroQuadro.mover(c, i, 'revisao'), ['cj', id]); await Q(A, () => render());
+  await A.pag.click(`[data-qdkey="${key}"] [data-qdacao="devolver"]`);
+  await esperar(250);
+  checa('15.11 "Devolver" na Revisão volta para Fazendo', (await col()) === 'fazendo', await col());
+  /* o revisor vê o que revisar */
+  await Q(A, ([c, i]) => { MaestroQuadro.mover(c, i, 'revisao'); render(); }, ['cj', id]);
+  const rv = await Q(A, (key) => ({ nomes: MaestroQuadro.revisores().map(x => x.id), selo: !!document.querySelector(`[data-qdkey="${key}"] .qdRevisa`) }), key);
+  checa('15.12 o card em Revisão mostra quem revisa', rv.selo && rv.nomes.length > 0, rv);
+  await Q(A, () => { MaestroQuadro.aba = 'lista'; MaestroQuadro.sub = 'tarefas'; MaestroQuadro.pessoa = MaestroQuadro.revisores()[0].id; render(); });
+  const lista = await Q(A, (key) => ({ grupo: (document.querySelector('.qdGrupo.revisar') || {}).textContent || '', tem: !!document.querySelector(`.qdGrupo.revisar + .qdCaixa [data-qdkey="${key}"] [data-qdacao="cliente"]`) }), key);
+  checa('15.13 e ele aparece em "Para revisar" na Minha lista do revisor, com "Enviar ao cliente"', /Para revisar/.test(lista.grupo) && lista.tem, lista);
+  await A.pag.click(`.qdGrupo.revisar + .qdCaixa [data-qdkey="${key}"] [data-qdacao="cliente"]`);
+  await esperar(250);
+  checa('15.14 enviar direto da lista funciona', (await col()) === 'cliente', await col());
+  await Q(A, () => { MaestroQuadro.pessoa = null; MaestroQuadro.aba = 'quadro'; render(); });
+}
+
 console.log('\n  — 13. o celular —');
 {
   const M = await aparelho('M', 'ana@ejup.com', { celular: true });

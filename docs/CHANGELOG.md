@@ -1,9 +1,46 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.94
+Version: 0.5.95
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.95 — 2026-09-28
+
+**Status:** Na branch, com provas. NÃO publicado: aguarda a autorização do founder.
+
+### v280 — o ciclo do Quadro se explica sozinho
+
+O founder: "queria que fosse de fácil entendimento, intuitivo e organizado".
+E decidiu: **uma volta só com o cliente**. A agência manda o card para "Com o
+cliente" quando precisa de aprovação, seja do texto, seja com a peça, e a
+aprovação leva a Aprovado.
+
+- **Cada card diz o próximo passo.** Não é trava: é um atalho para mover, e
+  arrastar continua valendo.
+
+  | Coluna | Próximo passo |
+  |---|---|
+  | Pauta | **Atribuir** |
+  | A fazer | **Começar** |
+  | Fazendo | **Mandar para revisão** |
+  | Revisão | **Enviar ao cliente**, e também **Devolver** (a tarefa da agência: **Concluir**) |
+  | Com o cliente | sem botão: "Aguardando o cliente · há N dias" |
+  | Aprovado | **Agendar** — sem data de publicação, abre a ficha no campo da data |
+  | Agendado | **Publiquei** |
+
+  A ficha repete o botão em "Próximo passo".
+- **Cada coluna tem uma linha** que diz o que o card faz ali. No celular, a
+  linha da coluna aberta aparece embaixo das abas.
+- **Quem revisa:**
+  - o card em Revisão mostra os revisores (quem tem a permissão Revisor na
+    Equipe);
+  - a Minha lista de cada revisor ganha o grupo **"Para revisar"**, com
+    Enviar ao cliente e Devolver ali mesmo.
+- **Pauta:** o "+" do responsável sai do card, porque o "Atribuir" já faz isso.
+- **Provas:** 16 novas na `v277-o-quadro.mjs`, 86 de 86 no total.
 
 ---
 
