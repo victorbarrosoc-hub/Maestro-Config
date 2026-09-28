@@ -299,8 +299,8 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
-**Na branch (28 set, v280), NÃO publicado: aguarda o founder autorizar — o
-ciclo se explica.** Uma volta só com o cliente (decisão do founder). Cada card
+**Fechado (28 set, v280, NO AR com autorização do founder) — o ciclo se
+explica.** Uma volta só com o cliente (decisão do founder). Cada card
 tem o botão do próximo passo; cada coluna, uma linha; Revisão mostra quem
 revisa, e o revisor tem "Para revisar" na Minha lista. 86 provas.
 **Fechado (28 set, v279, NO AR com autorização do founder) — o padrão do
