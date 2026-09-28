@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v287', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v288', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -763,6 +763,64 @@
     document.body.classList.remove('qdFolhaAberta');
   }
   Q.abrirFolha = abrirFolha; Q.fecharFolha = fecharFolha;
+  /* v288 — tudo o que o card tem, na ficha. "Não consigo visualizar o
+     conteúdo do card inteiro, só quando clico em Editor completo." O roteiro,
+     o corte, as telas do story, as plataformas, a observação: os mesmos
+     campos que o editor completo grava, no mesmo lugar do card, e cada um
+     grava sozinho como os outros da ficha. */
+  function pegar(o, caminho){ let v = o; for(const k of caminho.split('.')){ if(v == null) return ''; v = v[k]; } return v == null ? '' : String(v); }
+  function comCaminho(p, caminho, valor){
+    const partes = caminho.split('.'); const top = partes[0];
+    const ehIdx = k => /^\d+$/.test(k);
+    const raiz = p[top] == null ? (ehIdx(partes[1]) ? [] : {}) : JSON.parse(JSON.stringify(p[top]));
+    let o = raiz;
+    for(let i = 1; i < partes.length; i++){
+      const k = partes[i], ult = i === partes.length - 1;
+      if(Array.isArray(o)){ const n = +k; for(let j = o.length; j < n; j++) o[j] = top === 'telas' ? '' : { de: '', ate: '', ordem: j + 1 }; }
+      if(ult) o[k] = valor;
+      else { if(o[k] == null) o[k] = ehIdx(partes[i + 1]) ? [] : (top === 'corte' && partes[i - 1] === 'tcs' ? { de: '', ate: '', ordem: +k + 1 } : {}); o = o[k]; }
+    }
+    if(top === 'corte' && Array.isArray(raiz.tcs)) raiz.tcs.forEach((tc, j) => { if(tc && tc.ordem == null) tc.ordem = j + 1; });
+    return { [top]: raiz };
+  }
+  function mais(k){ return Q.folhaMais && Q.folhaMais.key === Q.folha ? (Q.folhaMais[k] || 0) : 0; }
+  function porMais(k, n){ if(!Q.folhaMais || Q.folhaMais.key !== Q.folha) Q.folhaMais = { key: Q.folha }; Q.folhaMais[k] = Math.max(0, n); }
+  const guardadas = (p, k) => k === 'tcs' ? ((p.corte && Array.isArray(p.corte.tcs)) ? p.corte.tcs.length : 0) : (Array.isArray(p.telas) ? p.telas.length : 0);
+  const linhas = (p, k) => Math.max(1, guardadas(p, k)) + mais(k);
+  function tipoDaFolha(p){
+    if(Q.folhaTipo && Q.folhaTipo.key === Q.folha) return Q.folhaTipo.t;
+    return p.corte ? 'corte' : p.roteiro ? 'roteiro' : 'post';
+  }
+  const ehStory = p => (Array.isArray(p.fmts) && p.fmts.length ? p.fmts : [p.fmt]).includes('Story') || guardadas(p, 'telas') > 0 || !!(p.sticker || p.recursos || p.caixinha);
+  function blocosConteudo(p){
+    const tipo = tipoDaFolha(p);
+    const ct = p.corte || {};
+    const area = (qf, rot, ph, rows) => `<label class="qdFCampo">${rot}<textarea class="qdIn qdArea" data-qf="${qf}" rows="${rows || 2}" placeholder="${ph}">${esc_(pegar(p, qf))}</textarea></label>`;
+    const nTc = linhas(p, 'tcs'), nTela = linhas(p, 'telas');
+    const tcs = Array.from({ length: nTc }, (_, i) => (Array.isArray(ct.tcs) && ct.tcs[i]) || { de: '', ate: '', ordem: i + 1 });
+    const plats = (typeof PLATS === 'object' && PLATS) || {};
+    const on = new Set(Array.isArray(p.plats) ? p.plats : []);
+    return `<div class="qdFBloco" data-qdfconteudo="1"><h4>Tipo de conteúdo</h4>
+      <div class="qdFTipos">${[['post', 'Post'], ['roteiro', 'Roteiro de vídeo'], ['corte', 'Corte de podcast']].map(([k, n]) => `<button type="button" class="qdPil ${tipo === k ? 'on' : ''}" data-qdtipo="${k}">${n}</button>`).join('')}</div>
+      ${tipo === 'roteiro' ? area('roteiro.hook', 'Hook — os 3 primeiros segundos', 'A frase ou imagem que segura quem ia passar direto.')
+        + area('roteiro.des', 'Desenvolvimento', 'O argumento, cena a cena.', 4) + area('roteiro.cta', 'CTA do vídeo', 'O que a pessoa faz ao terminar de assistir.') : ''}
+      ${tipo === 'corte' ? `<label class="qdFCampo">Episódio<input class="qdIn" data-qf="corte.ep" value="${esc_(ct.ep || '')}" placeholder="Ex.: EJUPcast #12"></label>
+        <div class="qdFCampo">Trechos — a ordem diz ao editor como juntar
+        ${tcs.map((tc, i) => `<div class="qdFTc"><input class="qdIn" data-qf="corte.tcs.${i}.de" value="${esc_(tc.de || '')}" placeholder="início 00:12:30" inputmode="numeric"><input class="qdIn" data-qf="corte.tcs.${i}.ate" value="${esc_(tc.ate || '')}" placeholder="fim 00:14:05" inputmode="numeric"><input class="qdIn qdFOrd" data-qf="corte.tcs.${i}.ordem" value="${esc_(String(tc.ordem == null ? i + 1 : tc.ordem))}" inputmode="numeric" aria-label="Ordem na edição"><button type="button" class="qdX" data-qdtcx="${i}" aria-label="Tirar trecho">×</button></div>`).join('')}
+        <button type="button" class="qdPil" data-qdtcmais="1">+ trecho</button></div>` : ''}
+    </div>
+    ${ehStory(p) ? `<div class="qdFBloco"><h4>Telas do story <span>${guardadas(p, 'telas') || ''}</span></h4>
+      ${Array.from({ length: nTela }, (_, i) => `<div class="qdFTela"><b>T${i + 1}</b><textarea class="qdIn qdArea" data-qf="telas.${i}" rows="2" placeholder="O que aparece na tela ${i + 1}">${esc_(pegar(p, 'telas.' + i))}</textarea><button type="button" class="qdX" data-qdtelax="${i}" aria-label="Tirar tela">×</button></div>`).join('')}
+      <button type="button" class="qdPil" data-qdtelamais="1">+ tela</button>
+      <label class="qdFCampo">Interação / sticker<input class="qdIn" data-qf="sticker" value="${esc_(p.sticker || '')}" placeholder="Ex.: enquete na tela 2"></label>
+      ${area('recursos', 'Recursos / produção', 'O que a produção precisa ter à mão.')}
+      <label class="qdFChk"><input type="checkbox" data-qfbool="caixinha" ${p.caixinha ? 'checked' : ''}> Com caixinha de perguntas</label></div>` : ''}
+    <div class="qdFBloco"><h4>Plataformas</h4><div class="qdFPlats">${Object.entries(plats).map(([k, v]) => `<button type="button" class="qdPil ${on.has(k) ? 'on' : ''}" data-qdplat="${esc_(k)}"><i style="background:${esc_(v.c)}"></i>${esc_(v.n)}</button>`).join('')}</div></div>
+    ${p.cta ? `<div class="qdFBloco"><h4>CTA</h4><textarea class="qdIn qdArea" data-qf="cta" rows="2">${esc_(p.cta)}</textarea></div>` : ''}
+    <div class="qdFBloco"><h4>Observação</h4><textarea class="qdIn qdArea" data-qf="obs" rows="2" placeholder="Recado para quem for executar: contexto, cuidado, detalhe">${esc_(p.obs || '')}</textarea></div>
+    ${p.pend ? `<div class="qdFBloco"><h4>Pendência</h4><textarea class="qdIn qdArea" data-qf="pend" rows="2">${esc_(p.pend)}</textarea></div>` : ''}`;
+  }
+  Q.blocosConteudo = blocosConteudo;
   function desenharFolha(inteira){
     if(!Q.folha) return;
     const [cli, id] = Q.folha.split('|');
@@ -802,6 +860,7 @@
       <div class="qdFBloco"><h4>${ehAg ? 'Descrição' : 'Briefing'}</h4><textarea class="qdIn qdArea" data-qf="objetivo" rows="3" placeholder="${ehAg ? 'Detalhes da tarefa' : 'O que o card precisa dizer, para quem, com que objetivo'}">${esc_(p.objetivo || '')}</textarea></div>
       ${ehAg ? '' : `<div class="qdFBloco"><h4>Texto</h4><textarea class="qdIn qdArea" data-qf="texto" rows="4" placeholder="O texto da peça">${esc_(p.texto || '')}</textarea></div>
       <div class="qdFBloco"><h4>Legenda</h4><textarea class="qdIn qdArea" data-qf="legenda" rows="4" placeholder="O texto que vai publicado">${esc_(p.legenda || '')}</textarea></div>
+      ${blocosConteudo(p)}
       <div class="qdFBloco"><h4>Material <span>${ms.length || ''}</span></h4>
         <div class="qdFMat">${ms.slice(0, 12).map(m => {
           const u = url_(m.tipo === 'imagem' ? (m.url || m.capa) : (m.capa || ''));
@@ -815,9 +874,14 @@
       </div>
     </div>`;
     const t = el.querySelector('.qdFTit'); if(t) ajustarAltura(t);
+    el.dataset.assin = assinaturaFolha(cli, p);
   }
+  /* o que, mudando, pede a ficha desenhada de novo. Guardada a cada desenho
+     inteiro: sem isso, o primeiro campo gravado depois de trocar o tipo ou
+     pôr um trecho redesenhava tudo e tirava o cursor de quem digitava. */
+  const assinaturaFolha = (cli, p) => JSON.stringify([p.check || [], materiais(cli, p.id).length, !!p.ajustePendente, linhas(p, 'tcs'), linhas(p, 'telas'), p.plats || [], tipoDaFolha(p), ehStory(p)]);
   function ajustarAltura(t){ t.style.height = 'auto'; t.style.height = Math.min(160, t.scrollHeight) + 'px'; }
-  const valorDoCampo = (p, cli, k) => k === 'tema' ? tema(p, cli) : (p[k] == null ? '' : String(p[k]));
+  const valorDoCampo = (p, cli, k) => k === 'tema' ? tema(p, cli) : pegar(p, k);
   function atualizarCampos(el, cli, p){
     /* o que chegou de fora entra; o campo em uso fica como a pessoa deixou */
     const ativo = document.activeElement;
@@ -830,7 +894,8 @@
     const col = colunaDe(p);
     el.querySelectorAll('[data-qdfcol]').forEach(b => b.classList.toggle('on', b.dataset.qdfcol === col));
     /* checklist, material e ajuste: redesenha só se não há nada sendo digitado neles */
-    const assin = JSON.stringify([p.check || [], materiais(cli, p.id).length, !!p.ajustePendente]);
+    el.querySelectorAll('[data-qfbool]').forEach(c => { if(c !== ativo) c.checked = !!p[c.dataset.qfbool]; });
+    const assin = assinaturaFolha(cli, p);
     if(el.dataset.assin && el.dataset.assin !== assin && !(ativo && el.contains(ativo) && ativo.closest('.qdFCkNovo'))){
       const rol = el.querySelector('.qdFolhaIn') ? el.querySelector('.qdFolhaIn').scrollTop : 0;
       desenharFolha(true);
@@ -861,6 +926,12 @@
         const col = colunaDe(p);
         mudar(cli, id, { resp: v || null });
         if(v && col === 'pauta') mover(cli, id, 'afazer');
+      } else if(k.includes('.')){
+        const lista = k.startsWith('corte.tcs.') ? 'tcs' : k.startsWith('telas.') ? 'telas' : null;
+        const antes = lista ? linhas(p, lista) : 0;
+        if(/\.ordem$/.test(k)) v = /^\d+$/.test(v.trim()) ? +v.trim() : v;
+        mudar(cli, id, comCaminho(p, k, v));
+        if(lista) porMais(lista, antes - Math.max(1, guardadas(achar(cli, id) || p, lista)));
       } else mudar(cli, id, { [k]: v });
       redesenharPagina();
     };
@@ -997,7 +1068,7 @@
     }
     const px = e.target.closest('[data-qdprox]');
     if(px){ e.stopPropagation(); executar(px.dataset.qdprox, px.dataset.qdacao, px); return; }
-    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel]');
+    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax]');
     if(!e.target.closest('#qdPop')) document.getElementById('qdPop')?.remove();
     if(!alvo) return;
     const d = alvo.dataset;
@@ -1039,6 +1110,19 @@
     }
     if(d.qdck){ const p = achar(cli, id); if(!p) return; mudar(cli, id, { check: (p.check || []).map(c => c.id === d.qdck ? Object.assign({}, c, { ok: !c.ok }) : c) }); desenharFolha(true); redesenharPagina(); return; }
     if(d.qdckx){ const p = achar(cli, id); if(!p) return; mudar(cli, id, { check: (p.check || []).filter(c => c.id !== d.qdckx) }); desenharFolha(true); redesenharPagina(); return; }
+    if(d.qdtipo){ Q.folhaTipo = { key, t: d.qdtipo }; desenharFolha(true); return; }
+    if(d.qdplat){ const p = achar(cli, id); if(!p) return; const on = new Set(Array.isArray(p.plats) ? p.plats : []); on.has(d.qdplat) ? on.delete(d.qdplat) : on.add(d.qdplat);
+      mudar(cli, id, { plats: [...on] }); desenharFolha(true); redesenharPagina(); return; }
+    if(d.qdtcmais){ const p = achar(cli, id); if(p) porMais('tcs', mais('tcs') + 1); desenharFolha(true); return; }
+    if(d.qdtelamais){ const p = achar(cli, id); if(p) porMais('telas', mais('telas') + 1); desenharFolha(true); return; }
+    if(d.qdtcx || d.qdtelax){
+      const p = achar(cli, id); if(!p) return;
+      const k = d.qdtcx ? 'tcs' : 'telas', i = +(d.qdtcx || d.qdtelax), g = guardadas(p, k);
+      if(i >= g){ porMais(k, mais(k) - 1); desenharFolha(true); return; }
+      if(k === 'tcs'){ const ct = JSON.parse(JSON.stringify(p.corte)); ct.tcs.splice(i, 1); mudar(cli, id, { corte: ct }); }
+      else { const ts = p.telas.slice(); ts.splice(i, 1); mudar(cli, id, { telas: ts.length ? ts : null }); }
+      desenharFolha(true); redesenharPagina(); return;
+    }
     if(d.qdapagar){ Q.folhaApagar = true; desenharFolha(true); return; }
     if(d.qdapagarnao){ Q.folhaApagar = false; desenharFolha(true); return; }
     if(d.qdapagarsim){ apagar(cli, id); fecharFolha(); redesenharPagina(); return; }
@@ -1065,6 +1149,7 @@
       return;
     }
     if(c.matches && c.matches('#qdFolha [data-qf]')){ gravarCampo(c, true); return; }
+    if(c.matches && c.matches('#qdFolha [data-qfbool]') && Q.folha){ const [cli, id] = Q.folha.split('|'); mudar(cli, id, { [c.dataset.qfbool]: c.checked || null }); redesenharPagina(); return; }
     if(c.dataset && c.dataset.qdfc){ Q.filtroCli = c.value; render(); return; }
     if(c.dataset && c.dataset.qdpessoa){ Q.pessoa = c.value; render(); return; }
   }, true);
@@ -1498,6 +1583,15 @@
   .qdIn{ font:inherit; font-size:14px; color:var(--tx, #fff); background:var(--sup, rgba(255,255,255,.06)); border:0; border-radius:10px; padding:8px 10px; min-height:36px; box-sizing:border-box; width:100% }
   .qdArea{ resize:vertical; line-height:1.45 }
   .qdFBloco{ margin:0 0 16px }
+  .qdFCampo{ display:block; font-size:12px; color:var(--mut, #999); margin:10px 0 0 }
+  .qdFCampo > .qdIn{ margin-top:5px; display:block }
+  .qdFTipos, .qdFPlats{ display:flex; flex-wrap:wrap; gap:6px }
+  .qdFPlats i{ display:inline-block; width:8px; height:8px; border-radius:50% }
+  .qdFTc{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) 52px 28px; gap:6px; align-items:center; margin:6px 0 }
+  .qdFTc + .qdPil, .qdFTela + .qdPil{ margin-top:4px }
+  .qdFTela{ display:grid; grid-template-columns:26px minmax(0, 1fr) 28px; gap:6px; align-items:start; margin:0 0 6px }
+  .qdFTela b{ font-size:11px; color:var(--mut, #999); padding-top:10px }
+  .qdFChk{ display:flex; gap:8px; align-items:center; font-size:13px; margin-top:12px }
   .qdFBloco h4{ margin:0 0 7px; font-size:13px; font-weight:600; display:flex; gap:8px; align-items:center }
   .qdFBloco h4 span{ color:var(--mut, #999); font-weight:400 }
   .qdFCk{ display:flex; flex-direction:column; gap:2px; margin-bottom:6px }

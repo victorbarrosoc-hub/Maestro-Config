@@ -524,6 +524,45 @@ console.log('\n  — 11. nada de mensagem embaixo —');
   checa('11.1 aviso de rodapé não aparece (nem "bem-vindo", nem versão, nem banco)', !r.visivel, r);
 }
 
+console.log('\n  — 16. a ficha mostra o card inteiro (v288) —');
+{
+  await Q(A, () => { MaestroQuadro.fecharFolha(); MaestroQuadro.aba = 'quadro'; MaestroQuadro.filtroCli = 'todos'; MaestroQuadro.pessoa = null; render(); });
+  await Q(B, () => { const p = S.pautas.cj.find(x => +x.id === 601); p.roteiro = { hook: 'Hook que prende' }; p.telas = ['Tela um', 'Tela dois']; p.obs = 'Recado para a edição'; p.cta = 'Link na bio'; p.plats = ['ig']; p.mod = Date.now(); return Sincro.gravar('cj', true); });
+  await ate(A, async () => ((await cardDe(A, 'cj', 601)).telas || []).length === 2, 6000);
+  await Q(A, () => MaestroQuadro.abrirFolha('cj|601'));
+  await esperar(250);
+  const v = await Q(A, () => { const f = document.getElementById('qdFolha'); const q = k => { const e = f.querySelector(`[data-qf="${k}"]`); return e ? e.value : null; };
+    return { hook: q('roteiro.hook'), des: q('roteiro.des'), t0: q('telas.0'), t1: q('telas.1'), obs: q('obs'), cta: q('cta'),
+      plats: f.querySelectorAll('[data-qdplat]').length, platOn: [...f.querySelectorAll('[data-qdplat].on')].map(b => b.dataset.qdplat).join(), tipo: (f.querySelector('[data-qdtipo].on') || {}).dataset?.qdtipo }; });
+  checa('16.1 roteiro, telas do story, observação, CTA e plataformas aparecem na ficha, sem abrir o editor', v.hook === 'Hook que prende' && v.des === '' && v.t0 === 'Tela um' && v.t1 === 'Tela dois' && v.obs === 'Recado para a edição' && v.cta === 'Link na bio' && v.plats >= 5 && v.platOn === 'ig' && v.tipo === 'roteiro', v);
+  await A.pag.click('#qdFolha [data-qf="roteiro.des"]');
+  await A.pag.keyboard.type('Cena 1, cena 2', { delay: 10 });
+  await esperar(1200);
+  let d = noBanco('cj', 601).dados;
+  checa('16.2 escrever no roteiro grava sozinho e não apaga o hook', d.roteiro && d.roteiro.des === 'Cena 1, cena 2' && d.roteiro.hook === 'Hook que prende', d.roteiro);
+  await A.pag.click('#qdFolha [data-qdtipo="corte"]');
+  await A.pag.fill('#qdFolha [data-qf="corte.ep"]', 'EJUPcast #3');
+  await A.pag.click('#qdFolha [data-qf="corte.tcs.0.de"]');
+  await A.pag.keyboard.type('00:01:00', { delay: 10 });
+  await A.pag.click('#qdFolha [data-qdtcmais]');
+  await A.pag.click('#qdFolha [data-qf="corte.tcs.1.ate"]');
+  await A.pag.keyboard.type('00:09:30', { delay: 10 });
+  const foco = await Q(A, () => document.activeElement && document.activeElement.dataset.qf);
+  await esperar(1200);
+  d = noBanco('cj', 601).dados;
+  checa('16.3 corte: episódio e dois trechos, na ordem, no banco', d.corte && d.corte.ep === 'EJUPcast #3' && d.corte.tcs.length === 2 && d.corte.tcs[0].de === '00:01:00' && d.corte.tcs[0].ordem === 1 && d.corte.tcs[1].ate === '00:09:30' && d.corte.tcs[1].ordem === 2, d.corte);
+  checa('16.4 o trecho novo não tira o cursor de quem digita', foco === 'corte.tcs.1.ate', foco);
+  checa('16.5 trocar o tipo não apaga o roteiro já escrito', d.roteiro && d.roteiro.des === 'Cena 1, cena 2', d.roteiro);
+  await A.pag.click('#qdFolha [data-qdplat="yt"]');
+  await A.pag.click('#qdFolha [data-qdtelax="0"]');
+  await esperar(1000);
+  d = noBanco('cj', 601).dados;
+  checa('16.6 plataformas e telas se editam na ficha (YouTube entra, a tela 1 sai)', d.plats.join() === 'ig,yt' && d.telas.join() === 'Tela dois', { plats: d.plats, telas: d.telas });
+  const msB = await ate(B, async () => { const p = await cardDe(B, 'cj', 601); return p.corte && p.corte.tcs && p.corte.tcs.length === 2 && (p.telas || []).length === 1; }, 6000);
+  checa('16.7 e o outro aparelho recebe tudo', msB >= 0, msB);
+  await Q(A, () => MaestroQuadro.fecharFolha());
+}
+
 console.log('\n  — 12. recarregar: o que está no banco é o que se vê —');
 {
   const antes = await Q(A, () => MaestroQuadro.todos().map(x => x.cli + '|' + x.p.id + ':' + x.col).sort());

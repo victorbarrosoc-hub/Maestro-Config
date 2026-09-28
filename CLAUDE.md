@@ -299,6 +299,18 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (28 set, v288, NO AR) — a ficha mostra o card inteiro.** "Aqui eu
+não consigo visualizar o conteúdo do card inteiro, só quando clico em editor
+completo." A ficha do Quadro passa a ter tudo o que o editor completo grava:
+tipo de conteúdo (Post · Roteiro de vídeo · Corte de podcast) com hook,
+desenvolvimento e CTA, ou episódio e trechos na ordem; telas do story,
+sticker, recursos e caixinha; plataformas; observação; e CTA e pendência
+quando existem. Cada campo grava sozinho (caminhos como `roteiro.hook` e
+`corte.tcs.1.ate`); trocar o tipo não apaga o que o outro tinha; "+ trecho"
+e "+ tela" não gravam linha vazia. **Armadilha que a prova pegou:** o
+desenho inteiro não guardava a assinatura, e o primeiro campo gravado depois
+de trocar o tipo redesenhava a ficha e tirava o cursor — o texto seguinte
+se perdia. Seção 16 da `v277-o-quadro.mjs` (7 provas, dois aparelhos).
 **Fechado (28 set, v287, NO AR com autorização do founder) — o plano de
 entrada vira "Trio".** "Ensaio" era o nome do plano de R$ 149 e da aba que
 saiu do app; Trio diz os 3 assentos e segue a família (Trio · Concerto ·

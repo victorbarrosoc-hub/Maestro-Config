@@ -1,11 +1,38 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.102
+Version: 0.5.103
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.103 — 2026-09-28
+
+**Status:** No ar.
+
+### v288 — a ficha mostra o card inteiro
+
+- O founder, com o print da ficha de um Reels: "Aqui eu não consigo
+  visualizar o conteúdo do card inteiro, só quando clico em Editor completo."
+  A ficha do Quadro tinha briefing, texto, legenda e material; o roteiro, o
+  corte, as telas do story, as plataformas e a observação só apareciam no
+  editor antigo.
+- Agora a ficha tem os mesmos campos, editáveis e gravando sozinhos:
+  - Tipo de conteúdo: Post, Roteiro de vídeo (hook, desenvolvimento, CTA) ou
+    Corte de podcast (episódio e trechos com ordem, "+ trecho");
+  - Telas do story (quando o formato é Story ou o card já tem telas), com
+    sticker, recursos e caixinha de perguntas;
+  - Plataformas, em chips;
+  - Observação; CTA e Pendência aparecem quando o card já os tem.
+- Trocar o tipo não apaga o que foi escrito no outro. "+ trecho" e "+ tela"
+  só viram dado quando algo é escrito nelas.
+- A prova pegou um defeito de desenho: depois de trocar o tipo, o primeiro
+  campo gravado redesenhava a ficha inteira e o cursor saía do campo — o
+  resto do que se digitava ia para lugar nenhum. A ficha agora guarda a
+  assinatura a cada desenho inteiro.
+- Seção 16 da `v277-o-quadro.mjs`: 7 provas contra Postgres, com o segundo
+  aparelho recebendo tudo. `MaestroQuadro.blocosConteudo` exposto.
 
 ## 0.5.102 — 2026-09-28
 
