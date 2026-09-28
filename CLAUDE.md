@@ -299,6 +299,11 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Na branch (28 set, v284), NÃO publicado: aguarda o founder autorizar — o
+claro em tudo.** Homepage com versão Linho (fotos num palco escuro, sol/lua
+na barra), login claro, área do cliente Linho + amarelo, e o primário do app
+amarelo nos dois temas. Mora em `web/tema/tema.js`. 24 provas em
+`web/verificar/v284-o-claro-em-tudo.mjs`.
 **Fechado (28 set, v283, NO AR com autorização do founder) — tema claro
 "Linho"** (fundo `#EFEEEA`, sem branco puro) **com o mesmo amarelo `#FFC857`
 nos dois temas**, só no app da agência. 92 provas.

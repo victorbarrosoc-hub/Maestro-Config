@@ -1,9 +1,54 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.98
+Version: 0.5.99
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.99 — 2026-09-28
+
+**Status:** Na branch, com provas. NÃO publicado: aguarda a autorização do founder.
+
+### v284 — o claro em tudo: homepage, login, área do cliente
+
+O founder: "Adapta a homepage pra ter uma versão light também, o login
+também. Tem umas partes no site que não estão adaptadas nesse modelo novo do
+branco e amarelo; veja a área do cliente também."
+
+O que foi feito, primeiro levantando tela por tela com prints e depois
+perguntando ao navegador o que ainda tinha texto branco ou fundo escuro fixo.
+Tudo mora em `web/tema/tema.js`, carregado pela `tempo-real.js`.
+
+- **Homepage.** No tema claro ela era forçada ao escuro. Agora ganha a versão
+  Linho:
+  - os tokens da vitrine (`--sTx`, `--sSup`, …) e a escala `--ink-*` ganham
+    versões claras;
+  - títulos escuros, cards e barra do topo claros, botões amarelos;
+  - as fotos dos aparelhos têm fundo preto e só funcionavam por "clarear"
+    sobre o escuro; no claro, entram num **palco escuro de cantos
+    arredondados**, como as vitrines da Apple;
+  - **sol/lua** na barra do topo, que usa a mesma escolha do app
+    (`maestro-luz-v1`).
+- **Login.**
+  - No claro, o fundo atrás da caixa é Linho, e não preto.
+  - O "Entrar" é amarelo nos dois temas.
+  - O sol/lua aparece no canto.
+- **Área do cliente (o link).**
+  - No claro, o fundo é Linho, e a barra de baixo e a faixa do topo ficam
+    claras (antes eram cinza-escuro fixo).
+  - O "Decidir agora" é amarelo sem degradê, e os filtros escolhidos também,
+    nos dois temas.
+  - O item aberto do menu ganha só um toque de amarelo.
+- **App da agência.**
+  - O primário (`--prim`) passa a ser o amarelo nos dois temas. Antes era
+    preto no claro e branco no escuro.
+  - Com isso, "Nova postagem" e os filtros escolhidos do Feed e da Mandala
+    ficam amarelos.
+- **O escuro não mudou de cara:** a homepage segue grafite. Só os botões
+  principais viraram amarelos.
+- **Provas:** 24 em `web/verificar/v284-o-claro-em-tudo.mjs`.
 
 ---
 

@@ -1119,6 +1119,14 @@
 (function(){
   if(window.MaestroQuadro || window.__quadroPedido) return;
   window.__quadroPedido = true;
-  fetch('/web/quadro/quadro.js?v=v283').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/quadro/quadro.js?v=v284').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+    .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } }).catch(() => {});
+})();
+
+/* v284 — o tema claro "Linho" em tudo (web/tema): vitrine, login, área do cliente */
+(function(){
+  if(window.MaestroTema || window.__temaPedido) return;
+  window.__temaPedido = true;
+  fetch('/web/tema/tema.js?v=v284').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } }).catch(() => {});
 })();
