@@ -105,6 +105,7 @@
     return D.checado;
   }
   D.checar = checar;
+  D.ler = (t, q) => ler(t, q);
 
   /* ---------------- 2. a linha `pauta` sem as chaves de card ---------------- */
   const _fetch = window.fetch;
@@ -981,4 +982,120 @@
     });
     inp.click();
   }, true);
+})();
+
+/* =====================================================================
+   v276 — a tarefa presa numa CÓPIA volta para o card que fica
+   ---------------------------------------------------------------------
+   As cópias de 26/09 (ver v275 e docs/ENGINEERING/dados-1c-limpar-copias.sql)
+   levaram junto tarefas do Ensaio: o app que criou a cópia apontou a tarefa
+   para ela. Quando a cópia vai para a lixeira, a regra da v202 leva a
+   tarefa para a lixeira do quadro — foi assim que o Vorcaro e o Projeto
+   Amaro sumiram do Ensaio.
+   O SQL dados-1c grava o mapa `cards_copias` (cópia → card que fica). Com
+   ele, aqui:
+     1. tarefa viva ou concluída que aponta para uma cópia passa a apontar
+        para o card que fica — se ele ainda não tem tarefa viva;
+     2. tarefa que foi para a lixeira DO QUADRO junto com uma cópia (a
+        marca `doCard` da v202) volta ao quadro, no card que fica, com o
+        tempo, o responsável e o histórico dela.
+   Tarefa que alguém apagou à mão não volta: só a que foi junto com a cópia.
+   Sem a tabela (antes do SQL), nada acontece.
+   ===================================================================== */
+(function(){
+  'use strict';
+  if(window.MaestroCopias || typeof S === 'undefined') return;
+  const R = window.MaestroCopias = { mapa: null, reapontadas: 0, voltaram: 0, diario: [] };
+  const k = (cli, id) => String(cli) + '|' + String(+id);
+  const anota = (...x) => { R.diario.push(x); if(R.diario.length > 40) R.diario.shift(); };
+
+  async function buscar(){
+    const D = window.MaestroDados;
+    if(!D || !D.ligado || !D.carregouEm || typeof D.ler !== 'function') return false;
+    try{
+      const l = await D.ler('cards_copias', 'select=cliente,copia,fica');
+      const m = new Map();
+      (Array.isArray(l) ? l : []).forEach(x => { if(x && x.cliente != null && x.copia != null && x.fica != null) m.set(k(x.cliente, x.copia), +x.fica); });
+      R.mapa = m;
+      return true;
+    }catch(e){ return false; }          // a tabela ainda não existe: o app de antes
+  }
+  R.buscar = buscar;
+
+  function aplicar(){
+    const E = S.ensaio;
+    if(!R.mapa || !R.mapa.size || !E || !Array.isArray(E.tarefas)) return 0;
+    const cardVivo = (cli, id) => (S.pautas[cli] || []).find(p => p && +p.id === +id) || null;
+    const fica = t => (t && t.cardId != null && t.cli != null) ? R.mapa.get(k(t.cli, t.cardId)) : undefined;
+    /* o card que fica já tem tarefa viva? A clone que o repositor criou
+       (carimbo `reposta`, v224) não conta: ela cede o lugar à tarefa de
+       verdade, entregando o tempo que contou. */
+    const outraViva = (cli, id, menos) => {
+      const donas = E.tarefas.filter(x => x && x !== menos && String(x.cli) === String(cli) && x.cardId != null && +x.cardId === +id);
+      if(!donas.length) return false;
+      if(!donas.every(x => x.reposta === true)) return true;
+      for(const x of donas){
+        if(menos){ menos.tempoMs = (+menos.tempoMs || 0) + (+x.tempoMs || 0); if(x.desde && !menos.desde) menos.desde = x.desde; if(!menos.resp && x.resp) menos.resp = x.resp; }
+        const i = E.tarefas.indexOf(x); if(i >= 0) E.tarefas.splice(i, 1);
+        try{ window.MaestroFaxinaEnsaio && window.MaestroFaxinaEnsaio.enterrar(x.id); }catch(e){}
+        anota('clone-cedeu', x.id);
+      }
+      return false;
+    };
+    const ligar = t => { try{ if(typeof ligarTarefaAoCard === 'function') ligarTarefaAoCard(t); }catch(e){} };
+    let n = 0;
+    /* 1. vivas e concluídas */
+    for(const lista of [E.tarefas, E.feitas || []]){
+      for(const t of lista){
+        const f = fica(t);
+        if(f == null || !cardVivo(t.cli, f)) continue;
+        if(lista === E.tarefas && outraViva(t.cli, f, t)) continue;     // o card que fica já tem a dele
+        anota('reapontou', t.id, t.cardId, f);
+        t.cardId = f; R.reapontadas++; n++;
+        if(lista === E.tarefas) ligar(t);
+      }
+    }
+    /* 2. a lixeira do quadro: só o que foi junto com uma cópia */
+    const lixo = Array.isArray(E.lixo) ? E.lixo : [];
+    for(const e of lixo.slice()){
+      const t = e && e.tarefa;
+      if(!t || !e.doCard) continue;
+      const f = fica(t);
+      if(f == null || e.doCard !== 'c:' + t.cli + '|' + t.cardId) continue;
+      if(!cardVivo(t.cli, f) || (t.faseFeita == null && outraViva(t.cli, f, t))) continue;
+      const i = lixo.indexOf(e); if(i >= 0) lixo.splice(i, 1);
+      try{ const F = window.MaestroFaxinaEnsaio; if(F){ F.desenterrar(String(t.id)); } }catch(x){}
+      /* volta para onde estava: a concluída (carimbo `faseFeita`, v193)
+         para as concluídas; a do quadro, para o quadro */
+      const feita = t.faseFeita != null;
+      const destino = feita ? (E.feitas = E.feitas || []) : E.tarefas;
+      if([...E.tarefas, ...(E.feitas || [])].some(x => x && x.id === t.id) && typeof novoIdTarefa === 'function') t.id = novoIdTarefa();
+      anota('voltou', t.id, t.cardId, f, feita ? 'feita' : 'quadro');
+      t.cardId = f; t.movidoEm = Date.now();
+      destino.push(t); if(!feita) ligar(t);
+      R.voltaram++; n++;
+    }
+    return n;
+  }
+  R.aplicar = aplicar;
+
+  function redesenhar(){
+    try{
+      if(S.view !== 'agency' || S.modal) return;
+      const a = document.activeElement;
+      if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+      if(typeof render === 'function') render();
+    }catch(e){}
+  }
+  /* o mapa muda uma vez só (quando o SQL roda); perguntar a cada 30s é barato */
+  let ultimaBusca = 0;
+  setInterval(async () => {
+    try{
+      if(Date.now() - ultimaBusca > 30000){ ultimaBusca = Date.now(); await buscar(); }
+      if(aplicar()){
+        redesenhar();
+        try{ if(window.Sincro && typeof Sincro.gravar === 'function') Sincro.gravar('__estado__', true); }catch(e){}
+      }
+    }catch(e){}
+  }, 3000);
 })();

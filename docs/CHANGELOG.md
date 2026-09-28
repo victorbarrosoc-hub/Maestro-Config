@@ -1,9 +1,73 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.90
+Version: 0.5.91
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.91 — 2026-09-28
+
+**Status:** Pronta na branch — **aguardando a autorização do founder para subir**.
+
+### v276 — as cópias saem, e a tarefa volta para o card certo
+
+A consulta `dados-1b` no banco de produção confirmou a v275: **48 cópias**
+nasceram em 26/09, às 12:13 (4) e às 13:40 (44), pelo login `ejup.mkt`. É o
+aparelho com a pauta velha abrindo. A equipe já tinha resolvido 11 pares à
+mão; 37 cópias seguiam vivas ao lado do original (os duplicados do
+Cronograma). O Vorcaro e o Projeto Amaro estavam de pé, mas a tarefa de cada
+um apontava para a cópia, e foi para a lixeira do quadro quando apagaram a
+cópia (a regra da v202).
+
+**`docs/ENGINEERING/dados-1c-limpar-copias.sql`** (o founder roda), numa
+transação só:
+
+1. faz uma cópia de segurança (`cards_antes_1c`);
+2. grava o mapa **cópia → card que fica** (`cards_copias`, só leitura para
+   a agência);
+3. manda as cópias vivas para a **lixeira**, e não apaga de vez.
+
+- Fica o mais antigo ainda vivo. Se a equipe apagou o original e deixou a
+  cópia, fica a cópia.
+- Só é "cópia" o que é **igual** em nome, formato, dia e hora, e nasceu
+  entre a Etapa 1 ligar e a v275 subir.
+- Card editado depois de copiado não é tocado.
+- **Trava:** com mais de 60 cópias, o arquivo recusa e não muda nada.
+
+Provado no formato do CSV real do banco: 38 no mapa, 27 para a lixeira, e
+rodar de novo não muda nada.
+
+**No app (fim de `web/dados/tempo-real.js`):** com o mapa em mãos,
+
+- a tarefa viva ou concluída que aponta para uma cópia passa a apontar
+  para o card que fica;
+- a tarefa que foi para a lixeira **junto com** a cópia (marca `doCard` da
+  v202) volta: a do quadro para o quadro, a concluída para as concluídas,
+  com o tempo, o responsável e o histórico dela;
+- a tarefa apagada à mão **não** volta;
+- a clone que o repositor criou para o original cede o lugar (v224).
+
+**O que a prova pegou:**
+
+- a primeira versão deixava a tarefa de verdade presa porque o repositor
+  já tinha criado uma clone para o original;
+- antes do SQL, o app perguntava pelo mapa a cada 3s. Agora pergunta a cada
+  30s: na bancada, isso bagunçava os tempos de outras provas; em produção,
+  seria desperdício.
+
+Seção 14 em `web/verificar/v271-o-card-em-tempo-real.mjs` (66 provas, com o
+arquivo SQL de verdade contra um Postgres de verdade).
+
+**Ordem:**
+
+1. o app v276 sobe (com autorização);
+2. a equipe recarrega;
+3. o founder roda o `dados-1c`.
+
+Ao contrário, também funciona: as tarefas passam uns segundos na lixeira do
+quadro e voltam quando a v276 chega.
 
 ---
 

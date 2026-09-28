@@ -21,6 +21,7 @@
    9. parado, ninguém grava nada;
    10. sem a agência ligada, o app é o de antes.
    Roda com: node web/verificar/v271-o-card-em-tempo-real.mjs */
+import { execSync } from 'child_process';
 import { chromium } from 'playwright';
 import http from 'http';
 import fs from 'fs';
@@ -141,7 +142,7 @@ function ponte(email, opcoes = {}){
         ESTAT.rpc++; ESTAT.porFn[fn] = (ESTAT.porFn[fn] || 0) + 1;
         return json(200, umaLinha(comoPessoa(email, `select to_jsonb(public.${fn}(${args}))`)));
       }
-      const tab = /^\/rest\/v1\/(pauta|cards|card_midias|maestro_cards_ligado)$/.exec(p);
+      const tab = /^\/rest\/v1\/(pauta|cards|card_midias|maestro_cards_ligado|cards_copias)$/.exec(p);
       if(!tab) return json(404, {});
       const tabela = tab[1];
       if(tabela !== 'pauta' && opcoes.semTabelas) return json(404, { message: 'relation does not exist' });
@@ -511,6 +512,58 @@ console.log('\n  — 13. v275: o aparelho com a cópia velha não duplica o card
   checa('13.4 número que já é deste cliente não vira card novo', r2.nao >= 1 && conta() === antes && r2.ids === r2.antesX.arr.slice().sort().join(), { r2, agora: conta() });
   const tarefasOk = await noAparelho(A, () => (S.ensaio && S.ensaio.tarefas || []).every(t => !t.cardId || +t.cardId < 1e12));
   checa('13.5 nenhuma tarefa foi apontada para um número novo', tarefasOk);
+}
+
+console.log('\n  — 14. v276: a limpeza das cópias e a tarefa que volta —');
+{
+  /* o estrago de 26/09, reproduzido: os cards "originais" nasceram na hora
+     de ligar; às 13:40 um aparelho velho criou cópias. Uma cópia está viva
+     (com a tarefa apontada para ela); a outra a equipe já apagou, e a
+     tarefa dela foi para a lixeira do quadro (a v202). */
+  psql(`update public.cards set criado_em = '2026-09-26 10:55-03' where org = 'maestro';
+        insert into public.cards(org, cliente, id, dados, criado_em)
+          select org, cliente, 1790440000601, dados || '{"id":1790440000601}', '2026-09-26 13:40-03' from public.cards where org = 'maestro' and cliente = 'cj' and id = 601;
+        insert into public.cards(org, cliente, id, dados, criado_em, apagado_em)
+          select org, cliente, 1790440000602, dados || '{"id":1790440000602}', '2026-09-26 13:40-03', now() from public.cards where org = 'maestro' and cliente = 'cj' and id = 602;`);
+  const vivosAntes = doBanco(`select count(*)::int from public.cards where org='maestro' and cliente='cj' and apagado_em is null`);
+  await noAparelho(A, () => {
+    const E = S.ensaio;
+    const fora = t => !(t && t.cli === 'cj' && [601, 602, 1790440000601, 1790440000602].includes(+t.cardId));
+    E.tarefas = E.tarefas.filter(fora); E.feitas = (E.feitas || []).filter(fora); E.lixo = (E.lixo || []).filter(e => fora(e && e.tarefa));
+    E.tarefas.push({ id: 991401, titulo: 'Presa na cópia viva', cli: 'cj', cat: 'producao', col: 'do', cardId: 1790440000601, job: true, criada: 1, tempoMs: 5000 });
+    E.lixo.unshift({ tarefa: { id: 991402, titulo: 'Vorcaro — foi junto com a cópia', cli: 'cj', cat: 'producao', col: 'plan', cardId: 1790440000602, job: true, criada: 1, tempoMs: 7000 },
+                     quando: Date.now(), doCard: 'c:cj|1790440000602' });
+    E.lixo.unshift({ tarefa: { id: 991404, titulo: 'Concluída que foi junto', cli: 'cj', cat: 'producao', cardId: 1790440000602, job: true, criada: 1, faseFeita: 'postado', voltasFeita: 0 },
+                     quando: Date.now(), doCard: 'c:cj|1790440000602' });
+    E.lixo.unshift({ tarefa: { id: 991403, titulo: 'Apagada à mão', cli: 'cj', cat: 'producao', col: 'plan', cardId: 1790440000602, job: true, criada: 1 }, quando: Date.now() });
+  });
+  const semTabela = await noAparelho(A, async () => { await MaestroCopias.buscar(); return MaestroCopias.aplicar(); });
+  checa('14.1 antes do SQL (sem o mapa), o app não mexe em nada', semTabela === 0, semTabela);
+  /* o arquivo de verdade */
+  const saida = execSync(`psql -X -q -d ${DB} -f docs/ENGINEERING/dados-1c-limpar-copias.sql 2>&1`).toString();
+  const mapa = doBanco(`select coalesce(json_agg(json_build_object('c', copia, 'f', fica) order by copia), '[]') from public.cards_copias where org='maestro'`);
+  checa('14.2 o SQL monta o mapa: as duas cópias apontam para os originais', JSON.stringify(mapa) === JSON.stringify([{ c: 1790440000601, f: 601 }, { c: 1790440000602, f: 602 }]), { mapa, saida: saida.slice(-400) });
+  const vivosDepois = doBanco(`select count(*)::int from public.cards where org='maestro' and cliente='cj' and apagado_em is null`);
+  checa('14.3 a cópia viva foi para a LIXEIRA (não apagada de vez); os originais seguem vivos', vivosDepois === vivosAntes - 1
+    && doBanco(`select apagado_em is not null and varrido_em is null from public.cards where org='maestro' and cliente='cj' and id=1790440000601`) === true
+    && doBanco(`select count(*)::int from public.cards where org='maestro' and cliente='cj' and id in (601,602) and apagado_em is null`) === 2, { vivosAntes, vivosDepois });
+  checa('14.4 e a cópia de segurança existe', doBanco(`select count(*)::int from public.cards_antes_1c`) > 0);
+  const r = await noAparelho(A, async () => {
+    await MaestroCopias.buscar(); const n = MaestroCopias.aplicar();
+    const E = S.ensaio, t = id => E.tarefas.find(x => x.id === id);
+    return { n, t1: t(991401) && t(991401).cardId, t2: t(991402) && t(991402).cardId, t2tempo: t(991402) && t(991402).tempoMs,
+      t3quadro: !!t(991403), t3lixo: (E.lixo || []).some(e => e && e.tarefa && e.tarefa.id === 991403),
+      col2: t(991402) && t(991402).col,
+      t4: ((E.feitas || []).find(x => x.id === 991404) || {}).cardId, t4quadro: !!t(991404) };
+  });
+  checa('14.5 a tarefa presa na cópia viva passa a apontar para o original', r.t1 === 601, r);
+  checa('14.6 a tarefa que foi para a lixeira junto com a cópia VOLTA ao quadro, no original', r.t2 === 602 && r.t2tempo === 7000, r);
+  checa('14.7 a que alguém apagou à mão continua na lixeira', !r.t3quadro && r.t3lixo, r);
+  checa('14.7b a CONCLUÍDA que foi junto volta para as concluídas (não para o quadro)', r.t4 === 602 && !r.t4quadro, r);
+  const r2 = await noAparelho(A, () => MaestroCopias.aplicar());
+  checa('14.8 rodar de novo não mexe em nada', r2 === 0, r2);
+  const again = execSync(`psql -X -q -d ${DB} -f docs/ENGINEERING/dados-1c-limpar-copias.sql 2>&1`).toString();
+  checa('14.9 rodar o SQL de novo não apaga mais nada', doBanco(`select count(*)::int from public.cards where org='maestro' and cliente='cj' and apagado_em is null`) === vivosDepois, again.slice(-300));
 }
 
 console.log('\n  — 9. parado, ninguém grava —');

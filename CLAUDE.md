@@ -299,6 +299,14 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Pronta, esperando autorização (28 set, v276) — as cópias saem e a tarefa
+volta.** O banco confirmou 48 cópias de 26/09 (12:13 e 13:40, login
+`ejup.mkt`); 37 vivas. `docs/ENGINEERING/dados-1c-limpar-copias.sql` (o
+founder roda): cópia de segurança, mapa `cards_copias` e cópias vivas para a
+LIXEIRA (trava: >60 recusa). O app reaponta a tarefa presa numa cópia e
+devolve a que foi para a lixeira junto com ela (a do quadro ao quadro, a
+concluída às concluídas; a apagada à mão fica). Seção 14 da v271 (66 provas).
+Ordem: app → recarregar → SQL.
 **Fechado (28 set, v275, NO AR com autorização do founder) — sem cópia de
 card, e o material sobe dentro da pauta.** O founder pediu: **"suba tudo de
 uma vez… e só subir quando eu autorizar"**; autorizou em 28/set. (1) A
