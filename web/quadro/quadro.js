@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v278', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v279', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -57,7 +57,7 @@
   ];
   const COL = Object.fromEntries(COLS.map(([k, n, c]) => [k, { k, n, c }]));
   const PENDENTES = ['pauta', 'afazer', 'fazendo'];
-  const FORMATOS = ['Post', 'Carrossel', 'Reels', 'Story', 'Vídeo', 'Artigo', 'Tarefa'];
+  const FORMATOS = ['Post', 'Carrossel', 'Reels', 'Story', 'Shorts', 'Vídeo', 'Artigo', 'Tarefa'];
 
   const faseDo = p => { try{ return typeof faseDe === 'function' ? faseDe(p) : (p.fase || 'rascunho'); }catch(e){ return p.fase || 'rascunho'; } };
   function daFase(f, p){
@@ -313,25 +313,84 @@
       || casar(/\s(?:ate |para |pra |na |no |nesta |neste |proxima |proximo )?(domingo|segunda|terca|quarta|quinta|sexta|sabado)(?:-feira)?(?=\s)/, m => {
         const alvo = dias[m[1]]; const hoje0 = doISO(h).getDay();
         let n = (alvo - hoje0 + 7) % 7; if(n === 0) n = 7; r.prazo = soma(h, n); });
-    const fm = /\s(reels?|carrossel|story|stories|post|video|artigo)(?=\s)/.exec(sa);
-    if(fm){ r.fmt = { reel: 'Reels', reels: 'Reels', carrossel: 'Carrossel', story: 'Story', stories: 'Story', post: 'Post', video: 'Vídeo', artigo: 'Artigo' }[fm[1]]; }
+    const fm = /\s(reels?|carrossel|story|stories|post|video|artigo|shorts)(?=\s)/.exec(sa);
+    if(fm){ r.fmt = { reel: 'Reels', reels: 'Reels', carrossel: 'Carrossel', story: 'Story', stories: 'Story', post: 'Post', video: 'Vídeo', artigo: 'Artigo', shorts: 'Shorts' }[fm[1]]; }
     r.tema = s.replace(/\s+/g, ' ').trim();
     return r;
   }
   Q.interpretar = interpretar;
 
-  function criarDoTexto(txt, base){
+  /* o padrão do nome (v260): Cliente · Formato · Tema. O formato já está no
+     nome, então "Reels da obra" com formato Reels vira o tema "Obra" —
+     senão o nome sai "EJUP · Reels · Reels da obra". */
+  const PALAVRAS_FMT = /^(reels?|carross[eé]is|carrossel|stor(y|ies)|posts?|v[ií]deos?|artigos?|shorts?|tarefa)\b[\s:–-]*((de|da|do|das|dos|sobre|para|pra|com|no|na|nos|nas|um|uma)\s+)*/i;
+  function limparTema(t, fmt){
+    const o = String(t || '').trim();
+    if(!fmt) return o;
+    const x = o.replace(PALAVRAS_FMT, '').trim();
+    return x ? x[0].toUpperCase() + x.slice(1) : o;
+  }
+  Q.limparTema = limparTema;
+  /* o que o texto + os botões escolhidos viram — a prévia e a criação usam o mesmo */
+  function montar(txt, base, esc){
     const r = interpretar(txt, base);
-    if(!r.tema) return null;
-    const cli = r.cli || (base && base.cli) || AG;
+    esc = esc || {};
+    const cli = esc.cli || r.cli || (base && base.cli) || AG;
+    const fmt = cli === AG ? 'Tarefa' : (esc.fmt || r.fmt || 'Post');
+    const tm = cli === AG ? r.tema : limparTema(r.tema, fmt);
+    return { r, cli, fmt, tema: tm, nome: tm ? titulo(cli, fmt, tm) : '' };
+  }
+  Q.montar = montar;
+  function criarDoTexto(txt, base, esc){
+    const m = montar(txt, base, esc);
+    const r = m.r;
+    if(!m.tema) return null;
+    const cli = m.cli;
     const resp = r.resp || (base && 'resp' in base ? base.resp : null);
     const coluna = (base && base.coluna) || (resp ? 'afazer' : 'pauta');
-    const dados = { tema: r.tema, fmt: r.fmt || (cli === AG ? 'Tarefa' : 'Post'), resp, coluna,
+    const dados = { tema: m.tema, fmt: m.fmt, resp, coluna,
       prazo: r.prazo || (base && base.prazo) || null, prazoHora: r.prazoHora, importante: r.importante };
     if(base && base.data) dados.data = base.data;
     return { cli, p: novo(cli, dados) };
   }
   Q.criarDoTexto = criarDoTexto;
+
+  /* ---------------- o nome na hora de criar ---------------- */
+  Q.esc = Q.esc || {};
+  function blocoNome(alvo){
+    const e = Q.esc[alvo] || {};
+    return `<div class="qdNome" data-qdnome="${esc_(alvo)}" hidden>
+      <div class="qdNomeL"><span>Cliente</span><div class="qdChips">
+        <button type="button" class="qdChipN" data-qdncli="${AG}">Agência</button>
+        ${clientes().map(c => `<button type="button" class="qdChipN" data-qdncli="${esc_(c.id)}">${esc_(c.nome)}</button>`).join('')}</div></div>
+      <div class="qdNomeL qdNomeFmt"><span>Formato</span><div class="qdChips">
+        ${FORMATOS.filter(f => f !== 'Tarefa').map(f => `<button type="button" class="qdChipN" data-qdnfmt="${esc_(f)}">${esc_(f)}</button>`).join('')}</div></div>
+      <p class="qdPrev">Vai aparecer assim: <b></b></p>
+    </div>`;
+  }
+  function baseDoForm(f){
+    const alvo = f.dataset.qdentrada ? 'lista' : f.dataset.qdaddform;
+    let base = {};
+    if(alvo === 'lista') base = { resp: Q.pessoa || eu(), coluna: 'afazer' };
+    else if(alvo.startsWith('dia:')) base = { prazo: alvo.slice(4) || null, resp: Q.pessoa || eu(), coluna: 'afazer' };
+    else if(alvo.startsWith('cal:')) base = { data: alvo.slice(4), coluna: 'pauta', cli: Q.filtroCli !== 'todos' ? Q.filtroCli : null };
+    else base = { coluna: alvo, cli: Q.filtroCli !== 'todos' ? Q.filtroCli : null, resp: Q.filtroPessoa !== 'todos' && Q.filtroPessoa !== 'ninguem' ? Q.filtroPessoa : null };
+    return { alvo, base };
+  }
+  function atualizarNome(f){
+    if(!f) return;
+    const { alvo, base } = baseDoForm(f);
+    const bl = f.querySelector('[data-qdnome]'); if(!bl) return;
+    const campo = f.querySelector('input[type=text], textarea');
+    const txt = (campo && campo.value || '').trim();
+    bl.hidden = !txt && !(Q.esc[alvo] && (Q.esc[alvo].cli || Q.esc[alvo].fmt));
+    const m = montar(txt, base, Q.esc[alvo]);
+    bl.querySelectorAll('[data-qdncli]').forEach(b => b.classList.toggle('on', b.dataset.qdncli === m.cli));
+    bl.querySelectorAll('[data-qdnfmt]').forEach(b => b.classList.toggle('on', b.dataset.qdnfmt === m.fmt));
+    bl.querySelector('.qdNomeFmt').hidden = m.cli === AG;
+    bl.querySelector('.qdPrev b').textContent = m.tema ? (m.cli === AG ? m.nome + '  (tarefa da agência)' : m.nome) : '—';
+  }
+  Q.atualizarNome = atualizarNome;
 
   /* ---------------- desenho ---------------- */
   function avCli(cli, cls){
@@ -484,6 +543,7 @@
         <input type="text" id="qdNovo" name="qdnovo" placeholder="O que precisa ser feito?" aria-label="Nova tarefa" enterkeyhint="done">
         <button type="submit" class="qdBt">Adicionar</button>
         <p class="qdDica">Escreva do jeito que fala: <b>reels da obra sexta às 15h #vale</b>. <b>@pessoa</b> passa para alguém, <b>!</b> no fim marca como importante. Sem <b>#cliente</b>, é tarefa da agência.</p>
+        ${blocoNome('lista')}
       </form>`;
     const subs = `<div class="qdSubs" role="tablist">
         <button type="button" class="${Q.sub === 'tarefas' ? 'on' : ''}" data-qdsub="tarefas">${ic_('checkc', 13)} Tarefas <span>${pend.length}</span></button>
@@ -648,6 +708,7 @@
       <div class="qdFTopo">${avCli(cli)}<span class="qdCli">${esc_(cliente(cli).nome)}</span><span class="qdSp"></span>
         <button type="button" class="qdFechar" data-qdfechar="1" aria-label="Fechar">×</button></div>
       <textarea class="qdFTit" data-qf="tema" rows="1" aria-label="Nome do card">${esc_(tema(p, cli))}</textarea>
+      ${ehAg ? '' : `<p class="qdFNome">${segueOPadrao(p, cli) ? `Nome: <b data-qdfnome="1">${esc_(p.t)}</b>` : `Fora do padrão. <button type="button" class="qdPil" data-qdpadrao="1">Padronizar: ${esc_(titulo(cli, p.fmt || 'Post', limparTema(tema(p, cli), p.fmt)))}</button>`}</p>`}
       <div class="qdFCols" role="group" aria-label="Coluna">${COLS.filter(([k]) => !ehAg || !['cliente', 'aprovado', 'agendado'].includes(k)).map(([k, n, c]) =>
         `<button type="button" class="qdFCol ${col === k ? 'on' : ''}" style="--qdc:${c}" data-qdfcol="${k}">${ehAg && k === 'publicado' ? 'Feito' : n}</button>`).join('')}</div>
       ${p.ajustePendente ? `<div class="qdFAjuste"><b>O cliente pediu ajuste</b>${(Array.isArray(p.alteracoes) ? p.alteracoes : []).slice(-1).map(a => `<p>${esc_(a.oque || '')}${a.por ? ` <span class="qdMut">— ${esc_(a.por)}</span>` : ''}</p>`).join('')}
@@ -691,6 +752,7 @@
       const v = valorDoCampo(p, cli, c.dataset.qf);
       if(c.value !== v) c.value = v;
     });
+    const fn = el.querySelector('[data-qdfnome]'); if(fn && fn.textContent !== p.t) fn.textContent = p.t;
     const col = colunaDe(p);
     el.querySelectorAll('[data-qdfcol]').forEach(b => b.classList.toggle('on', b.dataset.qdfcol === col));
     /* checklist, material e ajuste: redesenha só se não há nada sendo digitado neles */
@@ -755,6 +817,7 @@
       } else c = document.getElementById(x.nome);
       if(!c) continue;
       c.value = x.v;
+      atualizarNome(c.closest('form'));
       if(x.foco){ c.focus(); try{ c.setSelectionRange(x.s, x.e); }catch(e){} }
     }
   }
@@ -797,19 +860,20 @@
     const alvo = w.dataset.qdaddwrap;
     w.innerHTML = `<form class="qdAddForm" data-qdaddform="${esc_(alvo)}" autocomplete="off">
       <textarea rows="2" placeholder="${alvo.startsWith('cal:') ? 'Tema #cliente' : 'O que precisa ser feito? #cliente @pessoa'}" aria-label="Novo card"></textarea>
-      <div><button type="submit" class="qdBt">Adicionar</button><button type="button" class="qdBtGho" data-qdaddfechar="1">Cancelar</button></div></form>`;
+      ${blocoNome(alvo)}
+      <div class="qdAddBts"><button type="submit" class="qdBt">Adicionar</button><button type="button" class="qdBtGho" data-qdaddfechar="1">Cancelar</button></div></form>`;
+    atualizarNome(w.querySelector('form'));
     if(!silencioso){ const t = w.querySelector('textarea'); t.focus(); }
   }
   function criarDeAdd(form){
     const alvo = form.dataset.qdaddform;
     const t = form.querySelector('textarea');
     const txt = (t.value || '').trim(); if(!txt) return;
-    let base = {};
-    if(alvo.startsWith('dia:')) base = { prazo: alvo.slice(4) || null, resp: Q.pessoa || eu(), coluna: 'afazer' };
-    else if(alvo.startsWith('cal:')) base = { data: alvo.slice(4), coluna: 'pauta', cli: Q.filtroCli !== 'todos' ? Q.filtroCli : null };
-    else base = { coluna: alvo, cli: Q.filtroCli !== 'todos' ? Q.filtroCli : null, resp: Q.filtroPessoa !== 'todos' && Q.filtroPessoa !== 'ninguem' ? Q.filtroPessoa : null };
-    if(alvo.startsWith('cal:') && !interpretar(txt).cli && !base.cli){ t.setCustomValidity('Diga de qual cliente: #nome'); t.reportValidity(); return; }
-    const r = criarDoTexto(txt, base);
+    const { base } = baseDoForm(form);
+    const esc = Q.esc[alvo] || {};
+    if(alvo.startsWith('cal:') && !interpretar(txt).cli && !base.cli && !esc.cli){ t.setCustomValidity('Escolha o cliente'); t.reportValidity(); return; }
+    const r = criarDoTexto(txt, base, esc);
+    if(Q.esc[alvo]) delete Q.esc[alvo].fmt;           /* o cliente fica escolhido para o próximo; o formato, não */
     if(r && alvo.startsWith('cal:') && r.cli !== AG) mudar(r.cli, r.p.id, { data: alvo.slice(4), dia: (doISO(alvo.slice(4)).getDay() + 6) % 7, hora: r.p.hora || '18:30' });
     t.value = '';
     redesenharPagina();
@@ -847,7 +911,16 @@
   }
 
   document.addEventListener('click', e => {
-    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel]');
+    const chip = e.target.closest('[data-qdncli],[data-qdnfmt]');
+    if(chip){
+      const f = chip.closest('form'); const { alvo } = baseDoForm(f);
+      const esc = Q.esc[alvo] = Q.esc[alvo] || {};
+      if(chip.dataset.qdncli) esc.cli = chip.dataset.qdncli; else esc.fmt = chip.dataset.qdnfmt;
+      atualizarNome(f);
+      const c = f.querySelector('input[type=text], textarea'); if(c) c.focus();
+      return;
+    }
+    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel]');
     if(!e.target.closest('#qdPop')) document.getElementById('qdPop')?.remove();
     if(!alvo) return;
     const d = alvo.dataset;
@@ -892,6 +965,7 @@
     if(d.qdapagar){ Q.folhaApagar = true; desenharFolha(true); return; }
     if(d.qdapagarnao){ Q.folhaApagar = false; desenharFolha(true); return; }
     if(d.qdapagarsim){ apagar(cli, id); fecharFolha(); redesenharPagina(); return; }
+    if(d.qdpadrao){ const p = achar(cli, id); if(!p) return; mudar(cli, id, { t: titulo(cli, p.fmt || 'Post', limparTema(tema(p, cli), p.fmt)) }); desenharFolha(true); redesenharPagina(); return; }
     if(d.qdajok){ mudar(cli, id, { ajustePendente: null }); desenharFolha(true); redesenharPagina(); return; }
     if(d.qdsubir){ const i = document.getElementById('qdArquivo'); if(i){ i.value = ''; i.click(); } return; }
     if(d.qdeditor){
@@ -921,6 +995,7 @@
     const c = e.target;
     if(c.matches && c.matches('#qdFolha [data-qf]')){ if(c.classList.contains('qdFTit')) ajustarAltura(c); if(c.tagName !== 'SELECT' && c.type !== 'date' && c.type !== 'time') gravarCampo(c, false); }
     if(c.matches && c.matches('[data-qdaddform] textarea')) c.setCustomValidity('');
+    if(c.matches && c.matches('#qdNovo, [data-qdaddform] textarea')) atualizarNome(c.closest('form'));
   }, true);
   document.addEventListener('focusout', e => {
     const c = e.target;
@@ -932,7 +1007,8 @@
       e.preventDefault();
       const i = f.querySelector('input'); const txt = (i.value || '').trim(); if(!txt) return;
       const pid = Q.pessoa || eu();
-      criarDoTexto(txt, { resp: pid, coluna: 'afazer' });
+      criarDoTexto(txt, { resp: pid, coluna: 'afazer' }, Q.esc.lista);
+      if(Q.esc.lista) delete Q.esc.lista.fmt;
       i.value = '';
       redesenharPagina();
       const n = document.getElementById('qdNovo'); if(n) n.focus();
@@ -1163,7 +1239,24 @@
   .qdAddBt{ width:100%; text-align:left; border:0; background:transparent; color:var(--mut, #999); font:inherit; font-size:13px; padding:8px 6px; border-radius:10px; cursor:pointer; min-height:34px }
   .qdAddBt:hover{ background:var(--sup2, rgba(255,255,255,.06)); color:var(--tx, #fff) }
   .qdAddForm textarea{ width:100%; box-sizing:border-box; font:inherit; font-size:14px; color:var(--tx, #fff); background:var(--bg, #1c1c1f); border:1px solid var(--qdl); border-radius:10px; padding:8px 10px; resize:none }
-  .qdAddForm div{ display:flex; gap:6px; margin-top:6px }
+  .qdAddForm .qdAddBts{ display:flex; gap:6px; margin-top:6px }
+  .qdNome{ flex-basis:100%; margin:4px 0 2px; display:flex; flex-direction:column; gap:6px; min-width:0 }
+  .qdNome[hidden], .qdNomeL[hidden]{ display:none }
+  .qdNomeL{ display:flex; align-items:center; gap:8px; min-width:0 }
+  .qdNomeL > span{ font-size:11.5px; color:var(--mut, #999); width:52px; flex:none }
+  .qdChips{ display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; min-width:0 }
+  .qdChips::-webkit-scrollbar{ display:none }
+  .qdChipN{ flex:none; border:0; font:inherit; font-size:12.5px; padding:5px 10px; border-radius:999px; background:var(--sup2, rgba(255,255,255,.08)); color:var(--mut, #bbb); cursor:pointer; min-height:30px }
+  .qdChipN.on{ background:var(--tx, #fff); color:var(--bg, #111); font-weight:600 }
+  .qdPrev{ margin:0; font-size:12.5px; color:var(--mut, #999) }
+  .qdPrev b{ color:var(--tx, #fff); font-weight:500 }
+  .qdAddForm .qdNome{ margin-top:6px }
+  .qdAddForm .qdNomeL{ flex-direction:column; align-items:flex-start; gap:4px }
+  .qdAddForm .qdNomeL > span{ width:auto }
+  .qdAddForm .qdChips{ max-width:100% }
+  .qdEntrada .qdNome{ margin-left:30px }
+  .qdFNome{ margin:-4px 0 12px; font-size:12.5px; color:var(--mut, #999); display:flex; flex-wrap:wrap; gap:6px; align-items:center }
+  .qdFNome b{ color:var(--tx, #ddd); font-weight:500 }
   .qdAbasCol{ display:none }
   /* minha lista */
   .qdLista{ max-width:920px }
@@ -1309,6 +1402,7 @@
     .qdEntrada input{ font-size:16px }
     .qdEntrada .qdBt{ display:none }
     .qdDica{ display:none }
+    .qdEntrada .qdNome{ margin-left:0 }
     .qdSemana{ grid-template-columns:1fr; gap:6px }
     .qdDia{ min-height:0 }
     .qdMalha{ display:none }

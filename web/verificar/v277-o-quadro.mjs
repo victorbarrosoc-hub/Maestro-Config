@@ -477,12 +477,12 @@ console.log('\n  — 9. duas pessoas no mesmo card, ao mesmo tempo —');
   const ms2 = await ate(B, async () => (await Q(B, () => MaestroQuadro.colunaDe(S.pautas.cj.find(x => +x.id === 602)))) === 'fazendo', 5000);
   checa('9.2 e cada aparelho vê a do outro', ms >= 0 && ms2 >= 0, { ms, ms2 });
   /* os dois criam card ao mesmo tempo */
-  await Promise.all([Q(A, () => MaestroQuadro.criarDoTexto('Post da Ana #cortez', { coluna: 'pauta' })), Q(B, () => MaestroQuadro.criarDoTexto('Post da Gabi #cortez', { coluna: 'pauta' }))]);
+  await Promise.all([Q(A, () => MaestroQuadro.criarDoTexto('Card da Ana #cortez', { coluna: 'pauta' })), Q(B, () => MaestroQuadro.criarDoTexto('Card da Gabi #cortez', { coluna: 'pauta' }))]);
   await esperar(2000);
-  const nomes = JSON.parse(umaLinha(`select coalesce(jsonb_agg(dados->>'t' order by id), '[]')::text from public.cards where org='maestro' and cliente='cj' and apagado_em is null and dados->>'t' like '%Post da%'`));
+  const nomes = JSON.parse(umaLinha(`select coalesce(jsonb_agg(dados->>'t' order by id), '[]')::text from public.cards where org='maestro' and cliente='cj' and apagado_em is null and dados->>'t' like '%Card da%'`));
   checa('9.3 dois cards criados ao mesmo tempo: dois cards, nenhum duplicado', nomes.length === 2 && new Set(nomes).size === 2, nomes);
-  const vistoA = await ate(A, async () => (await Q(A, () => MaestroQuadro.todos().filter(x => /Post da/.test(x.p.t)).length)) === 2, 5000);
-  const vistoB = await ate(B, async () => (await Q(B, () => MaestroQuadro.todos().filter(x => /Post da/.test(x.p.t)).length)) === 2, 5000);
+  const vistoA = await ate(A, async () => (await Q(A, () => MaestroQuadro.todos().filter(x => /Card da/.test(x.p.t)).length)) === 2, 5000);
+  const vistoB = await ate(B, async () => (await Q(B, () => MaestroQuadro.todos().filter(x => /Card da/.test(x.p.t)).length)) === 2, 5000);
   checa('9.4 os dois aparelhos veem os dois', vistoA >= 0 && vistoB >= 0, { vistoA, vistoB });
   /* o pior caso: os dois aparelhos dão o MESMO número a cards diferentes */
   await Promise.all([
@@ -537,6 +537,47 @@ console.log('\n  — 12. recarregar: o que está no banco é o que se vê —');
   checa('12.2 nenhum card repetido no banco depois de tudo', +dup === 0, dup);
   await C.ctx.close();
   checa('12.3 nenhum erro de página', [...A.erros, ...B.erros, ...C.erros].length === 0, [...A.erros, ...B.erros, ...C.erros].slice(0, 4));
+}
+
+console.log('\n  — 14. o padrão do nome, na hora de criar —');
+{
+  await Q(A, () => { MaestroQuadro.fecharFolha(); MaestroQuadro.aba = 'lista'; MaestroQuadro.sub = 'tarefas'; render(); });
+  const oculto = await Q(A, () => document.querySelector('[data-qdnome="lista"]').hidden);
+  checa('14.1 sem nada escrito, o campo é só o campo (o padrão não aparece)', oculto === true, oculto);
+  await A.pag.fill('#qdNovo', 'carrossel sobre a sala #ejup');
+  const r = await Q(A, () => { const b = document.querySelector('[data-qdnome="lista"]');
+    return { vis: !b.hidden, cli: (b.querySelector('[data-qdncli].on') || {}).textContent, fmt: (b.querySelector('[data-qdnfmt].on') || {}).textContent, prev: b.querySelector('.qdPrev b').textContent }; });
+  checa('14.2 ao escrever, aparecem cliente e formato já marcados, e a prévia do nome', r.vis && r.cli === 'EJUP' && r.fmt === 'Carrossel' && r.prev === 'EJUP · Carrossel · A sala', r);
+  await A.pag.click('[data-qdnome="lista"] [data-qdncli="cj"]');
+  await A.pag.click('[data-qdnome="lista"] [data-qdnfmt="Reels"]');
+  const r2 = await Q(A, () => ({ prev: document.querySelector('[data-qdnome="lista"] .qdPrev b').textContent, foco: document.activeElement.id }));
+  checa('14.3 tocar no cliente e no formato troca o nome (e o cursor volta ao campo)', r2.prev === 'Cortez Jurídico · Reels · A sala' && r2.foco === 'qdNovo', r2);
+  await A.pag.press('#qdNovo', 'Enter');
+  await esperar(1200);
+  const n = umaLinha(`select count(*) from public.cards where org='maestro' and cliente='cj' and dados->>'t' = 'Cortez Jurídico · Reels · A sala' and dados->>'fmt' = 'Reels'`);
+  checa('14.4 o card nasce com o nome no padrão e o formato certo, no banco', +n === 1, n);
+  await A.pag.fill('#qdNovo', 'post sobre herança');
+  const r3 = await Q(A, () => ({ cli: (document.querySelector('[data-qdnome="lista"] [data-qdncli].on') || {}).textContent, prev: document.querySelector('[data-qdnome="lista"] .qdPrev b').textContent }));
+  checa('14.5 o cliente escolhido fica para o próximo card; o formato vem do texto', r3.cli === 'Cortez Jurídico' && r3.prev === 'Cortez Jurídico · Post · Herança', r3);
+  await A.pag.click('[data-qdnome="lista"] [data-qdncli="agencia"]');
+  const r4 = await Q(A, () => ({ fmtOculto: document.querySelector('[data-qdnome="lista"] .qdNomeFmt').hidden, prev: document.querySelector('[data-qdnome="lista"] .qdPrev b').textContent }));
+  checa('14.6 tarefa da agência: sem formato, e a prévia diz que é da agência', r4.fmtOculto && /tarefa da agência/.test(r4.prev), r4);
+  await A.pag.fill('#qdNovo', '');
+  /* um card antigo, fora do padrão: a ficha oferece padronizar */
+  await Q(A, () => { S.pautas.cj.push({ id: 8800001, t: 'reels sobre divórcio', fmt: 'Reels', fase: 'rascunho', criadoEm: 5 }); return Sincro.gravar('cj', true); });
+  await esperar(800);
+  await Q(A, () => { MaestroQuadro.aba = 'quadro'; render(); MaestroQuadro.abrirFolha('cj|8800001'); });
+  const pad = await Q(A, () => (document.querySelector('#qdFolha [data-qdpadrao]') || {}).textContent || '');
+  checa('14.7 card fora do padrão: a ficha mostra como fica padronizado', /Cortez Jurídico · Reels · Divórcio/.test(pad), pad);
+  await A.pag.click('#qdFolha [data-qdpadrao]');
+  await esperar(900);
+  checa('14.8 um toque padroniza (no banco)', noBanco('cj', 8800001).dados.t === 'Cortez Jurídico · Reels · Divórcio', noBanco('cj', 8800001).dados.t);
+  await Q(A, () => MaestroQuadro.fecharFolha());
+  /* no quadro, o "+ Adicionar" da coluna também tem o padrão */
+  await Q(A, () => document.querySelector('[data-qdadd="pauta"]').click());
+  await A.pag.fill('[data-qdaddform="pauta"] textarea', 'story enquete #ejup');
+  const r5 = await Q(A, () => document.querySelector('[data-qdnome="pauta"] .qdPrev b').textContent);
+  checa('14.9 o "+ Adicionar" das colunas mostra o mesmo padrão', r5 === 'EJUP · Story · Enquete', r5);
 }
 
 console.log('\n  — 13. o celular —');

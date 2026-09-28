@@ -1,9 +1,36 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.93
+Version: 0.5.94
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.94 — 2026-09-28
+
+**Status:** Na branch, com provas. NÃO publicado: aguarda a autorização do founder.
+
+### v279 — o padrão do nome, na hora de criar
+
+O founder mandou o print do "Editar postagem" (v260) e perguntou: "em que
+momento uso isso? preciso que isso esteja na hora de criar uma nova tarefa".
+O padrão `Cliente · Formato · Tema` só aparecia no editor antigo. No Quadro,
+o nome já nascia montado, mas sem ninguém ver.
+
+- **Ao escrever**, no campo da Minha lista e no "+ Adicionar" das colunas,
+  aparecem:
+  - os botões de **Cliente** (Agência primeiro) e de **Formato**, já
+    marcados pelo que o texto diz (`#ejup`, "carrossel");
+  - a prévia "Vai aparecer assim: EJUP · Carrossel · A sala".
+  - Tocar num botão troca o nome, e o cursor volta ao campo.
+- **O formato sai do tema:** "carrossel sobre a sala" vira o tema "A sala",
+  e não "EJUP · Carrossel · Carrossel sobre a sala".
+- **O cliente escolhido fica para o próximo card;** o formato, não.
+- **Na ficha**, o nome inteiro aparece embaixo do tema. Card antigo fora do
+  padrão mostra como ficaria, com "Padronizar" (um toque).
+- **Shorts** entra nos formatos.
+- **Provas:** 9 novas na `v277-o-quadro.mjs`, 70 de 70 no total.
 
 ---
 
