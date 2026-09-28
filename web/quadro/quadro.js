@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v285', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v286', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -66,7 +66,7 @@
     aprovado: 'O cliente aprovou. Falta agendar.',
     agendado: 'Programado para ir ao ar.',
     publicado: 'No ar.' };
-  Q.DESC = DESC;
+  Q.DESC = DESC; Q.COLS = COLS;
   const PENDENTES = ['pauta', 'afazer', 'fazendo'];
   const FORMATOS = ['Post', 'Carrossel', 'Reels', 'Story', 'Shorts', 'Vídeo', 'Artigo', 'Tarefa'];
 

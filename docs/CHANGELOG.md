@@ -1,11 +1,31 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.100
+Version: 0.5.101
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.101 — 2026-09-28
+
+**Status:** No ar.
+
+### v286 — a vitrine conta o método de hoje
+
+- O founder: "Tem que atualizar as telas da homepage escura também, porque
+  mudou o design interno das abas." As fotos escuras já eram as novas (v285,
+  conferido por hash no ar). O que estava velho era o texto da vitrine:
+  "Seis colunas. Um método." (Plan, Do, Check, Com o cliente, Act, Concluído)
+  e "Texto antes da arte" com "1ª volta · texto / 2ª volta · peça", que a
+  v280 aposentou (uma volta só).
+- Agora: "Oito colunas. Um fluxo." com as oito do Quadro (Pauta, A fazer,
+  Fazendo, Revisão, Com o cliente, Aprovado, Agendado, Publicado), nas cores
+  do Quadro, quatro por linha no computador; e "Uma volta com o cliente"
+  (só o texto, ou texto + peça). O alt da foto diz "o Quadro", não "o Ensaio".
+- `MaestroQuadro.COLS` passa a ser exposto, e a prova 8.1 compara a vitrine
+  com ele em tempo de execução. v250 e v258 cobravam o texto antigo e foram
+  atualizadas.
 
 ## 0.5.100 — 2026-09-28
 

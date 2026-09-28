@@ -78,7 +78,7 @@ console.log('\n2. a vitrine, para quem chega pela primeira vez');
   await pg.waitForFunction(() => document.documentElement.classList.contains('pronto'), null, { timeout: 15000 }).catch(() => {});
   await pg.waitForTimeout(600);
   const f = await aVista(pg);
-  checa('no fim, a vitrine inteira', f.pronto && /Seis colunas/.test(f.txt), f.txt);
+  checa('no fim, a vitrine inteira', f.pronto && /Oito colunas/.test(f.txt), f.txt);
   await ctx.close();
 }
 

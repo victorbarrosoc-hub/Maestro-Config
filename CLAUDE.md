@@ -299,6 +299,15 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (28 set, v286, NO AR) — a vitrine conta o método de hoje.** "Tem
+que atualizar as telas da homepage escura também, porque mudou o design
+interno das abas." As fotos escuras já eram as novas (v285); o que estava
+velho era o TEXTO: "Seis colunas. Um método." com Plan/Do/Check/Act e o bloco
+"1ª volta · texto / 2ª volta · peça". Agora são as oito colunas do Quadro
+(mesmos nomes, cores e ordem de `MaestroQuadro.COLS`, quatro por linha no
+computador) e "Uma volta com o cliente" (só o texto, ou texto + peça). A prova
+8.1 compara a vitrine com o Quadro em tempo de execução: renomear coluna sem
+mudar a vitrine fica vermelho. v250 e v258 atualizadas.
 **Fechado (28 set, v285, NO AR com autorização do founder: "suba tudo
 junto") — as fotos seguem o tema, e a ficha não balança.** (1) As telas
 encaixadas nas fotos da vitrine (notebook, celular, mão) existem nos dois

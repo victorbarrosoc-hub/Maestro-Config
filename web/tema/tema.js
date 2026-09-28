@@ -19,7 +19,7 @@
 (function(){
   'use strict';
   if(window.MaestroTema) return;
-  const T = window.MaestroTema = { versao: 'v285' };
+  const T = window.MaestroTema = { versao: 'v286' };
 
   const LUZ = 'maestro-luz-v1';
   const claro = () => document.documentElement.getAttribute('data-tema') === 'claro';
@@ -108,6 +108,12 @@
   html[data-tema="claro"] .sv .price.pop{ background:linear-gradient(#FFF3D6, #F8F7F4) }
   html[data-tema="claro"] .sv .sPasso, html[data-tema="claro"] .sv .sTile, html[data-tema="claro"] .sv .price{ box-shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px -12px rgba(40,30,10,.12) }
   html[data-tema="claro"] .sv .seg button.on{ background:#FFC857 !important; color:#1C1C1F !important }
+
+  /* v286 — o método na vitrine são as oito colunas do Quadro: quatro por linha no computador */
+  @media(min-width:861px){ .sv .sPassos{ grid-template-columns:repeat(4, 1fr) } }
+  :root .sv .sVoltas em:first-child{ background:rgba(255,255,255,.07); color:inherit }
+  html[data-tema="claro"] .sv .sVoltas em, html[data-tema="claro"] .sv .sVoltas em:first-child{ background:#E6E4DE; color:#1F1D1A }
+  @media(min-width:601px) and (max-width:860px){ .sv .sPassos{ grid-template-columns:1fr 1fr } }
 
   /* o login: no claro, o fundo atrás da caixa é Linho, não preto */
   html[data-tema="claro"] #entrarMaestro{ background:rgba(239,238,234,.95) !important; -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px) }

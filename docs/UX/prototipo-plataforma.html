@@ -959,10 +959,7 @@ function precos(){
   </div>`;
 }
 
-/* v250 — a vitrine refeita no estilo da plataforma (pedido do founder:
-   "mais clean, mais Apple"). Só o que é verdade: nada de logo de cliente
-   ou depoimento inventado. O quadro e o celular são desenhados em HTML,
-   com o método de verdade (as seis colunas) — sem imagem para baixar. */
+/* v250/v286 — a vitrine: só o que é verdade, e o método de hoje (as oito colunas do Quadro). */
 function vSite(){
   const passo = (cor, nome, txt) => `<div class="sPasso rv"><i style="background:${cor}"></i><h3>${nome}</h3><p>${txt}</p></div>`;
   return `<div class="site sv">
@@ -987,21 +984,23 @@ function vSite(){
   <img class="sFoto fu" style="animation-delay:260ms" src="/web/img/vitrine-aparelhos-1800.webp"
     srcset="/web/img/vitrine-aparelhos-1000.webp 1000w, /web/img/vitrine-aparelhos-1800.webp 1800w"
     sizes="(max-width: 860px) 100vw, 1040px" width="1800" height="1020" fetchpriority="high"
-    alt="A Maestro num notebook e num iPhone: o quadro do Ensaio e as publicações do cliente"></picture>
+    alt="A Maestro num notebook e num iPhone: o Quadro e as publicações do cliente"></picture>
 </header>
 
 <section class="sSec" id="como">
   <p class="sOlho rv">Como funciona</p>
-  <h2 class="rv">Seis colunas. Um método.</h2>
-  <p class="sSub rv">Plan, Do, Check, Act — o ciclo que a agência boa já faz, com o cliente como uma
-    das colunas. Todo card sabe onde está e quem move.</p>
+  <h2 class="rv">Oito colunas. Um fluxo.</h2>
+  <p class="sSub rv">Da ideia ao ar, com o cliente como uma das colunas. Todo card mostra o próximo
+    passo e quem move.</p>
   <div class="sPassos">
-    ${passo('#5B8DEF', 'Plan', 'A pauta nasce: o que, para quem, até quando, com quem.')}
-    ${passo('#E5B83B', 'Do', 'Texto e peça em produção, com prazo e cronômetro.')}
-    ${passo('#FF9500', 'Check', 'O revisor libera. Ninguém aprova o próprio trabalho.')}
-    ${passo('#C8963A', 'Com o cliente', 'Ele decide no celular — aprova ou pede ajuste.')}
-    ${passo('#34C759', 'Act', 'Aprovado vira agenda e vai ao ar na hora marcada.')}
-    ${passo('#8E8E93', 'Concluído', 'O que foi ao ar, com versão e histórico.')}
+    ${passo('#8E8E93', 'Pauta', 'A ideia nasce. Escolha quem faz.')}
+    ${passo('#5B8DEF', 'A fazer', 'Tem dono e prazo.')}
+    ${passo('#2EC4B6', 'Fazendo', 'Texto e peça em produção.')}
+    ${passo('#BF5AF2', 'Revisão', 'Alguém da casa confere antes do cliente.')}
+    ${passo('#FF7A45', 'Com o cliente', 'Ele decide no celular: aprova ou pede ajuste.')}
+    ${passo('#30D158', 'Aprovado', 'O cliente aprovou. Falta agendar.')}
+    ${passo('#8B7BF0', 'Agendado', 'Programado para a hora marcada.')}
+    ${passo('#98989D', 'Publicado', 'No ar, com versão e histórico.')}
   </div>
 </section>
 
@@ -1030,9 +1029,9 @@ function vSite(){
     <div class="sTile sG rv"><h3>Toda aprovação guarda a versão exata.</h3>
       <p>Se a peça mudar depois de aprovada, a aprovação cai sozinha. O que foi aprovado é o que vai ao ar.</p>
       <span class="sSelo">${ic('sealic')} aprovado · v3</span></div>
-    <div class="sTile sG rv"><h3>Texto antes da arte.</h3>
-      <p>Primeiro o cliente aprova a copy; só depois a produção começa. Arte sobre texto não aprovado é retrabalho.</p>
-      <span class="sVoltas"><em>1ª volta · texto ✓</em><em>2ª volta · peça</em></span></div>
+    <div class="sTile sG rv"><h3>Uma volta com o cliente.</h3>
+      <p>Vai para o cliente quando há o que decidir: só o texto, ou já com a peça. Ele aprova ou pede ajuste.</p>
+      <span class="sVoltas"><em>Só o texto</em><em>Texto + peça</em></span></div>
     <div class="sTile rv"><h3>Negócios</h3><p>Do primeiro contato ao cliente: próxima ação sempre à vista, e o ganho já nasce na operação.</p></div>
     <div class="sTile rv"><h3>Hoje</h3><p>O que vai ao ar hoje, de todos os clientes, numa tela só.</p></div>
     <div class="sTile rv"><h3>Conversas</h3><p>Canais da equipe com foto, vídeo e áudio — sem grupo de WhatsApp.</p></div>
@@ -16062,7 +16061,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v285 · 28 set · fotos no tema';
+const VERSAO_PROTOTIPO = 'v286 · 28 set · o método na vitrine';
 
 menuSheet = (function(orig){
   return function(){
@@ -48555,4 +48554,4 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
 render=(o=>function(){try{for(const t of(S.ensaio&&S.ensaio.tarefas)||[]){const e=A[t.id];if(sc(t)&&C.includes(t.col)&&e&&!C.includes(e)){t.col=e;toast('Sem card não passa do Do: estruture a pauta.')}A[t.id]=t.col}
 const g=S.chat&&(S.chat.canais||[]).find(c=>c.id==='geral');if(g&&g.msgs){let v=0;const n=g.msgs.filter(m=>!m||m.txt!==B||!v++);if(n.length<g.msgs.length)g.msgs=n}}catch(e){}
 const r=o.apply(this,arguments);try{document.querySelectorAll('.enCard[data-entar]').forEach(c=>{const t=S.ensaio.tarefas.find(x=>x.id==+c.dataset.entar),a=c.querySelector('.acoes');if(sc(t)&&C.includes(t.col)&&a&&!c.querySelector('.v272'))a.insertAdjacentHTML('beforebegin','<div class="cyEtapa v272"><span><b>Sem card.</b> O Check libera card — estruture a pauta.</span></div>')})}catch(e){}return r})(render)})();</script>
-<script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v285').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}}).catch(()=>{})</script>
+<script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v286').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}}).catch(()=>{})</script>

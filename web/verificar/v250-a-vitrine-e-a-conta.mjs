@@ -65,7 +65,7 @@ for(const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]){
   if(vp.width > 500){
     checa('sem depoimento, logo ou número inventado', !/Rafael Lima|Studio Norte|Marina Reis|9 → 2|87%/.test(m.texto), m.texto.match(/Rafael Lima|Studio Norte|87%/));
     const passos = await pg.evaluate(() => [...document.querySelectorAll('.sPasso h3')].map(h => h.textContent).join('|'));
-    checa('o método de verdade na vitrine: as seis colunas', passos === 'Plan|Do|Check|Com o cliente|Act|Concluído', passos);
+    checa('o método de verdade na vitrine: as oito colunas do Quadro (v286)', passos === 'Pauta|A fazer|Fazendo|Revisão|Com o cliente|Aprovado|Agendado|Publicado', passos);
   }
   /* Entrar mostra a porta */
   await pg.click('.snav [data-go="entrar"]'); await pg.waitForTimeout(500);
