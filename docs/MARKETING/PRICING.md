@@ -34,7 +34,7 @@ preço = faixa (assentos + projetos ativos)  +  extras avulsos
 
 Valores em reais, por mês, cobrados anualmente. Mensal fica ~25% acima.
 
-| | **Ensaio** | **Concerto** | **Orquestra** | **Sob medida** |
+| | **Trio** | **Concerto** | **Orquestra** | **Sob medida** |
 |---|---|---|---|---|
 | | R$ 149 | **R$ 349** | R$ 749 | falar com a gente |
 | Assentos | 3 | 10 | 25 | ilimitado |
@@ -53,7 +53,7 @@ Valores em reais, por mês, cobrados anualmente. Mensal fica ~25% acima.
 
 **Extras:** assento adicional **R$ 29/mês** · projeto ativo adicional **R$ 25/mês**.
 
-**Nomes dos planos são proposta.** Ensaio → Concerto → Orquestra é uma progressão real e cabe na marca. Alternativa neutra: Essencial · Profissional · Agência.
+**Nomes dos planos.** Trio → Concerto → Orquestra é uma progressão real e cabe na marca. O de entrada se chamava "Ensaio" e virou **Trio** em 28/set (v287): a aba Ensaio saiu do app, e quem a conheceu leria o plano como aquela tela; Trio também diz os 3 assentos. Alternativa neutra: Essencial · Profissional · Agência.
 
 ---
 
@@ -81,7 +81,7 @@ Se essa frase não convencer, o problema é de posicionamento, não de preço.
 - **Sem plano gratuito.** Plano grátis nesta categoria atrai quem não vai pagar e consome o suporte que ainda não temos. Revisar quando houver time de suporte.
 - **Onboarding assistido no Concerto para cima**, nos primeiros 90 dias. A metodologia é o diferencial; agência que não configura a dela não percebe valor e cancela.
 
-**O risco do modelo:** agência pequena com 3 clientes e 5 pessoas estoura os assentos do Ensaio e acha o Concerto caro. É o buraco entre as faixas. Mitigação: assento adicional a R$ 29 resolve até 7 pessoas por R$ 265 — abaixo do Concerto.
+**O risco do modelo:** agência pequena com 3 clientes e 5 pessoas estoura os assentos do Trio e acha o Concerto caro. É o buraco entre as faixas. Mitigação: assento adicional a R$ 29 resolve até 7 pessoas por R$ 265 — abaixo do Concerto.
 
 ---
 

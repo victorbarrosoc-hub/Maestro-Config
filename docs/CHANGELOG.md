@@ -1,11 +1,25 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.101
+Version: 0.5.102
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.102 — 2026-09-28
+
+**Status:** No ar, com autorização do founder ("Pode trocar").
+
+### v287 — o plano de entrada vira "Trio"
+
+- O plano de R$ 149 se chamava "Ensaio", o mesmo nome da aba que saiu do app
+  com a chegada do Quadro. Virou **Trio**: diz os 3 assentos e mantém a
+  família musical (Trio · Concerto · Orquestra). Trocado na vitrine, no
+  cadastro de planos do app (só o nome; a chave `ENSAIO` segue igual, para
+  não mexer em dado gravado) e em `PRICING.md` e `MODELO_DE_NEGOCIO.md`.
+- Prova 8.5 na `v284-o-claro-em-tudo.mjs`; a 8.2 passa a recusar "Ensaio" em
+  qualquer texto da vitrine.
 
 ## 0.5.101 — 2026-09-28
 

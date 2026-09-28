@@ -130,11 +130,13 @@ for(const [nome, vp] of [['computador', null], ['celular', { width: 390, height:
     const tops = [...document.querySelectorAll('.site .sPasso')].map(e => Math.round(e.getBoundingClientRect().top));
     const txt = document.querySelector('.site').textContent;
     return { passos, cols: (window.MaestroQuadro && MaestroQuadro.COLS || []).map(c => c[1]), porLinha: tops.filter(t => t === tops[0]).length,
-      velho: ['Seis colunas', 'Plan, Do', 'Check', '1ª volta', '2ª volta', 'Ensaio e as'].filter(v => txt.includes(v)),
+      velho: ['Seis colunas', 'Plan, Do', 'Check', '1ª volta', '2ª volta', 'Ensaio'].filter(v => txt.includes(v)),
+      planos: [...document.querySelectorAll('.site .price h4')].map(h => h.textContent).join(),
       lado: document.documentElement.scrollWidth > innerWidth + 1 }; });
   if(nome === 'computador'){
     checa('8.1 os passos da vitrine são as oito colunas do Quadro, na ordem e com os mesmos nomes', r.cols.length === 8 && r.passos.join() === r.cols.join(), r);
     checa('8.2 nada do método antigo (Plan/Do/Check, seis colunas, 1ª/2ª volta)', r.velho.length === 0, r.velho);
+    checa('8.5 o plano de entrada é o Trio (a aba Ensaio saiu do app, v287)', r.planos === 'Trio,Concerto,Orquestra,Sob medida', r.planos);
     checa('8.3 no computador, quatro por linha (duas linhas cheias)', r.porLinha === 4, r.porLinha);
   } else checa('8.4 no celular, um por linha e sem rolar de lado', r.porLinha === 1 && !r.lado, r);
   await ctx.close();

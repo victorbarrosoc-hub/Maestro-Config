@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v286', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v287', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';

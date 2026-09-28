@@ -46,7 +46,7 @@ tocada.
 
 | Plano | Preço/mês | Assentos | Projetos ativos | **Por assento** |
 |---|---|---|---|---|
-| Ensaio | R$ 149 | 3 | 2 | R$ 49,67 |
+| Trio | R$ 149 | 3 | 2 | R$ 49,67 |
 | Concerto | R$ 349 | 10 | 8 | R$ 34,90 |
 | Orquestra | R$ 749 | 25 | 25 | R$ 29,96 |
 | Sob medida | negociado | ilimitado | ilimitado | — |
@@ -89,9 +89,9 @@ todo o resto depende, e hoje ela está publicada no protótipo que vai para clie
 
 A conta do founder: 20 agências no Concerto ≈ R$ 6.980/mês. Está correta.
 
-Para dar tamanho ao problema, uma composição de base plausível — **55% Ensaio, 35%
+Para dar tamanho ao problema, uma composição de base plausível — **55% Trio, 35%
 Concerto, 10% Orquestra** (o mercado-alvo brasileiro é de agências pequenas, e o
-próprio `PRICING.md` aponta o buraco entre Ensaio e Concerto como o risco do modelo):
+próprio `PRICING.md` aponta o buraco entre Trio e Concerto como o risco do modelo):
 
 ```
 receita média por agência = 0,55×149 + 0,35×349 + 0,10×749 = R$ 279/mês
@@ -194,7 +194,7 @@ cresce com o uso em vez do tamanho da agência — atraente, mas exige que os 5%
 sejam dor real e medida. **Não construir antes de ouvir um cliente pedir.**
 
 **6 · Meta como add-on — não recomendo.** Contradiz a tabela publicada, que põe
-"Agendamento (Meta)" em **todas** as faixas, inclusive Ensaio. E é item de paridade: os
+"Agendamento (Meta)" em **todas** as faixas, inclusive Trio. E é item de paridade: os
 três concorrentes brasileiros já entregam agendamento. Transformar paridade em add-on
 é o tipo de decisão que ganha R$ 30 e perde a venda. Se a D-069 quiser esse item, o
 caminho é **"demais redes" como marcador de faixa** — que é exactamente o que a tabela

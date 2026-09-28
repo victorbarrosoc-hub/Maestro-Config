@@ -299,6 +299,10 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Fechado (28 set, v287, NO AR com autorização do founder) — o plano de
+entrada vira "Trio".** "Ensaio" era o nome do plano de R$ 149 e da aba que
+saiu do app; Trio diz os 3 assentos e segue a família (Trio · Concerto ·
+Orquestra). A chave interna `ENSAIO` não mudou (só o nome). Prova 8.5 na v284.
 **Fechado (28 set, v286, NO AR) — a vitrine conta o método de hoje.** "Tem
 que atualizar as telas da homepage escura também, porque mudou o design
 interno das abas." As fotos escuras já eram as novas (v285); o que estava
