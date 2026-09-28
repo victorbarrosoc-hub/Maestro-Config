@@ -92,6 +92,35 @@ console.log('\n  — 5. o escuro não mudou de cara —');
   checa('5.1 a homepage no escuro continua grafite', r === 'rgb(28, 28, 31)', r);
   await ctx.close();
 }
+console.log('\n  — 6. as fotos da vitrine seguem o tema (v285) —');
+{
+  const { ctx, pg } = await abrir('claro');
+  const fotos = () => pg.evaluate(async () => { await new Promise(r => setTimeout(r, 150));
+    return [...document.querySelectorAll('#root .site img, #root .site source')].map(e => (e.getAttribute('src') || '') + ' ' + (e.getAttribute('srcset') || '')).filter(t => t.includes('/web/img/vitrine-')); });
+  await pg.evaluate(() => { document.getElementById('entrarMaestro')?.remove(); S.view = 'site'; S.route = 'home'; render(); });
+  const c = await fotos();
+  const urls = t => t.match(/\/web\/img\/[^\s,]+\.webp/g) || [];
+  checa('6.1 no claro, toda foto de aparelho usa a tela clara', c.length >= 4 && c.every(t => urls(t).every(u => u.includes('-claro-'))), c);
+  const todas = [...new Set(c.flatMap(urls))];
+  const carregou = await pg.evaluate(us => Promise.all(us.map(u => fetch(u).then(async r => [u, r.status, (await r.blob()).size]))), todas);
+  checa('6.2 e os oito arquivos claros existem', todas.length === 8 && carregou.every(([, st, n]) => st === 200 && n > 10000), carregou);
+  await pg.click('.site .snav .tmLuz');
+  const e = await fotos();
+  checa('6.3 trocar para o escuro volta para a tela escura, sem recarregar', e.length === c.length && e.every(t => urls(t).every(u => !u.includes('-claro'))), e);
+  await pg.click('.site .snav .tmLuz');
+  const c2 = await fotos();
+  checa('6.4 e de volta ao claro, sem dobrar o sufixo', c2.every(t => urls(t).every(u => /-claro-\d+\.webp$/.test(u) && !u.includes('-claro-claro'))), c2);
+  await ctx.close();
+}
+console.log('\n  — 7. o deslizar do cliente no claro (v285) —');
+for(const luz of ['claro', 'escuro']){
+  const { ctx, pg } = await abrir(luz, { width: 390, height: 780, isMobile: true, hasTouch: true });
+  const r = await pg.evaluate(async () => { const d = document.createElement('div'); d.id = 'v253dz'; d.innerHTML = '<div class="dzCartao"><div class="dzTexto">x</div></div>'; document.body.appendChild(d);
+    await new Promise(r => setTimeout(r, 50)); return { fundo: getComputedStyle(d).backgroundColor, cartao: getComputedStyle(d.querySelector('.dzCartao')).backgroundColor }; });
+  if(luz === 'claro') checa('7.1 no claro, o deslizar é Linho com cartão claro (antes: preto)', !escuro(r.fundo) && !escuro(r.cartao), r);
+  else checa('7.2 no escuro, o deslizar segue escuro', escuro(r.fundo), r);
+  await ctx.close();
+}
 checa('9.9 nenhum erro de página', erros.length === 0, erros.slice(0, 3));
 console.log(`\n${ok} passaram · ${falhou} falharam`);
 await nav.close(); srv.close();

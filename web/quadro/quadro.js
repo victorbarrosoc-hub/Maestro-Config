@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v284', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v285', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -1486,7 +1486,13 @@
   .qdFCol.on{ background:var(--qdc); color:#111; font-weight:600 }
   .qdFAjuste{ background:color-mix(in srgb, var(--coral, #FF9F0A) 14%, transparent); border-radius:12px; padding:10px 12px; margin:0 0 14px; font-size:13.5px }
   .qdFAjuste p{ margin:6px 0 8px }
-  .qdFGrade{ display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; margin:0 0 16px }
+  .qdFGrade{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:10px 12px; margin:0 0 16px }
+  .qdFGrade label{ min-width:0 }
+  /* v284 — a ficha não balança de lado: o campo de data do iPhone tem largura
+     mínima própria e empurrava a folha para além da tela */
+  .qdFolhaIn{ overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y }
+  .qdFolhaIn input, .qdFolhaIn select, .qdFolhaIn textarea{ min-width:0; max-width:100% }
+  .qdFolhaIn input[type=date], .qdFolhaIn input[type=time]{ -webkit-appearance:none; appearance:none; display:block }
   .qdFGrade label{ display:flex; flex-direction:column; gap:5px; font-size:12px; color:var(--mut, #999) }
   .qdFGrade .qdSel{ border-radius:10px }
   .qdIn{ font:inherit; font-size:14px; color:var(--tx, #fff); background:var(--sup, rgba(255,255,255,.06)); border:0; border-radius:10px; padding:8px 10px; min-height:36px; box-sizing:border-box; width:100% }
@@ -1558,7 +1564,7 @@
     .qdAgL{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px }
     .qdAgL .qdEv{ font-size:14px; padding:8px 10px }
     .qdFolhaIn{ top:auto; left:0; width:100vw; height:calc(100% - 44px); border-radius:18px 18px 0 0; padding:14px 16px calc(40px + env(safe-area-inset-bottom)) }
-    .qdFGrade{ grid-template-columns:1fr 1fr }
+    .qdFGrade{ grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) }
     .qdIn, .qdSel{ font-size:16px }
   }
   body.qdFolhaAberta{ overflow:hidden }

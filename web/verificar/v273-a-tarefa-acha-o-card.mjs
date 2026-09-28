@@ -76,7 +76,7 @@ const ctx = await nav.newContext({ viewport: { width: 1440, height: 900 } });
 const pg = await pagina(ctx, A);
 
 console.log('\n0. a camada chega pelo arquivo à parte');
-checa('0.1 o protótipo diz v273', await pg.evaluate(() => /^v27[3-9]/.test(VERSAO_PROTOTIPO)));
+checa('0.1 o protótipo diz v273', await pg.evaluate(() => +VERSAO_PROTOTIPO.slice(1, 4) >= 273));
 checa('0.2 o conserto foi carregado de /web/dados', await pg.evaluate(() => !!window.MaestroReliga));
 
 /* monta o cenário: cards do cliente cj e tarefas presas */

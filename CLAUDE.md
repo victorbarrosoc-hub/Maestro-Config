@@ -299,7 +299,17 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
-**Na branch (28 set, v284), NÃO publicado: aguarda o founder autorizar — o
+**Fechado (28 set, v285, NO AR com autorização do founder: "suba tudo
+junto") — as fotos seguem o tema, e a ficha não balança.** (1) As telas
+encaixadas nas fotos da vitrine (notebook, celular, mão) existem nos dois
+temas: `web/img/vitrine-*-claro-*.webp`, e `trocarFotos()` em
+`web/tema/tema.js` troca `src`/`srcset` ao virar o sol/lua. O notebook agora
+mostra o Quadro (não mais o Ensaio). O deslizar do cliente também ficou
+claro no claro. (2) Vídeo do founder: no celular a ficha do card balançava
+de lado ao rolar — o campo de data/hora do iPhone é mais largo que a coluna
+da grade; `minmax(0,1fr)`, `overflow-x:hidden` e `touch-action:pan-y`.
+Provas: 13.4b na `v277-o-quadro.mjs`, seções 6 e 7 na `v284`.
+**Fechado (28 set, v284, NO AR junto com a v285) — o
 claro em tudo.** Homepage com versão Linho (fotos num palco escuro, sol/lua
 na barra), login claro, área do cliente Linho + amarelo, e o primário do app
 amarelo nos dois temas. Mora em `web/tema/tema.js`. 24 provas em

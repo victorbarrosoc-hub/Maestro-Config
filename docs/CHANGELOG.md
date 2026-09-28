@@ -1,15 +1,39 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.99
+Version: 0.5.100
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
 
+## 0.5.100 — 2026-09-28
+
+**Status:** No ar, junto com a 0.5.99. O founder: "Suba tudo junto."
+
+### v285 — as fotos seguem o tema, e a ficha não balança
+
+- **"Os cards balançam pro lado quando desce."** No vídeo, a ficha do card
+  no celular rolava de lado. O campo de data e o de hora do iPhone têm
+  largura mínima própria, maior que a metade da folha; a grade de duas
+  colunas (`1fr 1fr`) não encolhe abaixo disso, e a folha ganhava rolagem
+  lateral. Agora a grade é `minmax(0,1fr)`, os campos têm `min-width:0`, a
+  folha trava a rolagem lateral (`overflow-x:hidden`, `touch-action:pan-y`).
+  A coluna vazia também passou a aceitar o deslizar (a página inteira do
+  Quadro é área de deslizar).
+- **"Adaptar as peças da homepage que estão com a tela preta para o tema de
+  cada aba do toggle."** As telas encaixadas nas fotos foram capturadas de
+  novo nos dois temas (dados fictícios: Loja Norte, Café Aurora) e
+  compostas sobre as mesmas fotos: `vitrine-*-claro-*.webp` ao lado das
+  escuras. `trocarFotos()` em `web/tema/tema.js` troca `src` e `srcset`
+  quando o sol/lua vira, sem recarregar. O notebook agora mostra o Quadro.
+  O deslizar do cliente ganhou o claro (antes ficava preto no tema claro).
+- Provas: 13.4b em `v277-o-quadro.mjs`; seções 6 (fotos) e 7 (deslizar) em
+  `v284-o-claro-em-tudo.mjs`.
+
 ## 0.5.99 — 2026-09-28
 
-**Status:** Na branch, com provas. NÃO publicado: aguarda a autorização do founder.
+**Status:** No ar desde a 0.5.100 (publicadas juntas).
 
 ### v284 — o claro em tudo: homepage, login, área do cliente
 

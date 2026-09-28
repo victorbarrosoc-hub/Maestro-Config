@@ -19,7 +19,7 @@
 (function(){
   'use strict';
   if(window.MaestroTema) return;
-  const T = window.MaestroTema = { versao: 'v284' };
+  const T = window.MaestroTema = { versao: 'v285' };
 
   const LUZ = 'maestro-luz-v1';
   const claro = () => document.documentElement.getAttribute('data-tema') === 'claro';
@@ -51,11 +51,25 @@
   document.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('[data-tmluz]'); if(!b) return;
     e.preventDefault(); e.stopPropagation();
-    aplicarLuz(claro() ? 'escuro' : 'claro');
+    aplicarLuz(claro() ? 'escuro' : 'claro'); trocarFotos();
     document.querySelectorAll('.tmLuz').forEach(x => { x.innerHTML = claro() ? LUA : SOL; x.setAttribute('aria-label', claro() ? 'Usar o tema escuro' : 'Usar o tema claro'); });
   }, true);
-  new MutationObserver(() => porBotoes()).observe(document.body, { childList: true, subtree: true });
-  porBotoes();
+  /* as fotos da vitrine têm as telas do app DENTRO: no claro, as telas claras
+     (web/img/vitrine-*-claro-N.webp); no escuro, as escuras */
+  const RE = /(\/web\/img\/vitrine-[a-z-]+?)(-claro)?-(\d+)\.webp/g;
+  function trocarFotos(){
+    const c = claro();
+    document.querySelectorAll('#root .site img, #root .site source').forEach(el => {
+      for(const at of ['src', 'srcset']){
+        const v = el.getAttribute(at); if(!v || v.indexOf('/web/img/vitrine-') < 0) continue;
+        const n = v.replace(RE, (m, base, cl, w) => base + (c ? '-claro' : '') + '-' + w + '.webp');
+        if(n !== v) el.setAttribute(at, n);
+      }
+    });
+  }
+  T.trocarFotos = trocarFotos;
+  new MutationObserver(() => { porBotoes(); trocarFotos(); }).observe(document.body, { childList: true, subtree: true });
+  porBotoes(); trocarFotos();
 
   const st = document.createElement('style');
   st.id = 'tm-estilo';
@@ -117,6 +131,26 @@
   html .cl .clrail .nav.on{ background:rgba(255,200,87,.2) !important; color:inherit !important }
   html .cl .clrail .nav.on svg{ color:#C9921E !important }
   html:not([data-tema="claro"]) .cl .clrail .nav.on svg{ color:#FFC857 !important }
+
+  /* ---------- 4. o deslizar do cliente no claro ---------- */
+  html[data-tema="claro"] #v253dz{ background:#EFEEEA !important; color:#1F1D1A !important }
+  html[data-tema="claro"] #v253dz .dzTopo span, html[data-tema="claro"] #v253dz .dzInfo > span{ color:#7D7A73 !important }
+  html[data-tema="claro"] #v253dz .dzX{ background:rgba(30,28,20,.07) !important; color:#1F1D1A !important }
+  html[data-tema="claro"] #v253dz .dzProg{ background:rgba(30,28,20,.1) !important }
+  html[data-tema="claro"] #v253dz .dzProg i{ background:#FFC857 !important }
+  html[data-tema="claro"] #v253dz .dzCartao{ background:#FCFBF9 !important; box-shadow:0 30px 70px -20px rgba(40,30,10,.3) !important }
+  html[data-tema="claro"] #v253dz .dzTexto{ background:linear-gradient(160deg, #F8F7F4, #EFEDE7) !important }
+  html[data-tema="claro"] #v253dz .dzTexto p{ color:#1F1D1A !important }
+  html[data-tema="claro"] #v253dz .dzLeg{ color:#45423D !important }
+  html[data-tema="claro"] #v253dz .dzTexto .rot, html[data-tema="claro"] #v253dz .dzLer, html[data-tema="claro"] #v253dz .dzDesfaz button{ color:#9A6F12 !important }
+  html[data-tema="claro"] #v253dz .dzB{ background:#FCFBF9 !important; box-shadow:0 8px 22px -6px rgba(40,30,10,.25) !important }
+  html[data-tema="claro"] #v253dz .dzB.ajuste{ color:#D97706 !important } html[data-tema="claro"] #v253dz .dzB.ok{ color:#1E9E4A !important } html[data-tema="claro"] #v253dz .dzB.amei{ color:#E0A800 !important }
+  html[data-tema="claro"] #v253dz .dzDica{ color:#7D7A73 !important }
+  html[data-tema="claro"] #v253dz .dzDesfaz{ background:rgba(252,251,249,.97) !important; color:#1F1D1A !important; box-shadow:0 10px 30px rgba(40,30,10,.18) !important }
+  html[data-tema="claro"] #v253dz .dzFolha{ background:#FCFBF9 !important; color:#1F1D1A !important; box-shadow:0 -20px 60px rgba(40,30,10,.18) !important }
+  html[data-tema="claro"] #v253dz .dzFolha textarea, html[data-tema="claro"] #v253dz .dzTelas button{ background:#EFEEEA !important; color:#1F1D1A !important }
+  html[data-tema="claro"] #v253dz .dzTelas button.on{ background:#FFC857 !important; color:#1C1C1F !important }
+  html[data-tema="claro"] #v253dz .dzFim p{ color:#45423D !important } html[data-tema="claro"] #v253dz .dzFim .dzFimSub{ color:#7D7A73 !important }
 
   /* o sol/lua */
   .tmLuz{ border:0; background:transparent; color:inherit; opacity:.75; width:34px; height:34px; border-radius:50%; display:inline-grid; place-items:center; cursor:pointer; margin-right:6px }
