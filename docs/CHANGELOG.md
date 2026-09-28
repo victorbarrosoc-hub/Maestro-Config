@@ -1,15 +1,111 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.91
+Version: 0.5.92
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
 
+## 0.5.92 — 2026-09-28
+
+**Status:** Na branch, com provas. NÃO publicado: aguarda a autorização do founder.
+
+### v277 — o Quadro: um card só, três jeitos de ver
+
+O founder: *"Não tá funcionando, vou abandonar essa aba ensaio e o código
+dela de junção com o cronograma."* Os defeitos que ele via (card duplicado,
+card sumindo, tarefa voltando, aba errada no card) tinham a mesma raiz. Havia
+DUAS coisas para um trabalho só:
+
+- a tarefa do Ensaio, dentro do documento `__estado__`, mesclado inteiro no
+  navegador;
+- o card da pauta.
+
+Manter as duas em par é o que falhava. O Quadro tem uma coisa só: **o card**,
+que desde a Etapa 1 mora na tabela `cards` e é gravado por campo.
+
+**Em `web/quadro/quadro.js`**, carregado pela `web/dados/tempo-real.js`.
+O protótipo não ganhou nenhum byte além do número da versão. A página ocupa a
+rota e o lugar do Ensaio no menu, agora chamado **Quadro**, e tem três abas:
+
+- **Quadro.** Oito colunas: Pauta · A fazer · Fazendo · Revisão · Com o
+  cliente · Aprovado · Agendado · Publicado.
+  - Mover é livre, sem nenhuma trava (arrastar no computador, um toque na
+    ficha).
+  - Filtro por pessoa (inclusive "Sem responsável") e por cliente.
+  - Na Pauta, o avatar do card escolhe quem faz, e escolher manda o card
+    para A fazer.
+  - No celular, uma coluna por vez, em abas.
+- **Minha lista**, no modelo da DEICHECK:
+  - saudação, progresso da semana e um campo escrito do jeito que se fala
+    (`reels da obra sexta às 15h #vale @gabi !`);
+  - grupos por prazo: Atrasadas · Hoje · Amanhã · Esta semana · Depois ·
+    Sem prazo;
+  - o círculo marca feito: o card vai para Revisão (a tarefa da agência,
+    para Feito) e entra em "Concluídas nesta semana";
+  - sub-abas Semana (sete dias, arrastar muda o prazo) e Por cliente;
+  - "Ver a lista de" outra pessoa, para quem planeja.
+- **Calendário, que é o Cronograma.** O mês inteiro, e cada card no dia em
+  que publica, com a cor da coluna em que está.
+  - Arrastar para outro dia muda a data.
+  - No celular, vira a agenda do mês.
+  - "Sem data de publicação" embaixo.
+  - O item Cronograma do menu abre aqui.
+
+**A ficha do card** é uma folha ao lado, fora do redesenho:
+
+- colunas, quem faz, formato, entregar até, publica em, checklist, briefing,
+  texto, legenda e material ("Subir material" aceita vários arquivos);
+- "Editor completo" abre o editor de sempre, para roteiro, corte, telas do
+  story e plataformas;
+- cada campo grava sozinho, e o campo em que a pessoa está digitando nunca é
+  sobrescrito pelo que chega de outra pessoa.
+
+**Outras regras:**
+
+- **Tarefa da agência:** escrita sem `#cliente`, é um card do "cliente"
+  `agencia`. Aparece no quadro e na lista; não aparece no calendário nem no
+  link do cliente. A linha dela no banco nasce sozinha, sem SQL.
+- **A fase acompanha a coluna**, e é ela que o link do cliente lê: "Com o
+  cliente" = `texto_cli` (ou `post_cli`, com material). A decisão do cliente
+  move o card sozinha: aprovado vai para Aprovado; ajuste pedido volta para
+  Fazendo, com "Ajuste pedido pelo cliente" no card.
+- **Nada de aviso embaixo:** os toasts somem da plataforma inteira.
+
+**Dois defeitos de dado que a prova de duas pessoas pegou**, ambos em
+`tempo-real.js`: dois aparelhos criando card no mesmo instante chegavam ao
+MESMO número, e um dos dois cards sumia:
+
+1. **No recebimento.** O card do outro chegava pelo tempo real antes de o meu
+   subir, e a camada mesclava o dele por cima do meu.
+2. **Na gravação.** A regra da v275 ("número que já é deste cliente é o mesmo
+   card") tomava o card do outro como sendo o meu.
+
+Agora só é "o mesmo card" se for ele mesmo (mesmo `criadoEm` ou, no card
+antigo, mesmo nome). Se não for, o meu ganha outro número. E o número do card
+novo leva uma parte ao acaso.
+
+**Provas:**
+
+- 56 em `web/verificar/v277-o-quadro.mjs`: Postgres 16 de verdade, a ponte da
+  v271, dois navegadores e o celular. Entre elas, "mesmo número em dois
+  aparelhos: os dois cards ficam" e "banco, aparelho A e aparelho B contam o
+  mesmo número de cards".
+- A v271 segue com 66 de 66.
+
+**O que ficou para trás de propósito:**
+
+- O código do Ensaio segue no protótipo, sem tela. As tarefas antigas do
+  `__estado__` não aparecem no Quadro: o que valia delas era o card, e o card
+  está lá.
+- O e-mail de "lote para aprovar" não sai ao mover para "Com o cliente".
+
+---
+
 ## 0.5.91 — 2026-09-28
 
-**Status:** Concluída — publicada com a autorização do founder em 28/set. Falta o founder rodar o `dados-1c`.
+**Status:** Concluída — publicada com a autorização do founder em 28/set. O founder rodou o `dados-1c` no mesmo dia: 36 cópias para a lixeira, 12 já estavam apagadas.
 
 ### v276 — as cópias saem, e a tarefa volta para o card certo
 

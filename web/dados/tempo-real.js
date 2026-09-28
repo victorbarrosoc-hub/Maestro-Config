@@ -357,7 +357,13 @@
              Renumerar só quando o número é de OUTRO cliente. */
           let meu = null;
           try{ [meu] = await ler('cards', `select=org,cliente,id,dados,versao,posicao,apagado_em,varrido_em,atualizado_em&cliente=eq.${encodeURIComponent(cli)}&id=eq.${id}`); }catch(e){ throw new Error('criar: conferir'); }
-          if(meu){ receberCard(meu); anota('nao-duplicou', cli, id); D.naoDuplicou = (D.naoDuplicou || 0) + 1; continue; }
+          /* v277: mas só é "o mesmo card" se for ele mesmo. Duas pessoas
+             criando no mesmo instante chegam ao MESMO número com cards
+             DIFERENTES — tratar o do outro como o meu apagava o meu. */
+          const md = (meu && meu.dados) || {};
+          const oMesmo = meu && ((p.criadoEm && md.criadoEm) ? +p.criadoEm === +md.criadoEm : String(md.t || '') === String(p.t || ''));
+          if(oMesmo){ receberCard(meu); anota('nao-duplicou', cli, id); D.naoDuplicou = (D.naoDuplicou || 0) + 1; continue; }
+          if(meu) anota('numero-de-outro-card', cli, id);
           const novo = renumerar(cli, p); r = await rpc('maestro_card_criar', { p_cliente: cli, p_dados: Object.assign(dados, { id: novo }), p_id: novo });
         }
         if(!r || !r.ok) throw new Error('criar: ' + ((r && r.erro) || '?'));
@@ -565,6 +571,14 @@
       return true;
     }
     if(iLx >= 0){ lx.splice(iLx, 1); (D.lixBase[cli] || new Set()).delete(id); }
+    /* v277: um card DESTE aparelho, que ainda não subiu, com o mesmo número
+       de um card de OUTRA pessoa que acabou de chegar — são dois cards.
+       Mesclar um no outro apagava o meu; o meu ganha outro número. */
+    if(p && !B.has(id) && !velho){
+      const md = c.dados || {};
+      const oMesmo = (p.criadoEm && md.criadoEm) ? +p.criadoEm === +md.criadoEm : String(md.t || '') === String(p.t || '');
+      if(!oMesmo){ anota('numero-de-outro-card', cli, id); renumerar(cli, p); SRV.delete(id); D.recebidas--; return receberCard(l); }
+    }
     if(!p){
       const d = clone(c.dados); d.id = id;
       // na ordem: antes do primeiro com posição maior
@@ -1098,4 +1112,13 @@
       }
     }catch(e){}
   }, 3000);
+})();
+
+/* v277 — o Quadro (web/quadro): a página que ocupa o lugar do Ensaio.
+   Mora à parte, como esta camada, porque o protótipo está no teto. */
+(function(){
+  if(window.MaestroQuadro || window.__quadroPedido) return;
+  window.__quadroPedido = true;
+  fetch('/web/quadro/quadro.js?v=v277').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+    .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } }).catch(() => {});
 })();

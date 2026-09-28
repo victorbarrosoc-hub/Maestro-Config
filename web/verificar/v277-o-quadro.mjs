@@ -1,0 +1,568 @@
+/* v277 — O QUADRO. "Não tá funcionando, vou abandonar essa aba ensaio e o
+   código dela de junção com o cronograma… uma nova aba no estilo do Trello,
+   com ToDo list individual por pessoa… sem travas… o cronograma um espelho
+   dessa nova página… nada de mensagens em baixo… que guarde os dados."
+
+   Um card só (a tabela `cards`, gravada por campo) e três jeitos de ver:
+   Quadro (oito colunas, mover livre), Minha lista (por prazo, como a
+   DEICHECK) e Calendário (o Cronograma). O banco é um Postgres 16 de
+   verdade com dados-0 e dados-1, a mesma ponte da v271; dois navegadores.
+
+   1. a página ocupa o lugar do Ensaio; o Cronograma abre o Calendário;
+   2. mover é livre (sem trava), e a fase acompanha — o link do cliente lê;
+   3. a decisão do cliente move o card sozinha;
+   4. escrever do jeito que se fala;
+   5. Minha lista: por prazo, marcar feito, progresso da semana;
+   6. tarefa da agência: no quadro e na lista, fora do calendário;
+   7. calendário: o card no dia, arrastar muda a data;
+   8. a ficha: grava campo a campo, não perde o que se digita;
+   9. DUAS PESSOAS no mesmo card: nada se perde, nada duplica;
+   10. apagar vai para a lixeira e não volta; restaurar volta;
+   11. nada de mensagem embaixo;
+   12. o celular: uma coluna por vez, sem rolagem de lado.
+   Roda com: node web/verificar/v277-o-quadro.mjs */
+import { execSync } from 'child_process';
+import { chromium } from 'playwright';
+import http from 'http';
+import fs from 'fs';
+import { execFileSync } from 'child_process';
+
+const ALVO = process.argv[2] || 'docs/UX/prototipo-plataforma.html';
+const html = fs.readFileSync(ALVO, 'utf8');
+const CAMADA = fs.readFileSync('web/dados/tempo-real.js', 'utf8');
+const DB = 'maestro_v277';
+const QUADRO = fs.readFileSync('web/quadro/quadro.js', 'utf8');
+const SB = 'https://tgrbmdsootnewjqpmeii.supabase.co';
+
+let nOk = 0, nFalhou = 0;
+const checa = (nome, cond, extra) => { cond ? nOk++ : nFalhou++;
+  console.log(`  ${cond ? 'ok   ' : 'FALHA'} ${nome}${!cond && extra !== undefined ? '  → ' + JSON.stringify(extra).slice(0, 500) : ''}`); };
+
+/* ---------- o banco de verdade ---------- */
+function psql(texto, banco = DB){
+  return execFileSync('psql', ['-d', banco, '-At', '-q', '-v', 'ON_ERROR_STOP=1'], { input: texto, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+}
+function montarBanco(ligar){
+  psql(`drop database if exists ${DB};`, 'postgres');
+  psql(`create database ${DB};`, 'postgres');
+  psql(`
+    do $$ begin create role anon; exception when duplicate_object then null; end $$;
+    do $$ begin create role authenticated; exception when duplicate_object then null; end $$;
+    create publication supabase_realtime;
+    grant usage on schema public to anon, authenticated;
+    create or replace function public.maestro_org() returns text language sql stable
+      as $f$ select nullif(current_setting('prova.org', true), '') $f$;
+    grant execute on function public.maestro_org() to authenticated;
+    create table public.pauta(org text not null default public.maestro_org(), cliente text not null,
+      dados jsonb not null default '{}'::jsonb, atualizado_em timestamptz default now(), primary key (org, cliente));
+    alter table public.pauta enable row level security;
+    create policy p_sel on public.pauta for select to authenticated using (org = public.maestro_org());
+    create policy p_ins on public.pauta for insert to authenticated with check (org = public.maestro_org());
+    create policy p_upd on public.pauta for update to authenticated using (org = public.maestro_org());
+    grant select, insert, update on public.pauta to authenticated;
+  `);
+  const agora = Date.now();
+  const linha = (cli, d) => `insert into public.pauta(org, cliente, dados) values ('maestro', '${cli}', $j$${JSON.stringify(d)}$j$::jsonb);`;
+  psql([
+    linha('cj', { rev: 2, versao: 48, refs: {}, lixeira: [], projetos: [{ id: 'pj1', nome: 'Autoridade' }],
+      mats: { 601: [{ tipo: 'imagem', nome: 'tela1.jpg', url: 'https://x.test/tela1.jpg', nuvem: true }] },
+      pauta: [
+        { id: 601, t: 'Cortez · Carrossel · STF', fase: 'producao', st: 'DRAFT', data: '2026-09-28', hora: '18:00', plats: ['ig'], texto: 'O STF decidiu', legenda: 'Leia até o fim' },
+        { id: 602, t: 'Cortez · Post · Agenda', fase: 'rascunho', st: 'DRAFT', data: '2026-09-29', hora: '10:00', plats: ['ig'], texto: 'Agenda' },
+        { id: 603, t: 'Cortez · Vídeo · Ep. 18', fase: 'texto_cli', st: 'DRAFT', data: '2026-09-30', hora: '12:00', plats: ['ig'], roteiro: { hook: 'Você sabia?' } } ] }),
+    linha('__estado__', { rev: 1, versao: 76, s: { novos: [] }, quando: agora }),
+    linha('outra-cli', { rev: 1, pauta: [] }),
+  ].join('\n'));
+  psql(`insert into public.pauta(org, cliente, dados) values ('outra', 'cj', '{"rev":1,"pauta":[{"id":9,"t":"de outra agência"}]}');`);
+  psql(fs.readFileSync('docs/ENGINEERING/dados-0-historico.sql', 'utf8'));
+  psql(fs.readFileSync('docs/ENGINEERING/dados-1-cards.sql', 'utf8'));
+  /* o Realtime: tudo o que o banco muda nas duas tabelas, na ordem */
+  psql(`
+    create table teste_mudancas(id bigserial primary key, tabela text, tipo text, registro jsonb);
+    create or replace function teste_registrar() returns trigger language plpgsql as $f$
+    begin insert into teste_mudancas(tabela, tipo, registro) values (tg_table_name, tg_op, to_jsonb(new)); return null; end $f$;
+    create trigger t_cards after insert or update on public.cards for each row execute function teste_registrar();
+    create trigger t_midias after insert or update on public.card_midias for each row execute function teste_registrar();
+  `);
+  if(ligar) psql(`select public.maestro_cards_ligar('maestro');`);
+}
+const umaLinha = q => { const o = psql(q).trim().split('\n').filter(Boolean); return o.length ? o[o.length - 1] : ''; };
+const doBanco = q => JSON.parse(umaLinha(`select coalesce(to_jsonb((${q}))::text, 'null')`));
+
+/* ---------- a ponte: o PostgREST ---------- */
+const lit = v => { const s = String(v); return `$q$${s.replace(/\$q\$/g, '')}$q$`; };
+const ASSINATURAS = {
+  maestro_card_criar: { p_cliente: 'text', p_dados: 'jsonb', p_posicao: 'numeric', p_id: 'bigint' },
+  maestro_card_mudar: { p_cliente: 'text', p_id: 'bigint', p_base: 'int', p_campos: 'jsonb', p_tirar: 'text[]', p_posicao: 'numeric' },
+  maestro_card_apagar: { p_cliente: 'text', p_id: 'bigint' },
+  maestro_card_restaurar: { p_cliente: 'text', p_id: 'bigint' },
+  maestro_card_varrer: { p_cliente: 'text', p_ids: 'bigint[]' },
+  maestro_midia_por: { p_cliente: 'text', p_card: 'bigint', p_dados: 'jsonb', p_tipo: 'text', p_posicao: 'numeric' },
+  maestro_midia_mudar: { p_cliente: 'text', p_id: 'text', p_campos: 'jsonb' },
+  maestro_midia_tirar: { p_cliente: 'text', p_id: 'text' },
+  maestro_midia_devolver: { p_cliente: 'text', p_id: 'text' },
+  maestro_midia_ordenar: { p_cliente: 'text', p_card: 'bigint', p_ids: 'text[]' },
+};
+const valorSql = (v, tipo) => {
+  if(v === null || v === undefined) return `null::${tipo}`;
+  if(tipo === 'jsonb') return `${lit(JSON.stringify(v))}::jsonb`;
+  if(tipo.endsWith('[]')) return `array[${(v || []).map(x => lit(x)).join(',')}]::${tipo}`;
+  return `${lit(v)}::${tipo}`;
+};
+function comoPessoa(email, q){
+  const claims = JSON.stringify({ email, sub: '00000000-0000-0000-0000-00000000000' + (email.length % 9) });
+  return `begin; set local role authenticated; select set_config('prova.org', 'maestro', true);
+    select set_config('request.jwt.claims', ${lit(claims)}, true);
+    select coalesce((${q})::jsonb::text, 'null'); commit;`;
+}
+function comoPessoaCru(email, stmt){
+  const claims = JSON.stringify({ email, sub: '00000000-0000-0000-0000-00000000000' + (email.length % 9) });
+  return `begin; set local role authenticated; select set_config('prova.org', 'maestro', true);
+    select set_config('request.jwt.claims', ${lit(claims)}, true);
+    ${stmt}; commit;`;
+}
+const SEM_REDE = new Set();
+const ESTAT = { rpc: 0, pautaEscrita: 0, porFn: {}, porLinha: {} };
+function ponte(email, opcoes = {}){
+  return async route => {
+    const req = route.request(), u = new URL(req.url()), met = req.method();
+    const json = (status, corpo) => route.fulfill({ status, contentType: 'application/json', body: typeof corpo === 'string' ? corpo : JSON.stringify(corpo) });
+    const p = u.pathname;
+    if(p.startsWith('/auth/v1/token')) return json(200, { access_token: 't', refresh_token: 'r', expires_in: 3600, user: { email } });
+    if(p.includes('/rpc/maestro_org')) return json(200, '"maestro"');
+    if(p.includes('/rpc/maestro_pronto')) return json(200, 'true');
+    if(p.startsWith('/auth/v1/')) return json(200, '{}');
+    if(SEM_REDE.has(opcoes.nome)) return route.abort('internetdisconnected');
+    try{
+      const rpc = /^\/rest\/v1\/rpc\/(\w+)$/.exec(p);
+      if(rpc){
+        const fn = rpc[1], sig = ASSINATURAS[fn];
+        if(!sig) return json(404, { message: 'fn' });
+        const corpo = JSON.parse(req.postData() || '{}');
+        const args = Object.entries(corpo).filter(([k]) => sig[k]).map(([k, v]) => `${k} => ${valorSql(v, sig[k])}`).join(', ');
+        ESTAT.rpc++; ESTAT.porFn[fn] = (ESTAT.porFn[fn] || 0) + 1;
+        return json(200, umaLinha(comoPessoa(email, `select to_jsonb(public.${fn}(${args}))`)));
+      }
+      const tab = /^\/rest\/v1\/(pauta|cards|card_midias|maestro_cards_ligado|cards_copias)$/.exec(p);
+      if(!tab) return json(404, {});
+      const tabela = tab[1];
+      if(tabela !== 'pauta' && opcoes.semTabelas) return json(404, { message: 'relation does not exist' });
+      const conds = [];
+      for(const [k, v] of u.searchParams.entries()){
+        if(['select', 'order', 'on_conflict', 'limit'].includes(k)) continue;
+        const m = /^(eq|gt|is|neq)\.(.*)$/.exec(v); if(!m) continue;
+        const col = k.includes('->>') ? `${k.split('->>')[0]}->>${lit(k.split('->>')[1])}` : k;
+        if(m[1] === 'is') conds.push(`${col} is ${m[2] === 'null' ? 'null' : 'not null'}`);
+        else conds.push(`${col} ${m[1] === 'eq' ? '=' : m[1] === 'gt' ? '>' : '<>'} ${lit(m[2])}`);
+      }
+      const onde = conds.length ? 'where ' + conds.join(' and ') : '';
+      if(met === 'GET'){
+        const sel = (u.searchParams.get('select') || '*').split(',').map(c => {
+          c = c.trim(); const al = /^(\w+):(.+)$/.exec(c);
+          if(al){ const [col, k] = al[2].split('->>'); return `${col}->>${lit(k)} as ${al[1]}`; }
+          return c;
+        }).join(', ');
+        return json(200, umaLinha(comoPessoa(email, `select coalesce(json_agg(x), '[]') from (select ${sel} from public.${tabela} ${onde}) x`)));
+      }
+      if(tabela !== 'pauta') return json(405, {});
+      const corpo = JSON.parse(req.postData() || 'null');
+      ESTAT.pautaEscrita++;
+      { const qual = decodeURIComponent((/[?&]cliente=eq\.([^&]+)/.exec(u.search) || [])[1] || (Array.isArray(corpo) ? corpo[0] : corpo || {}).cliente || '?');
+        ESTAT.porLinha[email + ':' + met + ':' + qual] = (ESTAT.porLinha[email + ':' + met + ':' + qual] || 0) + 1; }
+      if(met === 'PATCH'){
+        const r = umaLinha(comoPessoaCru(email, `with m as (update public.pauta set dados = ${lit(JSON.stringify(corpo.dados))}::jsonb, atualizado_em = now() ${onde} returning cliente) select coalesce(jsonb_agg(m), '[]')::text from m`));
+        const prefer = req.headers()['prefer'] || '';
+        return route.fulfill({ status: prefer.includes('representation') ? 200 : 204, contentType: 'application/json', body: prefer.includes('representation') ? r : '' });
+      }
+      if(met === 'POST'){
+        const itens = Array.isArray(corpo) ? corpo : [corpo];
+        for(const it of itens){
+          if(!it || !it.cliente) continue;
+          const conflito = u.searchParams.has('on_conflict') ? 'on conflict (org, cliente) do update set dados = excluded.dados, atualizado_em = now()' : '';
+          try{ umaLinha(comoPessoaCru(email, `insert into public.pauta(cliente, dados) values (${lit(it.cliente)}, ${lit(JSON.stringify(it.dados))}::jsonb) ${conflito}`)); }
+          catch(e){ if(/duplicate key/.test(String(e.stderr || e.message))) return json(409, {}); throw e; }
+        }
+        return route.fulfill({ status: 201, contentType: 'application/json', body: '' });
+      }
+      return json(405, {});
+    }catch(e){ if(process.env.DEPURAR) console.log('    [ponte 400]', met, p, u.search.slice(0, 80), String(e.stderr || e.message).slice(0, 200)); return json(400, { message: String(e.stderr || e.message).slice(0, 300) }); }
+  };
+}
+
+/* ---------- a ponte: o Realtime ---------- */
+const SOQUETES = new Set();
+let ultimaMudanca = 0, entregaLigada = true;
+const parados = new Set();          // aparelhos cujo canal está "atrasado"
+setInterval(() => {
+  if(!entregaLigada) return;
+  let linhas;
+  try{ linhas = JSON.parse(umaLinha(`select coalesce(jsonb_agg(t order by id), '[]')::text from teste_mudancas t where id > ${ultimaMudanca}`) || '[]'); }catch(e){ return; }
+  for(const l of linhas){
+    ultimaMudanca = Math.max(ultimaMudanca, l.id);
+    for(const s of SOQUETES){
+      if(parados.has(s.nome) || !s.topicos.size) continue;
+      if(l.registro.org !== 'maestro') continue;              // o filtro org=eq.<org> do canal
+      for(const t of s.topicos) s.ws.send(JSON.stringify({ topic: t, event: 'postgres_changes', ref: null,
+        payload: { ids: [1], data: { schema: 'public', table: l.tabela, type: l.tipo, record: l.registro, commit_timestamp: new Date().toISOString() } } }));
+    }
+  }
+}, 120);
+
+/* ---------- os aparelhos ---------- */
+const srv = http.createServer((q, r) => {
+  if(q.url.startsWith('/web/dados/tempo-real.js')){
+    if(servirCamada){ r.writeHead(200, { 'Content-Type': 'text/javascript' }); r.end(CAMADA); }
+    else { r.writeHead(404); r.end(''); }
+    return;
+  }
+  if(q.url.startsWith('/web/quadro/quadro.js')){ r.writeHead(200, { 'Content-Type': 'text/javascript' }); return r.end(QUADRO); }
+  r.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); r.end(html);
+});
+let servirCamada = true;
+await new Promise(r => srv.listen(0, r));
+const PAGINA = 'http://127.0.0.1:' + srv.address().port + '/';
+const navegador = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+
+async function aparelho(nome, email, opcoes = {}){
+  const vp = opcoes.celular ? { viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } };
+  const ctx = await navegador.newContext(Object.assign({ locale: 'pt-BR' }, vp));
+  const sq = { nome, ws: null, topicos: new Set() };
+  await ctx.routeWebSocket(/realtime\/v1\/websocket/, ws => {
+    const s = { nome, ws, topicos: new Set() };
+    SOQUETES.add(s);
+    ws.onMessage(txt => { let m; try{ m = JSON.parse(String(txt)); }catch(e){ return; }
+      if(m.event === 'phx_join'){
+        const pc = m.payload && m.payload.config && m.payload.config.postgres_changes;
+        if(pc && pc.length) s.topicos.add(m.topic);
+        ws.send(JSON.stringify({ topic: m.topic, event: 'phx_reply', ref: m.ref, payload: { status: 'ok', response: { postgres_changes: (pc || []).map((x, i) => Object.assign({ id: i + 1 }, x)) } } }));
+      }
+      if(m.event === 'broadcast') for(const o of SOQUETES) if(o !== s && !parados.has(o.nome)) o.ws.send(JSON.stringify({ topic: m.topic, event: 'broadcast', payload: m.payload }));
+    });
+    ws.onClose(() => SOQUETES.delete(s));
+  });
+  await ctx.route('https://x.test/**', r => r.fulfill({ status: 200, contentType: 'image/gif', body: Buffer.from('R0lGODlhAQABAAAAACw=', 'base64') }));
+  const pag = await ctx.newPage();
+  const erros = [];
+  pag.on('pageerror', e => erros.push(nome + ': ' + e.message));
+  await pag.route(SB + '/**', ponte(email, Object.assign({ nome }, opcoes)));
+  await pag.goto(PAGINA, { waitUntil: 'load' });
+  await entrar(pag, email);
+  return { ctx, pag, erros, nome };
+}
+async function entrar(pag, email){
+  await pag.waitForTimeout(500);
+  await pag.evaluate(async email => {
+    document.getElementById('abertura')?.remove();
+    document.querySelector('#entrarMaestro #em-fora')?.click();
+    document.getElementById('entrarMaestro')?.remove();
+    document.getElementById('quemEsta')?.remove();
+    await window.MaestroPorta.entrar(email, 'senha');
+    S.usuario = { tipo: 'agencia', id: email.split('@')[0] };
+    S.skel = false; S.seen = { agency: true };
+    await sbCarregar();
+    S.view = 'agency'; S.route = 'producao'; render();
+  }, email);
+  await pag.waitForTimeout(2500);
+}
+const noAparelho = (a, f, arg) => a.pag.evaluate(f, arg);
+const card = (a, id) => noAparelho(a, id => { const p = (S.pautas.cj || []).find(x => +x.id === id); return p ? JSON.parse(JSON.stringify(p)) : null; }, id);
+const mudarCard = (a, id, campos) => noAparelho(a, async ([id, campos]) => {
+  const p = S.pautas.cj.find(x => +x.id === id); Object.assign(p, campos); render(); return Sincro.gravar('cj', true);
+}, [id, campos]);
+async function ate(a, cond, ms = 4000){
+  const t0 = Date.now();
+  while(Date.now() - t0 < ms){ if(await cond()) return Date.now() - t0; await a.pag.waitForTimeout(100); }
+  return -1;
+}
+const cardNoBanco = id => doBanco(`select to_jsonb(c) from public.cards c where org='maestro' and cliente='cj' and id=${id}`);
+const espelho = () => doBanco(`select dados from public.pauta where org='maestro' and cliente='cj'`);
+
+const Q = (a, f, arg) => a.pag.evaluate(f, arg);
+const cardDe = (a, cli, id) => Q(a, ([cli, id]) => { const p = (S.pautas[cli] || []).find(x => +x.id === +id); return p ? JSON.parse(JSON.stringify(p)) : null; }, [cli, id]);
+const noBanco = (cli, id) => doBanco(`select to_jsonb(c) from public.cards c where org='maestro' and cliente='${cli}' and id=${id}`);
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+async function quieto(a){ await Q(a, async () => {
+  /* a porta de entrada e o "quem está entrando" do protótipo não são o assunto aqui */
+  setInterval(() => { for(const id of ['entrarMaestro', 'quemEsta', 'abertura']){ const e = document.getElementById(id); if(e){ e.remove(); document.body.style.overflow = ''; } } }, 50);
+  for(let i = 0; i < 40; i++){ if(!window.MaestroQuadro) { await new Promise(r => setTimeout(r, 100)); continue; } break; } }); }
+
+/* =================================================================== */
+montarBanco(true);
+const A = await aparelho('A', 'ana@ejup.com');
+const B = await aparelho('B', 'gabi@ejup.com');
+await quieto(A); await quieto(B);
+const EU = await Q(A, () => { const m = S.equipe.map(x => membroId(x)); S.usuario = { tipo: 'agencia', id: m[0] }; render(); return m; });
+await Q(B, (m) => { S.usuario = { tipo: 'agencia', id: m[1] }; render(); }, EU);
+
+console.log('\n  — 1. a página ocupa o lugar do Ensaio —');
+{
+  const r = await Q(A, () => ({
+    tem: !!document.querySelector('#root .qdPagina'),
+    cols: [...document.querySelectorAll('#root .qdCol .qdColHd b')].map(x => x.textContent),
+    menu: [...document.querySelectorAll('[data-r="producao"]')].map(x => x.textContent.trim()).filter(Boolean)[0] || '',
+    ensaio: !!document.querySelector('#root .enCard, #root .enRolo') }));
+  checa('1.1 a rota da produção desenha o Quadro, não o Ensaio', r.tem && !r.ensaio, r);
+  checa('1.2 as oito colunas, na ordem combinada', r.cols.join('|') === 'Pauta|A fazer|Fazendo|Revisão|Com o cliente|Aprovado|Agendado|Publicado', r.cols);
+  checa('1.3 no menu, o item se chama Quadro', /Quadro/.test(r.menu), r.menu);
+  const ids = await Q(A, () => MaestroQuadro.todos().filter(x => x.cli === 'cj').map(x => +x.p.id + ':' + x.col));
+  checa('1.4 os cards que já existiam entram, cada um na coluna da fase dele', ids.join() === '601:fazendo,602:pauta,603:cliente', ids);
+  const c = await Q(A, async () => { go('agency', 'pauta'); await new Promise(r => setTimeout(r, 150));
+    return { aba: MaestroQuadro.aba, cal: !!document.querySelector('#root .qdMalha'), on: !!document.querySelector('.nav.on[data-r="pauta"]') }; });
+  checa('1.5 o Cronograma do menu abre o Calendário da mesma página', c.aba === 'calendario' && c.cal && c.on, c);
+  await Q(A, () => { MaestroQuadro.aba = 'quadro'; render(); });
+}
+
+console.log('\n  — 2. mover é livre, e a fase acompanha —');
+{
+  /* 602 é rascunho sem texto: no Ensaio, ir ao cliente exigia texto, Check e lote */
+  await Q(A, () => MaestroQuadro.mover('cj', 602, 'cliente'));
+  await esperar(900);
+  let b = noBanco('cj', 602);
+  checa('2.1 rascunho vazio vai direto para "Com o cliente" — sem trava', b.dados.coluna === 'cliente' && b.dados.fase === 'texto_cli', b.dados);
+  const link = umaLinha(`select count(*) from public.cards where org='maestro' and cliente='cj' and dados->>'fase' in ('texto_cli','post_cli') and apagado_em is null`);
+  checa('2.2 e a fase que o link do cliente lê é a de "com o cliente"', +link === 2, link);
+  await Q(A, () => MaestroQuadro.mover('cj', 602, 'publicado'));
+  await esperar(900);
+  b = noBanco('cj', 602);
+  checa('2.3 pular para Publicado também pode (e marca postado)', b.dados.fase === 'postado' && b.dados.feito === true && b.dados.st === 'SCHEDULED', b.dados);
+  await Q(A, () => MaestroQuadro.mover('cj', 602, 'afazer'));
+  await esperar(900);
+  b = noBanco('cj', 602);
+  checa('2.4 e voltar, de qualquer coluna para qualquer outra', b.dados.coluna === 'afazer' && b.dados.feito === undefined && b.dados.st === 'DRAFT', b.dados);
+  const n = await Q(A, () => { render(); return document.querySelectorAll('#root .qdCol[data-qdcol="afazer"] [data-qdkey="cj|602"]').length; });
+  checa('2.5 a tela mostra o card na coluna nova', n === 1, n);
+}
+
+console.log('\n  — 3. a decisão do cliente move o card sozinha —');
+{
+  /* o link do cliente grava a fase (decidirCard): aprovado */
+  await Q(B, () => { const p = S.pautas.cj.find(x => +x.id === 603); p.fase = 'aprovado'; return Sincro.gravar('cj', true); });
+  const ms = await ate(A, async () => (await Q(A, () => MaestroQuadro.colunaDe(S.pautas.cj.find(x => +x.id === 603)))) === 'aprovado', 8000);
+  if(process.env.DEPURAR){ console.log('   banco 603', JSON.stringify(noBanco('cj', 603).dados), 'A:', JSON.stringify(await cardDe(A, 'cj', 603)), 'B:', JSON.stringify(await cardDe(B, 'cj', 603)));
+    console.log('   diario B', JSON.stringify(await Q(B, () => MaestroDados.diario.slice(-12)))); console.log('   diario A', JSON.stringify(await Q(A, () => MaestroDados.diario.slice(-12)))); }
+  checa('3.1 o cliente aprova e o card aparece em Aprovado, no outro aparelho', ms >= 0, ms);
+  await Q(B, () => { const p = S.pautas.cj.find(x => +x.id === 603); p.fase = 'producao'; p.ajustePendente = true; p.alteracoes = [{ id: 'a1', oque: 'Troque a foto', por: 'Cliente' }]; return Sincro.gravar('cj', true); });
+  await ate(A, async () => await Q(A, () => !!document.querySelector('.qdCol[data-qdcol="fazendo"] [data-qdkey="cj|603"] .qdAjuste')), 8000);
+  const r = await Q(A, () => ({ col: MaestroQuadro.colunaDe(S.pautas.cj.find(x => +x.id === 603)), aj: !!document.querySelector('[data-qdkey="cj|603"] .qdAjuste') }));
+  checa('3.2 pedido de ajuste devolve para Fazendo, com o aviso no card', r.col === 'fazendo' && r.aj, r);
+}
+
+console.log('\n  — 4. escrever do jeito que se fala —');
+{
+  const r = await Q(A, () => {
+    const I = MaestroQuadro.interpretar;
+    const a = I('Reels da obra sexta às 15h #cortez @anna !');
+    const b = I('ligar pro fornecedor amanhã');
+    const c = I('carrossel STF 05/10 #ejup');
+    return { a, b, c, sexta: (() => { const d = new Date(); let n = (5 - d.getDay() + 7) % 7 || 7; d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); })(),
+      anna: (S.equipe.find(m => /^anna/i.test(m.n)) ? membroId(S.equipe.find(m => /^anna/i.test(m.n))) : null), amanha: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); })(), pessoas: S.equipe.map(m => membroId(m)) };
+  });
+  checa('4.1 #cliente, @pessoa, dia, hora, formato e ! — tudo tirado do texto', r.a.cli === 'cj' && r.a.prazo === r.sexta && r.a.prazoHora === '15:00' && r.a.fmt === 'Reels' && r.a.importante && r.a.tema === 'Reels da obra' && r.a.resp === r.anna, r);
+  checa('4.2 sem #cliente é da agência (cli nulo → agência) e "amanhã" vira data', r.b.cli === null && r.b.prazo === r.amanha && r.b.tema === 'ligar pro fornecedor', r.b);
+  checa('4.3 dd/mm vira a data', /-10-05$/.test(r.c.prazo || '') && r.c.cli === 'n0' && r.c.fmt === 'Carrossel', r.c);
+}
+
+console.log('\n  — 5. Minha lista —');
+{
+  await Q(A, () => { MaestroQuadro.aba = 'lista'; MaestroQuadro.sub = 'tarefas'; render(); });
+  await A.pag.fill('#qdNovo', 'Roteiro do episódio 19 hoje #cortez');
+  await A.pag.press('#qdNovo', 'Enter');
+  await A.pag.fill('#qdNovo', 'Pagar a gráfica ontem');
+  await A.pag.press('#qdNovo', 'Enter');
+  await esperar(1200);
+  const r = await Q(A, () => ({
+    grupos: [...document.querySelectorAll('.qdGrupo')].map(g => g.textContent.replace(/\s+/g, ' ').trim()),
+    foco: document.activeElement && document.activeElement.id,
+    ola: (document.querySelector('.qdOla h2') || {}).textContent || '' }));
+  checa('5.1 o que se escreve cai no grupo do prazo (Atrasadas, Hoje…)', r.grupos.some(g => /^Atrasadas 1/.test(g)) && r.grupos.some(g => /^Hoje 1/.test(g)), r);
+  checa('5.2 o campo continua pronto para a próxima (foco)', r.foco === 'qdNovo', r.foco);
+  checa('5.3 a saudação, como na DEICHECK', /^(Bom dia|Boa tarde|Boa noite)/.test(r.ola), r.ola);
+  const cli = umaLinha(`select count(*) from public.cards where org='maestro' and cliente='cj' and dados->>'t' = 'Cortez Jurídico · Post · Roteiro do episódio 19'`);
+  checa('5.4 o card do cliente foi para o banco, com o nome no padrão (uma vez só)', +cli === 1, cli);
+  const key = await Q(A, () => { const x = MaestroQuadro.todos().find(x => /Roteiro do episódio 19/.test(x.p.t)); return x.cli + '|' + x.p.id; });
+  await A.pag.click(`[data-qdfeito="${key}"]`);
+  await esperar(900);
+  const r2 = await Q(A, (key) => ({ col: MaestroQuadro.colunaDe(S.pautas[key.split('|')[0]].find(p => +p.id === +key.split('|')[1])),
+    feitas: (document.querySelector('.qdFeitas summary') || {}).textContent || '', barra: (document.querySelector('.qdOla p') || {}).textContent || '' }), key);
+  checa('5.5 marcar feito manda o card para Revisão', r2.col === 'revisao', r2);
+  checa('5.6 e ele aparece em "Concluídas nesta semana", com o progresso', /Concluídas nesta semana\s*1/.test(r2.feitas) && /1 de \d+ feitas/.test(r2.barra), r2);
+  await Q(A, () => { MaestroQuadro.sub = 'semana'; render(); });
+  const sem = await Q(A, () => ({ dias: document.querySelectorAll('.qdSemana .qdDia').length, hoje: !!document.querySelector('.qdDia.hoje .qdMini') }));
+  checa('5.7 a Semana tem os sete dias, e o de hoje com o que foi marcado', sem.dias === 7 && sem.hoje, sem);
+  await Q(A, () => { MaestroQuadro.sub = 'tarefas'; render(); });
+}
+
+console.log('\n  — 6. tarefa da agência —');
+{
+  const t = await Q(A, () => MaestroQuadro.todos().filter(x => x.cli === 'agencia').map(x => x.p.t));
+  const n0 = 0;
+  await esperar(800);
+  const n = umaLinha(`select count(*) from public.cards where org='maestro' and cliente='agencia' and apagado_em is null`);
+  checa('6.1 "Pagar a gráfica" é da agência e foi para o banco (a linha da agência nasce sozinha)', t.includes('Pagar a gráfica') && +n === 1, { t, n, n0 });
+  const r = await Q(A, () => { MaestroQuadro.aba = 'calendario'; render();
+    const noCal = [...document.querySelectorAll('.qdEv')].some(e => /gráfica/.test(e.textContent));
+    MaestroQuadro.aba = 'quadro'; render();
+    const noQuadro = [...document.querySelectorAll('.qdCard')].some(e => /gráfica/.test(e.textContent));
+    return { noCal, noQuadro }; });
+  checa('6.2 aparece no quadro e NÃO no calendário (nem no link)', r.noQuadro && !r.noCal, r);
+  const msB = await ate(B, async () => (await Q(B, () => MaestroQuadro.todos().some(x => x.cli === 'agencia'))), 5000);
+  checa('6.3 chega ao outro aparelho', msB >= 0, msB);
+}
+
+console.log('\n  — 7. o calendário é o cronograma —');
+{
+  await Q(A, () => { MaestroQuadro.aba = 'calendario'; MaestroQuadro.mes = '2026-09'; MaestroQuadro.filtroCli = 'todos'; render(); });
+  const r = await Q(A, () => { const d = document.querySelector('.qdDd[data-qddia="2026-09-28"]'); return d ? d.textContent : ''; });
+  checa('7.1 o card fica no dia em que publica', /STF/.test(r), r);
+  const cor = await Q(A, () => getComputedStyle(document.querySelector('.qdDd[data-qddia="2026-09-28"] .qdEv')).getPropertyValue('--qdc').trim());
+  checa('7.2 com a cor da coluna em que está (Fazendo)', cor.toUpperCase() === '#FF9F0A', cor);
+  const de = A.pag.locator('.qdDd[data-qddia="2026-09-28"] .qdEv').first();
+  await de.dragTo(A.pag.locator('.qdDd[data-qddia="2026-09-17"]'));
+  await esperar(1000);
+  const b = noBanco('cj', 601);
+  checa('7.3 arrastar para outro dia muda a data de publicação (no banco)', b.dados.data === '2026-09-17' && b.dados.dia === 3, b.dados);
+  const msB = await ate(B, async () => (await cardDe(B, 'cj', 601)).data === '2026-09-17', 5000);
+  checa('7.4 e o outro aparelho vê', msB >= 0, msB);
+}
+
+console.log('\n  — 8. a ficha do card —');
+{
+  await Q(A, () => { MaestroQuadro.aba = 'quadro'; render(); });
+  await A.pag.click('[data-qdkey="cj|601"] .qdTit');
+  await esperar(200);
+  const aberta = await Q(A, () => !!document.querySelector('#qdFolha .qdFolhaIn'));
+  checa('8.1 tocar no card abre a ficha', aberta);
+  await A.pag.click('#qdFolha [data-qf="legenda"]');
+  await A.pag.keyboard.type('Nova legenda escrita devagar', { delay: 15 });
+  /* no meio da digitação, outro aparelho muda OUTRO campo do mesmo card */
+  await Q(B, () => { const p = S.pautas.cj.find(x => +x.id === 601); p.prazo = '2026-10-01'; return Sincro.gravar('cj', true); });
+  await ate(A, async () => (await cardDe(A, 'cj', 601)).prazo === '2026-10-01', 5000);
+  await esperar(300);
+  const r = await Q(A, () => ({ leg: document.querySelector('#qdFolha [data-qf="legenda"]').value, foco: document.activeElement && document.activeElement.dataset.qf,
+    prazo: document.querySelector('#qdFolha [data-qf="prazo"]').value }));
+  checa('8.2 o que chegou de fora entra na ficha (o prazo)…', r.prazo === '2026-10-01', r);
+  checa('8.3 …e o que eu estava digitando fica, com o cursor', r.leg.endsWith('Nova legenda escrita devagar') && r.foco === 'legenda', r);
+  await esperar(1400);
+  const b = noBanco('cj', 601);
+  checa('8.4 a legenda grava sozinha, sem botão de salvar, e o prazo do outro fica', b.dados.legenda.endsWith('Nova legenda escrita devagar') && b.dados.prazo === '2026-10-01', b.dados);
+  await A.pag.click('#qdFolha [data-qdfcol="revisao"]');
+  await esperar(900);
+  checa('8.5 as colunas na ficha movem com um toque', noBanco('cj', 601).dados.coluna === 'revisao');
+  await A.pag.fill('#qdFolha [data-qdcknovo] input', 'Conferir a fonte');
+  await A.pag.press('#qdFolha [data-qdcknovo] input', 'Enter');
+  await esperar(900);
+  const ck = noBanco('cj', 601).dados.check || [];
+  checa('8.6 checklist grava no card', ck.length === 1 && ck[0].t === 'Conferir a fonte', ck);
+  const ed = await Q(A, async () => { document.querySelector('#qdFolha [data-qdeditor]').click(); await new Promise(r => setTimeout(r, 200));
+    const m = document.querySelector('#layer .modal'); const f = document.getElementById('qdFolha');
+    const zm = m ? +getComputedStyle(m).zIndex || 0 : -1, zf = +getComputedStyle(f).zIndex;
+    const el = m ? document.elementFromPoint(innerWidth / 2, innerHeight / 2) : null;
+    const res = { temModal: !!m, pt: !!document.querySelector('#layer #pt-t'), porCima: !!(el && m.contains(el)), zm, zf };
+    S.modal = null; renderLayer(); return res; });
+  checa('8.7 "Editor completo" abre o editor de sempre, por cima da ficha', ed.temModal && ed.pt && ed.porCima, ed);
+  await A.pag.keyboard.press('Escape');
+}
+
+console.log('\n  — 9. duas pessoas no mesmo card, ao mesmo tempo —');
+{
+  await Q(B, () => { MaestroQuadro.aba = 'quadro'; render(); });
+  /* A move; B escreve a legenda — no mesmo instante */
+  await Promise.all([
+    Q(A, () => MaestroQuadro.mover('cj', 602, 'fazendo')),
+    Q(B, () => MaestroQuadro.mudar('cj', 602, { legenda: 'Legenda da Gabi' })) ]);
+  await esperar(1500);
+  const b = noBanco('cj', 602);
+  checa('9.1 no banco ficam as DUAS mudanças (a coluna de um, a legenda do outro)', b.dados.coluna === 'fazendo' && b.dados.legenda === 'Legenda da Gabi', b.dados);
+  const ms = await ate(A, async () => (await cardDe(A, 'cj', 602)).legenda === 'Legenda da Gabi', 5000);
+  const ms2 = await ate(B, async () => (await Q(B, () => MaestroQuadro.colunaDe(S.pautas.cj.find(x => +x.id === 602)))) === 'fazendo', 5000);
+  checa('9.2 e cada aparelho vê a do outro', ms >= 0 && ms2 >= 0, { ms, ms2 });
+  /* os dois criam card ao mesmo tempo */
+  await Promise.all([Q(A, () => MaestroQuadro.criarDoTexto('Post da Ana #cortez', { coluna: 'pauta' })), Q(B, () => MaestroQuadro.criarDoTexto('Post da Gabi #cortez', { coluna: 'pauta' }))]);
+  await esperar(2000);
+  const nomes = JSON.parse(umaLinha(`select coalesce(jsonb_agg(dados->>'t' order by id), '[]')::text from public.cards where org='maestro' and cliente='cj' and apagado_em is null and dados->>'t' like '%Post da%'`));
+  checa('9.3 dois cards criados ao mesmo tempo: dois cards, nenhum duplicado', nomes.length === 2 && new Set(nomes).size === 2, nomes);
+  const vistoA = await ate(A, async () => (await Q(A, () => MaestroQuadro.todos().filter(x => /Post da/.test(x.p.t)).length)) === 2, 5000);
+  const vistoB = await ate(B, async () => (await Q(B, () => MaestroQuadro.todos().filter(x => /Post da/.test(x.p.t)).length)) === 2, 5000);
+  checa('9.4 os dois aparelhos veem os dois', vistoA >= 0 && vistoB >= 0, { vistoA, vistoB });
+  /* o pior caso: os dois aparelhos dão o MESMO número a cards diferentes */
+  await Promise.all([
+    Q(A, () => { S.pautas.cj.push({ id: 7777777, t: 'Cortez Jurídico · Post · Mesmo número da Ana', fmt: 'Post', fase: 'rascunho', criadoEm: 111 }); return Sincro.gravar('cj', true); }),
+    Q(B, () => { S.pautas.cj.push({ id: 7777777, t: 'Cortez Jurídico · Post · Mesmo número da Gabi', fmt: 'Post', fase: 'rascunho', criadoEm: 222 }); return Sincro.gravar('cj', true); }) ]);
+  await esperar(2500);
+  const mesmos = JSON.parse(umaLinha(`select coalesce(jsonb_agg(jsonb_build_array(id, dados->>'t') order by id), '[]')::text from public.cards where org='maestro' and dados->>'t' like '%Mesmo número%'`));
+  checa('9.5 mesmo número em dois aparelhos: os DOIS cards ficam, cada um com o seu número', mesmos.length === 2 && mesmos[0][0] !== mesmos[1][0] && mesmos.some(x => /Ana/.test(x[1])) && mesmos.some(x => /Gabi/.test(x[1])), mesmos);
+  await ate(A, async () => (await Q(A, () => MaestroQuadro.todos().filter(x => /Mesmo número/.test(x.p.t)).length)) === 2, 5000);
+  await ate(B, async () => (await Q(B, () => MaestroQuadro.todos().filter(x => /Mesmo número/.test(x.p.t)).length)) === 2, 5000);
+  const total = umaLinha(`select count(*) from public.cards where org='maestro' and apagado_em is null`);
+  const telaA = await Q(A, () => MaestroQuadro.todos().length), telaB = await Q(B, () => MaestroQuadro.todos().length);
+  checa('9.6 banco, aparelho A e aparelho B contam o mesmo número de cards', +total === telaA && telaA === telaB, { total, telaA, telaB });
+}
+
+console.log('\n  — 10. apagar não volta; restaurar volta —');
+{
+  await Q(A, () => MaestroQuadro.apagar('cj', 602));
+  await esperar(1000);
+  checa('10.1 apagar manda para a lixeira do banco', !!noBanco('cj', 602).apagado_em);
+  await ate(B, async () => !(await cardDe(B, 'cj', 602)), 5000);
+  /* B, que ainda tinha uma edição, grava outra coisa: o 602 não pode voltar */
+  await Q(B, () => MaestroQuadro.mudar('cj', 601, { objetivo: 'Explicar a decisão' }));
+  await esperar(1200);
+  checa('10.2 a gravação do outro aparelho não traz o apagado de volta', !!noBanco('cj', 602).apagado_em && !(await cardDe(A, 'cj', 602)));
+  const lx = await Q(A, async () => { document.querySelector('[data-qdlixeira]').click(); await new Promise(r => setTimeout(r, 100));
+    return [...document.querySelectorAll('#layer [data-qdrestaurar]')].map(b => b.dataset.qdrestaurar); });
+  checa('10.3 a Lixeira da página mostra o card', lx.includes('cj|602'), lx);
+  await A.pag.click('#layer [data-qdrestaurar="cj|602"]');
+  await esperar(1200);
+  checa('10.4 restaurar traz de volta, no banco e na tela', !noBanco('cj', 602).apagado_em && !!(await cardDe(A, 'cj', 602)));
+  await Q(A, () => { S.modal = null; renderLayer(); });
+}
+
+console.log('\n  — 11. nada de mensagem embaixo —');
+{
+  const r = await Q(A, async () => { toast('Bem-vindo de volta, Ana.'); await new Promise(r => setTimeout(r, 100));
+    const t = document.querySelector('.toast'); return { existe: !!t, visivel: !!(t && t.getBoundingClientRect().height) }; });
+  checa('11.1 aviso de rodapé não aparece (nem "bem-vindo", nem versão, nem banco)', !r.visivel, r);
+}
+
+console.log('\n  — 12. recarregar: o que está no banco é o que se vê —');
+{
+  const antes = await Q(A, () => MaestroQuadro.todos().map(x => x.cli + '|' + x.p.id + ':' + x.col).sort());
+  await B.ctx.close();
+  const C = await aparelho('C', 'gabi@ejup.com');
+  await quieto(C);
+  await ate(C, async () => (await Q(C, () => MaestroQuadro.todos().length)) === antes.length, 6000);
+  const depois = await Q(C, () => MaestroQuadro.todos().map(x => x.cli + '|' + x.p.id + ':' + x.col).sort());
+  checa('12.1 outro aparelho abrindo do zero vê cada card na mesma coluna', JSON.stringify(antes) === JSON.stringify(depois), { antes, depois });
+  const dup = umaLinha(`select count(*) from (select cliente, dados->>'t' t from public.cards where org='maestro' and apagado_em is null group by 1,2 having count(*) > 1) x`);
+  checa('12.2 nenhum card repetido no banco depois de tudo', +dup === 0, dup);
+  await C.ctx.close();
+  checa('12.3 nenhum erro de página', [...A.erros, ...B.erros, ...C.erros].length === 0, [...A.erros, ...B.erros, ...C.erros].slice(0, 4));
+}
+
+console.log('\n  — 13. o celular —');
+{
+  const M = await aparelho('M', 'ana@ejup.com', { celular: true });
+  await quieto(M);
+  await Q(M, (m) => { S.usuario = { tipo: 'agencia', id: m[0] }; MaestroQuadro.aba = 'quadro'; render(); }, EU);
+  const r = await Q(M, () => ({ visiveis: [...document.querySelectorAll('.qdCol')].filter(c => c.offsetParent).length,
+    abas: document.querySelectorAll('.qdAbaCol').length, lado: document.documentElement.scrollWidth > innerWidth + 1 }));
+  checa('13.1 uma coluna por vez, com as oito em abas', r.visiveis === 1 && r.abas === 8, r);
+  checa('13.2 a página não rola de lado', !r.lado, r);
+  await M.pag.click('.qdAbaCol[data-qdcolmovel="revisao"]');
+  const v = await Q(M, () => [...document.querySelectorAll('.qdCol')].filter(c => c.offsetParent).map(c => c.dataset.qdcol));
+  checa('13.3 tocar na aba troca a coluna', v.join() === 'revisao', v);
+  await M.pag.click('.qdCol[data-qdcol="revisao"] .qdCard .qdTit');
+  await esperar(200);
+  const f = await Q(M, () => { const r = document.querySelector('#qdFolha .qdFolhaIn').getBoundingClientRect(); const x = document.querySelector('#qdFolha .qdFechar').getBoundingClientRect();
+    return { l: r.left, w: r.width, fechar: x.top >= 0 && document.elementFromPoint(x.left + x.width / 2, x.top + x.height / 2) === document.querySelector('#qdFolha .qdFechar') }; });
+  checa('13.4 a ficha abre como folha da tela inteira, com o fechar à mão', f.l === 0 && f.w >= 389 && f.fechar, f);
+  await Q(M, () => { MaestroQuadro.aba = 'lista'; render(); });
+  const l = await Q(M, () => ({ lado: document.documentElement.scrollWidth > innerWidth + 1, campo: !!document.getElementById('qdNovo') }));
+  checa('13.5 a Minha lista cabe no celular', !l.lado && l.campo, l);
+  checa('13.6 nenhum erro de página no celular', M.erros.length === 0, M.erros);
+  await M.ctx.close();
+}
+
+console.log(`\n${nOk} passaram · ${nFalhou} falharam`);
+await navegador.close(); srv.close();
+process.exit(nFalhou ? 1 : 0);

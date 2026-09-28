@@ -4,7 +4,7 @@ Version: 0.5
 Status: Implementação — blocos 1, 2, 3 e 5 da API prontos, verificados por HTTP
         · D-080 resolvida (a fase substitui o status): blocos 4, 6, 7 e 8 liberados
 Codename: Project Symphony
-Última atualização: 2026-09-26
+Última atualização: 2026-09-28
 
 > **Retomando o projeto? Leia [`docs/HANDOFF.md`](docs/HANDOFF.md) primeiro.**
 > Ele é o mapa: estado do código, o que já foi verificado, o que está aberto
@@ -299,8 +299,31 @@ não é a Mastercard, e sim quatro "Maestro" brasileiros de software, sendo o
 Maestro ABM o pior caso (SaaS de marketing B2B, comprador quase idêntico).
 Rodada 3 do teste com clientes.
 
+**Na branch (28 set, v277), NÃO publicado: aguarda o founder autorizar.
+O Quadro substitui o Ensaio.** O founder disse: "vou abandonar essa aba
+ensaio e o código dela de junção com o cronograma". A raiz dos defeitos era
+haver duas coisas para um trabalho só: a tarefa no `__estado__` e o card.
+Agora existe uma, o card (tabela `cards`, gravado por campo).
+
+- **Onde mora:** `web/quadro/quadro.js`, carregado pela `tempo-real.js`. Usa
+  a rota e o lugar do Ensaio no menu ("Quadro").
+- **Três abas:**
+  - Quadro: 8 colunas livres, sem trava.
+  - Minha lista: por prazo, no modelo da DEICHECK.
+  - Calendário: é o Cronograma, e o menu Cronograma abre aqui.
+- **A ficha do card:** folha ao lado; cada campo grava sozinho.
+- **Tarefa da agência:** é card do "cliente" `agencia`. A linha nasce
+  sozinha, sem SQL.
+- **Toasts:** somem da plataforma inteira.
+- **Fase:** acompanha a coluna, e é o que o link do cliente lê.
+- **Dois consertos em `tempo-real.js`:** mesmo número de card em dois
+  aparelhos fazia um card sumir. Isso acontecia no recebimento e na regra da
+  v275.
+- **Provas:** 56 em `web/verificar/v277-o-quadro.mjs`.
+- **Fica sem tela, de propósito:** o código do Ensaio. O e-mail de lote não
+  sai ao mover.
 **Fechado (28 set, v276, NO AR com autorização do founder) — as cópias
-saem e a tarefa volta.** Falta o founder rodar o `dados-1c`. O banco confirmou 48 cópias de 26/09 (12:13 e 13:40, login
+saem e a tarefa volta.** O founder rodou o `dados-1c` em 28/set: 36 para a lixeira, 12 já apagadas. O banco confirmou 48 cópias de 26/09 (12:13 e 13:40, login
 `ejup.mkt`); 37 vivas. `docs/ENGINEERING/dados-1c-limpar-copias.sql` (o
 founder roda): cópia de segurança, mapa `cards_copias` e cópias vivas para a
 LIXEIRA (trava: >60 recusa). O app reaponta a tarefa presa numa cópia e
