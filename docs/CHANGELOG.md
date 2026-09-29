@@ -9,7 +9,7 @@ Nunca apagar versões anteriores.
 
 ## 0.5.115 — 2026-09-29
 
-**Status:** No ar. **Falta o founder rodar `docs/ENGINEERING/equipe-3-restaurar.sql`.**
+**Status:** No ar. Restauração rodada pelo founder em 29/09 09h27: as cinco pessoas voltaram, todas com foto.
 
 ### v300 — a trava do estado (o que apagou a equipe)
 

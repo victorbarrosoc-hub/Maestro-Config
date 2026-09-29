@@ -21,9 +21,11 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 ## No ar
 
 v300 (29 set) — TRAVA DO ESTADO: a v276 apagou o `__estado__` em 28/09 14:02
-(gravou pauta de cliente por cima). Código corrigido; FALTA o founder rodar
-`docs/ENGINEERING/equipe-3-restaurar.sql` no projeto tgrbmdsootnewjqpmeii e
-conferir a lista com as 5 pessoas e fotos. Antes, a v299 — ENTRADA REFEITA ("não quero falhas… nem telas piscando"):
+(gravou pauta de cliente por cima). Código corrigido e o founder RODOU o
+`docs/ENGINEERING/equipe-3-restaurar.sql` (29/09 09h27): 5 pessoas, todas com
+foto. Falta ele conferir a lista no celular (aba anônima). O estado estragado
+está em `estado_antes_restaurar` (não apagar ainda). Projeto Supabase certo:
+tgrbmdsootnewjqpmeii (o único que o site usa). Antes, a v299 — ENTRADA REFEITA ("não quero falhas… nem telas piscando"):
 uma peça só (`web/entrada/entrada.js`) conduz vitrine → login → espera →
 lista (equipe lida direto do banco, com fotos) → app. Se o founder ainda vir
 a equipe de fábrica, é o BANCO que está sem a equipe: conferir a linha
