@@ -344,6 +344,7 @@
     document.documentElement.classList.add('dsAberto');
     const palco = el.querySelector('#dsPalco');
     palco.addEventListener('pointerdown', aoApertar);
+    palco.addEventListener('mousedown', e => { if(E.editando && e.target.id !== 'dsTxtEd') e.preventDefault(); });
     palco.addEventListener('pointermove', aoMover);
     palco.addEventListener('pointerup', aoSoltar);
     palco.addEventListener('pointercancel', aoSoltar);
@@ -624,9 +625,11 @@
     const ed = document.getElementById('dsTxtEd');
     ed.hidden = false; ed.textContent = o.txt || '';
     posTexto();
-    ed.focus();
-    const r = document.createRange(); r.selectNodeContents(ed); r.collapse(false);
-    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    /* o foco vai depois do clique terminar: o mousedown do palco o roubaria */
+    const focar = () => { if(E.editando !== id) return; ed.focus();
+      const r = document.createRange(); r.selectNodeContents(ed); r.collapse(false);
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+    focar(); setTimeout(focar, 0);
     ed.oninput = () => { o.txt = ed.innerText.replace(/\n$/, ''); o.h = Math.max(o.fs * 1.2, alturaTexto(o)); posTexto(); pintarSel(); };
   }
   function posTexto(){
@@ -897,7 +900,9 @@
   });
   document.addEventListener('change', e => {
     const t = e.target; if(!t.matches || !t.matches('#dsDir [data-dsp]')) return;
-    prop(t.dataset.dsp, t.value, true); pintarProps();
+    /* sem redesenhar o painel: quem sai de um campo para outro não perde o foco */
+    prop(t.dataset.dsp, t.value, true);
+    const par = t.closest('.dsCor'); if(par) par.querySelectorAll('input').forEach(i => { if(i !== t && /^#[0-9a-f]{6}$/i.test(t.value)) i.value = t.value; });
   });
   document.addEventListener('keydown', e => {
     const ed = document.getElementById('dsEditor'); if(!ed) return;
