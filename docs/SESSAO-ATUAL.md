@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 29 set 2026
+Última atualização: 29 set 2026 (v292 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -20,38 +20,22 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v291 (28 set) — ficha com Formato múltiplo, Pilar e Referências; criar pelo
-Hoje, Mandala e Estúdio usa o campo do Quadro; o cliente vê o essencial.
-
-## Pronto na branch, ainda NÃO no ar (v292)
-
-- **Estúdio**: menu de entrada (novo design por tamanho, abrir, apagar,
-  Ideias) e editor estilo Figma em `web/design/design.js` (ferramentas
-  V F R O L T H, camadas, alinhar, desfazer, guias, imagem, exportar PNG,
-  "Mandar para um card"). 29 provas: `web/verificar/v292-o-estudio.mjs`.
-- **Ficha em abas** Conteúdo · Peça · Detalhes, sem "Editor completo",
-  "Salvando…/Tudo salvo", textos que crescem. Nada trava o preenchimento.
-- **Arrastar no computador** mostra a faixa das 8 colunas (como no celular).
-- **Cronograma de conteúdos** saiu da ficha do cliente e virou a segunda
-  vista do Calendário (mensal, semana a semana, cliente no seletor).
-  Provas 6.1–6.5 em `web/verificar/v291-criar-e-ficha.mjs` (32 verdes).
+v292 (29 set) — Estúdio com menu e editor de design (web/design/design.js),
+ficha em abas sem "Editor completo", faixa de colunas ao arrastar no
+computador, Cronograma de conteúdos como vista mensal do Calendário, e a
+Minha lista como o dia da pessoa (lembretes pessoais que não viram card).
 
 ## Em andamento
 
-**Minha lista vira lista pessoal do dia.** Pedido do founder: "eu criei ela
-mais pra ser algo individual de lembrar a pessoa o que tem que fazer no dia
-dela no trabalho. Não necessariamente precisa virar uma tarefa do Quadro."
-Desenho:
-- o campo de cima cria **lembrete pessoal** (não card), guardado por pessoa;
-- lembretes não feitos de dias anteriores sobem para hoje;
-- os cards do Quadro da pessoa (prazo hoje/atrasados, Para revisar) ficam
-  numa seção à parte; "Meus cards" mostra a lista completa;
-- cada lembrete pode virar card por um botão, se a pessoa quiser.
+Nada aberto desta leva. Próximo passo: o que o founder pedir depois de
+testar a v292 no celular.
 
-Depois: subir versão (VERSAO_PROTOTIPO e os `?v=` dos carregadores),
-CLAUDE.md, CHANGELOG, regressão (v277 precisa de Postgres:
-`pg_ctlcluster 16 main start`), merge na main, build, conferir no ar,
-republicar o artifact.
+## Como rodar as provas num container novo
+
+- `npm install` (com `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`).
+- Postgres: `pg_ctlcluster 16 main start`, depois
+  `su postgres -c "psql -qc 'create role root superuser login'"`.
+- Rodar uma suíte: `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node web/verificar/<suite>.mjs`.
 
 ## Pendências antigas que seguem abertas
 

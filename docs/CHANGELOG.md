@@ -1,9 +1,58 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.106
+Version: 0.5.107
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.107 — 2026-09-29
+
+**Status:** No ar.
+
+### v292 — o Estúdio vira ferramenta de design, a Minha lista vira o dia da pessoa
+
+- **Estúdio com menu.** Abre num menu: criar um design por tamanho de rede
+  (post 4:5, quadrado, story/reels 9:16, carrossel de 3 telas, capa do
+  YouTube, LinkedIn), abrir um design seu (com miniatura) ou ir ao quadro de
+  ideias de sempre, que ganhou "‹ Estúdio" para voltar.
+- **Editor no jeito do Figma** (`web/design/design.js`): pranchetas,
+  ferramentas V F R O L T I H, camadas por prancheta, propriedades (posição,
+  tamanho, cor, cantos, contorno, texto, opacidade), alinhar, trazer para
+  frente / mandar para trás, duplicar, copiar e colar, desfazer e refazer,
+  guias de encaixe, alças com Shift, seleção por arraste, texto escrito no
+  lugar, imagem por arquivo ou arrastando, zoom com ⌘ + roda. **Exportar
+  PNG** (uma por prancheta) e **Mandar para um card**: as telas viram a peça
+  do card na ordem da esquerda para a direita, ou nasce um card novo com elas.
+  O design é da pessoa (`estMeu().designs`); a imagem sobe para a nuvem e,
+  enquanto não sobe, a prévia fica fora do estado (a regra da v218).
+- **Ficha em abas.** Conteúdo · Peça · Detalhes, uma à vista por vez, com a
+  conta de cada uma; o topo (nome, coluna, próximo passo, quem faz, prazo,
+  publicação) fica sempre à vista. Sem "Editor completo". Nada trava o
+  preenchimento: qualquer campo, em qualquer ordem, grava sozinho
+  ("Salvando…" / "Tudo salvo").
+- **Arrastar no computador mostra a faixa das oito colunas** embaixo, como no
+  celular: soltar ali poupa rolar o quadro de lado.
+- **Cronograma de conteúdos** saiu da ficha do cliente e virou a segunda
+  vista do Calendário: mês inteiro, semana a semana, com o cliente num
+  seletor.
+- **Minha lista é o dia da pessoa.** O campo de cima anota um **lembrete
+  pessoal**, que não vira card (`S.lembretes`, por pessoa, apagar é lápide).
+  "15h", "amanhã", "sexta" e "!" funcionam como antes. O que ficou para trás
+  sobe para hoje com "desde ontem". Cada lembrete tem Amanhã, Virar card e ×.
+  Abas: Meu dia (lembretes + "Do Quadro, para hoje": o que revisar e os
+  cards que vencem) · Semana (lembretes e cards por dia, e anotar no dia) ·
+  Meus cards (por prazo ou por cliente). Na lista de outra pessoa, os
+  lembretes não aparecem.
+- **Provas:** 40 em `web/verificar/v292-o-estudio.mjs`; 120 na v277 (a seção
+  5 reescrita para os lembretes); 32 na v291 (vista mensal); 23 na v290
+  (faixa ao arrastar).
+- **Incidente:** o container da sessão foi recriado no meio desta entrega, e
+  o que não tinha ido para o GitHub (o editor, as provas dele e os ajustes
+  das suítes) foi refeito. Regra nova no `CLAUDE.md`: cada peça pronta vai
+  para o GitHub na hora, e `docs/SESSAO-ATUAL.md` guarda a passagem de
+  bastão.
 
 ---
 

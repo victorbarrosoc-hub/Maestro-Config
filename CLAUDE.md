@@ -245,6 +245,10 @@ Regra do founder, para **toda** conversa neste projeto:
    os pedidos do founder com as palavras dele, e as pendências.
 3. Fazer commit e push desse arquivo (na branch de trabalho **e** na `main`),
    para que nada dependa do container.
+   **E sempre, não só no fim:** cada peça pronta e provada vai para o GitHub
+   na hora (commit + push na branch de trabalho). Em 29/set o container foi
+   recriado no meio de uma entrega, e o que só existia nele (um editor
+   inteiro e suas provas) teve de ser refeito.
 4. Entregar ao founder o prompt pronto para abrir a conversa seguinte. O
    modelo está no topo do `docs/SESSAO-ATUAL.md`.
 
@@ -333,6 +337,32 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (29 set, v292, NO AR) — o Estúdio vira ferramenta de design, e a
+Minha lista vira o dia da pessoa.** Quatro pedidos numa leva:
+- **"Quero uma ferramenta igual à do Figma lá dentro. Bota um menu."** O
+  Estúdio abre num menu: criar um design por tamanho de rede, abrir um seu,
+  ou ir ao quadro de ideias. O editor mora em `web/design/design.js`, em tela
+  cheia fora do `#root`. Tem pranchetas, V F R O L T I H, camadas,
+  propriedades, alinhar, ordem, desfazer, guias, texto no lugar e imagem.
+  Exporta PNG e "Mandar para um card" põe as telas na peça do card, em ordem.
+  40 provas em `web/verificar/v292-o-estudio.mjs`.
+- **"Não precisa mais do Editor completo… organize de forma mais
+  intuitiva… sem limitar quem estrutura."** A ficha tem três abas
+  (Conteúdo · Peça · Detalhes), e o topo fica sempre à vista. Cada campo
+  grava sozinho, em qualquer ordem.
+- **Arrastar no computador** mostra a faixa das oito colunas (v290, seção 4).
+- **"Remove essa aba do cliente e coloca esse modelo dentro de
+  Calendário… mensal."** A ficha do cliente não tem mais Cronograma. O
+  Calendário tem "Calendário · Cronograma de conteúdos", que abre no mês
+  inteiro. v291, seção 6.
+- **"Minha lista… algo individual de lembrar a pessoa o que tem que fazer no
+  dia dela… não precisa virar tarefa do Quadro."** O campo de cima anota
+  LEMBRETE (`S.lembretes`, por pessoa, com lápide), não card. O que ficou
+  para trás sobe para hoje. Cada lembrete tem Amanhã, Virar card e ×. As
+  abas são Meu dia · Semana · Meus cards. v277, seção 5 (120 provas).
+- **Incidente e regra nova:** o container foi recriado no meio da entrega e
+  o editor (nunca commitado) foi refeito. Agora cada peça pronta vai para o
+  GitHub NA HORA, e `docs/SESSAO-ATUAL.md` é a passagem de bastão.
 **Fechado (28 set, v290, NO AR) — a coluna recolhe, mostra 10 de cada vez, e
 o filtro de prazo.** "Essa coluna de concluído precisa urgente recolher, se
 não a página vai descer até o infinito… um limite de 10, e mais 10 num
