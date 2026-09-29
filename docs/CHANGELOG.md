@@ -1,11 +1,35 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.111
+Version: 0.5.112
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.112 — 2026-09-29
+
+**Status:** No ar.
+
+### v297 — as redes à vista, o claro que se lê, e a vitrine inteira
+
+- **Para onde vai o post.** "Queria uma visualização fácil de qual plataforma
+  vai o post, se é Instagram, LinkedIn…" Cada rede tem o seu símbolo, na cor
+  dela, no card do Quadro e no da Semana (a do Hoje). No topo da ficha, "Vai
+  para" mostra as escolhidas por extenso e as outras apagadas; um toque liga
+  ou desliga. As plataformas saíram de Detalhes (um lugar só).
+- **O claro que se lê.** "Os nomes na versão clara estão escuros, balões e
+  textos. Não dá pra ler." O card da Semana tinha fundo escuro fixo; agora é
+  claro no claro. Junto: o número do dia de hoje (amarelo sobre claro), a hora
+  da agenda do Hoje, a etiqueta "bloqueado" e o "online" das Conversas. A prova
+  mede o contraste de todo texto de sete telas no claro.
+- **A vitrine inteira.** "Não aparece nada depois da foto… até o fim do
+  site." Os blocos da vitrine entram quando um observador avisa que chegaram à
+  tela; no iPhone o aviso não veio. Agora a rolagem confere (e, por garantia,
+  a cada segundo). A prova desliga o observador de propósito.
+- **A foto do celular no claro** tinha um retângulo em volta; agora o fundo é
+  transparente (só o aparelho, com sombra suave).
+- 21 provas em `web/verificar/v297-redes-e-claro.mjs`.
 
 ## 0.5.111 — 2026-09-29
 

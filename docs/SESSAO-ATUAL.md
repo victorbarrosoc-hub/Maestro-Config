@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 29 set 2026 (v296 no ar)
+Última atualização: 29 set 2026 (v297 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -20,7 +20,10 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v296 (29 set) — entrar sem piscar: na aba anônima a lista espera a equipe
+v297 (29 set) — símbolo das redes no card e "Vai para" na ficha; o claro
+legível (card da Semana, número de hoje, agenda do Hoje, Conversas); a vitrine
+aparece inteira ao rolar no iPhone; a foto do celular sem retângulo no claro.
+Antes, a v296 — entrar sem piscar: na aba anônima a lista espera a equipe
 inteira com fotos; a espera do login entra de uma vez; a vitrine abre já com
 o tema e, no claro, com a foto clara (fundo Linho); no celular, "Soltar em"
 colado no card. Antes, a v295 — nome inteiro no padrão por fora e na ficha, datas em

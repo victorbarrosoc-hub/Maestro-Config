@@ -349,6 +349,15 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (29 set, v297, NO AR) — as redes à vista, o claro que se lê, a
+vitrine inteira.** (1) "Qual plataforma vai o post": símbolo de cada rede no
+card do Quadro e da Semana, e "Vai para" no topo da ficha (saiu de Detalhes).
+(2) "Na versão clara os nomes estão escuros": o card da Semana tinha fundo
+escuro fixo; e mais quatro textos claros demais. (3) "Não aparece nada depois
+da foto": no iPhone o observador dos blocos `.rv` não avisou; `revelar()` em
+`web/tema/tema.js` confere na rolagem. (4) A foto do celular no claro é
+transparente. 21 provas em `web/verificar/v297-redes-e-claro.mjs` (contraste
+de sete telas no claro; observador desligado de propósito).
 **Fechado (29 set, v296, NO AR) — entrar sem piscar.** (1) Aba anônima:
 "quando loguei não apareceram as fotos, nem todos os usuários". Com rede
 lenta, a lista "Quem está entrando?" abria aos 12s com a equipe de fábrica e
