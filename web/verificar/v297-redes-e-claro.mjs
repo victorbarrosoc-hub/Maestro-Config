@@ -62,6 +62,12 @@ await pg.click('#qdFolha [data-qdfaba="detalhes"]'); await pg.waitForTimeout(100
 const det = await pg.evaluate(() => [...document.querySelectorAll('#qdFolha [data-qdfpainel="detalhes"] h4')].map(h => h.childNodes[0].textContent.trim()));
 checa('1.6 as plataformas moram num lugar só (saíram de Detalhes)', !det.includes('Plataformas'), det);
 await pg.evaluate(() => MaestroQuadro.fecharFolha());
+/* v298 — "pode deixar sem nenhuma rede marcada": às vezes é artigo, só no site */
+const novo = await pg.evaluate(cli => { const r = MaestroQuadro.criarDoTexto('Artigo sobre a ANEEL', { cli, coluna: 'pauta' }); render(); return { k: r.cli + '|' + r.p.id, plats: r.p.plats }; }, CLI);
+await pg.evaluate(k => MaestroQuadro.abrirFolha(k), novo.k); await pg.waitForTimeout(200);
+const vazio = await pg.evaluate(() => ({ on: document.querySelectorAll('#qdFolha .qdFRede.on').length, aviso: (document.querySelector('#qdFolha .qdFRedesNada') || {}).textContent || '' }));
+checa('1.8 card novo nasce sem nenhuma rede, e a ficha pede para escolher', Array.isArray(novo.plats) && novo.plats.length === 0 && vazio.on === 0 && /escolha onde/.test(vazio.aviso), [novo.plats, vazio]);
+await pg.evaluate(() => MaestroQuadro.fecharFolha());
 await pg.evaluate(() => { MaestroQuadro.aba = 'calendario'; MaestroQuadro.calVista = 'semana'; MaestroQuadro.semCal = 0; render(); }); await pg.waitForTimeout(200);
 checa('1.7 na Semana (a do Hoje), o card também mostra as redes', (await redesNoCard(7101, '.qdSemCard')).join() === 'LinkedIn,YouTube', await redesNoCard(7101, '.qdSemCard'));
 

@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v297', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v298', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -244,7 +244,7 @@
     const fmt = dados.fmt || (cli === AG ? 'Tarefa' : 'Post');
     const col = dados.coluna || (dados.resp ? 'afazer' : 'pauta');
     const f = FASE_DA_COLUNA[col] === 'post_cli' ? 'texto_cli' : (FASE_DA_COLUNA[col] === 'revisao2' ? 'revisao' : FASE_DA_COLUNA[col]);
-    const p = { id, t: titulo(cli, fmt, dados.tema || 'Sem título'), fmt, plats: cli === AG ? [] : ['ig'],
+    const p = { id, t: titulo(cli, fmt, dados.tema || 'Sem título'), fmt, plats: [],   /* v298: nasce sem rede — às vezes é artigo, só no site; quem estrutura escolhe */
       texto: '', cta: '', fase: f, st: (f === 'agendado' || f === 'postado') ? 'SCHEDULED' : 'DRAFT',
       coluna: col, colunaFase: f, ordem: ordemNoFim(col), criadoEm: Date.now(), criadoPor: eu() || undefined, mod: Date.now() };
     if(dados.resp) p.resp = dados.resp;

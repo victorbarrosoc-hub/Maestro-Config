@@ -1,11 +1,22 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.112
+Version: 0.5.113
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.113 — 2026-09-29
+
+**Status:** No ar.
+
+### v298 — o card nasce sem rede
+
+- "Às vezes é um artigo, aí é só no site. Não precisa já deixar um padrão."
+  O card novo nascia com Instagram marcado; agora nasce sem rede, e a ficha
+  mostra "escolha onde o post vai ao ar" até alguém escolher. Sem padrão por
+  cliente (decisão do founder). Prova 1.8 em `web/verificar/v297-redes-e-claro.mjs`.
 
 ## 0.5.112 — 2026-09-29
 

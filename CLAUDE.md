@@ -349,6 +349,10 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (29 set, v298, NO AR) — o card nasce sem rede.** "Às vezes é um
+artigo, só no site. Não precisa deixar um padrão." Nem Instagram por omissão,
+nem padrão por cliente (decisão do founder); a ficha pede a escolha. Prova 1.8
+na v297.
 **Fechado (29 set, v297, NO AR) — as redes à vista, o claro que se lê, a
 vitrine inteira.** (1) "Qual plataforma vai o post": símbolo de cada rede no
 card do Quadro e da Semana, e "Vai para" no topo da ficha (saiu de Detalhes).

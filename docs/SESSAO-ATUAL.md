@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 29 set 2026 (v297 no ar)
+Última atualização: 29 set 2026 (v298 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -20,7 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v297 (29 set) — símbolo das redes no card e "Vai para" na ficha; o claro
+v298 (29 set) — card novo nasce sem rede marcada (decisão do founder: sem
+padrão, nem por cliente). Antes, a v297 — símbolo das redes no card e "Vai para" na ficha; o claro
 legível (card da Semana, número de hoje, agenda do Hoje, Conversas); a vitrine
 aparece inteira ao rolar no iPhone; a foto do celular sem retângulo no claro.
 Antes, a v296 — entrar sem piscar: na aba anônima a lista espera a equipe
