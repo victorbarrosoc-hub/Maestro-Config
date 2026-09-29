@@ -59,6 +59,11 @@ de colunas ao arrastar, Minha lista como o dia da pessoa.
 
 ## Em andamento
 
+- Achado do ensaio (não consertado, sem pedido): o código do Ensaio antigo, sem
+  tela desde a v277, ainda cria "tarefas" escondidas no estado da agência para
+  cada card (`sincronizarJobs`). É gravação à toa no documento da equipe (onde
+  moram equipe e lembretes) e acende "perigo" no histórico quando uma some.
+  Propor ao founder desligar esse repositor.
 - Lentidão depois de um tempo de uso: não reproduziu (6 min com outra pessoa
   mexendo, contra um banco de verdade). Perguntar ao founder: qual tela,
   quanto tempo, qual aparelho.
