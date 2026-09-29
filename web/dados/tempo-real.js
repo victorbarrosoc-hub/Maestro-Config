@@ -1140,3 +1140,29 @@
   fetch('/web/tema/tema.js?v=v295').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } }).catch(() => {});
 })();
+
+/* v295 — a página nunca recarrega sem dizer por quê. Quando sai uma versão nova, a casa
+   se atualiza sozinha; o aviso "Versão nova — atualizando" era um toast, e os toasts
+   sumiram da plataforma (v277): quem estava usando via a tela piscar e voltar, sem
+   explicação. Agora uma faixa no topo diz o que vai acontecer antes de recarregar. */
+(function(){
+  if(window.__avisoVersao) return; window.__avisoVersao = true;
+  const ligar = () => {
+    if(typeof recarregarLimpo !== 'function' || recarregarLimpo.__aviso) return false;
+    const orig = recarregarLimpo;
+    recarregarLimpo = function(){
+      try{
+        const d = document.createElement('div');
+        d.setAttribute('role', 'status');
+        d.textContent = 'Saiu uma versão nova da Maestro — atualizando a página…';
+        Object.assign(d.style, { position: 'fixed', left: '50%', top: '12px', transform: 'translateX(-50%)', zIndex: 99999,
+          background: '#FFC857', color: '#1C1C1F', font: '600 14px Inter, system-ui, sans-serif', padding: '10px 16px', borderRadius: '999px', boxShadow: '0 8px 30px rgba(0,0,0,.35)' });
+        document.body.appendChild(d);
+      }catch(e){}
+      setTimeout(() => orig.apply(this, arguments), 1400);
+    };
+    recarregarLimpo.__aviso = true;
+    return true;
+  };
+  if(!ligar()){ let n = 0; const t = setInterval(() => { if(ligar() || ++n > 40) clearInterval(t); }, 250); }
+})();
