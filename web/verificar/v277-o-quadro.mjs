@@ -86,6 +86,11 @@ function montarBanco(ligar){
   `);
   if(ligar) psql(`select public.maestro_cards_ligar('maestro');`);
 }
+/* a ficha tem abas (v292): antes de tocar num campo, abrir a aba em que ele mora */
+async function naAba(P, sel){
+  await P.pag.evaluate((sel) => { const el = document.querySelector(sel); const pn = el && el.closest('[data-qdfpainel]');
+    if(pn && pn.hidden){ const b = document.querySelector(`#qdFolha [data-qdfaba="${pn.dataset.qdfpainel}"]`); if(b) b.click(); } }, sel);
+}
 const umaLinha = q => { const o = psql(q).trim().split('\n').filter(Boolean); return o.length ? o[o.length - 1] : ''; };
 const doBanco = q => JSON.parse(umaLinha(`select coalesce(to_jsonb((${q}))::text, 'null')`));
 
@@ -362,34 +367,86 @@ console.log('\n  — 4. escrever do jeito que se fala —');
   checa('4.3 dd/mm vira a data', /-10-05$/.test(r.c.prazo || '') && r.c.cli === 'n0' && r.c.fmt === 'Carrossel', r.c);
 }
 
-console.log('\n  — 5. Minha lista —');
+console.log('\n  — 5. Minha lista: o dia da pessoa (lembretes que não viram card) —');
 {
-  await Q(A, () => { MaestroQuadro.aba = 'lista'; MaestroQuadro.sub = 'tarefas'; render(); });
-  await A.pag.fill('#qdNovo', 'Roteiro do episódio 19 hoje #cortez');
+  await Q(A, () => { MaestroQuadro.aba = 'lista'; MaestroQuadro.sub = 'dia'; render(); });
+  const cardsAntes = await Q(A, () => MaestroQuadro.todos().length);
+  const bancoAntes = umaLinha(`select count(*) from public.cards where org='maestro'`);
+  await A.pag.fill('#qdNovo', 'Ligar pro contador 15h #ejup');
   await A.pag.press('#qdNovo', 'Enter');
-  await A.pag.fill('#qdNovo', 'Pagar a gráfica ontem');
+  await A.pag.fill('#qdNovo', 'Revisar a proposta amanhã !');
   await A.pag.press('#qdNovo', 'Enter');
-  await esperar(1200);
+  await esperar(1000);
   const r = await Q(A, () => ({
-    grupos: [...document.querySelectorAll('.qdGrupo')].map(g => g.textContent.replace(/\s+/g, ' ').trim()),
+    lem: [...document.querySelectorAll('.qdLem .qdLinTit')].map(x => x.textContent.trim()),
+    prox: (document.querySelector('.qdProxL summary') || {}).textContent || '',
     foco: document.activeElement && document.activeElement.id,
-    ola: (document.querySelector('.qdOla h2') || {}).textContent || '' }));
-  checa('5.1 o que se escreve cai no grupo do prazo (Atrasadas, Hoje…)', r.grupos.some(g => /^Atrasadas 1/.test(g)) && r.grupos.some(g => /^Hoje 1/.test(g)), r);
-  checa('5.2 o campo continua pronto para a próxima (foco)', r.foco === 'qdNovo', r.foco);
-  checa('5.3 a saudação, como na DEICHECK', /^(Bom dia|Boa tarde|Boa noite)/.test(r.ola), r.ola);
+    ola: (document.querySelector('.qdOla h2') || {}).textContent || '',
+    cards: MaestroQuadro.todos().length, l: (S.lembretes || []).map(l => ({ t: l.t, dia: l.dia, hora: l.hora, imp: l.imp })) }));
+  checa('5.1 o que se escreve vira LEMBRETE da pessoa, não card (nada novo no Quadro nem no banco)', r.cards === cardsAntes && umaLinha(`select count(*) from public.cards where org='maestro'`) === bancoAntes && r.l.length === 2, r);
+  checa('5.2 "15h" e "amanhã" viram hora e dia; #cliente fica no texto como a pessoa escreveu', r.lem.includes('Ligar pro contador #ejup') && r.l.some(l => l.hora === '15:00') && r.l.some(l => l.t === 'Revisar a proposta' && l.imp && l.dia > new Date().toISOString().slice(0, 10)), r);
+  checa('5.3 o de amanhã fica em "Próximos dias"; o campo continua pronto (foco); a saudação fica', /Próximos dias\s*1/.test(r.prox) && r.foco === 'qdNovo' && /^(Bom dia|Boa tarde|Boa noite)/.test(r.ola), r);
+  /* o que ficou de ontem sobe para hoje */
+  await Q(A, () => { const ontem = new Date(Date.now() - 864e5); const d = `${ontem.getFullYear()}-${String(ontem.getMonth() + 1).padStart(2, '0')}-${String(ontem.getDate()).padStart(2, '0')}`;
+    S.lembretes.push({ id: 'lontem', dono: S.usuario.id, t: 'Mandar o orçamento', dia: d, feito: false, em: 1 }); render(); });
+  const r2 = await Q(A, () => { const el = document.querySelector('[data-qdlemid="lontem"]'); return el ? el.textContent.replace(/\s+/g, ' ') : ''; });
+  checa('5.4 o que não foi feito ontem sobe para hoje, dizendo "desde ontem"', /Mandar o orçamento/.test(r2) && /desde ontem/.test(r2), r2);
+  await A.pag.click('[data-qdlem="lontem"]');
+  await esperar(300);
+  const r3 = await Q(A, () => ({ feito: S.lembretes.find(l => l.id === 'lontem').feito, barra: (document.querySelector('.qdOla p') || {}).textContent || '', aba: (document.querySelector('[data-qdabaid="lista"] span') || {}).textContent || '' }));
+  checa('5.5 marcar feito risca, e o topo conta "1 de N do seu dia"', r3.feito && /1 de \d+ do seu dia/.test(r3.barra), r3);
+  /* "Amanhã" e apagar */
+  const idL = await Q(A, () => S.lembretes.find(l => l.t === 'Ligar pro contador #ejup').id);
+  await A.pag.hover(`[data-qdlemid="${idL}"]`);
+  await A.pag.click(`[data-qdlemadia="${idL}"]`);
+  const r4 = await Q(A, (id) => S.lembretes.find(l => l.id === id).dia, idL);
+  checa('5.6 "Amanhã" passa o lembrete para o dia seguinte', r4 > new Date().toISOString().slice(0, 10), r4);
+  /* os lembretes viajam no estado da casa: o outro aparelho do mesmo login recebe */
+  const msL = await ate(B, async () => (await Q(B, () => (S.lembretes || []).filter(l => !l.fora).length)) >= 3, 8000);
+  checa('5.7 os lembretes sobem para o banco e chegam ao outro aparelho', msL >= 0, msL);
+  /* virar card, quando a pessoa quiser */
+  const idP = await Q(A, () => S.lembretes.find(l => l.t === 'Revisar a proposta').id);
+  await Q(A, () => { MaestroQuadro.sub = 'dia'; render(); const d = document.querySelector('.qdProxL'); if(d) d.open = true; });
+  await A.pag.hover(`[data-qdlemid="${idP}"]`);
+  await A.pag.click(`[data-qdlemcard="${idP}"]`);
+  await esperar(500);
+  const r5 = await Q(A, () => ({ aba: MaestroQuadro.aba, val: (document.querySelector('[data-qdaddform="afazer"] textarea') || {}).value }));
+  checa('5.8 "Virar card" abre o campo do Quadro (coluna A fazer) já com o texto', r5.aba === 'quadro' && r5.val === 'Revisar a proposta', r5);
+  await A.pag.press('[data-qdaddform="afazer"] textarea', 'Enter');
+  await esperar(800);
+  const r6 = await Q(A, (id) => ({ card: MaestroQuadro.todos().some(x => /Revisar a proposta/.test(x.p.t) && x.col === 'afazer'), fora: S.lembretes.find(l => l.id === id).fora }), idP);
+  checa('5.9 o card nasce em A fazer e o lembrete sai da lista (não fica em dois lugares)', r6.card && r6.fora === true, r6);
+  /* a semana mostra os lembretes em cada dia, e dá para anotar no dia */
+  await Q(A, () => { MaestroQuadro.aba = 'lista'; MaestroQuadro.sub = 'semana'; render(); });
+  const amanhaIso = await Q(A, () => { const d = new Date(Date.now() + 864e5); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
+  const sem = await Q(A, (am) => ({ dias: document.querySelectorAll('.qdSemana .qdDia').length, hoje: !!document.querySelector('.qdDia.hoje .qdLemMini'),
+    amanha: [...document.querySelectorAll(`.qdDia[data-qddia="${am}"] .qdLemMini`)].map(x => x.textContent.trim()), campo: !!document.querySelector(`[data-qdlemnovo="${am}"]`) }), amanhaIso);
+  checa('5.10 a Semana tem os sete dias, com os lembretes no dia deles', sem.dias === 7 && sem.hoje && sem.amanha.some(t => /Ligar pro contador/.test(t)), sem);
+  if(sem.campo){ await A.pag.fill(`[data-qdlemnovo="${amanhaIso}"] input`, 'Separar as fotos'); await A.pag.press(`[data-qdlemnovo="${amanhaIso}"] input`, 'Enter'); }
+  const r7 = await Q(A, () => (S.lembretes.find(l => l.t === 'Separar as fotos') || {}).dia);
+  checa('5.11 anotar dentro de um dia da Semana guarda para aquele dia', r7 === amanhaIso, { r7, amanhaIso });
+  /* lembrete é de cada um: vendo a lista de outra pessoa, não aparecem */
+  const outra = await Q(A, () => { const o = MaestroQuadro.todos && (S.equipe || []).map(m => membroId(m)).find(id => id !== S.usuario.id); MaestroQuadro.pessoa = o; MaestroQuadro.sub = 'dia'; render();
+    const r = { lem: document.querySelectorAll('.qdLem').length, campo: !!document.getElementById('qdNovo'), aviso: !!document.querySelector('.qdPriv') }; MaestroQuadro.pessoa = S.usuario.id; render(); return r; });
+  checa('5.12 na lista de outra pessoa, os seus lembretes não aparecem (e não há campo de anotar)', outra.lem === 0 && !outra.campo && outra.aviso, outra);
+
+  /* os cards seguem em "Meus cards": criados pelo campo da coluna */
+  await Q(A, () => { for(const t of ['Roteiro do episódio 19 hoje #cortez', 'Pagar a gráfica ontem']) MaestroQuadro.criarDoTexto(t, { resp: S.usuario.id, coluna: 'afazer' }); render(); });
+  await esperar(1200);
+  await Q(A, () => { MaestroQuadro.aba = 'lista'; MaestroQuadro.sub = 'dia'; render(); });
+  const dq = await Q(A, () => [...document.querySelectorAll('.qdLin:not(.qdLem) .qdLinTit')].map(x => x.textContent.trim()));
+  checa('5.13 em "Meu dia", a seção "Do Quadro, para hoje" traz os cards que vencem hoje ou atrasados', dq.some(t => /Roteiro do episódio 19/.test(t)) && dq.some(t => /Pagar a gráfica/.test(t)), dq);
   const cli = umaLinha(`select count(*) from public.cards where org='maestro' and cliente='cj' and dados->>'t' = 'Cortez Jurídico · Post · Roteiro do episódio 19'`);
-  checa('5.4 o card do cliente foi para o banco, com o nome no padrão (uma vez só)', +cli === 1, cli);
+  checa('5.14 o card do cliente foi para o banco, com o nome no padrão (uma vez só)', +cli === 1, cli);
+  await Q(A, () => { MaestroQuadro.sub = 'tarefas'; render(); });
+  const gr = await Q(A, () => [...document.querySelectorAll('.qdGrupo')].map(g => g.textContent.replace(/\s+/g, ' ').trim()));
+  checa('5.15 "Meus cards" agrupa por prazo (Atrasadas, Hoje…)', gr.some(g => /^Atrasadas 1/.test(g)) && gr.some(g => /^Hoje 1/.test(g)), gr);
   const key = await Q(A, () => { const x = MaestroQuadro.todos().find(x => /Roteiro do episódio 19/.test(x.p.t)); return x.cli + '|' + x.p.id; });
   await A.pag.click(`[data-qdfeito="${key}"]`);
   await esperar(900);
-  const r2 = await Q(A, (key) => ({ col: MaestroQuadro.colunaDe(S.pautas[key.split('|')[0]].find(p => +p.id === +key.split('|')[1])),
-    feitas: (document.querySelector('.qdFeitas summary') || {}).textContent || '', barra: (document.querySelector('.qdOla p') || {}).textContent || '' }), key);
-  checa('5.5 marcar feito manda o card para Revisão', r2.col === 'revisao', r2);
-  checa('5.6 e ele aparece em "Concluídas nesta semana", com o progresso', /Concluídas nesta semana\s*1/.test(r2.feitas) && /1 de \d+ feitas/.test(r2.barra), r2);
-  await Q(A, () => { MaestroQuadro.sub = 'semana'; render(); });
-  const sem = await Q(A, () => ({ dias: document.querySelectorAll('.qdSemana .qdDia').length, hoje: !!document.querySelector('.qdDia.hoje .qdMini') }));
-  checa('5.7 a Semana tem os sete dias, e o de hoje com o que foi marcado', sem.dias === 7 && sem.hoje, sem);
-  await Q(A, () => { MaestroQuadro.sub = 'tarefas'; render(); });
+  const r8 = await Q(A, (key) => ({ col: MaestroQuadro.colunaDe(S.pautas[key.split('|')[0]].find(p => +p.id === +key.split('|')[1])),
+    feitas: (document.querySelector('.qdFeitas summary') || {}).textContent || '' }), key);
+  checa('5.16 marcar o card feito manda para Revisão, e ele aparece em "Concluídas nesta semana"', r8.col === 'revisao' && /Concluídas nesta semana\s*1/.test(r8.feitas), r8);
 }
 
 console.log('\n  — 6. tarefa da agência —');
@@ -398,7 +455,7 @@ console.log('\n  — 6. tarefa da agência —');
   const n0 = 0;
   await esperar(800);
   const n = umaLinha(`select count(*) from public.cards where org='maestro' and cliente='agencia' and apagado_em is null`);
-  checa('6.1 "Pagar a gráfica" é da agência e foi para o banco (a linha da agência nasce sozinha)', t.includes('Pagar a gráfica') && +n === 1, { t, n, n0 });
+  checa('6.1 "Pagar a gráfica" é da agência e foi para o banco (a linha da agência nasce sozinha)', t.includes('Pagar a gráfica') && t.includes('Revisar a proposta') && +n === 2, { t, n, n0 });
   const r = await Q(A, () => { MaestroQuadro.aba = 'calendario'; render();
     const noCal = [...document.querySelectorAll('.qdEv')].some(e => /gráfica/.test(e.textContent));
     MaestroQuadro.aba = 'quadro'; render();
@@ -432,7 +489,7 @@ console.log('\n  — 8. a ficha do card —');
   await esperar(200);
   const aberta = await Q(A, () => !!document.querySelector('#qdFolha .qdFolhaIn'));
   checa('8.1 tocar no card abre a ficha', aberta);
-  await A.pag.click('#qdFolha [data-qf="legenda"]');
+  await naAba(A, '#qdFolha [data-qf="legenda"]'); await A.pag.click('#qdFolha [data-qf="legenda"]');
   await A.pag.keyboard.type('Nova legenda escrita devagar', { delay: 15 });
   /* no meio da digitação, outro aparelho muda OUTRO campo do mesmo card */
   await Q(B, () => { const p = S.pautas.cj.find(x => +x.id === 601); p.prazo = '2026-10-01'; return Sincro.gravar('cj', true); });
@@ -445,21 +502,18 @@ console.log('\n  — 8. a ficha do card —');
   await esperar(1400);
   const b = noBanco('cj', 601);
   checa('8.4 a legenda grava sozinha, sem botão de salvar, e o prazo do outro fica', b.dados.legenda.endsWith('Nova legenda escrita devagar') && b.dados.prazo === '2026-10-01', b.dados);
-  await A.pag.click('#qdFolha [data-qdfcol="revisao"]');
+  await naAba(A, '#qdFolha [data-qdfcol="revisao"]'); await A.pag.click('#qdFolha [data-qdfcol="revisao"]');
   await esperar(900);
   checa('8.5 as colunas na ficha movem com um toque', noBanco('cj', 601).dados.coluna === 'revisao');
-  await A.pag.fill('#qdFolha [data-qdcknovo] input', 'Conferir a fonte');
+  await naAba(A, '#qdFolha [data-qdcknovo] input'); await A.pag.fill('#qdFolha [data-qdcknovo] input', 'Conferir a fonte');
   await A.pag.press('#qdFolha [data-qdcknovo] input', 'Enter');
   await esperar(900);
   const ck = noBanco('cj', 601).dados.check || [];
   checa('8.6 checklist grava no card', ck.length === 1 && ck[0].t === 'Conferir a fonte', ck);
-  const ed = await Q(A, async () => { document.querySelector('#qdFolha [data-qdeditor]').click(); await new Promise(r => setTimeout(r, 200));
-    const m = document.querySelector('#layer .modal'); const f = document.getElementById('qdFolha');
-    const zm = m ? +getComputedStyle(m).zIndex || 0 : -1, zf = +getComputedStyle(f).zIndex;
-    const el = m ? document.elementFromPoint(innerWidth / 2, innerHeight / 2) : null;
-    const res = { temModal: !!m, pt: !!document.querySelector('#layer #pt-t'), porCima: !!(el && m.contains(el)), zm, zf };
-    S.modal = null; renderLayer(); return res; });
-  checa('8.7 "Editor completo" abre o editor de sempre, por cima da ficha', ed.temModal && ed.pt && ed.porCima, ed);
+  const ed = await Q(A, () => ({ editor: !!document.querySelector('#qdFolha [data-qdeditor]'),
+    abas: [...document.querySelectorAll('#qdFolha [data-qdfaba]')].map(b => b.dataset.qdfaba),
+    visiveis: [...document.querySelectorAll('#qdFolha [data-qdfpainel]')].filter(x => !x.hidden).length }));
+  checa('8.7 não há mais "Editor completo": a ficha tem tudo, em três abas (uma à vista por vez)', !ed.editor && ed.abas.join() === 'conteudo,peca,detalhes' && ed.visiveis === 1, ed);
   await A.pag.keyboard.press('Escape');
 }
 
@@ -535,17 +589,17 @@ console.log('\n  — 16. a ficha mostra o card inteiro (v288) —');
     return { hook: q('roteiro.hook'), des: q('roteiro.des'), t0: q('telas.0'), t1: q('telas.1'), obs: q('obs'), cta: q('cta'),
       plats: f.querySelectorAll('[data-qdplat]').length, platOn: [...f.querySelectorAll('[data-qdplat].on')].map(b => b.dataset.qdplat).join(), tipo: (f.querySelector('[data-qdtipo].on') || {}).dataset?.qdtipo }; });
   checa('16.1 roteiro, telas do story, observação, CTA e plataformas aparecem na ficha, sem abrir o editor', v.hook === 'Hook que prende' && v.des === '' && v.t0 === 'Tela um' && v.t1 === 'Tela dois' && v.obs === 'Recado para a edição' && v.cta === 'Link na bio' && v.plats >= 5 && v.platOn === 'ig' && v.tipo === 'roteiro', v);
-  await A.pag.click('#qdFolha [data-qf="roteiro.des"]');
+  await naAba(A, '#qdFolha [data-qf="roteiro.des"]'); await A.pag.click('#qdFolha [data-qf="roteiro.des"]');
   await A.pag.keyboard.type('Cena 1, cena 2', { delay: 10 });
   await esperar(1200);
   let d = noBanco('cj', 601).dados;
   checa('16.2 escrever no roteiro grava sozinho e não apaga o hook', d.roteiro && d.roteiro.des === 'Cena 1, cena 2' && d.roteiro.hook === 'Hook que prende', d.roteiro);
-  await A.pag.click('#qdFolha [data-qdtipo="corte"]');
-  await A.pag.fill('#qdFolha [data-qf="corte.ep"]', 'EJUPcast #3');
-  await A.pag.click('#qdFolha [data-qf="corte.tcs.0.de"]');
+  await naAba(A, '#qdFolha [data-qdtipo="corte"]'); await A.pag.click('#qdFolha [data-qdtipo="corte"]');
+  await naAba(A, '#qdFolha [data-qf="corte.ep"]'); await A.pag.fill('#qdFolha [data-qf="corte.ep"]', 'EJUPcast #3');
+  await naAba(A, '#qdFolha [data-qf="corte.tcs.0.de"]'); await A.pag.click('#qdFolha [data-qf="corte.tcs.0.de"]');
   await A.pag.keyboard.type('00:01:00', { delay: 10 });
-  await A.pag.click('#qdFolha [data-qdtcmais]');
-  await A.pag.click('#qdFolha [data-qf="corte.tcs.1.ate"]');
+  await naAba(A, '#qdFolha [data-qdtcmais]'); await A.pag.click('#qdFolha [data-qdtcmais]');
+  await naAba(A, '#qdFolha [data-qf="corte.tcs.1.ate"]'); await A.pag.click('#qdFolha [data-qf="corte.tcs.1.ate"]');
   await A.pag.keyboard.type('00:09:30', { delay: 10 });
   const foco = await Q(A, () => document.activeElement && document.activeElement.dataset.qf);
   await esperar(1200);
@@ -553,8 +607,8 @@ console.log('\n  — 16. a ficha mostra o card inteiro (v288) —');
   checa('16.3 corte: episódio e dois trechos, na ordem, no banco', d.corte && d.corte.ep === 'EJUPcast #3' && d.corte.tcs.length === 2 && d.corte.tcs[0].de === '00:01:00' && d.corte.tcs[0].ordem === 1 && d.corte.tcs[1].ate === '00:09:30' && d.corte.tcs[1].ordem === 2, d.corte);
   checa('16.4 o trecho novo não tira o cursor de quem digita', foco === 'corte.tcs.1.ate', foco);
   checa('16.5 trocar o tipo não apaga o roteiro já escrito', d.roteiro && d.roteiro.des === 'Cena 1, cena 2', d.roteiro);
-  await A.pag.click('#qdFolha [data-qdplat="yt"]');
-  await A.pag.click('#qdFolha [data-qdtelax="0"]');
+  await naAba(A, '#qdFolha [data-qdplat="yt"]'); await A.pag.click('#qdFolha [data-qdplat="yt"]');
+  await naAba(A, '#qdFolha [data-qdtelax="0"]'); await A.pag.click('#qdFolha [data-qdtelax="0"]');
   await esperar(1000);
   d = noBanco('cj', 601).dados;
   checa('16.6 plataformas e telas se editam na ficha (YouTube entra, a tela 1 sai)', d.plats.join() === 'ig,yt' && d.telas.join() === 'Tela dois', { plats: d.plats, telas: d.telas });
@@ -594,7 +648,7 @@ console.log('\n  — 18. ver cada peça e mudar a ordem, na ficha (v289) —');
     return { n: f.querySelectorAll('[data-qdver]').length, nums: [...f.querySelectorAll('.qdFMatVer em')].map(e => e.textContent).join(), play: f.querySelectorAll('.qdFMatPlay').length,
       setas: f.querySelectorAll('[data-qdmv]').length, porNome: !!f.querySelector('[data-qdmatnome]') }; });
   checa('18.1 todas as peças na ficha, numeradas, com o vídeo marcado, setas de ordem e "Ordenar por nome"', g.n === 3 && g.nums === '1,2,3' && g.play === 1 && g.setas === 6 && g.porNome, g);
-  await A.pag.click('#qdFolha [data-qdver="2"]');
+  await naAba(A, '#qdFolha [data-qdver="2"]'); await A.pag.click('#qdFolha [data-qdver="2"]');
   await esperar(200);
   const v = await Q(A, () => { const el = document.getElementById('qdVer'); const vd = el && el.querySelector('video');
     return { aberto: !!el, video: !!vd, controles: vd && vd.controls, src: vd && vd.getAttribute('src'), conta: el && el.querySelector('.qdVerTopo span').textContent, prox: el && el.querySelector('[data-qdverir="1"]').disabled }; });
@@ -604,11 +658,11 @@ console.log('\n  — 18. ver cada peça e mudar a ordem, na ficha (v289) —');
   await A.pag.keyboard.press('Escape');
   const fechou = await Q(A, () => !document.getElementById('qdVer') && !!document.getElementById('qdFolha'));
   checa('18.3 a seta passa para a peça anterior (imagem), e Esc fecha só a peça', img.img && img.conta === '2 / 3' && fechou, { img, fechou });
-  await A.pag.click('#qdFolha [data-qdmv="0|1"]');
+  await naAba(A, '#qdFolha [data-qdmv="0|1"]'); await A.pag.click('#qdFolha [data-qdmv="0|1"]');
   await ate(A, async () => ordemNoBanco() === 'tela2.png,tela10.png,corte.mp4', 6000);
   checa('18.4 a seta muda a ordem, e a ordem vai para o banco (é a que o cliente vê)', ordemNoBanco() === 'tela2.png,tela10.png,corte.mp4', ordemNoBanco());
-  await A.pag.click('#qdFolha [data-qdmv="2|-1"]');
-  await A.pag.click('#qdFolha [data-qdmatnome]');
+  await naAba(A, '#qdFolha [data-qdmv="2|-1"]'); await A.pag.click('#qdFolha [data-qdmv="2|-1"]');
+  await naAba(A, '#qdFolha [data-qdmatnome]'); await A.pag.click('#qdFolha [data-qdmatnome]');
   await ate(A, async () => ordemNoBanco() === 'corte.mp4,tela2.png,tela10.png', 6000);
   checa('18.5 "Ordenar por nome" põe tela2 antes de tela10', ordemNoBanco() === 'corte.mp4,tela2.png,tela10.png', ordemNoBanco());
   const msB = await ate(B, async () => (await Q(B, () => ((S.mat || {})['cj|601'] || []).map(m => m.nome).join())) === 'corte.mp4,tela2.png,tela10.png', 6000);
@@ -633,35 +687,35 @@ console.log('\n  — 12. recarregar: o que está no banco é o que se vê —');
 
 console.log('\n  — 14. o padrão do nome, na hora de criar —');
 {
-  await Q(A, () => { MaestroQuadro.fecharFolha(); MaestroQuadro.aba = 'lista'; MaestroQuadro.sub = 'tarefas'; render(); });
-  const oculto = await Q(A, () => document.querySelector('[data-qdnome="lista"]').hidden);
+  await Q(A, () => { MaestroQuadro.fecharFolha(); MaestroQuadro.aba = 'quadro'; MaestroQuadro.esc = {}; render(); document.querySelector('[data-qdadd="afazer"]').click(); });
+  const oculto = await Q(A, () => document.querySelector('[data-qdnome="afazer"]').hidden);
   checa('14.1 sem nada escrito, o campo é só o campo (o padrão não aparece)', oculto === true, oculto);
-  await A.pag.fill('#qdNovo', 'carrossel sobre a sala #ejup');
-  const r = await Q(A, () => { const b = document.querySelector('[data-qdnome="lista"]');
+  await A.pag.fill('[data-qdaddform="afazer"] textarea', 'carrossel sobre a sala #ejup');
+  const r = await Q(A, () => { const b = document.querySelector('[data-qdnome="afazer"]');
     return { vis: !b.hidden, cli: (b.querySelector('[data-qdncli].on') || {}).textContent, fmt: (b.querySelector('[data-qdnfmt].on') || {}).textContent, prev: b.querySelector('.qdPrev b').textContent }; });
   checa('14.2 ao escrever, aparecem cliente e formato já marcados, e a prévia do nome', r.vis && r.cli === 'EJUP' && r.fmt === 'Carrossel' && r.prev === 'EJUP · Carrossel · A sala', r);
-  await A.pag.click('[data-qdnome="lista"] [data-qdncli="cj"]');
-  await A.pag.click('[data-qdnome="lista"] [data-qdnfmt="Reels"]');
-  const r2 = await Q(A, () => ({ prev: document.querySelector('[data-qdnome="lista"] .qdPrev b').textContent, foco: document.activeElement.id }));
-  checa('14.3 tocar no cliente e no formato troca o nome (e o cursor volta ao campo)', r2.prev === 'Cortez Jurídico · Reels · A sala' && r2.foco === 'qdNovo', r2);
-  await A.pag.press('#qdNovo', 'Enter');
+  await A.pag.click('[data-qdnome="afazer"] [data-qdncli="cj"]');
+  await A.pag.click('[data-qdnome="afazer"] [data-qdnfmt="Reels"]');
+  const r2 = await Q(A, () => ({ prev: document.querySelector('[data-qdnome="afazer"] .qdPrev b').textContent, foco: document.activeElement.tagName }));
+  checa('14.3 tocar no cliente e no formato troca o nome (e o cursor volta ao campo)', r2.prev === 'Cortez Jurídico · Reels · A sala' && r2.foco === 'TEXTAREA', r2);
+  await A.pag.press('[data-qdaddform="afazer"] textarea', 'Enter');
   await esperar(1200);
   const n = umaLinha(`select count(*) from public.cards where org='maestro' and cliente='cj' and dados->>'t' = 'Cortez Jurídico · Reels · A sala' and dados->>'fmt' = 'Reels'`);
   checa('14.4 o card nasce com o nome no padrão e o formato certo, no banco', +n === 1, n);
-  await A.pag.fill('#qdNovo', 'post sobre herança');
-  const r3 = await Q(A, () => ({ cli: (document.querySelector('[data-qdnome="lista"] [data-qdncli].on') || {}).textContent, prev: document.querySelector('[data-qdnome="lista"] .qdPrev b').textContent }));
+  await A.pag.fill('[data-qdaddform="afazer"] textarea', 'post sobre herança');
+  const r3 = await Q(A, () => ({ cli: (document.querySelector('[data-qdnome="afazer"] [data-qdncli].on') || {}).textContent, prev: document.querySelector('[data-qdnome="afazer"] .qdPrev b').textContent }));
   checa('14.5 o cliente escolhido fica para o próximo card; o formato vem do texto', r3.cli === 'Cortez Jurídico' && r3.prev === 'Cortez Jurídico · Post · Herança', r3);
-  await A.pag.click('[data-qdnome="lista"] [data-qdncli="agencia"]');
-  const r4 = await Q(A, () => ({ fmtOculto: document.querySelector('[data-qdnome="lista"] .qdNomeFmt').hidden, prev: document.querySelector('[data-qdnome="lista"] .qdPrev b').textContent }));
+  await A.pag.click('[data-qdnome="afazer"] [data-qdncli="agencia"]');
+  const r4 = await Q(A, () => ({ fmtOculto: document.querySelector('[data-qdnome="afazer"] .qdNomeFmt').hidden, prev: document.querySelector('[data-qdnome="afazer"] .qdPrev b').textContent }));
   checa('14.6 tarefa da agência: sem formato, e a prévia diz que é da agência', r4.fmtOculto && /tarefa da agência/.test(r4.prev), r4);
-  await A.pag.fill('#qdNovo', '');
+  await A.pag.fill('[data-qdaddform="afazer"] textarea', '');
   /* um card antigo, fora do padrão: a ficha oferece padronizar */
   await Q(A, () => { S.pautas.cj.push({ id: 8800001, t: 'reels sobre divórcio', fmt: 'Reels', fase: 'rascunho', criadoEm: 5 }); return Sincro.gravar('cj', true); });
   await esperar(800);
   await Q(A, () => { MaestroQuadro.aba = 'quadro'; render(); MaestroQuadro.abrirFolha('cj|8800001'); });
   const pad = await Q(A, () => (document.querySelector('#qdFolha [data-qdpadrao]') || {}).textContent || '');
   checa('14.7 card fora do padrão: a ficha mostra como fica padronizado', /Cortez Jurídico · Reels · Divórcio/.test(pad), pad);
-  await A.pag.click('#qdFolha [data-qdpadrao]');
+  await naAba(A, '#qdFolha [data-qdpadrao]'); await A.pag.click('#qdFolha [data-qdpadrao]');
   await esperar(900);
   checa('14.8 um toque padroniza (no banco)', noBanco('cj', 8800001).dados.t === 'Cortez Jurídico · Reels · Divórcio', noBanco('cj', 8800001).dados.t);
   await Q(A, () => MaestroQuadro.fecharFolha());
@@ -715,11 +769,11 @@ console.log('\n  — 15. o ciclo: cada card diz o próximo passo —');
   await esperar(250);
   const pede = await Q(A, () => ({ folha: !!document.getElementById('qdFolha'), foco: document.activeElement && document.activeElement.dataset.qf }));
   checa('15.8 "Agendar" sem data de publicação abre a ficha no campo da data', pede.folha && pede.foco === 'data' && (await col()) === 'aprovado', pede);
-  await A.pag.fill('#qdFolha [data-qf="data"]', '2026-10-09');
-  await A.pag.click('#qdFolha [data-qdacao="agendar"]');
+  await naAba(A, '#qdFolha [data-qf="data"]'); await A.pag.fill('#qdFolha [data-qf="data"]', '2026-10-09');
+  await naAba(A, '#qdFolha [data-qdacao="agendar"]'); await A.pag.click('#qdFolha [data-qdacao="agendar"]');
   await esperar(300);
   checa('15.9 com a data, o "Agendar" da ficha agenda', (await col()) === 'agendado', await col());
-  await A.pag.click('#qdFolha [data-qdacao="publicado"]');
+  await naAba(A, '#qdFolha [data-qdacao="publicado"]'); await A.pag.click('#qdFolha [data-qdacao="publicado"]');
   await esperar(900);
   checa('15.10 "Publiquei" fecha o ciclo, no banco', noBanco('cj', id).dados.fase === 'postado', noBanco('cj', id).dados.fase);
   await Q(A, () => MaestroQuadro.fecharFolha());

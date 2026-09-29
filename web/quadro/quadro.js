@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v292', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v292', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -632,6 +632,82 @@
     G.forEach(x => x[2].sort(ord));
     return G;
   }
+  /* v292 — "Essa aba de Minha lista… eu criei ela mais pra ser algo individual de
+     lembrar a pessoa o que tem que fazer no dia dela no trabalho. Não necessariamente
+     precisa virar uma tarefa do Quadro." O campo de cima agora anota um LEMBRETE — da
+     pessoa, não do Quadro. Mora em S.lembretes (lista com id: a mescla une item a item),
+     apagar é marca `fora` (lápide), e o que não foi feito ontem sobe para hoje. Quem
+     quiser que vire card toca em "Virar card". Os cards do Quadro seguem ali embaixo. */
+  function lembretes(){ if(!Array.isArray(S.lembretes)) S.lembretes = []; return S.lembretes; }
+  const meusLembretes = pid => lembretes().filter(l => l && l.id && !l.fora && l.dono === pid);
+  const achaL = id => lembretes().find(l => l && l.id === id && !l.fora) || null;
+  const novoIdL = () => 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  function lerLembrete(txt){
+    /* #, @ e o formato são coisa de card: aqui ficam no texto, como a pessoa escreveu */
+    const guard = String(txt).replace(/#/g, '').replace(/@/g, '');
+    const r = interpretar(guard, {});
+    const t = String(r.tema || '').replace(//g, '#').replace(//g, '@').trim() || String(txt).trim();
+    return { t: t.slice(0, 300), dia: r.prazo || hoje(), hora: r.prazoHora || '', imp: !!r.importante };
+  }
+  function anotarLembrete(txt, pid){
+    const l = Object.assign({ id: novoIdL(), dono: pid, feito: false, em: Date.now() }, lerLembrete(txt));
+    lembretes().push(l);
+    return l;
+  }
+  Q.anotarLembrete = anotarLembrete; Q.lembretes = lembretes;
+  const diaDoL = l => l.feito ? (l.feitoDia || l.dia) : l.dia;
+  function lembretesDeHoje(pid){
+    const h = hoje();
+    return meusLembretes(pid).filter(l => l.feito ? diaDoL(l) === h : l.dia <= h)
+      .sort((a, b) => ((a.feito ? 1 : 0) - (b.feito ? 1 : 0)) || ((b.imp ? 1 : 0) - (a.imp ? 1 : 0)) || String(a.hora || '99').localeCompare(String(b.hora || '99')) || (a.em || 0) - (b.em || 0));
+  }
+  const proximosL = pid => meusLembretes(pid).filter(l => !l.feito && l.dia > hoje())
+    .sort((a, b) => a.dia < b.dia ? -1 : a.dia > b.dia ? 1 : String(a.hora || '99').localeCompare(String(b.hora || '99')));
+  function linhaLembrete(l, compacta){
+    const h = hoje();
+    const atras = !l.feito && l.dia < h;
+    if(compacta) return `<div class="qdMini qdLemMini${l.feito ? ' feita' : ''}" data-qdlemid="${esc_(l.id)}">
+        <button type="button" class="qdOk mini" data-qdlem="${esc_(l.id)}" aria-label="${l.feito ? 'Desmarcar' : 'Feito'}">${l.feito ? ic_('checkc', 11) : ''}</button>
+        <span>${esc_(l.t)}</span></div>`;
+    return `<div class="qdLin qdLem${l.feito ? ' feita' : ''}${l.imp ? ' imp' : ''}" data-qdlemid="${esc_(l.id)}">
+      <button type="button" class="qdOk" data-qdlem="${esc_(l.id)}" aria-label="${l.feito ? 'Desmarcar' : 'Marcar como feito'}">${l.feito ? ic_('checkc', 14) : ''}</button>
+      <div class="qdLinTxt">
+        <div class="qdLinTit">${esc_(l.t)}${l.imp ? ' <b class="qdImp">!</b>' : ''}</div>
+        ${(l.hora || atras || l.dia > h) ? `<div class="qdLinMeta">
+          ${l.dia > h ? `<span>${ic_('cal', 11)}${esc_(rotuloDia(l.dia))}</span>` : ''}
+          ${atras ? `<span class="atrasado">desde ${esc_(rotuloDia(l.dia))}</span>` : ''}
+          ${l.hora ? `<span>${ic_('clock', 11)}${esc_(l.hora)}</span>` : ''}
+        </div>` : ''}
+      </div>
+      <div class="qdLemAc">
+        ${!l.feito ? `${l.dia <= h ? `<button type="button" class="qdLemBt" data-qdlemadia="${esc_(l.id)}" title="Passar para amanhã">Amanhã</button>` : ''}
+        <button type="button" class="qdLemBt" data-qdlemcard="${esc_(l.id)}" title="Levar para o Quadro como card">Virar card</button>` : ''}
+        <button type="button" class="qdLemBt x" data-qdlemx="${esc_(l.id)}" aria-label="Apagar lembrete">×</button>
+      </div>
+    </div>`;
+  }
+  function subDia(pid, pend, souEu, paraRevisar){
+    const h = hoje();
+    let html = '';
+    if(souEu){
+      const hj = lembretesDeHoje(pid), prox = proximosL(pid);
+      const falta = hj.filter(l => !l.feito).length;
+      html += `<h3 class="qdGrupo qdGrLem">Meus lembretes <span>${falta ? falta + ' para hoje' : hj.length ? 'tudo feito' : ''}</span></h3>
+        <div class="qdCaixa">${hj.map(l => linhaLembrete(l)).join('') || `<p class="qdNada qdNadaL">Nada anotado para hoje. Escreva acima o que você precisa lembrar.</p>`}</div>`;
+      if(prox.length) html += `<details class="qdFeitas qdProxL" ${Q.proxLAberto ? 'open' : ''} data-qdproxl="1"><summary>${ic_('cal', 13)} Próximos dias <span>${prox.length}</span></summary>
+        <div class="qdCaixa">${prox.map(l => linhaLembrete(l)).join('')}</div></details>`;
+    } else {
+      html += `<p class="qdMut qdPriv">Os lembretes são de cada pessoa. Aqui aparecem só os cards de ${esc_((pessoa(pid) || {}).n || 'quem você escolheu')}.</p>`;
+    }
+    const doDia = pend.filter(x => { const pz = prazoDe(x.p); return pz && pz <= h; })
+      .sort((a, b) => (prazoDe(a.p) < prazoDe(b.p) ? -1 : prazoDe(a.p) > prazoDe(b.p) ? 1 : 0));
+    html += `<h3 class="qdGrupo qdDoQuadro">Do Quadro, para hoje <span>${doDia.length + paraRevisar.length}</span></h3>`;
+    if(paraRevisar.length) html += `<div class="qdSubRot">Para revisar · ${paraRevisar.length}</div><div class="qdCaixa qdCxRev">${paraRevisar.map(linhaRevisar).join('')}</div>`;
+    if(doDia.length) html += `${paraRevisar.length ? '<div class="qdSubRot">Vencem hoje ou atrasados</div>' : ''}<div class="qdCaixa">${doDia.map(x => linha(x, false)).join('')}</div>`;
+    else if(!paraRevisar.length) html += `<p class="qdNada">Nenhum card seu vence hoje.</p>`;
+    if(pend.length > doDia.length) html += `<button type="button" class="qdPil qdVerCards" data-qdsub="tarefas">Ver todos os meus cards · ${pend.length}</button>`;
+    return html;
+  }
   function vistaLista(){
     const pid = Q.pessoa || eu();
     const quem = pessoa(pid);
@@ -640,8 +716,12 @@
     const paraRevisar = souRevisor ? todos().filter(x => x.col === 'revisao') : [];
     const h = hoje(), fimSem = soma(inicioSemana(), 6);
     const daSemana = pend.filter(x => prazoDe(x.p) && prazoDe(x.p) <= fimSem).length;
-    const total = feitasSemana.length + daSemana;
-    const pct = total ? Math.round(feitasSemana.length * 100 / total) : 0;
+    /* o dia da pessoa: os lembretes de hoje (só os dela) + os cards que vencem até hoje */
+    const hjLs = pid === eu() ? lembretesDeHoje(pid) : [];
+    const cardsFeitosHoje = feitasSemana.filter(x => iso(new Date(x.p.feitoEm)) === h).length;
+    const feitosDia = hjLs.filter(l => l.feito).length + cardsFeitosHoje;
+    const total = feitosDia + hjLs.filter(l => !l.feito).length + pend.filter(x => prazoDe(x.p) && prazoDe(x.p) <= h).length;
+    const pct = total ? Math.round(feitosDia * 100 / total) : 0;
     const hr = new Date().getHours();
     const saud = hr < 12 ? 'Bom dia' : hr < 18 ? 'Boa tarde' : 'Boa noite';
     const d = new Date();
@@ -650,30 +730,36 @@
     const outros = pessoas();
     const cab = `<div class="qdOla">
         <h2>${souEu ? `${saud}${quem ? ', ' + esc_(String(quem.n).split(/\s+/)[0]) : ''}` : `Lista de ${esc_(quem ? quem.n : 'ninguém')}`}</h2>
-        <p>${esc_(dataLonga)} · <b>${feitasSemana.length}</b> de ${total} feitas nesta semana</p>
+        <p>${esc_(dataLonga)}${total ? ` · <b>${feitosDia}</b> de ${total} do seu dia` : ''}</p>
         <div class="qdBarra"><i style="width:${pct}%"></i></div>
       </div>
       ${outros.length > 1 ? `<label class="qdVerDe">Ver a lista de
         <select class="qdSel" data-qdpessoa="1">${outros.map(x => `<option value="${esc_(x.id)}" ${x.id === pid ? 'selected' : ''}>${esc_(x.n)}${x.id === eu() ? ' (você)' : ''}</option>`).join('')}</select></label>` : ''}`;
-    const entrada = `<form class="qdEntrada" data-qdentrada="lista" autocomplete="off">
+    const entrada = souEu ? `<form class="qdEntrada" data-qdentrada="lembrete" autocomplete="off">
         <span class="qdMais">+</span>
-        <input type="text" id="qdNovo" name="qdnovo" placeholder="O que precisa ser feito?" aria-label="Nova tarefa" enterkeyhint="done">
-        <button type="submit" class="qdBt">Adicionar</button>
-        <p class="qdDica">Escreva do jeito que fala: <b>reels da obra sexta às 15h #vale</b>. <b>@pessoa</b> passa para alguém, <b>!</b> no fim marca como importante. Sem <b>#cliente</b>, é tarefa da agência.</p>
-        ${blocoNome('lista')}
-      </form>`;
+        <input type="text" id="qdNovo" name="qdnovo" placeholder="O que você precisa lembrar hoje?" aria-label="Novo lembrete" enterkeyhint="done">
+        <button type="submit" class="qdBt">Anotar</button>
+        <p class="qdDica">Só seu, não vira card. <b>amanhã</b>, <b>sexta</b> ou <b>15h</b> marcam o dia e a hora; <b>!</b> no fim, importante. O que ficar para trás sobe para hoje.</p>
+      </form>` : '';
+    const emCards = Q.sub === 'tarefas' || Q.sub === 'listas';
+    const hjL = souEu ? lembretesDeHoje(pid).filter(l => !l.feito).length : 0;
     const subs = `<div class="qdSubs" role="tablist">
-        <button type="button" class="${Q.sub === 'tarefas' ? 'on' : ''}" data-qdsub="tarefas">${ic_('checkc', 13)} Tarefas <span>${pend.length}</span></button>
+        <button type="button" class="${Q.sub === 'dia' ? 'on' : ''}" data-qdsub="dia">${ic_('checkc', 13)} Meu dia${hjL ? ` <span>${hjL}</span>` : ''}</button>
         <button type="button" class="${Q.sub === 'semana' ? 'on' : ''}" data-qdsub="semana">${ic_('cal', 13)} Semana</button>
-        <button type="button" class="${Q.sub === 'listas' ? 'on' : ''}" data-qdsub="listas">${ic_('stack', 13)} Por cliente</button>
+        <button type="button" class="${emCards ? 'on' : ''}" data-qdsub="tarefas">${ic_('kanban', 13)} Meus cards <span>${pend.length}</span></button>
       </div>`;
     let corpo = '';
-    if(Q.sub === 'semana') corpo = subSemana(pid, pend, feitasSemana);
-    else if(Q.sub === 'listas') corpo = subListas(pend);
+    const agrupar = `<div class="qdFiltros qdAgrupar"><span class="qdMut">Agrupar</span>
+        <button type="button" class="qdPil ${Q.sub === 'tarefas' ? 'on' : ''}" data-qdsub="tarefas">por prazo</button>
+        <button type="button" class="qdPil ${Q.sub === 'listas' ? 'on' : ''}" data-qdsub="listas">por cliente</button></div>`;
+    if(Q.sub === 'dia' || !['semana', 'tarefas', 'listas'].includes(Q.sub)) corpo = subDia(pid, pend, souEu, paraRevisar);
+    else if(Q.sub === 'semana') corpo = subSemana(pid, pend, feitasSemana, souEu);
+    else if(Q.sub === 'listas') corpo = agrupar + subListas(pend);
     else{
+      corpo = agrupar;
       const G = grupos(pend).filter(g => g[2].length);
-      corpo = (paraRevisar.length ? `<h3 class="qdGrupo revisar">Para revisar <span>${paraRevisar.length}</span></h3><div class="qdCaixa">${paraRevisar.map(linhaRevisar).join('')}</div>` : '') + G.map(([k, n, l]) => `<h3 class="qdGrupo ${k}">${n} <span>${l.length}</span></h3><div class="qdCaixa">${l.map(x => linha(x, false)).join('')}</div>`).join('')
-        || (paraRevisar.length ? '' : `<p class="qdNada">Nada para fazer por aqui. ${souEu ? 'Escreva acima o que vem pela frente.' : ''}</p>`);
+      corpo += (paraRevisar.length ? `<h3 class="qdGrupo revisar">Para revisar <span>${paraRevisar.length}</span></h3><div class="qdCaixa">${paraRevisar.map(linhaRevisar).join('')}</div>` : '') + G.map(([k, n, l]) => `<h3 class="qdGrupo ${k}">${n} <span>${l.length}</span></h3><div class="qdCaixa">${l.map(x => linha(x, false)).join('')}</div>`).join('')
+        || (paraRevisar.length ? '' : `<p class="qdNada">Nenhum card com você agora.</p>`);
       if(feitasSemana.length){
         corpo += `<details class="qdFeitas" ${Q.feitasAberto ? 'open' : ''} data-qdfeitas="1"><summary>${ic_('checkc', 13)} Concluídas nesta semana <span>${feitasSemana.length}</span></summary>
           <div class="qdCaixa">${feitasSemana.sort((a, b) => (b.p.feitoEm || 0) - (a.p.feitoEm || 0)).map(x => linha(x, true)).join('')}</div></details>`;
@@ -681,7 +767,7 @@
     }
     return `<div class="qdLista">${cab}${entrada}${subs}${corpo}</div>`;
   }
-  function subSemana(pid, pend, feitas){
+  function subSemana(pid, pend, feitas, souEu){
     const ini = soma(inicioSemana(), 7 * (Q.semana || 0));
     const dias = Array.from({ length: 7 }, (_, i) => soma(ini, i));
     const h = hoje();
@@ -693,8 +779,9 @@
         <header><b>${DIAS3[dt.getDay()]}</b> ${ddmm(d)}${d === h ? ' <em>hoje</em>' : ''}</header>
         <div class="qdDiaCorpo">${l.map(x => `<div class="qdMini${PENDENTES.includes(x.col) ? '' : ' feita'}" data-qdabre="${esc_(x.cli + '|' + x.p.id)}" data-qdkey="${esc_(x.cli + '|' + x.p.id)}" ${arrastavel()}>
             <button type="button" class="qdOk mini" data-qdfeito="${esc_(x.cli + '|' + x.p.id)}" aria-label="Marcar">${PENDENTES.includes(x.col) ? '' : ic_('checkc', 11)}</button>
-            <span>${esc_(tema(x.p, x.cli))}</span></div>`).join('')}</div>
-        <div class="qdAdd" data-qdaddwrap="dia:${d}"><button type="button" class="qdAddBt" data-qdadd="dia:${d}">+ Adicionar</button></div>
+            <span>${esc_(tema(x.p, x.cli))}</span></div>`).join('')}${souEu ? meusLembretes(pid).filter(lm => lm.feito ? diaDoL(lm) === d : (lm.dia === d || (d === h && lm.dia < h))).map(lm => linhaLembrete(lm, true)).join('') : ''}</div>
+        ${souEu ? `<form class="qdLemNovo" data-qdlemnovo="${d}" autocomplete="off"><input type="text" placeholder="+ lembrete" aria-label="Novo lembrete em ${ddmm(d)}" enterkeyhint="done"></form>`
+          : `<div class="qdAdd" data-qdaddwrap="dia:${d}"><button type="button" class="qdAddBt" data-qdadd="dia:${d}">+ Adicionar</button></div>`}
       </section>`;
     };
     return `<div class="qdSemNav"><button type="button" class="qdBtIc" data-qdsem="-1" aria-label="Semana anterior">‹</button>
@@ -806,7 +893,10 @@
   function pagina(){
     if(!Q.aba) Q.aba = abaPadrao();
     if(!Q.pessoa || !pessoa(Q.pessoa)) Q.pessoa = eu() || (pessoas()[0] || {}).id || null;
-    const n = listaDaPessoa(eu()).pend.length + (revisores().some(x => x.id === eu()) ? todos().filter(x => x.col === 'revisao').length : 0);
+    /* a conta da aba é o dia: lembretes de hoje + cards que vencem até hoje + o que revisar */
+    const n = (eu() ? lembretesDeHoje(eu()).filter(l => !l.feito).length : 0)
+      + listaDaPessoa(eu()).pend.filter(x => prazoDe(x.p) && prazoDe(x.p) <= hoje()).length
+      + (revisores().some(x => x.id === eu()) ? todos().filter(x => x.col === 'revisao').length : 0);
     const abas = [['quadro', 'Quadro', 'kanban'], ['lista', 'Minha lista', 'checkc'], ['calendario', 'Calendário', 'cal']];
     const corpo = Q.aba === 'lista' ? vistaLista() : Q.aba === 'calendario' ? vistaCalendario() : vistaQuadro();
     return `<div class="qdPagina" data-qdaba="${Q.aba}">
@@ -1468,8 +1558,58 @@
     const c = e.target;
     if(c.matches && c.matches('#qdFolha [data-qf]') && c.dataset.sujo) gravarCampo(c, true);
   }, true);
+  /* as gavetas abertas ficam abertas depois do redesenho */
+  document.addEventListener('toggle', e => {
+    const t = e.target; if(!t || !t.matches) return;
+    if(t.matches('[data-qdproxl]')) Q.proxLAberto = t.open;
+    if(t.matches('[data-qdfeitas]')) Q.feitasAberto = t.open;
+  }, true);
+  /* os lembretes: marcar, passar para amanhã, virar card, apagar */
+  document.addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-qdlem],[data-qdlemadia],[data-qdlemcard],[data-qdlemx]');
+    if(!t || !t.closest('#root')) return;
+    e.preventDefault(); e.stopPropagation();
+    const d = t.dataset;
+    const l = achaL(d.qdlem || d.qdlemadia || d.qdlemcard || d.qdlemx); if(!l) return;
+    l.mod = Date.now();
+    if(d.qdlem !== undefined){
+      l.feito = !l.feito;
+      if(l.feito){ l.feitoEm = Date.now(); l.feitoDia = hoje(); if(typeof som === 'function') som('ok'); }
+      else { delete l.feitoEm; delete l.feitoDia; if(l.dia < hoje()) l.dia = hoje(); }
+    }
+    else if(d.qdlemadia !== undefined){ l.dia = soma(hoje(), 1); }
+    else if(d.qdlemx !== undefined){ l.fora = true; }
+    else if(d.qdlemcard !== undefined){
+      const id = l.id;
+      novoPeloQuadro({ tema: l.t, col: 'afazer', campos: eu() ? { resp: eu() } : null,
+        depois: () => { const x = achaL(id); if(x){ x.fora = true; x.virouCard = true; x.mod = Date.now(); } render(); } });
+      return;
+    }
+    render();
+  }, true);
   document.addEventListener('submit', e => {
     const f = e.target;
+    if(f.matches('[data-qdlemnovo]')){
+      e.preventDefault();
+      const i = f.querySelector('input'); const txt = (i.value || '').trim(); if(!txt) return;
+      const me = eu(); if(!me) return;
+      const l = anotarLembrete(txt, me);
+      if(!lerLembrete(txt).dia || lerLembrete(txt).dia === hoje() && !/\b(hoje)\b/i.test(txt)) l.dia = f.dataset.qdlemnovo;
+      const d = f.dataset.qdlemnovo;
+      render();
+      const n = document.querySelector(`#root [data-qdlemnovo="${d}"] input`); if(n) n.focus();
+      return;
+    }
+    if(f.matches('[data-qdentrada="lembrete"]')){
+      e.preventDefault();
+      const i = f.querySelector('input'); const txt = (i.value || '').trim(); if(!txt) return;
+      const me = eu(); if(!me) return;
+      anotarLembrete(txt, me);
+      i.value = '';
+      render();
+      const n = document.getElementById('qdNovo'); if(n) n.focus();
+      return;
+    }
     if(f.matches('[data-qdentrada]')){
       e.preventDefault();
       const i = f.querySelector('input'); const txt = (i.value || '').trim(); if(!txt) return;
@@ -1806,6 +1946,22 @@
   .qdAbasCol{ display:none }
   /* minha lista */
   .qdLista{ max-width:920px }
+  .qdLemAc{ display:flex; gap:4px; flex:none; align-items:center; opacity:.0; transition:opacity .15s }
+  .qdLem:hover .qdLemAc, .qdLem:focus-within .qdLemAc{ opacity:1 }
+  @media (hover:none){ .qdLemAc{ opacity:1 } .qdLemBt:not(.x){ display:none } .qdLem:focus-within .qdLemBt{ display:inline-flex } }
+  .qdLemBt{ display:inline-flex; align-items:center; border:0; background:var(--sup2, rgba(255,255,255,.08)); color:var(--mut, #999); font:inherit; font-size:12px; padding:5px 10px; border-radius:999px; cursor:pointer; min-height:28px }
+  .qdLemBt:hover{ color:var(--tx, #fff) }
+  .qdLemBt.x{ background:transparent; font-size:18px; padding:2px 8px }
+  .qdLemMini{ opacity:.92 }
+  .qdLemMini::before{ content:''; width:3px; align-self:stretch; border-radius:2px; background:var(--brass, #FFC857); margin-right:2px }
+  .qdGrLem{ margin-top:6px }
+  .qdSubRot{ font-size:12.5px; color:var(--mut, #999); margin:10px 2px 6px }
+  .qdVerCards{ margin-top:12px }
+  .qdAgrupar{ display:flex; align-items:center; gap:6px; margin:0 0 6px }
+  .qdPriv{ margin:4px 2px 10px; font-size:13px }
+  .qdLemNovo input{ width:100%; border:0; background:transparent; color:var(--tx, #fff); font:inherit; font-size:12.5px; padding:6px 4px; border-radius:8px; outline:none }
+  .qdLemNovo input:focus{ background:var(--sup2, rgba(255,255,255,.06)) }
+  .qdLemNovo input::placeholder{ color:var(--mut, #999) }
   .qdOla h2{ font-size:34px; line-height:1.1; margin:0 0 6px; letter-spacing:-.02em; font-weight:600 }
   .qdOla p{ margin:0; color:var(--mut, #aaa); font-size:15px }
   .qdOla p b{ color:var(--tx, #fff) }
