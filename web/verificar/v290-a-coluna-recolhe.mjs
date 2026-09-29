@@ -117,6 +117,20 @@ console.log('\n  — o filtro de prazo —');
   checa('3.8 "Qualquer prazo" volta tudo', (await vis()).length > 12);
   await ctx.close();
 }
+console.log('\n  — 4. arrastar no computador mostra a faixa de colunas (como no celular) —');
+{
+  const { ctx, pg } = await abrir({ width: 1440, height: 900 });
+  const c = await pg.evaluate(() => { const el = [...document.querySelectorAll('#root .qdCol[data-qdcol="afazer"] .qdCard')].find(x => /Por fazer 1$/.test(x.textContent.trim().split('\n')[0]) || /Por fazer 1\b/.test(x.textContent)); const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + 20, key: el.dataset.qdkey }; });
+  await pg.mouse.move(c.x, c.y); await pg.mouse.down(); await pg.mouse.move(c.x + 30, c.y + 30, { steps: 5 }); await pg.waitForTimeout(150);
+  const f = await pg.evaluate(() => { const b = document.getElementById('qdSoltar'); if(!b) return null; const r = b.getBoundingClientRect();
+    return { spans: [...b.querySelectorAll('[data-qdsoltar]')].map(x => x.dataset.qdsoltar), baixo: r.bottom > innerHeight - 60, centro: Math.abs(r.left + r.width / 2 - innerWidth / 2) < 4 }; });
+  checa('4.1 ao começar a arrastar um card, aparece embaixo a faixa com as oito colunas', f && f.spans.length === 8 && f.baixo && f.centro, f);
+  const alvo = await pg.evaluate(() => { const r = document.querySelector('#qdSoltar [data-qdsoltar="revisao"]').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  await pg.mouse.move(alvo.x, alvo.y, { steps: 8 }); await pg.waitForTimeout(80); await pg.mouse.up(); await pg.waitForTimeout(250);
+  const r = await pg.evaluate((key) => { const [cli, id] = key.split('|'); const p = S.pautas[cli].find(x => +x.id === +id); return { col: MaestroQuadro.colunaDe(p), faixa: !!document.getElementById('qdSoltar') }; }, c.key);
+  checa('4.2 soltar na faixa leva o card para a coluna, e a faixa some', r.col === 'revisao' && !r.faixa, r);
+  await ctx.close();
+}
 checa('9.9 nenhum erro de página', erros.length === 0, erros.slice(0, 3));
 console.log(`\n${ok} passaram · ${falhou} falharam`);
 await nav.close(); srv.close();
