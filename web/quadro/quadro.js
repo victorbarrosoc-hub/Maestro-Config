@@ -1357,7 +1357,9 @@
     });
   }
   Q.fecharAdd = fecharAdd;
-  document.addEventListener('pointerdown', e => {
+  /* no "click", não no "pointerdown": fechar a caixa sobe o que está embaixo, e o toque
+     que começou num botão terminaria em outro lugar */
+  document.addEventListener('click', e => {
     const abertos = [...document.querySelectorAll('#root [data-qdaddwrap]')].filter(x => x.querySelector('form'));
     if(!abertos.length) return;
     const t = e.target;
