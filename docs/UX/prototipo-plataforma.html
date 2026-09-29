@@ -25,7 +25,7 @@
    A cor da primeira pintura passa a sair da escolha da pessoa, e a
    escolha é lida no primeiro script do documento, antes de qualquer
    pintura. Quem está no escuro continua vendo escuro desde o quadro 1. */
-html[data-tema="claro"], html[data-tema="claro"] body{ background:#F5F5F7 }
+html[data-tema="claro"], html[data-tema="claro"] body{ background:#EFEEEA }
 html.abrindo #root, html.abrindo .ctx, html.abrindo #layer{ visibility:hidden }
 /* v258 — nada aparece antes de o arquivo inteiro chegar: um ponto de latão
    pulsa no grafite, e o app entra UMA vez, já com a cara certa */
@@ -44,7 +44,7 @@ html.pronto #root{ animation:v258e .22s ease }
     if(t !== 'claro') return;                       /* escuro é o padrão, e já está pintado */
     document.documentElement.setAttribute('data-tema', 'claro');
     var m = document.querySelector('meta[name="theme-color"]');
-    if(m) m.setAttribute('content', '#F5F5F7');
+    if(m) m.setAttribute('content', '#EFEEEA');
     var c = document.querySelector('meta[name="color-scheme"]');
     if(c) c.setAttribute('content', 'light');
   }catch(e){}
@@ -79,19 +79,17 @@ html.pronto #root{ animation:v258e .22s ease }
    memória do aparelho (o defeito da cortina antiga, v155); e se algo
    travar, aparece em 12s de qualquer jeito. */
 (function(){
-  /* o link do cliente espera a PÁGINA DO CLIENTE: antes dela, o aparelho
-     mostraria o que tinha guardado (a agência, no aparelho de quem testa)
-     e a vitrine — o founder viu as duas piscarem antes do "Olá, EJUP" */
+  /* o link espera a página do cliente (antes dela piscavam a agência e a
+     vitrine); e tudo espera o tema (v296: os botões nasciam brancos) */
   var link = /[?&](aprovar|ver)=/.test(location.search);
   var mostra = function(){ document.documentElement.classList.add('pronto'); };
   var pronto = function(){
     try{ if(typeof render === 'function') render(); }catch(e){}
-    if(!link) return mostra();
     var t0 = Date.now();
     (function espera(){
       var ok = false;
-      try{ ok = window.MAESTRO_LINK_RESPONDEU || (typeof S === 'object' && S && (S.view === 'client' || S.soVer || S.soFluxo) && !document.querySelector('.site')); }catch(e){}
-      if(ok || Date.now() - t0 > 8000) return mostra();
+      try{ ok = (window.MaestroTema || window.__semQuadro || window.__semTema) && (!link || window.MAESTRO_LINK_RESPONDEU || (typeof S === 'object' && S && (S.view === 'client' || S.soVer || S.soFluxo) && !document.querySelector('.site'))); }catch(e){}
+      if(ok || Date.now() - t0 > (link ? 8000 : 3000)) return mostra();
       setTimeout(espera, 80);
     })();
   };
@@ -16062,7 +16060,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v295 · 29 set · nome e datas';
+const VERSAO_PROTOTIPO = 'v296 · 29 set · entrar sem piscar';
 
 menuSheet = (function(orig){
   return function(){
@@ -48555,4 +48553,4 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
 render=(o=>function(){try{for(const t of(S.ensaio&&S.ensaio.tarefas)||[]){const e=A[t.id];if(sc(t)&&C.includes(t.col)&&e&&!C.includes(e)){t.col=e;toast('Sem card não passa do Do: estruture a pauta.')}A[t.id]=t.col}
 const g=S.chat&&(S.chat.canais||[]).find(c=>c.id==='geral');if(g&&g.msgs){let v=0;const n=g.msgs.filter(m=>!m||m.txt!==B||!v++);if(n.length<g.msgs.length)g.msgs=n}}catch(e){}
 const r=o.apply(this,arguments);try{document.querySelectorAll('.enCard[data-entar]').forEach(c=>{const t=S.ensaio.tarefas.find(x=>x.id==+c.dataset.entar),a=c.querySelector('.acoes');if(sc(t)&&C.includes(t.col)&&a&&!c.querySelector('.v272'))a.insertAdjacentHTML('beforebegin','<div class="cyEtapa v272"><span><b>Sem card.</b> O Check libera card — estruture a pauta.</span></div>')})}catch(e){}return r})(render)})();</script>
-<script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v295').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}else throw 0}).catch(()=>{window.__semQuadro=1;if(S.route==='producao')render()})</script>
+<script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v296').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}else throw 0}).catch(()=>{window.__semQuadro=1;if(S.route==='producao')render()})</script>

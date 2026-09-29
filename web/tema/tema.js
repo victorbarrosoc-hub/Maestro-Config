@@ -19,7 +19,7 @@
 (function(){
   'use strict';
   if(window.MaestroTema) return;
-  const T = window.MaestroTema = { versao: 'v295' };
+  const T = window.MaestroTema = { versao: 'v296' };
 
   const LUZ = 'maestro-luz-v1';
   const claro = () => document.documentElement.getAttribute('data-tema') === 'claro';
@@ -57,13 +57,22 @@
   /* as fotos da vitrine têm as telas do app DENTRO: no claro, as telas claras
      (web/img/vitrine-*-claro-N.webp); no escuro, as escuras */
   const RE = /(\/web\/img\/vitrine-[a-z-]+?)(-claro)?-(\d+)\.webp/g;
+  /* v296 — a foto trocada só aparece quando a nova chegou: antes, no claro,
+     a foto escura ficava à vista até a clara baixar (o "pisca" da abertura) */
+  function esperarFoto(img){
+    if(!img || img.__tmEspera) return;
+    img.__tmEspera = true; img.style.opacity = '0';
+    const fim = () => { if(!img.__tmEspera) return; img.__tmEspera = false; img.style.transition = 'opacity .25s ease'; img.style.opacity = ''; };
+    img.addEventListener('load', fim, { once: true }); img.addEventListener('error', fim, { once: true });
+    setTimeout(fim, 2500);
+  }
   function trocarFotos(){
     const c = claro();
     document.querySelectorAll('#root .site img, #root .site source').forEach(el => {
       for(const at of ['src', 'srcset']){
         const v = el.getAttribute(at); if(!v || v.indexOf('/web/img/vitrine-') < 0) continue;
         const n = v.replace(RE, (m, base, cl, w) => base + (c ? '-claro' : '') + '-' + w + '.webp');
-        if(n !== v) el.setAttribute(at, n);
+        if(n !== v){ esperarFoto(el.tagName === 'IMG' ? el : el.parentElement && el.parentElement.querySelector('img')); el.setAttribute(at, n); }
       }
     });
   }
