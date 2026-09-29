@@ -349,6 +349,9 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (29 set, v302, NO AR) — a chave toda vez.** Decisão do founder: quem
+tem chave a digita a CADA abertura do site (a pessoa lembrada abre em "Chave de
+acesso", com "Outra pessoa"); sem chave, entra direto. Provas 3.1–3.5 na v299.
 **Fechado (29 set, v301, NO AR) — a chave de cada pessoa, de volta.** "Não
 tá pedindo a senha do usuário." A lista da v299 pulou a chave (v84). Agora
 cadeado na lista e "Chave de acesso" ao tocar, conferida por `conferirChave`

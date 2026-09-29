@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 29 set 2026 (v301 no ar)
+Última atualização: 29 set 2026 (v302 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -20,7 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v301 (29 set) — a lista pede a CHAVE de quem tem uma (a v299 tinha pulado).
+v302 (29 set) — a chave é pedida a CADA abertura (decisão do founder).
+Antes, a v301 — a lista pede a CHAVE de quem tem uma (a v299 tinha pulado).
 Antes, a v300 — TRAVA DO ESTADO: a v276 apagou o `__estado__` em 28/09 14:02
 (gravou pauta de cliente por cima). Código corrigido e o founder RODOU o
 `docs/ENGINEERING/equipe-3-restaurar.sql` (29/09 09h27): 5 pessoas, todas com

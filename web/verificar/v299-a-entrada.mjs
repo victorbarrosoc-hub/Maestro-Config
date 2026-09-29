@@ -173,12 +173,26 @@ let depois = null;
   const qs3 = await quadros(pg);
   const u3 = await pg.evaluate(() => S.usuario && S.usuario.id);
   console.log('\n  — 3. recarregar com a sessão —');
-  checa('3.1 abre direto no app como a Gabi: nem vitrine, nem login, nem lista', u3 === 'gabriela.rdomingues' && qs3.every(q => !q.site && !q.form && q.tela !== 'lista' && !q.velha) && qs3.some(q => q.app), resumo(qs3));
+  /* v302 — "quero que peça a chave toda vez": a Gabi tem chave, então cada abertura pede */
+  const ch3 = await pg.evaluate(() => { const m = document.getElementById('mEntrada'); return m && { tela: m.dataset.tela, bt: (m.querySelector('[data-mchavevolta]') || {}).textContent }; });
+  checa('3.1 reabrir o site pede a chave da Gabi de novo: nem app, nem vitrine, nem login, nem lista', ch3 && ch3.tela === 'chave' && ch3.bt === 'Outra pessoa'
+    && qs3.every(q => !q.app && !q.site && !q.form && q.tela !== 'lista' && !q.velha), [ch3, resumo(qs3)]);
+  await pg.fill('#mChave', 'gabi2026'); await pg.keyboard.press('Enter'); await pg.waitForTimeout(2500);
+  const u31 = await pg.evaluate(() => ({ id: S.usuario && S.usuario.id, app: !document.documentElement.classList.contains('mConduz') }));
+  checa('3.1b com a chave, entra como a Gabi', u31.id === 'gabriela.rdomingues' && u31.app, u31);
   await pg.evaluate(() => { window.__q = []; });
   await pg.goto(BASE + '/');
   await pg.waitForTimeout(6000);
   const qs4 = await quadros(pg);
-  checa('3.2 logado, abrir o endereço da vitrine (/) leva ao app, sem mostrar a vitrine', qs4.every(q => !q.site && !q.form && !q.velha) && qs4.some(q => q.app), resumo(qs4));
+  checa('3.2 logado, abrir o endereço da vitrine (/) pede a chave, sem mostrar vitrine nem app', qs4.every(q => !q.site && !q.form && !q.velha && !q.app) && qs4[qs4.length - 1].tela === 'chave', resumo(qs4));
+  await pg.click('#mEntrada [data-mchavevolta]'); await pg.waitForTimeout(300);
+  checa('3.3 "Outra pessoa" abre a lista da equipe', await pg.evaluate(() => document.getElementById('mEntrada').dataset.tela === 'lista'));
+  await pg.click('#mEntrada [data-mpessoa="victorbarrosoc"]'); await pg.waitForTimeout(2000);
+  checa('3.4 quem não tem chave (o Victor) entra direto', await pg.evaluate(() => S.usuario.id === 'victorbarrosoc' && !document.documentElement.classList.contains('mConduz')));
+  await pg.evaluate(() => { window.__q = []; });
+  await pg.reload(); await pg.waitForTimeout(6000);
+  const qs5 = await quadros(pg);
+  checa('3.5 e reabre no app como ele, só com a espera no caminho (sem chave, nada a pedir)', qs5.some(q => q.app) && qs5.every(q => !q.site && !q.form && (!q.tela || q.tela === 'carregando') && !q.velha) && await pg.evaluate(() => S.usuario.id === 'victorbarrosoc'), resumo(qs5));
   depois = { ctx, pg, b: aparelhoAtual };
 }
 
@@ -212,7 +226,7 @@ console.log('\n  — 4. trocar de usuário e sair —');
   const lista = await pg.evaluate(() => { const m = document.getElementById('mEntrada'); return m && m.dataset.tela; });
   checa('4.1 "Trocar de usuário" abre a lista nova, com a equipe do banco e "Voltar"', lista === 'lista' && (await nomesDaLista(pg)).length === 5 && !!(await pg.$('#mEntrada [data-mvoltar]')), lista);
   await pg.click('#mEntrada [data-mvoltar]'); await pg.waitForTimeout(400);
-  checa('4.2 "Voltar" devolve o app, com a mesma pessoa', await pg.evaluate(() => !document.querySelector('#mEntrada:not(.sai)') && S.usuario.id === 'gabriela.rdomingues'));
+  checa('4.2 "Voltar" devolve o app, com a mesma pessoa', await pg.evaluate(() => !document.querySelector('#mEntrada:not(.sai)') && S.usuario.id === 'victorbarrosoc'));
   await pg.waitForTimeout(1700); await pg.evaluate(() => abrirQuemAgencia()); await pg.waitForTimeout(300);
   checa('4.3 sem gesto de ninguém (um relógio antigo), a lista não abre', await pg.evaluate(() => !document.querySelector('#mEntrada:not(.sai)')));
   await pg.evaluate(() => { window.__q = []; });

@@ -37,7 +37,7 @@
 (function(){
   'use strict';
   if(window.MaestroEntrada2) return;
-  const E = window.MaestroEntrada2 = { versao: 'v301', fase: 'inicio', diario: [] };
+  const E = window.MaestroEntrada2 = { versao: 'v302', fase: 'inicio', diario: [] };
   const anota = (...x) => { E.diario.push([Math.round(performance.now()), ...x]); if(E.diario.length > 80) E.diario.shift(); };
 
   /* ---------------- quem está aqui ---------------- */
@@ -196,7 +196,7 @@
     return da || mem || null;
   }
   let errosChave = 0;
-  function mostrarChave(m){
+  function mostrarChave(m, deOnde){
     const el = palco();
     el.dataset.tela = 'chave';
     errosChave = 0;
@@ -206,7 +206,7 @@
       <p class="mSub">Só ${escH(String(m.n).split(/\s+/)[0])} entra aqui.</p>
       <input class="mCampo" id="mChave" type="password" autocomplete="current-password" placeholder="Sua chave" aria-label="Chave de acesso">
       <p class="mErro" id="mChaveErro" role="alert"></p>
-      <div class="mBts"><button type="button" class="mBt sec" data-mchavevolta="1">Voltar</button><button type="submit" class="mBt">Entrar</button></div></form>`;
+      <div class="mBts"><button type="button" class="mBt sec" data-mchavevolta="1">${deOnde === 'abertura' ? 'Outra pessoa' : 'Voltar'}</button><button type="submit" class="mBt">Entrar</button></div></form>`;
     setTimeout(() => { const c = document.getElementById('mChave'); if(c) c.focus(); }, 60);
   }
   async function tentarChave(form){
@@ -323,7 +323,14 @@
     let pergunta = false;
     try{ pergunta = sessionStorage.getItem(ESTE_LOGIN) === '1'; }catch(e){}
     const ja = pergunta ? null : escolhaGuardada(equipe);
-    if(ja){ S.usuario = { tipo: 'agencia', id: ja }; try{ localStorage.setItem(CH_USR, JSON.stringify(S.usuario)); }catch(e){} irParaOApp(); return; }
+    E.listaAtual = equipe;
+    if(ja){
+      /* v302 — "quero que peça a chave toda vez": a pessoa lembrada neste aparelho,
+         se tem chave, digita a chave a cada abertura do site. Sem chave, entra direto. */
+      const m = pessoaDe(ja);
+      if(chaveDe(m)){ E.fase = 'chave'; anota('chave na abertura', ja); mostrarChave(m, 'abertura'); return; }
+      S.usuario = { tipo: 'agencia', id: ja }; try{ localStorage.setItem(CH_USR, JSON.stringify(S.usuario)); }catch(e){} irParaOApp(); return;
+    }
     E.fase = 'lista'; anota('lista', equipe.length);
     E.equipeDaLista = equipe;
     mostrarLista(equipe, false);

@@ -1,11 +1,23 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.116
+Version: 0.5.117
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.117 — 2026-09-29
+
+**Status:** No ar.
+
+### v302 — a chave é pedida toda vez
+
+- "Sim, quero que peça a chave toda vez." Quem tem chave a digita a cada
+  abertura do site: a pessoa lembrada no aparelho abre direto em "Chave de
+  acesso" (com "Outra pessoa" para a lista), e o app só aparece depois da chave
+  certa. Quem não tem chave entra direto, como sempre. Provas 3.1–3.5 na
+  `v299-a-entrada.mjs` (33).
 
 ## 0.5.116 — 2026-09-29
 
