@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 29 set 2026 (v292 no ar)
+Última atualização: 29 set 2026 (v296 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -20,7 +20,10 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v295 (29 set) — nome inteiro no padrão por fora e na ficha, datas em
+v296 (29 set) — entrar sem piscar: na aba anônima a lista espera a equipe
+inteira com fotos; a espera do login entra de uma vez; a vitrine abre já com
+o tema e, no claro, com a foto clara (fundo Linho); no celular, "Soltar em"
+colado no card. Antes, a v295 — nome inteiro no padrão por fora e na ficha, datas em
 Produção e Publicação. Aberto: lentidão depois de um tempo (não reproduziu;
 perguntar tela, tempo e aparelho). Antes, a v294: baixar o material do card, Cancelar e tocar fora fecham a
 criação, arrastar sem piscar e a Mão no Estúdio. Antes, a v293: Calendário com Mês · Semana (do jeito do Quadro), quadro de
@@ -34,8 +37,10 @@ de colunas ao arrastar, Minha lista como o dia da pessoa.
 
 ## Em andamento
 
-Nada aberto desta leva. Próximo passo: o que o founder pedir depois de
-testar a v292 no celular.
+- Lentidão depois de um tempo de uso: não reproduziu (6 min com outra pessoa
+  mexendo, contra um banco de verdade). Perguntar ao founder: qual tela,
+  quanto tempo, qual aparelho.
+- Vídeo 3 do founder (janela normal): sem defeito identificado.
 
 ## Como rodar as provas num container novo
 

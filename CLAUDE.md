@@ -349,6 +349,16 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (29 set, v296, NO AR) — entrar sem piscar.** (1) Aba anônima:
+"quando loguei não apareceram as fotos, nem todos os usuários". Com rede
+lenta, a lista "Quem está entrando?" abria aos 12s com a equipe de fábrica e
+nunca se refazia; agora espera o banco (até 60s) atrás do "Carregando…" e se
+refaz quando a equipe muda (fim de `web/dados/tempo-real.js`). (2) A espera
+do login entra inteira, sem esmaecer sobre o app vazio. (3) A vitrine só
+aparece com o tema aplicado (os botões nasciam brancos), e no claro a foto só
+aparece clara (`esperarFoto` em `web/tema/tema.js`). (4) No celular, "Soltar
+em" nasce colado no card. 8 provas em
+`web/verificar/v296-a-lista-espera-a-equipe.mjs`, 13.7b na v277.
 **Fechado (29 set, v295, NO AR) — o nome e as datas.** O card por fora mostra
 o nome inteiro no padrão; a ficha monta "Cliente · Formato ·" e só o tema se
 escreve (escrever o tema de card fora do padrão já padroniza). Datas em dois

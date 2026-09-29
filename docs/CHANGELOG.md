@@ -1,11 +1,39 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.110
+Version: 0.5.111
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.111 — 2026-09-29
+
+**Status:** No ar.
+
+### v296 — entrar sem piscar, a lista com a equipe inteira, e soltar perto do card
+
+- **A aba anônima.** "Quando loguei não apareceram as fotos, nem todos os
+  usuários." Sem nada guardado no aparelho, a equipe e as fotos vêm só do
+  banco; com rede lenta, "Quem está entrando?" desistia aos 12s e abria com a
+  equipe de fábrica (três nomes, sem foto), e nunca se refazia. Agora a lista
+  fica atrás do "Carregando a sua agência…" enquanto o banco fala (até 60s) e,
+  aberta, se refaz sozinha quando a equipe muda. Reproduzido com 15s por
+  leitura antes do conserto. 8 provas em
+  `web/verificar/v296-a-lista-espera-a-equipe.mjs`.
+- **O pisca depois do login.** A espera entrava esmaecendo e o app vazio
+  aparecia por baixo por um instante; agora entra inteira, de uma vez.
+- **O pisca ao abrir o site.** A vitrine aparecia com os botões brancos (as
+  cores de antes) e virava amarela quando o tema chegava; no claro, a foto
+  escura ficava à vista até a clara baixar. A abertura agora espera o tema
+  (até 3s; sem ele, não espera), e a foto trocada só aparece quando a nova
+  chegou.
+- **A foto principal no claro** tem o fundo do site (Linho), sem o palco escuro.
+- **Soltar perto do card, no celular.** "Precisa estar perto do card pra ser
+  mais rápido." A faixa "Soltar em" nasce colada no card (embaixo, ou em cima
+  se não couber), pequena, com a coluna atual apagada. Prova 13.7b na v277.
+- **Criar card:** a caixa fecha no clique de fora (não no primeiro toque),
+  para o toque que começa num botão não terminar em outro lugar.
 
 ## 0.5.110 — 2026-09-29
 
