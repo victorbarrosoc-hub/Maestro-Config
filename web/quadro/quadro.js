@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v303', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v304', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -252,6 +252,7 @@
     if(dados.prazoHora) p.prazoHora = dados.prazoHora;
     if(dados.data && cli !== AG){ p.data = dados.data; p.dia = (doISO(dados.data).getDay() + 6) % 7; p.hora = dados.hora || '18:30'; }
     if(dados.importante) p.importante = true;
+    if(Array.isArray(dados.fmts) && dados.fmts.length > 1) p.fmts = dados.fmts.slice();
     Object.keys(p).forEach(k => p[k] === undefined && delete p[k]);
     lista.push(p);
     anota('novo', cli, id, col);
@@ -349,9 +350,13 @@
     const r = interpretar(txt, base);
     esc = esc || {};
     const cli = esc.cli || r.cli || (base && base.cli) || AG;
-    const fmt = cli === AG ? 'Tarefa' : (esc.fmt || r.fmt || 'Post');
+    /* v304 — "só deixa selecionar um tipo… às vezes são mais de um. Tipo: Reels e Shorts."
+       Os botões de formato somam; o primeiro dá o nome, como na ficha. */
+    const escolhidos = Array.isArray(esc.fmts) && esc.fmts.length ? esc.fmts : (esc.fmt ? [esc.fmt] : []);
+    const fmt = cli === AG ? 'Tarefa' : (escolhidos[0] || r.fmt || 'Post');
+    const fmts = cli === AG ? [] : (escolhidos.length ? escolhidos : [fmt]);
     const tm = cli === AG ? r.tema : limparTema(r.tema, fmt);
-    return { r, cli, fmt, tema: tm, nome: tm ? titulo(cli, fmt, tm) : '' };
+    return { r, cli, fmt, fmts, tema: tm, nome: tm ? titulo(cli, fmt, tm) : '' };
   }
   Q.montar = montar;
   function criarDoTexto(txt, base, esc){
@@ -361,7 +366,7 @@
     const cli = m.cli;
     const resp = r.resp || (base && 'resp' in base ? base.resp : null);
     const coluna = (base && base.coluna) || (resp ? 'afazer' : 'pauta');
-    const dados = { tema: m.tema, fmt: m.fmt, resp, coluna,
+    const dados = { tema: m.tema, fmt: m.fmt, fmts: m.fmts, resp, coluna,
       prazo: r.prazo || (base && base.prazo) || null, prazoHora: r.prazoHora, importante: r.importante };
     if(base && base.data) dados.data = base.data;
     return { cli, p: novo(cli, dados) };
@@ -376,7 +381,7 @@
       <div class="qdNomeL"><span>Cliente</span><div class="qdChips">
         <button type="button" class="qdChipN" data-qdncli="${AG}">Agência</button>
         ${clientes().map(c => `<button type="button" class="qdChipN" data-qdncli="${esc_(c.id)}">${esc_(c.nome)}</button>`).join('')}</div></div>
-      <div class="qdNomeL qdNomeFmt"><span>Formato</span><div class="qdChips">
+      <div class="qdNomeL qdNomeFmt"><span>Formato <em>pode marcar mais de um</em></span><div class="qdChips">
         ${FORMATOS.filter(f => f !== 'Tarefa').map(f => `<button type="button" class="qdChipN" data-qdnfmt="${esc_(f)}">${esc_(f)}</button>`).join('')}</div></div>
       <p class="qdPrev">Vai aparecer assim: <b></b></p>
     </div>`;
@@ -399,9 +404,9 @@
     bl.hidden = !txt && !(Q.esc[alvo] && (Q.esc[alvo].cli || Q.esc[alvo].fmt));
     const m = montar(txt, base, Q.esc[alvo]);
     bl.querySelectorAll('[data-qdncli]').forEach(b => b.classList.toggle('on', b.dataset.qdncli === m.cli));
-    bl.querySelectorAll('[data-qdnfmt]').forEach(b => b.classList.toggle('on', b.dataset.qdnfmt === m.fmt));
+    bl.querySelectorAll('[data-qdnfmt]').forEach(b => b.classList.toggle('on', m.fmts.includes(b.dataset.qdnfmt)));
     bl.querySelector('.qdNomeFmt').hidden = m.cli === AG;
-    bl.querySelector('.qdPrev b').textContent = m.tema ? (m.cli === AG ? m.nome + '  (tarefa da agência)' : m.nome) : '—';
+    bl.querySelector('.qdPrev b').textContent = m.tema ? (m.cli === AG ? m.nome + '  (tarefa da agência)' : m.nome + (m.fmts.length > 1 ? `  (${m.fmts.join(' + ')})` : '')) : '—';
   }
   Q.atualizarNome = atualizarNome;
 
@@ -469,7 +474,8 @@
   function chipPrazo(p, col){
     const pz = prazoDe(p); if(!pz) return '';
     const atrasado = pz < hoje() && PENDENTES.concat(['revisao']).includes(col);
-    return `<span class="qdChip ${atrasado ? 'atrasado' : pz === hoje() ? 'hoje' : ''}" title="Entregar até">${ic_('clock', 11)}${esc_(rotuloDia(pz))}${p.prazoHora ? ' ' + esc_(p.prazoHora) : ''}</span>`;
+    /* v304 — "a equipe tá confundindo quando vê o card de fora": cada data diz o que é */
+    return `<span class="qdChip qdData ${atrasado ? 'atrasado' : pz === hoje() ? 'hoje' : ''}" title="A equipe entrega até">${ic_('clock', 11)}<em>Entrega</em> ${esc_(rotuloDia(pz))}${p.prazoHora ? ' ' + esc_(p.prazoHora) : ''}</span>`;
   }
   const ic_ = (n, t) => { try{ return typeof ic === 'function' ? ic(n, t) : ''; }catch(e){ return ''; } };
 
@@ -498,7 +504,7 @@
     const nm = materiais(cli, p.id).length;
     const cp = capa(cli, p.id);
     return `<article class="qdCard${p.importante ? ' imp' : ''}" data-qdabre="${esc_(key)}" data-qdkey="${esc_(key)}" ${arrastavel()} tabindex="0">
-      ${cp ? `<div class="qdCapa" style="background-image:url('${cp.replace(/'/g, '%27')}')"></div>` : ''}
+      ${cp ? `<div class="qdCapa" data-qdcapa="${esc_(key + '|' + cp)}" style="background-image:url('${cp.replace(/'/g, '%27')}')"></div>` : ''}
       ${segueOPadrao(p, cli)
         /* v295 — o nome do card por fora é o nome inteiro no padrão ("EJUP · Post · Tema"),
            o mesmo que a ficha monta; cliente e formato já estão nele, então não se repetem */
@@ -509,10 +515,12 @@
       ${col === 'revisao' && revisores().length ? `<div class="qdRevisa"><span>Revisa</span>${revisores().slice(0, 3).map(x => avPes(x.id, 'qdAvP mini')).join('')}<em>${esc_(revisores().slice(0, 2).map(x => String(x.n).split(/\s+/)[0]).join(', '))}${revisores().length > 2 ? '…' : ''}</em></div>` : ''}
       <div class="qdMeta">
         ${chipPrazo(p, col)}
-        ${p.data && cli !== AG ? `<span class="qdChip" title="Publica em">${ic_('cal', 11)}${esc_(ddmm(p.data))}</span>` : ''}
+        ${p.data && cli !== AG ? `<span class="qdChip qdData pub" title="Vai ao ar em">${ic_('cal', 11)}<em>No ar</em> ${esc_(ddmm(p.data))}${p.hora ? ' ' + esc_(p.hora) : ''}</span>` : ''}
         ${ck.length ? `<span class="qdChip ${feitos === ck.length ? 'ok' : ''}" title="Checklist">${ic_('checkc', 11)}${feitos}/${ck.length}</span>` : ''}
         ${nm ? `<span class="qdChip" title="Material">${ic_('clipe', 11)}${nm}</span>` : ''}
         ${cli !== AG ? redesDoCard(p) : ''}
+        ${colabsDe(p).length ? `<span class="qdChip qdColabC" title="Collab">+ ${esc_(colabsDe(p).map(c => c.cli ? nomeColab(c) : c.ig).join(', '))}</span>` : ''}
+        ${mensagensDe(p).length ? `<span class="qdChip" title="Mensagens na conversa do card">${ic_('chat', 11)}${mensagensDe(p).length}</span>` : ''}
         <span class="qdSp"></span>
         ${!p.resp && col === 'pauta' ? '' : `<button type="button" class="qdResp" data-qdresp="${esc_(key)}" aria-label="${p.resp ? 'Responsável: ' + esc_((pessoa(p.resp) || {}).n || p.resp) : 'Escolher quem faz'}">${avPes(p.resp)}</button>`}
       </div>
@@ -523,17 +531,45 @@
   /* v290 — "bota um filtro no Quadro pra visualizar os cards por prazo".
      O prazo é o "Entregar até" do card; atrasado e sem prazo só contam
      para o que ainda está por fazer (Pauta, A fazer, Fazendo). */
-  const PRAZOS = [['todos', 'Qualquer prazo'], ['atrasados', 'Atrasados'], ['hoje', 'Para hoje'], ['semana', 'Esta semana'], ['proxima', 'Próxima semana'], ['sem', 'Sem prazo']];
+  /* v304 — "os filtros de prazo não estão corretos, não tá identificando direito."
+     Eram três coisas: (1) o filtro só olhava a data de ENTREGA, e a equipe procurava
+     pela data em que o post vai ao ar; (2) "Esta semana" contava card que já tinha
+     sido entregue (Com o cliente, Aprovado, Publicado); (3) "Atrasados" deixava de
+     fora a Revisão, embora o card lá já aparecesse vermelho. Agora são dois grupos,
+     cada um dizendo de que data fala, e a entrega só conta o que ainda é trabalho
+     da casa (Pauta, A fazer, Fazendo, Revisão). */
+  const PRAZOS = [['todos', 'Qualquer data'],
+    ['atrasados', 'Entrega atrasada', 'Entrega'], ['hoje', 'Entrega hoje', 'Entrega'], ['semana', 'Entrega esta semana', 'Entrega'],
+    ['proxima', 'Entrega na próxima semana', 'Entrega'], ['sem', 'Sem data de entrega', 'Entrega'],
+    ['pub-hoje', 'Vai ao ar hoje', 'Postagem'], ['pub-semana', 'Vai ao ar esta semana', 'Postagem'], ['pub-proxima', 'Vai ao ar na próxima semana', 'Postagem']];
+  const EM_TRABALHO = ['pauta', 'afazer', 'fazendo', 'revisao'];
+  /* a data como a ficha grava (2026-10-09); o que vier noutro jeito (09/10/2026) é lido também */
+  function diaDe(v){
+    const t = String(v || '').trim(); if(!t) return '';
+    if(/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10);
+    const m = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/.exec(t);
+    if(m){ const a = m[3] ? (m[3].length === 2 ? '20' + m[3] : m[3]) : String(new Date().getFullYear()); return `${a}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`; }
+    return '';
+  }
+  Q.diaDe = diaDe;
   function passaPrazo(x, f){
     f = f || Q.filtroPrazo || 'todos';
     if(f === 'todos') return true;
-    const pz = x.p.prazo || '', h = hoje(), ini = segunda(h);
-    if(f === 'sem') return !pz && PENDENTES.includes(x.col);
+    const h = hoje(), ini = segunda(h);
+    const naSemana = (d, n) => d >= soma(ini, 7 * n) && d <= soma(ini, 7 * n + 6);
+    if(f.startsWith('pub-')){
+      if(x.cli === AG) return false;
+      const d = diaDe(x.p.data); if(!d) return false;
+      return f === 'pub-hoje' ? d === h : naSemana(d, f === 'pub-semana' ? 0 : 1);
+    }
+    if(!EM_TRABALHO.includes(x.col)) return false;
+    const pz = diaDe(x.p.prazo);
+    if(f === 'sem') return !pz;
     if(!pz) return false;
-    if(f === 'atrasados') return pz < h && PENDENTES.includes(x.col);
+    if(f === 'atrasados') return pz < h;
     if(f === 'hoje') return pz === h;
-    if(f === 'semana') return pz >= ini && pz <= soma(ini, 6);
-    if(f === 'proxima') return pz >= soma(ini, 7) && pz <= soma(ini, 13);
+    if(f === 'semana') return naSemana(pz, 0);
+    if(f === 'proxima') return naSemana(pz, 1);
     return true;
   }
   Q.passaPrazo = passaPrazo;
@@ -548,8 +584,10 @@
     itens.forEach(x => porCol[x.col].push(x));
     Object.values(porCol).forEach(l => l.sort((a, b) => chaveOrdem(a.p) - chaveOrdem(b.p)));
     /* com o filtro de prazo ligado, o mais urgente em cima */
-    if((Q.filtroPrazo || 'todos') !== 'todos') Object.values(porCol).forEach(l => l.sort((a, b) =>
-      String(a.p.prazo || '9999').localeCompare(String(b.p.prazo || '9999')) || String(a.p.prazoHora || '99').localeCompare(String(b.p.prazoHora || '99'))));
+    if((Q.filtroPrazo || 'todos') !== 'todos'){ const pub = String(Q.filtroPrazo).startsWith('pub-');
+      Object.values(porCol).forEach(l => l.sort((a, b) => pub
+        ? (diaDe(a.p.data) || '9999').localeCompare(diaDe(b.p.data) || '9999') || String(a.p.hora || '99').localeCompare(String(b.p.hora || '99'))
+        : (diaDe(a.p.prazo) || '9999').localeCompare(diaDe(b.p.prazo) || '9999') || String(a.p.prazoHora || '99').localeCompare(String(b.p.prazoHora || '99')))); }
     /* v290 — o que já foi ao ar: o mais recente primeiro (são esses que se procuram) */
     porCol.publicado.sort((a, b) => String(b.p.data || '').localeCompare(String(a.p.data || '')) || ((b.p.feitoEm || b.p.mod || 0) - (a.p.feitoEm || a.p.mod || 0)));
     const pes = pessoas();
@@ -563,9 +601,9 @@
         ${clientes().map(c => `<option value="${esc_(c.id)}" ${Q.filtroCli === c.id ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}
       </select>
       ${(() => { const base = semPrazoFiltro(); const fp = Q.filtroPrazo || 'todos';
-        return `<select class="qdSel${fp !== 'todos' ? ' ligado' : ''}" data-qdprazo="1" aria-label="Filtrar por prazo">${PRAZOS.map(([k, n]) => {
-          const c = k === 'todos' ? '' : ` (${base.filter(x => passaPrazo(x, k)).length})`;
-          return `<option value="${k}" ${fp === k ? 'selected' : ''}>${n}${c}</option>`; }).join('')}</select>`; })()}
+        const op = ([k, n]) => `<option value="${k}" ${fp === k ? 'selected' : ''}>${n}${k === 'todos' ? '' : ` (${base.filter(x => passaPrazo(x, k)).length})`}</option>`;
+        return `<select class="qdSel${fp !== 'todos' ? ' ligado' : ''}" data-qdprazo="1" aria-label="Filtrar por data">${op(PRAZOS[0])}
+          ${['Entrega', 'Postagem'].map(g => `<optgroup label="${g === 'Entrega' ? 'Entrega da equipe' : 'Postagem (vai ao ar)'}">${PRAZOS.filter(x => x[2] === g).map(op).join('')}</optgroup>`).join('')}</select>`; })()}
     </div>`;
     const entrou = Q.entrada; Q.entrada = null;
     /* v290 — "a página vai descer até o infinito": 10 cards por coluna, e
@@ -841,7 +879,7 @@
     const cp = capa(cli, p.id); const nm = materiais(cli, p.id).length;
     const fmts = fmtsDe(p);
     return `<article class="qdSemCard" style="--qdc:${COL[col].c}" data-qdabre="${esc_(key)}" data-qdkey="${esc_(key)}" ${arrastavel()} tabindex="0">
-      ${cp ? `<div class="qdSemCapa" style="background-image:url('${cp.replace(/'/g, '%27')}')"></div>` : ''}
+      ${cp ? `<div class="qdSemCapa" data-qdcapa="${esc_('s|' + key + '|' + cp)}" style="background-image:url('${cp.replace(/'/g, '%27')}')"></div>` : ''}
       <div class="qdSemTopo"><span class="qdSemHora">${esc_(p.hora || '—')}</span><span class="qdDot" style="--qdc:${COL[col].c}">${esc_(COL[col].n)}</span></div>
       <div class="qdSemTit">${esc_(tema(p, cli))}</div>
       <div class="qdSemPe">${avCli(cli, 'qdAvC mini')}<span class="qdSemCli">${esc_(cliente(cli).nome)}</span>
@@ -1075,10 +1113,13 @@
     return p.corte ? 'corte' : p.roteiro ? 'roteiro' : 'post';
   }
   const ehStory = p => (Array.isArray(p.fmts) && p.fmts.length ? p.fmts : [p.fmt]).includes('Story') || guardadas(p, 'telas') > 0 || !!(p.sticker || p.recursos || p.caixinha);
+  /* v304 — "não tem mais a opção de copiar o que tá escrito nas caixas de texto…
+     quero que isso volte." Um "Copiar" ao lado do nome de cada caixa. */
+  const bCopiar = qf => `<button type="button" class="qdCopiar" data-qdcopiar="${esc_(qf)}" title="Copiar o texto"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2.2"/><path d="M15.5 8.5V6.2a1.7 1.7 0 0 0-1.7-1.7H6.2a1.7 1.7 0 0 0-1.7 1.7v7.6a1.7 1.7 0 0 0 1.7 1.7h2.3"/></svg><span>Copiar</span></button>`;
   function blocosConteudo(p, parte){
     const tipo = tipoDaFolha(p);
     const ct = p.corte || {};
-    const area = (qf, rot, ph, rows) => `<label class="qdFCampo">${rot}<textarea class="qdIn qdArea" data-qf="${qf}" rows="${rows || 2}" placeholder="${ph}">${esc_(pegar(p, qf))}</textarea></label>`;
+    const area = (qf, rot, ph, rows) => `<label class="qdFCampo"><span class="qdFCampoT">${rot}${bCopiar(qf)}</span><textarea class="qdIn qdArea" data-qf="${qf}" rows="${rows || 2}" placeholder="${ph}">${esc_(pegar(p, qf))}</textarea></label>`;
     const nTc = linhas(p, 'tcs'), nTela = linhas(p, 'telas');
     const tcs = Array.from({ length: nTc }, (_, i) => (Array.isArray(ct.tcs) && ct.tcs[i]) || { de: '', ate: '', ordem: i + 1 });
     const plats = (typeof PLATS === 'object' && PLATS) || {};
@@ -1093,16 +1134,15 @@
         <button type="button" class="qdPil" data-qdtcmais="1">+ trecho</button></div>` : ''}
     </div>
     ${ehStory(p) ? `<div class="qdFBloco"><h4>Telas do story <span>${guardadas(p, 'telas') || ''}</span></h4>
-      ${Array.from({ length: nTela }, (_, i) => `<div class="qdFTela"><b>T${i + 1}</b><textarea class="qdIn qdArea" data-qf="telas.${i}" rows="2" placeholder="O que aparece na tela ${i + 1}">${esc_(pegar(p, 'telas.' + i))}</textarea><button type="button" class="qdX" data-qdtelax="${i}" aria-label="Tirar tela">×</button></div>`).join('')}
+      ${Array.from({ length: nTela }, (_, i) => `<div class="qdFTela"><b>T${i + 1}</b>${bCopiar('telas.' + i)}<textarea class="qdIn qdArea" data-qf="telas.${i}" rows="2" placeholder="O que aparece na tela ${i + 1}">${esc_(pegar(p, 'telas.' + i))}</textarea><button type="button" class="qdX" data-qdtelax="${i}" aria-label="Tirar tela">×</button></div>`).join('')}
       <button type="button" class="qdPil" data-qdtelamais="1">+ tela</button>
       <label class="qdFCampo">Interação / sticker<input class="qdIn" data-qf="sticker" value="${esc_(p.sticker || '')}" placeholder="Ex.: enquete na tela 2"></label>
       ${area('recursos', 'Recursos / produção', 'O que a produção precisa ter à mão.')}
       <label class="qdFChk"><input type="checkbox" data-qfbool="caixinha" ${p.caixinha ? 'checked' : ''}> Com caixinha de perguntas</label></div>` : ''}
-    ${p.cta ? `<div class="qdFBloco"><h4>CTA</h4><textarea class="qdIn qdArea" data-qf="cta" rows="2">${esc_(p.cta)}</textarea></div>` : ''}`;
+    ${p.cta ? `<div class="qdFBloco"><h4>CTA ${bCopiar('cta')}</h4><textarea class="qdIn qdArea" data-qf="cta" rows="2">${esc_(p.cta)}</textarea></div>` : ''}`;
     /* v297 — as plataformas moram no topo da ficha ("Vai para"), num lugar só */
-    const dosDetalhes = `${(() => { const pil = (typeof PILAR_COR === 'object' && PILAR_COR) || {}; const ks = Object.keys(pil); if(!ks.length) return '';
-      return `<div class="qdFBloco"><h4>Pilar <span>a que eixo editorial serve</span></h4><div class="qdFPlats">${ks.map(k => `<button type="button" class="qdPil ${p.pilar === k ? 'on' : ''}" data-qdpilar="${esc_(k)}"><i style="background:${esc_(pil[k])}"></i>${esc_(k)}</button>`).join('')}</div></div>`; })()}
-    <div class="qdFBloco"><h4>Observação</h4><textarea class="qdIn qdArea" data-qf="obs" rows="2" placeholder="Recado para quem for executar: contexto, cuidado, detalhe">${esc_(p.obs || '')}</textarea></div>
+    /* v304 — o Pilar saiu da ficha ("não usamos"); o que um card antigo tiver guardado fica no card */
+    const dosDetalhes = `<div class="qdFBloco"><h4>Observação ${bCopiar('obs')}</h4><textarea class="qdIn qdArea" data-qf="obs" rows="2" placeholder="Recado para quem for executar: contexto, cuidado, detalhe">${esc_(p.obs || '')}</textarea></div>
     ${p.pend ? `<div class="qdFBloco"><h4>Pendência</h4><textarea class="qdIn qdArea" data-qf="pend" rows="2">${esc_(p.pend)}</textarea></div>` : ''}`;
     return parte === 'conteudo' ? doConteudo : parte === 'detalhes' ? dosDetalhes : doConteudo + dosDetalhes;
   }
@@ -1113,8 +1153,8 @@
     const c = [p.objetivo, p.texto, p.legenda].filter(tem).length;
     const ms = materiais(cli, p.id).length, rs = refsDoCard(cli, p.id).length;
     const ck = Array.isArray(p.check) ? p.check : [];
-    const d = [fmtsDe(p).length > 0, tem(p.pilar), tem(p.obs)].filter(Boolean).length;
-    return { conteudo: `${c}/3`, peca: ms ? `${ms} ${ms === 1 ? 'peça' : 'peças'}` : (rs ? `${rs} ref.` : '—'), detalhes: ck.length ? `${ck.filter(x => x && x.ok).length}/${ck.length} ✓` : `${d}/3` };
+    const d = [fmtsDe(p).length > 0, tem(p.obs)].filter(Boolean).length;
+    return { conteudo: `${c}/3`, peca: ms ? `${ms} ${ms === 1 ? 'peça' : 'peças'}` : (rs ? `${rs} ref.` : '—'), detalhes: ck.length ? `${ck.filter(x => x && x.ok).length}/${ck.length} ✓` : `${d}/2` };
   }
   /* v291 — "quero preencher na ficha o que tem dentro do Editor completo":
      o formato (mais de um: Reels + Vídeo), o pilar e as referências. */
@@ -1131,6 +1171,219 @@
       ${rs.map((r, i) => { const u = url_(r.url || ''); return `<div class="qdFRef">${u ? `<a href="${u}" target="_blank" rel="noopener noreferrer">${esc_(r.nome || r.url)}</a>` : `<span>${esc_(r.nome || 'arquivo')}</span>`}<button type="button" class="qdX" data-qdrefx="${i}" aria-label="Tirar referência">×</button></div>`; }).join('')}
       <form class="qdFCkNovo" data-qdrefnovo="1" autocomplete="off"><input type="text" inputmode="url" class="qdIn" placeholder="+ colar link de referência (https://…)" aria-label="Nova referência"></form></div>`;
   }
+
+  /* ======================================================================
+     v304 — o card ganha: trocar de cliente, collab, link próprio e conversa.
+     ====================================================================== */
+  /* --- collab: outro cliente da casa, ou um perfil do Instagram que não está na Maestro --- */
+  const colabsDe = p => (Array.isArray(p.colab) ? p.colab : []).filter(c => c && (c.cli || c.ig));
+  const nomeColab = c => c.cli ? (cliente(c.cli).nome || c.cli) : c.ig;
+  function blocoColab(cli, p){
+    const cs = colabsDe(p);
+    const ja = new Set(cs.filter(c => c.cli).map(c => c.cli));
+    const outros = clientes().filter(c => c.id !== cli && !ja.has(c.id));
+    return `<div class="qdFColab" role="group" aria-label="Collab"><span class="qdFRedesT">Collab</span>
+      ${cs.map((c, i) => `<span class="qdFColabI">${c.cli ? avCli(c.cli, 'qdAvC mini') : '<b class="qdFArroba">@</b>'}${esc_(c.cli ? nomeColab(c) : String(c.ig).replace(/^@/, ''))}<button type="button" class="qdX" data-qdcolabx="${i}" aria-label="Tirar ${esc_(nomeColab(c))} da collab">×</button></span>`).join('')}
+      ${outros.length ? `<select class="qdSel qdFColabSel" data-qdcolabcli="1" aria-label="Collab com um cliente da casa"><option value="">+ cliente da casa</option>${outros.map(c => `<option value="${esc_(c.id)}">${esc_(c.nome)}</option>`).join('')}</select>` : ''}
+      <form class="qdFColabIg" data-qdcolabig="1" autocomplete="off"><input type="text" class="qdIn" placeholder="+ @perfil do Instagram" aria-label="Collab com um perfil do Instagram" autocapitalize="off" spellcheck="false"></form>
+    </div>`;
+  }
+  /* --- trocar o card de cliente: nasce no novo (com as peças e as referências) e sai do antigo
+     sem passar pela lixeira dele — é o mesmo card, mudou de casa --- */
+  async function trocarCliente(cli, id, novoCli){
+    const p = achar(cli, id); if(!p || !novoCli || novoCli === cli || cli === AG) return;
+    const clone = JSON.parse(JSON.stringify(p));
+    if(segueOPadrao(p, cli)) clone.t = titulo(novoCli, p.fmt || 'Post', tema(p, cli));
+    if(achar(novoCli, clone.id)) clone.id = Math.max(Date.now(), +clone.id + 1) + Math.floor(Math.random() * 997);
+    clone.colab = colabsDe(p).filter(c => c.cli !== novoCli);
+    if(!clone.colab.length) delete clone.colab;
+    clone.mod = Date.now(); clone.trocouDe = cli;
+    S.mat = S.mat || {}; S.refs = S.refs || {};
+    const mats = materiais(cli, id), refs = refsDoCard(cli, id);
+    if(mats.length) S.mat[novoCli + '|' + clone.id] = JSON.parse(JSON.stringify(mats));
+    if(refs.length) S.refs[novoCli + '|' + clone.id] = JSON.parse(JSON.stringify(refs));
+    pautaDe(novoCli).push(clone);
+    anota('trocou-cliente', cli, id, novoCli, clone.id);
+    Q.folha = novoCli + '|' + clone.id;
+    desenharFolha(true); redesenharPagina();
+    await salvar(novoCli);
+    /* no antigo: vai para a lixeira e sai dela (o banco guarda o histórico; a tela não mostra) */
+    const lista = pautaDe(cli); const i = lista.findIndex(x => +x.id === +id);
+    if(i >= 0){
+      const [item] = lista.splice(i, 1);
+      const lx = typeof lixeiraDe === 'function' ? lixeiraDe(cli) : ((S.lixeira = S.lixeira || {})[cli] = S.lixeira[cli] || []);
+      lx.unshift({ item, idx: i, quando: Date.now(), movidoPara: novoCli });
+      await salvar(cli);
+      const j = lx.findIndex(e => e && e.item && +e.item.id === +id && e.movidoPara === novoCli);
+      if(j >= 0) lx.splice(j, 1);
+      await salvar(cli);
+    }
+    redesenharPagina();
+  }
+  Q.trocarCliente = trocarCliente;
+
+  /* --- o link de cada card: abre a Maestro direto nele --- */
+  const linkDoCard = key => location.origin + '/quadro#card=' + encodeURIComponent(key);
+  Q.linkDoCard = linkDoCard;
+  async function copiarTexto(txt){
+    try{ if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(txt); return true; } }catch(e){}
+    try{ const t = document.createElement('textarea'); t.value = txt; t.setAttribute('readonly', ''); t.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.appendChild(t); t.select(); const ok = document.execCommand('copy'); t.remove(); return ok; }catch(e){ return false; }
+  }
+  Q.copiarTexto = copiarTexto;
+  function avisoNoBotao(bt, txt){
+    const sp = bt.querySelector('span'); const alvo = sp || bt; const antes = alvo.textContent;
+    alvo.textContent = txt; bt.classList.add('feito');
+    clearTimeout(bt._t); bt._t = setTimeout(() => { alvo.textContent = antes; bt.classList.remove('feito'); }, 1600);
+  }
+  /* abrir um card pelo link (ou pelo aviso): espera a pessoa entrar e o banco falar */
+  function abrirCard(key, irConversa){
+    const [cli, id] = String(key).split('|');
+    let n = 0;
+    (function tenta(){
+      const dentro = S.usuario && S.usuario.tipo === 'agencia' && S.view === 'agency';
+      const lido = !window.Sincro || Sincro.lido !== false || n > 40;      /* sem banco (ou banco mudo), não espera para sempre */
+      if(dentro && lido && achar(cli, id)){
+        if(S.route !== 'producao'){ if(typeof go === 'function') go('agency', 'producao'); else { S.route = 'producao'; render(); } }
+        Q.folhaAba = Q.folhaAba || 'conteudo';
+        abrirFolha(cli + '|' + id);
+        if(irConversa) setTimeout(() => { const c = document.querySelector('#qdFolha .qdFChat'); if(c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60);
+        return;
+      }
+      if(++n < 100) setTimeout(tenta, 200);
+    })();
+  }
+  Q.abrirCard = abrirCard;
+  function lerLinkDoCard(){
+    const m = /[#&]card=([^&]+)/.exec(location.hash || ''); if(!m) return;
+    let key = ''; try{ key = decodeURIComponent(m[1]); }catch(e){ return; }
+    if(!/^[^|]+\|\d+$/.test(key)) return;
+    try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
+    abrirCard(key, /[#&]conversa/.test(location.hash));
+  }
+  addEventListener('hashchange', lerLinkDoCard);
+  setTimeout(lerLinkDoCard, 0);
+
+  /* --- a conversa do card ---------------------------------------------
+     "Colocar um chat em cada card, pra eu marcar as pessoas dentro do card pra
+     saber o que fazer e chegar a notificação pra ela." Cada mensagem é um campo
+     próprio do card (cm_<id>): duas pessoas escrevendo ao mesmo tempo nunca
+     disputam o mesmo campo, então nenhuma mensagem apaga a outra. Marcar é @Nome;
+     quem é marcado recebe o aviso (sino, aviso na tela e no celular). */
+  const pNome = x => String(x.n || '').split(/\s+/)[0] || String(x.n || '');
+  function mensagensDe(p){
+    return Object.keys(p).filter(k => /^cm_/.test(k) && p[k] && typeof p[k] === 'object' && p[k].txt)
+      .map(k => Object.assign({ id: k }, p[k])).sort((a, b) => (a.em || 0) - (b.em || 0));
+  }
+  Q.mensagensDe = mensagensDe;
+  function marcadosNo(txt){
+    const ps = pessoas(); const t = semAcento(txt); const out = new Set();
+    for(const x of ps){
+      const nomes = [String(x.n || ''), pNome(x)].map(semAcento).filter(Boolean);
+      if(nomes.some(n => t.includes('@' + n))) out.add(x.id);
+    }
+    return [...out];
+  }
+  Q.marcadosNo = marcadosNo;
+  function textoComMarcas(txt){
+    let h = esc_(txt);
+    for(const x of pessoas()){ const pn = esc_(pNome(x)); if(!pn) continue;
+      h = h.replace(new RegExp('@(' + String(x.n).split(/\s+/).map(w => esc_(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+') + '|' + pn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<b class="qdMarca">@$1</b>'); }
+    return h.replace(/\n/g, '<br>');
+  }
+  const horaMsg = t => { const d = new Date(t || 0); const hj = hoje(); const di = iso(d);
+    return (di === hj ? '' : ddmm(di) + ' ') + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+  function msgsHtml(p){
+    const ms = mensagensDe(p); const me = eu();
+    if(!ms.length) return `<p class="qdFChatVazio">Ninguém escreveu ainda. Escreva o que precisa ser feito e use @ para marcar quem faz.</p>`;
+    return ms.map(m => { const x = pessoa(m.por); return `<div class="qdMsg${m.por === me ? ' minha' : ''}" data-qdmsg="${esc_(m.id)}">
+        ${avPes(m.por, 'qdAvP mini')}<div class="qdMsgC"><div class="qdMsgT"><b>${esc_(x ? pNome(x) : (m.nome || 'Alguém'))}</b><span>${esc_(horaMsg(m.em))}</span>
+        ${m.por === me ? `<button type="button" class="qdX" data-qdmsgx="${esc_(m.id)}" aria-label="Apagar a mensagem" title="Apagar">×</button>` : ''}</div>
+        <div class="qdMsgTxt">${textoComMarcas(m.txt)}</div></div></div>`; }).join('');
+  }
+  function blocoConversa(cli, p){
+    const n = mensagensDe(p).length;
+    return `<section class="qdFChat" aria-label="Conversa do card"><h4>${ic_('chat', 13)} Conversa do card <span data-qdfchatn="1">${n || ''}</span></h4>
+      <div class="qdFMsgs" data-qdfmsgs="1">${msgsHtml(p)}</div>
+      <form class="qdFChatForm" data-qdmsgnovo="1" autocomplete="off">
+        <textarea class="qdIn" rows="1" placeholder="Escreva… use @ para marcar alguém" aria-label="Nova mensagem no card"></textarea>
+        <button type="submit" class="qdBt">Enviar</button>
+        <div class="qdMenSug" hidden></div>
+      </form></section>`;
+  }
+  const assinaturaMsgs = p => mensagensDe(p).map(m => m.id).join(',');
+  function enviarMensagem(cli, id, txt){
+    const p = achar(cli, id); const me = eu(); if(!p || !me) return null;
+    txt = String(txt || '').trim().slice(0, 2000); if(!txt) return null;
+    const mid = 'cm_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const men = marcadosNo(txt).filter(x => x !== me);
+    const x = pessoa(me);
+    mudar(cli, id, { [mid]: { por: me, nome: x ? x.n : '', em: Date.now(), txt, men } });
+    if(men.length && typeof avisar === 'function'){
+      const key = cli + '|' + id;
+      const nomeCard = cli === AG ? tema(p, cli) : (p.t || tema(p, cli));
+      const chave = 'card:' + key + ':' + mid;
+      try{
+        avisar({ para: men, autor: me, chave, txt: `${x ? pNome(x) : 'Alguém'} te marcou em ${String(nomeCard).slice(0, 70)}`,
+          sub: txt.slice(0, 140), ir: '/quadro#card=' + encodeURIComponent(key) + '&conversa' });
+        const a = (S.avisos || []).find(v => v && v.chave === chave);
+        if(a){ a.card = key; a.ir = '/quadro#card=' + encodeURIComponent(key) + '&conversa'; }
+      }catch(e){ anota('aviso-falhou', e && e.message); }
+    }
+    return mid;
+  }
+  Q.enviarMensagem = enviarMensagem;
+  /* no aparelho de quem foi marcado: o aviso aparece na tela (ou no celular) uma vez */
+  const VISTOS_CHAVE = 'maestro-card-avisos-v1';
+  let vistos = null, vistosDe = null;
+  function olharMarcacoes(){
+    const me = eu(); if(!me || !Array.isArray(S.avisos)) return;
+    if(vistosDe !== me){ vistos = null; vistosDe = me; }          /* cada pessoa do aparelho tem os seus */
+    const meus = S.avisos.filter(a => a && a.card && (a.para || []).includes(me) && !(a.lidoPor || []).includes(me));
+    if(vistos === null){
+      let guardado = null; try{ guardado = localStorage.getItem(VISTOS_CHAVE + ':' + me); }catch(e){}
+      try{ vistos = new Set(JSON.parse(guardado || '[]')); }catch(e){ vistos = new Set(); }
+      /* a primeira vez NESTE aparelho só fotografa: o que já estava no sino não vira aviso de novo */
+      if(guardado === null){ meus.forEach(a => vistos.add(a.id)); guardarVistos(); return; }
+    }
+    for(const a of meus){
+      if(vistos.has(a.id)) continue;
+      vistos.add(a.id);
+      if(Date.now() - (a.quando || 0) > 36e5) continue;                                     /* antigo: fica no sino */
+      try{ if(window.MaestroAvisos && MaestroAvisos.avisarNoAparelho) MaestroAvisos.avisarNoAparelho({ titulo: a.txt, corpo: a.sub, tag: a.chave, url: a.ir || ('/quadro#card=' + encodeURIComponent(a.card)) }); }catch(e){}
+      try{ if(typeof som === 'function') som('toque'); }catch(e){}
+    }
+    guardarVistos();
+  }
+  function guardarVistos(){ try{ if(vistos && vistosDe) localStorage.setItem(VISTOS_CHAVE + ':' + vistosDe, JSON.stringify([...vistos].slice(-200))); }catch(e){} }
+  Q.olharMarcacoes = olharMarcacoes;
+  setInterval(() => { try{ olharMarcacoes(); }catch(e){} }, 2500);
+  /* no sino: tocar num aviso de card abre o card, na conversa */
+  let avisoTocado = null;
+  addEventListener('pointerdown', e => { const t = e.target.closest && e.target.closest('[data-avabrir]'); avisoTocado = t ? t.dataset.avabrir : null; }, true);
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-avabrir]'); if(!t) return;
+    const a = (S.avisos || []).find(x => x && x.id === (t.dataset.avabrir || avisoTocado));
+    if(a && a.card) setTimeout(() => abrirCard(a.card, true), 30);
+  }, true);
+  /* sugestões ao escrever @ */
+  function sugerir(ta){
+    const box = ta.closest('form').querySelector('.qdMenSug');
+    const antes = ta.value.slice(0, ta.selectionStart);
+    const m = /(^|\s)@([^\s@]*)$/.exec(antes);
+    if(!m){ box.hidden = true; return; }
+    const q = semAcento(m[2]);
+    const ls = pessoas().filter(x => !q || semAcento(x.n).split(/\s+/).some(w => w.startsWith(q)) || semAcento(x.n).startsWith(q)).slice(0, 6);
+    if(!ls.length){ box.hidden = true; return; }
+    box.innerHTML = ls.map(x => `<button type="button" data-qdmen="${esc_(x.id)}">${avPes(x.id, 'qdAvP mini')}<span>${esc_(x.n)}</span></button>`).join('');
+    box.hidden = false;
+  }
+  function inserirMarca(ta, pid){
+    const x = pessoa(pid); if(!x) return;
+    const pos = ta.selectionStart; const antes = ta.value.slice(0, pos).replace(/(^|\s)@([^\s@]*)$/, (s0, a) => a + '@' + pNome(x) + ' ');
+    ta.value = antes + ta.value.slice(pos); ta.focus(); ta.setSelectionRange(antes.length, antes.length);
+    ta.closest('form').querySelector('.qdMenSug').hidden = true;
+  }
   function desenharFolha(inteira){
     if(!Q.folha) return;
     const [cli, id] = Q.folha.split('|');
@@ -1138,7 +1391,14 @@
     let el = document.getElementById('qdFolha');
     if(!p){ if(el){ el.innerHTML = `<div class="qdFolhaIn"><button type="button" class="qdFechar" data-qdfechar="1" aria-label="Fechar">×</button><p class="qdNada">Este card não está mais no quadro (foi apagado). Ele está na Lixeira.</p></div>`; } return; }
     if(el && !inteira){ atualizarCampos(el, cli, p); return; }
+    /* v304 — "quando clica em alguma função, ele sobe o scroll pro começo do card…
+       é pra permanecer". Redesenhar a ficha trocava o conteúdo inteiro e a rolagem
+       voltava a zero; agora ela é guardada e devolvida (mesmo card, mesma altura). */
+    const mesmoCard = el && el.dataset.qdfkey === Q.folha;
+    const rolIn = mesmoCard && el.querySelector('.qdFolhaIn') ? el.querySelector('.qdFolhaIn').scrollTop : 0;
+    const rolEl = mesmoCard ? el.scrollTop : 0;
     if(!el){ el = document.createElement('div'); el.id = 'qdFolha'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'false'); document.body.appendChild(el); }
+    el.dataset.qdfkey = Q.folha;
     document.body.classList.add('qdFolhaAberta');
     const col = colunaDe(p);
     const ehAg = cli === AG;
@@ -1146,13 +1406,16 @@
     const ck = Array.isArray(p.check) ? p.check : [];
     const ms = materiais(cli, p.id);
     el.innerHTML = `<div class="qdFolhaFundo" data-qdfechar="1"></div><div class="qdFolhaIn" data-qdfkey="${esc_(Q.folha)}">
-      <div class="qdFTopo">${avCli(cli)}<span class="qdCli">${esc_(cliente(cli).nome)}</span><span class="qdSp"></span>
+      <div class="qdFTopo">${avCli(cli)}${ehAg ? `<span class="qdCli">${esc_(cliente(cli).nome)}</span>`
+          : `<select class="qdSel qdFCliSel" data-qdfcli="1" aria-label="Cliente do card">${clientes().map(c => `<option value="${esc_(c.id)}" ${c.id === cli ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}</select>`}
+        <span class="qdSp"></span>
+        <button type="button" class="qdFLink" data-qdlink="1" title="Copiar o link deste card">${ic_('linkic', 13)}<span>Copiar link</span></button>
         <span class="qdFSalvo" id="qdFSalvo" aria-live="polite">Tudo salvo</span>
         <button type="button" class="qdFechar" data-qdfechar="1" aria-label="Fechar">×</button></div>
       <div class="qdFTitL">${!ehAg && segueOPadrao(p, cli) ? `<span class="qdFPre" data-qdfpre="1">${esc_(prefixo(cli, p))}</span>` : ''}<textarea class="qdFTit" data-qf="tema" rows="1" aria-label="Nome do card">${esc_(tema(p, cli))}</textarea></div>
       ${ehAg || segueOPadrao(p, cli) ? '' : `<p class="qdFNome">Fora do padrão. <button type="button" class="qdPil" data-qdpadrao="1">Padronizar: ${esc_(titulo(cli, p.fmt || 'Post', limparTema(tema(p, cli), p.fmt)))}</button></p>`}
       ${ehAg ? '' : (() => { const on = new Set(platsDe(p));
-        return `<div class="qdFRedes" role="group" aria-label="Vai para"><span class="qdFRedesT">Vai para</span>${Object.keys(REDE).filter(k => typeof PLATS !== 'object' || !PLATS || PLATS[k]).map(k => `<button type="button" class="qdFRede ${on.has(k) ? 'on' : ''}" style="--pc:${REDE[k][0]}" title="${esc_(nomeRede(k))}" data-qdplat="${esc_(k)}" aria-pressed="${on.has(k)}">${iconeRede(k)}<span>${esc_(nomeRede(k))}</span></button>`).join('')}${on.size ? '' : '<span class="qdFRedesNada">escolha onde o post vai ao ar</span>'}</div>`; })()}
+        return `<div class="qdFRedes" role="group" aria-label="Vai para"><span class="qdFRedesT">Vai para</span>${Object.keys(REDE).filter(k => typeof PLATS !== 'object' || !PLATS || PLATS[k]).map(k => `<button type="button" class="qdFRede ${on.has(k) ? 'on' : ''}" style="--pc:${REDE[k][0]}" title="${esc_(nomeRede(k))}" data-qdplat="${esc_(k)}" aria-pressed="${on.has(k)}">${iconeRede(k)}<span>${esc_(nomeRede(k))}</span></button>`).join('')}${on.size ? '' : '<span class="qdFRedesNada">escolha onde o post vai ao ar</span>'}</div>` + blocoColab(cli, p); })()}
       <div class="qdFCols" role="group" aria-label="Coluna">${COLS.filter(([k]) => !ehAg || !['cliente', 'aprovado', 'agendado'].includes(k)).map(([k, n, c]) =>
         `<button type="button" class="qdFCol ${col === k ? 'on' : ''}" style="--qdc:${c}" data-qdfcol="${k}">${ehAg && k === 'publicado' ? 'Feito' : n}</button>`).join('')}</div>
       ${(() => { const b = blocoProximo(Q.folha, cli, p, col, 'qdProx qdFProx'); return b ? `<div class="qdFProxL"><span>Próximo passo</span>${b}</div>` : ''; })()}
@@ -1179,7 +1442,7 @@
           <div class="qdFCk">${ck.map(c => `<div class="qdFCkL ${c.ok ? 'ok' : ''}"><button type="button" class="qdOk mini" data-qdck="${esc_(c.id)}" aria-label="${c.ok ? 'Desmarcar' : 'Marcar'}">${c.ok ? ic_('checkc', 11) : ''}</button>
             <span>${esc_(c.t)}</span><button type="button" class="qdX" data-qdckx="${esc_(c.id)}" aria-label="Tirar item">×</button></div>`).join('')}</div>
           <form class="qdFCkNovo" data-qdcknovo="1" autocomplete="off"><input type="text" class="qdIn" placeholder="+ item da checklist" aria-label="Novo item da checklist"></form></div>`;
-        const briefing = `<div class="qdFBloco"><h4>${ehAg ? 'Descrição' : 'Briefing'}</h4><textarea class="qdIn qdArea" data-qf="objetivo" rows="2" placeholder="${ehAg ? 'Detalhes da tarefa' : 'O que o card precisa dizer, para quem, com que objetivo'}">${esc_(p.objetivo || '')}</textarea></div>`;
+        const briefing = `<div class="qdFBloco"><h4>${ehAg ? 'Descrição' : 'Briefing'} ${bCopiar('objetivo')}</h4><textarea class="qdIn qdArea" data-qf="objetivo" rows="2" placeholder="${ehAg ? 'Detalhes da tarefa' : 'O que o card precisa dizer, para quem, com que objetivo'}">${esc_(p.objetivo || '')}</textarea></div>`;
         if(ehAg) return briefing + checklist;
         const aba = Q.folhaAba || 'conteudo';
         const cont = contagemAbas(cli, p);
@@ -1189,6 +1452,9 @@
           <div class="qdFMat">${ms.map((m, i) => {
             const u = url_(m.tipo === 'imagem' ? (m.url || m.capa) : (m.capa || m.poster || ''));
             return `<span class="qdFMatI"><button type="button" class="qdFMatVer" data-qdver="${i}" aria-label="Ver ${esc_(m.nome || 'a peça ' + (i + 1))}" title="${esc_(m.nome || '')}">${u ? `<img src="${u}" alt="" loading="lazy">` : `<i>${esc_(m.tipo === 'video' ? 'vídeo' : m.tipo === 'link' ? 'link' : 'arquivo')}</i>`}${m.tipo === 'video' ? `<b class="qdFMatPlay" aria-hidden="true">▶</b>` : ''}${ms.length > 1 ? `<em>${i + 1}</em>` : ''}</button>
+              ${Q.matApagar && Q.matApagar.key === Q.folha && Q.matApagar.i === i
+                ? `<span class="qdFMatConf"><b>Apagar?</b><button type="button" data-qdmatsim="${i}">Sim</button><button type="button" data-qdmatnao="1">Não</button></span>`
+                : `<button type="button" class="qdFMatX" data-qdmatx="${i}" aria-label="Apagar ${esc_(m.nome || 'a peça ' + (i + 1))}" title="Apagar esta peça">×</button>`}
               ${m.tipo !== 'link' ? `<button type="button" class="qdFMatBaixa" data-qdbaixar="${i}" aria-label="Baixar ${esc_(m.nome || 'a peça ' + (i + 1))}" title="Baixar">${ic_('baixar', 12) || '↓'}</button>` : ''}
               ${ms.length > 1 ? `<span class="qdFMatMv"><button type="button" data-qdmv="${i}|-1" aria-label="Uma posição antes" ${i === 0 ? 'disabled' : ''}>‹</button><button type="button" data-qdmv="${i}|1" aria-label="Uma posição depois" ${i === ms.length - 1 ? 'disabled' : ''}>›</button></span>` : ''}</span>`; }).join('')}</div>
           <div class="qdFMatBts">${ms.filter(m => m.tipo !== 'link').length ? `<button type="button" class="qdPil" data-qdbaixar="todas">${ic_('baixar', 12)} ${ms.filter(m => m.tipo !== 'link').length > 1 ? `Baixar as ${ms.filter(m => m.tipo !== 'link').length}` : 'Baixar'}</button>` : ''}${ms.length > 1 ? `<button type="button" class="qdPil" data-qdmatnome="1">Ordenar por nome</button>` : ''}<button type="button" class="qdPil" data-qdsubir="1">${ic_('clipe', 12)} Subir material</button></div>
@@ -1196,12 +1462,13 @@
           ${blocoRefs(cli, p)}`;
         return `<div class="qdFAbas" role="tablist" aria-label="Partes do card">${tab('conteudo', 'Conteúdo')}${tab('peca', 'Peça')}${tab('detalhes', 'Detalhes')}</div>
           <div class="qdFPainel" data-qdfpainel="conteudo" role="tabpanel" ${aba === 'conteudo' ? '' : 'hidden'}>${briefing}
-            <div class="qdFBloco"><h4>Texto</h4><textarea class="qdIn qdArea" data-qf="texto" rows="2" placeholder="O texto da peça">${esc_(p.texto || '')}</textarea></div>
-            <div class="qdFBloco"><h4>Legenda</h4><textarea class="qdIn qdArea" data-qf="legenda" rows="2" placeholder="O texto que vai publicado">${esc_(p.legenda || '')}</textarea></div>
+            <div class="qdFBloco"><h4>Texto ${bCopiar('texto')}</h4><textarea class="qdIn qdArea" data-qf="texto" rows="2" placeholder="O texto da peça">${esc_(p.texto || '')}</textarea></div>
+            <div class="qdFBloco"><h4>Legenda ${bCopiar('legenda')}</h4><textarea class="qdIn qdArea" data-qf="legenda" rows="2" placeholder="O texto que vai publicado">${esc_(p.legenda || '')}</textarea></div>
             ${blocosConteudo(p, 'conteudo')}</div>
           <div class="qdFPainel" data-qdfpainel="peca" role="tabpanel" ${aba === 'peca' ? '' : 'hidden'}>${peca}</div>
           <div class="qdFPainel" data-qdfpainel="detalhes" role="tabpanel" ${aba === 'detalhes' ? '' : 'hidden'}>${blocoFormato(p)}${blocosConteudo(p, 'detalhes')}${checklist}</div>`;
       })()}
+      ${blocoConversa(cli, p)}
       <div class="qdFPe">
         ${Q.folhaApagar ? `<span>Mandar para a lixeira?</span><button type="button" class="qdPil" data-qdapagarnao="1">Não</button><button type="button" class="qdPil perigo" data-qdapagarsim="1">Sim, apagar</button>`
           : `<button type="button" class="qdPil perigo" data-qdapagar="1">${ic_('lixo', 12)} Apagar</button>`}
@@ -1210,11 +1477,14 @@
     const t = el.querySelector('.qdFTit'); if(t) ajustarAltura(t);
     el.querySelectorAll('.qdArea').forEach(ajustarAltura);
     el.dataset.assin = assinaturaFolha(cli, p);
+    const cxm = el.querySelector('[data-qdfmsgs]'); if(cxm){ cxm.dataset.assin = assinaturaMsgs(p); cxm.scrollTop = cxm.scrollHeight; }
+    if(rolIn){ const inn = el.querySelector('.qdFolhaIn'); if(inn) inn.scrollTop = rolIn; }
+    if(rolEl) el.scrollTop = rolEl;
   }
   /* o que, mudando, pede a ficha desenhada de novo. Guardada a cada desenho
      inteiro: sem isso, o primeiro campo gravado depois de trocar o tipo ou
      pôr um trecho redesenhava tudo e tirava o cursor de quem digitava. */
-  const assinaturaFolha = (cli, p) => JSON.stringify([p.check || [], materiais(cli, p.id).map(m => (m && (m.url || m.nome)) || '').join('|'), !!p.ajustePendente, linhas(p, 'tcs'), linhas(p, 'telas'), p.plats || [], tipoDaFolha(p), ehStory(p), fmtsDe(p), p.pilar || '', refsDoCard(cli, p.id).length]);
+  const assinaturaFolha = (cli, p) => JSON.stringify([colabsDe(p), p.check || [], materiais(cli, p.id).map(m => (m && (m.url || m.nome)) || '').join('|'), !!p.ajustePendente, linhas(p, 'tcs'), linhas(p, 'telas'), p.plats || [], tipoDaFolha(p), ehStory(p), fmtsDe(p), p.pilar || '', refsDoCard(cli, p.id).length]);
   function ajustarAltura(t){ if(!t.offsetParent && !t.classList.contains('qdFTit')) return; t.style.height = 'auto'; t.style.height = Math.min(t.classList.contains('qdFTit') ? 160 : 420, t.scrollHeight + 2) + 'px'; }
   function salvoAgora(txt){ const s = document.getElementById('qdFSalvo'); if(s){ s.textContent = txt; s.classList.toggle('salvando', txt !== 'Tudo salvo'); } }
   const valorDoCampo = (p, cli, k) => k === 'tema' ? tema(p, cli) : pegar(p, k);
@@ -1232,6 +1502,9 @@
     el.querySelectorAll('[data-qdfcol]').forEach(b => b.classList.toggle('on', b.dataset.qdfcol === col));
     /* checklist, material e ajuste: redesenha só se não há nada sendo digitado neles */
     el.querySelectorAll('[data-qfbool]').forEach(c => { if(c !== ativo) c.checked = !!p[c.dataset.qfbool]; });
+    const am = assinaturaMsgs(p), cx = el.querySelector('[data-qdfmsgs]');
+    if(cx && cx.dataset.assin !== am){ const noFim = cx.scrollHeight - cx.scrollTop - cx.clientHeight < 40; cx.innerHTML = msgsHtml(p); cx.dataset.assin = am;
+      if(noFim) cx.scrollTop = cx.scrollHeight; const nn = el.querySelector('[data-qdfchatn]'); if(nn) nn.textContent = mensagensDe(p).length || ''; }
     const assin = assinaturaFolha(cli, p);
     if(el.dataset.assin && el.dataset.assin !== assin && !(ativo && el.contains(ativo) && ativo.closest('.qdFCkNovo'))){
       const rol = el.querySelector('.qdFolhaIn') ? el.querySelector('.qdFolhaIn').scrollTop : 0;
@@ -1329,7 +1602,14 @@
     const naPagina = S.view === 'agency' && S.route === 'producao';
     const g = naPagina ? guardarEntrada() : [];
     const rolQ = naPagina ? ((document.querySelector('#root .qdQuadro') || {}).scrollLeft || 0) : 0;
+    /* v304 — "as miniaturas dos cards ficam piscando". Cada redesenho (e o ao vivo
+       redesenha a cada novidade) criava a capa de novo, e o celular mostrava o card
+       vazio até decodificar a imagem outra vez. Agora a capa que já está na tela é a
+       MESMA que volta, enquanto a peça não muda. */
+    const capas = new Map();
+    if(naPagina) document.querySelectorAll('#root [data-qdcapa]').forEach(c => { if(!capas.has(c.dataset.qdcapa)) capas.set(c.dataset.qdcapa, c); });
     const r = renderAntes.apply(this, arguments);
+    if(capas.size) document.querySelectorAll('#root [data-qdcapa]').forEach(c => { const v = capas.get(c.dataset.qdcapa); if(v && v !== c){ c.replaceWith(v); capas.delete(c.dataset.qdcapa); } });
     if(S.view === 'agency' && S.route === 'producao'){
       if(g.length) devolverEntrada(g);
       const qd = document.querySelector('#root .qdQuadro'); if(qd && rolQ) qd.scrollLeft = rolQ;
@@ -1399,7 +1679,7 @@
     /* v291 — o que veio da Mandala ou do Estúdio (briefing, passos) entra no card que nasceu */
     const ex = Q.extra && Q.extra.alvo === alvo ? Q.extra : null;
     if(r && ex){ Q.extra = null; try{ if(ex.campos) mudar(r.cli, r.p.id, ex.campos); if(ex.depois) ex.depois(r); }catch(x){} }
-    if(Q.esc[alvo]) delete Q.esc[alvo].fmt;           /* o cliente fica escolhido para o próximo; o formato, não */
+    if(Q.esc[alvo]){ delete Q.esc[alvo].fmt; delete Q.esc[alvo].fmts; }  /* o cliente fica escolhido para o próximo; o formato, não */
     if(r && alvo.startsWith('cal:') && r.cli !== AG) mudar(r.cli, r.p.id, { data: alvo.slice(4), dia: (doISO(alvo.slice(4)).getDay() + 6) % 7, hora: r.p.hora || '18:30' });
     t.value = '';
     redesenharPagina();
@@ -1417,7 +1697,7 @@
     try{ S.modal = null; if(typeof renderLayer === 'function') renderLayer(); }catch(e){}
     Q.aba = 'quadro'; Q.colMovel = col; Q.filtroPrazo = 'todos';
     if(recolhidas().has(col)) alternarRecolhida(col);
-    Q.esc[col] = Object.assign({}, Q.esc[col] || {}, o.cli ? { cli: o.cli } : {}, o.fmt ? { fmt: o.fmt } : {});
+    Q.esc[col] = Object.assign({}, Q.esc[col] || {}, o.cli ? { cli: o.cli } : {}, o.fmt ? { fmt: o.fmt, fmts: [o.fmt] } : {});
     Q.extra = (o.campos || o.depois) ? { alvo: col, campos: o.campos || null, depois: o.depois || null } : null;
     if(S.view !== 'agency' || S.route !== 'producao'){ if(typeof go === 'function') go('agency', 'producao'); else { S.view = 'agency'; S.route = 'producao'; } }
     render();
@@ -1556,7 +1836,10 @@
     if(chip){
       const f = chip.closest('form'); const { alvo } = baseDoForm(f);
       const esc = Q.esc[alvo] = Q.esc[alvo] || {};
-      if(chip.dataset.qdncli) esc.cli = chip.dataset.qdncli; else esc.fmt = chip.dataset.qdnfmt;
+      if(chip.dataset.qdncli) esc.cli = chip.dataset.qdncli;
+      else { const f = chip.dataset.qdnfmt; const l = Array.isArray(esc.fmts) ? esc.fmts.slice() : (esc.fmt ? [esc.fmt] : []);
+        const i = l.indexOf(f); if(i >= 0) l.splice(i, 1); else l.push(f);
+        esc.fmts = l; esc.fmt = l[0]; if(!l.length){ delete esc.fmts; delete esc.fmt; } }
       atualizarNome(f);
       const c = f.querySelector('input[type=text], textarea'); if(c) c.focus();
       return;
@@ -1745,7 +2028,7 @@
       const i = f.querySelector('input'); const txt = (i.value || '').trim(); if(!txt) return;
       const pid = Q.pessoa || eu();
       criarDoTexto(txt, { resp: pid, coluna: 'afazer' }, Q.esc.lista);
-      if(Q.esc.lista) delete Q.esc.lista.fmt;
+      if(Q.esc.lista){ delete Q.esc.lista.fmt; delete Q.esc.lista.fmts; }
       i.value = '';
       redesenharPagina();
       const n = document.getElementById('qdNovo'); if(n) n.focus();
@@ -1988,6 +2271,73 @@
   }
 
   /* ---------------- nada de mensagem embaixo ---------------- */
+  /* ---------------- v304: os toques do que é novo na ficha ---------------- */
+  document.addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('#qdFolha [data-qdcopiar], #qdFolha [data-qdlink], #qdFolha [data-qdmatx], #qdFolha [data-qdmatsim], #qdFolha [data-qdmatnao], #qdFolha [data-qdcolabx], #qdFolha [data-qdmen], #qdFolha [data-qdmsgx]');
+    if(!t || !Q.folha) return;
+    e.preventDefault(); e.stopPropagation();
+    const key = Q.folha; const [cli, id] = key.split('|'); const d = t.dataset;
+    if(d.qdcopiar){
+      const c = document.querySelector(`#qdFolha [data-qf="${CSS.escape(d.qdcopiar)}"]`);
+      const p = achar(cli, id); const v = c ? c.value : (p ? pegar(p, d.qdcopiar) : '');
+      copiarTexto(v || '').then(ok => avisoNoBotao(t, v ? (ok ? 'Copiado' : 'Não deu') : 'Vazio'));
+      return;
+    }
+    if(d.qdlink){ copiarTexto(linkDoCard(key)).then(ok => avisoNoBotao(t, ok ? 'Link copiado' : 'Não deu')); return; }
+    if(d.qdmatx !== undefined){ Q.matApagar = { key, i: +d.qdmatx }; desenharFolha(true); return; }
+    if(d.qdmatnao){ Q.matApagar = null; desenharFolha(true); return; }
+    if(d.qdmatsim !== undefined){
+      const arr = materiais(cli, id); const i = +d.qdmatsim; Q.matApagar = null;
+      if(arr[i]){ arr.splice(i, 1); mudar(cli, id, {}); salvar(cli); }
+      desenharFolha(true); redesenharPagina(); return;
+    }
+    if(d.qdcolabx !== undefined){ const p = achar(cli, id); if(!p) return; const l = colabsDe(p).slice(); l.splice(+d.qdcolabx, 1);
+      mudar(cli, id, { colab: l.length ? l : null }); desenharFolha(true); redesenharPagina(); return; }
+    if(d.qdmen){ const ta = t.closest('form').querySelector('textarea'); inserirMarca(ta, d.qdmen); return; }
+    if(d.qdmsgx){ const p = achar(cli, id); if(!p || !p[d.qdmsgx] || p[d.qdmsgx].por !== eu()) return; mudar(cli, id, { [d.qdmsgx]: null }); desenharFolha(false); redesenharPagina(); return; }
+  }, true);
+  document.addEventListener('submit', e => {
+    const f = e.target;
+    if(!Q.folha || !f.closest || !f.closest('#qdFolha')) return;
+    const [cli, id] = Q.folha.split('|');
+    if(f.matches('[data-qdmsgnovo]')){
+      e.preventDefault(); e.stopPropagation();
+      const ta = f.querySelector('textarea'); const v = (ta.value || '').trim(); if(!v) return;
+      if(enviarMensagem(cli, id, v)){ ta.value = ''; ta.style.height = ''; f.querySelector('.qdMenSug').hidden = true; desenharFolha(false); redesenharPagina();
+        const cx = document.querySelector('#qdFolha [data-qdfmsgs]'); if(cx) cx.scrollTop = cx.scrollHeight; ta.focus(); }
+      return;
+    }
+    if(f.matches('[data-qdcolabig]')){
+      e.preventDefault(); e.stopPropagation();
+      const i = f.querySelector('input'); let v = String(i.value || '').trim().replace(/^(https?:\/\/)?(www\.)?instagram\.com\//i, '').replace(/[/?#].*$/, '').replace(/\s+/g, '');
+      if(!v) return; v = '@' + v.replace(/^@+/, '');
+      if(!/^@[A-Za-z0-9._]{1,30}$/.test(v)){ i.setCustomValidity('Escreva o @ do perfil, ex.: @perfil'); i.reportValidity(); return; }
+      const p = achar(cli, id); if(!p) return;
+      const l = colabsDe(p); if(!l.some(c => c.ig && c.ig.toLowerCase() === v.toLowerCase())) mudar(cli, id, { colab: l.concat({ ig: v }) });
+      i.value = ''; desenharFolha(true); redesenharPagina(); return;
+    }
+  }, true);
+  document.addEventListener('change', e => {
+    const c = e.target; if(!Q.folha || !c.closest || !c.closest('#qdFolha')) return;
+    const [cli, id] = Q.folha.split('|');
+    if(c.dataset.qdfcli){ e.stopPropagation(); const v = c.value; if(v && v !== cli) trocarCliente(cli, id, v); return; }
+    if(c.dataset.qdcolabcli){ e.stopPropagation(); const v = c.value; if(!v) return; const p = achar(cli, id); if(!p) return;
+      const l = colabsDe(p); if(!l.some(x => x.cli === v)) mudar(cli, id, { colab: l.concat({ cli: v }) }); desenharFolha(true); redesenharPagina(); return; }
+  }, true);
+  document.addEventListener('input', e => {
+    const c = e.target;
+    if(c.matches && c.matches('#qdFolha .qdFChatForm textarea')){ c.style.height = 'auto'; c.style.height = Math.min(160, c.scrollHeight + 2) + 'px'; sugerir(c); }
+    if(c.matches && c.matches('#qdFolha [data-qdcolabig] input')) c.setCustomValidity('');
+  }, true);
+  document.addEventListener('keydown', e => {
+    const c = e.target;
+    if(!(c.matches && c.matches('#qdFolha .qdFChatForm textarea'))) return;
+    const box = c.closest('form').querySelector('.qdMenSug');
+    if(!box.hidden && (e.key === 'Enter' || e.key === 'Tab')){ const b = box.querySelector('[data-qdmen]'); if(b){ e.preventDefault(); inserirMarca(c, b.dataset.qdmen); return; } }
+    if(e.key === 'Escape' && !box.hidden){ e.preventDefault(); e.stopPropagation(); box.hidden = true; return; }
+    if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); c.closest('form').requestSubmit(); }
+  }, true);
+
   const st = document.createElement('style');
   st.id = 'qd-estilo';
   st.textContent = `
@@ -2057,6 +2407,7 @@
   .qdAjuste{ font-size:11.5px; color:var(--coral, #FF9F0A); margin:-2px 0 8px }
   .qdMeta{ display:flex; align-items:center; gap:6px; flex-wrap:wrap }
   .qdChip{ display:inline-flex; align-items:center; gap:4px; font-size:11.5px; color:var(--mut, #999) }
+  .qdData em{ font-style:normal; font-weight:600; opacity:.85 }
   .qdChip.atrasado{ color:var(--danger, #E5484D); font-weight:600 }
   .qdChip.hoje{ color:var(--coral, #FF9F0A) }
   .qdChip.ok{ color:#30D158 }
@@ -2434,6 +2785,46 @@
   html[data-tema="claro"] .qdDd.hoje .qdDdN, html[data-tema="claro"] .qdAgDia.hoje .qdAgN b, html[data-tema="claro"] .qdSemDia.hoje header b{ color:#8A5A00 }
   html[data-tema="claro"] .qdSemCard{ background:#FCFBF9; box-shadow:0 1px 2px rgba(0,0,0,.07) }
   html[data-tema="claro"] .qdFolhaFundo{ background:rgba(0,0,0,.18) }
+
+  /* v304 */
+  .qdFLink{ display:inline-flex; align-items:center; gap:5px; border:0; background:var(--sup2, rgba(255,255,255,.07)); color:inherit; font:inherit; font-size:12px; padding:6px 10px; border-radius:999px; cursor:pointer; margin-right:6px }
+  .qdFLink.feito, .qdCopiar.feito{ color:#1C1C1F; background:var(--brass-500, #FFC857) }
+  .qdFCliSel{ max-width:190px; font-weight:600 }
+  .qdCopiar{ display:inline-flex; align-items:center; gap:4px; border:0; background:none; color:var(--mut, #999); font:inherit; font-size:11px; font-weight:500; padding:2px 6px; border-radius:6px; cursor:pointer; margin-left:6px; vertical-align:middle; text-transform:none; letter-spacing:0 }
+  .qdCopiar:hover{ color:inherit; background:var(--sup2, rgba(255,255,255,.07)) }
+  .qdFCampoT{ display:flex; align-items:center; justify-content:space-between }
+  .qdFTela .qdCopiar span{ display:none }
+  .qdFMatI{ position:relative }
+  .qdFMatX{ position:absolute; top:4px; left:4px; width:22px; height:22px; border:0; border-radius:50%; background:rgba(0,0,0,.65); color:#fff; font-size:14px; line-height:1; cursor:pointer; display:grid; place-items:center; z-index:2 }
+  .qdFMatConf{ position:absolute; inset:0; z-index:3; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; background:rgba(0,0,0,.78); color:#fff; border-radius:10px; font-size:12px }
+  .qdFMatConf button{ border:0; border-radius:999px; padding:3px 12px; font:inherit; font-size:12px; cursor:pointer; background:#fff; color:#111 }
+  .qdFMatConf button[data-qdmatsim]{ background:#E5484D; color:#fff }
+  .qdFColab{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:-2px 0 12px }
+  .qdFColabI{ display:inline-flex; align-items:center; gap:5px; font-size:12.5px; padding:3px 4px 3px 6px; border-radius:999px; background:var(--sup2, rgba(255,255,255,.07)) }
+  .qdFArroba{ font-weight:700; color:#E1306C }
+  .qdFColabSel{ font-size:12px; padding:4px 8px }
+  .qdFColabIg{ flex:1 1 150px; min-width:130px; max-width:220px }
+  .qdFColabIg input{ width:100%; box-sizing:border-box; font-size:12px; padding:5px 9px }
+  .qdColabC{ max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .qdFChat{ margin:14px 0 8px; padding:12px; border-radius:14px; background:var(--sup2, rgba(255,255,255,.05)) }
+  .qdFChat h4{ display:flex; align-items:center; gap:6px; margin:0 0 8px; font-size:13px }
+  .qdFChat h4 span{ color:var(--mut, #999); font-weight:500 }
+  .qdFMsgs{ max-height:300px; overflow:auto; display:flex; flex-direction:column; gap:10px; padding:2px 2px 8px }
+  .qdFChatVazio{ margin:0; font-size:12.5px; color:var(--mut, #999) }
+  .qdMsg{ display:flex; gap:8px; align-items:flex-start }
+  .qdMsgC{ flex:1; min-width:0 }
+  .qdMsgT{ display:flex; align-items:center; gap:6px; font-size:12px }
+  .qdMsgT span{ color:var(--mut, #999); font-size:11px }
+  .qdMsgT .qdX{ margin-left:auto; opacity:.5 }
+  .qdMsgTxt{ font-size:13.5px; line-height:1.45; white-space:normal; word-break:break-word }
+  .qdMarca{ color:#1C1C1F; background:var(--brass-500, #FFC857); border-radius:5px; padding:0 3px; font-weight:600 }
+  .qdFChatForm{ position:relative; display:flex; gap:6px; align-items:flex-end }
+  .qdFChatForm textarea{ flex:1; resize:none; min-height:38px; max-height:160px; font-size:14px }
+  .qdMenSug{ position:absolute; left:0; bottom:calc(100% + 6px); z-index:5; min-width:220px; background:var(--sup, #2a2a2e); border-radius:12px; padding:4px; box-shadow:0 12px 32px rgba(0,0,0,.35) }
+  .qdMenSug button{ display:flex; align-items:center; gap:8px; width:100%; border:0; background:none; color:inherit; font:inherit; font-size:13px; padding:7px 8px; border-radius:8px; cursor:pointer; text-align:left }
+  .qdMenSug button:hover, .qdMenSug button:first-child{ background:var(--sup2, rgba(255,255,255,.08)) }
+  html[data-tema="claro"] .qdMenSug{ background:#FCFBF9 }
+  @media (max-width:760px){ .qdFLink span{ display:none } .qdFColabSel{ font-size:13px } }
   #btAtualizar{ display:none !important }
   .qdPagina [data-qdkey]{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none }
   body.qdArrastandoToque{ touch-action:none }

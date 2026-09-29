@@ -1,11 +1,45 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.118
+Version: 0.5.119
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.119 — 2026-09-29
+
+**Status:** No ar.
+
+### v304 — o card completo
+
+Uma leva de pedidos do founder sobre o card do Quadro:
+- **Filtro de data** ("não tá identificando direito"): dois grupos — *Entrega da
+  equipe* (atrasada, hoje, esta semana, próxima, sem data) e *Postagem* (vai ao ar
+  hoje, esta semana, próxima). A entrega só conta o que ainda é trabalho da casa
+  (Pauta, A fazer, Fazendo, Revisão); antes, "Esta semana" contava o que já tinha ido
+  ao cliente, "Atrasados" deixava a Revisão de fora e não havia filtro pela data de
+  postagem. Datas escritas como 09/10/2026 também são lidas.
+- **Datas por fora do card:** "Entrega 09/10" e "No ar 13/10 18:00", cada uma com o nome.
+- **Trocar o cliente** do card na ficha (vai com peças, referências e conversa; sai do
+  antigo sem ficar na lixeira dele; o nome se refaz no padrão do novo).
+- **Collab:** com um cliente da casa ou com um @ do Instagram que não está na Maestro
+  (aceita o link do perfil). O card por fora mostra com quem.
+- **Pilar** saiu da ficha (o que já estava gravado fica no card).
+- **Apagar mídia:** × em cada peça, com "Apagar? Sim / Não".
+- **A ficha não volta ao topo** quando se toca em algo (a rolagem é guardada).
+- **Criar com mais de um formato** (Reels + Shorts); o nome segue o primeiro.
+- **Copiar** ao lado de cada caixa de texto (briefing, texto, legenda, roteiro, telas…).
+- **Link do card:** "Copiar link" na ficha; abrir o link leva direto ao card.
+- **Conversa do card**, com @ para marcar (sugere a pessoa ao escrever). Cada mensagem
+  é um campo próprio do card, então duas pessoas escrevendo juntas não se apagam.
+  Quem é marcado recebe o aviso: sino, aviso na tela e no celular; tocar abre o card
+  na conversa.
+- **Miniaturas não piscam:** o redesenho devolve a mesma capa enquanto a peça não muda.
+- 37 provas em `web/verificar/v304-o-card-completo.mjs`; v290 (filtro, 25) e v291
+  (sem Pilar) atualizadas.
+- **Aberto:** a conversa do card viaja junto com o card para o link do cliente (não é
+  desenhada lá, como a observação); se for preciso esconder de vez, filtrar na porta.
 
 ## 0.5.118 — 2026-09-29
 

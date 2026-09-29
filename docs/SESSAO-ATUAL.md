@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 29 set 2026 (v303 no ar)
+Última atualização: 29 set 2026 (v304 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -20,7 +20,12 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v303 (29 set) — ensaio geral com 5 pessoas ao mesmo tempo (achou e consertou:
+v304 (29 set) — o card completo: filtro de data (entrega · postagem), datas com
+nome por fora, trocar cliente, collab (cliente ou @), sem Pilar, apagar mídia,
+ficha sem voltar ao topo, criar com vários formatos, copiar texto, link do card,
+conversa do card com @ e aviso, miniaturas sem piscar. Pedido do founder nas
+palavras dele está no CHANGELOG 0.5.119.
+Antes, v303 (29 set) — ensaio geral com 5 pessoas ao mesmo tempo (achou e consertou:
 quem volta da rede não recebia os cards criados enquanto estava fora); Estúdio:
 quadro de ideias abre em tela cheia com o menu recolhido, botão para alternar, e
 "PDF" no quadro e no editor de design. O ALARME DIÁRIO está pronto em

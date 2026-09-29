@@ -349,6 +349,18 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (29 set, v304, NO AR) — o card completo.** Filtro de data em dois
+grupos (entrega da equipe · postagem), só o trabalho da casa conta na entrega;
+datas por fora com nome ("Entrega", "No ar"); trocar o cliente do card (sai do
+antigo sem ficar na lixeira); collab com cliente da casa ou @ do Instagram
+(`p.colab`); Pilar fora da ficha; × com confirmação na mídia; a ficha guarda a
+rolagem em todo redesenho; criar com mais de um formato (`esc.fmts`); "Copiar"
+em cada caixa; "Copiar link" (`/quadro#card=cli|id`, abre direto); conversa do
+card com @ e aviso (cada mensagem é um campo `cm_<id>` do card; o aviso leva
+`card` e `ir`, e o aparelho de quem foi marcado mostra uma vez só); a capa do
+card é reaproveitada no redesenho (não pisca). 37 provas em
+`web/verificar/v304-o-card-completo.mjs`. **Aberto:** a conversa viaja no card
+até a porta do link do cliente (não é desenhada lá).
 **Fechado (29 set, v303, NO AR) — o ensaio geral, e o Estúdio em tela cheia
 com PDF.** (1) "Vamos ver quando outras pessoas começarem a usar ao mesmo
 tempo. Esse é meu medo." `web/verificar/v303-ensaio-geral.mjs`: cinco

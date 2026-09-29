@@ -91,14 +91,19 @@ console.log('\n  — o filtro de prazo —');
       { id: 9302, t: 'Para hoje B', fmt: 'Post', fase: 'producao', st: 'DRAFT', resp: r, prazo: D(0), prazoHora: '15:00' },
       { id: 9303, t: 'Fim de semana C', fmt: 'Post', fase: 'criado', st: 'DRAFT', resp: r, prazo: DS(6) },
       { id: 9304, t: 'Semana que vem D', fmt: 'Post', fase: 'criado', st: 'DRAFT', resp: r, prazo: DS(9) },
-      { id: 9305, t: 'Entregue atrasado E', fmt: 'Post', fase: 'revisao', st: 'DRAFT', resp: r, prazo: D(-5) });
+      { id: 9305, t: 'Entregue atrasado E', fmt: 'Post', fase: 'texto_cli', st: 'DRAFT', resp: r, prazo: D(-5) },
+      /* v304: a Revisão ainda é trabalho da casa — o prazo dela conta (o card já aparecia vermelho) */
+      { id: 9306, t: 'Na revisão atrasado F', fmt: 'Post', fase: 'revisao', st: 'DRAFT', resp: r, prazo: D(-2) },
+      /* v304: a data em que vai ao ar tem filtro próprio */
+      { id: 9307, t: 'Vai ao ar hoje G', fmt: 'Post', fase: 'aprovado', st: 'DRAFT', resp: r, data: D(0), hora: '18:00' },
+      { id: 9308, t: 'Vai ao ar semana que vem H', fmt: 'Post', fase: 'agendado', st: 'SCHEDULED', resp: r, data: DS(8), prazo: D(-9) });
     render(); });
   const vis = () => pg.evaluate(() => [...document.querySelectorAll('#root .qdCard')].filter(x => x.getClientRects().length).map(x => (x.querySelector('.qdTit') || x).textContent.trim()));
   const opcoes = await pg.evaluate(() => [...document.querySelectorAll('#root [data-qdprazo] option')].map(o => o.textContent));
-  checa('3.1 o filtro de prazo está no Quadro, com a conta de cada opção', opcoes.length === 6 && /Atrasados \(1\)/.test(opcoes.join()) && /Para hoje \(1\)/.test(opcoes.join()), opcoes);
+  checa('3.1 o filtro está no Quadro, em dois grupos (entrega · postagem), com a conta de cada opção', opcoes.length === 9 && /Entrega atrasada \(2\)/.test(opcoes.join()) && /Entrega hoje \(1\)/.test(opcoes.join()) && /Vai ao ar hoje \(1\)/.test(opcoes.join()), opcoes);
   await pg.selectOption('#root [data-qdprazo]', 'atrasados'); await pg.waitForTimeout(150);
   let v = await vis();
-  checa('3.2 "Atrasados": só o que passou do prazo e ainda está por fazer (o entregue fica de fora)', v.length === 1 && /Atrasado A/.test(v[0]), v);
+  checa('3.2 "Entrega atrasada": o que passou do prazo e ainda é da casa (Revisão conta; o que já foi ao cliente ou saiu, não)', v.length === 2 && v.some(t => /Atrasado A/.test(t)) && v.some(t => /Na revisão atrasado F/.test(t)), v);
   const lig = await pg.evaluate(() => document.querySelector('#root [data-qdprazo]').classList.contains('ligado'));
   checa('3.3 o filtro ligado fica amarelo (não se esquece que está filtrando)', lig);
   await pg.selectOption('#root [data-qdprazo]', 'hoje'); await pg.waitForTimeout(150);
@@ -114,7 +119,14 @@ console.log('\n  — o filtro de prazo —');
   v = await vis();
   checa('3.7 "Sem prazo" mostra o que está por fazer sem data (os 12 de "A fazer", 10 à vista)', v.length === 10 && v.every(t => /Por fazer/.test(t)), v.length);
   await pg.selectOption('#root [data-qdprazo]', 'todos'); await pg.waitForTimeout(150);
-  checa('3.8 "Qualquer prazo" volta tudo', (await vis()).length > 12);
+  await pg.selectOption('#root [data-qdprazo]', 'pub-hoje'); await pg.waitForTimeout(150);
+  v = await vis();
+  checa('3.8 "Vai ao ar hoje" filtra pela data de POSTAGEM (não pela de entrega)', v.length === 1 && /Vai ao ar hoje G/.test(v[0]), v);
+  await pg.selectOption('#root [data-qdprazo]', 'pub-proxima'); await pg.waitForTimeout(150);
+  v = await vis();
+  checa('3.9 "Vai ao ar na próxima semana"', v.length === 1 && /semana que vem H/.test(v[0]), v);
+  await pg.selectOption('#root [data-qdprazo]', 'todos'); await pg.waitForTimeout(150);
+  checa('3.10 "Qualquer data" volta tudo', (await vis()).length > 12);
   await ctx.close();
 }
 console.log('\n  — 4. arrastar no computador mostra a faixa de colunas (como no celular) —');
