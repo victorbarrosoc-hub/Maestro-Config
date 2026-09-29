@@ -208,6 +208,18 @@ Priorizar escalabilidade, simplicidade e UX.
 
 ---
 
+## Como falar com o founder — **regra dele, vale para toda conversa**
+
+- **Sempre em português.** Nada de mensagens em inglês, nem as curtas de
+  andamento ("vou fazer isso agora", "rodando os testes").
+- **Simples e fácil de entender.** Ele não é programador: explicar o que muda
+  na tela e no uso, não como o código funciona.
+- **Sem código na conversa.** Nada de trechos de programa, nomes de funções ou
+  de arquivos, a não ser que ele peça. Termos técnicos só quando não houver
+  outro jeito, e aí com uma frase dizendo o que são.
+
+---
+
 ## Como publicar — **sempre levar até o fim**
 
 O fundador testa no celular. Trabalho que ficou numa branch de trabalho, por
