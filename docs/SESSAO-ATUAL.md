@@ -20,7 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v293 (29 set) — Calendário com Mês · Semana (do jeito do Quadro), quadro de
+v294 (29 set) — baixar o material do card, Cancelar e tocar fora fecham a
+criação, arrastar sem piscar e a Mão no Estúdio. Antes, a v293: Calendário com Mês · Semana (do jeito do Quadro), quadro de
 ideias do Estúdio no jeito do FigJam (colar/arrastar imagem, link, forma,
 seção, caneta, carimbo) e colar da área de transferência no editor de
 design. Antes dela, a v292: Estúdio com menu e editor, ficha em abas, faixa

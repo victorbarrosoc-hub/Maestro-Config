@@ -1,9 +1,34 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.108
+Version: 0.5.109
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.109 — 2026-09-29
+
+**Status:** No ar.
+
+### v294 — baixar o material, cancelar de verdade, e arrastar sem piscar
+
+- **Baixar o que está anexado no card.** Na aba Peça da ficha, cada arquivo
+  tem o botão de baixar, e há "Baixar" / "Baixar as N" para todos; a peça
+  aberta em tela cheia também tem "Baixar". Baixa com o nome do arquivo (do
+  aparelho se ainda está só nele, da nuvem se já subiu).
+- **Criar card: Cancelar funciona, e tocar fora fecha.** O "Cancelar" não
+  fechava; agora fecha sem criar nada. Tocar fora da caixa também para de
+  estruturar — e o que já estava escrito volta ao abrir o "+ Adicionar" de
+  novo (o Cancelar descarta).
+- **Estúdio, editor:** arrastar e redimensionar não redesenham mais a cena
+  inteira a cada movimento (a imagem colada piscava ou sumia no Safari);
+  o navegador não "pega" mais a imagem para arrastá-la sozinho; cursor de
+  mão fechada ao mover a tela.
+- **Estúdio, quadro de ideias:** ferramenta **Mão** na barra (arrastar em
+  qualquer lugar move o quadro, até em cima de uma nota) e segurar a barra
+  de espaço vira a mão enquanto segura, como no Figma.
+- **Provas:** v291 seção 7 (9 novas, 44 no total) e v292 seção 14 (63).
 
 ---
 

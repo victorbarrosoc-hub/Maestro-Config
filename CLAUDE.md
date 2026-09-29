@@ -349,6 +349,13 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (29 set, v294, NO AR) — baixar, cancelar e arrastar.** "Colocar a
+opção de baixar o arquivo anexado no card"; "o cancelar não funciona… só
+clicar fora e ele parar de estruturar"; "bug de arrastar a imagem colada…
+a mãozinha não aparece". A ficha baixa cada arquivo (e todos); Cancelar e
+tocar fora fecham a criação (o texto escrito volta ao reabrir); no editor o
+arrastar mexe só o que andou (antes redesenhava tudo e a imagem piscava); o
+quadro de ideias ganhou a Mão e a barra de espaço. v291 seção 7, v292 seção 14.
 **Fechado (29 set, v293, NO AR) — a Semana do jeito do Quadro, e o Estúdio
 no jeito do FigJam.** (1) "Não é pra ser igual, queria que você fizesse uma
 forma de visualizar só por semana… está no jeito antigo até quando clica no
