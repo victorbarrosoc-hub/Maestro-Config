@@ -24,7 +24,7 @@ v304 (29 set) — o card completo: filtro de data (entrega · postagem), datas c
 nome por fora, trocar cliente, collab (cliente ou @), sem Pilar, apagar mídia,
 ficha sem voltar ao topo, criar com vários formatos, copiar texto, link do card,
 conversa do card com @ e aviso, miniaturas sem piscar. Pedido do founder nas
-palavras dele está no CHANGELOG 0.5.119. FALTA O FOUNDER RODAR
+palavras dele está no CHANGELOG 0.5.119. APLICADO em 29/set (três "ok"):
 `docs/ENGINEERING/links-6-esconder-o-interno.sql` (a porta do link deixa de levar
 conversa, observação, pendência, checklist e recursos ao cliente).
 Antes, v303 (29 set) — ensaio geral com 5 pessoas ao mesmo tempo (achou e consertou:

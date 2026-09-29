@@ -364,7 +364,7 @@ interno** (decisão do founder: "cliente não pode ver essa conversa nem
 observação interna"): `docs/ENGINEERING/links-6-esconder-o-interno.sql` tira
 `cm_*`, `obs`, `pend`, `check` e `recursos` do que as funções do link devolvem
 — lendo a função que está no banco e trocando só o ponto de saída (trava se não
-achar). 15 provas em `links-6-teste.sql`. **FALTA O FOUNDER RODAR.**
+achar). 15 provas em `links-6-teste.sql`. **APLICADO no banco de produção em 29/set** (as três funções conferidas "ok").
 **Fechado (29 set, v303, NO AR) — o ensaio geral, e o Estúdio em tela cheia
 com PDF.** (1) "Vamos ver quando outras pessoas começarem a usar ao mesmo
 tempo. Esse é meu medo." `web/verificar/v303-ensaio-geral.mjs`: cinco
