@@ -207,7 +207,9 @@ console.log('\n  — 7. baixar o material do card, e o Cancelar / tocar fora (v2
   checa('7.6 e o que foi cancelado não volta', vazio === '', vazio);
   /* tocar fora */
   await pg.fill('[data-qdaddform="pauta"] textarea', 'rascunho guardado');
-  await pg.mouse.click(700, 60); await pg.waitForTimeout(150);
+  /* um ponto vazio da página (o título), não um botão */
+  const fora = await pg.evaluate(() => { const r = document.querySelector('.qdPagina h1').getBoundingClientRect(); return { x: r.right + 40, y: r.top + r.height / 2 }; });
+  await pg.mouse.click(fora.x, fora.y); await pg.waitForTimeout(150);
   const c2 = await pg.evaluate(() => ({ aberto: !!document.querySelector('[data-qdaddform="pauta"]'), criou: MaestroQuadro.todos().some(x => /rascunho guardado/.test(x.p.t)) }));
   checa('7.7 tocar fora do card para de estruturar (fecha, sem criar)', !c2.aberto && !c2.criou, c2);
   await pg.evaluate(() => document.querySelector('[data-qdadd="pauta"]').click());
