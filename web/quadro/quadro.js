@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v291', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v292', aba: null, pessoa: null, sub: 'tarefas', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -717,7 +717,36 @@
 
   /* --- Calendário (o Cronograma) --- */
   const arrastavel = () => (typeof matchMedia === 'function' && matchMedia('(pointer:fine)').matches) ? 'draggable="true"' : '';
+  /* v292 — "remove essa aba dentro da aba do cliente e coloca esse modelo de visualização
+     dentro de Calendário… é mais um tipo de visualização do que vem do Quadro, só que mensal".
+     O Cronograma de conteúdos (as semanas do mês, card a card) vira a segunda vista do
+     Calendário, do cliente escolhido, abrindo no mês inteiro. */
+  const vistasCal = () => `<div class="qdVistas" role="group" aria-label="Como ver o mês">${[['mes', 'Calendário'], ['crono', 'Cronograma de conteúdos']].map(([k, n]) =>
+    `<button type="button" class="qdPil ${(Q.calVista || 'mes') === k ? 'on' : ''}" data-qdcalvista="${k}">${n}</button>`).join('')}</div>`;
+  function clienteDoCrono(){
+    const cs = clientes(); if(!cs.length) return null;
+    if(Q.filtroCli && Q.filtroCli !== 'todos' && cs.some(c => c.id === Q.filtroCli)) return Q.filtroCli;
+    if(cs.some(c => c.id === S.cli)) return S.cli;
+    return cs[0].id;
+  }
+  function vistaCronograma(){
+    const cli = clienteDoCrono(); if(!cli) return vistasCal() + '<p class="qdMut">Nenhum cliente ainda.</p>';
+    S.cli = cli;
+    const mes = S.ptMes || (Q.mes || hoje().slice(0, 7));
+    if(!S.ptSemana || !S.ptSemana[mes]) S.ptSemana = Object.assign({}, S.ptSemana, { [mes]: 'todas' });
+    /* mensal: aqui o padrão é o mês inteiro, semana a semana — não o Dia da pauta.
+       Quem escolher outra vista (Mês, Stories, Dia) lá dentro, fica com ela. */
+    const trocar = S.ptVistaAuto !== false && (!S.ptVista || S.ptVista === 'dia');
+    const antes = S.ptVista;
+    let corpo = '';
+    try{ if(trocar) S.ptVista = 'semana'; corpo = typeof corpoPauta === 'function' ? corpoPauta() : ''; }catch(e){ corpo = ''; }
+    finally{ if(trocar) S.ptVista = antes; }
+    return `<div class="qdCalTopo">${vistasCal()}<span class="qdSp"></span>
+        <select class="qdSel" data-qdfc="1" aria-label="Cliente">${clientes().map(c => `<option value="${esc_(c.id)}" ${c.id === cli ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}</select></div>
+      <div class="qdCrono">${corpo || '<p class="qdMut">Este cliente ainda não tem cards com data.</p>'}</div>`;
+  }
   function vistaCalendario(){
+    if(Q.calVista === 'crono') return vistaCronograma();
     const h = hoje();
     const mes = Q.mes || h.slice(0, 7);
     const [a, m] = mes.split('-').map(Number);
@@ -751,7 +780,7 @@
     const legenda = COLS.map(([k, n, c]) => `<span class="qdLeg" style="--qdc:${c}"><i></i>${n}</span>`).join('');
     const nomeMes = `${MESES[m - 1][0].toUpperCase() + MESES[m - 1].slice(1)} ${a}`;
     const antes = iso(new Date(a, m - 2, 1)).slice(0, 7), depois = iso(new Date(a, m, 1)).slice(0, 7);
-    return `<div class="qdCalTopo">
+    return `<div class="qdCalTopo">${vistasCal()}</div><div class="qdCalTopo">
         <button type="button" class="qdBtIc" data-qdmes="${antes}" aria-label="Mês anterior">‹</button>
         <b class="qdMesNome">${nomeMes}</b>
         <button type="button" class="qdBtIc" data-qdmes="${depois}" aria-label="Próximo mês">›</button>
@@ -882,7 +911,7 @@
     return p.corte ? 'corte' : p.roteiro ? 'roteiro' : 'post';
   }
   const ehStory = p => (Array.isArray(p.fmts) && p.fmts.length ? p.fmts : [p.fmt]).includes('Story') || guardadas(p, 'telas') > 0 || !!(p.sticker || p.recursos || p.caixinha);
-  function blocosConteudo(p){
+  function blocosConteudo(p, parte){
     const tipo = tipoDaFolha(p);
     const ct = p.corte || {};
     const area = (qf, rot, ph, rows) => `<label class="qdFCampo">${rot}<textarea class="qdIn qdArea" data-qf="${qf}" rows="${rows || 2}" placeholder="${ph}">${esc_(pegar(p, qf))}</textarea></label>`;
@@ -890,7 +919,7 @@
     const tcs = Array.from({ length: nTc }, (_, i) => (Array.isArray(ct.tcs) && ct.tcs[i]) || { de: '', ate: '', ordem: i + 1 });
     const plats = (typeof PLATS === 'object' && PLATS) || {};
     const on = new Set(Array.isArray(p.plats) ? p.plats : []);
-    return `<div class="qdFBloco" data-qdfconteudo="1"><h4>Tipo de conteúdo</h4>
+    const doConteudo = `<div class="qdFBloco" data-qdfconteudo="1"><h4>Tipo de conteúdo</h4>
       <div class="qdFTipos">${[['post', 'Post'], ['roteiro', 'Roteiro de vídeo'], ['corte', 'Corte de podcast']].map(([k, n]) => `<button type="button" class="qdPil ${tipo === k ? 'on' : ''}" data-qdtipo="${k}">${n}</button>`).join('')}</div>
       ${tipo === 'roteiro' ? area('roteiro.hook', 'Hook — os 3 primeiros segundos', 'A frase ou imagem que segura quem ia passar direto.')
         + area('roteiro.des', 'Desenvolvimento', 'O argumento, cena a cena.', 4) + area('roteiro.cta', 'CTA do vídeo', 'O que a pessoa faz ao terminar de assistir.') : ''}
@@ -905,14 +934,24 @@
       <label class="qdFCampo">Interação / sticker<input class="qdIn" data-qf="sticker" value="${esc_(p.sticker || '')}" placeholder="Ex.: enquete na tela 2"></label>
       ${area('recursos', 'Recursos / produção', 'O que a produção precisa ter à mão.')}
       <label class="qdFChk"><input type="checkbox" data-qfbool="caixinha" ${p.caixinha ? 'checked' : ''}> Com caixinha de perguntas</label></div>` : ''}
-    <div class="qdFBloco"><h4>Plataformas</h4><div class="qdFPlats">${Object.entries(plats).map(([k, v]) => `<button type="button" class="qdPil ${on.has(k) ? 'on' : ''}" data-qdplat="${esc_(k)}"><i style="background:${esc_(v.c)}"></i>${esc_(v.n)}</button>`).join('')}</div></div>
+    ${p.cta ? `<div class="qdFBloco"><h4>CTA</h4><textarea class="qdIn qdArea" data-qf="cta" rows="2">${esc_(p.cta)}</textarea></div>` : ''}`;
+    const dosDetalhes = `<div class="qdFBloco"><h4>Plataformas</h4><div class="qdFPlats">${Object.entries(plats).map(([k, v]) => `<button type="button" class="qdPil ${on.has(k) ? 'on' : ''}" data-qdplat="${esc_(k)}"><i style="background:${esc_(v.c)}"></i>${esc_(v.n)}</button>`).join('')}</div></div>
     ${(() => { const pil = (typeof PILAR_COR === 'object' && PILAR_COR) || {}; const ks = Object.keys(pil); if(!ks.length) return '';
       return `<div class="qdFBloco"><h4>Pilar <span>a que eixo editorial serve</span></h4><div class="qdFPlats">${ks.map(k => `<button type="button" class="qdPil ${p.pilar === k ? 'on' : ''}" data-qdpilar="${esc_(k)}"><i style="background:${esc_(pil[k])}"></i>${esc_(k)}</button>`).join('')}</div></div>`; })()}
-    ${p.cta ? `<div class="qdFBloco"><h4>CTA</h4><textarea class="qdIn qdArea" data-qf="cta" rows="2">${esc_(p.cta)}</textarea></div>` : ''}
     <div class="qdFBloco"><h4>Observação</h4><textarea class="qdIn qdArea" data-qf="obs" rows="2" placeholder="Recado para quem for executar: contexto, cuidado, detalhe">${esc_(p.obs || '')}</textarea></div>
     ${p.pend ? `<div class="qdFBloco"><h4>Pendência</h4><textarea class="qdIn qdArea" data-qf="pend" rows="2">${esc_(p.pend)}</textarea></div>` : ''}`;
+    return parte === 'conteudo' ? doConteudo : parte === 'detalhes' ? dosDetalhes : doConteudo + dosDetalhes;
   }
   Q.blocosConteudo = blocosConteudo;
+  /* quanto cada aba já tem — o que ajuda a voltar depois e ver o que falta */
+  function contagemAbas(cli, p){
+    const tem = v => !!String(v == null ? '' : v).trim();
+    const c = [p.objetivo, p.texto, p.legenda].filter(tem).length;
+    const ms = materiais(cli, p.id).length, rs = refsDoCard(cli, p.id).length;
+    const ck = Array.isArray(p.check) ? p.check : [];
+    const d = [fmtsDe(p).length > 0, (p.plats || []).length > 0, tem(p.pilar), tem(p.obs)].filter(Boolean).length;
+    return { conteudo: `${c}/3`, peca: ms ? `${ms} ${ms === 1 ? 'peça' : 'peças'}` : (rs ? `${rs} ref.` : '—'), detalhes: ck.length ? `${ck.filter(x => x && x.ok).length}/${ck.length} ✓` : `${d}/4` };
+  }
   /* v291 — "quero preencher na ficha o que tem dentro do Editor completo":
      o formato (mais de um: Reels + Vídeo), o pilar e as referências. */
   const fmtsDe = p => { const f = (Array.isArray(p.fmts) && p.fmts.length ? p.fmts : [p.fmt]).filter(Boolean); return f.length ? f : ['Post']; };
@@ -944,6 +983,7 @@
     const ms = materiais(cli, p.id);
     el.innerHTML = `<div class="qdFolhaFundo" data-qdfechar="1"></div><div class="qdFolhaIn" data-qdfkey="${esc_(Q.folha)}">
       <div class="qdFTopo">${avCli(cli)}<span class="qdCli">${esc_(cliente(cli).nome)}</span><span class="qdSp"></span>
+        <span class="qdFSalvo" id="qdFSalvo" aria-live="polite">Tudo salvo</span>
         <button type="button" class="qdFechar" data-qdfechar="1" aria-label="Fechar">×</button></div>
       <textarea class="qdFTit" data-qf="tema" rows="1" aria-label="Nome do card">${esc_(tema(p, cli))}</textarea>
       ${ehAg ? '' : `<p class="qdFNome">${segueOPadrao(p, cli) ? `Nome: <b data-qdfnome="1">${esc_(p.t)}</b>` : `Fora do padrão. <button type="button" class="qdPil" data-qdpadrao="1">Padronizar: ${esc_(titulo(cli, p.fmt || 'Post', limparTema(tema(p, cli), p.fmt)))}</button>`}</p>`}
@@ -959,38 +999,51 @@
         ${ehAg ? '' : `<label>Publica em<input type="date" class="qdIn" data-qf="data" value="${esc_(p.data || '')}"></label>
         <label>Às<input type="time" class="qdIn" data-qf="hora" value="${esc_(p.hora || '')}"></label>`}
       </div>
-      ${ehAg ? '' : blocoFormato(p)}
-      <div class="qdFBloco"><h4>Checklist ${ck.length ? `<span>${ck.filter(c => c && c.ok).length}/${ck.length}</span>` : ''}</h4>
-        <div class="qdFCk">${ck.map(c => `<div class="qdFCkL ${c.ok ? 'ok' : ''}"><button type="button" class="qdOk mini" data-qdck="${esc_(c.id)}" aria-label="${c.ok ? 'Desmarcar' : 'Marcar'}">${c.ok ? ic_('checkc', 11) : ''}</button>
-          <span>${esc_(c.t)}</span><button type="button" class="qdX" data-qdckx="${esc_(c.id)}" aria-label="Tirar item">×</button></div>`).join('')}</div>
-        <form class="qdFCkNovo" data-qdcknovo="1" autocomplete="off"><input type="text" class="qdIn" placeholder="+ item da checklist" aria-label="Novo item da checklist"></form></div>
-      <div class="qdFBloco"><h4>${ehAg ? 'Descrição' : 'Briefing'}</h4><textarea class="qdIn qdArea" data-qf="objetivo" rows="3" placeholder="${ehAg ? 'Detalhes da tarefa' : 'O que o card precisa dizer, para quem, com que objetivo'}">${esc_(p.objetivo || '')}</textarea></div>
-      ${ehAg ? '' : `<div class="qdFBloco"><h4>Texto</h4><textarea class="qdIn qdArea" data-qf="texto" rows="4" placeholder="O texto da peça">${esc_(p.texto || '')}</textarea></div>
-      <div class="qdFBloco"><h4>Legenda</h4><textarea class="qdIn qdArea" data-qf="legenda" rows="4" placeholder="O texto que vai publicado">${esc_(p.legenda || '')}</textarea></div>
-      ${blocosConteudo(p)}
-      <div class="qdFBloco"><h4>Material <span>${ms.length || ''}</span></h4>
-        ${ms.length > 1 ? `<p class="qdFMatDica">A ordem daqui é a que o cliente vê. Toque numa peça para ver.</p>` : ''}
-        <div class="qdFMat">${ms.map((m, i) => {
-          const u = url_(m.tipo === 'imagem' ? (m.url || m.capa) : (m.capa || m.poster || ''));
-          return `<span class="qdFMatI"><button type="button" class="qdFMatVer" data-qdver="${i}" aria-label="Ver ${esc_(m.nome || 'a peça ' + (i + 1))}" title="${esc_(m.nome || '')}">${u ? `<img src="${u}" alt="" loading="lazy">` : `<i>${esc_(m.tipo === 'video' ? 'vídeo' : m.tipo === 'link' ? 'link' : 'arquivo')}</i>`}${m.tipo === 'video' ? `<b class="qdFMatPlay" aria-hidden="true">▶</b>` : ''}${ms.length > 1 ? `<em>${i + 1}</em>` : ''}</button>
-            ${ms.length > 1 ? `<span class="qdFMatMv"><button type="button" data-qdmv="${i}|-1" aria-label="Uma posição antes" ${i === 0 ? 'disabled' : ''}>‹</button><button type="button" data-qdmv="${i}|1" aria-label="Uma posição depois" ${i === ms.length - 1 ? 'disabled' : ''}>›</button></span>` : ''}</span>`; }).join('')}</div>
-        <div class="qdFMatBts">${ms.length > 1 ? `<button type="button" class="qdPil" data-qdmatnome="1">Ordenar por nome</button>` : ''}<button type="button" class="qdPil" data-qdsubir="1">${ic_('clipe', 12)} Subir material</button>
-          <button type="button" class="qdPil" data-qdeditor="1">${ic_('pencil', 12)} Editor completo</button></div>
-        <input type="file" id="qdArquivo" multiple hidden></div>
-      ${blocoRefs(cli, p)}`}
+      ${(() => {
+        /* v292 — "esse card tem muita informação… organize de forma mais intuitiva… só não pode
+           limitar quem está estruturando". Três abas, nenhuma trava a outra; tudo grava sozinho,
+           e cada aba diz quanto já tem, para quem volta depois saber o que falta. */
+        const checklist = `<div class="qdFBloco"><h4>Checklist ${ck.length ? `<span>${ck.filter(c => c && c.ok).length}/${ck.length}</span>` : ''}</h4>
+          <div class="qdFCk">${ck.map(c => `<div class="qdFCkL ${c.ok ? 'ok' : ''}"><button type="button" class="qdOk mini" data-qdck="${esc_(c.id)}" aria-label="${c.ok ? 'Desmarcar' : 'Marcar'}">${c.ok ? ic_('checkc', 11) : ''}</button>
+            <span>${esc_(c.t)}</span><button type="button" class="qdX" data-qdckx="${esc_(c.id)}" aria-label="Tirar item">×</button></div>`).join('')}</div>
+          <form class="qdFCkNovo" data-qdcknovo="1" autocomplete="off"><input type="text" class="qdIn" placeholder="+ item da checklist" aria-label="Novo item da checklist"></form></div>`;
+        const briefing = `<div class="qdFBloco"><h4>${ehAg ? 'Descrição' : 'Briefing'}</h4><textarea class="qdIn qdArea" data-qf="objetivo" rows="2" placeholder="${ehAg ? 'Detalhes da tarefa' : 'O que o card precisa dizer, para quem, com que objetivo'}">${esc_(p.objetivo || '')}</textarea></div>`;
+        if(ehAg) return briefing + checklist;
+        const aba = Q.folhaAba || 'conteudo';
+        const cont = contagemAbas(cli, p);
+        const tab = (k, n) => `<button type="button" role="tab" class="qdFAba ${aba === k ? 'on' : ''}" data-qdfaba="${k}" aria-selected="${aba === k}"><span>${n}</span><em data-qdfcont="${k}">${cont[k]}</em></button>`;
+        const peca = `<div class="qdFBloco"><h4>Material <span>${ms.length || ''}</span></h4>
+          ${ms.length > 1 ? `<p class="qdFMatDica">A ordem daqui é a que o cliente vê. Toque numa peça para ver.</p>` : ''}
+          <div class="qdFMat">${ms.map((m, i) => {
+            const u = url_(m.tipo === 'imagem' ? (m.url || m.capa) : (m.capa || m.poster || ''));
+            return `<span class="qdFMatI"><button type="button" class="qdFMatVer" data-qdver="${i}" aria-label="Ver ${esc_(m.nome || 'a peça ' + (i + 1))}" title="${esc_(m.nome || '')}">${u ? `<img src="${u}" alt="" loading="lazy">` : `<i>${esc_(m.tipo === 'video' ? 'vídeo' : m.tipo === 'link' ? 'link' : 'arquivo')}</i>`}${m.tipo === 'video' ? `<b class="qdFMatPlay" aria-hidden="true">▶</b>` : ''}${ms.length > 1 ? `<em>${i + 1}</em>` : ''}</button>
+              ${ms.length > 1 ? `<span class="qdFMatMv"><button type="button" data-qdmv="${i}|-1" aria-label="Uma posição antes" ${i === 0 ? 'disabled' : ''}>‹</button><button type="button" data-qdmv="${i}|1" aria-label="Uma posição depois" ${i === ms.length - 1 ? 'disabled' : ''}>›</button></span>` : ''}</span>`; }).join('')}</div>
+          <div class="qdFMatBts">${ms.length > 1 ? `<button type="button" class="qdPil" data-qdmatnome="1">Ordenar por nome</button>` : ''}<button type="button" class="qdPil" data-qdsubir="1">${ic_('clipe', 12)} Subir material</button></div>
+          <input type="file" id="qdArquivo" multiple hidden></div>
+          ${blocoRefs(cli, p)}`;
+        return `<div class="qdFAbas" role="tablist" aria-label="Partes do card">${tab('conteudo', 'Conteúdo')}${tab('peca', 'Peça')}${tab('detalhes', 'Detalhes')}</div>
+          <div class="qdFPainel" data-qdfpainel="conteudo" role="tabpanel" ${aba === 'conteudo' ? '' : 'hidden'}>${briefing}
+            <div class="qdFBloco"><h4>Texto</h4><textarea class="qdIn qdArea" data-qf="texto" rows="2" placeholder="O texto da peça">${esc_(p.texto || '')}</textarea></div>
+            <div class="qdFBloco"><h4>Legenda</h4><textarea class="qdIn qdArea" data-qf="legenda" rows="2" placeholder="O texto que vai publicado">${esc_(p.legenda || '')}</textarea></div>
+            ${blocosConteudo(p, 'conteudo')}</div>
+          <div class="qdFPainel" data-qdfpainel="peca" role="tabpanel" ${aba === 'peca' ? '' : 'hidden'}>${peca}</div>
+          <div class="qdFPainel" data-qdfpainel="detalhes" role="tabpanel" ${aba === 'detalhes' ? '' : 'hidden'}>${blocoFormato(p)}${blocosConteudo(p, 'detalhes')}${checklist}</div>`;
+      })()}
       <div class="qdFPe">
         ${Q.folhaApagar ? `<span>Mandar para a lixeira?</span><button type="button" class="qdPil" data-qdapagarnao="1">Não</button><button type="button" class="qdPil perigo" data-qdapagarsim="1">Sim, apagar</button>`
           : `<button type="button" class="qdPil perigo" data-qdapagar="1">${ic_('lixo', 12)} Apagar</button>`}
       </div>
     </div>`;
     const t = el.querySelector('.qdFTit'); if(t) ajustarAltura(t);
+    el.querySelectorAll('.qdArea').forEach(ajustarAltura);
     el.dataset.assin = assinaturaFolha(cli, p);
   }
   /* o que, mudando, pede a ficha desenhada de novo. Guardada a cada desenho
      inteiro: sem isso, o primeiro campo gravado depois de trocar o tipo ou
      pôr um trecho redesenhava tudo e tirava o cursor de quem digitava. */
   const assinaturaFolha = (cli, p) => JSON.stringify([p.check || [], materiais(cli, p.id).map(m => (m && (m.url || m.nome)) || '').join('|'), !!p.ajustePendente, linhas(p, 'tcs'), linhas(p, 'telas'), p.plats || [], tipoDaFolha(p), ehStory(p), fmtsDe(p), p.pilar || '', refsDoCard(cli, p.id).length]);
-  function ajustarAltura(t){ t.style.height = 'auto'; t.style.height = Math.min(160, t.scrollHeight) + 'px'; }
+  function ajustarAltura(t){ if(!t.offsetParent && !t.classList.contains('qdFTit')) return; t.style.height = 'auto'; t.style.height = Math.min(t.classList.contains('qdFTit') ? 160 : 420, t.scrollHeight + 2) + 'px'; }
+  function salvoAgora(txt){ const s = document.getElementById('qdFSalvo'); if(s){ s.textContent = txt; s.classList.toggle('salvando', txt !== 'Tudo salvo'); } }
   const valorDoCampo = (p, cli, k) => k === 'tema' ? tema(p, cli) : pegar(p, k);
   function atualizarCampos(el, cli, p){
     /* o que chegou de fora entra; o campo em uso fica como a pessoa deixou */
@@ -1001,6 +1054,7 @@
       if(c.value !== v) c.value = v;
     });
     const fn = el.querySelector('[data-qdfnome]'); if(fn && fn.textContent !== p.t) fn.textContent = p.t;
+    const ct = contagemAbas(cli, p); el.querySelectorAll('[data-qdfcont]').forEach(e => { const v = ct[e.dataset.qdfcont]; if(v != null && e.textContent !== v) e.textContent = v; });
     const col = colunaDe(p);
     el.querySelectorAll('[data-qdfcol]').forEach(b => b.classList.toggle('on', b.dataset.qdfcol === col));
     /* checklist, material e ajuste: redesenha só se não há nada sendo digitado neles */
@@ -1020,6 +1074,7 @@
     const k = c.dataset.qf;
     const fazer = () => {
       delete c.dataset.sujo;
+      setTimeout(() => { if(!document.querySelector('#qdFolha [data-sujo]')) salvoAgora('Tudo salvo'); }, 0);
       const p = achar(cli, id); if(!p) return;
       let v = c.value;
       if(k === 'tema'){
@@ -1046,7 +1101,7 @@
       redesenharPagina();
     };
     clearTimeout(temporizadores[k]);
-    if(ja) fazer(); else { c.dataset.sujo = '1'; temporizadores[k] = setTimeout(fazer, 700); }
+    if(ja) fazer(); else { c.dataset.sujo = '1'; salvoAgora('Salvando…'); temporizadores[k] = setTimeout(fazer, 700); }
   }
 
   /* ---------------- redesenhar sem atrapalhar ---------------- */
@@ -1207,6 +1262,19 @@
     }
   }
   ligarEntradas();
+  /* a ficha do cliente perde a aba "Cronograma de conteúdos" (ela mora no Calendário agora);
+     quem chegava nela (clicar num cliente, link de post) cai em "Marca e briefing" */
+  if(typeof abasCliente === 'function' && !abasCliente.__qd){
+    const oa = abasCliente;
+    abasCliente = function(atual){ return oa.apply(this, arguments).replace(/<button data-tab="pauta"[^>]*>[\s\S]*?<\/button>/, ''); };
+    abasCliente.__qd = true;
+  }
+  if(typeof agClienteDet === 'function' && !agClienteDet.__qd){
+    const oc = agClienteDet;
+    agClienteDet = function(){ if(!S.tab || S.tab === 'pauta') S.tab = 'marca'; return oc.apply(this, arguments); };
+    agClienteDet.__qd = true;
+  }
+  try{ const v = localStorage.getItem('maestro-quadro-calvista'); if(v === 'crono' || v === 'mes') Q.calVista = v; }catch(e){}
 
   /* v291 — "preciso mostrar as informações-chave pro cliente ver no link dele".
      Ele já via texto, legenda, CTA, roteiro, corte, telas, data e redes; faltavam
@@ -1283,7 +1351,7 @@
     }
     const px = e.target.closest('[data-qdprox]');
     if(px){ e.stopPropagation(); executar(px.dataset.qdprox, px.dataset.qdacao, px); return; }
-    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome],[data-qdmais],[data-qdmenos],[data-qdrecolhe],[data-qdfmt],[data-qdpilar],[data-qdrefx]');
+    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome],[data-qdmais],[data-qdmenos],[data-qdrecolhe],[data-qdfmt],[data-qdpilar],[data-qdrefx],[data-qdfaba],[data-qdcalvista]');
     if(!e.target.closest('#qdPop')) document.getElementById('qdPop')?.remove();
     const rc = !alvo && e.target.closest && e.target.closest('#root .qdCol.recolhida');
     if(rc){ alternarRecolhida(rc.dataset.qdcol); render(); return; }
@@ -1291,6 +1359,7 @@
     const d = alvo.dataset;
     if(d.qdabaid){ Q.aba = d.qdabaid; try{ localStorage.setItem('maestro-quadro-aba', Q.aba); }catch(x){} fecharFolha(); render(); window.scrollTo(0, 0); return; }
     if(d.qdfp){ Q.filtroPessoa = d.qdfp; render(); return; }
+    if(d.qdcalvista){ Q.calVista = d.qdcalvista; if(d.qdcalvista === 'crono') S.ptMes = Q.mes || hoje().slice(0, 7); try{ localStorage.setItem('maestro-quadro-calvista', Q.calVista); }catch(x){} render(); return; }
     if(d.qdmais){ Q.verMais = Q.verMais || {}; Q.verMais[d.qdmais] = quantosVer(d.qdmais) + LIMITE; render(); return; }
     if(d.qdmenos){ if(Q.verMais) delete Q.verMais[d.qdmenos]; render(); const c = document.querySelector(`#root .qdCol[data-qdcol="${d.qdmenos}"]`); if(c && c.getBoundingClientRect().top < 0) c.scrollIntoView({ block: 'start' }); return; }
     if(d.qdrecolhe){ e.stopPropagation(); alternarRecolhida(d.qdrecolhe); render(); return; }
@@ -1330,6 +1399,10 @@
     }
     if(d.qdck){ const p = achar(cli, id); if(!p) return; mudar(cli, id, { check: (p.check || []).map(c => c.id === d.qdck ? Object.assign({}, c, { ok: !c.ok }) : c) }); desenharFolha(true); redesenharPagina(); return; }
     if(d.qdckx){ const p = achar(cli, id); if(!p) return; mudar(cli, id, { check: (p.check || []).filter(c => c.id !== d.qdckx) }); desenharFolha(true); redesenharPagina(); return; }
+    if(d.qdfaba){ Q.folhaAba = d.qdfaba;       /* troca sem redesenhar: nada do que se digitou se perde */
+      document.querySelectorAll('#qdFolha [data-qdfaba]').forEach(b => { const on = b.dataset.qdfaba === d.qdfaba; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+      document.querySelectorAll('#qdFolha [data-qdfpainel]').forEach(pn => { pn.hidden = pn.dataset.qdfpainel !== d.qdfaba; });
+      document.querySelectorAll('#qdFolha [data-qdfpainel]:not([hidden]) .qdArea').forEach(ajustarAltura); return; }
     if(d.qdtipo){ Q.folhaTipo = { key, t: d.qdtipo }; desenharFolha(true); return; }
     if(d.qdfmt){ const p = achar(cli, id); if(!p) return; const f = fmtsDe(p);
       const nova = f.includes(d.qdfmt) ? f.filter(x => x !== d.qdfmt) : f.concat(d.qdfmt);
@@ -1387,7 +1460,7 @@
   }, true);
   document.addEventListener('input', e => {
     const c = e.target;
-    if(c.matches && c.matches('#qdFolha [data-qf]')){ if(c.classList.contains('qdFTit')) ajustarAltura(c); if(c.tagName !== 'SELECT' && c.type !== 'date' && c.type !== 'time') gravarCampo(c, false); }
+    if(c.matches && c.matches('#qdFolha [data-qf]')){ if(c.classList.contains('qdFTit') || c.classList.contains('qdArea')) ajustarAltura(c); if(c.tagName !== 'SELECT' && c.type !== 'date' && c.type !== 'time') gravarCampo(c, false); }
     if(c.matches && c.matches('[data-qdaddform] textarea')) c.setCustomValidity('');
     if(c.matches && c.matches('#qdNovo, [data-qdaddform] textarea')) atualizarNome(c.closest('form'));
   }, true);
@@ -1448,13 +1521,22 @@
     Q.arrastando = c.dataset.qdkey;
     try{ e.dataTransfer.setData('text/plain', Q.arrastando); e.dataTransfer.effectAllowed = 'move'; }catch(x){}
     c.classList.add('arrastando');
+    /* v292 — "a opção de arrastar com atalhos pra onde quer, do celular, no desktop também":
+       a mesma faixa com as oito colunas, embaixo — soltar ali poupa rolar o quadro de lado */
+    if(Q.aba === 'quadro' && !document.getElementById('qdSoltar')){
+      const b = document.createElement('div'); b.id = 'qdSoltar'; b.className = 'mouse';
+      b.innerHTML = `<p>Soltar em</p><div>${COLS.map(([k, n, cor]) => `<span data-qdsoltar="${k}" style="--qdc:${cor}">${n}</span>`).join('')}</div>`;
+      setTimeout(() => document.body.appendChild(b), 0);     /* depois do dragstart: senão o navegador cancela o arraste */
+    }
   });
-  function alvoDoArraste(e){ return e.target.closest && e.target.closest('#root [data-qdcol], #root [data-qddia]'); }
+  function alvoDoArraste(e){ return e.target.closest && e.target.closest('#qdSoltar [data-qdsoltar], #root [data-qdcol], #root [data-qddia]'); }
+  const tirarFaixa = () => { const b = document.getElementById('qdSoltar'); if(b && b.classList.contains('mouse')) b.remove(); };
+  document.addEventListener('dragend', () => { tirarFaixa(); document.querySelectorAll('#root .qdSobre').forEach(x => x.classList.remove('qdSobre')); if(Q.arrastando){ Q.arrastando = null; } });
   document.addEventListener('dragover', e => {
     if(!Q.arrastando) return;
     const a = alvoDoArraste(e); if(!a) return;
     e.preventDefault();
-    document.querySelectorAll('#root .qdSobre').forEach(x => x !== a && x.classList.remove('qdSobre'));
+    document.querySelectorAll('#root .qdSobre, #qdSoltar .qdSobre').forEach(x => x !== a && x.classList.remove('qdSobre'));
     a.classList.add('qdSobre');
   });
   document.addEventListener('drop', e => {
@@ -1462,8 +1544,8 @@
     const a = alvoDoArraste(e); if(!a) return;
     e.preventDefault();
     soltar(Q.arrastando, a, e.clientY);
-    Q.arrastando = null;
-    document.querySelectorAll('#root .qdSobre').forEach(x => x.classList.remove('qdSobre'));
+    Q.arrastando = null; tirarFaixa();
+    document.querySelectorAll('#root .qdSobre, #qdSoltar .qdSobre').forEach(x => x.classList.remove('qdSobre'));
     render();
   });
   function soltar(key, a, y){
@@ -1825,10 +1907,20 @@
   .qdIn{ font:inherit; font-size:14px; color:var(--tx, #fff); background:var(--sup, rgba(255,255,255,.06)); border:0; border-radius:10px; padding:8px 10px; min-height:36px; box-sizing:border-box; width:100% }
   .qdArea{ resize:vertical; line-height:1.45 }
   .qdFBloco{ margin:0 0 16px }
+  .qdFSalvo{ font-size:12px; color:var(--mut, #999); margin-right:8px; white-space:nowrap }
+  .qdFSalvo.salvando{ color:var(--latao, #FFC857) }
+  .qdFAbas{ position:sticky; top:-16px; z-index:2; display:flex; gap:4px; margin:4px -18px 14px; padding:8px 18px; background:var(--bg, #1c1c1f); border-bottom:1px solid var(--qdl, rgba(255,255,255,.08)) }
+  .qdFAba{ flex:1; display:flex; flex-direction:column; align-items:center; gap:1px; border:0; border-radius:10px; padding:7px 6px; font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; background:transparent; color:var(--mut, #999) }
+  .qdFAba em{ font-style:normal; font-weight:500; font-size:11px; opacity:.8 }
+  .qdFAba:hover{ background:var(--sup, rgba(255,255,255,.05)) }
+  .qdFAba.on{ background:var(--sup, rgba(255,255,255,.07)); color:var(--tx, #fff); box-shadow:inset 0 -2px 0 var(--latao, #FFC857) }
+  .qdFPainel .qdArea{ min-height:44px; overflow:hidden }
   .qdFRef{ display:flex; align-items:center; gap:8px; margin:0 0 6px; font-size:13px; min-width:0 }
   .qdFRef a, .qdFRef span{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--tx, #fff) }
   .qdFRef a{ text-decoration:underline; text-underline-offset:2px }
   .qdSel.ligado{ background:var(--latao, #FFC857) !important; color:#1C1C1F !important; font-weight:600 }
+  .qdVistas{ display:flex; gap:6px; flex-wrap:wrap }
+  .qdCrono{ margin-top:6px }
   .qdMais, .qdMenos{ display:block; width:100%; margin:4px 0 0; border:0; border-radius:10px; padding:9px 10px; font:inherit; font-size:13px; font-weight:600; cursor:pointer; background:var(--sup, rgba(255,255,255,.06)); color:var(--tx, #fff) }
   .qdMais span{ font-weight:400; color:var(--mut, #999) }
   .qdMenos{ background:transparent; color:var(--mut, #999); font-weight:500 }
@@ -1938,6 +2030,7 @@
     .qdAgL{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px }
     .qdAgL .qdEv{ font-size:14px; padding:8px 10px }
     .qdFolhaIn{ top:auto; left:0; width:100vw; height:calc(100% - 44px); border-radius:18px 18px 0 0; padding:14px 16px calc(40px + env(safe-area-inset-bottom)) }
+    .qdFAbas{ top:-14px; margin:4px -16px 14px; padding:8px 16px }
     .qdFGrade{ grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) }
     .qdIn, .qdSel{ font-size:16px }
   }
@@ -1984,6 +2077,10 @@
   #qdSoltar div{ display:grid; grid-template-columns:repeat(4, 1fr); gap:6px }
   #qdSoltar span{ text-align:center; font-size:12.5px; padding:12px 4px; border-radius:12px; background:color-mix(in srgb, var(--qdc) 18%, transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--qdc) 45%, transparent) }
   #qdSoltar span.qdSobre{ background:var(--qdc); color:#111; font-weight:600; outline:none }
+  #qdSoltar.mouse{ left:50%; right:auto; bottom:22px; transform:translateX(-50%); width:min(860px, calc(100vw - 40px)); animation:qdSobe .16s ease-out }
+  #qdSoltar.mouse div{ grid-template-columns:repeat(8, 1fr) }
+  #qdSoltar.mouse span{ padding:16px 4px }
+  @keyframes qdSobe{ from{ opacity:0; transform:translate(-50%, 12px) } to{ opacity:1; transform:translate(-50%, 0) } }
   `;
   document.head.appendChild(st);
 

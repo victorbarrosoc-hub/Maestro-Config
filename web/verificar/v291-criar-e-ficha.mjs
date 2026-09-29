@@ -24,6 +24,7 @@ const card = id => pg.evaluate(([c, i]) => JSON.parse(JSON.stringify(S.pautas[c]
 
 console.log('\n  — 1. a ficha tem o que o Editor completo tinha —');
 await pg.evaluate(k => MaestroQuadro.abrirFolha(k), CLI + '|7001'); await pg.waitForTimeout(200);
+await pg.click('#qdFolha [data-qdfaba="detalhes"]');
 const blocos = await pg.evaluate(() => [...document.querySelectorAll('#qdFolha .qdFBloco h4')].map(h => h.childNodes[0].textContent.trim()));
 checa('1.1 a ficha tem Formato, Pilar e Referências (além do que já tinha)', ['Formato', 'Pilar', 'Referências'].every(b => blocos.includes(b)), blocos);
 await pg.click('#qdFolha [data-qdfmt="Vídeo"]'); await pg.waitForTimeout(150);
@@ -39,6 +40,7 @@ await pg.click(`#qdFolha [data-qdpilar="${pil}"]`); await pg.waitForTimeout(150)
 checa('1.5 escolher o pilar grava no card', (await card(7001)).pilar === pil, pil);
 await pg.click(`#qdFolha [data-qdpilar="${pil}"]`); await pg.waitForTimeout(150);
 checa('1.6 tocar de novo tira o pilar', !(await card(7001)).pilar);
+await pg.click('#qdFolha [data-qdfaba="peca"]');
 await pg.fill('#qdFolha [data-qdrefnovo] input', 'pinterest.com/pin/123'); await pg.press('#qdFolha [data-qdrefnovo] input', 'Enter'); await pg.waitForTimeout(150);
 let refs = await pg.evaluate(k => (S.refs[k] || []).map(r => r.url), CLI + '|7001');
 checa('1.7 colar um link de referência grava (com https://)', refs.join() === 'https://pinterest.com/pin/123', refs);
@@ -58,6 +60,30 @@ async function criar(texto, cliNome){
   if(cliNome) await pg.evaluate(n => { const b = [...document.querySelectorAll('#root [data-qdaddwrap="pauta"] [data-qdncli]')].find(x => x.textContent.trim() === n); b && b.click(); }, cliNome);
   await pg.click('#root [data-qdaddwrap="pauta"] button[type=submit]'); await pg.waitForTimeout(250);
   return pg.evaluate(() => MaestroQuadro.todos().map(x => ({ cli: x.cli, p: x.p, col: x.col })).sort((a, b) => (b.p.criadoEm || b.p.id) - (a.p.criadoEm || a.p.id))[0]);
+}
+
+console.log('\n  — 1b. a ficha em abas, sem trava (v292) —');
+{
+  await pg.evaluate(k => { MaestroQuadro.folhaAba = 'conteudo'; MaestroQuadro.abrirFolha(k); }, CLI + '|7001'); await pg.waitForTimeout(200);
+  const a = await pg.evaluate(() => ({ abas: [...document.querySelectorAll('#qdFolha [data-qdfaba]')].map(b => b.dataset.qdfaba).join(), editor: !!document.querySelector('#qdFolha [data-qdeditor]'),
+    topo: ['resp', 'prazo', 'data'].every(k => { const e = document.querySelector(`#qdFolha [data-qf="${k}"]`); return e && e.getClientRects().length; }),
+    visiveis: [...document.querySelectorAll('#qdFolha [data-qdfpainel]')].filter(p => !p.hidden).map(p => p.dataset.qdfpainel).join() }));
+  checa('1b.1 três abas (Conteúdo, Peça, Detalhes), sem o "Editor completo", e quem faz, prazo e publicação sempre à vista', a.abas === 'conteudo,peca,detalhes' && !a.editor && a.topo && a.visiveis === 'conteudo', a);
+  await pg.click('#qdFolha [data-qdfaba="detalhes"]'); await pg.waitForTimeout(80);
+  await pg.fill('#qdFolha [data-qf="obs"]', 'Gravar à tarde');
+  await pg.click('#qdFolha [data-qdfaba="conteudo"]'); await pg.waitForTimeout(80);
+  await pg.click('#qdFolha [data-qf="legenda"]'); await pg.keyboard.type('Legenda antes do texto');
+  const sv = await pg.evaluate(() => document.getElementById('qdFSalvo').textContent);
+  await pg.waitForTimeout(1000);
+  const c = await card(7001);
+  const sv2 = await pg.evaluate(() => document.getElementById('qdFSalvo').textContent);
+  checa('1b.2 dá para preencher em qualquer ordem (Detalhes antes do Conteúdo, legenda sem texto), e grava', c.obs === 'Gravar à tarde' && c.legenda === 'Legenda antes do texto' && !c.texto, c);
+  checa('1b.3 o topo diz "Salvando…" enquanto digita e "Tudo salvo" depois', sv === 'Salvando…' && sv2 === 'Tudo salvo', [sv, sv2]);
+  const cont = await pg.evaluate(() => Object.fromEntries([...document.querySelectorAll('#qdFolha [data-qdfcont]')].map(e => [e.dataset.qdfcont, e.textContent])));
+  checa('1b.4 cada aba diz quanto já tem (Conteúdo 1/3), para quem volta saber o que falta', cont.conteudo === '1/3', cont);
+  await pg.evaluate(() => MaestroQuadro.fecharFolha()); await pg.evaluate(k => MaestroQuadro.abrirFolha(k), CLI + '|7001'); await pg.waitForTimeout(150);
+  checa('1b.5 fechar e abrir de novo: continua de onde parou (a mesma aba, o que foi escrito)', await pg.evaluate(() => [...document.querySelectorAll('#qdFolha [data-qdfpainel]')].filter(p => !p.hidden).map(p => p.dataset.qdfpainel).join() === 'conteudo' && document.querySelector('#qdFolha [data-qf="legenda"]').value === 'Legenda antes do texto'));
+  await pg.evaluate(() => MaestroQuadro.fecharFolha());
 }
 
 console.log('\n  — 2. Hoje: "Nova postagem" e "Nova tarefa" —');
@@ -109,6 +135,31 @@ console.log('\n  — 5. o cliente vê as informações-chave, e só elas —');
   checa('5.1 o cliente vê formatos (Reels + Vídeo), redes, hora, texto, legenda, CTA, roteiro, corte, telas e a interação', !falta.length, falta);
   const vaza = ['OBS-INTERNA', 'PEND-INTERNA', 'REC-INTERNO', 'CHECK-INTERNO'].filter(k => t.includes(k));
   checa('5.2 e não vê o que é da casa (observação, pendência, recursos, checklist)', !vaza.length, vaza);
+}
+console.log('\n  — 6. o Cronograma de conteúdos mora no Calendário, mensal —');
+{
+  const r = await pg.evaluate(async cli => {
+    S.view = 'agency'; S.route = 'clientedet'; S.cli = cli; S.tab = 'pauta'; render(); await new Promise(r => setTimeout(r, 250));
+    const abas = [...document.querySelectorAll('#root .tabs button')].map(b => b.textContent.trim());
+    const tab = S.tab;
+    const m = new Date().toISOString().slice(0, 7);
+    S.pautas[cli] = (S.pautas[cli] || []).concat([3, 12, 24].map((d, i) => ({ id: 6100 + i, t: 'EJUP · Post · Crono ' + (i + 1), fmt: 'Post', fase: 'producao', data: `${m}-${String(d).padStart(2, '0')}`, hora: '10:00', plats: ['ig'] })));
+    S.ptVista = 'dia'; S.ptVistaAuto = true; S.ptSemana = {}; S.ptMes = null;
+    S.route = 'producao'; render(); MaestroQuadro.aba = 'calendario'; MaestroQuadro.calVista = 'mes'; MaestroQuadro.filtroCli = cli; render(); await new Promise(r => setTimeout(r, 200));
+    const temBotao = !!document.querySelector('[data-qdcalvista="crono"]');
+    document.querySelector('[data-qdcalvista="crono"]').click(); await new Promise(r => setTimeout(r, 300));
+    const cr = document.querySelector('#root .qdCrono');
+    const txt = cr ? cr.innerText : '';
+    let guardado = null; try{ guardado = localStorage.getItem('maestro-quadro-calvista'); }catch(e){}
+    return { abas, tab, temBotao, temCrono: !!cr, semanas: cr ? cr.querySelectorAll('.ptSemanaHd').length : 0, dia: /dia \d+ de \d+/.test(txt), guardado, vistaDepois: S.ptVista,
+      sel: (document.querySelector('.qdCalTopo select') || {}).value };
+  }, CLI);
+  checa('6.1 a ficha do cliente não tem mais a aba Cronograma e cai em Marca', !r.abas.some(a => /cronograma/i.test(a)) && r.tab === 'marca', r);
+  checa('6.2 o Calendário tem a vista "Cronograma de conteúdos"', r.temBotao && r.temCrono, r);
+  checa('6.3 ela abre no mês inteiro, semana a semana (não no Dia)', r.semanas >= 2 && !r.dia, r);
+  checa('6.4 a escolha de vista fica no aparelho, e o Dia da pauta não é tocado', r.guardado === 'crono' && r.vistaDepois === 'dia', r);
+  checa('6.5 com o cliente escolhido no seletor', r.sel === CLI, r);
+  await pg.evaluate(() => { MaestroQuadro.calVista = 'mes'; try{ localStorage.removeItem('maestro-quadro-calvista'); }catch(e){} });
 }
 checa('9.9 nenhum erro de página', erros.length === 0, erros.slice(0, 3));
 console.log(`\n${ok} passaram · ${falhou} falharam`);
