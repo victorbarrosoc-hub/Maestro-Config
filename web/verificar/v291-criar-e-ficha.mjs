@@ -136,29 +136,43 @@ console.log('\n  — 5. o cliente vê as informações-chave, e só elas —');
   const vaza = ['OBS-INTERNA', 'PEND-INTERNA', 'REC-INTERNO', 'CHECK-INTERNO'].filter(k => t.includes(k));
   checa('5.2 e não vê o que é da casa (observação, pendência, recursos, checklist)', !vaza.length, vaza);
 }
-console.log('\n  — 6. o Cronograma de conteúdos mora no Calendário, mensal —');
+console.log('\n  — 6. a Semana do Calendário, do jeito do Quadro (v293) —');
 {
   const r = await pg.evaluate(async cli => {
     S.view = 'agency'; S.route = 'clientedet'; S.cli = cli; S.tab = 'pauta'; render(); await new Promise(r => setTimeout(r, 250));
     const abas = [...document.querySelectorAll('#root .tabs button')].map(b => b.textContent.trim());
     const tab = S.tab;
-    const m = new Date().toISOString().slice(0, 7);
-    S.pautas[cli] = (S.pautas[cli] || []).concat([3, 12, 24].map((d, i) => ({ id: 6100 + i, t: 'EJUP · Post · Crono ' + (i + 1), fmt: 'Post', fase: 'producao', data: `${m}-${String(d).padStart(2, '0')}`, hora: '10:00', plats: ['ig'] })));
-    S.ptVista = 'dia'; S.ptVistaAuto = true; S.ptSemana = {}; S.ptMes = null;
-    S.route = 'producao'; render(); MaestroQuadro.aba = 'calendario'; MaestroQuadro.calVista = 'mes'; MaestroQuadro.filtroCli = cli; render(); await new Promise(r => setTimeout(r, 200));
-    const temBotao = !!document.querySelector('[data-qdcalvista="crono"]');
-    document.querySelector('[data-qdcalvista="crono"]').click(); await new Promise(r => setTimeout(r, 300));
-    const cr = document.querySelector('#root .qdCrono');
-    const txt = cr ? cr.innerText : '';
+    const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const seg = new Date(); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
+    const dia = n => { const d = new Date(seg); d.setDate(d.getDate() + n); return iso(d); };
+    S.pautas[cli] = (S.pautas[cli] || []).concat([[0, '09:00'], [2, '18:30'], [2, '10:00'], [9, '12:00']].map(([n, h], i) => ({ id: 6100 + i, t: 'EJUP · Post · Semana ' + (i + 1), fmt: 'Post', fase: 'producao', data: dia(n), hora: h, plats: ['ig'] })));
+    S.route = 'producao'; render(); MaestroQuadro.aba = 'calendario'; MaestroQuadro.calVista = 'mes'; MaestroQuadro.filtroCli = 'todos'; MaestroQuadro.semCal = 0; render(); await new Promise(r => setTimeout(r, 200));
+    const vistas = [...document.querySelectorAll('[data-qdcalvista]')].map(b => b.textContent.trim());
+    document.querySelector('[data-qdcalvista="semana"]').click(); await new Promise(r => setTimeout(r, 250));
+    const dias = [...document.querySelectorAll('#root .qdSemDia')].map(d => d.dataset.qddia);
+    const noDia = d => [...document.querySelectorAll(`#root .qdSemDia[data-qddia="${d}"] .qdSemCard`)].map(c => c.querySelector('.qdSemHora').textContent + ' ' + c.querySelector('.qdSemTit').textContent).filter(t => /Semana \d/.test(t));
     let guardado = null; try{ guardado = localStorage.getItem('maestro-quadro-calvista'); }catch(e){}
-    return { abas, tab, temBotao, temCrono: !!cr, semanas: cr ? cr.querySelectorAll('.ptSemanaHd').length : 0, dia: /dia \d+ de \d+/.test(txt), guardado, vistaDepois: S.ptVista,
-      sel: (document.querySelector('.qdCalTopo select') || {}).value };
-  }, CLI);
+    return { abas, tab, vistas, dias, seg: dia(0), dom: dia(6), quarta: noDia(dia(2)), segunda: noDia(dia(0)), prox: dia(9), velho: !!document.querySelector('#root .ptSemanaHd, #root .qdCrono'), guardado }; }, CLI);
   checa('6.1 a ficha do cliente não tem mais a aba Cronograma e cai em Marca', !r.abas.some(a => /cronograma/i.test(a)) && r.tab === 'marca', r);
-  checa('6.2 o Calendário tem a vista "Cronograma de conteúdos"', r.temBotao && r.temCrono, r);
-  checa('6.3 ela abre no mês inteiro, semana a semana (não no Dia)', r.semanas >= 2 && !r.dia, r);
-  checa('6.4 a escolha de vista fica no aparelho, e o Dia da pauta não é tocado', r.guardado === 'crono' && r.vistaDepois === 'dia', r);
-  checa('6.5 com o cliente escolhido no seletor', r.sel === CLI, r);
+  checa('6.2 o Calendário tem Mês e Semana (e não embute mais o Cronograma antigo)', r.vistas.join() === 'Mês,Semana' && !r.velho, r);
+  checa('6.3 a Semana mostra os sete dias, de segunda a domingo', r.dias.length === 7 && r.dias[0] === r.seg && r.dias[6] === r.dom, r.dias);
+  checa('6.4 cada card no dia dele, em ordem de hora, com o card do Quadro', r.quarta.join('|') === '10:00 Semana 3|18:30 Semana 2' && r.segunda.length === 1, r);
+  checa('6.5 a escolha fica no aparelho', r.guardado === 'semana', r.guardado);
+  await pg.click('#root [data-qdabre$="|6101"]'); await pg.waitForTimeout(300);
+  const f = await pg.evaluate(() => ({ folha: MaestroQuadro.folha, abas: !!document.querySelector('#qdFolha .qdFAbas'), velho: !!document.querySelector('#layer .modal') }));
+  checa('6.6 tocar no card abre a ficha NOVA do Quadro (não a janela antiga)', /\|6101$/.test(f.folha || '') && f.abas && !f.velho, f);
+  await pg.evaluate(() => MaestroQuadro.fecharFolha());
+  await pg.click('#root [data-qdsemcal="1"]'); await pg.waitForTimeout(200);
+  const r2 = await pg.evaluate(() => ({ cards: [...document.querySelectorAll('#root .qdSemCard .qdSemTit')].map(x => x.textContent), volta: !!document.querySelector('#root [data-qdsemcal="0"]') }));
+  checa('6.7 › vai para a próxima semana (e aparece "Esta semana")', r2.cards.includes('Semana 4') && r2.volta, r2);
+  await pg.click('#root [data-qdsemcal="0"]'); await pg.waitForTimeout(200);
+  /* arrastar muda o dia */
+  const destino = r.dias[4];
+  const de = pg.locator('#root [data-qdabre$="|6100"]');
+  await de.dragTo(pg.locator(`#root .qdSemDia[data-qddia="${destino}"]`));
+  await pg.waitForTimeout(300);
+  const dt = await pg.evaluate(cli => S.pautas[cli].find(p => p.id === 6100).data, CLI);
+  checa('6.8 arrastar o card para outro dia muda a data de publicação', dt === destino, { dt, destino });
   await pg.evaluate(() => { MaestroQuadro.calVista = 'mes'; try{ localStorage.removeItem('maestro-quadro-calvista'); }catch(e){} });
 }
 checa('9.9 nenhum erro de página', erros.length === 0, erros.slice(0, 3));

@@ -804,36 +804,55 @@
 
   /* --- Calendário (o Cronograma) --- */
   const arrastavel = () => (typeof matchMedia === 'function' && matchMedia('(pointer:fine)').matches) ? 'draggable="true"' : '';
-  /* v292 — "remove essa aba dentro da aba do cliente e coloca esse modelo de visualização
-     dentro de Calendário… é mais um tipo de visualização do que vem do Quadro, só que mensal".
-     O Cronograma de conteúdos (as semanas do mês, card a card) vira a segunda vista do
-     Calendário, do cliente escolhido, abrindo no mês inteiro. */
-  const vistasCal = () => `<div class="qdVistas" role="group" aria-label="Como ver o mês">${[['mes', 'Calendário'], ['crono', 'Cronograma de conteúdos']].map(([k, n]) =>
+  /* v293 — "Não é pra ser igual, queria que você fizesse uma forma de visualizar só por
+     semana… está no jeito antigo até quando clica no card." A v292 embutia o Cronograma
+     antigo (a pauta, com a janela antiga). Agora o Calendário tem Mês e SEMANA, as duas
+     feitas do card do Quadro: tocar abre a ficha nova, arrastar muda o dia, "+" cria. */
+  const vistasCal = () => `<div class="qdVistas" role="group" aria-label="Como ver">${[['mes', 'Mês'], ['semana', 'Semana']].map(([k, n]) =>
     `<button type="button" class="qdPil ${(Q.calVista || 'mes') === k ? 'on' : ''}" data-qdcalvista="${k}">${n}</button>`).join('')}</div>`;
-  function clienteDoCrono(){
-    const cs = clientes(); if(!cs.length) return null;
-    if(Q.filtroCli && Q.filtroCli !== 'todos' && cs.some(c => c.id === Q.filtroCli)) return Q.filtroCli;
-    if(cs.some(c => c.id === S.cli)) return S.cli;
-    return cs[0].id;
+  const selCli = () => `<select class="qdSel" data-qdfc="1" aria-label="Filtrar por cliente"><option value="todos">Todos os clientes</option>
+      ${clientes().map(c => `<option value="${esc_(c.id)}" ${Q.filtroCli === c.id ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}</select>`;
+  function cartaoSemana(x){
+    const { cli, p, col } = x; const key = cli + '|' + p.id;
+    const cp = capa(cli, p.id); const nm = materiais(cli, p.id).length;
+    const fmts = fmtsDe(p);
+    return `<article class="qdSemCard" style="--qdc:${COL[col].c}" data-qdabre="${esc_(key)}" data-qdkey="${esc_(key)}" ${arrastavel()} tabindex="0">
+      ${cp ? `<div class="qdSemCapa" style="background-image:url('${cp.replace(/'/g, '%27')}')"></div>` : ''}
+      <div class="qdSemTopo"><span class="qdSemHora">${esc_(p.hora || '—')}</span><span class="qdDot" style="--qdc:${COL[col].c}">${esc_(COL[col].n)}</span></div>
+      <div class="qdSemTit">${esc_(tema(p, cli))}</div>
+      <div class="qdSemPe">${avCli(cli, 'qdAvC mini')}<span class="qdSemCli">${esc_(cliente(cli).nome)}</span>
+        ${fmts.length ? `<span class="qdFmt">${esc_(fmts.join(' + '))}</span>` : ''}${nm ? `<span class="qdSemMat" title="Material">${ic_('clipe', 10)}${nm}</span>` : ''}</div>
+    </article>`;
   }
-  function vistaCronograma(){
-    const cli = clienteDoCrono(); if(!cli) return vistasCal() + '<p class="qdMut">Nenhum cliente ainda.</p>';
-    S.cli = cli;
-    const mes = S.ptMes || (Q.mes || hoje().slice(0, 7));
-    if(!S.ptSemana || !S.ptSemana[mes]) S.ptSemana = Object.assign({}, S.ptSemana, { [mes]: 'todas' });
-    /* mensal: aqui o padrão é o mês inteiro, semana a semana — não o Dia da pauta.
-       Quem escolher outra vista (Mês, Stories, Dia) lá dentro, fica com ela. */
-    const trocar = S.ptVistaAuto !== false && (!S.ptVista || S.ptVista === 'dia');
-    const antes = S.ptVista;
-    let corpo = '';
-    try{ if(trocar) S.ptVista = 'semana'; corpo = typeof corpoPauta === 'function' ? corpoPauta() : ''; }catch(e){ corpo = ''; }
-    finally{ if(trocar) S.ptVista = antes; }
-    return `<div class="qdCalTopo">${vistasCal()}<span class="qdSp"></span>
-        <select class="qdSel" data-qdfc="1" aria-label="Cliente">${clientes().map(c => `<option value="${esc_(c.id)}" ${c.id === cli ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}</select></div>
-      <div class="qdCrono">${corpo || '<p class="qdMut">Este cliente ainda não tem cards com data.</p>'}</div>`;
+  function vistaSemana(){
+    const h = hoje();
+    const ini = soma(segunda(h), 7 * (Q.semCal || 0));
+    const dias = Array.from({ length: 7 }, (_, i) => soma(ini, i));
+    const itens = todos().filter(x => x.cli !== AG && x.p.data && x.p.data >= dias[0] && x.p.data <= dias[6] && (Q.filtroCli === 'todos' || x.cli === Q.filtroCli));
+    const doDia = d => itens.filter(x => x.p.data === d).sort((a, b) => String(a.p.hora || '99').localeCompare(String(b.p.hora || '99')));
+    const noAr = itens.filter(x => ['agendado', 'publicado'].includes(x.col)).length;
+    const cliente_ = itens.filter(x => x.col === 'cliente').length;
+    const d0 = doISO(dias[0]), d6 = doISO(dias[6]);
+    const rot = d0.getMonth() === d6.getMonth() ? `${d0.getDate()} – ${d6.getDate()} de ${MESES[d6.getMonth()]}` : `${d0.getDate()} de ${MESES[d0.getMonth()].slice(0, 3)} – ${d6.getDate()} de ${MESES[d6.getMonth()].slice(0, 3)}`;
+    const col = d => {
+      const dt = doISO(d), l = doDia(d);
+      return `<section class="qdSemDia ${d === h ? 'hoje' : ''} ${d < h ? 'passou' : ''}" data-qddia="${d}" data-qddiaque="data">
+        <header><span>${DIAS3[dt.getDay()]}</span><b>${dt.getDate()}</b>${l.length ? `<em>${l.length}</em>` : ''}</header>
+        <div class="qdSemL">${l.map(cartaoSemana).join('')}</div>
+        <div class="qdAdd" data-qdaddwrap="cal:${d}"><button type="button" class="qdAddBt" data-qdadd="cal:${d}">+ Adicionar</button></div>
+      </section>`;
+    };
+    return `<div class="qdCalTopo">${vistasCal()}
+        <span class="qdNavG"><button type="button" class="qdBtIc" data-qdsemcal="-1" aria-label="Semana anterior">‹</button>
+        <b class="qdMesNome">${esc_(rot)}</b>
+        <button type="button" class="qdBtIc" data-qdsemcal="1" aria-label="Próxima semana">›</button>
+        ${Q.semCal ? `<button type="button" class="qdPil" data-qdsemcal="0">Esta semana</button>` : ''}</span>
+        <span class="qdSp"></span>${selCli()}</div>
+      <p class="qdSemResumo"><b>${itens.length}</b> ${itens.length === 1 ? 'publicação' : 'publicações'} na semana${itens.length ? ` · ${noAr} agendada${noAr === 1 ? '' : 's'} ou no ar · ${cliente_} com o cliente` : ''}</p>
+      <div class="qdSemana7">${dias.map(col).join('')}</div>`;
   }
   function vistaCalendario(){
-    if(Q.calVista === 'crono') return vistaCronograma();
+    if(Q.calVista === 'semana') return vistaSemana();
     const h = hoje();
     const mes = Q.mes || h.slice(0, 7);
     const [a, m] = mes.split('-').map(Number);
@@ -867,11 +886,11 @@
     const legenda = COLS.map(([k, n, c]) => `<span class="qdLeg" style="--qdc:${c}"><i></i>${n}</span>`).join('');
     const nomeMes = `${MESES[m - 1][0].toUpperCase() + MESES[m - 1].slice(1)} ${a}`;
     const antes = iso(new Date(a, m - 2, 1)).slice(0, 7), depois = iso(new Date(a, m, 1)).slice(0, 7);
-    return `<div class="qdCalTopo">${vistasCal()}</div><div class="qdCalTopo">
-        <button type="button" class="qdBtIc" data-qdmes="${antes}" aria-label="Mês anterior">‹</button>
+    return `<div class="qdCalTopo">${vistasCal()}
+        <span class="qdNavG"><button type="button" class="qdBtIc" data-qdmes="${antes}" aria-label="Mês anterior">‹</button>
         <b class="qdMesNome">${nomeMes}</b>
         <button type="button" class="qdBtIc" data-qdmes="${depois}" aria-label="Próximo mês">›</button>
-        ${mes !== h.slice(0, 7) ? `<button type="button" class="qdPil" data-qdmes="${h.slice(0, 7)}">Hoje</button>` : ''}
+        ${mes !== h.slice(0, 7) ? `<button type="button" class="qdPil" data-qdmes="${h.slice(0, 7)}">Hoje</button>` : ''}</span>
         <span class="qdSp"></span>
         <select class="qdSel" data-qdfc="1" aria-label="Filtrar por cliente"><option value="todos">Todos os clientes</option>
           ${clientes().map(c => `<option value="${esc_(c.id)}" ${Q.filtroCli === c.id ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}</select>
@@ -1364,7 +1383,7 @@
     agClienteDet = function(){ if(!S.tab || S.tab === 'pauta') S.tab = 'marca'; return oc.apply(this, arguments); };
     agClienteDet.__qd = true;
   }
-  try{ const v = localStorage.getItem('maestro-quadro-calvista'); if(v === 'crono' || v === 'mes') Q.calVista = v; }catch(e){}
+  try{ const v = localStorage.getItem('maestro-quadro-calvista'); if(v === 'semana' || v === 'crono') Q.calVista = 'semana'; else if(v === 'mes') Q.calVista = v; }catch(e){}
 
   /* v291 — "preciso mostrar as informações-chave pro cliente ver no link dele".
      Ele já via texto, legenda, CTA, roteiro, corte, telas, data e redes; faltavam
@@ -1441,7 +1460,7 @@
     }
     const px = e.target.closest('[data-qdprox]');
     if(px){ e.stopPropagation(); executar(px.dataset.qdprox, px.dataset.qdacao, px); return; }
-    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome],[data-qdmais],[data-qdmenos],[data-qdrecolhe],[data-qdfmt],[data-qdpilar],[data-qdrefx],[data-qdfaba],[data-qdcalvista]');
+    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome],[data-qdmais],[data-qdmenos],[data-qdrecolhe],[data-qdfmt],[data-qdpilar],[data-qdrefx],[data-qdfaba],[data-qdcalvista],[data-qdsemcal]');
     if(!e.target.closest('#qdPop')) document.getElementById('qdPop')?.remove();
     const rc = !alvo && e.target.closest && e.target.closest('#root .qdCol.recolhida');
     if(rc){ alternarRecolhida(rc.dataset.qdcol); render(); return; }
@@ -1449,7 +1468,8 @@
     const d = alvo.dataset;
     if(d.qdabaid){ Q.aba = d.qdabaid; try{ localStorage.setItem('maestro-quadro-aba', Q.aba); }catch(x){} fecharFolha(); render(); window.scrollTo(0, 0); return; }
     if(d.qdfp){ Q.filtroPessoa = d.qdfp; render(); return; }
-    if(d.qdcalvista){ Q.calVista = d.qdcalvista; if(d.qdcalvista === 'crono') S.ptMes = Q.mes || hoje().slice(0, 7); try{ localStorage.setItem('maestro-quadro-calvista', Q.calVista); }catch(x){} render(); return; }
+    if(d.qdsemcal !== undefined){ Q.semCal = d.qdsemcal === '0' ? 0 : (Q.semCal || 0) + (+d.qdsemcal); render(); return; }
+    if(d.qdcalvista){ Q.calVista = d.qdcalvista; try{ localStorage.setItem('maestro-quadro-calvista', Q.calVista); }catch(x){} render(); return; }
     if(d.qdmais){ Q.verMais = Q.verMais || {}; Q.verMais[d.qdmais] = quantosVer(d.qdmais) + LIMITE; render(); return; }
     if(d.qdmenos){ if(Q.verMais) delete Q.verMais[d.qdmenos]; render(); const c = document.querySelector(`#root .qdCol[data-qdcol="${d.qdmenos}"]`); if(c && c.getBoundingClientRect().top < 0) c.scrollIntoView({ block: 'start' }); return; }
     if(d.qdrecolhe){ e.stopPropagation(); alternarRecolhida(d.qdrecolhe); render(); return; }
@@ -2087,7 +2107,32 @@
   .qdFRef a{ text-decoration:underline; text-underline-offset:2px }
   .qdSel.ligado{ background:var(--latao, #FFC857) !important; color:#1C1C1F !important; font-weight:600 }
   .qdVistas{ display:flex; gap:6px; flex-wrap:wrap }
-  .qdCrono{ margin-top:6px }
+  /* a semana: sete colunas do card do Quadro */
+  .qdNavG{ display:inline-flex; align-items:center; gap:8px; white-space:nowrap }
+  .qdSemResumo{ margin:-2px 0 12px; color:var(--mut, #999); font-size:13px }
+  .qdSemResumo b{ color:var(--tx, #fff) }
+  .qdSemana7{ display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:8px; align-items:start }
+  .qdSemDia{ background:var(--sup, rgba(255,255,255,.035)); border-radius:16px; padding:8px 6px 6px; min-height:360px; display:flex; flex-direction:column }
+  .qdSemDia.hoje{ box-shadow:inset 0 0 0 1.5px var(--latao, #FFC857) }
+  .qdSemDia.passou{ opacity:.78 }
+  .qdSemDia > header{ display:flex; align-items:baseline; gap:6px; padding:2px 6px 8px; color:var(--mut, #999); font-size:12.5px; text-transform:capitalize }
+  .qdSemDia > header b{ color:var(--tx, #fff); font-size:18px; font-weight:600 }
+  .qdSemDia.hoje > header b{ color:var(--latao, #FFC857) }
+  .qdSemDia > header em{ margin-left:auto; font-style:normal; font-size:11.5px; background:var(--sup2, rgba(255,255,255,.08)); border-radius:999px; padding:1px 7px }
+  .qdSemL{ flex:1; display:flex; flex-direction:column; gap:6px }
+  .qdSemCard{ position:relative; background:var(--card, #27272B); border-radius:12px; padding:8px 9px 8px 11px; cursor:pointer; overflow:hidden; outline:none }
+  .qdSemCard::before{ content:''; position:absolute; left:0; top:8px; bottom:8px; width:3px; border-radius:0 3px 3px 0; background:var(--qdc) }
+  .qdSemCard:hover, .qdSemCard:focus-visible{ box-shadow:inset 0 0 0 1.5px var(--qdl) }
+  .qdSemCapa{ height:72px; margin:-8px -9px 8px -11px; background:center/cover no-repeat var(--sup2, #333) }
+  .qdSemTopo{ display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--mut, #999) }
+  .qdSemHora{ color:var(--tx, #fff); font-weight:600; font-variant-numeric:tabular-nums }
+  .qdSemTopo .qdDot{ display:inline-flex; align-items:center; gap:4px; margin-left:auto; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
+  .qdSemTit{ font-size:13px; line-height:1.3; margin:4px 0 6px; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden }
+  .qdSemPe{ display:flex; align-items:center; gap:5px; font-size:11px; color:var(--mut, #999); min-width:0 }
+  .qdSemCli{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .qdSemPe .qdFmt{ margin-left:auto; flex:none }
+  .qdSemMat{ display:inline-flex; align-items:center; gap:2px; flex:none }
+  .qdSemDia .qdAddBt{ width:100%; margin-top:6px }
   .qdMais, .qdMenos{ display:block; width:100%; margin:4px 0 0; border:0; border-radius:10px; padding:9px 10px; font:inherit; font-size:13px; font-weight:600; cursor:pointer; background:var(--sup, rgba(255,255,255,.06)); color:var(--tx, #fff) }
   .qdMais span{ font-weight:400; color:var(--mut, #999) }
   .qdMenos{ background:transparent; color:var(--mut, #999); font-weight:500 }
@@ -2188,6 +2233,12 @@
     .qdSemana{ grid-template-columns:1fr; gap:6px }
     .qdDia{ min-height:0 }
     .qdMalha{ display:none }
+    .qdSemana7{ grid-template-columns:1fr; gap:8px }
+    .qdSemDia{ min-height:0 }
+    .qdCalTopo .qdNavG{ order:2; flex-basis:100%; justify-content:space-between }
+    .qdCalTopo .qdNavG .qdMesNome{ flex:1; text-align:center }
+    .qdCalTopo .qdSel{ order:3; flex:1 }
+    .qdSemCapa{ height:120px }
     .qdAgenda{ display:flex; flex-direction:column; gap:2px }
     .qdAgDia{ display:flex; gap:12px; padding:10px 0; border-top:1px solid var(--qdl) }
     .qdAgDia.hoje .qdAgN b{ color:var(--cobalt, #5B8DEF) }
