@@ -175,6 +175,48 @@ console.log('\n  — 6. a Semana do Calendário, do jeito do Quadro (v293) —')
   checa('6.8 arrastar o card para outro dia muda a data de publicação', dt === destino, { dt, destino });
   await pg.evaluate(() => { MaestroQuadro.calVista = 'mes'; try{ localStorage.removeItem('maestro-quadro-calvista'); }catch(e){} });
 }
+console.log('\n  — 7. baixar o material do card, e o Cancelar / tocar fora (v294) —');
+{
+  const key = await pg.evaluate(async cli => {
+    S.view = 'agency'; S.route = 'producao'; MaestroQuadro.aba = 'quadro'; render();
+    S.pautas[cli].push({ id: 7301, t: 'EJUP · Carrossel · Baixar', fmt: 'Carrossel', fase: 'producao' });
+    const mk = async (cor) => { const cv = document.createElement('canvas'); cv.width = 20; cv.height = 20; const x = cv.getContext('2d'); x.fillStyle = cor; x.fillRect(0, 0, 20, 20); const b = await new Promise(r => cv.toBlob(r, 'image/png')); return URL.createObjectURL(b); };
+    S.mat[cli + '|7301'] = [{ tipo: 'imagem', nome: 'tela-1.png', url: await mk('#f00') }, { tipo: 'imagem', nome: 'tela-2.png', url: await mk('#0f0') }, { tipo: 'link', nome: 'https://drive.x/abc', url: 'https://drive.x/abc' }];
+    render(); MaestroQuadro.folhaAba = 'peca'; MaestroQuadro.abrirFolha(cli + '|7301'); await new Promise(r => setTimeout(r, 300));
+    return { bts: document.querySelectorAll('#qdFolha [data-qdbaixar]').length, todas: (document.querySelector('#qdFolha [data-qdbaixar="todas"]') || {}).textContent };
+  }, CLI);
+  checa('7.1 cada arquivo do card tem o botão de baixar (link não), e há "Baixar as 2"', key.bts === 3 && /Baixar as 2/.test(key.todas || ''), key);
+  const [d1] = await Promise.all([pg.waitForEvent('download', { timeout: 5000 }), pg.click('#qdFolha [data-qdbaixar="1"]')]);
+  checa('7.2 um toque baixa o arquivo com o nome dele', d1.suggestedFilename() === 'tela-2.png', d1.suggestedFilename());
+  const nomes = [];
+  pg.on('download', d => nomes.push(d.suggestedFilename()));
+  await pg.click('#qdFolha [data-qdbaixar="todas"]'); await pg.waitForTimeout(1200);
+  checa('7.3 "Baixar as 2" baixa todos, na ordem', nomes.join() === 'tela-1.png,tela-2.png', nomes);
+  await pg.click('#qdFolha .qdFMatVer'); await pg.waitForTimeout(200);
+  const [d2] = await Promise.all([pg.waitForEvent('download', { timeout: 5000 }), pg.click('#qdVer [data-qdverbaixar]')]);
+  checa('7.4 e dá para baixar de dentro da peça aberta em tela cheia', d2.suggestedFilename() === 'tela-1.png', d2.suggestedFilename());
+  await pg.evaluate(() => { MaestroQuadro.fecharVer(); MaestroQuadro.fecharFolha(); render(); });
+  /* Cancelar */
+  await pg.evaluate(() => document.querySelector('[data-qdadd="pauta"]').click());
+  await pg.fill('[data-qdaddform="pauta"] textarea', 'um card que eu desisti');
+  await pg.click('[data-qdaddform="pauta"] [data-qdaddfechar]'); await pg.waitForTimeout(150);
+  const c1 = await pg.evaluate(() => ({ aberto: !!document.querySelector('[data-qdaddform="pauta"]'), botao: !!document.querySelector('[data-qdadd="pauta"]'), criou: MaestroQuadro.todos().some(x => /desisti/.test(x.p.t)) }));
+  checa('7.5 "Cancelar" fecha a criação, sem criar card', !c1.aberto && c1.botao && !c1.criou, c1);
+  await pg.evaluate(() => document.querySelector('[data-qdadd="pauta"]').click());
+  const vazio = await pg.evaluate(() => document.querySelector('[data-qdaddform="pauta"] textarea').value);
+  checa('7.6 e o que foi cancelado não volta', vazio === '', vazio);
+  /* tocar fora */
+  await pg.fill('[data-qdaddform="pauta"] textarea', 'rascunho guardado');
+  await pg.mouse.click(700, 60); await pg.waitForTimeout(150);
+  const c2 = await pg.evaluate(() => ({ aberto: !!document.querySelector('[data-qdaddform="pauta"]'), criou: MaestroQuadro.todos().some(x => /rascunho guardado/.test(x.p.t)) }));
+  checa('7.7 tocar fora do card para de estruturar (fecha, sem criar)', !c2.aberto && !c2.criou, c2);
+  await pg.evaluate(() => document.querySelector('[data-qdadd="pauta"]').click());
+  const volta = await pg.evaluate(() => document.querySelector('[data-qdaddform="pauta"] textarea').value);
+  checa('7.8 o que estava escrito volta ao abrir de novo (não se perde)', volta === 'rascunho guardado', volta);
+  await pg.click('[data-qdaddform="pauta"] [data-qdncli]'); await pg.waitForTimeout(100);
+  checa('7.9 tocar nos botões de cliente/formato não fecha', await pg.evaluate(() => !!document.querySelector('[data-qdaddform="pauta"]')));
+  await pg.click('[data-qdaddform="pauta"] [data-qdaddfechar]');
+}
 checa('9.9 nenhum erro de página', erros.length === 0, erros.slice(0, 3));
 console.log(`\n${ok} passaram · ${falhou} falharam`);
 await nav.close(); srv.close();

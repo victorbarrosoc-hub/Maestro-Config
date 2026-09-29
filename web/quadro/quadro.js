@@ -972,10 +972,41 @@
     let el = document.getElementById('qdVer');
     if(!el){ el = document.createElement('div'); el.id = 'qdVer'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); document.body.appendChild(el); }
     el.innerHTML = `<div class="qdVerFundo" data-qdverfechar="1"></div>
-      <div class="qdVerIn"><div class="qdVerTopo"><span>${ms.length > 1 ? `${i + 1} / ${ms.length}` : ''}</span><b>${esc_(m.nome || '')}</b><button type="button" class="qdFechar" data-qdverfechar="1" aria-label="Fechar">×</button></div>
+      <div class="qdVerIn"><div class="qdVerTopo"><span>${ms.length > 1 ? `${i + 1} / ${ms.length}` : ''}</span><b>${esc_(m.nome || '')}</b>${m.tipo !== 'link' ? `<button type="button" class="qdPil qdVerBaixa" data-qdverbaixar="1">Baixar</button>` : ''}<button type="button" class="qdFechar" data-qdverfechar="1" aria-label="Fechar">×</button></div>
         <div class="qdVerPalco">${corpo}</div>
         ${ms.length > 1 ? `<button type="button" class="qdVerSeta ant" data-qdverir="-1" aria-label="Anterior" ${i === 0 ? 'disabled' : ''}>‹</button><button type="button" class="qdVerSeta prox" data-qdverir="1" aria-label="Próxima" ${i === ms.length - 1 ? 'disabled' : ''}>›</button>` : ''}</div>`;
   }
+  /* v294 — "colocar a opção de baixar o arquivo que está anexado no card". Um toque
+     baixa com o nome do arquivo: do aparelho, se ainda está só nele; da nuvem, se já
+     subiu. Se o navegador não deixar baixar, abre numa aba nova. */
+  async function baixarMaterial(m, i){
+    if(!m || m.tipo === 'link') return false;
+    const nome = String(m.nome || `peca-${(i || 0) + 1}`).replace(/[\\/:*?"<>|]+/g, '-');
+    let blob = null;
+    try{ if(m.chave && typeof idbLer === 'function') blob = await idbLer(m.chave); }catch(e){}
+    const u = url_(m.url || '');
+    if(!blob && u){ try{ const r = await fetch(u); if(r.ok) blob = await r.blob(); }catch(e){} }
+    if(!blob){ if(u) window.open(u, '_blank', 'noopener'); return false; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    return true;
+  }
+  Q.baixarMaterial = baixarMaterial;
+  async function baixarDoCard(cli, id, qual){
+    const ms = materiais(cli, id);
+    if(qual === 'todas'){ for(let k = 0; k < ms.length; k++){ if(ms[k] && ms[k].tipo !== 'link'){ await baixarMaterial(ms[k], k); await new Promise(r => setTimeout(r, 300)); } } return; }
+    await baixarMaterial(ms[+qual], +qual);
+  }
+  Q.baixarDoCard = baixarDoCard;
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('#qdFolha [data-qdbaixar], #qdVer [data-qdverbaixar]');
+    if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    if(b.dataset.qdverbaixar){ if(Q.ver) baixarDoCard(Q.ver.cli, Q.ver.id, Q.ver.i); return; }
+    if(!Q.folha) return;
+    const [cli, id] = Q.folha.split('|');
+    baixarDoCard(cli, id, b.dataset.qdbaixar);
+  }, true);
   function fecharVer(){ Q.ver = null; const el = document.getElementById('qdVer'); if(el) el.remove(); }
   Q.verPeca = verPeca; Q.fecharVer = fecharVer;
   document.addEventListener('click', e => {
@@ -1126,8 +1157,9 @@
           <div class="qdFMat">${ms.map((m, i) => {
             const u = url_(m.tipo === 'imagem' ? (m.url || m.capa) : (m.capa || m.poster || ''));
             return `<span class="qdFMatI"><button type="button" class="qdFMatVer" data-qdver="${i}" aria-label="Ver ${esc_(m.nome || 'a peça ' + (i + 1))}" title="${esc_(m.nome || '')}">${u ? `<img src="${u}" alt="" loading="lazy">` : `<i>${esc_(m.tipo === 'video' ? 'vídeo' : m.tipo === 'link' ? 'link' : 'arquivo')}</i>`}${m.tipo === 'video' ? `<b class="qdFMatPlay" aria-hidden="true">▶</b>` : ''}${ms.length > 1 ? `<em>${i + 1}</em>` : ''}</button>
+              ${m.tipo !== 'link' ? `<button type="button" class="qdFMatBaixa" data-qdbaixar="${i}" aria-label="Baixar ${esc_(m.nome || 'a peça ' + (i + 1))}" title="Baixar">${ic_('baixar', 12) || '↓'}</button>` : ''}
               ${ms.length > 1 ? `<span class="qdFMatMv"><button type="button" data-qdmv="${i}|-1" aria-label="Uma posição antes" ${i === 0 ? 'disabled' : ''}>‹</button><button type="button" data-qdmv="${i}|1" aria-label="Uma posição depois" ${i === ms.length - 1 ? 'disabled' : ''}>›</button></span>` : ''}</span>`; }).join('')}</div>
-          <div class="qdFMatBts">${ms.length > 1 ? `<button type="button" class="qdPil" data-qdmatnome="1">Ordenar por nome</button>` : ''}<button type="button" class="qdPil" data-qdsubir="1">${ic_('clipe', 12)} Subir material</button></div>
+          <div class="qdFMatBts">${ms.filter(m => m.tipo !== 'link').length ? `<button type="button" class="qdPil" data-qdbaixar="todas">${ic_('baixar', 12)} ${ms.filter(m => m.tipo !== 'link').length > 1 ? `Baixar as ${ms.filter(m => m.tipo !== 'link').length}` : 'Baixar'}</button>` : ''}${ms.length > 1 ? `<button type="button" class="qdPil" data-qdmatnome="1">Ordenar por nome</button>` : ''}<button type="button" class="qdPil" data-qdsubir="1">${ic_('clipe', 12)} Subir material</button></div>
           <input type="file" id="qdArquivo" multiple hidden></div>
           ${blocoRefs(cli, p)}`;
         return `<div class="qdFAbas" role="tablist" aria-label="Partes do card">${tab('conteudo', 'Conteúdo')}${tab('peca', 'Peça')}${tab('detalhes', 'Detalhes')}</div>
@@ -1282,9 +1314,35 @@
       <textarea rows="2" placeholder="${alvo.startsWith('cal:') ? 'Tema #cliente' : 'O que precisa ser feito? #cliente @pessoa'}" aria-label="Novo card"></textarea>
       ${blocoNome(alvo)}
       <div class="qdAddBts"><button type="submit" class="qdBt">Adicionar</button><button type="button" class="qdBtGho" data-qdaddfechar="1">Cancelar</button></div></form>`;
+    const rasc = Q.rascunho && Q.rascunho[alvo];
+    if(rasc){ w.querySelector('textarea').value = rasc; delete Q.rascunho[alvo]; }
     atualizarNome(w.querySelector('form'));
-    if(!silencioso){ const t = w.querySelector('textarea'); t.focus(); }
+    if(!silencioso){ const t = w.querySelector('textarea'); t.focus(); if(rasc) t.setSelectionRange(t.value.length, t.value.length); }
   }
+  /* v294 — "o cancelar não funciona… seria interessante só clicar fora do card, ele parar
+     de estruturar automaticamente." Cancelar fecha; tocar fora também fecha. O que já
+     estava escrito não se perde: volta quando o mesmo "+ Adicionar" for aberto de novo. */
+  const botaoAdd = alvo => `<button type="button" class="qdAddBt" data-qdadd="${esc_(alvo)}">+ Adicionar</button>`;
+  function fecharAdd(w, descartar){
+    const ws = w ? [w] : [...document.querySelectorAll('#root [data-qdaddwrap]')].filter(x => x.querySelector('form'));
+    ws.forEach(x => {
+      const alvo = x.dataset.qdaddwrap; const t = x.querySelector('textarea');
+      Q.rascunho = Q.rascunho || {};
+      if(t && t.value.trim() && !descartar) Q.rascunho[alvo] = t.value; else delete Q.rascunho[alvo];
+      if(Q.extra && Q.extra.alvo === alvo && descartar) Q.extra = null;
+      x.innerHTML = botaoAdd(alvo);
+    });
+  }
+  Q.fecharAdd = fecharAdd;
+  document.addEventListener('pointerdown', e => {
+    const abertos = [...document.querySelectorAll('#root [data-qdaddwrap]')].filter(x => x.querySelector('form'));
+    if(!abertos.length) return;
+    const t = e.target;
+    if(!t || !t.closest) return;
+    /* não fecha por toque na própria caixa, nos botões de cliente/formato, no seletor de pessoa, ou numa janela por cima */
+    if(t.closest('[data-qdaddwrap], #qdPop, #layer .modal, #qdFolha, [data-qdadd]')) return;
+    abertos.forEach(x => fecharAdd(x, false));
+  }, true);
   function criarDeAdd(form){
     const alvo = form.dataset.qdaddform;
     const t = form.querySelector('textarea');
@@ -1479,7 +1537,7 @@
     if(d.qdmes){ Q.mes = d.qdmes; render(); return; }
     if(d.qdcolmovel){ Q.colMovel = d.qdcolmovel; render(); window.scrollTo(0, Math.min(scrollY, (document.querySelector('#root .qdAbasCol') || { offsetTop: 0 }).offsetTop)); return; }
     if(d.qdadd){ const w = document.querySelector(`#root [data-qdaddwrap="${CSS.escape(d.qdadd)}"]`); if(w) abrirAdd(w); return; }
-    if(d.qdaddfechar){ render(); return; }
+    if(d.qdaddfechar){ fecharAdd(d.qdaddfechar === '1' ? alvo.closest('[data-qdaddwrap]') : null, true); return; }
     if(d.qdfeito){ e.stopPropagation(); marcarFeito(d.qdfeito); return; }
     if(d.qdresp){ e.stopPropagation(); popResp(alvo, d.qdresp); return; }
     if(d.qdpoppes !== undefined){
@@ -2147,7 +2205,7 @@
   }
   @media (max-width:860px){ .qdRecolhe{ display:none } }
   .qdFMatDica{ margin:0 0 8px; font-size:12px; color:var(--mut, #999) }
-  .qdFMatI{ display:flex; flex-direction:column; align-items:center; gap:3px }
+  .qdFMatI{ position:relative; display:flex; flex-direction:column; align-items:center; gap:3px }
   .qdFMatVer{ position:relative; display:block; padding:0; border:0; background:none; cursor:zoom-in; border-radius:10px; overflow:hidden; font:inherit; color:inherit }
   .qdFMatVer img{ display:block }
   .qdFMatPlay{ position:absolute; inset:0; display:grid; place-items:center; font-size:16px; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.6); pointer-events:none }
@@ -2184,6 +2242,9 @@
   .qdFCkL span{ flex:1 }
   .qdX{ border:0; background:transparent; color:var(--mut, #888); font-size:17px; cursor:pointer; width:28px; height:28px; border-radius:50% }
   .qdFMat{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px }
+  .qdFMatBaixa{ position:absolute; top:4px; right:4px; width:24px; height:24px; border:0; border-radius:7px; background:rgba(0,0,0,.6); color:#fff; font-size:13px; cursor:pointer; display:grid; place-items:center; padding:0; z-index:1 }
+  .qdFMatBaixa:hover{ background:rgba(0,0,0,.8) }
+  .qdVerBaixa{ margin-left:auto }
   .qdFMatVer{ width:64px; height:64px; background:var(--sup2, #333); display:grid; place-items:center; font-size:11px; color:var(--mut, #aaa) }
   .qdFMatVer img{ width:100%; height:100%; object-fit:cover }
   .qdFMatBts{ display:flex; gap:6px; flex-wrap:wrap }

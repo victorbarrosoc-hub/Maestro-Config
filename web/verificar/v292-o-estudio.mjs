@@ -281,7 +281,7 @@ console.log('\n  — 13. o quadro de ideias no jeito do FigJam (v293) —');
     S.est.quadro = 'qfj'; S.est.vista = { x: 20, y: 20, z: 1 }; S.est.modo = 'mover'; S.est.sel = []; render(); });
   await esperar(250);
   const barra = await Q(() => [...document.querySelectorAll('.estFerr [data-esfig]')].map(b => b.dataset.esfig).join());
-  checa('13.1 a barra ganha imagem, link, forma, seção, caneta e carimbo', barra === 'imagem,link,forma,secao,caneta,carimbo', barra);
+  checa('13.1 a barra ganha imagem, link, forma, seção, mão, caneta e carimbo', barra === 'imagem,link,forma,secao,mao,caneta,carimbo', barra);
   const colarQ = (arg) => Q(async (arg) => {
     const dt = new DataTransfer();
     if(arg.png){ const cv = document.createElement('canvas'); cv.width = 400; cv.height = 200; cv.getContext('2d').fillRect(0, 0, 400, 200); const b = await new Promise(r => cv.toBlob(r, 'image/png')); dt.items.add(new File([b], 'print.png', { type: 'image/png' })); }
@@ -358,6 +358,36 @@ console.log('\n  — 13. o quadro de ideias no jeito do FigJam (v293) —');
   const estado = await Q(() => JSON.stringify(estMeu().quadros));
   checa('13.15 nada de endereço blob: no que sincroniza', !/blob:/.test(estado));
   await Q(() => { S.est.modo = 'mover'; });
+}
+
+console.log('\n  — 14. arrastar sem piscar, e a mão (v294) —');
+{
+  await Q(() => { S.est.aberto = null; render(); });
+  await pg.click('[data-esnovo="post"]'); await pg.waitForSelector('#dsEditor'); await esperar(150);
+  await Q(async () => { const cv = document.createElement('canvas'); cv.width = 300; cv.height = 300; cv.getContext('2d').fillRect(0, 0, 300, 300); const b = await new Promise(r => cv.toBlob(r, 'image/png'));
+    const dt = new DataTransfer(); dt.items.add(new File([b], 'x.png', { type: 'image/png' })); document.getElementById('dsPalco').dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); });
+  await esperar(400);
+  const o = await Q(() => { const o = MaestroDesign.E.doc.objs.at(-1); const el = document.querySelector(`#dsCena [data-dsid="${o.id}"]`); window.__noImg = el; const r = el.getBoundingClientRect(); return { id: o.id, x: o.x, cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; });
+  await pg.mouse.move(o.cx, o.cy); await pg.mouse.down(); await pg.mouse.move(o.cx + 60, o.cy + 30, { steps: 5 });
+  const meio = await Q((id) => ({ mesmo: document.querySelector(`#dsCena [data-dsid="${id}"]`) === window.__noImg, x: MaestroDesign.E.doc.objs.find(x => x.id === id).x }), o.id);
+  await pg.mouse.up();
+  checa('14.1 arrastar a imagem colada mexe a MESMA imagem (não redesenha — não pisca nem some)', meio.mesmo && meio.x > o.x, { meio, x0: o.x });
+  await Q(() => MaestroDesign.fechar()); await esperar(100);
+  await Q(() => { S.est.aberto = 'ideias'; const m = estMeu(); m.quadros = [{ id: 'qm', nome: 'M', modelo: 'livre', itens: [{ id: 'nM', tipo: 'nota', x: 200, y: 150, cor: 'latao', txt: 'Nota', em: '', votos: 0, fixa: false }], liga: [] }]; S.est.quadro = 'qm'; S.est.vista = { x: 0, y: 0, z: 1 }; S.est.modo = 'mover'; render(); });
+  await esperar(250);
+  await Q(() => document.querySelector('.estFerr [data-esfig="mao"]').click());
+  const cur = await Q(() => ({ modo: S.est.modo, cursor: getComputedStyle(document.querySelector('[data-estnota="nM"]')).cursor }));
+  const n = await Q(() => { const r = document.querySelector('[data-estnota="nM"] .pega').getBoundingClientRect(); return { x: r.left + 30, y: r.top + 6 }; });
+  await pg.mouse.move(n.x, n.y); await pg.mouse.down(); await pg.mouse.move(n.x + 120, n.y + 60, { steps: 6 }); await pg.mouse.up(); await esperar(100);
+  const r = await Q(() => ({ nota: [estQuadro().itens[0].x, estQuadro().itens[0].y], vista: [S.est.vista.x, S.est.vista.y] }));
+  checa('14.2 com a mão, arrastar em cima de uma nota move o QUADRO (a nota fica onde está), e a mãozinha aparece', cur.modo === 'mao' && cur.cursor === 'grab' && r.nota.join() === '200,150' && r.vista[0] === 120 && r.vista[1] === 60, { cur, r });
+  await pg.keyboard.press('Escape');
+  await Q(() => { S.est.vista = { x: 0, y: 0, z: 1 }; estPintar(); });
+  await pg.keyboard.down(' ');
+  await pg.mouse.move(n.x - 120, n.y - 60); await pg.mouse.down(); await pg.mouse.move(n.x - 60, n.y - 30, { steps: 6 }); await pg.mouse.up();
+  await pg.keyboard.up(' ');
+  const r2 = await Q(() => ({ modo: S.est.modo, vista: [S.est.vista.x, S.est.vista.y], nota: [estQuadro().itens[0].x, estQuadro().itens[0].y] }));
+  checa('14.3 segurar a barra de espaço vira a mão só enquanto segura', r2.modo === 'mover' && r2.vista.join() === '60,30' && r2.nota.join() === '200,150', r2);
 }
 
 console.log('\n  — 10. no celular —');

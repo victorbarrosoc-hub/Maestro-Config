@@ -353,6 +353,7 @@
     palco.addEventListener('dblclick', aoDuplo);
     palco.addEventListener('wheel', aoRoda, { passive: false });
     palco.addEventListener('dragover', e => e.preventDefault());
+    palco.addEventListener('dragstart', e => e.preventDefault());
     palco.addEventListener('drop', e => { e.preventDefault(); const fs = [...(e.dataTransfer.files || [])].filter(f => /^image\//.test(f.type)); if(fs.length) porImagens(fs, pontoTela(e)); });
     el.querySelector('#dsNome').addEventListener('input', e => { E.doc.nome = e.target.value.slice(0, 80) || 'Sem título'; mudou(); });
     el.querySelector('#dsImg').addEventListener('change', e => { const fs = [...(e.target.files || [])]; e.target.value = ''; if(fs.length) porImagens(fs); });
@@ -377,6 +378,27 @@
   }
   D.pintar = pintar;
   function pintarSel(){ const s = document.getElementById('dsSel'); if(s) s.innerHTML = svgSelecao(); }
+  /* v294 — arrastar não redesenha a cena inteira: só mexe nos nós que andaram. Antes cada
+     movimento recriava a imagem, e no Safari ela piscava ou sumia enquanto era arrastada. */
+  function atualizarNos(ids){
+    const cena = document.getElementById('dsCena'); if(!cena) return pintar();
+    const set = (el, o) => { for(const k in o) el.setAttribute(k, o[k]); };
+    for(const id of ids){
+      const o = acha(id); if(!o) continue;
+      if(ehFrame(id)){
+        cena.querySelectorAll(`[data-dsid="${id}"]`).forEach(el => { if(el.tagName === 'rect') set(el, { x: o.x, y: o.y, width: Math.max(0, o.w), height: Math.max(0, o.h) }); else set(el, { x: o.x, y: o.y - 10 / E.vista.z }); });
+        const cp = cena.querySelector(`#dsClip-${id} rect`); if(cp) set(cp, { x: o.x, y: o.y, width: Math.max(0, o.w), height: Math.max(0, o.h) });
+        continue;
+      }
+      const el = cena.querySelector(`[data-dsid="${id}"]`); if(!el){ pintarCena(); continue; }
+      if(o.tipo === 'rect') set(el, { x: o.x, y: o.y, width: Math.max(0, o.w), height: Math.max(0, o.h), rx: o.r || 0 });
+      else if(o.tipo === 'elipse') set(el, { cx: o.x + o.w / 2, cy: o.y + o.h / 2, rx: Math.max(0, o.w / 2), ry: Math.max(0, o.h / 2) });
+      else if(o.tipo === 'linha') set(el, { x1: o.x, y1: o.y, x2: o.x + o.w, y2: o.y + o.h });
+      else if(o.tipo === 'imagem' && el.tagName === 'image') set(el, { x: o.x, y: o.y, width: Math.max(0, o.w), height: Math.max(0, o.h) });
+      else { const t = document.createElementNS('http://www.w3.org/2000/svg', 'g'); t.innerHTML = desenharObj(o); const novo = t.firstElementChild; if(novo) el.replaceWith(novo); }
+    }
+    pintarSel();
+  }
 
   function pintarCamadas(){
     const box = document.getElementById('dsCamadas'); if(!box) return;
@@ -482,6 +504,7 @@
     if(e.button === 1 || e.button === 2) { if(e.button === 1){ e.preventDefault(); E.arr = { tipo: 'mao', sx: e.clientX, sy: e.clientY, v: { ...E.vista } }; } return; }
     if(E.editando && e.target.id === 'dsTxtEd') return;
     terminarTexto();
+    e.preventDefault();          /* sem o arrastar nativo do navegador (a "cópia fantasma" da imagem) */
     const palco = document.getElementById('dsPalco'); palco.focus({ preventScroll: true });
     try{ palco.setPointerCapture(e.pointerId); }catch(x){}
     const p = pontoTela(e);
@@ -512,20 +535,20 @@
     }
     if(a && a.id){
       const id = a.id;
-      if(e.shiftKey){ E.sel = E.sel.includes(id) ? E.sel.filter(x => x !== id) : [...E.sel, id]; pintar(); return; }
+      if(e.shiftKey){ E.sel = E.sel.includes(id) ? E.sel.filter(x => x !== id) : [...E.sel, id]; pintarSel(); pintarCamadas(); pintarProps(); return; }
       if(!E.sel.includes(id)) E.sel = [id];
       antes();
       /* mover uma prancheta leva o que mora nela */
       const leva = new Set(E.sel);
       E.sel.filter(ehFrame).forEach(fid => { const f = acha(fid); E.doc.objs.filter(o => frameDe(o) === f).forEach(o => leva.add(o.id)); });
       E.arr = { tipo: 'mover', a: p, ids: [...leva], orig: [...leva].map(i => ({ id: i, x: acha(i).x, y: acha(i).y })), caixa0: caixaSel(), moveu: false };
-      pintar(); return;
+      pintarSel(); pintarCamadas(); pintarProps(); return;
     }
     E.sel = []; E.arr = { tipo: 'marquee', a: p, b: p }; pintar();
   }
   function aoMover(e){
     const A = E.arr; if(!A) return;
-    if(A.tipo === 'mao'){ E.vista.x = A.v.x - (e.clientX - A.sx) / E.vista.z; E.vista.y = A.v.y - (e.clientY - A.sy) / E.vista.z; pintar(); return; }
+    if(A.tipo === 'mao'){ document.getElementById('dsPalco').classList.add('panning'); E.vista.x = A.v.x - (e.clientX - A.sx) / E.vista.z; E.vista.y = A.v.y - (e.clientY - A.sy) / E.vista.z; pintar(); return; }
     const p = pontoTela(e);
     if(A.tipo === 'criar'){
       const o = acha(A.id); let dx = p.x - A.a.x, dy = p.y - A.a.y;
@@ -549,14 +572,14 @@
       dx = enc.dx; dy = enc.dy; E.guias = enc.guias;
       if(Math.abs(dx) + Math.abs(dy) > 0.5) A.moveu = true;
       A.orig.forEach(o => { const x = acha(o.id); x.x = r1(o.x + dx); x.y = r1(o.y + dy); });
-      pintar(); return;
+      atualizarNos(A.ids); return;
     }
     if(A.tipo === 'alca'){
       if(A.linha){
         const o = acha(E.sel[0]), o0 = A.orig[0];
         if(A.k === 'p1'){ const x2 = o0.x + o0.w, y2 = o0.y + o0.h; o.x = r1(p.x); o.y = r1(p.y); o.w = r1(x2 - p.x); o.h = r1(y2 - p.y); }
         else { o.w = r1(p.x - o0.x); o.h = r1(p.y - o0.y); }
-        pintar(); return;
+        atualizarNos([o.id]); return;
       }
       const c0 = A.c0; let { x, y, w, h } = c0;
       const dx = p.x - A.a.x, dy = p.y - A.a.y;
@@ -575,11 +598,12 @@
       A.orig.forEach(o0 => { const o = acha(o0.id);
         o.x = r1(x + (o0.x - c0.x) * sx); o.y = r1(y + (o0.y - c0.y) * sy); o.w = r1(o0.w * sx); o.h = r1(o0.h * sy);
         if(o.tipo === 'texto' && e.shiftKey) o.fs = Math.max(4, r1((o0.fs || 48) * sx)); });
-      pintar();
+      atualizarNos(A.orig.map(o0 => o0.id));
     }
   }
   function aoSoltar(e){
     const A = E.arr; E.arr = null; E.guias = [];
+    document.getElementById('dsPalco')?.classList.remove('panning');
     if(!A){ return; }
     if(A.tipo === 'criar'){
       const o = acha(A.id);
@@ -1134,6 +1158,7 @@
         + bt('link', 'Link', '<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/>')
         + bt('forma', 'Forma', '<rect x="4" y="4" width="9" height="9" rx="1"/><circle cx="16" cy="16" r="4.5"/>')
         + bt('secao', 'Seção', '<path d="M4 8V5h3M20 8V5h-3M4 16v3h3M20 16v3h-3M9 5h6M9 19h6"/>')
+        + bt('mao', 'Mão: arrastar o quadro (ou segure a barra de espaço)', '<path d="M8 12V6a1.5 1.5 0 0 1 3 0v5M11 11V4.5a1.5 1.5 0 0 1 3 0V11M14 11V6a1.5 1.5 0 0 1 3 0v7c0 4-2.5 7-6 7-2.5 0-4-1.5-5.5-4L4 13a1.5 1.5 0 0 1 2.5-1.5L8 13"/>', S.est.modo === 'mao')
         + bt('caneta', 'Caneta', '<path d="M4 20l4-1 11-11-3-3L5 16z"/>', S.est.modo === 'caneta')
         + bt('carimbo', 'Carimbo', '<circle cx="12" cy="12" r="8"/><path d="M9 10h.01M15 10h.01M8.5 14c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2"/>', S.est.modo === 'carimbo');
       h = h.replace(/(<button type="button" data-estferr="texto"[\s\S]*?<\/button>)/, `$1${extra}`);
@@ -1142,7 +1167,7 @@
       if(S.est.modo === 'caneta') opc = `<div class="estOpc" role="group" aria-label="Cor da caneta">${TINTAS.map(c => `<button type="button" data-estinta="${c}" class="${Fj.tinta === c ? 'on' : ''}" style="background:${c}" aria-label="Cor ${c}"></button>`).join('')}</div>`;
       if(S.est.modo === 'carimbo') opc = `<div class="estOpc" role="group" aria-label="Carimbo">${EMOJIS.map(e => `<button type="button" data-estemoji="${e}" class="${Fj.emoji === e ? 'on' : ''}">${e}</button>`).join('')}</div>`;
       if(opc) h = h.replace('<div class="estZoom">', opc + '<div class="estZoom">');
-      const dica = { caneta: 'desenhe com o dedo ou o mouse · Esc sai', carimbo: 'toque numa nota ou imagem para carimbar' }[S.est.modo];
+      const dica = { caneta: 'desenhe com o dedo ou o mouse · Esc sai', carimbo: 'toque numa nota ou imagem para carimbar', mao: 'arraste para mover o quadro · Esc volta' }[S.est.modo];
       if(dica) h = h.replace(/<\/div>\s*$/, `<div class="estDica">${dica}</div></div>`);
       return h;
     };
@@ -1210,7 +1235,7 @@
     if(f === 'link') return abrirLinkPop();
     if(f === 'forma') return abrirFormaPop();
     if(f === 'secao') return secaoNoQuadro();
-    if(f === 'caneta' || f === 'carimbo'){ S.est.modo = S.est.modo === f ? 'mover' : f; S.est.liga = null; estPintar(); return; }
+    if(f === 'caneta' || f === 'carimbo' || f === 'mao'){ S.est.modo = S.est.modo === f ? 'mover' : f; S.est.liga = null; estPintar(); return; }
   }, true);
 
   /* --- colar e arrastar para dentro --- */
@@ -1267,6 +1292,15 @@
       try{ h.setPointerCapture(e.pointerId); }catch(x){}
       return;
     }
+    /* mão: qualquer arraste move o quadro, até em cima de uma nota ou imagem */
+    try{
+      if((S.est.modo === 'mao' || Fj.espaco) && typeof _estG !== 'undefined' && _estG && _estG.tipo === 'nota'){
+        palco_()?.querySelectorAll('.estNota.arr').forEach(n => n.classList.remove('arr'));
+        _estG = { tipo: 'pan', x0: e.clientX, y0: e.clientY, v0: { ...S.est.vista }, moveu: false, pid: e.pointerId, t: Date.now() };
+        palco_()?.classList.add('arrastando');
+        return;
+      }
+    }catch(x){}
     /* o gesto de sempre já começou (o protótipo ouve antes): se é uma seção, o que está dentro vai junto */
     try{
       if(typeof _estG !== 'undefined' && _estG && _estG.tipo === 'nota'){
@@ -1334,6 +1368,13 @@
     Object.assign(c.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
     const svg = c.querySelector('svg'); svg.setAttribute('width', r.width); svg.setAttribute('height', r.height);
   }
+  /* segurar a barra de espaço vira a mão, como no Figma */
+  addEventListener('keydown', e => {
+    if(e.key !== ' ' || Fj.espaco || !noQuadroDeIdeias()) return;
+    const t = e.target; if(t && t.matches && (t.matches('input, textarea, select, button') || t.isContentEditable)) return;
+    e.preventDefault(); Fj.espaco = true; palco_()?.classList.add('modo-mao');
+  }, true);
+  addEventListener('keyup', e => { if(e.key === ' ' && Fj.espaco){ Fj.espaco = false; if(S.est.modo !== 'mao') palco_()?.classList.remove('modo-mao'); } }, true);
   addEventListener('keydown', e => { if(e.key === 'Escape' && document.getElementById('estCaneta')){ S.est.modo = 'mover'; try{ estPintar(); }catch(x){} } }, true);
   addEventListener('resize', () => { if(document.getElementById('estCaneta')) capaDaCaneta(); });
   addEventListener('scroll', () => { if(document.getElementById('estCaneta')) capaDaCaneta(); }, true);
@@ -1425,6 +1466,10 @@
   #estFormaPop{ flex-direction:column }
   .estFIc{ width:16px; height:12px; background:currentColor; opacity:.7; display:inline-block }
   .estFIc.f-circ{ border-radius:50%; width:14px; height:14px } .estFIc.f-ret{ border-radius:3px } .estFIc.f-losango{ width:13px; height:13px; transform:rotate(45deg) }
+  .estPalco.modo-mao, .estPalco.modo-mao .estNota, .estPalco.modo-mao textarea{ cursor:grab !important }
+  .estPalco.arrastando, .estPalco.arrastando *{ cursor:grabbing !important }
+  .estPalco.modo-mao textarea{ pointer-events:none }
+  .estNota.estImg{ cursor:grab }
   #estCaneta{ position:fixed; z-index:40; cursor:crosshair; touch-action:none }
   #estCaneta svg{ display:block }
   @media (max-width:760px){ .estFerr{ max-width:calc(100% - 20px); overflow-x:auto; scrollbar-width:none } .estFerr button{ flex:none } .estOpc{ left:auto; right:10px; top:auto; bottom:70px; transform:none; flex-direction:row } #estLinkPop{ left:12px !important; right:12px; top:auto !important; bottom:90px } #estLinkPop input{ width:auto; flex:1 } }
@@ -1466,6 +1511,9 @@
   .dsPalco[data-ferr="F"], .dsPalco[data-ferr="R"], .dsPalco[data-ferr="O"], .dsPalco[data-ferr="L"]{ cursor:crosshair }
   .dsPalco[data-ferr="T"]{ cursor:text }
   .dsPalco[data-ferr="H"]{ cursor:grab }
+  .dsPalco.panning, .dsPalco.panning *{ cursor:grabbing !important }
+  #dsSvg image{ -webkit-user-drag:none; user-select:none }
+  .dsPalco[data-ferr="V"] #dsCena [data-dsid]{ cursor:move }
   #dsSvg{ position:absolute; inset:0; display:block; user-select:none }
   .dsFNome{ fill:var(--dsMu); font-family:Inter, system-ui, sans-serif; cursor:default }
   .dsFrame{ filter:drop-shadow(0 1px 3px rgba(0,0,0,.25)) }
