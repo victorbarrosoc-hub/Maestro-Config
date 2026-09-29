@@ -149,6 +149,8 @@
   }
   const titulo = (cli, fmt, tm) => cli === AG ? tm : `${cliente(cli).nome} · ${fmt || 'Post'} · ${tm}`;
   const segueOPadrao = (p, cli) => cli !== AG && String(p.t || '').startsWith(cliente(cli).nome + ' · ');
+  /* o começo do nome, que o padrão monta sozinho: "EJUP · Post ·" */
+  const prefixo = (cli, p) => { const t = String(p.t || ''); const tm = tema(p, cli); return t.endsWith(tm) ? t.slice(0, t.length - tm.length).trim() : `${cliente(cli).nome} · ${p.fmt || 'Post'} ·`; };
 
   function materiais(cli, id){
     try{ return (S.mat && S.mat[cli + '|' + id]) || []; }catch(e){ return []; }
@@ -480,8 +482,12 @@
     const cp = capa(cli, p.id);
     return `<article class="qdCard${p.importante ? ' imp' : ''}" data-qdabre="${esc_(key)}" data-qdkey="${esc_(key)}" ${arrastavel()} tabindex="0">
       ${cp ? `<div class="qdCapa" style="background-image:url('${cp.replace(/'/g, '%27')}')"></div>` : ''}
-      <div class="qdCTopo">${avCli(cli)}<span class="qdCli">${esc_(cliente(cli).nome)}</span>${cli !== AG && p.fmt ? `<span class="qdFmt">${esc_(p.fmt)}</span>` : ''}</div>
-      <div class="qdTit">${esc_(tema(p, cli))}</div>
+      ${segueOPadrao(p, cli)
+        /* v295 — o nome do card por fora é o nome inteiro no padrão ("EJUP · Post · Tema"),
+           o mesmo que a ficha monta; cliente e formato já estão nele, então não se repetem */
+        ? `<div class="qdCTopo qdCTopoNome">${avCli(cli)}<div class="qdTit">${esc_(p.t)}</div></div>`
+        : `<div class="qdCTopo">${avCli(cli)}<span class="qdCli">${esc_(cliente(cli).nome)}</span>${cli !== AG && p.fmt ? `<span class="qdFmt">${esc_(p.fmt)}</span>` : ''}</div>
+      <div class="qdTit">${esc_(tema(p, cli))}</div>`}
       ${p.ajustePendente ? `<div class="qdAjuste">Ajuste pedido pelo cliente</div>` : ''}
       ${col === 'revisao' && revisores().length ? `<div class="qdRevisa"><span>Revisa</span>${revisores().slice(0, 3).map(x => avPes(x.id, 'qdAvP mini')).join('')}<em>${esc_(revisores().slice(0, 2).map(x => String(x.n).split(/\s+/)[0]).join(', '))}${revisores().length > 2 ? '…' : ''}</em></div>` : ''}
       <div class="qdMeta">
@@ -1125,19 +1131,25 @@
       <div class="qdFTopo">${avCli(cli)}<span class="qdCli">${esc_(cliente(cli).nome)}</span><span class="qdSp"></span>
         <span class="qdFSalvo" id="qdFSalvo" aria-live="polite">Tudo salvo</span>
         <button type="button" class="qdFechar" data-qdfechar="1" aria-label="Fechar">×</button></div>
-      <textarea class="qdFTit" data-qf="tema" rows="1" aria-label="Nome do card">${esc_(tema(p, cli))}</textarea>
-      ${ehAg ? '' : `<p class="qdFNome">${segueOPadrao(p, cli) ? `Nome: <b data-qdfnome="1">${esc_(p.t)}</b>` : `Fora do padrão. <button type="button" class="qdPil" data-qdpadrao="1">Padronizar: ${esc_(titulo(cli, p.fmt || 'Post', limparTema(tema(p, cli), p.fmt)))}</button>`}</p>`}
+      <div class="qdFTitL">${!ehAg && segueOPadrao(p, cli) ? `<span class="qdFPre" data-qdfpre="1">${esc_(prefixo(cli, p))}</span>` : ''}<textarea class="qdFTit" data-qf="tema" rows="1" aria-label="Nome do card">${esc_(tema(p, cli))}</textarea></div>
+      ${ehAg || segueOPadrao(p, cli) ? '' : `<p class="qdFNome">Fora do padrão. <button type="button" class="qdPil" data-qdpadrao="1">Padronizar: ${esc_(titulo(cli, p.fmt || 'Post', limparTema(tema(p, cli), p.fmt)))}</button></p>`}
       <div class="qdFCols" role="group" aria-label="Coluna">${COLS.filter(([k]) => !ehAg || !['cliente', 'aprovado', 'agendado'].includes(k)).map(([k, n, c]) =>
         `<button type="button" class="qdFCol ${col === k ? 'on' : ''}" style="--qdc:${c}" data-qdfcol="${k}">${ehAg && k === 'publicado' ? 'Feito' : n}</button>`).join('')}</div>
       ${(() => { const b = blocoProximo(Q.folha, cli, p, col, 'qdProx qdFProx'); return b ? `<div class="qdFProxL"><span>Próximo passo</span>${b}</div>` : ''; })()}
       ${p.ajustePendente ? `<div class="qdFAjuste"><b>O cliente pediu ajuste</b>${(Array.isArray(p.alteracoes) ? p.alteracoes : []).slice(-1).map(a => `<p>${esc_(a.oque || '')}${a.por ? ` <span class="qdMut">— ${esc_(a.por)}</span>` : ''}</p>`).join('')}
         <button type="button" class="qdPil" data-qdajok="1">Ajuste feito</button></div>` : ''}
-      <div class="qdFGrade">
-        <label>Quem faz<select class="qdSel" data-qf="resp"><option value="">Ninguém ainda</option>${pes.map(x => `<option value="${esc_(x.id)}" ${p.resp === x.id ? 'selected' : ''}>${esc_(x.n)}</option>`).join('')}</select></label>
-        <label>Entregar até<input type="date" class="qdIn" data-qf="prazo" value="${esc_(p.prazo || '')}"></label>
-        <label>Hora<input type="time" class="qdIn" data-qf="prazoHora" value="${esc_(p.prazoHora || '')}"></label>
-        ${ehAg ? '' : `<label>Publica em<input type="date" class="qdIn" data-qf="data" value="${esc_(p.data || '')}"></label>
-        <label>Às<input type="time" class="qdIn" data-qf="hora" value="${esc_(p.hora || '')}"></label>`}
+      <div class="qdFDatas">
+        <section class="qdFGrupo">
+          <h5>${ic_('checkc', 13)} Produção <span>quem faz e quando a equipe entrega</span></h5>
+          <label class="qdFLinha">Quem faz<select class="qdSel" data-qf="resp"><option value="">Ninguém ainda</option>${pes.map(x => `<option value="${esc_(x.id)}" ${p.resp === x.id ? 'selected' : ''}>${esc_(x.n)}</option>`).join('')}</select></label>
+          <div class="qdFPar"><label>Entregar até<input type="date" class="qdIn" data-qf="prazo" value="${esc_(p.prazo || '')}"></label>
+            <label>Hora<input type="time" class="qdIn" data-qf="prazoHora" value="${esc_(p.prazoHora || '')}"></label></div>
+        </section>
+        ${ehAg ? '' : `<section class="qdFGrupo pub">
+          <h5>${ic_('cal', 13)} Publicação <span>quando o post vai ao ar</span></h5>
+          <div class="qdFPar"><label>Vai ao ar em<input type="date" class="qdIn" data-qf="data" value="${esc_(p.data || '')}"></label>
+            <label>Às<input type="time" class="qdIn" data-qf="hora" value="${esc_(p.hora || '')}"></label></div>
+        </section>`}
       </div>
       ${(() => {
         /* v292 — "esse card tem muita informação… organize de forma mais intuitiva… só não pode
@@ -1194,7 +1206,7 @@
       const v = valorDoCampo(p, cli, c.dataset.qf);
       if(c.value !== v) c.value = v;
     });
-    const fn = el.querySelector('[data-qdfnome]'); if(fn && fn.textContent !== p.t) fn.textContent = p.t;
+    const fp = el.querySelector('[data-qdfpre]'); if(fp){ const v = prefixo(cli, p); if(fp.textContent !== v) fp.textContent = v; }
     const ct = contagemAbas(cli, p); el.querySelectorAll('[data-qdfcont]').forEach(e => { const v = ct[e.dataset.qdfcont]; if(v != null && e.textContent !== v) e.textContent = v; });
     const col = colunaDe(p);
     el.querySelectorAll('[data-qdfcol]').forEach(b => b.classList.toggle('on', b.dataset.qdfcol === col));
@@ -1207,6 +1219,14 @@
       const inn = el.querySelector('.qdFolhaIn'); if(inn) inn.scrollTop = rol;
     }
     el.dataset.assin = assin;
+  }
+  /* o começo do nome aparece (ou se atualiza) sem redesenhar a ficha: quem digita não perde o cursor */
+  function mostrarPrefixo(cli, id){
+    const el = document.getElementById('qdFolha'); const p = achar(cli, id); if(!el || !p || !segueOPadrao(p, cli)) return;
+    let fp = el.querySelector('[data-qdfpre]');
+    if(!fp){ const l = el.querySelector('.qdFTitL'); if(!l) return; fp = document.createElement('span'); fp.className = 'qdFPre'; fp.dataset.qdfpre = '1'; l.insertBefore(fp, l.firstChild); }
+    fp.textContent = prefixo(cli, p);
+    el.querySelector('.qdFNome')?.remove();
   }
   const temporizadores = {};
   function gravarCampo(c, ja){
@@ -1221,10 +1241,13 @@
       if(k === 'tema'){
         v = v.replace(/\s+/g, ' ').trim(); if(!v) return;
         if(v === tema(p, cli)) return;
-        mudar(cli, id, { t: cli === AG ? v : (segueOPadrao(p, cli) || !p.t ? titulo(cli, p.fmt, v) : v) });
+        /* v295 — "quando for estruturar, precisa criar a nomenclatura já no nome do card":
+           escrever o tema de um card de cliente sempre monta o nome no padrão */
+        mudar(cli, id, { t: cli === AG ? v : titulo(cli, p.fmt || 'Post', v) });
+        if(cli !== AG) mostrarPrefixo(cli, id);
       } else if(k === 'fmt'){
         const tm = tema(p, cli);
-        mudar(cli, id, { fmt: v, t: segueOPadrao(p, cli) ? titulo(cli, v, tm) : p.t });
+        mudar(cli, id, { fmt: v, t: segueOPadrao(p, cli) ? titulo(cli, v, tm) : p.t }); mostrarPrefixo(cli, id);
       } else if(k === 'data'){
         c.classList.remove('qdPede');
         mudar(cli, id, v ? { data: v, dia: (doISO(v).getDay() + 6) % 7, hora: p.hora || '18:30' } : { data: null });
@@ -2026,6 +2049,21 @@
   .qdAddForm .qdNomeL > span{ width:auto }
   .qdAddForm .qdChips{ max-width:100% }
   .qdEntrada .qdNome{ margin-left:30px }
+  .qdCTopoNome{ align-items:flex-start }
+  .qdCTopoNome .qdTit{ flex:1; min-width:0; margin:0 }
+  .qdFTitL{ display:flex; flex-wrap:wrap; align-items:baseline; gap:0 8px; margin:6px 0 8px }
+  .qdFTitL .qdFTit{ flex:1 1 180px; margin:0 }
+  .qdFPre{ font-size:21px; font-weight:600; line-height:1.25; color:var(--mut, #999); white-space:nowrap; padding:8px 0 }
+  .qdFDatas{ display:flex; flex-direction:column; gap:10px; margin:0 0 16px }
+  .qdFGrupo{ background:var(--sup, rgba(255,255,255,.04)); border-radius:14px; padding:10px 12px 12px; box-shadow:inset 3px 0 0 var(--mut, #777) }
+  .qdFGrupo.pub{ box-shadow:inset 3px 0 0 var(--latao, #FFC857) }
+  .qdFGrupo h5{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:0 0 8px; font-size:13px; font-weight:600; color:var(--tx, #fff) }
+  .qdFGrupo h5 span{ font-weight:400; font-size:12px; color:var(--mut, #999) }
+  .qdFGrupo label{ display:flex; flex-direction:column; gap:5px; font-size:12px; color:var(--mut, #999); min-width:0 }
+  .qdFGrupo .qdSel{ border-radius:10px; width:100% }
+  .qdFLinha{ margin-bottom:8px }
+  .qdFPar{ display:grid; grid-template-columns:minmax(0, 1.4fr) minmax(0, 1fr); gap:8px }
+  .qdFPar .qdIn{ width:100%; box-sizing:border-box; min-width:0 }
   .qdFNome{ margin:-4px 0 12px; font-size:12.5px; color:var(--mut, #999); display:flex; flex-wrap:wrap; gap:6px; align-items:center }
   .qdFNome b{ color:var(--tx, #ddd); font-weight:500 }
   .qdAbasCol{ display:none }

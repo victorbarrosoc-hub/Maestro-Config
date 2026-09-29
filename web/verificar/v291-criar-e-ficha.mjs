@@ -217,6 +217,34 @@ console.log('\n  — 7. baixar o material do card, e o Cancelar / tocar fora (v2
   checa('7.9 tocar nos botões de cliente/formato não fecha', await pg.evaluate(() => !!document.querySelector('[data-qdaddform="pauta"]')));
   await pg.click('[data-qdaddform="pauta"] [data-qdaddfechar]');
 }
+console.log('\n  — 8. o nome no padrão por fora e na ficha, e as datas organizadas (v295) —');
+{
+  const r = await pg.evaluate(async cli => {
+    S.view = 'agency'; S.route = 'producao'; MaestroQuadro.aba = 'quadro'; MaestroQuadro.filtroCli = 'todos'; render();
+    const nome = CLIS().find(c => c.id === cli).nome;
+    S.pautas[cli].push({ id: 7401, t: nome + ' · Post · Novo Estudio', fmt: 'Post', fase: 'producao' });
+    S.pautas[cli].push({ id: 7402, t: 'ideia solta da mandala', fmt: 'Reels', fase: 'producao' });
+    render(); await new Promise(r => setTimeout(r, 150));
+    const card = document.querySelector(`#root .qdCard[data-qdkey="${cli}|7401"] .qdTit`).textContent;
+    MaestroQuadro.abrirFolha(cli + '|7401'); await new Promise(r => setTimeout(r, 200));
+    const f = document.getElementById('qdFolha');
+    return { nome, card, pre: f.querySelector('[data-qdfpre]')?.textContent, tit: f.querySelector('.qdFTit').value, linhaNome: !!f.querySelector('.qdFNome'),
+      grupos: [...f.querySelectorAll('.qdFGrupo h5')].map(h => h.textContent.replace(/\s+/g, ' ').trim()),
+      prod: [...f.querySelectorAll('.qdFGrupo:not(.pub) [data-qf]')].map(x => x.dataset.qf), pub: [...f.querySelectorAll('.qdFGrupo.pub [data-qf]')].map(x => x.dataset.qf) };
+  }, CLI);
+  checa('8.1 o card por fora mostra o nome inteiro no padrão', r.card === r.nome + ' · Post · Novo Estudio', r);
+  checa('8.2 na ficha o nome é um só: o começo montado ("EJUP · Post ·") e o tema para escrever, sem a linha "Nome:" embaixo', r.pre === r.nome + ' · Post ·' && r.tit === 'Novo Estudio' && !r.linhaNome, r);
+  checa('8.3 datas em dois grupos com título: Produção (quem faz, entregar até, hora) e Publicação (vai ao ar em, às)', /^Produção/.test(r.grupos[0]) && /^Publicação/.test(r.grupos[1]) && r.prod.join() === 'resp,prazo,prazoHora' && r.pub.join() === 'data,hora', r);
+  /* um card fora do padrão: escrever o tema já monta o nome, sem tirar o cursor */
+  await pg.evaluate(cli => { MaestroQuadro.fecharFolha(); MaestroQuadro.abrirFolha(cli + '|7402'); }, CLI);
+  await pg.waitForTimeout(200);
+  await pg.click('#qdFolha .qdFTit'); await pg.keyboard.press('End'); await pg.keyboard.type(' boa');
+  await pg.waitForTimeout(1500);
+  const r2 = await pg.evaluate(cli => { const p = S.pautas[cli].find(x => x.id === 7402); const f = document.getElementById('qdFolha');
+    return { t: p.t, pre: f.querySelector('[data-qdfpre]')?.textContent, foco: document.activeElement && document.activeElement.classList.contains('qdFTit'), padronizar: !!f.querySelector('[data-qdpadrao]') }; }, CLI);
+  checa('8.4 estruturar um card fora do padrão (escrever o tema) já grava o nome no padrão — e o cursor fica', r2.t === r.nome + ' · Reels · ideia solta da mandala boa' && r2.pre === r.nome + ' · Reels ·' && r2.foco && !r2.padronizar, r2);
+  await pg.evaluate(() => MaestroQuadro.fecharFolha());
+}
 checa('9.9 nenhum erro de página', erros.length === 0, erros.slice(0, 3));
 console.log(`\n${ok} passaram · ${falhou} falharam`);
 await nav.close(); srv.close();
