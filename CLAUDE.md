@@ -363,6 +363,11 @@ botão "Tela cheia / Sair da tela cheia"; "PDF" no quadro (o quadro inteiro,
 via html2canvas do cdnjs, carregado só ao tocar) e no editor (uma página por
 tela, na ordem). O PDF é escrito à mão (`pdfDeTelas` em `web/design/design.js`,
 JPEG por página). 24 provas em `web/verificar/v303-estudio-cheio.mjs`.
+(3) O alarme: `docs/ENGINEERING/alarme-1-conferencia-diaria.sql` (o founder
+roda) confere o banco às 07h contra a cópia de ontem e manda e-mail aos
+administradores se sumiu equipe, foto, lembrete, cards, texto ou mídia. 20
+provas em `alarme-1-teste.sql`. Protocolo combinado: se algo sumir, não apagar
+nada, mandar print e a hora.
 **Fechado (29 set, v302, NO AR) — a chave toda vez.** Decisão do founder: quem
 tem chave a digita a CADA abertura do site (a pessoa lembrada abre em "Chave de
 acesso", com "Outra pessoa"); sem chave, entra direto. Provas 3.1–3.5 na v299.

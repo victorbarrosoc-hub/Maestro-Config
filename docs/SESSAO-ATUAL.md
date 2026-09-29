@@ -23,10 +23,9 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 v303 (29 set) — ensaio geral com 5 pessoas ao mesmo tempo (achou e consertou:
 quem volta da rede não recebia os cards criados enquanto estava fora); Estúdio:
 quadro de ideias abre em tela cheia com o menu recolhido, botão para alternar, e
-"PDF" no quadro e no editor de design. Próximo combinado com o founder: o
-ALARME DIÁRIO (item 2 do plano "medo de muita gente ao mesmo tempo") — uma
-conferência automática no banco que avisa se alguma gravação apagou equipe,
-cards ou lembretes. Protocolo combinado (item 3): se algo sumir, NÃO apagar
+"PDF" no quadro e no editor de design. O ALARME DIÁRIO está pronto em
+`docs/ENGINEERING/alarme-1-conferencia-diaria.sql` — FALTA O FOUNDER RODAR no
+Supabase (ele mostra a primeira conferência no fim, sem mandar e-mail). Protocolo combinado (item 3): se algo sumir, NÃO apagar
 nada; mandar print e a hora.
 Antes, v302 (29 set) — a chave é pedida a CADA abertura (decisão do founder).
 Antes, a v301 — a lista pede a CHAVE de quem tem uma (a v299 tinha pulado).

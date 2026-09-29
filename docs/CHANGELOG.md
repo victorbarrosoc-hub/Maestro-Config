@@ -40,6 +40,13 @@ Nunca apagar versões anteriores.
   ao lado de "Exportar PNG": todas as telas, na ordem do carrossel, uma por página,
   cada uma do tamanho da tela. O PDF é montado no próprio navegador, sem servidor.
   24 provas em `web/verificar/v303-estudio-cheio.mjs`.
+- **O alarme diário** (`docs/ENGINEERING/alarme-1-conferencia-diaria.sql`, o
+  founder roda): todo dia às 07h o banco se confere contra a cópia de ontem e
+  o histórico de 24 h — estado sem a equipe, pessoa ou foto a menos, lembrete
+  sumido, cliente que perdeu muitos cards, gravação que esvaziou texto ou tirou
+  mídia. Anota em `maestro_conferencias` e, se achou algo, manda e-mail aos
+  administradores pela fila de avisos (se a equipe sumiu, aos de ontem). Só lê.
+  20 provas em `alarme-1-teste.sql`.
 
 ## 0.5.117 — 2026-09-29
 
