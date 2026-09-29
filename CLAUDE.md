@@ -359,8 +359,12 @@ em cada caixa; "Copiar link" (`/quadro#card=cli|id`, abre direto); conversa do
 card com @ e aviso (cada mensagem é um campo `cm_<id>` do card; o aviso leva
 `card` e `ir`, e o aparelho de quem foi marcado mostra uma vez só); a capa do
 card é reaproveitada no redesenho (não pisca). 37 provas em
-`web/verificar/v304-o-card-completo.mjs`. **Aberto:** a conversa viaja no card
-até a porta do link do cliente (não é desenhada lá).
+`web/verificar/v304-o-card-completo.mjs`. **A porta do cliente esconde o
+interno** (decisão do founder: "cliente não pode ver essa conversa nem
+observação interna"): `docs/ENGINEERING/links-6-esconder-o-interno.sql` tira
+`cm_*`, `obs`, `pend`, `check` e `recursos` do que as funções do link devolvem
+— lendo a função que está no banco e trocando só o ponto de saída (trava se não
+achar). 15 provas em `links-6-teste.sql`. **FALTA O FOUNDER RODAR.**
 **Fechado (29 set, v303, NO AR) — o ensaio geral, e o Estúdio em tela cheia
 com PDF.** (1) "Vamos ver quando outras pessoas começarem a usar ao mesmo
 tempo. Esse é meu medo." `web/verificar/v303-ensaio-geral.mjs`: cinco

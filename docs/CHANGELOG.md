@@ -38,8 +38,10 @@ Uma leva de pedidos do founder sobre o card do Quadro:
 - **Miniaturas não piscam:** o redesenho devolve a mesma capa enquanto a peça não muda.
 - 37 provas em `web/verificar/v304-o-card-completo.mjs`; v290 (filtro, 25) e v291
   (sem Pilar) atualizadas.
-- **Aberto:** a conversa do card viaja junto com o card para o link do cliente (não é
-  desenhada lá, como a observação); se for preciso esconder de vez, filtrar na porta.
+- **O cliente não recebe o que é da casa** (decisão do founder): a porta do link
+  passa a tirar a conversa do card, a observação, a pendência, a checklist e os
+  recursos antes de devolver o card (`docs/ENGINEERING/links-6-esconder-o-interno.sql`,
+  o founder roda; 15 provas em `links-6-teste.sql`). O que o cliente vê hoje não muda.
 
 ## 0.5.118 — 2026-09-29
 
