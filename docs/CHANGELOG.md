@@ -1,9 +1,35 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.109
+Version: 0.5.110
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.110 — 2026-09-29
+
+**Status:** No ar.
+
+### v295 — o nome no padrão por fora, e as datas que se explicam
+
+- **O nome do card é um só.** "Precisa criar a nomenclatura já no nome do
+  card original, pq ele cria embaixo em Nome:. Mas não muda o nome do card
+  por fora." O card no Quadro mostra o nome inteiro ("EJUP · Post · Tema");
+  na ficha, o começo ("EJUP · Post ·") vem montado e só o tema se escreve —
+  a linha "Nome:" embaixo saiu. Escrever o tema de um card fora do padrão
+  já grava o nome no padrão, sem tirar o cursor.
+- **Datas em dois grupos.** "Ficou confuso, demorei pra entender que era o
+  horário de entregar a tarefa e quando vai ser postada." Agora:
+  **Produção** (quem faz e quando a equipe entrega: Entregar até · Hora) e
+  **Publicação** (quando o post vai ao ar: Vai ao ar em · Às), cada um num
+  bloco com título e uma linha de explicação.
+- **Lentidão depois de um tempo:** investigada. Seis minutos de uso com outra
+  pessoa mexendo sem parar, ligados a um banco de verdade: memória, número de
+  elementos na tela e tempo de desenho ficaram estáveis; parado, a tela quase
+  não gasta processamento. Não reproduziu — faltam detalhes do founder
+  (qual tela, depois de quanto tempo, computador ou celular).
+- **Provas:** v291 seção 8 (4 novas, 48 no total).
 
 ---
 

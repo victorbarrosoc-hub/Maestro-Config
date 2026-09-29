@@ -20,7 +20,9 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v294 (29 set) — baixar o material do card, Cancelar e tocar fora fecham a
+v295 (29 set) — nome inteiro no padrão por fora e na ficha, datas em
+Produção e Publicação. Aberto: lentidão depois de um tempo (não reproduziu;
+perguntar tela, tempo e aparelho). Antes, a v294: baixar o material do card, Cancelar e tocar fora fecham a
 criação, arrastar sem piscar e a Mão no Estúdio. Antes, a v293: Calendário com Mês · Semana (do jeito do Quadro), quadro de
 ideias do Estúdio no jeito do FigJam (colar/arrastar imagem, link, forma,
 seção, caneta, carimbo) e colar da área de transferência no editor de

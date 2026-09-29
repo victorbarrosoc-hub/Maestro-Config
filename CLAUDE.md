@@ -349,6 +349,13 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (29 set, v295, NO AR) — o nome e as datas.** O card por fora mostra
+o nome inteiro no padrão; a ficha monta "Cliente · Formato ·" e só o tema se
+escreve (escrever o tema de card fora do padrão já padroniza). Datas em dois
+blocos: Produção (quem faz, entregar até, hora) e Publicação (vai ao ar em,
+às). v291 seção 8. **Aberto:** "lentidão depois de um tempo" — simulação de 6
+min com dois aparelhos e banco de verdade ficou estável; pedir ao founder qual
+tela, depois de quanto tempo e em que aparelho.
 **Fechado (29 set, v294, NO AR) — baixar, cancelar e arrastar.** "Colocar a
 opção de baixar o arquivo anexado no card"; "o cancelar não funciona… só
 clicar fora e ele parar de estruturar"; "bug de arrastar a imagem colada…
