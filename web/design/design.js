@@ -918,8 +918,11 @@
     if(cmd && k === 'y'){ e.preventDefault(); refazer(); return; }
     if(cmd && k === 'd'){ e.preventDefault(); duplicar(); return; }
     if(cmd && k === 'a'){ e.preventDefault(); E.sel = E.doc.objs.map(o => o.id); pintar(); return; }
-    if(cmd && k === 'c'){ e.preventDefault(); E.clip = E.sel.filter(id => !ehFrame(id)).map(id => clone(acha(id))); return; }
-    if(cmd && k === 'v'){ e.preventDefault(); if(E.clip && E.clip.length){ antes(); E.sel = E.clip.map(o => { const c = clone(o); c.id = novoId('o'); c.x = r1(c.x + 20); c.y = r1(c.y + 20); E.doc.objs.push(c); return c.id; }); mudou(); pintar(); } return; }
+    /* ⌘C e ⌘V passam pela área de transferência do sistema (o evento copy/paste abaixo):
+       é assim que uma imagem copiada de qualquer lugar entra. Se o navegador não mandar o
+       evento, o que foi copiado aqui dentro ainda cola. */
+    if(cmd && k === 'c'){ E.clip = E.sel.filter(id => !ehFrame(id)).map(id => clone(acha(id))); return; }
+    if(cmd && k === 'v'){ clearTimeout(E.colarT); E.colarT = setTimeout(() => colarInterno(E.clip), 120); return; }
     if(cmd && (k === '=' || k === '+')){ e.preventDefault(); zoomEm(1.25); return; }
     if(cmd && k === '-'){ e.preventDefault(); zoomEm(0.8); return; }
     if(e.shiftKey && e.key === '!'){ e.preventDefault(); enquadrar(); pintar(); return; }
@@ -932,10 +935,408 @@
     const F = { v: 'V', f: 'F', a: 'F', r: 'R', o: 'O', l: 'L', t: 'T', h: 'H' }[k];
     if(F){ E.tool = F; pintar(); }
   }, true);
+  function colarInterno(objs){
+    if(!objs || !objs.length || !E.doc) return;
+    antes();
+    E.sel = objs.map(o => { const c = clone(o); c.id = novoId('o'); c.x = r1(c.x + 20); c.y = r1(c.y + 20); if(D.previas[o.id]) D.previas[c.id] = D.previas[o.id]; E.doc.objs.push(c); return c.id; });
+    E.clip = E.sel.map(id => clone(acha(id)));
+    mudou(); pintar();
+  }
+  /* onde entra o que se cola: no meio do que está à vista */
+  function centroVisivel(){
+    const palco = document.getElementById('dsPalco'); const v = E.vista;
+    return { x: v.x + (palco.clientWidth / 2) / v.z, y: v.y + (palco.clientHeight / 2) / v.z };
+  }
+  const ehUrl = t => /^https?:\/\/[^\s]+$/i.test(String(t || '').trim());
+  const ehImagemUrl = t => ehUrl(t) && /\.(png|jpe?g|gif|webp|svg|avif)(\?|#|$)/i.test(String(t).trim());
+  D.ehUrl = ehUrl;
+  function editorLivre(e){
+    const ed = document.getElementById('dsEditor'); if(!ed || !E.doc || E.editando) return false;
+    if(document.getElementById('dsMandar')) return false;
+    const t = e.target; if(t && t.matches && (t.matches('input, textarea, select') || t.isContentEditable)) return false;
+    return true;
+  }
+  document.addEventListener('copy', e => {
+    if(!editorLivre(e)) return;
+    const objs = E.sel.filter(id => !ehFrame(id)).map(id => clone(acha(id))); if(!objs.length) return;
+    E.clip = objs;
+    try{ e.clipboardData.setData('text/plain', 'maestro-design:' + JSON.stringify(limpo({ objs }).objs)); e.preventDefault(); }catch(x){}
+  });
+  document.addEventListener('paste', e => {
+    if(!editorLivre(e)) return;
+    clearTimeout(E.colarT);
+    const dt = e.clipboardData; if(!dt) return;
+    const fs = [...(dt.files || [])].filter(f => /^image\//.test(f.type));
+    if(fs.length){ e.preventDefault(); porImagens(fs, centroVisivel()); return; }
+    const txt = (dt.getData('text/plain') || '').trim(); if(!txt) return;
+    e.preventDefault();
+    if(txt.startsWith('maestro-design:')){ try{ colarInterno(JSON.parse(txt.slice(15))); }catch(x){} return; }
+    const c = centroVisivel();
+    antes();
+    if(ehImagemUrl(txt)){
+      const o = { id: novoId('o'), tipo: 'imagem', x: r1(c.x - 200), y: r1(c.y - 200), w: 400, h: 400, src: txt, fit: 'cover', nome: txt.split('/').pop().split(/[?#]/)[0].slice(0, 40) };
+      E.doc.objs.push(o); E.sel = [o.id];
+      const img = new Image(); img.onload = () => { const k = Math.min(1, 800 / img.naturalWidth, 800 / img.naturalHeight); o.w = r1(img.naturalWidth * k); o.h = r1(img.naturalHeight * k); o.x = r1(c.x - o.w / 2); o.y = r1(c.y - o.h / 2); mudou(); pintar(); }; img.src = txt;
+    } else {
+      /* texto (e link) vira camada de texto, como no Figma */
+      const o = { id: novoId('o'), tipo: 'texto', x: r1(c.x - 300), y: r1(c.y - 30), w: 600, h: 58, txt: txt.slice(0, 2000), fs: 40, fw: 400, cor: ehUrl(txt) ? '#1F6FEB' : '#111111', al: 'left' };
+      if(ehUrl(txt)) o.link = txt;
+      o.h = Math.max(48, alturaTexto(o));
+      E.doc.objs.push(o); E.sel = [o.id];
+    }
+    mudou(); pintar();
+  });
   document.addEventListener('keyup', e => { if(e.key === ' ' && espaco){ espaco = false; const p = document.getElementById('dsPalco'); if(p) p.dataset.ferr = E.tool; } });
   window.addEventListener('resize', () => { if(document.getElementById('dsEditor')) pintar(); });
   /* sair da página com o editor aberto não perde nada */
   window.addEventListener('pagehide', () => { if(E.doc){ try{ gravar(E.doc); }catch(e){} } });
+
+  /* ======================================================================
+     O QUADRO DE IDEIAS NO JEITO DO FIGJAM (v293)
+     "Quero que no estúdio eu consiga colar algo de imagem que está no ctrl C, com o
+     ctrl V ou cmd V. Mesma coisa de arrastar imagem pra dentro do quadro. Colocar um
+     link também, veja as funcionalidades do quadro do Figma pra implantar."
+     Entram, ao lado das notas, do título, das ligações, dos votos e do cronômetro que
+     já existiam: imagem (colar, arrastar ou escolher), link (colar ou escrever; vídeo do
+     YouTube mostra a capa), forma com texto, seção (leva junto o que está dentro),
+     caneta, carimbos e copiar/colar entre quadros. Cada tipo novo é um item do quadro
+     (q.itens), então o arrastar, apagar, duplicar e desfazer de sempre valem para ele.
+     ====================================================================== */
+  const EMOJIS = ['👍', '❤️', '🔥', '⭐', '✅', '❓'];
+  const TINTAS = ['#FFC857', '#F2F2F2', '#E5484D', '#5B8DEF', '#2EC4B6'];
+  const FORMAS = [['ret', 'Retângulo'], ['circ', 'Círculo'], ['losango', 'Losango']];
+  const Fj = D.quadro = { emoji: EMOJIS[0], tinta: TINTAS[0], forma: 'ret' };
+  const q_ = () => { try{ return estQuadro(); }catch(e){ return null; } };
+  const palco_ = () => document.querySelector('#root .estPalco');
+  const noQuadroDeIdeias = () => { try{ return S.view === 'agency' && S.route === 'estudio' && S.est && S.est.aberto === 'ideias' && !!q_() && !!palco_() && !document.getElementById('dsEditor') && !S.modal; }catch(e){ return false; } };
+  Fj.ativo = noQuadroDeIdeias;
+  function pontoMundo(cx, cy){ const p = palco_(); const r = p.getBoundingClientRect(), v = S.est.vista; return [(cx - r.left - v.x) / v.z, (cy - r.top - v.y) / v.z]; }
+  function centroMundo(){ const r = palco_().getBoundingClientRect(); return pontoMundo(r.left + r.width / 2, r.top + r.height / 2); }
+  function lembrar(){ try{ estLembrar(); }catch(e){} }
+  function acharItem(id){ try{ for(const qq of (estMeu().quadros || [])){ const i = (qq.itens || []).find(x => x.id === id); if(i) return i; } }catch(e){} return null; }
+  function poe(i){ const q = q_(); if(!q) return null; q.itens.push(Object.assign({ votos: 0, fixa: false }, i)); return i; }
+  function pronto(ids){ S.est.sel = ids; try{ estFaisca('nota'); }catch(e){} try{ estGravar(); }catch(e){} try{ estPintar(); }catch(e){} }
+  const idNovo = () => { try{ return estId(); }catch(e){ return novoId('i'); } };
+
+  /* --- imagem --- */
+  function imagensNoQuadro(fs, pt){
+    const q = q_(); if(!q || !fs.length) return;
+    lembrar();
+    const [x0, y0] = pt || centroMundo();
+    const ids = fs.map((f, k) => {
+      const id = idNovo(); const url = URL.createObjectURL(f); D.previas[id] = url;
+      const i = poe({ id, tipo: 'imagem', x: Math.round(x0 - 140 + k * 28), y: Math.round(y0 - 100 + k * 28), w: 280, h: 200, src: '', nome: String(f.name || 'imagem').slice(0, 60) });
+      const img = new Image();
+      img.onload = () => { const kk = Math.min(1, 360 / img.naturalWidth, 360 / img.naturalHeight); i.w = Math.round(img.naturalWidth * kk); i.h = Math.round(img.naturalHeight * kk); try{ estGravar(); estPintar(); }catch(e){} };
+      img.src = url;
+      subirItem(id, f, q.id);
+      return id;
+    });
+    pronto(ids);
+  }
+  Fj.imagens = imagensNoQuadro;
+  async function subirItem(id, f, qid){
+    const ext = ((f.name || '').match(/\.([a-z0-9]+)$/i) || [, (f.type || 'image/png').split('/')[1] || 'png'])[1].toLowerCase().replace('jpeg', 'jpg');
+    try{
+      if(typeof subirNuvem !== 'function') throw 0;
+      const url = await subirNuvem(`estudio/${qid}/${id}.${ext}`, f);
+      const i = acharItem(id); if(i){ i.src = url; try{ estGravar(); }catch(e){} }
+    }catch(e){ const i = acharItem(id); if(i) i.local = true; }
+  }
+  /* --- link --- */
+  function hrefOk(u){ try{ if(typeof hrefSeguro === 'function') return hrefSeguro(u); }catch(e){} return /^https?:\/\//i.test(u) ? u : ''; }
+  function ytId(u){ const m = String(u).match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/i); return m ? m[1] : ''; }
+  function linkNoQuadro(url, pt){
+    const u = String(url || '').trim(); if(!ehUrl(u) || !hrefOk(u)) return null;
+    lembrar();
+    const [x, y] = pt || centroMundo();
+    let host = ''; try{ host = new URL(u).hostname.replace(/^www\./, ''); }catch(e){}
+    const i = poe({ id: idNovo(), tipo: 'link', url: u, txt: '', host, x: Math.round(x - 130), y: Math.round(y - 60) });
+    pronto([i.id]);
+    return i;
+  }
+  Fj.link = linkNoQuadro;
+  /* --- forma, seção --- */
+  function formaNoQuadro(f, pt){ lembrar(); const [x, y] = pt || centroMundo(); const i = poe({ id: idNovo(), tipo: 'forma', f: f || Fj.forma, x: Math.round(x - 90), y: Math.round(y - 60), w: 180, h: 120, cor: 'latao', txt: '' }); pronto([i.id]); setTimeout(() => document.querySelector(`[data-esttxt="${i.id}"]`)?.focus(), 30); return i; }
+  function secaoNoQuadro(pt){ lembrar(); const [x, y] = pt || centroMundo(); const i = poe({ id: idNovo(), tipo: 'secao', x: Math.round(x - 280), y: Math.round(y - 180), w: 560, h: 360, cor: 'cobalto', txt: 'Seção' }); pronto([i.id]); return i; }
+  function textoSolto(txt, pt){ lembrar(); const [x, y] = pt || centroMundo(); const i = poe({ id: idNovo(), tipo: 'nota', x: Math.round(x - 95), y: Math.round(y - 48), cor: 'latao', txt: String(txt).slice(0, 1000), em: '' }); pronto([i.id]); return i; }
+  Fj.forma_ = formaNoQuadro; Fj.secao = secaoNoQuadro;
+
+  /* --- desenhar os itens novos --- */
+  function selosHtml(i){
+    const l = Array.isArray(i.selos) ? i.selos : []; if(!l.length) return '';
+    const cont = {}; l.forEach(s => { cont[s.e] = (cont[s.e] || 0) + 1; });
+    return `<div class="estSelosI">${Object.keys(cont).map(e => `<button type="button" class="estSeloI" data-estselo="${esc_(i.id)}|${esc_(e)}" title="Tocar tira o seu">${e}${cont[e] > 1 ? `<b>${cont[e]}</b>` : ''}</button>`).join('')}</div>`;
+  }
+  const corDe = c => { try{ return estCor(c); }catch(e){ return [c, 'rgba(255,200,87,.16)', '#FFC857']; } };
+  function itemNovoHtml(i){
+    const sel = S.est.sel.includes(i.id) ? ' sel' : '';
+    const pos = `left:${i.x}px;top:${i.y}px`;
+    const rz = `<button type="button" class="estRz" data-estrz="${esc_(i.id)}" aria-label="Redimensionar"></button>`;
+    const acoes = `<div class="estAcI"><button type="button" data-estcopia="${esc_(i.id)}" title="Duplicar">⧉</button><button type="button" data-estapaga="${esc_(i.id)}" title="Apagar">✕</button></div>`;
+    if(i.tipo === 'imagem'){
+      const src = D.previas[i.id] || i.src || '';
+      return `<div class="estNota estImg${sel}" data-estnota="${esc_(i.id)}" style="${pos};width:${i.w || 280}px;height:${i.h || 200}px">
+        ${src ? `<img src="${esc_(src)}" alt="${esc_(i.nome || '')}" draggable="false">` : `<div class="estImgVazia">imagem</div>`}
+        ${!i.src && !D.previas[i.id] ? '<span class="estImgAviso">só no aparelho em que foi colada</span>' : ''}
+        ${acoes}${selosHtml(i)}${rz}</div>`;
+    }
+    if(i.tipo === 'link'){
+      const yt = ytId(i.url); const href = hrefOk(i.url);
+      return `<div class="estNota estLink${sel}" data-estnota="${esc_(i.id)}" style="${pos}">
+        ${yt ? `<div class="estLinkCapa" style="background-image:url('https://img.youtube.com/vi/${yt}/hqdefault.jpg')"><span>▶</span></div>` : ''}
+        <div class="estLinkCorpo"><span class="estLinkHost">${esc_(i.host || '')}</span>
+          <textarea data-esttxt="${esc_(i.id)}" rows="1" placeholder="Dê um nome ao link">${esc_(i.txt || '')}</textarea>
+          <span class="estLinkUrl">${esc_(i.url)}</span>
+          ${href ? `<a class="estLinkAbre" href="${esc_(href)}" target="_blank" rel="noopener noreferrer">Abrir ↗</a>` : ''}</div>
+        ${acoes}${selosHtml(i)}</div>`;
+    }
+    if(i.tipo === 'forma'){
+      const [, np, nb] = corDe(i.cor);
+      return `<div class="estNota estForma f-${esc_(i.f || 'ret')}${sel}" data-estnota="${esc_(i.id)}" style="${pos};width:${i.w || 180}px;height:${i.h || 120}px;--fc:${nb};--fp:${np}">
+        <div class="estFormaFundo"></div><textarea data-esttxt="${esc_(i.id)}" rows="2" placeholder="Texto">${esc_(i.txt || '')}</textarea>
+        ${acoes}${selosHtml(i)}${rz}</div>`;
+    }
+    if(i.tipo === 'secao'){
+      const [, np, nb] = corDe(i.cor);
+      return `<div class="estNota estSecao${sel}" data-estnota="${esc_(i.id)}" style="${pos};width:${i.w || 560}px;height:${i.h || 360}px;--fc:${nb};--fp:${np}">
+        <div class="estSecaoTopo"><textarea data-esttxt="${esc_(i.id)}" rows="1" placeholder="Nome da seção">${esc_(i.txt || '')}</textarea></div>
+        ${acoes}${rz}</div>`;
+    }
+    if(i.tipo === 'traco'){
+      const d = (i.pts || []).map((p, k) => (k ? 'L' : 'M') + p[0] + ' ' + p[1]).join(' ');
+      return `<div class="estNota estTraco${sel}" data-estnota="${esc_(i.id)}" style="${pos};width:${Math.max(4, i.w)}px;height:${Math.max(4, i.h)}px">
+        <svg width="${Math.max(4, i.w)}" height="${Math.max(4, i.h)}" style="overflow:visible"><path d="${d}" stroke="${esc_(i.cor || '#FFC857')}" stroke-width="${i.esp || 4}" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+    }
+    return null;
+  }
+  function ligarItens(){
+    if(typeof estNotaHtml !== 'function' || estNotaHtml.__fj) return;
+    const orig = estNotaHtml;
+    estNotaHtml = function(i){
+      const novo = i && itemNovoHtml(i); if(novo) return novo;
+      const html = orig.apply(this, arguments);
+      const sl = i ? selosHtml(i) : ''; return sl ? html.replace(/<\/div>\s*$/, sl + '</div>') : html;
+    };
+    estNotaHtml.__fj = true;
+  }
+  /* a barra de ferramentas ganha as do FigJam */
+  function ligarBarra(){
+    if(typeof estPalcoHtml !== 'function' || estPalcoHtml.__fj) return;
+    const orig = estPalcoHtml;
+    estPalcoHtml = function(){
+      let h = orig.apply(this, arguments);
+      const q = q_(); if(!q) return h;
+      /* as seções ficam atrás de tudo: desenhadas primeiro */
+      const bt = (k, t, svg, on) => `<button type="button" data-esfig="${k}" class="${on ? 'on' : ''}" title="${t}" aria-label="${t}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${svg}</svg></button>`;
+      const extra = bt('imagem', 'Imagem (ou cole com ⌘V / arraste)', '<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 16l5-5 4 4 3-3 4 4"/>')
+        + bt('link', 'Link', '<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/>')
+        + bt('forma', 'Forma', '<rect x="4" y="4" width="9" height="9" rx="1"/><circle cx="16" cy="16" r="4.5"/>')
+        + bt('secao', 'Seção', '<path d="M4 8V5h3M20 8V5h-3M4 16v3h3M20 16v3h-3M9 5h6M9 19h6"/>')
+        + bt('caneta', 'Caneta', '<path d="M4 20l4-1 11-11-3-3L5 16z"/>', S.est.modo === 'caneta')
+        + bt('carimbo', 'Carimbo', '<circle cx="12" cy="12" r="8"/><path d="M9 10h.01M15 10h.01M8.5 14c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2"/>', S.est.modo === 'carimbo');
+      h = h.replace(/(<button type="button" data-estferr="texto"[\s\S]*?<\/button>)/, `$1${extra}`);
+      /* as opções da ferramenta ligada */
+      let opc = '';
+      if(S.est.modo === 'caneta') opc = `<div class="estOpc" role="group" aria-label="Cor da caneta">${TINTAS.map(c => `<button type="button" data-estinta="${c}" class="${Fj.tinta === c ? 'on' : ''}" style="background:${c}" aria-label="Cor ${c}"></button>`).join('')}</div>`;
+      if(S.est.modo === 'carimbo') opc = `<div class="estOpc" role="group" aria-label="Carimbo">${EMOJIS.map(e => `<button type="button" data-estemoji="${e}" class="${Fj.emoji === e ? 'on' : ''}">${e}</button>`).join('')}</div>`;
+      if(opc) h = h.replace('<div class="estZoom">', opc + '<div class="estZoom">');
+      const dica = { caneta: 'desenhe com o dedo ou o mouse · Esc sai', carimbo: 'toque numa nota ou imagem para carimbar' }[S.est.modo];
+      if(dica) h = h.replace(/<\/div>\s*$/, `<div class="estDica">${dica}</div></div>`);
+      return h;
+    };
+    estPalcoHtml.__fj = true;
+  }
+  /* seções primeiro, para ficarem atrás */
+  function secoesAtras(){
+    const q = q_(); if(!q || !Array.isArray(q.itens)) return;
+    const s = q.itens.filter(i => i.tipo === 'secao'); if(!s.length) return;
+    const ok = q.itens.slice(0, s.length).every(i => i.tipo === 'secao');
+    if(!ok) q.itens = [...s, ...q.itens.filter(i => i.tipo !== 'secao')];
+  }
+  function ligarPintar(){
+    if(typeof estPintar !== 'function' || estPintar.__fj) return;
+    const orig = estPintar;
+    estPintar = function(){ secoesAtras(); const r = orig.apply(this, arguments); capaDaCaneta(); return r; };
+    estPintar.__fj = true;
+  }
+
+  /* --- botões --- */
+  function abrirLinkPop(){
+    fecharPops();
+    const b = document.querySelector('[data-esfig="link"]'); if(!b) return;
+    const r = b.getBoundingClientRect();
+    const f = document.createElement('form'); f.id = 'estLinkPop'; f.className = 'estPop'; f.autocomplete = 'off';
+    f.innerHTML = `<input type="text" inputmode="url" placeholder="Cole ou escreva o link" aria-label="Link"><button type="submit">Pôr no quadro</button>`;
+    f.style.left = (r.right + 10) + 'px'; f.style.top = Math.max(10, r.top - 6) + 'px';
+    document.body.appendChild(f);
+    f.querySelector('input').focus();
+    f.addEventListener('submit', e => { e.preventDefault(); let u = f.querySelector('input').value.trim(); if(u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
+      if(!linkNoQuadro(u)){ const i = f.querySelector('input'); i.setCustomValidity('Isso não parece um link'); i.reportValidity(); return; } fecharPops(); });
+  }
+  function abrirFormaPop(){
+    fecharPops();
+    const b = document.querySelector('[data-esfig="forma"]'); if(!b) return;
+    const r = b.getBoundingClientRect();
+    const d = document.createElement('div'); d.id = 'estFormaPop'; d.className = 'estPop';
+    d.innerHTML = FORMAS.map(([k, n]) => `<button type="button" data-estformaf="${k}"><i class="estFIc f-${k}"></i>${n}</button>`).join('');
+    d.style.left = (r.right + 10) + 'px'; d.style.top = Math.max(10, r.top - 6) + 'px';
+    document.body.appendChild(d);
+  }
+  function fecharPops(){ document.getElementById('estLinkPop')?.remove(); document.getElementById('estFormaPop')?.remove(); }
+  let _entrada = null;
+  function escolherImagens(){
+    if(!_entrada){ _entrada = document.createElement('input'); _entrada.type = 'file'; _entrada.accept = 'image/*'; _entrada.multiple = true; _entrada.hidden = true; _entrada.id = 'estImgIn';
+      _entrada.addEventListener('change', () => { const fs = [..._entrada.files]; _entrada.value = ''; if(fs.length) imagensNoQuadro(fs); }); document.body.appendChild(_entrada); }
+    _entrada.click();
+  }
+  addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-esfig],[data-estinta],[data-estemoji],[data-estformaf],[data-estselo]');
+    if(!t){ if(!e.target.closest || !e.target.closest('.estPop,[data-esfig]')) fecharPops(); return; }
+    const d = t.dataset;
+    if(d.estformaf){ e.preventDefault(); fecharPops(); formaNoQuadro(d.estformaf); return; }
+    if(!noQuadroDeIdeias()) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if(d.estinta){ Fj.tinta = d.estinta; estPintar(); return; }
+    if(d.estemoji){ Fj.emoji = d.estemoji; estPintar(); return; }
+    if(d.estselo){ const [id, em] = d.estselo.split('|'); const i = acharItem(id); if(!i || !i.selos) return;
+      const eu = (() => { try{ return estQuemSou(); }catch(x){ return ''; } })();
+      const k = i.selos.findIndex(s => s.e === em && s.quem === eu); if(k < 0) return;
+      lembrar(); i.selos.splice(k, 1); estGravar(); estPintar(); return; }
+    const f = d.esfig;
+    if(f === 'imagem') return escolherImagens();
+    if(f === 'link') return abrirLinkPop();
+    if(f === 'forma') return abrirFormaPop();
+    if(f === 'secao') return secaoNoQuadro();
+    if(f === 'caneta' || f === 'carimbo'){ S.est.modo = S.est.modo === f ? 'mover' : f; S.est.liga = null; estPintar(); return; }
+  }, true);
+
+  /* --- colar e arrastar para dentro --- */
+  addEventListener('paste', e => {
+    if(!noQuadroDeIdeias()) return;
+    const t = e.target; if(t && t.matches && (t.matches('input, textarea, select') || t.isContentEditable)) return;
+    const dt = e.clipboardData; if(!dt) return;
+    const fs = [...(dt.files || [])].filter(f => /^image\//.test(f.type));
+    if(fs.length){ e.preventDefault(); imagensNoQuadro(fs); return; }
+    const txt = (dt.getData('text/plain') || '').trim(); if(!txt) return;
+    e.preventDefault();
+    if(txt.startsWith('maestro-quadro:')){ try{ colarItens(JSON.parse(txt.slice(15))); }catch(x){} return; }
+    if(ehUrl(txt)) linkNoQuadro(txt); else textoSolto(txt);
+  });
+  addEventListener('copy', e => {
+    if(!noQuadroDeIdeias()) return;
+    const t = e.target; if(t && t.matches && (t.matches('input, textarea, select') || t.isContentEditable)) return;
+    const q = q_(); const its = q.itens.filter(i => S.est.sel.includes(i.id)); if(!its.length) return;
+    try{ e.clipboardData.setData('text/plain', 'maestro-quadro:' + JSON.stringify(its.map(i => { const c = clone(i); if(c.tipo === 'imagem' && !c.src) c.previa = D.previas[i.id] || ''; return c; }))); e.preventDefault(); }catch(x){}
+  });
+  function colarItens(its){
+    if(!Array.isArray(its) || !its.length) return;
+    lembrar();
+    const ids = its.map(i => { const c = clone(i); const novo = idNovo(); if(c.previa){ D.previas[novo] = c.previa; } delete c.previa; c.id = novo; c.x = Math.round((c.x || 0) + 30); c.y = Math.round((c.y || 0) + 30); c.votos = 0; c.fixa = false; poe(c); return novo; });
+    pronto(ids);
+  }
+  addEventListener('dragover', e => {
+    if(!noQuadroDeIdeias() || !e.target.closest || !e.target.closest('.estPalco')) return;
+    const tipos = [...(e.dataTransfer && e.dataTransfer.types || [])];
+    if(tipos.includes('Files') || tipos.includes('text/uri-list')){ e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; palco_().classList.add('recebendo'); }
+  });
+  addEventListener('dragleave', e => { if(e.target.closest && e.target.closest('.estPalco') && !e.relatedTarget?.closest?.('.estPalco')) palco_()?.classList.remove('recebendo'); });
+  addEventListener('drop', e => {
+    if(!noQuadroDeIdeias() || !e.target.closest || !e.target.closest('.estPalco')) return;
+    palco_().classList.remove('recebendo');
+    const dt = e.dataTransfer; if(!dt) return;
+    const pt = pontoMundo(e.clientX, e.clientY);
+    const fs = [...(dt.files || [])].filter(f => /^image\//.test(f.type));
+    if(fs.length){ e.preventDefault(); imagensNoQuadro(fs, pt); return; }
+    const u = (dt.getData('text/uri-list') || dt.getData('text/plain') || '').split('\n').find(l => ehUrl(l.trim()));
+    if(u){ e.preventDefault(); linkNoQuadro(u.trim(), pt); }
+  });
+
+  /* --- redimensionar, e a seção leva o que está dentro --- */
+  let _rz = null, _apertou = null;
+  addEventListener('pointerdown', e => {
+    if(!noQuadroDeIdeias()) return;
+    _apertou = { x: e.clientX, y: e.clientY };
+    const h = e.target.closest && e.target.closest('[data-estrz]');
+    if(h){
+      const i = acharItem(h.dataset.estrz); if(!i) return;
+      e.preventDefault(); e.stopPropagation(); lembrar();
+      _rz = { i, x0: e.clientX, y0: e.clientY, w0: i.w || 200, h0: i.h || 150, el: h.closest('.estNota') };
+      try{ h.setPointerCapture(e.pointerId); }catch(x){}
+      return;
+    }
+    /* o gesto de sempre já começou (o protótipo ouve antes): se é uma seção, o que está dentro vai junto */
+    try{
+      if(typeof _estG !== 'undefined' && _estG && _estG.tipo === 'nota'){
+        const q = q_(); const secs = _estG.ids.map(id => q.itens.find(x => x.id === id)).filter(i => i && i.tipo === 'secao');
+        secs.forEach(s => q.itens.forEach(i => {
+          if(i.tipo === 'secao' || _estG.ids.includes(i.id)) return;
+          const w = i.w || 190, hh = i.h || 96, cx = i.x + w / 2, cy = i.y + hh / 2;
+          if(cx >= s.x && cx <= s.x + s.w && cy >= s.y && cy <= s.y + s.h){ _estG.ids.push(i.id); _estG.pos.push([i.x, i.y]); }
+        }));
+      }
+    }catch(x){}
+  }, true);
+  addEventListener('pointermove', e => {
+    if(!_rz) return;
+    const z = S.est.vista.z, i = _rz.i;
+    let w = Math.max(40, _rz.w0 + (e.clientX - _rz.x0) / z), h = Math.max(30, _rz.h0 + (e.clientY - _rz.y0) / z);
+    if(i.tipo === 'imagem' && !e.shiftKey){ const k = _rz.w0 / _rz.h0; h = w / k; }
+    i.w = Math.round(w); i.h = Math.round(h);
+    if(_rz.el){ _rz.el.style.width = i.w + 'px'; _rz.el.style.height = i.h + 'px'; }
+  }, true);
+  addEventListener('pointerup', e => {
+    if(_rz){ _rz = null; try{ estGravar(); estPintar(); }catch(x){} return; }
+    /* carimbo: um toque (sem arrastar) numa nota, imagem, link ou forma */
+    if(noQuadroDeIdeias() && S.est.modo === 'carimbo' && _apertou && Math.abs(e.clientX - _apertou.x) + Math.abs(e.clientY - _apertou.y) < 6){
+      const el = e.target.closest && e.target.closest('.estNota'); if(!el || e.target.closest('button,a')) return;
+      const i = acharItem(el.dataset.estnota); if(!i || i.tipo === 'secao' || i.tipo === 'traco') return;
+      lembrar(); i.selos = Array.isArray(i.selos) ? i.selos : [];
+      let eu = ''; try{ eu = estQuemSou(); }catch(x){}
+      i.selos.push({ e: Fj.emoji, quem: eu });
+      try{ estGravar(); estPintar(); }catch(x){}
+    }
+  }, true);
+
+  /* --- a caneta: uma capa por cima do palco, fora dele (o gesto de mover não a vê) --- */
+  function capaDaCaneta(){
+    const on = noQuadroDeIdeias() && S.est.modo === 'caneta';
+    let c = document.getElementById('estCaneta');
+    if(!on){ if(c) c.remove(); return; }
+    const p = palco_(); const r = p.getBoundingClientRect();
+    if(!c){
+      c = document.createElement('div'); c.id = 'estCaneta';
+      c.innerHTML = '<svg><path fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      document.body.appendChild(c);
+      let pts = null;
+      c.addEventListener('pointerdown', e => { e.preventDefault(); pts = [[e.clientX, e.clientY]]; try{ c.setPointerCapture(e.pointerId); }catch(x){} desenhar(); });
+      c.addEventListener('pointermove', e => { if(!pts) return; pts.push([e.clientX, e.clientY]); desenhar(); });
+      const fim = () => {
+        if(!pts) return; const l = pts; pts = null; desenhar();
+        if(l.length < 2) return;
+        const w = l.map(([x, y]) => pontoMundo(x, y));
+        const minX = Math.min(...w.map(p => p[0])), minY = Math.min(...w.map(p => p[1]));
+        const maxX = Math.max(...w.map(p => p[0])), maxY = Math.max(...w.map(p => p[1]));
+        lembrar();
+        const i = poe({ id: idNovo(), tipo: 'traco', x: Math.round(minX), y: Math.round(minY), w: Math.round(maxX - minX), h: Math.round(maxY - minY), cor: Fj.tinta, esp: 4,
+          pts: w.map(([x, y]) => [Math.round(x - minX), Math.round(y - minY)]) });
+        try{ estGravar(); estPintar(); }catch(x){}
+        return i;
+      };
+      c.addEventListener('pointerup', fim); c.addEventListener('pointercancel', fim);
+      function desenhar(){ const path = c.querySelector('path'); const rr = c.getBoundingClientRect();
+        path.setAttribute('d', (pts || []).map((p, k) => (k ? 'L' : 'M') + (p[0] - rr.left) + ' ' + (p[1] - rr.top)).join(' '));
+        path.setAttribute('stroke', Fj.tinta); path.setAttribute('stroke-width', 4 * S.est.vista.z); }
+    }
+    /* a capa cobre o palco, menos a barra e o zoom */
+    Object.assign(c.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+    const svg = c.querySelector('svg'); svg.setAttribute('width', r.width); svg.setAttribute('height', r.height);
+  }
+  addEventListener('keydown', e => { if(e.key === 'Escape' && document.getElementById('estCaneta')){ S.est.modo = 'mover'; try{ estPintar(); }catch(x){} } }, true);
+  addEventListener('resize', () => { if(document.getElementById('estCaneta')) capaDaCaneta(); });
+  addEventListener('scroll', () => { if(document.getElementById('estCaneta')) capaDaCaneta(); }, true);
+  /* sair do quadro tira a capa */
+  setInterval(() => { if(document.getElementById('estCaneta') && !(noQuadroDeIdeias() && S.est.modo === 'caneta')) document.getElementById('estCaneta').remove(); }, 400);
 
   /* ---------------- estilo ---------------- */
   const css = document.createElement('style');
@@ -975,6 +1376,56 @@
   @media (hover:none){ .esDocX{ opacity:1 } }
   .esVazio{ color:var(--ink-400, #999); font-size:14px }
   .esVolta{ border:0; background:var(--ink-850, rgba(255,255,255,.06)); color:inherit; font:inherit; font-size:13px; padding:6px 12px; border-radius:999px; cursor:pointer; margin:0 0 10px }
+
+  /* o quadro de ideias no jeito do FigJam */
+  .estPalco.recebendo{ box-shadow:inset 0 0 0 3px var(--brass-500, #FFC857) }
+  .estNota.estImg, .estNota.estForma, .estNota.estSecao, .estNota.estLink, .estNota.estTraco{ min-height:0; padding:0; background:none; box-shadow:none; border:0; gap:0 }
+  .estNota.estImg{ border-radius:8px; overflow:visible }
+  .estNota.estImg img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:8px; pointer-events:none; user-select:none }
+  .estImgVazia{ width:100%; height:100%; border-radius:8px; display:grid; place-items:center; background:rgba(127,127,127,.2); color:var(--ink-400, #999); font-size:12px }
+  .estImgAviso{ position:absolute; left:6px; bottom:6px; font-size:10.5px; background:rgba(0,0,0,.6); color:#fff; padding:2px 6px; border-radius:6px }
+  .estNota.sel.estImg, .estNota.sel.estForma, .estNota.sel.estLink, .estNota.sel.estSecao{ outline:2px solid #0D99FF; outline-offset:2px }
+  .estAcI{ position:absolute; top:-30px; right:0; display:none; gap:3px }
+  .estNota.sel .estAcI, .estNota:hover .estAcI{ display:flex }
+  .estAcI button{ width:26px; height:26px; border:0; border-radius:7px; background:rgba(30,30,30,.9); color:#fff; font-size:12px; cursor:pointer }
+  .estRz{ position:absolute; right:-7px; bottom:-7px; width:14px; height:14px; border:2px solid #0D99FF; border-radius:3px; background:#fff; cursor:nwse-resize; padding:0; display:none; touch-action:none }
+  .estNota.sel .estRz, .estNota:hover .estRz{ display:block }
+  .estNota.estLink{ width:260px; border-radius:12px; overflow:visible; background:var(--estPapel, #26262A); box-shadow:0 2px 10px rgba(0,0,0,.25) }
+  .estLinkCapa{ height:140px; border-radius:12px 12px 0 0; background:center/cover no-repeat #000; display:grid; place-items:center }
+  .estLinkCapa span{ width:44px; height:44px; border-radius:50%; background:rgba(0,0,0,.6); color:#fff; display:grid; place-items:center; font-size:16px }
+  .estLinkCorpo{ display:flex; flex-direction:column; gap:3px; padding:10px 12px 12px }
+  .estLinkHost{ font-size:11px; color:var(--ink-400, #999); text-transform:lowercase }
+  .estLinkCorpo textarea{ border:0; background:transparent; color:inherit; font:inherit; font-weight:600; font-size:14px; resize:none; padding:0; min-height:20px; outline:none }
+  .estLinkUrl{ font-size:11.5px; color:#5B8DEF; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .estLinkAbre{ align-self:flex-start; margin-top:6px; font-size:12px; font-weight:600; color:#1C1C1F; background:var(--brass-500, #FFC857); border-radius:999px; padding:4px 10px; text-decoration:none }
+  .estNota.estForma{ display:grid; place-items:center }
+  .estFormaFundo{ position:absolute; inset:0; background:var(--fp); box-shadow:inset 0 0 0 2px var(--fc) }
+  .estForma.f-ret .estFormaFundo{ border-radius:10px }
+  .estForma.f-circ .estFormaFundo{ border-radius:50% }
+  .estForma.f-losango .estFormaFundo{ clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); box-shadow:none; background:var(--fc); opacity:.5 }
+  .estForma textarea{ position:relative; width:78%; border:0; background:transparent; color:inherit; font:inherit; font-size:15px; font-weight:600; text-align:center; resize:none; outline:none }
+  .estNota.estSecao{ border-radius:14px; background:var(--fp); box-shadow:inset 0 0 0 1.5px var(--fc); animation:none }
+  .estSecaoTopo{ position:absolute; top:-30px; left:0 }
+  .estSecaoTopo textarea{ border:0; background:var(--fc); color:#1C1C1F; font:inherit; font-size:13px; font-weight:600; border-radius:8px; padding:4px 10px; resize:none; width:220px; outline:none }
+  .estNota.estTraco{ pointer-events:none }
+  .estNota.estTraco path{ pointer-events:stroke; cursor:move }
+  .estNota.estTraco.sel path{ filter:drop-shadow(0 0 3px #0D99FF) }
+  .estSelosI{ position:absolute; left:6px; bottom:-14px; display:flex; gap:3px; z-index:2 }
+  .estSeloI{ border:0; background:rgba(30,30,30,.92); border-radius:999px; padding:2px 7px; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; gap:3px; color:#fff }
+  .estSeloI b{ font-size:11px }
+  .estOpc{ position:absolute; left:64px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:6px; background:rgba(30,30,30,.92); padding:8px; border-radius:12px; z-index:5 }
+  .estOpc button{ width:28px; height:28px; border:0; border-radius:8px; cursor:pointer; font-size:17px; background:transparent }
+  .estOpc button.on{ outline:2px solid #fff; outline-offset:1px }
+  .estPop{ position:fixed; z-index:9050; display:flex; gap:6px; background:#2C2C2C; color:#EDEDED; padding:8px; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,.35); font:13px Inter, system-ui, sans-serif }
+  .estPop input{ width:260px; border:0; border-radius:8px; background:#1E1E1E; color:#EDEDED; font:inherit; padding:8px 10px; outline:none }
+  .estPop button{ border:0; border-radius:8px; background:#1E1E1E; color:#EDEDED; font:inherit; padding:8px 10px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; white-space:nowrap }
+  #estLinkPop button{ background:var(--brass-500, #FFC857); color:#1C1C1F; font-weight:600 }
+  #estFormaPop{ flex-direction:column }
+  .estFIc{ width:16px; height:12px; background:currentColor; opacity:.7; display:inline-block }
+  .estFIc.f-circ{ border-radius:50%; width:14px; height:14px } .estFIc.f-ret{ border-radius:3px } .estFIc.f-losango{ width:13px; height:13px; transform:rotate(45deg) }
+  #estCaneta{ position:fixed; z-index:40; cursor:crosshair; touch-action:none }
+  #estCaneta svg{ display:block }
+  @media (max-width:760px){ .estFerr{ max-width:calc(100% - 20px); overflow-x:auto; scrollbar-width:none } .estFerr button{ flex:none } .estOpc{ left:auto; right:10px; top:auto; bottom:70px; transform:none; flex-direction:row } #estLinkPop{ left:12px !important; right:12px; top:auto !important; bottom:90px } #estLinkPop input{ width:auto; flex:1 } }
 
   /* o editor */
   html.dsAberto, html.dsAberto body{ overflow:hidden }
@@ -1063,8 +1514,8 @@
   }`;
   document.head.appendChild(css);
 
-  ligarMenu(); ligarRender(); ligarDesfazer();
+  ligarMenu(); ligarRender(); ligarDesfazer(); ligarItens(); ligarBarra(); ligarPintar();
   /* o protótipo pode ainda estar terminando de ler: tenta de novo até as funções existirem */
-  let n = 0; const t = setInterval(() => { ligarMenu(); ligarRender(); ligarDesfazer(); if(++n > 40 || (agEstudio.__ds && render.__ds)) clearInterval(t); }, 150);
+  let n = 0; const t = setInterval(() => { ligarMenu(); ligarRender(); ligarDesfazer(); ligarItens(); ligarBarra(); ligarPintar(); if(++n > 40 || (agEstudio.__ds && render.__ds)) clearInterval(t); }, 150);
   try{ if(S.view === 'agency' && S.route === 'estudio') render(); }catch(e){}
 })();
