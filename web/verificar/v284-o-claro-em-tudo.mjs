@@ -32,12 +32,13 @@ console.log('\n  — 1. a homepage no claro —');
     const brancos = [...document.querySelectorAll('.site h1, .site h2, .site h3, .site h4')].filter(e => { const m = getComputedStyle(e).color.match(/\d+/g).map(Number); return m[0] > 200 && m[1] > 200 && m[2] > 200; }).length;
     const cards = [...document.querySelectorAll('.site .sPasso, .site .sTile, .site .price')].map(e => getComputedStyle(e).backgroundColor);
     return { fundo: cs('.site.sv').backgroundColor, h1: cs('.sHero h1').color, brancos, cards, nav: cs('.sv .snav').backgroundColor,
-      palco: cs('.sv .sHero .sFotoMol').backgroundColor, cta: cs('.sHero .b.pri').backgroundColor, ctaTx: cs('.sHero .b.pri').color, luz: !!document.querySelector('.site .snav .tmLuz') }; });
+      palco: cs('.sv .sHero .sFotoMol').backgroundColor, foto: (document.querySelector('.sv .sHero img.sFoto') || {}).currentSrc || '', mistura: document.querySelector('.sv .sHero img.sFoto') ? getComputedStyle(document.querySelector('.sv .sHero img.sFoto')).mixBlendMode : '', cta: cs('.sHero .b.pri').backgroundColor, ctaTx: cs('.sHero .b.pri').color, luz: !!document.querySelector('.site .snav .tmLuz') }; });
   checa('1.1 a homepage é Linho no claro (antes: escura mesmo no tema claro)', r.fundo === LINHO, r.fundo);
   checa('1.2 nenhum título branco sobre o claro', r.brancos === 0 && escuro(r.h1), r);
   checa('1.3 os cards (passos, recursos, preços) são claros', r.cards.length > 5 && r.cards.every(c => !escuro(c)), r.cards);
   checa('1.4 a barra do topo é clara', !escuro(r.nav), r.nav);
-  checa('1.5 a foto dos aparelhos (fundo preto) entra num palco escuro', escuro(r.palco), r.palco);
+  /* v296: "a imagem maior tá com o fundo preto… precisa casar com o fundo do site" — sem palco escuro; a foto clara já tem o fundo Linho */
+  checa('1.5 a foto dos aparelhos é a clara, sem palco escuro e sem mistura', !escuro(r.palco) && /-claro-/.test(r.foto) && r.mistura === 'normal', [r.palco, r.foto, r.mistura]);
   checa('1.6 o botão principal é o amarelo, com texto escuro', r.cta === AMARELO && r.ctaTx === TEXTO, r);
   checa('1.7 a vitrine tem o sol/lua', r.luz);
   await pg.click('.site .snav .tmLuz');
