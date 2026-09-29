@@ -30,12 +30,40 @@
        ele); número repetido é recusado pelo banco e o card ganha outro.
    ===================================================================== */
 
+/* v300 — A TRAVA DA LINHA ERRADA. Em 28/09 14:02 a camada da v276 chamou
+   `Sincro.gravar('__estado__')`. `gravar` empacota a linha de UM CLIENTE (pauta,
+   materiais…) e a escreveu por cima do `__estado__` — o documento da agência
+   (equipe com as fotos, lembretes, negócios…), que ficou sem o `s`. Dali em
+   diante o estado não conseguia mais gravar, e todo aparelho novo via a equipe
+   de fábrica. Regra agora, num ponto só: linha que começa com "__" nunca é de
+   cliente. `__estado__` vai para `enviar()` (o caminho dele); as outras, recusa. */
+(function(){
+  let n = 0;
+  const armar = () => {
+    const Sin = window.Sincro;
+    if(!Sin || typeof Sin.gravar !== 'function') return false;
+    if(Sin.gravar.__travada) return true;
+    const orig = Sin.gravar;
+    Sin.gravar = function(cli){
+      const c = String(cli == null ? '' : cli);
+      if(c.startsWith('__')){
+        try{ console.warn('[maestro] gravar() recusou a linha', c); }catch(e){}
+        return c === '__estado__' && typeof Sin.enviar === 'function' ? Sin.enviar() : Promise.resolve(false);
+      }
+      return orig.apply(this, arguments);
+    };
+    Sin.gravar.__travada = true;
+    return true;
+  };
+  if(!armar()){ const t = setInterval(() => { if(armar() || ++n > 200) clearInterval(t); }, 50); }
+})();
+
 /* v299 — a entrada (web/entrada): a primeira coisa a descer, porque decide o que
    a pessoa vê antes de tudo. Sem ela, a cortina do protótipo abre do jeito antigo. */
 (function(){
   if(window.MaestroEntrada2 || window.__entradaPedida) return;
   window.__entradaPedida = true;
-  fetch('/web/entrada/entrada.js?v=v299').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/entrada/entrada.js?v=v300').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else window.__entrada = 1; })
     .catch(() => { window.__entrada = 1; });
 })();
@@ -1119,7 +1147,8 @@
       if(Date.now() - ultimaBusca > 30000){ ultimaBusca = Date.now(); await buscar(); }
       if(aplicar()){
         redesenhar();
-        try{ if(window.Sincro && typeof Sincro.gravar === 'function') Sincro.gravar('__estado__', true); }catch(e){}
+        /* v300: o __estado__ se grava por enviar(), nunca por gravar() (que é a linha de UM cliente — ver a trava abaixo) */
+        try{ if(window.Sincro && typeof Sincro.enviar === 'function') Sincro.enviar(); }catch(e){}
       }
     }catch(e){}
   }, 3000);
@@ -1130,7 +1159,7 @@
 (function(){
   if(window.MaestroQuadro || window.__quadroPedido) return;
   window.__quadroPedido = true;
-  fetch('/web/quadro/quadro.js?v=v299').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/quadro/quadro.js?v=v300').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else throw 0; })
     /* v289: sem o Quadro, a rota fica em "Carregando o quadro…" — só em obra o Ensaio antigo vira bancada */
     .catch(() => { window.__semQuadro = 1; try{ if(S.route === 'producao') render(); }catch(e){} });
@@ -1140,7 +1169,7 @@
 (function(){
   if(window.MaestroDesign || window.__designPedido) return;
   window.__designPedido = true;
-  fetch('/web/design/design.js?v=v299').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/design/design.js?v=v300').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else window.__semTema = 1; })
     .catch(() => { window.__semTema = 1; });   /* v296: a abertura espera o tema; sem ele, não espera à toa */
 })();
@@ -1149,7 +1178,7 @@
 (function(){
   if(window.MaestroTema || window.__temaPedido) return;
   window.__temaPedido = true;
-  fetch('/web/tema/tema.js?v=v299').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/tema/tema.js?v=v300').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else window.__semTema = 1; })
     .catch(() => { window.__semTema = 1; });   /* v296: a abertura espera o tema; sem ele, não espera à toa */
 })();

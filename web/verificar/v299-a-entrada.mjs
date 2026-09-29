@@ -31,7 +31,7 @@ const NOMES = EQUIPE.map(m => m.n).sort().join();
 
 /* o banco de mentira: sem login devolve [] (a RLS); com login, a agência EJUP */
 function banco(pg, opc){
-  const b = { email: null, atraso: opc.atraso || 300, falha: !!opc.falha };
+  const b = { email: null, atraso: opc.atraso || 300, falha: !!opc.falha, estado: [] };
   pg.route('https://tgrbmdsootnewjqpmeii.supabase.co/**', async r => {
     const u = r.request().url(), met = r.request().method();
     const j = (x, s = 200) => r.fulfill({ status: s, contentType: 'application/json', body: JSON.stringify(x) }).catch(() => {});
@@ -57,7 +57,14 @@ function banco(pg, opc){
       const m = /cliente=eq\.([^&]+)/.exec(u);
       return j(m ? linhas.filter(l => l.cliente === decodeURIComponent(m[1])) : linhas);
     }
-    if(met !== 'GET') return j({}, 201);
+    if(met !== 'GET'){
+      /* toda escrita na linha do estado fica anotada: ela NUNCA pode sair sem o "s" (a equipe mora nele) */
+      const alvo = (/cliente=eq\.([^&]+)/.exec(u) || [])[1];
+      let corpo = null; try{ corpo = JSON.parse(r.request().postData() || 'null'); }catch(e){}
+      const cli = alvo ? decodeURIComponent(alvo) : (corpo && corpo.cliente);
+      if(cli === '__estado__'){ const d = corpo && (corpo.dados || corpo); b.estado.push(!!(d && d.s && typeof d.s === 'object')); }
+      return j({}, 201);
+    }
     return j([]);
   });
   return b;
@@ -120,7 +127,7 @@ console.log('\n  — 1. sem login: só a vitrine, nada de dentro —');
 console.log('\n  — 2. login da agência, aba anônima, banco lento —');
 let depois = null;
 {
-  const { ctx, pg } = await aparelho({ atraso: 1500 });
+  const { ctx, pg, b: aparelhoAtual } = await aparelho({ atraso: 1500 });
   await pg.waitForTimeout(2500);
   await pg.locator('[data-go="entrar"]:visible').first().click();
   await logar(pg, 'ejup.mkt@gmail.com');
@@ -155,9 +162,29 @@ let depois = null;
   await pg.waitForTimeout(6000);
   const qs4 = await quadros(pg);
   checa('3.2 logado, abrir o endereço da vitrine (/) leva ao app, sem mostrar a vitrine', qs4.every(q => !q.site && !q.form && !q.velha) && qs4.some(q => q.app), resumo(qs4));
-  depois = { ctx, pg };
+  depois = { ctx, pg, b: aparelhoAtual };
 }
 
+console.log('\n  — 3b. a trava da linha errada (o que apagou a equipe em 28/09) —');
+{
+  const { pg } = depois;
+  const r = await pg.evaluate(async () => {
+    const antes = S.equipe.length;
+    let enviou = 0, escritas = 0;
+    const env0 = Sincro.enviar; Sincro.enviar = function(){ enviou++; return env0.apply(this, arguments); };
+    const f0 = window.fetch; window.fetch = function(u, o){ if(o && o.method && o.method !== 'GET' && /__(estado|x)__/.test(String(u) + String(o.body || '').slice(0, 200))) escritas++; return f0.apply(this, arguments); };
+    try{
+      const a = await Sincro.gravar('__estado__', true);     /* o que a v276 chamava */
+      const n1 = escritas; escritas = 0;
+      const b = await Sincro.gravar('__x__', true);          /* qualquer outra linha da casa */
+      return { antes, depois: S.equipe.length, enviou, a: String(a), b: String(b), fetchsX: escritas, travada: !!Sincro.gravar.__travada };
+    } finally { Sincro.enviar = env0; window.fetch = f0; }
+  });
+  await pg.waitForTimeout(800);
+  checa('3b.1 gravar() da linha do estado vai pelo caminho do estado (enviar), nunca como pauta de cliente', r.travada && r.enviou === 1 && depois.b.estado.every(Boolean), [r, depois.b.estado]);
+  checa('3b.1b outra linha da casa ("__x__") por gravar(): recusada, sem escrita nenhuma', r.b === 'false' && r.fetchsX === 0, r);
+  checa('3b.2 e a equipe da tela continua inteira', r.depois === r.antes && r.antes >= 5, r);
+}
 console.log('\n  — 4. trocar de usuário e sair —');
 {
   const { pg } = depois;

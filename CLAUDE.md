@@ -349,6 +349,15 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado no código (29 set, v300, NO AR) — a trava do estado.** O banco
+(consulta `equipe-2-conferir.sql`) mostrou a equipe completa com 5 fotos até
+28/09 14:02 e o `__estado__` SEM o `s` depois: a camada da v276 chamou
+`Sincro.gravar('__estado__')`, que grava a linha de um CLIENTE, e escreveu pauta
+por cima do documento da agência (equipe, lembretes, negócios). Trava em
+`tempo-real.js`: linha "__…" nunca é gravada como cliente. **Falta o founder
+rodar `docs/ENGINEERING/equipe-3-restaurar.sql`** (acha sozinho a última versão
+boa no histórico; com travas e cópia). **Lição:** `gravar(cli)` é da linha de
+cliente; o documento da casa é `enviar()` — nome parecido, dono diferente.
 **Fechado (29 set, v299, NO AR) — a entrada refeita.** "Refaça todo o código
 da homepage e da aba de e-mail… entre no lugar certo, sem revelar o que tem
 dentro antes do login, sem telas piscando, chegando o banco certinho." Oito

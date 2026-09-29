@@ -1,11 +1,35 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.114
+Version: 0.5.115
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.115 — 2026-09-29
+
+**Status:** No ar. **Falta o founder rodar `docs/ENGINEERING/equipe-3-restaurar.sql`.**
+
+### v300 — a trava do estado (o que apagou a equipe)
+
+- **A causa, confirmada no banco** (consulta `equipe-2-conferir.sql`, rodada
+  pelo founder): a equipe completa, com as 5 fotos, esteve no `__estado__`
+  até 28/09 14:02; a gravação feita pelo login ejup.mkt nesse minuto deixou o
+  documento sem o `s`. Foi a camada da v276 (a tarefa que volta ao card, logo
+  depois do `dados-1c`): ela chamava `Sincro.gravar('__estado__')`, e `gravar`
+  empacota a linha de UM CLIENTE — escreveu pauta de cliente por cima do
+  documento da agência. Dali em diante o estado não gravava mais e todo
+  aparelho novo via a equipe de fábrica.
+- **Correção:** a v276 passa a chamar `enviar()`, e uma trava num ponto só
+  (`tempo-real.js`): linha que começa com "__" nunca é gravada como cliente —
+  `__estado__` vai para `enviar()`, as outras são recusadas.
+- **Restauração:** `docs/ENGINEERING/equipe-3-restaurar.sql` acha sozinho a
+  última versão boa no histórico, recusa se o estado já tiver equipe, guarda
+  o que está lá em `estado_antes_restaurar` e devolve o estado inteiro com a
+  revisão acima. Testado num Postgres com o formato do banco dele (pula a
+  gravação estragada, não toca nos clientes, a 2ª vez recusa).
+- Provas 3b.1, 3b.1b e 3b.2 na `v299-a-entrada.mjs` (25) — sem a trava, falham.
 
 ## 0.5.114 — 2026-09-29
 
