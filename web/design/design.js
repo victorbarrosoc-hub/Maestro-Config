@@ -184,6 +184,8 @@
     E.doc = clone(d); E.sel = []; E.tool = 'V'; E.hist = []; E.fut = []; E.editando = null;
     try{ if(S.est) S.est.sel = []; }catch(e){}
     D.doc = E.doc;
+    /* a caixa do texto acompanha as linhas que ele tem de fato */
+    E.doc.objs.forEach(o => { if(o.tipo === 'texto') o.h = Math.max((o.fs || 48) * 1.2, alturaTexto(o)); });
     montar();
     enquadrar();
     pintar();
@@ -590,7 +592,7 @@
       E.tool = 'V'; mudou(); pintar(); return;
     }
     if(A.tipo === 'mover'){ if(!A.moveu){ E.hist.pop(); } else mudou(); pintar(); return; }
-    if(A.tipo === 'alca'){ mudou(); pintar(); return; }
+    if(A.tipo === 'alca'){ E.sel.map(acha).forEach(o => { if(o && o.tipo === 'texto') o.h = Math.max((o.fs || 48) * 1.2, alturaTexto(o)); }); mudou(); pintar(); return; }
     pintar();
   }
   function aoDuplo(e){
@@ -757,7 +759,7 @@
         if(k === 'x' || k === 'y'){ const d = n - c[k];
           const leva = new Set(E.sel); if(ehFrame(o.id)) E.doc.objs.filter(x => frameDe(x) === o).forEach(x => leva.add(x.id));
           leva.forEach(id => { acha(id)[k] = r1(acha(id)[k] + d); }); }
-        else o[k] = Math.max(1, r1(n)); }
+        else { o[k] = Math.max(1, r1(n)); if(o.tipo === 'texto' && k === 'w') o.h = Math.max((o.fs || 48) * 1.2, alturaTexto(o)); } }
       else if(k === 'x' || k === 'y'){ const d = n - c[k]; E.sel.forEach(id => { acha(id)[k] = r1(acha(id)[k] + d); }); }
     } else {
       E.sel.forEach(id => { const o = acha(id);
@@ -1018,7 +1020,7 @@
   .dsAlca{ fill:#fff; stroke:var(--dsAz); cursor:nwse-resize }
   .dsAlca[data-dsalca="n"], .dsAlca[data-dsalca="s"]{ cursor:ns-resize } .dsAlca[data-dsalca="e"], .dsAlca[data-dsalca="w"]{ cursor:ew-resize }
   .dsAlca[data-dsalca="ne"], .dsAlca[data-dsalca="sw"]{ cursor:nesw-resize } .dsAlca[data-dsalca="p1"], .dsAlca[data-dsalca="p2"]{ cursor:move }
-  .dsMedida{ fill:#fff; font-family:Inter, system-ui, sans-serif; paint-order:stroke; stroke:var(--dsAz); stroke-width:4px; pointer-events:none }
+  .dsMedida{ fill:var(--dsAz); font-family:Inter, system-ui, sans-serif; font-weight:600; pointer-events:none }
   .dsGuia{ stroke:#FF3EA5; pointer-events:none }
   .dsMarq{ fill:rgba(13,153,255,.08); stroke:var(--dsAz); pointer-events:none }
   #dsTxtEd{ position:absolute; outline:1.5px solid var(--dsAz); white-space:pre-wrap; overflow-wrap:break-word; font-family:Inter, system-ui, sans-serif; cursor:text; padding:0; margin:0 }
