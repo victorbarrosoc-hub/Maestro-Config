@@ -1,11 +1,27 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.115
+Version: 0.5.116
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.116 — 2026-09-29
+
+**Status:** No ar.
+
+### v301 — a chave de cada pessoa, de volta
+
+- "Ele só não tá pedindo a senha do usuário, tá entrando direto quando clica no
+  usuário." A lista antiga (v84) pedia a chave de acesso de quem tem uma; a
+  lista da v299 pulou esse passo. Agora quem tem chave tem o cadeado na lista,
+  e tocar no nome abre "Chave de acesso" (Voltar · Entrar). A conferência é a
+  MESMA do app (`conferirChave`), com a chave que veio do banco — se uma cópia
+  da pessoa na memória não tiver a chave, vale a que tem. Chave errada não
+  entra ("Chave errada"; da 3ª em diante, "Quem é administrador troca a chave
+  em Equipe"). Quem não tem chave definida entra direto, como sempre foi.
+- Provas 2.5b–2.6 na `v299-a-entrada.mjs` (29).
 
 ## 0.5.115 — 2026-09-29
 

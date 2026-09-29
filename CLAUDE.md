@@ -349,6 +349,11 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (29 set, v301, NO AR) — a chave de cada pessoa, de volta.** "Não
+tá pedindo a senha do usuário." A lista da v299 pulou a chave (v84). Agora
+cadeado na lista e "Chave de acesso" ao tocar, conferida por `conferirChave`
+com a chave do banco. Quem não tem chave definida entra direto (como antes).
+Provas 2.5b–2.6 na `v299-a-entrada.mjs`.
 **Fechado (29 set, v300, NO AR, e RESTAURADO no banco) — a trava do estado.** O banco
 (consulta `equipe-2-conferir.sql`) mostrou a equipe completa com 5 fotos até
 28/09 14:02 e o `__estado__` SEM o `s` depois: a camada da v276 chamou

@@ -7,7 +7,7 @@
    vista: vitrine, login, a espera, a lista, o app — e a prova olha a
    sequência inteira, não só o fim.
    Rodar da raiz: node web/verificar/v299-a-entrada.mjs */
-import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs';
+import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs'; import crypto from 'crypto';
 const html = fs.readFileSync(process.argv[2] || 'docs/UX/prototipo-plataforma.html', 'utf8');
 const T = { js: 'application/javascript', webp: 'image/webp', png: 'image/png' };
 const srv = http.createServer((q, r) => { const u = decodeURIComponent(q.url.split('?')[0]);
@@ -24,7 +24,9 @@ const FOTO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ
 const EQUIPE = [
   { n: 'Victor Barroso', mail: 'victorbarrosoc@gmail.com', papel: 'Administrador', dono: true, foto: FOTO },
   { n: 'Anna Clara', mail: 'aclaramouran@gmail.com', papel: 'Social Media', foto: FOTO },
-  { n: 'Gabi Domingues', mail: 'gabriela.rdomingues@gmail.com', papel: 'Social Media', foto: FOTO },
+  /* a Gabi tem CHAVE de acesso (a mesma conta do app: sha-256 de "sal·chave") */
+  { n: 'Gabi Domingues', mail: 'gabriela.rdomingues@gmail.com', papel: 'Social Media', foto: FOTO,
+    chave: { sal: 'a1b2c3d4e5f60718', hash: crypto.createHash('sha256').update('a1b2c3d4e5f60718·gabi2026').digest('hex') } },
   { n: 'Roberto Pivotto', mail: 'roberto.ejup@gmail.com', papel: 'Administrador', foto: FOTO },
   { n: 'Leonardo Souza', mail: 'leonardo.ejup@gmail.com', papel: 'Videomaker', foto: FOTO } ];
 const NOMES = EQUIPE.map(m => m.n).sort().join();
@@ -142,11 +144,26 @@ let depois = null;
   checa('2.4 com as fotos', (await fotosDaLista(pg)) === 5);
   checa('2.5 a lista nunca apareceu incompleta, nem por um quadro', qs.filter(q => q.tela === 'lista').every(q => q.nomes === 5), [...new Set(qs.filter(q => q.tela === 'lista').map(q => q.nomes))]);
   await pg.evaluate(() => { window.__q = []; });
+  /* v301 — "não tá pedindo a senha do usuário": quem tem chave precisa dela */
+  const cad = await pg.evaluate(() => [...document.querySelectorAll('#mEntrada [data-mpessoa]')].filter(b => b.querySelector('.mCad')).map(b => b.dataset.mpessoa));
+  checa('2.5b o cadeado aparece só em quem tem chave (a Gabi)', cad.join() === 'gabriela.rdomingues', cad);
   await pg.click('#mEntrada [data-mpessoa="gabriela.rdomingues"]');
+  await pg.waitForTimeout(300);
+  const tela1 = await pg.evaluate(() => ({ tela: document.getElementById('mEntrada').dataset.tela, u: S.usuario && S.usuario.id, foco: document.activeElement && document.activeElement.id }));
+  checa('2.5c tocar na Gabi pede a chave (não entra direto)', tela1.tela === 'chave' && tela1.foco === 'mChave' && tela1.u !== 'gabriela.rdomingues', tela1);
+  await pg.fill('#mChave', 'errada'); await pg.keyboard.press('Enter'); await pg.waitForTimeout(400);
+  const tela2 = await pg.evaluate(() => ({ tela: document.getElementById('mEntrada').dataset.tela, erro: document.getElementById('mChaveErro').textContent, u: S.usuario && S.usuario.id, app: document.documentElement.classList.contains('mConduz') }));
+  checa('2.5d chave errada: continua na chave, com o aviso, e não entra', tela2.tela === 'chave' && /errada/i.test(tela2.erro) && tela2.u !== 'gabriela.rdomingues' && tela2.app, tela2);
+  await pg.click('#mEntrada [data-mchavevolta]'); await pg.waitForTimeout(200);
+  checa('2.5e "Voltar" devolve a lista', await pg.evaluate(() => document.getElementById('mEntrada').dataset.tela === 'lista' && document.querySelectorAll('#mEntrada [data-mpessoa]').length === 5));
+  await pg.click('#mEntrada [data-mpessoa="gabriela.rdomingues"]'); await pg.waitForTimeout(200);
+  await pg.fill('#mChave', 'gabi2026');
+  await pg.evaluate(() => { window.__q = []; });
+  await pg.keyboard.press('Enter');
   await pg.waitForTimeout(4000);
   const qs2 = await quadros(pg);
   const u = await pg.evaluate(() => ({ id: S.usuario && S.usuario.id, view: S.view, rota: S.route }));
-  checa('2.6 escolher a Gabi: entra no app como ela (no Hoje)', u.id === 'gabriela.rdomingues' && u.view === 'agency', u);
+  checa('2.6 com a chave certa, entra no app como a Gabi (no Hoje)', u.id === 'gabriela.rdomingues' && u.view === 'agency', u);
   const i1 = qs2.findIndex(q => q.app && !q.tela);
   checa('2.7 a lista sai esmaecendo sobre o app pronto, e nenhuma lista volta depois (4s olhando)', i1 >= 0 && qs2.slice(i1).every(q => q.app && !q.tela && !q.velha) && qs2.every(q => !q.velha), resumo(qs2));
   /* 3. recarregar: direto ao app, sem vitrine, sem login, sem lista */

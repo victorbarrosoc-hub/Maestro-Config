@@ -37,7 +37,7 @@
 (function(){
   'use strict';
   if(window.MaestroEntrada2) return;
-  const E = window.MaestroEntrada2 = { versao: 'v300', fase: 'inicio', diario: [] };
+  const E = window.MaestroEntrada2 = { versao: 'v301', fase: 'inicio', diario: [] };
   const anota = (...x) => { E.diario.push([Math.round(performance.now()), ...x]); if(E.diario.length > 80) E.diario.shift(); };
 
   /* ---------------- quem está aqui ---------------- */
@@ -111,6 +111,14 @@
   #mEntrada .mEste{ font-style:normal; font-size:11px; font-weight:650; color:#1C1C1F; background:#FFC857;
     border-radius:999px; padding:2px 8px; margin-left:6px; vertical-align:1px }
   #mEntrada .mSeta{ opacity:.5; flex:0 0 auto }
+  #mEntrada .mCad{ opacity:.6; flex:0 0 auto; margin-right:2px }
+  #mEntrada .mQuem{ display:flex; align-items:center; gap:12px; margin-bottom:6px }
+  #mEntrada .mCampo{ width:100%; box-sizing:border-box; border:0; border-radius:14px; padding:14px 16px; font:inherit; font-size:16px;
+    background:#27272B; color:inherit; outline:none; box-shadow:inset 0 0 0 1.5px transparent }
+  html[data-tema="claro"] #mEntrada .mCampo{ background:#FCFBF9; box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.08) }
+  #mEntrada .mCampo:focus{ box-shadow:inset 0 0 0 1.5px #FFC857 }
+  #mEntrada .mErro{ min-height:18px; margin:0; font-size:13px; color:#FF8A80 }
+  html[data-tema="claro"] #mEntrada .mErro{ color:#B42318 }
   #mEntrada .mBts{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:8px }
   #mEntrada .mBt{ border:0; border-radius:999px; padding:11px 20px; font:inherit; font-size:14px; font-weight:650; cursor:pointer;
     background:#FFC857; color:#1C1C1F }
@@ -165,10 +173,62 @@
       <p class="mSub">Escolha o seu nome — o que você fizer fica no seu nome.</p>
       ${ordenada.map(m => `<button type="button" class="mPessoa" data-mpessoa="${escH(idDe(m))}">${avatar(m)}
         <span class="mNome"><b>${escH(m.n)}${chaveM(m) === eu ? '<i class="mEste">este login</i>' : ''}</b><span>${escH(m.papel || 'Equipe')}${m.dono ? ' · dono da conta' : ''}</span></span>
+        ${chaveDe(m) ? '<svg class="mCad" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="pede chave"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>' : ''}
         <svg class="mSeta" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`).join('')}
       <div class="mBts">${voltar ? '<button type="button" class="mBt sec" data-mvoltar="1">Voltar</button>' : '<button type="button" class="mBt sec" data-msair="1">Sair da agência</button>'}</div></div>`;
     E.listaMostrada = ordenada.map(m => m.n);
+    E.listaAtual = ordenada;
   }
+  /* v301 — A CHAVE DE CADA PESSOA. "Ele só não tá pedindo a senha do usuário, tá
+     entrando direto quando clica no usuário." A lista antiga (v84) pedia a chave de
+     quem tem uma; a da v299 pulou esse passo. Agora: cadeado na lista, e tocar no
+     nome de quem tem chave abre a pergunta — conferida pela MESMA função do app
+     (`conferirChave`), com a chave que veio do banco. Sem chave certa, não entra. */
+  function chaveDe(m){
+    try{ return typeof temChave === 'function' && !!m && temChave(m); }catch(e){ return false; }
+  }
+  function pessoaDe(id){
+    const da = (E.listaAtual || []).find(x => idDe(x) === id);
+    const mem = (S.equipe || []).find(x => idDe(x) === id);
+    /* a que tem chave manda: nunca deixar a cópia sem chave abrir a porta */
+    if(chaveDe(da)) return da;
+    if(chaveDe(mem)) return mem;
+    return da || mem || null;
+  }
+  let errosChave = 0;
+  function mostrarChave(m){
+    const el = palco();
+    el.dataset.tela = 'chave';
+    errosChave = 0;
+    el.innerHTML = `<form class="mCaixa" data-mchaveform="${escH(idDe(m))}" autocomplete="off">
+      <div class="mQuem">${avatar(m)}<span class="mNome"><b>${escH(m.n)}</b><span>${escH(m.papel || 'Equipe')}</span></span></div>
+      <h2>Chave de acesso</h2>
+      <p class="mSub">Só ${escH(String(m.n).split(/\s+/)[0])} entra aqui.</p>
+      <input class="mCampo" id="mChave" type="password" autocomplete="current-password" placeholder="Sua chave" aria-label="Chave de acesso">
+      <p class="mErro" id="mChaveErro" role="alert"></p>
+      <div class="mBts"><button type="button" class="mBt sec" data-mchavevolta="1">Voltar</button><button type="submit" class="mBt">Entrar</button></div></form>`;
+    setTimeout(() => { const c = document.getElementById('mChave'); if(c) c.focus(); }, 60);
+  }
+  async function tentarChave(form){
+    const id = form.dataset.mchaveform, m = pessoaDe(id);
+    const campo = document.getElementById('mChave'), erro = document.getElementById('mChaveErro');
+    const v = campo ? campo.value : '';
+    const errar = t => { if(erro) erro.textContent = t; if(campo){ campo.select(); campo.focus(); } };
+    if(!m) return errar('Não achei esta pessoa na equipe.');
+    if(!v) return errar('Digite a chave.');
+    let ok = false;
+    try{ ok = await conferirChave(m, v); }catch(e){ ok = false; }
+    if(ok){ anota('chave certa', id); escolher(id); return; }
+    errosChave++; anota('chave errada', id, errosChave);
+    errar(errosChave >= 3 ? 'Ainda não confere. Quem é administrador troca a chave em Equipe.' : 'Chave errada.');
+  }
+  function tocarPessoa(id){
+    const m = pessoaDe(id);
+    if(chaveDe(m)){ mostrarChave(m); return; }
+    escolher(id);
+  }
+  E.tocarPessoa = tocarPessoa;
+
   function sairDoPalco(){
     const el = document.getElementById('mEntrada');
     raiz.classList.remove('mConduz');
@@ -196,7 +256,7 @@
     for(const m of doBanco){
       const x = S.equipe.find(y => chaveM(y) === chaveM(m));
       if(!x){ S.equipe.push(JSON.parse(JSON.stringify(m))); mudou = true; continue; }
-      for(const k of ['foto', 'papel', 'n', 'dono', 'login']) if(m[k] != null && x[k] !== m[k] && (k !== 'foto' || !x.foto)){ x[k] = m[k]; mudou = true; }
+      for(const k of ['foto', 'papel', 'n', 'dono', 'login', 'chave']) if(m[k] != null && x[k] !== m[k] && (k !== 'foto' || !x.foto)){ x[k] = m[k]; mudou = true; }
     }
     return mudou;
   }
@@ -299,10 +359,11 @@
   }catch(e){}
 
   document.addEventListener('click', e => {
-    const t = e.target.closest && e.target.closest('#mEntrada [data-mpessoa], #mEntrada [data-mvoltar], #mEntrada [data-msair], #mEntrada [data-mtentar]');
+    const t = e.target.closest && e.target.closest('#mEntrada [data-mpessoa], #mEntrada [data-mvoltar], #mEntrada [data-msair], #mEntrada [data-mtentar], #mEntrada [data-mchavevolta]');
     if(!t) return;
     e.preventDefault(); e.stopPropagation();
-    if(t.dataset.mpessoa){ escolher(t.dataset.mpessoa); return; }
+    if(t.dataset.mpessoa){ tocarPessoa(t.dataset.mpessoa); return; }
+    if(t.dataset.mchavevolta !== undefined){ mostrarLista(E.listaAtual || [], listaVoltar); return; }
     if(t.dataset.mvoltar !== undefined){ E.fase = 'app'; sairDoPalco(); return; }
     if(t.dataset.mtentar !== undefined){ entrarComSessao('de novo'); return; }
     if(t.dataset.msair !== undefined){
@@ -310,6 +371,13 @@
       try{ if(window.MaestroConta && MaestroConta.sair) MaestroConta.sair(false); else if(window.MaestroPorta) MaestroPorta.sair(); }catch(er){}
       setTimeout(() => { if(!logado()) paraAVitrine(false); }, 50);
     }
+  }, true);
+
+  document.addEventListener('submit', e => {
+    const f = e.target && e.target.closest && e.target.closest('#mEntrada [data-mchaveform]');
+    if(!f) return;
+    e.preventDefault(); e.stopPropagation();
+    tentarChave(f);
   }, true);
 
   /* ---------------- sem sessão: só a vitrine ---------------- */
