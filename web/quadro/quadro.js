@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v296', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v297', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -473,6 +473,23 @@
   }
   const ic_ = (n, t) => { try{ return typeof ic === 'function' ? ic(n, t) : ''; }catch(e){ return ''; } };
 
+  /* v297 — "queria uma visualização fácil de qual plataforma vai o post, se é
+     Instagram, LinkedIn…". Cada rede tem o seu símbolo na cor dela: no card
+     (Quadro e Semana/Hoje) e no topo da ficha, onde também se escolhe. */
+  const REDE = {
+    ig: ['#E1306C', '<rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="3.8" fill="none" stroke="#fff" stroke-width="2"/><circle cx="17.2" cy="6.8" r="1.2" fill="#fff"/>'],
+    li: ['#0A66C2', '<path fill="#fff" d="M5.2 9.2h3v9.8h-3zM6.7 4.6a1.7 1.7 0 1 1 0 3.4 1.7 1.7 0 0 1 0-3.4zM10.1 9.2H13v1.3c.5-.8 1.6-1.6 3.3-1.6 3 0 3.6 1.9 3.6 4.5V19h-3v-4.9c0-1.2 0-2.6-1.6-2.6s-1.9 1.2-1.9 2.5v5h-3z"/>'],
+    tt: ['#111111', '<path fill="#fff" d="M13.6 3.5h2.8a4 4 0 0 0 3.7 3.7v2.9a6.8 6.8 0 0 1-3.7-1.2v6a5.6 5.6 0 1 1-5.6-5.6h.6v3a2.6 2.6 0 1 0 2.2 2.6z"/>'],
+    yt: ['#FF0000', '<rect x="3" y="6" width="18" height="12" rx="3.5" fill="#fff"/><path d="M10.3 9.4l4.6 2.6-4.6 2.6z" fill="#FF0000"/>'],
+    sb: ['#8A6A2E', '<circle cx="12" cy="12" r="8" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M4 12h16M12 4c2.8 3.2 2.8 12.8 0 16M12 4c-2.8 3.2-2.8 12.8 0 16" fill="none" stroke="#fff" stroke-width="1.5"/>'],
+    str: ['#8B5CF6', '<circle cx="12" cy="12" r="7.8" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="3.6 2.4"/><circle cx="12" cy="12" r="3.4" fill="#fff"/>'],
+    sp: ['#1DB954', '<path d="M6.5 9.4c3.7-1.1 8-.7 11 1.1M7 12.7c3-.8 6.3-.5 8.8.9M7.6 15.8c2.4-.6 4.8-.4 6.8.6" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>']
+  };
+  const platsDe = p => (Array.isArray(p.plats) ? p.plats : []).filter(k => REDE[k]);
+  const nomeRede = k => ((typeof PLATS === 'object' && PLATS && PLATS[k]) || {}).n || k;
+  const iconeRede = (k, cls) => `<span class="qdRede ${cls || ''}" style="--pc:${REDE[k][0]}" title="${esc_(nomeRede(k))}" aria-label="${esc_(nomeRede(k))}"><svg viewBox="0 0 24 24" aria-hidden="true">${REDE[k][1]}</svg></span>`;
+  const redesDoCard = p => { const l = platsDe(p); return l.length ? `<span class="qdRedes">${l.map(k => iconeRede(k)).join('')}</span>` : ''; };
+  Q.platsDe = platsDe;
   function cartao(x){
     const { cli, p, col } = x;
     const key = cli + '|' + p.id;
@@ -495,6 +512,7 @@
         ${p.data && cli !== AG ? `<span class="qdChip" title="Publica em">${ic_('cal', 11)}${esc_(ddmm(p.data))}</span>` : ''}
         ${ck.length ? `<span class="qdChip ${feitos === ck.length ? 'ok' : ''}" title="Checklist">${ic_('checkc', 11)}${feitos}/${ck.length}</span>` : ''}
         ${nm ? `<span class="qdChip" title="Material">${ic_('clipe', 11)}${nm}</span>` : ''}
+        ${cli !== AG ? redesDoCard(p) : ''}
         <span class="qdSp"></span>
         ${!p.resp && col === 'pauta' ? '' : `<button type="button" class="qdResp" data-qdresp="${esc_(key)}" aria-label="${p.resp ? 'Responsável: ' + esc_((pessoa(p.resp) || {}).n || p.resp) : 'Escolher quem faz'}">${avPes(p.resp)}</button>`}
       </div>
@@ -827,7 +845,7 @@
       <div class="qdSemTopo"><span class="qdSemHora">${esc_(p.hora || '—')}</span><span class="qdDot" style="--qdc:${COL[col].c}">${esc_(COL[col].n)}</span></div>
       <div class="qdSemTit">${esc_(tema(p, cli))}</div>
       <div class="qdSemPe">${avCli(cli, 'qdAvC mini')}<span class="qdSemCli">${esc_(cliente(cli).nome)}</span>
-        ${fmts.length ? `<span class="qdFmt">${esc_(fmts.join(' + '))}</span>` : ''}${nm ? `<span class="qdSemMat" title="Material">${ic_('clipe', 10)}${nm}</span>` : ''}</div>
+        ${redesDoCard(p)}${fmts.length ? `<span class="qdFmt">${esc_(fmts.join(' + '))}</span>` : ''}${nm ? `<span class="qdSemMat" title="Material">${ic_('clipe', 10)}${nm}</span>` : ''}</div>
     </article>`;
   }
   function vistaSemana(){
@@ -1081,8 +1099,8 @@
       ${area('recursos', 'Recursos / produção', 'O que a produção precisa ter à mão.')}
       <label class="qdFChk"><input type="checkbox" data-qfbool="caixinha" ${p.caixinha ? 'checked' : ''}> Com caixinha de perguntas</label></div>` : ''}
     ${p.cta ? `<div class="qdFBloco"><h4>CTA</h4><textarea class="qdIn qdArea" data-qf="cta" rows="2">${esc_(p.cta)}</textarea></div>` : ''}`;
-    const dosDetalhes = `<div class="qdFBloco"><h4>Plataformas</h4><div class="qdFPlats">${Object.entries(plats).map(([k, v]) => `<button type="button" class="qdPil ${on.has(k) ? 'on' : ''}" data-qdplat="${esc_(k)}"><i style="background:${esc_(v.c)}"></i>${esc_(v.n)}</button>`).join('')}</div></div>
-    ${(() => { const pil = (typeof PILAR_COR === 'object' && PILAR_COR) || {}; const ks = Object.keys(pil); if(!ks.length) return '';
+    /* v297 — as plataformas moram no topo da ficha ("Vai para"), num lugar só */
+    const dosDetalhes = `${(() => { const pil = (typeof PILAR_COR === 'object' && PILAR_COR) || {}; const ks = Object.keys(pil); if(!ks.length) return '';
       return `<div class="qdFBloco"><h4>Pilar <span>a que eixo editorial serve</span></h4><div class="qdFPlats">${ks.map(k => `<button type="button" class="qdPil ${p.pilar === k ? 'on' : ''}" data-qdpilar="${esc_(k)}"><i style="background:${esc_(pil[k])}"></i>${esc_(k)}</button>`).join('')}</div></div>`; })()}
     <div class="qdFBloco"><h4>Observação</h4><textarea class="qdIn qdArea" data-qf="obs" rows="2" placeholder="Recado para quem for executar: contexto, cuidado, detalhe">${esc_(p.obs || '')}</textarea></div>
     ${p.pend ? `<div class="qdFBloco"><h4>Pendência</h4><textarea class="qdIn qdArea" data-qf="pend" rows="2">${esc_(p.pend)}</textarea></div>` : ''}`;
@@ -1095,8 +1113,8 @@
     const c = [p.objetivo, p.texto, p.legenda].filter(tem).length;
     const ms = materiais(cli, p.id).length, rs = refsDoCard(cli, p.id).length;
     const ck = Array.isArray(p.check) ? p.check : [];
-    const d = [fmtsDe(p).length > 0, (p.plats || []).length > 0, tem(p.pilar), tem(p.obs)].filter(Boolean).length;
-    return { conteudo: `${c}/3`, peca: ms ? `${ms} ${ms === 1 ? 'peça' : 'peças'}` : (rs ? `${rs} ref.` : '—'), detalhes: ck.length ? `${ck.filter(x => x && x.ok).length}/${ck.length} ✓` : `${d}/4` };
+    const d = [fmtsDe(p).length > 0, tem(p.pilar), tem(p.obs)].filter(Boolean).length;
+    return { conteudo: `${c}/3`, peca: ms ? `${ms} ${ms === 1 ? 'peça' : 'peças'}` : (rs ? `${rs} ref.` : '—'), detalhes: ck.length ? `${ck.filter(x => x && x.ok).length}/${ck.length} ✓` : `${d}/3` };
   }
   /* v291 — "quero preencher na ficha o que tem dentro do Editor completo":
      o formato (mais de um: Reels + Vídeo), o pilar e as referências. */
@@ -1133,6 +1151,8 @@
         <button type="button" class="qdFechar" data-qdfechar="1" aria-label="Fechar">×</button></div>
       <div class="qdFTitL">${!ehAg && segueOPadrao(p, cli) ? `<span class="qdFPre" data-qdfpre="1">${esc_(prefixo(cli, p))}</span>` : ''}<textarea class="qdFTit" data-qf="tema" rows="1" aria-label="Nome do card">${esc_(tema(p, cli))}</textarea></div>
       ${ehAg || segueOPadrao(p, cli) ? '' : `<p class="qdFNome">Fora do padrão. <button type="button" class="qdPil" data-qdpadrao="1">Padronizar: ${esc_(titulo(cli, p.fmt || 'Post', limparTema(tema(p, cli), p.fmt)))}</button></p>`}
+      ${ehAg ? '' : (() => { const on = new Set(platsDe(p));
+        return `<div class="qdFRedes" role="group" aria-label="Vai para"><span class="qdFRedesT">Vai para</span>${Object.keys(REDE).filter(k => typeof PLATS !== 'object' || !PLATS || PLATS[k]).map(k => `<button type="button" class="qdFRede ${on.has(k) ? 'on' : ''}" style="--pc:${REDE[k][0]}" title="${esc_(nomeRede(k))}" data-qdplat="${esc_(k)}" aria-pressed="${on.has(k)}">${iconeRede(k)}<span>${esc_(nomeRede(k))}</span></button>`).join('')}${on.size ? '' : '<span class="qdFRedesNada">escolha onde o post vai ao ar</span>'}</div>`; })()}
       <div class="qdFCols" role="group" aria-label="Coluna">${COLS.filter(([k]) => !ehAg || !['cliente', 'aprovado', 'agendado'].includes(k)).map(([k, n, c]) =>
         `<button type="button" class="qdFCol ${col === k ? 'on' : ''}" style="--qdc:${c}" data-qdfcol="${k}">${ehAg && k === 'publicado' ? 'Feito' : n}</button>`).join('')}</div>
       ${(() => { const b = blocoProximo(Q.folha, cli, p, col, 'qdProx qdFProx'); return b ? `<div class="qdFProxL"><span>Próximo passo</span>${b}</div>` : ''; })()}
@@ -2228,6 +2248,19 @@
   .qdSemDia.hoje > header b{ color:var(--latao, #FFC857) }
   .qdSemDia > header em{ margin-left:auto; font-style:normal; font-size:11.5px; background:var(--sup2, rgba(255,255,255,.08)); border-radius:999px; padding:1px 7px }
   .qdSemL{ flex:1; display:flex; flex-direction:column; gap:6px }
+  .qdRedes{ display:inline-flex; gap:3px; align-items:center }
+  .qdRede{ width:18px; height:18px; border-radius:50%; background:var(--pc); display:inline-grid; place-items:center; flex:0 0 auto }
+  .qdRede svg{ width:12px; height:12px }
+  .qdSemPe .qdRedes{ margin-left:auto } .qdSemPe .qdRedes + .qdFmt{ margin-left:0 }
+  .qdFRedes{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0 0 12px }
+  .qdFRedesT{ font-size:12px; color:var(--mut, #999); margin-right:2px }
+  .qdFRede{ display:inline-flex; align-items:center; gap:6px; border:0; border-radius:999px; padding:3px; background:transparent; color:var(--tx, #fff); font:inherit; font-size:12.5px; cursor:pointer; opacity:.38; filter:grayscale(1); transition:opacity .15s }
+  .qdFRede span:not(.qdRede){ display:none }
+  .qdFRede .qdRede{ width:26px; height:26px } .qdFRede .qdRede svg{ width:16px; height:16px }
+  .qdFRede:hover{ opacity:.7 }
+  .qdFRede.on{ opacity:1; filter:none; padding:3px 10px 3px 3px; background:color-mix(in srgb, var(--pc, #888) 14%, transparent) }
+  .qdFRede.on span:not(.qdRede){ display:inline }
+  .qdFRedesNada{ font-size:12px; color:var(--mut, #999) }
   .qdSemCard{ position:relative; background:var(--card, #27272B); border-radius:12px; padding:8px 9px 8px 11px; cursor:pointer; overflow:hidden; outline:none }
   .qdSemCard::before{ content:''; position:absolute; left:0; top:8px; bottom:8px; width:3px; border-radius:0 3px 3px 0; background:var(--qdc) }
   .qdSemCard:hover, .qdSemCard:focus-visible{ box-shadow:inset 0 0 0 1.5px var(--qdl) }
@@ -2397,6 +2430,9 @@
   html[data-tema="claro"] body:has(.app.ag) .ctx, html[data-tema="claro"] .app.ag ~ .tabbar, html[data-tema="claro"] body:has(.app.ag) .tabbar{ background:rgba(239,238,234,.9) !important }
   html[data-tema="claro"] .qdCol{ background:rgba(90,86,76,.07) }
   html[data-tema="claro"] .qdCard{ background:#FCFBF9 }
+  /* v297 — os cards da Semana (e do Hoje) tinham fundo escuro fixo: no claro, o nome escuro sumia */
+  html[data-tema="claro"] .qdDd.hoje .qdDdN, html[data-tema="claro"] .qdAgDia.hoje .qdAgN b, html[data-tema="claro"] .qdSemDia.hoje header b{ color:#8A5A00 }
+  html[data-tema="claro"] .qdSemCard{ background:#FCFBF9; box-shadow:0 1px 2px rgba(0,0,0,.07) }
   html[data-tema="claro"] .qdFolhaFundo{ background:rgba(0,0,0,.18) }
   #btAtualizar{ display:none !important }
   .qdPagina [data-qdkey]{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none }

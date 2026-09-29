@@ -19,7 +19,7 @@
 (function(){
   'use strict';
   if(window.MaestroTema) return;
-  const T = window.MaestroTema = { versao: 'v296' };
+  const T = window.MaestroTema = { versao: 'v297' };
 
   const LUZ = 'maestro-luz-v1';
   const claro = () => document.documentElement.getAttribute('data-tema') === 'claro';
@@ -80,6 +80,21 @@
   new MutationObserver(() => { porBotoes(); trocarFotos(); }).observe(document.body, { childList: true, subtree: true });
   porBotoes(); trocarFotos();
 
+  /* v297 — "não aparece nada depois da foto, até o fim do site". Os blocos da
+     vitrine nascem invisíveis e entram quando um observador avisa que chegaram
+     à tela; no iPhone esse aviso deixou de vir. Agora a própria rolagem confere
+     (e, por garantia, a cada segundo): o que já passou pela tela aparece. */
+  function revelar(){
+    const h = innerHeight;
+    document.querySelectorAll('.rv:not(.in)').forEach(e => { if(e.getBoundingClientRect().top < h * 0.95) e.classList.add('in'); });
+  }
+  let quadroRv = 0;
+  const agendarRv = () => { if(!quadroRv) quadroRv = requestAnimationFrame(() => { quadroRv = 0; revelar(); }); };
+  addEventListener('scroll', agendarRv, { passive: true, capture: true });
+  addEventListener('resize', agendarRv);
+  setInterval(revelar, 1000);
+  T.revelar = revelar;
+
   const st = document.createElement('style');
   st.id = 'tm-estilo';
   st.textContent = `
@@ -110,6 +125,11 @@
   html[data-tema="claro"] .sv .b.pri:hover{ background:#FFD176 !important }
   html[data-tema="claro"] .sHero::before{ background:radial-gradient(ellipse at center, rgba(255,200,87,.28), transparent 62%) }
   html[data-tema="claro"] .sv .sOlho{ color:#8A6410 }
+  /* v297 — no claro, texto colorido pensado para o escuro fica claro demais: a hora da
+     agenda do Hoje (na cor da rede) e a etiqueta "bloqueado" e o "online" das Conversas */
+  :root[data-tema="claro"] .agCard b{ color:#3A3A3C !important }   /* a cor da rede já está na borda e no fundo do card */
+  :root[data-tema="claro"] .pzT{ color:#5B5B60 }
+  :root[data-tema="claro"] .cvTag.bloq{ color:#B42318 }
   /* v295 — no claro, a foto principal tem o fundo do site (Linho), sem o palco escuro:
      "a imagem maior tá com o fundo preto… precisa casar com o fundo do site na versão light" */
   html[data-tema="claro"] .sv .sFoto, html[data-tema="claro"] .sv .sFoto img{ mix-blend-mode:normal !important }
