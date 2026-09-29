@@ -736,7 +736,7 @@
       ${outros.length > 1 ? `<label class="qdVerDe">Ver a lista de
         <select class="qdSel" data-qdpessoa="1">${outros.map(x => `<option value="${esc_(x.id)}" ${x.id === pid ? 'selected' : ''}>${esc_(x.n)}${x.id === eu() ? ' (você)' : ''}</option>`).join('')}</select></label>` : ''}`;
     const entrada = souEu ? `<form class="qdEntrada" data-qdentrada="lembrete" autocomplete="off">
-        <span class="qdMais">+</span>
+        <span class="qdEntMais" aria-hidden="true">+</span>
         <input type="text" id="qdNovo" name="qdnovo" placeholder="O que você precisa lembrar hoje?" aria-label="Novo lembrete" enterkeyhint="done">
         <button type="submit" class="qdBt">Anotar</button>
         <p class="qdDica">Só seu, não vira card. <b>amanhã</b>, <b>sexta</b> ou <b>15h</b> marcam o dia e a hora; <b>!</b> no fim, importante. O que ficar para trás sobe para hoje.</p>
@@ -1564,6 +1564,13 @@
     if(t.matches('[data-qdproxl]')) Q.proxLAberto = t.open;
     if(t.matches('[data-qdfeitas]')) Q.feitasAberto = t.open;
   }, true);
+  /* no celular as ações do lembrete ficam guardadas: tocar no texto mostra */
+  document.addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('#root .qdLem .qdLinTxt'); if(!t) return;
+    const row = t.closest('.qdLem'); const ab = !row.classList.contains('aberta');
+    document.querySelectorAll('#root .qdLem.aberta').forEach(x => x.classList.remove('aberta'));
+    row.classList.toggle('aberta', ab);
+  });
   /* os lembretes: marcar, passar para amanhã, virar card, apagar */
   document.addEventListener('click', e => {
     const t = e.target.closest && e.target.closest('[data-qdlem],[data-qdlemadia],[data-qdlemcard],[data-qdlemx]');
@@ -1948,7 +1955,11 @@
   .qdLista{ max-width:920px }
   .qdLemAc{ display:flex; gap:4px; flex:none; align-items:center; opacity:.0; transition:opacity .15s }
   .qdLem:hover .qdLemAc, .qdLem:focus-within .qdLemAc{ opacity:1 }
-  @media (hover:none){ .qdLemAc{ opacity:1 } .qdLemBt:not(.x){ display:none } .qdLem:focus-within .qdLemBt{ display:inline-flex } }
+  @media (max-width:760px), (hover:none){
+    .qdLem{ flex-wrap:wrap }
+    .qdLemAc{ display:none; opacity:1; flex-basis:100%; padding-left:36px; gap:6px }
+    .qdLem.aberta .qdLemAc{ display:flex }
+  }
   .qdLemBt{ display:inline-flex; align-items:center; border:0; background:var(--sup2, rgba(255,255,255,.08)); color:var(--mut, #999); font:inherit; font-size:12px; padding:5px 10px; border-radius:999px; cursor:pointer; min-height:28px }
   .qdLemBt:hover{ color:var(--tx, #fff) }
   .qdLemBt.x{ background:transparent; font-size:18px; padding:2px 8px }
@@ -1969,8 +1980,8 @@
   .qdBarra i{ display:block; height:100%; border-radius:inherit; background:var(--cobalt, #5B8DEF); transition:width .4s }
   .qdVerDe{ display:inline-flex; align-items:center; gap:8px; color:var(--mut, #999); font-size:13px; margin:0 0 12px }
   .qdEntrada{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:var(--sup, rgba(255,255,255,.05)); border-radius:18px; padding:12px 12px 10px 16px; margin:0 0 16px }
-  .qdEntrada .qdMais{ font-size:20px; color:var(--mut, #999) }
-  .qdEntrada input{ flex:1; min-width:0; border:0; background:transparent; color:var(--tx, #fff); font:inherit; font-size:16px; padding:6px 0; outline:none }
+  .qdEntrada .qdEntMais{ flex:none; font-size:20px; color:var(--mut, #999) }
+  .qdEntrada input{ flex:1 1 0; width:auto; min-width:0; border:0; background:transparent; color:var(--tx, #fff); font:inherit; font-size:16px; padding:6px 0; outline:none }
   .qdDica{ flex-basis:100%; margin:0 0 0 30px; font-size:12.5px; color:var(--mut, #999) }
   .qdDica b{ color:var(--tx, #ddd); font-weight:500 }
   .qdSubs{ display:inline-flex; gap:2px; padding:3px; border-radius:999px; background:var(--sup, rgba(255,255,255,.05)); margin:0 0 14px }
