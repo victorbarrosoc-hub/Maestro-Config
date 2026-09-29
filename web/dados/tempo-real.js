@@ -29,6 +29,17 @@
      * o número do card é o que o aparelho deu (tarefa e link apontam para
        ele); número repetido é recusado pelo banco e o card ganha outro.
    ===================================================================== */
+
+/* v299 — a entrada (web/entrada): a primeira coisa a descer, porque decide o que
+   a pessoa vê antes de tudo. Sem ela, a cortina do protótipo abre do jeito antigo. */
+(function(){
+  if(window.MaestroEntrada2 || window.__entradaPedida) return;
+  window.__entradaPedida = true;
+  fetch('/web/entrada/entrada.js?v=v299').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+    .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else window.__entrada = 1; })
+    .catch(() => { window.__entrada = 1; });
+})();
+
 (function(){
   'use strict';
   if(window.MaestroDados) return;
@@ -1119,7 +1130,7 @@
 (function(){
   if(window.MaestroQuadro || window.__quadroPedido) return;
   window.__quadroPedido = true;
-  fetch('/web/quadro/quadro.js?v=v298').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/quadro/quadro.js?v=v299').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else throw 0; })
     /* v289: sem o Quadro, a rota fica em "Carregando o quadro…" — só em obra o Ensaio antigo vira bancada */
     .catch(() => { window.__semQuadro = 1; try{ if(S.route === 'producao') render(); }catch(e){} });
@@ -1129,7 +1140,7 @@
 (function(){
   if(window.MaestroDesign || window.__designPedido) return;
   window.__designPedido = true;
-  fetch('/web/design/design.js?v=v298').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/design/design.js?v=v299').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else window.__semTema = 1; })
     .catch(() => { window.__semTema = 1; });   /* v296: a abertura espera o tema; sem ele, não espera à toa */
 })();
@@ -1138,7 +1149,7 @@
 (function(){
   if(window.MaestroTema || window.__temaPedido) return;
   window.__temaPedido = true;
-  fetch('/web/tema/tema.js?v=v298').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/tema/tema.js?v=v299').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else window.__semTema = 1; })
     .catch(() => { window.__semTema = 1; });   /* v296: a abertura espera o tema; sem ele, não espera à toa */
 })();
@@ -1164,66 +1175,4 @@
   if(!ligar()){ let n = 0; const t = setInterval(() => { if(ligar() || ++n > 40) clearInterval(t); }, 250); }
 })();
 
-/* v296 — "Na aba anônima, quando loguei, não apareceram as fotos, nem todos os
-   usuários." Sem nada guardado no aparelho, a equipe e as fotos só existem no
-   banco. Com rede lenta, a lista "Quem está entrando?" desistia de esperar aos
-   12s e abria com a equipe de fábrica (três nomes, sem foto) — e nunca se
-   refazia quando a equipe de verdade chegava. Agora: logado e com o banco
-   ainda falando, a lista fica escondida atrás do "Carregando a sua agência…"
-   (até 60s); e, aberta, ela se refaz quando a equipe muda (nome, papel
-   ou foto), sem piscar — a nova entra antes de a velha sair. */
-(function(){
-  if(window.__quemEstaVivo) return; window.__quemEstaVivo = true;
-  const TETO = 60000;
-  const assin = () => (S.equipe || []).map(m => m ? [m.n, m.mail, m.papel, m.foto ? 1 : 0, m.dono ? 1 : 0].join('|') : '').join(';');
-  const E = () => window.MaestroEntrada || {};
-  let esperaMinha = false;
-  function mostrarEspera(){
-    if(document.getElementById('v256Espera')) return;
-    const el = document.createElement('div'); el.id = 'v256Espera'; el.setAttribute('role', 'status');
-    el.innerHTML = '<div class="caixa"><span class="v256Roda" aria-hidden="true"></span><b>Carregando a sua agência…</b><span>A equipe vem do banco, não deste aparelho.</span></div>';
-    document.body.appendChild(el); esperaMinha = true;
-  }
-  function tirarEspera(){ if(esperaMinha){ document.getElementById('v256Espera')?.remove(); esperaMinha = false; } }
-  function refazer(velha){
-    velha.id = 'quemEstaVelha';
-    try{ abrirQuemEsta(); }catch(e){}
-    const nova = document.getElementById('quemEsta');
-    if(nova && nova !== velha){ nova.__assin = assin(); velha.remove(); }
-    else { velha.id = 'quemEsta'; velha.__assin = assin(); }
-  }
-  /* a espera entra de uma vez, sem esmaecer: esmaecendo, a tela vazia do app
-     aparecia por baixo por um instante logo depois do login — era o "pisca" */
-  try{ const st = document.createElement('style'); st.id = 'v296-espera';
-    st.textContent = '#v256Espera{ animation:none !important; opacity:1 !important }'; document.head.appendChild(st); }catch(e){}
-  let semNinguemDesde = 0;
-  function olhar(){
-    try{
-      const el = document.getElementById('quemEsta');
-      const e = E();
-      if(!el){
-        /* logado, ninguém escolhido e o banco ainda falando: a casa não aparece vazia */
-        const falta = !(e.obra && e.obra()) && e.logado && e.logado() && !S.viaLink && !S.soVer
-          && !(S.usuario && S.usuario.id) && !(window.Sincro && Sincro.lido) && !document.getElementById('entrarMaestro');
-        if(falta){ if(!semNinguemDesde) semNinguemDesde = Date.now(); if(Date.now() - semNinguemDesde < 60000){ mostrarEspera(); return; } }
-        else semNinguemDesde = 0;
-        tirarEspera(); return;
-      }
-      const segura = !(e.obra && e.obra()) && e.logado && e.logado() && !S.viaLink && !S.soVer
-        && !(window.Sincro && Sincro.lido);
-      if(!el.__desde) el.__desde = Date.now();
-      if(segura && Date.now() - el.__desde < TETO){
-        el.style.visibility = 'hidden'; mostrarEspera();
-        if(el.__assin === undefined) el.__assin = assin();
-        return;
-      }
-      if(el.style.visibility === 'hidden') el.style.visibility = '';
-      tirarEspera();
-      if(el.__assin === undefined){ el.__assin = assin(); return; }
-      if(el.__assin !== assin() && typeof abrirQuemEsta === 'function') refazer(el);
-    }catch(x){}
-  }
-  setInterval(olhar, 200);
-  /* e no mesmo instante em que ela entra na página, para não aparecer nem por um quadro */
-  try{ new MutationObserver(olhar).observe(document.body, { childList: true }); }catch(e){}
-})();
+/* v296 (a lista que esperava a equipe) saiu na v299: quem conduz a entrada agora é web/entrada/entrada.js */
