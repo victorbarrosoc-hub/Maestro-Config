@@ -101,10 +101,9 @@
   html[data-tema="claro"] .sv .b.pri:hover{ background:#FFD176 !important }
   html[data-tema="claro"] .sHero::before{ background:radial-gradient(ellipse at center, rgba(255,200,87,.28), transparent 62%) }
   html[data-tema="claro"] .sv .sOlho{ color:#8A6410 }
-  /* as fotos dos aparelhos têm fundo preto: no claro, entram num palco escuro
-     (como as vitrines da Apple), e o "clarear" segue funcionando dentro dele */
-  html[data-tema="claro"] .sv .sHero .sFotoMol{ background:#1C1C1F; border-radius:28px; max-width:1080px; margin:48px auto 0; padding:26px 26px 0; overflow:hidden; box-shadow:0 30px 70px -30px rgba(40,30,10,.35) }
-  html[data-tema="claro"] .sv .sHero .sFoto{ margin-top:0; width:100%; margin-left:0 }
+  /* v295 — no claro, a foto principal tem o fundo do site (Linho), sem o palco escuro:
+     "a imagem maior tá com o fundo preto… precisa casar com o fundo do site na versão light" */
+  html[data-tema="claro"] .sv .sFoto, html[data-tema="claro"] .sv .sFoto img{ mix-blend-mode:normal !important }
   html[data-tema="claro"] .sv .price.pop{ background:linear-gradient(#FFF3D6, #F8F7F4) }
   html[data-tema="claro"] .sv .sPasso, html[data-tema="claro"] .sv .sTile, html[data-tema="claro"] .sv .price{ box-shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px -12px rgba(40,30,10,.12) }
   html[data-tema="claro"] .sv .seg button.on{ background:#FFC857 !important; color:#1C1C1F !important }
