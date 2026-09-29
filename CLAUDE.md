@@ -233,6 +233,26 @@ fundador confere, em uma batida, se a tela que ele está vendo é a atual.
 
 ---
 
+## Janela de contexto — nunca perder a conversa
+
+Regra do founder, para **toda** conversa neste projeto:
+
+1. Não deixar a conversa chegar à compactação automática. Quando a janela
+   de contexto estiver perto de **92%**, parar e avisar: "vou gerar a
+   passagem de bastão".
+2. Atualizar `docs/SESSAO-ATUAL.md` com tudo o que a conversa decidiu: o que
+   está no ar, o que está pronto e não publicado, o que está em andamento,
+   os pedidos do founder com as palavras dele, e as pendências.
+3. Fazer commit e push desse arquivo (na branch de trabalho **e** na `main`),
+   para que nada dependa do container.
+4. Entregar ao founder o prompt pronto para abrir a conversa seguinte. O
+   modelo está no topo do `docs/SESSAO-ATUAL.md`.
+
+Mesmo antes disso, o `docs/SESSAO-ATUAL.md` é atualizado a cada entrega
+publicada. Se a conversa for compactada sem aviso, o arquivo ainda está lá.
+
+---
+
 ## Mapa da documentação
 
 ```
