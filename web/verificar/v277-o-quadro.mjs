@@ -836,6 +836,13 @@ console.log('\n  — 13. o celular —');
   if(process.env.DEPURAR) console.log('   ', JSON.stringify(await Q(M, () => ({ ev: window.__ev, T: { key: MaestroQuadro.toque.key }, el: (document.elementFromPoint(0,0)||{}).className }))), JSON.stringify(alvoCard));
   const lev = await Q(M, () => ({ f: !!document.getElementById('qdFantasma'), barra: document.querySelectorAll('#qdSoltar [data-qdsoltar]').length }));
   checa('13.7 segurar o card o levanta, e aparece a faixa com as oito colunas', lev.f && lev.barra === 8, lev);
+  /* v296 — "precisa estar perto do card pra ser mais rápido, não gigante embaixo" */
+  const perto = await Q(M, (key) => { const b = document.getElementById('qdSoltar').getBoundingClientRect();
+    const c = document.querySelector(`#root [data-qdkey="${CSS.escape(key)}"]`).getBoundingClientRect();
+    const gap = b.top >= c.bottom ? b.top - c.bottom : (c.top >= b.bottom ? c.top - b.bottom : 0);
+    return { gap: Math.round(gap), w: Math.round(b.width), h: Math.round(b.height), dentro: b.left >= 0 && b.right <= innerWidth && b.top >= 0 && b.bottom <= innerHeight }; }, alvoCard.key);
+  if(process.env.FOTO) await M.pag.screenshot({ path: process.env.FOTO });
+  checa('13.7b a faixa nasce colada no card (até 20px), pequena e inteira na tela', perto.gap <= 20 && perto.w <= 340 && perto.h <= 130 && perto.dentro, perto);
   const dest = await Q(M, () => { const r = document.querySelector('#qdSoltar [data-qdsoltar="cliente"]').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
   for(let i = 1; i <= 6; i++) await toque('touchMove', alvoCard.x + (dest.x - alvoCard.x) * i / 6, alvoCard.y + (dest.y - alvoCard.y) * i / 6);
   await esperar(100);

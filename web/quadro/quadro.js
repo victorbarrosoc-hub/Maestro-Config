@@ -1849,9 +1849,18 @@
     document.body.appendChild(f); T.fantasma = f;
     c.classList.add('arrastando');
     if(Q.aba === 'quadro'){
-      const b = document.createElement('div'); b.id = 'qdSoltar';
-      b.innerHTML = `<p>Soltar em</p><div>${COLS.map(([k, n, cor]) => `<span data-qdsoltar="${k}" style="--qdc:${cor}">${n}</span>`).join('')}</div>`;
+      /* v296 — "precisa estar perto do card pra ser mais rápido": a faixa nasce
+         colada no card (embaixo; em cima se não couber), pequena, e não
+         mais gigante no pé da tela */
+      const b = document.createElement('div'); b.id = 'qdSoltar'; b.className = 'perto';
+      const aqui = colunaDe(achar(...T.key.split('|')) || {});
+      b.innerHTML = `<p>Soltar em</p><div>${COLS.map(([k, n, cor]) => `<span data-qdsoltar="${k}" style="--qdc:${cor}"${k === aqui ? ' class="aqui"' : ''}>${n}</span>`).join('')}</div>`;
       document.body.appendChild(b);
+      const w = b.offsetWidth, h = b.offsetHeight, m = 10;
+      const left = Math.max(m, Math.min(innerWidth - w - m, T.x - w / 2));
+      const embaixo = r.bottom + 8, emCima = r.top - h - 8;
+      const top = embaixo + h + m <= innerHeight - 70 ? embaixo : (emCima >= m + 50 ? emCima : Math.max(m, Math.min(innerHeight - h - 80, T.y + 24)));
+      b.style.left = left + 'px'; b.style.top = top + 'px';
     }
     document.body.classList.add('qdArrastandoToque');
   }
@@ -1884,7 +1893,8 @@
     if(a !== T.alvo){ document.querySelectorAll('.qdSobre').forEach(x => x.classList.remove('qdSobre')); if(a) a.classList.add('qdSobre'); T.alvo = a; }
     /* perto da borda, a página rola sozinha */
     const borda = 70, h = innerHeight;
-    const v = e.clientY < borda + 50 ? -12 : (e.clientY > h - borda - (document.getElementById('qdSoltar') ? 150 : 0) && !(a && a.dataset.qdsoltar) ? 12 : 0);
+    const noPainel = !!(a && a.dataset.qdsoltar) || !!(e.target.closest && e.target.closest('#qdSoltar'));
+    const v = noPainel ? 0 : (e.clientY < borda + 50 ? -12 : (e.clientY > h - borda ? 12 : 0));
     cancelAnimationFrame(T.rolar); T.rolar = 0;
     if(v){ const passo = () => { scrollBy(0, v); T.rolar = requestAnimationFrame(passo); }; T.rolar = requestAnimationFrame(passo); }
   }, true);
@@ -2396,6 +2406,11 @@
   #qdSoltar div{ display:grid; grid-template-columns:repeat(4, 1fr); gap:6px }
   #qdSoltar span{ text-align:center; font-size:12.5px; padding:12px 4px; border-radius:12px; background:color-mix(in srgb, var(--qdc) 18%, transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--qdc) 45%, transparent) }
   #qdSoltar span.qdSobre{ background:var(--qdc); color:#111; font-weight:600; outline:none }
+  #qdSoltar.perto{ right:auto; bottom:auto; width:min(340px, calc(100vw - 20px)); padding:8px; border-radius:16px; animation:qdSobe .14s ease-out }
+  #qdSoltar.perto p{ margin:0 4px 6px; font-size:11px }
+  #qdSoltar.perto div{ gap:5px }
+  #qdSoltar.perto span{ font-size:11.5px; line-height:1.15; padding:8px 2px; border-radius:10px; display:grid; place-items:center; min-height:40px }
+  #qdSoltar.perto span.aqui{ opacity:.45 }
   #qdSoltar.mouse{ left:50%; right:auto; bottom:22px; transform:translateX(-50%); width:min(860px, calc(100vw - 40px)); animation:qdSobe .16s ease-out }
   #qdSoltar.mouse div{ grid-template-columns:repeat(8, 1fr) }
   #qdSoltar.mouse span{ padding:16px 4px }
