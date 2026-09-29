@@ -349,6 +349,20 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (29 set, v303, NO AR) — o ensaio geral, e o Estúdio em tela cheia
+com PDF.** (1) "Vamos ver quando outras pessoas começarem a usar ao mesmo
+tempo. Esse é meu medo." `web/verificar/v303-ensaio-geral.mjs`: cinco
+navegadores contra um Postgres de verdade (`MIN=3` padrão; `MIN=10` no
+longo), criando, escrevendo, movendo, lembretes, recarregando e perdendo a
+rede. Achou: **quem voltava da rede não recebia os cards criados enquanto
+estava fora** — o aviso do canal andava a marca da olhada. A marca agora só
+anda com o que a olhada ou a carga leram (`tempo-real.js`, `receber`).
+Prova 8 falha com o código de antes. (2) Estúdio: abrir o quadro de ideias =
+tela cheia (menu recolhido sem gravar a escolha, palco até o pé da tela),
+botão "Tela cheia / Sair da tela cheia"; "PDF" no quadro (o quadro inteiro,
+via html2canvas do cdnjs, carregado só ao tocar) e no editor (uma página por
+tela, na ordem). O PDF é escrito à mão (`pdfDeTelas` em `web/design/design.js`,
+JPEG por página). 24 provas em `web/verificar/v303-estudio-cheio.mjs`.
 **Fechado (29 set, v302, NO AR) — a chave toda vez.** Decisão do founder: quem
 tem chave a digita a CADA abertura do site (a pessoa lembrada abre em "Chave de
 acesso", com "Outra pessoa"); sem chave, entra direto. Provas 3.1–3.5 na v299.

@@ -1,11 +1,45 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.117
+Version: 0.5.118
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.118 — 2026-09-29
+
+**Status:** No ar.
+
+### v303 — o ensaio geral com cinco pessoas, e o Estúdio em tela cheia com PDF
+
+- **O ensaio geral.** "Vamos ver quando outras pessoas começarem a usar tbm ao
+  mesmo tempo. Esse é meu medo." `web/verificar/v303-ensaio-geral.mjs`: cinco
+  navegadores (a equipe da EJUP) contra um Postgres de verdade, por MIN minutos,
+  criando cards, escrevendo, mudando de coluna, marcando redes, anotando e
+  marcando lembretes, recarregando a página e perdendo a rede (10 s e 20 s).
+  Confere no fim: nenhum card perdido ou dobrado, a última escrita de cada um em
+  cada card no banco, todas as telas iguais ao banco, a equipe com as cinco fotos,
+  todos os lembretes, histórico sem estado estragado, nenhum erro.
+- **O que ele achou (e foi consertado):** quem perdia a rede e voltava não
+  recebia os cards criados nesse meio-tempo. O primeiro aviso do canal ao vivo (o
+  da própria gravação) levava a marca da "rede de segurança" para agora, e a
+  olhada seguinte perguntava "o que mudou desde agora?". A marca agora só anda com
+  o que a própria olhada (ou a carga) leu (`web/dados/tempo-real.js`). Prova 8 do
+  ensaio: com o código de antes falha, com o novo passa.
+- **Estúdio — quadro de ideias em tela cheia.** "Quero que quando abra o quadro
+  ele fique com a tela cheia e a side bar lateral do site recolhida. Coloque um
+  botão de deixar tela cheia ou não." Abrir o quadro recolhe o menu (sem gravar
+  como escolha da pessoa), tira o título e o palco vai até o pé da tela. O botão
+  "Sair da tela cheia" / "Tela cheia" alterna; no computador, entrar pelo botão
+  também põe o navegador em tela cheia. Sair do quadro devolve o menu como a pessoa
+  deixou.
+- **PDF.** "Quero que a pessoa consiga exportar o que fez no arquivo final tbm, em
+  pdf." O quadro de ideias ganhou "PDF": o quadro INTEIRO (não só o pedaço à
+  vista) numa página, sem os botões das notas. O editor de design ganhou "PDF"
+  ao lado de "Exportar PNG": todas as telas, na ordem do carrossel, uma por página,
+  cada uma do tamanho da tela. O PDF é montado no próprio navegador, sem servidor.
+  24 provas em `web/verificar/v303-estudio-cheio.mjs`.
 
 ## 0.5.117 — 2026-09-29
 

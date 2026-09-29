@@ -16,7 +16,7 @@
    Mora à parte, como o Quadro, porque o protótipo está no teto. */
 (function(){
   if(window.MaestroDesign) return;
-  const D = window.MaestroDesign = { versao: 'v302', previas: {}, doc: null };
+  const D = window.MaestroDesign = { versao: 'v303', previas: {}, doc: null };
 
   const esc_ = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const novoId = p => (p || 'd') + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -118,7 +118,11 @@
       S.est = S.est || {};
       if(S.est.aberto === 'ideias'){
         const html = orig.apply(this, arguments);
-        return html.replace('<div class="mtop estTopo"><div>', '<div class="mtop estTopo"><div><button type="button" class="esVolta" data-esmenu="1">‹ Estúdio</button>');
+        const cheio = D.telaCheia !== false;
+        const bts = `<button type="button" class="esBarBt" data-escheio="1" aria-pressed="${cheio}" title="${cheio ? 'Sair da tela cheia' : 'Tela cheia'}">${cheio ? ICH.sai : ICH.entra}<span>${cheio ? 'Sair da tela cheia' : 'Tela cheia'}</span></button>
+          <button type="button" class="esBarBt" data-espdf="1" title="Baixar o quadro inteiro em PDF">${ICH.pdf}<span>PDF</span></button>`;
+        return html.replace('<div class="mtop estTopo"><div>', '<div class="mtop estTopo"><div><button type="button" class="esVolta" data-esmenu="1">‹ Estúdio</button>')
+          .replace('<span class="sp"></span>', '<span class="sp"></span>' + bts);
       }
       return agShell(menuHtml());
     };
@@ -134,10 +138,136 @@
         if(aqui && ultima !== 'estudio' && S.est) S.est.aberto = null;
         ultima = aqui ? 'estudio' : S.route;
       }catch(e){}
-      return orig.apply(this, arguments);
+      const r = orig.apply(this, arguments);
+      try{ ajustarCheio(); }catch(e){}
+      return r;
     };
     render.__ds = true;
   }
+
+  /* ---------------- o quadro de ideias em tela cheia (v303) ----------------
+     "Quero que quando abra o quadro ele fique com a tela cheia e a side bar lateral
+     do site recolhida. Coloque um botão de deixar tela cheia ou não."
+     Abrir o quadro = tela cheia: o menu vira a trilha de ícones (a da v259, sem
+     gravar como escolha da pessoa), o cabeçalho encolhe e o palco ocupa a altura
+     toda. O botão alterna; no computador, entrar também pede a tela cheia do
+     navegador (Esc sai só dela). Ao sair do quadro, o menu volta como a pessoa deixou. */
+  const ICH = {
+    entra: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+    sai: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>',
+    pdf: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>' };
+  const raiz = document.documentElement;
+  let recuamosNos = false;
+  const menuDaPessoa = () => { try{ const v = localStorage.getItem('maestro-menu-recuado-v1'); return v === '1' ? true : v === '0' ? false : innerWidth <= 1280; }catch(e){ return innerWidth <= 1280; } };
+  function noQuadroAberto(){ try{ return S.view === 'agency' && S.route === 'estudio' && S.est && S.est.aberto === 'ideias' && !!document.querySelector('#root .estPalco'); }catch(e){ return false; } }
+  function ajustarCheio(){
+    const cheio = noQuadroAberto() && D.telaCheia !== false;
+    raiz.classList.toggle('esCheio', cheio);
+    if(cheio && !raiz.classList.contains('v259Recuado')){ raiz.classList.add('v259Recuado'); recuamosNos = true; }
+    if(!cheio && recuamosNos){ recuamosNos = false; raiz.classList.toggle('v259Recuado', menuDaPessoa()); }
+    if(!cheio && document.fullscreenElement && D.pedimosTela){ D.pedimosTela = false; try{ document.exitFullscreen(); }catch(e){} }
+    medirPalco();
+  }
+  D.ajustarCheio = ajustarCheio;
+  /* o palco vai até o fim da tela, deixando a linha de "Estruturar card" à vista */
+  function medirPalco(){
+    const p = document.querySelector('#root .estPalco'); if(!p) return;
+    if(!raiz.classList.contains('esCheio')){ p.style.removeProperty('height'); return; }
+    const ac = document.querySelector('#root .estAcoes');
+    const baixo = (ac ? ac.offsetHeight + 14 : 0) + (innerWidth <= 760 ? 96 : 20);
+    p.style.height = Math.max(320, Math.round(innerHeight - p.getBoundingClientRect().top - (scrollY > 0 ? 0 : 0) - baixo)) + 'px';
+  }
+  addEventListener('resize', () => { try{ medirPalco(); }catch(e){} });
+  document.addEventListener('fullscreenchange', () => setTimeout(() => { try{ medirPalco(); }catch(e){} }, 60));
+  /* estPintar troca o palco sem passar pelo render: a altura volta junto */
+  function ligarPintarCheio(){
+    if(typeof estPintar !== 'function' || estPintar.__cheio) return;
+    const orig = estPintar;
+    estPintar = function(){ const r = orig.apply(this, arguments); try{ medirPalco(); }catch(e){} return r; };
+    estPintar.__cheio = true;
+  }
+  function alternarCheio(){
+    D.telaCheia = D.telaCheia === false;
+    if(D.telaCheia && innerWidth > 760 && raiz.requestFullscreen && !document.fullscreenElement){
+      D.pedimosTela = true; raiz.requestFullscreen().catch(() => { D.pedimosTela = false; }); }
+    if(!D.telaCheia && document.fullscreenElement){ D.pedimosTela = false; try{ document.exitFullscreen(); }catch(e){} }
+    render();
+  }
+  D.alternarCheio = alternarCheio;
+
+  /* ---------------- o quadro de ideias em PDF (v303) ----------------
+     O quadro inteiro — não só o pedaço à vista — numa página só, do tamanho do que
+     foi feito: notas, títulos, imagens, formas, seções, ligações e traços. Os botões
+     de cada nota (votar, duplicar, apagar, cores) não saem no papel. */
+  let h2c = null;
+  function carregarH2c(){
+    if(window.html2canvas) return Promise.resolve(window.html2canvas);
+    if(h2c) return h2c;
+    h2c = new Promise((ok, falha) => {
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      sc.onload = () => window.html2canvas ? ok(window.html2canvas) : falha(new Error('sem html2canvas'));
+      sc.onerror = () => { h2c = null; falha(new Error('não carregou')); };
+      document.head.appendChild(sc);
+    });
+    return h2c;
+  }
+  D.carregarH2c = carregarH2c;
+  async function quadroEmPdf(bt){
+    const palco = document.querySelector('#root .estPalco'), mundo = palco && palco.querySelector('.estMundo');
+    const q = (() => { try{ return estQuadro(); }catch(e){ return null; } })();
+    if(!mundo || !q) return;
+    const itens = [...mundo.querySelectorAll(':scope > .estNota')];
+    if(!itens.length){ avisoPdf(bt, 'O quadro está vazio'); return; }
+    const rot = bt && bt.querySelector('span'), antes = rot ? rot.textContent : '';
+    if(rot) rot.textContent = 'Gerando…'; if(bt) bt.disabled = true;
+    let caixa = null;
+    try{
+      const lib = await carregarH2c();
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for(const el of itens){
+        const x = el.offsetLeft, y = el.offsetTop, w = el.offsetWidth, h = el.offsetHeight;
+        x0 = Math.min(x0, x); y0 = Math.min(y0, y - 34); x1 = Math.max(x1, x + w); y1 = Math.max(y1, y + h + 16);
+      }
+      const M = 40; x0 -= M; y0 -= M; x1 += M; y1 += M;
+      const W = Math.ceil(x1 - x0), H = Math.ceil(y1 - y0);
+      const fundo = getComputedStyle(palco).backgroundColor || '#1C1C1F';
+      caixa = document.createElement('div');
+      caixa.className = 'estPalco esPdfCaixa';
+      caixa.style.cssText = `position:fixed;left:0;top:0;width:${W}px;height:${H}px;min-height:0;overflow:hidden;background:${fundo};border:0;border-radius:0;z-index:-1;pointer-events:none`;
+      const copia = mundo.cloneNode(true);
+      copia.style.transform = `translate(${-x0}px, ${-y0}px)`;
+      copia.querySelectorAll('.sel').forEach(n => n.classList.remove('sel'));
+      /* a primeira letra maiúscula por CSS (::first-letter) sai solta no desenho: vai no texto */
+      copia.querySelectorAll('.pega .n').forEach(n => { const t = n.textContent || ''; n.textContent = t.charAt(0).toUpperCase() + t.slice(1); });
+      /* o que foi digitado e ainda não redesenhou vale também */
+      const orig = mundo.querySelectorAll('textarea'), cps = copia.querySelectorAll('textarea');
+      orig.forEach((t, i) => { if(cps[i]){ cps[i].textContent = t.value; cps[i].style.height = t.offsetHeight + 'px'; } });
+      caixa.appendChild(copia);
+      (palco.closest('.estWrap') || document.body).appendChild(caixa);
+      const escala = Math.max(0.5, Math.min(2, 7000 / Math.max(W, H)));
+      const cv = await lib(caixa, { backgroundColor: fundo, scale: escala, useCORS: true, logging: false, width: W, height: H, windowWidth: Math.max(innerWidth, W), windowHeight: Math.max(innerHeight, H) });
+      const nome = String(q.nome || 'quadro').replace(/[^\p{L}\p{N} _-]+/gu, '').trim().replace(/\s+/g, '-').toLowerCase() || 'quadro';
+      baixar(await pdfDeTelas([cv]), nome + '.pdf');
+      D.ultimoPdfQuadro = { w: cv.width, h: cv.height, itens: itens.length };
+    }catch(e){
+      avisoPdf(bt, 'Não deu para gerar agora. Tente de novo.');
+      D.erroPdf = String(e && e.message || e);
+    }finally{
+      if(caixa) caixa.remove();
+      if(bt){ bt.disabled = false; if(rot && rot.textContent === 'Gerando…') rot.textContent = antes; }
+    }
+  }
+  D.quadroEmPdf = quadroEmPdf;
+  function avisoPdf(bt, txt){
+    const rot = bt && bt.querySelector('span'); if(!rot) return;
+    rot.textContent = txt; setTimeout(() => { rot.textContent = 'PDF'; }, 3000);
+  }
+  document.addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-escheio],[data-espdf]'); if(!t) return;
+    e.preventDefault(); e.stopPropagation();
+    if(t.dataset.escheio) alternarCheio(); else quadroEmPdf(t);
+  }, true);
   /* desfazer do quadro de ideias não mexe enquanto o editor está aberto */
   function ligarDesfazer(){
     if(typeof estDesfazer !== 'function' || estDesfazer.__ds) return;
@@ -327,6 +457,7 @@
         <button type="button" class="dsZoom" data-ds="enquadrar" id="dsZoom" title="Ver tudo (⇧1)">40%</button>
         <button type="button" class="dsBtIc" data-ds="zmais" aria-label="Aumentar zoom">+</button>
         <button type="button" class="dsBt" data-ds="exportar">Exportar PNG</button>
+        <button type="button" class="dsBt" data-ds="pdf" title="Todas as telas num PDF, uma por página">PDF</button>
         <button type="button" class="dsBt pri" data-ds="mandar">Mandar para um card</button>
       </header>
       <div class="dsCorpo">
@@ -797,6 +928,43 @@
   D.prop = prop;
   function pintarCena(){ const c = document.getElementById('dsCena'); if(c) c.innerHTML = svgCena(); }
 
+  /* ---------------- PDF, sem biblioteca ----------------
+     Cada página é uma imagem JPEG (o PDF lê JPEG direto, sem converter). A
+     página tem o tamanho da imagem em pontos (1px = 0,75pt): 1080px viram
+     810pt, e quem abre vê a tela inteira, sem margem nem corte. */
+  function jpegDe(cv){
+    return new Promise(ok => cv.toBlob(async b => ok(new Uint8Array(await b.arrayBuffer())), 'image/jpeg', 0.92));
+  }
+  async function pdfDeTelas(telas){
+    const imgs = [];
+    for(const cv of telas) imgs.push({ w: cv.width, h: cv.height, jpg: await jpegDe(cv) });
+    const partes = [], offs = []; let tam = 0;
+    const put = x => { const b = typeof x === 'string' ? new TextEncoder().encode(x) : x; partes.push(b); tam += b.length; };
+    const obj = (n, corpo) => { offs[n] = tam; put(`${n} 0 obj\n`); corpo(); put('\nendobj\n'); };
+    put('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+    const n = imgs.length, kids = imgs.map((_, i) => `${3 + i * 3} 0 R`).join(' ');
+    obj(1, () => put('<< /Type /Catalog /Pages 2 0 R >>'));
+    obj(2, () => put(`<< /Type /Pages /Kids [${kids}] /Count ${n} >>`));
+    imgs.forEach((im, i) => {
+      const pg = 3 + i * 3, ct = pg + 1, ix = pg + 2;
+      const W = +(im.w * 0.75).toFixed(2), H = +(im.h * 0.75).toFixed(2);
+      const conteudo = `q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
+      obj(pg, () => put(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 ${ix} 0 R >> >> /Contents ${ct} 0 R >>`));
+      obj(ct, () => put(`<< /Length ${conteudo.length} >>\nstream\n${conteudo}\nendstream`));
+      obj(ix, () => { put(`<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.jpg.length} >>\nstream\n`); put(im.jpg); put('\nendstream'); });
+    });
+    const total = 3 + n * 3, xref = tam;
+    put(`xref\n0 ${total}\n0000000000 65535 f \n` + offs.slice(1, total).map(o => String(o).padStart(10, '0') + ' 00000 n \n').join(''));
+    put(`trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+    return new Blob(partes, { type: 'application/pdf' });
+  }
+  D.pdfDeTelas = pdfDeTelas;
+  function baixar(blob, nome){
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    D.ultimoArquivo = { nome, tipo: blob.type, tam: blob.size };
+  }
+
   /* ---------------- exportar ---------------- */
   function fonteInter(){
     const regras = [];
@@ -820,18 +988,31 @@
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${f.w}" height="${f.h}" viewBox="${f.x} ${f.y} ${f.w} ${f.h}"><style>${fonteInter()}</style>
       <rect x="${f.x}" y="${f.y}" width="${f.w}" height="${f.h}" fill="${esc_(f.fill || '#fff')}"/>${corpo}</svg>`;
   }
-  async function pngDoFrame(f){
+  async function pngDoFrame(f, comoTela){
     const svg = await svgDoFrame(f);
     const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
     try{
       const img = await new Promise((ok, falha) => { const i = new Image(); i.onload = () => ok(i); i.onerror = falha; i.src = url; });
       try{ await img.decode(); }catch(e){}
       const cv = document.createElement('canvas'); cv.width = Math.round(f.w); cv.height = Math.round(f.h);
-      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-      return await new Promise(ok => cv.toBlob(ok, 'image/png'));
+      const cx = cv.getContext('2d');
+      if(comoTela){ cx.fillStyle = f.fill || '#fff'; cx.fillRect(0, 0, cv.width, cv.height); }
+      cx.drawImage(img, 0, 0, cv.width, cv.height);
+      return comoTela ? cv : await new Promise(ok => cv.toBlob(ok, 'image/png'));
     } finally { URL.revokeObjectURL(url); }
   }
   D.pngDoFrame = pngDoFrame;
+  /* v303: "Quero que a pessoa consiga exportar o que fez no arquivo final tbm, em pdf.
+     Pra ela poder usar em outras coisas." Todas as telas, na ordem do carrossel, uma
+     por página, cada página do tamanho da tela. */
+  async function exportarPdf(){
+    terminarTexto();
+    const fs = framesEmOrdem(); if(!fs.length) return;
+    const pags = [];
+    for(const f of fs){ const cv = await pngDoFrame(f, true); if(cv) pags.push(cv); }
+    baixar(await pdfDeTelas(pags), nomeArq(0, 1).replace(/\.png$/, '.pdf'));
+  }
+  D.exportarPdf = exportarPdf;
   const nomeArq = (i, n) => `${String(E.doc.nome || 'design').replace(/[^\p{L}\p{N} _-]+/gu, '').trim().replace(/\s+/g, '-').toLowerCase() || 'design'}${n > 1 ? '-' + (i + 1) : ''}.png`;
   /* esquerda para a direita, de cima para baixo: a ordem das telas do carrossel */
   const framesEmOrdem = () => E.doc.frames.slice().sort((a, b) => (a.y - b.y) > 200 ? 1 : (b.y - a.y) > 200 ? -1 : a.x - b.x);
@@ -912,6 +1093,7 @@
     else if(a === 'zmenos') zoomEm(0.8);
     else if(a === 'enquadrar'){ enquadrar(); pintar(); }
     else if(a === 'exportar') exportar();
+    else if(a === 'pdf') exportarPdf();
     else if(a === 'mandar'){ terminarTexto(); janelaMandar(); }
     else if(a === 'duplicar') duplicar();
     else if(a === 'apagar') apagarSel();
@@ -1474,6 +1656,22 @@
   #estCaneta svg{ display:block }
   @media (max-width:760px){ .estFerr{ max-width:calc(100% - 20px); overflow-x:auto; scrollbar-width:none } .estFerr button{ flex:none } .estOpc{ left:auto; right:10px; top:auto; bottom:70px; transform:none; flex-direction:row } #estLinkPop{ left:12px !important; right:12px; top:auto !important; bottom:90px } #estLinkPop input{ width:auto; flex:1 } }
 
+  /* o quadro de ideias em tela cheia (v303) */
+  .esBarBt{ display:inline-flex; align-items:center; gap:6px; border:0; background:var(--ink-850, rgba(255,255,255,.06)); color:inherit; font:inherit; font-size:12.5px; font-weight:600; padding:6px 11px; border-radius:999px; cursor:pointer; white-space:nowrap }
+  .esBarBt:hover{ background:var(--ink-800, rgba(255,255,255,.1)) }
+  .esBarBt[aria-pressed="true"]{ background:var(--brass-500, #FFC857); color:#1C1C1F }
+  .esBarBt:disabled{ opacity:.6; cursor:progress }
+  html.esCheio .app.ag .main{ padding-top:14px; padding-left:18px; padding-right:18px; max-width:none }
+  html.esCheio .estTopo{ margin-bottom:8px }
+  html.esCheio .estTopo h1, html.esCheio .estTopo p, html.esCheio .estTopo .estQuem{ display:none }
+  html.esCheio .estTopo > div + div{ display:none !important }
+  html.esCheio .estTopo .esVolta{ margin:0 }
+  html.esCheio .estPalco{ min-height:320px }
+  .esPdfCaixa .cores, .esPdfCaixa .estAcI, .esPdfCaixa .estRz, .esPdfCaixa .estSelosI button:empty{ display:none !important }
+  .esPdfCaixa .pe button{ visibility:hidden }
+  .esPdfCaixa .estNota .pega .n::first-letter{ text-transform:none }
+  @media (max-width:760px){ .esBarBt span{ display:none } .esBarBt{ padding:7px 9px } html.esCheio .app.ag .main{ padding-left:10px; padding-right:10px } html.esCheio .estAcoes .sel{ display:none } }
+
   /* o editor */
   html.dsAberto, html.dsAberto body{ overflow:hidden }
   #dsEditor{ --dsBg:#1E1E1E; --dsPn:#2C2C2C; --dsLn:#3A3A3A; --dsTx:#EDEDED; --dsMu:#9A9A9A; --dsAz:#0D99FF; --dsAc:var(--brass-500, #FFC857);
@@ -1564,8 +1762,8 @@
   }`;
   document.head.appendChild(css);
 
-  ligarMenu(); ligarRender(); ligarDesfazer(); ligarItens(); ligarBarra(); ligarPintar();
+  ligarMenu(); ligarRender(); ligarDesfazer(); ligarItens(); ligarBarra(); ligarPintar(); ligarPintarCheio();
   /* o protótipo pode ainda estar terminando de ler: tenta de novo até as funções existirem */
-  let n = 0; const t = setInterval(() => { ligarMenu(); ligarRender(); ligarDesfazer(); ligarItens(); ligarBarra(); ligarPintar(); if(++n > 40 || (agEstudio.__ds && render.__ds)) clearInterval(t); }, 150);
+  let n = 0; const t = setInterval(() => { ligarMenu(); ligarRender(); ligarDesfazer(); ligarItens(); ligarBarra(); ligarPintar(); ligarPintarCheio(); if(++n > 40 || (agEstudio.__ds && render.__ds)) clearInterval(t); }, 150);
   try{ if(S.view === 'agency' && S.route === 'estudio') render(); }catch(e){}
 })();
