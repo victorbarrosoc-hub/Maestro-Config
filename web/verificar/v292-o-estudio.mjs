@@ -247,6 +247,119 @@ console.log('\n  — 9. o design fica guardado —');
   checa('9.4 apagar (com confirmação) tira o design', await Q(() => (estMeu().designs || []).length === 0 && !document.querySelector('#root .esDoc')));
 }
 
+console.log('\n  — 12. colar no editor (v293): imagem do ⌘C de fora, link, e copiar entre designs —');
+{
+  await Q(() => { go('agency', 'estudio'); }); await esperar(150);
+  await pg.click('[data-esnovo="post"]'); await pg.waitForSelector('#dsEditor'); await esperar(150);
+  const colar = (arg) => Q(async (arg) => {
+    const dt = new DataTransfer();
+    if(arg.png){ const cv = document.createElement('canvas'); cv.width = 60; cv.height = 30; const x = cv.getContext('2d'); x.fillStyle = '#00f'; x.fillRect(0, 0, 60, 30); const b = await new Promise(r => cv.toBlob(r, 'image/png')); dt.items.add(new File([b], 'print.png', { type: 'image/png' })); }
+    if(arg.txt) dt.setData('text/plain', arg.txt);
+    document.getElementById('dsPalco').dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+    await new Promise(r => setTimeout(r, 300));
+    const o = MaestroDesign.E.doc.objs.at(-1); return o && { tipo: o.tipo, w: o.w, h: o.h, txt: o.txt, link: o.link, n: MaestroDesign.E.doc.objs.length, previa: !!MaestroDesign.previas[o.id], src: o.src };
+  }, arg);
+  const a = await colar({ png: 1 });
+  checa('12.1 ⌘V com uma imagem copiada de fora (print, navegador) põe a imagem na prancheta, na proporção dela', a && a.tipo === 'imagem' && a.w === 60 && a.h === 30 && a.previa && !/^blob:/.test(a.src || ''), a);
+  const b = await colar({ txt: 'https://ejup.com.br/artigo' });
+  checa('12.2 colar um link vira texto com o link guardado (como no Figma)', b.tipo === 'texto' && b.txt === 'https://ejup.com.br/artigo' && b.link === 'https://ejup.com.br/artigo', b);
+  const c = await colar({ txt: 'Chamada do post' });
+  checa('12.3 colar texto vira camada de texto', c.tipo === 'texto' && c.txt === 'Chamada do post' && !c.link, c);
+  const marca = await Q(() => { MaestroDesign.E.sel = [MaestroDesign.E.doc.objs[0].id]; const dt = new DataTransfer();
+    document.getElementById('dsPalco').dispatchEvent(new ClipboardEvent('copy', { clipboardData: dt, bubbles: true, cancelable: true })); return dt.getData('text/plain'); });
+  checa('12.4 ⌘C põe a camada na área de transferência do sistema', /^maestro-design:\[/.test(marca) && !/blob:/.test(marca), marca.slice(0, 60));
+  const n0 = await Q(() => MaestroDesign.E.doc.objs.length);
+  const d = await colar({ txt: marca });
+  checa('12.5 e ⌘V em outro design (ou no mesmo) cola a camada, não o texto', d.n === n0 + 1 && d.tipo === 'imagem', d);
+  await Q(() => MaestroDesign.fechar()); await esperar(100);
+}
+
+console.log('\n  — 13. o quadro de ideias no jeito do FigJam (v293) —');
+{
+  await Q(() => { S.est.aberto = 'ideias'; const m = estMeu(); m.quadros = [{ id: 'qfj', nome: 'Teste', modelo: 'livre', itens: [
+    { id: 'nA', tipo: 'nota', x: 60, y: 60, cor: 'latao', txt: 'Ideia A', em: '', votos: 0, fixa: false }], liga: [] }];
+    S.est.quadro = 'qfj'; S.est.vista = { x: 20, y: 20, z: 1 }; S.est.modo = 'mover'; S.est.sel = []; render(); });
+  await esperar(250);
+  const barra = await Q(() => [...document.querySelectorAll('.estFerr [data-esfig]')].map(b => b.dataset.esfig).join());
+  checa('13.1 a barra ganha imagem, link, forma, seção, caneta e carimbo', barra === 'imagem,link,forma,secao,caneta,carimbo', barra);
+  const colarQ = (arg) => Q(async (arg) => {
+    const dt = new DataTransfer();
+    if(arg.png){ const cv = document.createElement('canvas'); cv.width = 400; cv.height = 200; cv.getContext('2d').fillRect(0, 0, 400, 200); const b = await new Promise(r => cv.toBlob(r, 'image/png')); dt.items.add(new File([b], 'print.png', { type: 'image/png' })); }
+    if(arg.txt) dt.setData('text/plain', arg.txt);
+    document.querySelector('.estPalco').dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+    await new Promise(r => setTimeout(r, 350));
+    const i = estQuadro().itens.at(-1); return { tipo: i.tipo, w: i.w, h: i.h, url: i.url, txt: i.txt, src: i.src, id: i.id, n: estQuadro().itens.length, el: !!document.querySelector(`.estPalco [data-estnota="${i.id}"]`) };
+  }, arg);
+  const im = await colarQ({ png: 1 });
+  checa('13.2 ⌘V com imagem copiada põe a imagem no quadro (na proporção, até 360)', im.tipo === 'imagem' && im.w === 360 && im.h === 180 && im.el && !/^blob:/.test(im.src || ''), im);
+  const ln = await colarQ({ txt: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' });
+  const card = await Q((id) => { const e = document.querySelector(`[data-estnota="${id}"]`); return { capa: /img\.youtube\.com\/vi\/dQw4w9WgXcQ/.test(e.innerHTML), abre: e.querySelector('a.estLinkAbre')?.getAttribute('href'), alvo: e.querySelector('a.estLinkAbre')?.target, host: e.querySelector('.estLinkHost')?.textContent }; }, ln.id);
+  checa('13.3 colar um link vira um cartão de link (vídeo do YouTube mostra a capa) que abre em outra aba', ln.tipo === 'link' && card.capa && card.abre === 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' && card.alvo === '_blank' && card.host === 'youtube.com', { ln, card });
+  const tx = await colarQ({ txt: 'Uma ideia colada' });
+  checa('13.4 colar texto vira uma nota', tx.tipo === 'nota' && tx.txt === 'Uma ideia colada', tx);
+  /* arrastar imagem do computador para dentro */
+  const solto = await Q(async () => {
+    const cv = document.createElement('canvas'); cv.width = 100; cv.height = 100; const b = await new Promise(r => cv.toBlob(r, 'image/png'));
+    const dt = new DataTransfer(); dt.items.add(new File([b], 'foto.png', { type: 'image/png' }));
+    const p = document.querySelector('.estPalco'); const r = p.getBoundingClientRect(); const x = r.left + 500, y = r.top + 300;
+    p.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, clientX: x, clientY: y, bubbles: true, cancelable: true }));
+    const marcou = p.classList.contains('recebendo');
+    p.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, clientX: x, clientY: y, bubbles: true, cancelable: true }));
+    await new Promise(r => setTimeout(r, 300));
+    const i = estQuadro().itens.at(-1); const v = S.est.vista; return { tipo: i.tipo, cx: i.x + 140, cy: i.y + 100, esperado: [(500 - v.x) / v.z, (300 - v.y) / v.z], marcou };
+  });
+  checa('13.5 arrastar uma imagem do computador para o quadro a põe onde foi solta', solto.tipo === 'imagem' && solto.marcou && Math.abs(solto.cx - solto.esperado[0]) < 2 && Math.abs(solto.cy - solto.esperado[1]) < 2, solto);
+  /* o botão de link, e o que não é link */
+  await pg.click('.estFerr [data-esfig="link"]');
+  await pg.fill('#estLinkPop input', 'javascript:alert(1)'); await pg.press('#estLinkPop input', 'Enter');
+  const recusou = await Q(() => !!document.getElementById('estLinkPop') && estQuadro().itens.every(i => !/javascript/i.test(i.url || '')));
+  await pg.fill('#estLinkPop input', 'ejup.com.br/blog'); await pg.press('#estLinkPop input', 'Enter');
+  const lk = await Q(() => ({ url: estQuadro().itens.at(-1).url, pop: !!document.getElementById('estLinkPop') }));
+  checa('13.6 o botão de link aceita o endereço (o https:// entra sozinho) e recusa o que não é link', recusou && lk.url === 'https://ejup.com.br/blog' && !lk.pop, { recusou, lk });
+  await pg.click('.estFerr [data-esfig="forma"]'); await pg.click('#estFormaPop [data-estformaf="circ"]');
+  const fm = await Q(() => { const i = estQuadro().itens.at(-1); return { tipo: i.tipo, f: i.f, foco: document.activeElement && document.activeElement.dataset.esttxt === i.id }; });
+  await esperar(80);
+  checa('13.7 forma: escolher o círculo cria a forma, pronta para escrever', fm.tipo === 'forma' && fm.f === 'circ', fm);
+  /* seção: leva junto o que está dentro */
+  const sec = await Q(() => { const q = estQuadro(); const s = { id: 'sec1', tipo: 'secao', x: 0, y: 0, w: 600, h: 400, cor: 'cobalto', txt: 'Seção' }; q.itens.push(s);
+    s.x = 2000; s.y = 0; const a = q.itens.find(i => i.id === 'nA'); a.x = 2060; a.y = 60; S.est.vista = { x: -1900, y: 40, z: 1 }; estPintar(); return { ordem: estQuadro().itens[0].tipo }; });
+  const topo = await Q(() => { const el = document.querySelector('[data-estnota="sec1"]'); const r = el.getBoundingClientRect(); return { x: r.left + 580, y: r.top + 380 }; });
+  await pg.mouse.move(topo.x, topo.y); await pg.mouse.down(); await pg.mouse.move(topo.x + 100, topo.y + 50, { steps: 6 }); await pg.mouse.up(); await esperar(150);
+  const mv = await Q(() => { const q = estQuadro(); return { s: [q.itens.find(i => i.id === 'sec1').x, q.itens.find(i => i.id === 'sec1').y], a: [q.itens.find(i => i.id === 'nA').x, q.itens.find(i => i.id === 'nA').y] }; });
+  checa('13.8 a seção fica atrás de tudo e, ao ser arrastada, leva o que está dentro', sec.ordem === 'secao' && mv.s[0] === 2100 && mv.s[1] === 50 && mv.a[0] === 2160 && mv.a[1] === 110, { sec, mv });
+  /* redimensionar a imagem mantém a proporção */
+  const idImg = im.id;
+  await Q((id) => { const i = estQuadro().itens.find(x => x.id === id); i.x = 2200; i.y = 700; S.est.sel = [id]; S.est.vista = { x: -2000, y: -500, z: 1 }; estPintar(); }, idImg);
+  const h0 = await Q((id) => { const r = document.querySelector(`[data-estrz="${id}"]`).getBoundingClientRect(); return { x: r.left + 5, y: r.top + 5 }; }, idImg);
+  await pg.mouse.move(h0.x, h0.y); await pg.mouse.down(); await pg.mouse.move(h0.x + 90, h0.y + 10, { steps: 5 }); await pg.mouse.up(); await esperar(100);
+  const rz = await Q((id) => { const i = estQuadro().itens.find(x => x.id === id); return [i.w, i.h]; }, idImg);
+  checa('13.9 a alça do canto redimensiona a imagem sem deformar', rz[0] === 450 && rz[1] === 225, rz);
+  /* carimbo */
+  await Q(() => { S.est.vista = { x: -1950, y: 40, z: 1 }; S.est.sel = []; estPintar(); });
+  await Q(() => document.querySelector('.estFerr [data-esfig="carimbo"]').click()); await Q(() => document.querySelector('[data-estemoji="🔥"]').click());
+  const nota = await Q(() => { const r = document.querySelector('[data-estnota="nA"] .pega').getBoundingClientRect(); return { x: r.left + 20, y: r.top + 6 }; });
+  await pg.mouse.click(nota.x, nota.y); await esperar(150);
+  const sl = await Q(() => ({ selos: (estQuadro().itens.find(i => i.id === 'nA').selos || []).map(s => s.e), el: document.querySelector('[data-estnota="nA"] .estSeloI')?.textContent }));
+  checa('13.10 carimbo: escolher 🔥 e tocar numa nota deixa o carimbo nela', sl.selos.join() === '🔥' && /🔥/.test(sl.el || ''), sl);
+  await Q(() => document.querySelector('[data-estnota="nA"] .estSeloI').click()); await esperar(100);
+  checa('13.11 tocar no próprio carimbo tira', await Q(() => (estQuadro().itens.find(i => i.id === 'nA').selos || []).length === 0));
+  /* caneta */
+  await Q(() => document.querySelector('.estFerr [data-esfig="caneta"]').click()); await Q(() => document.querySelector('[data-estinta="#E5484D"]').click());
+  const c0 = await Q(() => { const r = document.querySelector('.estPalco').getBoundingClientRect(); return { x: r.left + 300, y: r.top + 450 }; });
+  await pg.mouse.move(c0.x, c0.y); await pg.mouse.down(); for(let k = 1; k <= 8; k++) await pg.mouse.move(c0.x + k * 20, c0.y + (k % 2 ? -15 : 15)); await pg.mouse.up(); await esperar(150);
+  const tr = await Q(() => { const i = estQuadro().itens.at(-1); return { tipo: i.tipo, cor: i.cor, pts: (i.pts || []).length, w: i.w, el: !!document.querySelector(`[data-estnota="${i.id}"] path`) }; });
+  checa('13.12 caneta: desenhar deixa um traço na cor escolhida, que se move como qualquer item', tr.tipo === 'traco' && tr.cor === '#E5484D' && tr.pts >= 8 && tr.w >= 150 && tr.el, tr);
+  await pg.keyboard.press('Escape'); await esperar(100);
+  checa('13.13 Esc sai da caneta', await Q(() => S.est.modo === 'mover' && !document.getElementById('estCaneta')));
+  /* copiar e colar entre quadros */
+  const mk = await Q(() => { S.est.sel = ['nA']; const dt = new DataTransfer(); document.querySelector('.estPalco').dispatchEvent(new ClipboardEvent('copy', { clipboardData: dt, bubbles: true, cancelable: true })); return dt.getData('text/plain'); });
+  const cp = await colarQ({ txt: mk });
+  checa('13.14 ⌘C ⌘V copia itens do quadro (e cola em outro quadro)', /^maestro-quadro:/.test(mk) && cp.tipo === 'nota' && cp.txt === 'Ideia A', { mk: mk.slice(0, 40), cp });
+  const estado = await Q(() => JSON.stringify(estMeu().quadros));
+  checa('13.15 nada de endereço blob: no que sincroniza', !/blob:/.test(estado));
+  await Q(() => { S.est.modo = 'mover'; });
+}
+
 console.log('\n  — 10. no celular —');
 {
   const cel = await (await nav.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })).newPage();

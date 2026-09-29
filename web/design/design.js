@@ -1014,7 +1014,7 @@
   function centroMundo(){ const r = palco_().getBoundingClientRect(); return pontoMundo(r.left + r.width / 2, r.top + r.height / 2); }
   function lembrar(){ try{ estLembrar(); }catch(e){} }
   function acharItem(id){ try{ for(const qq of (estMeu().quadros || [])){ const i = (qq.itens || []).find(x => x.id === id); if(i) return i; } }catch(e){} return null; }
-  function poe(i){ const q = q_(); if(!q) return null; q.itens.push(Object.assign({ votos: 0, fixa: false }, i)); return i; }
+  function poe(i){ const q = q_(); if(!q) return null; const o = Object.assign({ votos: 0, fixa: false }, i); q.itens.push(o); return o; }
   function pronto(ids){ S.est.sel = ids; try{ estFaisca('nota'); }catch(e){} try{ estGravar(); }catch(e){} try{ estPintar(); }catch(e){} }
   const idNovo = () => { try{ return estId(); }catch(e){ return novoId('i'); } };
 
@@ -1048,6 +1048,7 @@
   function ytId(u){ const m = String(u).match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/i); return m ? m[1] : ''; }
   function linkNoQuadro(url, pt){
     const u = String(url || '').trim(); if(!ehUrl(u) || !hrefOk(u)) return null;
+    try{ const x = new URL(u); if(!/^https?:$/.test(x.protocol) || !/\.[a-z]{2,}$/i.test(x.hostname)) return null; }catch(e){ return null; }
     lembrar();
     const [x, y] = pt || centroMundo();
     let host = ''; try{ host = new URL(u).hostname.replace(/^www\./, ''); }catch(e){}
@@ -1171,7 +1172,8 @@
     f.style.left = (r.right + 10) + 'px'; f.style.top = Math.max(10, r.top - 6) + 'px';
     document.body.appendChild(f);
     f.querySelector('input').focus();
-    f.addEventListener('submit', e => { e.preventDefault(); let u = f.querySelector('input').value.trim(); if(u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
+    f.querySelector('input').addEventListener('input', e => e.target.setCustomValidity(''));
+    f.addEventListener('submit', e => { e.preventDefault(); let u = f.querySelector('input').value.trim(); if(u && !/^[a-z][a-z0-9+.-]*:/i.test(u)) u = 'https://' + u;
       if(!linkNoQuadro(u)){ const i = f.querySelector('input'); i.setCustomValidity('Isso não parece um link'); i.reportValidity(); return; } fecharPops(); });
   }
   function abrirFormaPop(){
