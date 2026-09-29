@@ -1,11 +1,47 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.113
+Version: 0.5.114
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.114 — 2026-09-29
+
+**Status:** No ar.
+
+### v299 — a entrada refeita
+
+- **O pedido:** "Refaça todo o código da homepage e da aba de e-mail, não quero
+  falhas. Quero que entre no lugar certo, sem revelar o que tem dentro da
+  página antes de fazer login, não quero telas piscando. Chegando o banco de
+  dados certinho."
+- **Por quê:** o caminho do primeiro byte até o app era decidido por oito
+  camadas (v33, v91, v256, v258, v267, v268, v272, v296), cada uma com o seu
+  relógio e a sua lista. A lista "Quem está entrando?" era montada com a
+  equipe em memória, que num aparelho limpo é a de fábrica (três nomes, sem
+  foto), e as telas entravam por cima umas das outras.
+- **Agora uma peça só conduz tudo** (`web/entrada/entrada.js`, a primeira a
+  descer, carregada pelo `tempo-real.js`):
+  - sem sessão: só a vitrine; endereço de dentro (/hoje) vira vitrine com o
+    login. O app nunca é desenhado.
+  - com sessão: uma tela opaca "Carregando a sua agência…" que entra no mesmo
+    quadro em que o login sai, até (1) a equipe chegar DIRETO do banco (a
+    linha `__estado__`, com as fotos) e (2) a sincronização ter lido o banco.
+    Pessoa já escolhida neste aparelho → o app; senão → a lista, com a equipe
+    do banco, o dono do e-mail primeiro ("este login").
+  - banco mudo: "Não consegui carregar a sua agência", com Tentar de novo e
+    Sair. Nunca uma equipe inventada.
+  - "Trocar de usuário" abre a mesma lista, com Voltar; relógio antigo não
+    abre lista sozinho. As listas e esperas antigas ficam sem palco.
+  - logado, abrir o endereço da vitrine leva ao app.
+- A cortina do protótipo espera a entrada (`window.__entrada`), com teto de 8s.
+- O remendo da v296 saiu de `tempo-real.js`; a suíte dela foi substituída.
+- 22 provas em `web/verificar/v299-a-entrada.mjs`, que gravam QUADRO A QUADRO
+  o que está à vista (vitrine, login, espera, lista, app, telas antigas):
+  aba anônima com banco lento, login da agência e da pessoa, recarregar,
+  trocar de usuário, sair, banco fora do ar, celular e computador.
 
 ## 0.5.113 — 2026-09-29
 

@@ -349,6 +349,19 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (29 set, v299, NO AR) — a entrada refeita.** "Refaça todo o código
+da homepage e da aba de e-mail… entre no lugar certo, sem revelar o que tem
+dentro antes do login, sem telas piscando, chegando o banco certinho." Oito
+camadas decidiam a entrada; agora UMA: `web/entrada/entrada.js` (a primeira a
+descer). Sem sessão: só vitrine/login, o app nunca é desenhado. Com sessão:
+uma espera opaca até a equipe chegar DIRETO do banco (`__estado__`, com
+fotos) e a sincronização ler; pessoa já escolhida → app; senão a lista (a do
+banco, nunca a de fábrica). Banco mudo → tela de erro com Tentar de novo.
+As listas antigas (`#quemEsta`, `#v256Espera`) ficam sem palco com sessão.
+**Regra:** entrada nova se mexe SÓ nesse arquivo. **Armadilha:** as suítes
+antigas de login servem só o HTML, então rodam o caminho de reserva (sem a
+entrada); quem prova a entrada é a `web/verificar/v299-a-entrada.mjs` (22
+provas, quadro a quadro).
 **Fechado (29 set, v298, NO AR) — o card nasce sem rede.** "Às vezes é um
 artigo, só no site. Não precisa deixar um padrão." Nem Instagram por omissão,
 nem padrão por cliente (decisão do founder); a ficha pede a escolha. Prova 1.8
