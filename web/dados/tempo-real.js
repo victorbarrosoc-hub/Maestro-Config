@@ -1168,11 +1168,11 @@
    12s e abria com a equipe de fábrica (três nomes, sem foto) — e nunca se
    refazia quando a equipe de verdade chegava. Agora: logado e com o banco
    ainda falando, a lista fica escondida atrás do "Carregando a sua agência…"
-   (até 30s a mais); e, aberta, ela se refaz quando a equipe muda (nome, papel
+   (até 60s); e, aberta, ela se refaz quando a equipe muda (nome, papel
    ou foto), sem piscar — a nova entra antes de a velha sair. */
 (function(){
   if(window.__quemEstaVivo) return; window.__quemEstaVivo = true;
-  const TETO = 30000;
+  const TETO = 60000;
   const assin = () => (S.equipe || []).map(m => m ? [m.n, m.mail, m.papel, m.foto ? 1 : 0, m.dono ? 1 : 0].join('|') : '').join(';');
   const E = () => window.MaestroEntrada || {};
   let esperaMinha = false;
@@ -1203,7 +1203,7 @@
         /* logado, ninguém escolhido e o banco ainda falando: a casa não aparece vazia */
         const falta = !(e.obra && e.obra()) && e.logado && e.logado() && !S.viaLink && !S.soVer
           && !(S.usuario && S.usuario.id) && !(window.Sincro && Sincro.lido) && !document.getElementById('entrarMaestro');
-        if(falta){ if(!semNinguemDesde) semNinguemDesde = Date.now(); if(Date.now() - semNinguemDesde < 45000){ mostrarEspera(); return; } }
+        if(falta){ if(!semNinguemDesde) semNinguemDesde = Date.now(); if(Date.now() - semNinguemDesde < 60000){ mostrarEspera(); return; } }
         else semNinguemDesde = 0;
         tirarEspera(); return;
       }
