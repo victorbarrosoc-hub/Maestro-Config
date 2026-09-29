@@ -349,6 +349,16 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (29 set, v293, NO AR) — a Semana do jeito do Quadro, e o Estúdio
+no jeito do FigJam.** (1) "Não é pra ser igual, queria que você fizesse uma
+forma de visualizar só por semana… está no jeito antigo até quando clica no
+card." O Calendário agora é Mês · Semana, as duas feitas do card do Quadro
+(tocar abre a ficha nova, arrastar muda o dia). v291, seção 6. (2) "Quero
+colar imagem do ctrl C… arrastar imagem pra dentro do quadro… colocar um
+link… as funcionalidades do quadro do Figma." O quadro de ideias ganhou
+colar e arrastar imagem, link (com capa do YouTube), forma, seção, caneta,
+carimbos e copiar entre quadros; o editor de design cola imagem, link e texto
+da área de transferência. 60 provas em `web/verificar/v292-o-estudio.mjs`.
 **Fechado (29 set, v292, NO AR) — o Estúdio vira ferramenta de design, e a
 Minha lista vira o dia da pessoa.** Quatro pedidos numa leva:
 - **"Quero uma ferramenta igual à do Figma lá dentro. Bota um menu."** O

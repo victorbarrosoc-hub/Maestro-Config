@@ -1,9 +1,40 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.107
+Version: 0.5.108
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
+
+---
+
+## 0.5.108 — 2026-09-29
+
+**Status:** No ar.
+
+### v293 — a Semana do jeito do Quadro, e o Estúdio no jeito do FigJam
+
+- **Calendário: Mês · Semana.** O pedido: "Não é pra ser igual, queria que
+  você fizesse uma forma de visualizar só por semana… está no jeito antigo
+  até quando clica no card." A v292 embutia o Cronograma antigo; agora a
+  Semana é feita do card do Quadro: sete colunas (no celular, um dia embaixo
+  do outro), com capa, hora, coluna, cliente e formato; tocar abre a ficha
+  nova; arrastar muda o dia; "+ Adicionar" cria no dia; setas mudam a semana
+  e "Esta semana" volta.
+- **Quadro de ideias do Estúdio no jeito do FigJam.** Colar (⌘V / Ctrl+V)
+  uma imagem copiada de qualquer lugar; arrastar imagens do computador para
+  o quadro; colar ou escrever um **link** (vira cartão que abre em outra aba;
+  vídeo do YouTube mostra a capa); **formas** com texto (retângulo, círculo,
+  losango); **seção** que leva junto o que está dentro; **caneta** em cinco
+  cores; **carimbos** (👍 ❤️ 🔥 ⭐ ✅ ❓, tocar no seu tira); copiar e colar
+  itens entre quadros; imagens redimensionam sem deformar. Imagem sobe para
+  a nuvem; enquanto não sobe, a prévia fica fora do estado.
+- **Editor de design:** ⌘V cola imagem copiada de fora, link vira texto com o
+  link, texto vira camada de texto; ⌘C / ⌘V usam a área de transferência do
+  sistema, então dá para copiar de um design para outro.
+- **Regra nova (CLAUDE.md):** falar com o founder sempre em português,
+  simples e sem código.
+- **Provas:** 60 em `v292-o-estudio.mjs` (seções 12 e 13 novas); v291 seção
+  6 reescrita para a Semana (35).
 
 ---
 

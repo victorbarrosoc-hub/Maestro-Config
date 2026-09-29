@@ -20,10 +20,14 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v292 (29 set) — Estúdio com menu e editor de design (web/design/design.js),
-ficha em abas sem "Editor completo", faixa de colunas ao arrastar no
-computador, Cronograma de conteúdos como vista mensal do Calendário, e a
-Minha lista como o dia da pessoa (lembretes pessoais que não viram card).
+v293 (29 set) — Calendário com Mês · Semana (do jeito do Quadro), quadro de
+ideias do Estúdio no jeito do FigJam (colar/arrastar imagem, link, forma,
+seção, caneta, carimbo) e colar da área de transferência no editor de
+design. Antes dela, a v292: Estúdio com menu e editor, ficha em abas, faixa
+de colunas ao arrastar, Minha lista como o dia da pessoa.
+
+**Como falar com o founder:** sempre em português, simples, sem código
+(regra no CLAUDE.md).
 
 ## Em andamento
 
