@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 30 set 2026 (v309 no ar)
+Última atualização: 30 set 2026 (v310 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -20,7 +20,9 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v309 (30 set) — a entrada espera o banco lento (até 2 min, com aviso) em vez de
+v310 (30 set) — o Ensaio antigo desligado (autorizado: "Pode desligar o
+ensaio"): o documento da agência deixa de ser regravado a cada desenho de tela.
+Antes, v309 (30 set) — a entrada espera o banco lento (até 2 min, com aviso) em vez de
 desistir aos 25 s; sem a frase "vêm do banco"; o filtro do Quadro se lê no
 Windows. Causa do "não carrega": incidente da Supabase (latência no Leste dos
 EUA), medido 1,6–54 s por pedido. Consulta só de leitura para o founder:
@@ -85,14 +87,12 @@ de colunas ao arrastar, Minha lista como o dia da pessoa.
   742 → 529 (as das últimas 24 h ficam; a faxina afina depois), 4941 gravações
   mantidas, gravador novo "sim". Gravações em 24 h: `__estado__` 2065 (!),
   n0 409, `__config__` 249, demais ~40. O `__estado__` é o código antigo do
-  Ensaio (repositor) + lembretes: pedir ao founder para desligar o repositor.
+  Ensaio (repositor) + lembretes: DESLIGADO na v310. Conferir amanhã com a
+  saude-1 e a contagem de gravações de `__estado__` em 24 h.
+- v271 6.1/7.1/11.2 medem ~3,5 s (teto 2 s) também na v309: investigar a
+  bancada do canal ao vivo.
   Falta: `vacuum full public.pauta_historico;` (sozinho) e a saude-1 amanhã.
 
-- Achado do ensaio (não consertado, sem pedido): o código do Ensaio antigo, sem
-  tela desde a v277, ainda cria "tarefas" escondidas no estado da agência para
-  cada card (`sincronizarJobs`). É gravação à toa no documento da equipe (onde
-  moram equipe e lembretes) e acende "perigo" no histórico quando uma some.
-  Propor ao founder desligar esse repositor.
 - Lentidão depois de um tempo de uso: não reproduziu (6 min com outra pessoa
   mexendo, contra um banco de verdade). Perguntar ao founder: qual tela,
   quanto tempo, qual aparelho.

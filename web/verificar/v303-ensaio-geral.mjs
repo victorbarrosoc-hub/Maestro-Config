@@ -437,6 +437,11 @@ console.log('\n  — 6. o histórico: nenhuma gravação estragou o estado —')
   const semSAgora = umaLinha(`select jsonb_typeof(dados->'s') from public.pauta where cliente='__estado__'`);
   const total = +umaLinha(`select count(*) from public.pauta_historico where cliente='__estado__'`);
   checa(`6.1 nenhuma das ${total} gravações do estado deixou o documento sem a equipe`, semS === 0 && ruins === 0 && semSAgora === 'object', { semS, semSAgora });
+  /* v310 — o Ensaio desligado: o documento da agência só é gravado quando alguém
+     anota lembrete ou conversa. Antes, ~100 de 127 gravações eram o Ensaio antigo
+     mexendo sozinho nas tarefas (2.065 por dia no banco de verdade). */
+  const teto = Math.round(LEMBRETES.size * 1.3) + 15;
+  checa(`6.3 o estado só é gravado quando alguém faz algo: ${total} gravações para ${LEMBRETES.size} lembretes (teto ${teto})`, total <= teto, { total, teto });
   const linhasRuins = umaLinha(`select count(*) from public.pauta where org='maestro' and cliente like '\\_\\_%' and cliente not in ('__estado__','__config__','__chat__','__pedidos__','__mandala__','__cerebro__','__estudio__') and cliente not like '\\_\\_redes\\_\\_%' and cliente not like '\\_\\_gestao\\_\\_%'`);
   checa('6.2 nenhuma linha estranha nasceu no banco', +linhasRuins === 0, umaLinha(`select string_agg(cliente, ',') from public.pauta where org='maestro'`));
 }

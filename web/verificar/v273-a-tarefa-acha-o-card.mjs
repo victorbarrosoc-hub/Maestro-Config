@@ -11,6 +11,11 @@
    nome a um card livre do mesmo cliente, sai se for repetida sem nada de
    seu, e volta ao Plan no resto.
    Rodar da raiz: node web/verificar/v273-a-tarefa-acha-o-card.mjs */
+/* v310 — APOSENTADA. O Ensaio foi desligado ("Pode desligar o ensaio", founder,
+   30/set): a camada que esta suíte prova não se instala mais. Fica o arquivo
+   como registro. */
+console.log('  v273 aposentada na v310 (o Ensaio foi desligado): nada a provar.');
+process.exit(0);
 import { chromium } from 'playwright'; import http from 'http'; import fs from 'fs'; import crypto from 'crypto';
 const html = fs.readFileSync(process.argv[2] || 'docs/UX/prototipo-plataforma.html', 'utf8');
 const js = fs.readFileSync('web/dados/tempo-real.js', 'utf8');

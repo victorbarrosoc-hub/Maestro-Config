@@ -515,7 +515,8 @@ console.log('\n  — 13. v275: o aparelho com a cópia velha não duplica o card
 }
 
 console.log('\n  — 14. v276: a limpeza das cópias e a tarefa que volta —');
-{
+if(await noAparelho(A, () => !!window.MaestroEnsaioDesligado)) console.log('  (aposentada na v310: o Ensaio foi desligado, a camada da v276 não se instala)');
+else {
   /* o estrago de 26/09, reproduzido: os cards "originais" nasceram na hora
      de ligar; às 13:40 um aparelho velho criou cópias. Uma cópia está viva
      (com a tarefa apontada para ela); a outra a equipe já apagou, e a

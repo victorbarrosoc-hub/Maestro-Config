@@ -1,11 +1,35 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.124
+Version: 0.5.125
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.125 — 2026-09-30
+
+**Status:** No ar.
+
+### v310 — o Ensaio desligado
+
+"Pode desligar o ensaio" (founder, 30/set). A saude-2 mostrou 2.065 gravações
+do `__estado__` em 24 h no banco de verdade (os clientes, ~40 cada). Medido no
+ensaio geral com uma sonda por gravação: ~100 de 127 gravações do estado eram o
+Ensaio antigo (sem tela desde a v277) mexendo nas tarefas escondidas —
+`tarefas`, `prox`, `apagadas` —, a cada desenho de tela, pelo repositor
+(`sincronizarJobs`) e pelas camadas v273 (religa) e v276 (cópias).
+
+- Início de `web/dados/tempo-real.js`: `sincronizarJobs` vira nada, e as
+  camadas v273/v276 não se instalam (`MaestroEnsaioDesligado`). As tarefas
+  que existem ficam como estão — nada é apagado.
+- Depois: o estado só é gravado com lembrete (49) e conversa (5) — nenhuma
+  gravação de `ensaio`.
+- Prova nova 6.3 em `v303-ensaio-geral.mjs` (teto de gravações do estado pelos
+  lembretes). `v273` aposentada; `v271` seção 14 pulada com o Ensaio desligado.
+- **Achado, não é desta versão:** `v271` 6.1, 7.1 e 11.2 medem ~3,5 s onde o
+  teto é 2 s — igual com a v309 (a bancada entrega pela olhada de 4 s, não
+  pelo canal). Fica aberto.
 
 ## 0.5.124 — 2026-09-30
 

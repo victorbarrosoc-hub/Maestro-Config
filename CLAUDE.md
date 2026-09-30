@@ -349,6 +349,13 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (30 set, v310, NO AR) — o Ensaio desligado.** "Pode desligar o
+ensaio." O repositor (`sincronizarJobs`) e as camadas v273/v276 mexiam nas
+tarefas escondidas a cada desenho: 2.065 gravações do `__estado__` por dia em
+produção, o histórico enchendo. Início de `tempo-real.js`
+(`MaestroEnsaioDesligado`): nada mais cria, religa ou move tarefa; nada é
+apagado. Sonda: ~100 de 127 gravações do estado sumiram. Prova 6.3 na v303;
+v273 aposentada. **Aberto:** v271 6.1/7.1/11.2 (~3,5 s) já falhava na v309.
 **Fechado (30 set, v309, NO AR) — a entrada espera o banco lento.** "Não tá
 carregando… cards mudados não tava salvando." O banco levou até 54 s por pedido
 (incidente da Supabase no Leste dos EUA, API Gateway degradado); a entrada

@@ -19,7 +19,7 @@
 (function(){
   'use strict';
   if(window.MaestroTema) return;
-  const T = window.MaestroTema = { versao: 'v309' };
+  const T = window.MaestroTema = { versao: 'v310' };
 
   const LUZ = 'maestro-luz-v1';
   const claro = () => document.documentElement.getAttribute('data-tema') === 'claro';
