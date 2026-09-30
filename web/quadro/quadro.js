@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v306', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v307', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -589,12 +589,33 @@
      (pessoa, cliente, data), numa barra só, com "Limpar" quando algo está
      ligado. A escolha da vista fica no aparelho. */
   const VISTA_CHAVE = 'maestro-quadro-vista-v1';
+  /* v307 — decisão do founder: quem não é administrador abre o Quadro já em
+     "Por prazo" com "Só os meus" — entra direto no que tem de entregar primeiro.
+     É só o ponto de partida: a vista e o filtro de pessoa que ela escolher ficam
+     no aparelho. Administrador segue abrindo em Colunas, com todos. Enquanto não
+     se sabe quem está dentro, não se decide (a entrada espera a equipe). */
+  const PESSOA_CHAVE = 'maestro-quadro-pessoa-v1';
+  function souAdmin(){
+    try{ if(typeof ehAdmin === 'function') return ehAdmin(); }catch(e){}
+    const x = pessoa(eu()); return !!(x && (x.m.dono || /admin/i.test(String(x.m.papel || ''))));
+  }
+  Q.souAdmin = souAdmin;
   function vistaQd(){
-    if(!Q.vistaQd){ let v = null; try{ v = localStorage.getItem(VISTA_CHAVE); }catch(e){}
-      Q.vistaQd = v === 'prazo' ? 'prazo' : 'colunas'; }
+    if(!Q.vistaQd){
+      const mim = eu(), conhecido = !!(mim && pessoa(mim));
+      let v = null, fp = null; try{ v = localStorage.getItem(VISTA_CHAVE); fp = localStorage.getItem(PESSOA_CHAVE); }catch(e){}
+      if(v !== 'prazo' && v !== 'colunas'){
+        if(!conhecido) return 'colunas';               /* ainda não se sabe quem é: decide depois */
+        v = souAdmin() ? 'colunas' : 'prazo';
+      }
+      Q.vistaQd = v;
+      if(conhecido && !souAdmin() && (Q.filtroPessoa || 'todos') === 'todos')
+        Q.filtroPessoa = fp && (fp === 'todos' || fp === 'ninguem' || pessoa(fp)) ? fp : mim;
+    }
     return Q.vistaQd;
   }
   function mudarVista(v){ Q.vistaQd = v === 'prazo' ? 'prazo' : 'colunas'; try{ localStorage.setItem(VISTA_CHAVE, Q.vistaQd); }catch(e){} }
+  function mudarPessoa(v){ Q.filtroPessoa = v || 'todos'; if(!souAdmin()){ try{ localStorage.setItem(PESSOA_CHAVE, Q.filtroPessoa); }catch(e){} } }
   const baseDoPrazo = () => (Q.prazoBase === 'ar' ? 'ar' : 'entrega');
   function filtrosLigados(){
     let n = 0;
@@ -675,6 +696,7 @@
     return `${sub}<div class="qdPorPrazo">${secoes || `<p class="qdVazio qdPzVazio">${ar ? 'Nenhum card esperando para ir ao ar' : 'Nada por fazer'}${filtrosLigados() ? ' com esses filtros' : ''}.</p>`}</div>`;
   }
   function vistaQuadro(){
+    vistaQd();                                   /* o ponto de partida da pessoa antes de filtrar */
     const itens = filtrados();
     const porCol = Object.fromEntries(COLS.map(([k]) => [k, []]));
     itens.forEach(x => porCol[x.col].push(x));
@@ -1983,7 +2005,7 @@
     if(d.qdfp){ Q.filtroPessoa = d.qdfp; render(); return; }
     if(d.qdvista){ mudarVista(d.qdvista); if(Q.verMais) Q.verMais = {}; render(); return; }
     if(d.qdpzbase){ Q.prazoBase = d.qdpzbase; if(Q.verMais) Q.verMais = {}; render(); return; }
-    if(d.qdlimpar){ Q.filtroPessoa = 'todos'; Q.filtroCli = 'todos'; if(vistaQd() === 'colunas') Q.filtroPrazo = 'todos'; if(Q.verMais) Q.verMais = {}; render(); return; }
+    if(d.qdlimpar){ mudarPessoa('todos'); Q.filtroCli = 'todos'; if(vistaQd() === 'colunas') Q.filtroPrazo = 'todos'; if(Q.verMais) Q.verMais = {}; render(); return; }
     if(d.qdsemcal !== undefined){ Q.semCal = d.qdsemcal === '0' ? 0 : (Q.semCal || 0) + (+d.qdsemcal); render(); return; }
     if(d.qdcalvista){ Q.calVista = d.qdcalvista; try{ localStorage.setItem('maestro-quadro-calvista', Q.calVista); }catch(x){} render(); return; }
     if(d.qdmais){ Q.verMais = Q.verMais || {}; Q.verMais[d.qdmais] = quantosVer(d.qdmais) + LIMITE; render(); return; }
@@ -2081,7 +2103,7 @@
     if(c.matches && c.matches('#qdFolha [data-qf]')){ gravarCampo(c, true); return; }
     if(c.matches && c.matches('#qdFolha [data-qfbool]') && Q.folha){ const [cli, id] = Q.folha.split('|'); mudar(cli, id, { [c.dataset.qfbool]: c.checked || null }); redesenharPagina(); return; }
     if(c.dataset && c.dataset.qdfc){ Q.filtroCli = c.value; render(); return; }
-    if(c.dataset && c.dataset.qdfpes){ Q.filtroPessoa = c.value; if(Q.verMais) Q.verMais = {}; render(); return; }
+    if(c.dataset && c.dataset.qdfpes){ mudarPessoa(c.value); if(Q.verMais) Q.verMais = {}; render(); return; }
     if(c.dataset && c.dataset.qdprazo){ Q.filtroPrazo = c.value; if(Q.verMais) Q.verMais = {}; render(); return; }
     if(c.dataset && c.dataset.qdpessoa){ Q.pessoa = c.value; render(); return; }
   }, true);

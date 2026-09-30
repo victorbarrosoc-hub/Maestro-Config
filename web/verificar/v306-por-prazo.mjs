@@ -135,6 +135,24 @@ console.log('\n  — 7. no celular —');
   await m.close();
 }
 
-checa('8.1 nenhum erro de página', erros.length === 0, erros);
+console.log('\n  — 8. v307: o ponto de partida de cada um —');
+{
+  const quem = await pg.evaluate(() => { const i = S.equipe.findIndex(m => !m.dono && m.papel !== 'Administrador'); return i; });
+  checa('8.0 a bancada tem alguém que não é administrador', quem >= 0, quem);
+  const abre = (i, limpa) => pg.evaluate(([i, limpa]) => { if(limpa){ localStorage.removeItem('maestro-quadro-vista-v1'); localStorage.removeItem('maestro-quadro-pessoa-v1'); }
+    S.usuario = { tipo: 'agencia', id: membroId(S.equipe[i]) }; MaestroQuadro.vistaQd = null; MaestroQuadro.filtroPessoa = 'todos'; MaestroQuadro.filtroCli = 'todos'; render();
+    return { vista: MaestroQuadro.vistaQd, fp: MaestroQuadro.filtroPessoa, eu: membroId(S.equipe[i]), sec: !!document.querySelector('#root .qdPorPrazo'),
+      op: document.querySelector('#root [data-qdfpes] option:checked')?.textContent, admin: MaestroQuadro.souAdmin() }; }, [i, limpa]);
+  const a = await abre(0, true);
+  checa('8.1 administrador abre em Colunas, com todos', a.admin && a.vista === 'colunas' && a.fp === 'todos' && !a.sec, a);
+  const b = await abre(quem, true);
+  checa('8.2 quem não é administrador abre em "Por prazo" com "Só os meus"', !b.admin && b.vista === 'prazo' && b.fp === b.eu && b.sec && b.op === 'Só os meus', b);
+  await pg.selectOption('#root [data-qdfpes]', 'todos'); await pg.click('#root [data-qdvista="colunas"]'); await pg.waitForTimeout(100);
+  const c = await abre(quem, false);
+  checa('8.3 o que a pessoa escolheu (Colunas, Todas) é o que volta ao reabrir', c.vista === 'colunas' && c.fp === 'todos', c);
+  await abre(0, true);
+}
+
+checa('8.9 nenhum erro de página', erros.length === 0, erros);
 console.log(`\n  ${ok} ok · ${falhou} falharam`);
 await nav.close(); srv.close(); process.exit(falhou ? 1 : 0);

@@ -1,11 +1,24 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.121
+Version: 0.5.122
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.122 — 2026-09-30
+
+**Status:** No ar.
+
+### v307 — cada um abre no seu
+
+Sugestão aceita pelo founder ("Sim"): quem não é administrador abre o Quadro
+já em "Por prazo" com "Só os meus". Administrador segue abrindo em Colunas,
+com todos. É só o ponto de partida: a vista e o filtro de pessoa que a pessoa
+escolher ficam no aparelho (`maestro-quadro-vista-v1`,
+`maestro-quadro-pessoa-v1`). Sem saber quem está dentro, não decide.
+Provas 8.0–8.3 em `web/verificar/v306-por-prazo.mjs` (30 no total).
 
 ## 0.5.121 — 2026-09-30
 
