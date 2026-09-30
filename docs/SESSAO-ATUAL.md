@@ -91,8 +91,10 @@ de colunas ao arrastar, Minha lista como o dia da pessoa.
   saude-1 e a contagem de gravações de `__estado__` em 24 h.
 - v271 6.1/7.1/11.2 medem ~3,5 s (teto 2 s) também na v309: investigar a
   bancada do canal ao vivo.
-  `vacuum full public.pauta_historico;` RODADO em 30/set ("Success"). Falta a
-  saude-1 para ver o tamanho depois.
+  `vacuum full public.pauta_historico;` RODADO em 30/set ("Success"). saude-1
+  depois: banco 208 → 138 MB, histórico 179 → 108 MB, 10 conexões, nenhuma
+  presa. As cópias de 30/set se afinam depois de 24 h; conferir em 1–2 dias
+  (esperado bem abaixo de 100 MB) e a contagem de gravações de `__estado__`.
 
 - Lentidão depois de um tempo de uso: não reproduziu (6 min com outra pessoa
   mexendo, contra um banco de verdade). Perguntar ao founder: qual tela,
