@@ -91,7 +91,8 @@ de colunas ao arrastar, Minha lista como o dia da pessoa.
   saude-1 e a contagem de gravações de `__estado__` em 24 h.
 - v271 6.1/7.1/11.2 medem ~3,5 s (teto 2 s) também na v309: investigar a
   bancada do canal ao vivo.
-  Falta: `vacuum full public.pauta_historico;` (sozinho) e a saude-1 amanhã.
+  `vacuum full public.pauta_historico;` RODADO em 30/set ("Success"). Falta a
+  saude-1 para ver o tamanho depois.
 
 - Lentidão depois de um tempo de uso: não reproduziu (6 min com outra pessoa
   mexendo, contra um banco de verdade). Perguntar ao founder: qual tela,
