@@ -129,6 +129,19 @@ console.log('\n  — 6b. v308: nas Colunas, ver todos em ordem de prazo —');
   await pg.click('#root [data-qdlimpar]'); await pg.waitForTimeout(100);
 }
 
+console.log('\n  — 6c. v309: a lista aberta do filtro se lê (no Windows ficava branca) —');
+{
+  const lum = c => { const m = c.match(/\d+(\.\d+)?/g).map(Number); const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }; return .2126 * f(m[0]) + .7152 * f(m[1]) + .0722 * f(m[2]); };
+  const contraste = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+  for(const tema of ['escuro', 'claro']){
+    const r = await pg.evaluate(t => { if(t === 'claro') document.documentElement.setAttribute('data-tema', 'claro'); else document.documentElement.removeAttribute('data-tema');
+      return [...document.querySelectorAll('#root [data-qdprazo] option, #root [data-qdfpes] option, #root [data-qdfc] option')].map(o => { const cs = getComputedStyle(o); return [cs.backgroundColor, cs.color]; }); }, tema);
+    const piores = r.map(([bg, c]) => contraste(bg, c)).sort((a, b) => a - b);
+    checa(`6c.${tema === 'escuro' ? 1 : 2} tema ${tema}: toda opção dos filtros tem fundo próprio e letra legível (contraste ≥ 4,5)`, r.length > 5 && !r.some(([bg]) => /rgba\(0, 0, 0, 0\)/.test(bg)) && piores[0] >= 4.5, { n: r.length, pior: piores[0], ex: r[0] });
+  }
+  await pg.evaluate(() => document.documentElement.removeAttribute('data-tema'));
+}
+
 console.log('\n  — 7. no celular —');
 {
   const m = await nav.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });

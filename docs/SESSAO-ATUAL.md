@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 30 set 2026 (v308 no ar)
+Última atualização: 30 set 2026 (v309 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -20,7 +20,12 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v308 (30 set) — nas Colunas, o campo Data ordena sem filtrar: "Todos, por prazo
+v309 (30 set) — a entrada espera o banco lento (até 2 min, com aviso) em vez de
+desistir aos 25 s; sem a frase "vêm do banco"; o filtro do Quadro se lê no
+Windows. Causa do "não carrega": incidente da Supabase (latência no Leste dos
+EUA), medido 1,6–54 s por pedido. Consulta só de leitura para o founder:
+`docs/ENGINEERING/saude-1-o-banco.sql` (descartar banco cheio/só leitura).
+Antes, v308 (30 set) — nas Colunas, o campo Data ordena sem filtrar: "Todos, por prazo
 de entrega" e "Todos, pela data em que vai ao ar".
 Antes, v307 (30 set) — quem não é administrador abre o Quadro em "Por prazo" com "Só os
 meus" (sugestão aceita pelo founder); administrador abre em Colunas.

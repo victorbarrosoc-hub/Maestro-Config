@@ -37,7 +37,7 @@
 (function(){
   'use strict';
   if(window.MaestroEntrada2) return;
-  const E = window.MaestroEntrada2 = { versao: 'v308', fase: 'inicio', diario: [] };
+  const E = window.MaestroEntrada2 = { versao: 'v309', fase: 'inicio', diario: [] };
   const anota = (...x) => { E.diario.push([Math.round(performance.now()), ...x]); if(E.diario.length > 80) E.diario.shift(); };
 
   /* ---------------- quem está aqui ---------------- */
@@ -140,7 +140,14 @@
     if(el.dataset.tela === 'carregando') return;
     el.dataset.tela = 'carregando';
     el.innerHTML = `<div class="mCaixa mCentro"><span class="mRoda" aria-hidden="true"></span>
-      <b class="mT">Carregando a sua agência…</b><span class="mSub">A equipe e o trabalho vêm do banco, não deste aparelho.</span></div>`;
+      <b class="mT">Carregando a sua agência…</b><span class="mSub" data-mlento="1" hidden></span></div>`;
+  }
+  /* v309 — "não precisa dessa frase na hora que tá carregando": a espera fica só
+     com o título. A linha só aparece se o banco demorar, para dizer que a tela
+     não travou — ela segue tentando sozinha. */
+  function avisarLento(t){
+    const s = document.querySelector('#mEntrada [data-mlento]');
+    if(s){ s.textContent = t; s.hidden = false; }
   }
   function mostrarErro(){
     conduzir();
@@ -302,15 +309,29 @@
     raiz.classList.add('mTomada');
     mostrarCarregando();
     liberarCortina();
+    /* v309 — 30/set o banco chegou a levar 54 s por resposta e a entrada desistia
+       aos 25 s ("Não consegui carregar"). Agora ela espera o banco lento (até 2 min),
+       diz que está demorando, e pede de novo a leitura que não voltou. */
+    const t0 = Date.now();
+    const lento = setInterval(() => { if(minha !== rodada){ clearInterval(lento); return; }
+      if(Date.now() - t0 > 8000) avisarLento('O banco está mais lento que o normal. Sigo tentando…'); }, 1000);
     let equipe = null;
-    for(let t = 0; t < 4 && minha === rodada; t++){
-      try{ equipe = await lerEquipeDoBanco(); break; }
-      catch(e){ anota('falhou', e.status || String(e)); if(e.status === 401 && !logado()) return; await esperar(700 * (t + 1)); }
-    }
-    if(minha !== rodada || !logado()) return;
-    if(equipe === null){ E.fase = 'erro'; mostrarErro(); return; }
-    /* a sincronização precisa ter lido o banco: é ela que traz o trabalho para a tela */
-    const leu = await ate(() => !window.Sincro || Sincro.lido, 25000);
+    try{
+      for(let t = 0; t < 6 && minha === rodada; t++){
+        try{ equipe = await lerEquipeDoBanco(); break; }
+        catch(e){ anota('falhou', e.status || String(e)); if(e.status === 401 && !logado()) return; await esperar(Math.min(1000 * (t + 1), 5000)); }
+      }
+      if(minha !== rodada || !logado()) return;
+      if(equipe === null){ E.fase = 'erro'; mostrarErro(); return; }
+      /* a sincronização precisa ter lido o banco: é ela que traz o trabalho para a tela */
+      let pediu = Date.now();
+      var leu = await ate(() => {
+        if(!window.Sincro || Sincro.lido) return true;
+        if(Date.now() - pediu > 20000 && !(Sincro.carregando > 0) && typeof sbCarregar === 'function'){
+          pediu = Date.now(); anota('pede a leitura de novo'); try{ sbCarregar(); }catch(e){} }
+        return false;
+      }, 120000, 150);
+    } finally { clearInterval(lento); }
     if(minha !== rodada || !logado()) return;
     if(!leu){ E.fase = 'erro'; mostrarErro(); return; }
     if(!equipe.length){

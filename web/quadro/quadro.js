@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v308', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v309', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -2519,6 +2519,15 @@
   .qdPil span{ opacity:.65; font-size:12px }
   .qdPil.perigo{ color:var(--danger, #E5484D) }
   .qdSel{ font:inherit; font-size:13px; color:var(--tx, #fff); background:var(--sup, rgba(255,255,255,.06)); border:0; border-radius:999px; padding:7px 12px; min-height:32px }
+  /* v309 — "o filtro em alguns computadores tá ficando branco, não dá pra ver": no
+     Windows a lista aberta de um <select> herda a letra clara do campo sobre o fundo
+     branco do sistema. A lista ganha fundo e letra do tema, e o navegador sabe qual é. */
+  .qdSel{ color-scheme:dark }
+  html[data-tema="claro"] .qdSel{ color-scheme:light }
+  .qdSel option, .qdSel optgroup, #qdFolha select option, #qdFolha select optgroup{ background:var(--bg, #1C1C1F); color:var(--tx, #F2F2F2) }
+  .qdSel optgroup{ color:var(--mut, #9A9AA0); font-style:normal }
+  html[data-tema="claro"] .qdSel option, html[data-tema="claro"] #qdFolha select option{ background:#FFFFFF; color:#1C1C1F }
+  html[data-tema="claro"] .qdSel optgroup{ background:#FFFFFF; color:#6B6B70 }
   .qdMut{ color:var(--mut, #999); font-size:13px }
   .qdFiltros{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin:0 0 14px }
   .qdVerBar{ display:flex; gap:10px 14px; flex-wrap:wrap; align-items:center; margin:0 0 14px }

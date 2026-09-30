@@ -349,6 +349,13 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (30 set, v309, NO AR) — a entrada espera o banco lento.** "Não tá
+carregando… cards mudados não tava salvando." O banco levou até 54 s por pedido
+(incidente da Supabase no Leste dos EUA, API Gateway degradado); a entrada
+desistia aos 25 s. Agora espera até 2 min, avisa que está lento e pede a
+leitura de novo; a frase "vêm do banco" saiu. O filtro branco no Windows: as
+opções dos `<select>` do Quadro têm fundo e letra do tema. Consulta só de
+leitura `docs/ENGINEERING/saude-1-o-banco.sql`. Provas 6b na v299, 6c na v306.
 **Fechado (30 set, v308, NO AR) — as colunas em ordem de prazo.** "Tem gente
 que gosta de visualizar o Quadro das colunas por prazo." No campo Data:
 "Todos, por prazo de entrega" / "Todos, pela data em que vai ao ar" (`ord-*`

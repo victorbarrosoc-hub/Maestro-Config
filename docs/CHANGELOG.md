@@ -1,11 +1,42 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.123
+Version: 0.5.124
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.124 — 2026-09-30
+
+**Status:** No ar.
+
+### v309 — a entrada espera o banco lento, e o filtro se lê
+
+Do founder, com prints: "Estou com problema nos dados, não tá carregando. Cards
+mudados não tava salvando"; "'A equipe e o trabalho vêm do banco, não deste
+aparelho' não precisa dessa frase"; "O filtro em alguns computadores tá ficando
+branco, não dá pra ver"; "faz tudo na mesma atualização".
+
+- **Diagnóstico (30/set à tarde):** o banco respondia, mas devagar — medido
+  daqui: 1,6 s a 54 s por pedido mínimo (Google: 0,2 s). A página de status da
+  Supabase mostrava incidente aberto: "Intermittent latency in Eastern US",
+  API Gateway degradado. A entrada desistia aos 25 s e mostrava "Não consegui
+  carregar a sua agência".
+- **Entrada** (`web/entrada/entrada.js`): espera até 2 min; depois de 8 s diz
+  "O banco está mais lento que o normal. Sigo tentando…"; se a leitura da
+  sincronização não voltou em 20 s, pede de novo. A frase fixa saiu.
+- **O que se muda com o banco lento não se perde:** fica na fila do aparelho
+  (`maestro-dados1-fila:<org>`) e sobe a cada 5 s até o banco responder.
+- **Filtro branco:** no Windows a lista aberta do `<select>` herdava a letra
+  clara sobre o fundo branco do sistema. Opções com fundo e letra do tema, e
+  `color-scheme` por tema.
+- **Consulta de saúde, só leitura:** `docs/ENGINEERING/saude-1-o-banco.sql`
+  (tamanho do banco, modo só leitura, conexões, tabelas maiores) — para
+  descartar o banco cheio (o plano gratuito vira só leitura em 0,5 GB).
+- Provas: 6b.1–6b.3 em `v299-a-entrada.mjs` (20 s por resposta termina na
+  lista, nunca no erro; 36 no total) e 6c.1–6c.2 em `v306-por-prazo.mjs`
+  (contraste ≥ 4,5 nos dois temas; 35 no total).
 
 ## 0.5.123 — 2026-09-30
 

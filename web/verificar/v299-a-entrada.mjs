@@ -264,6 +264,24 @@ console.log('\n  — 6. banco fora do ar —');
   await ctx.close();
 }
 
+console.log('\n  — 6b. v309: banco MUITO lento (30/set: 54 s por resposta) —');
+{
+  const { ctx, pg } = await aparelho({ atraso: 20000 });
+  await pg.waitForTimeout(2500);
+  await pg.locator('[data-go="entrar"]:visible').first().click();
+  await logar(pg, 'ejup.mkt@gmail.com');
+  await pg.waitForFunction(() => { const m = document.getElementById('mEntrada'); return m && m.dataset.tela === 'carregando'; }, null, { timeout: 10000 }).catch(() => {});
+  const cedo = await pg.evaluate(() => { const s = document.querySelector('#mEntrada [data-mlento]'); return { txt: document.getElementById('mEntrada').innerText.trim(), sub: s ? !s.hidden : null }; });
+  checa('6b.1 a espera é só "Carregando a sua agência…" (sem a frase do banco)', /^Carregando a sua agência…$/.test(cedo.txt) && cedo.sub === false, cedo);
+  await pg.waitForTimeout(10000);
+  const meio = await pg.evaluate(() => document.getElementById('mEntrada').innerText);
+  checa('6b.2 passados alguns segundos, diz que o banco está lento e que segue tentando', /mais lento que o normal/.test(meio), meio);
+  await pg.waitForFunction(() => { const m = document.getElementById('mEntrada'); return m && m.dataset.tela !== 'carregando'; }, null, { timeout: 150000 }).catch(() => {});
+  const qs = await quadros(pg);
+  checa('6b.3 com 20 s por resposta, não desiste: termina na lista da equipe, nunca no erro', qs.every(q => q.tela !== 'erro') && qs[qs.length - 1].tela === 'lista', resumo(qs));
+  await ctx.close();
+}
+
 console.log('\n  — 7. computador —');
 {
   const { ctx, pg } = await aparelho({ largura: 1440, atraso: 800 });
