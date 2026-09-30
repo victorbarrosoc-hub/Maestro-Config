@@ -1,11 +1,30 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.119
+Version: 0.5.120
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.120 — 2026-09-30
+
+**Status:** No ar.
+
+### v305 — o sino leva ao lugar
+
+- "Quando clicar na notificação, abra o local… se alguém me mencionou em algum card,
+  eu entro no card." O sino marcava como lido e só sabia abrir conversa de canal; o
+  resto fechava a janela e deixava a pessoa onde estava (e o toque no aviso de card
+  da v304 nunca chegava: a camada antiga do sino corta o clique para os outros).
+  Agora cada aviso tem destino: menção num card abre o card na conversa; card que
+  passou a ser seu abre o card; elogio do cliente abre o card elogiado; tarefa antiga
+  abre o card dela (ou o Quadro); lote abre Aprovações; mensagem de canal continua
+  abrindo a conversa. O toque é lido no fim do toque (e no Enter).
+- **Aviso novo:** passar um card para outra pessoa (ou criar já com @pessoa) avisa
+  essa pessoa — sino, aviso na tela e no celular.
+- O card abre na hora quando já está no aparelho (antes esperava o banco responder).
+- 14 provas em `web/verificar/v305-o-sino-leva.mjs` (computador e celular).
 
 ## 0.5.119 — 2026-09-29
 

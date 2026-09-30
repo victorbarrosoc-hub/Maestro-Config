@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v304', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v305', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -191,6 +191,7 @@
 
   function mudar(cli, id, campos){
     const p = achar(cli, id); if(!p) return null;
+    const respAntes = p.resp || null;
     let mudou = false;
     for(const [k, v] of Object.entries(campos)){
       const igual = JSON.stringify(p[k] === undefined ? null : p[k]) === JSON.stringify(v === undefined ? null : v);
@@ -201,6 +202,7 @@
     if(!mudou) return p;
     p.mod = Date.now();
     salvar(cli);
+    if('resp' in campos && (p.resp || null) !== respAntes){ try{ Q.avisarDono && Q.avisarDono(cli, id, respAntes, p.resp || null); }catch(e){} }
     return p;
   }
   Q.mudar = mudar;
@@ -257,6 +259,7 @@
     lista.push(p);
     anota('novo', cli, id, col);
     salvar(cli);
+    if(p.resp){ try{ Q.avisarDono && Q.avisarDono(cli, id, null, p.resp); }catch(e){} }
     return p;
   }
   Q.novo = novo;
@@ -1242,8 +1245,8 @@
     let n = 0;
     (function tenta(){
       const dentro = S.usuario && S.usuario.tipo === 'agencia' && S.view === 'agency';
-      const lido = !window.Sincro || Sincro.lido !== false || n > 40;      /* sem banco (ou banco mudo), não espera para sempre */
-      if(dentro && lido && achar(cli, id)){
+      /* o card já está aqui: abre na hora (o que chegar do banco depois entra na ficha aberta) */
+      if(dentro && achar(cli, id)){
         if(S.route !== 'producao'){ if(typeof go === 'function') go('agency', 'producao'); else { S.route = 'producao'; render(); } }
         Q.folhaAba = Q.folhaAba || 'conteudo';
         abrirFolha(cli + '|' + id);
@@ -1358,14 +1361,58 @@
   function guardarVistos(){ try{ if(vistos && vistosDe) localStorage.setItem(VISTOS_CHAVE + ':' + vistosDe, JSON.stringify([...vistos].slice(-200))); }catch(e){} }
   Q.olharMarcacoes = olharMarcacoes;
   setInterval(() => { try{ olharMarcacoes(); }catch(e){} }, 2500);
-  /* no sino: tocar num aviso de card abre o card, na conversa */
+  /* v305 — "quando clicar na notificação, abra o local… se alguém me mencionou num card,
+     eu entro no card." O sino já marcava como lido e só sabia abrir conversa de canal;
+     o resto fechava a janela e deixava a pessoa onde estava. Agora cada aviso diz para
+     onde leva: o card (menção, card que passou a ser seu, elogio do cliente) ou a tela.
+     O toque do sino é tratado pela camada antiga, que corta o clique para os outros —
+     por isso aqui se escuta o fim do toque (e o Enter), e o destino abre logo depois. */
+  function destinoDoAviso(a){
+    if(!a) return null;
+    if(a.card) return { card: a.card, conversa: /:cm_/.test(String(a.chave || '')) };
+    const ch = String(a.chave || '');
+    let m = /^elogio:(.+)$/.exec(ch);
+    if(m){ const it = Object.values(S.pedidosCli || {}).find(x => x && x.id === m[1]);
+      const n = it && /^elogio:(\d{1,18})$/.exec(String(it.formato || ''));
+      if(n && achar(it.cli, n[1])) return { card: it.cli + '|' + n[1] }; }
+    m = /^tar:([^:]+)/.exec(ch);
+    if(m){ const t = ((S.ensaio && S.ensaio.tarefas) || []).find(x => String(x.id) === m[1]);
+      if(t && t.cli && t.cardId && achar(t.cli, t.cardId)) return { card: t.cli + '|' + t.cardId };
+      return { rota: 'producao' }; }
+    if(/^lote:/.test(ch)) return { rota: 'aprovacoes' };
+    return null;                                   /* canal: a camada antiga já abre a conversa */
+  }
+  Q.destinoDoAviso = destinoDoAviso;
+  function abrirAviso(id){
+    const a = (S.avisos || []).find(x => x && x.id === id); const d = destinoDoAviso(a); if(!d) return false;
+    setTimeout(() => {
+      try{ S.modal = null; if(typeof renderLayer === 'function') renderLayer(); }catch(e){}
+      if(d.card) abrirCard(d.card, d.conversa);
+      else if(d.rota){ if(typeof go === 'function') go('agency', d.rota); else { S.route = d.rota; render(); } }
+    }, 80);
+    return true;
+  }
+  Q.abrirAviso = abrirAviso;
   let avisoTocado = null;
   addEventListener('pointerdown', e => { const t = e.target.closest && e.target.closest('[data-avabrir]'); avisoTocado = t ? t.dataset.avabrir : null; }, true);
-  addEventListener('click', e => {
-    const t = e.target.closest && e.target.closest('[data-avabrir]'); if(!t) return;
-    const a = (S.avisos || []).find(x => x && x.id === (t.dataset.avabrir || avisoTocado));
-    if(a && a.card) setTimeout(() => abrirCard(a.card, true), 30);
-  }, true);
+  addEventListener('pointerup', e => { const t = e.target.closest && e.target.closest('[data-avabrir]');
+    if(t && t.dataset.avabrir === avisoTocado) abrirAviso(t.dataset.avabrir); avisoTocado = null; }, true);
+  addEventListener('keydown', e => { if(e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target.closest && e.target.closest('[data-avabrir]'); if(t) abrirAviso(t.dataset.avabrir); }, true);
+  /* card que passa a ser de outra pessoa: ela fica sabendo, e o aviso leva ao card */
+  function avisarDono(cli, id, antes, depois){
+    const me = eu(); if(!depois || depois === antes || depois === me || typeof avisar !== 'function') return;
+    const p = achar(cli, id); if(!p) return;
+    const key = cli + '|' + id, chave = 'card:' + key + ':resp:' + depois;
+    const x = pessoa(me);
+    try{
+      avisar({ para: [depois], autor: me, chave, txt: `${x ? pNome(x) : 'Alguém'} passou um card para você`,
+        sub: String(cli === AG ? tema(p, cli) : (p.t || tema(p, cli))).slice(0, 110), ir: '/quadro#card=' + encodeURIComponent(key) });
+      const a = (S.avisos || []).find(v => v && v.chave === chave);
+      if(a){ a.card = key; a.ir = '/quadro#card=' + encodeURIComponent(key); }
+    }catch(e){ anota('aviso-dono-falhou', e && e.message); }
+  }
+  Q.avisarDono = avisarDono;
   /* sugestões ao escrever @ */
   function sugerir(ta){
     const box = ta.closest('form').querySelector('.qdMenSug');

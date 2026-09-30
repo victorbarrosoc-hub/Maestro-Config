@@ -349,6 +349,13 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (30 set, v305, NO AR) — o sino leva ao lugar.** "Quando clicar na
+notificação, abra o local." Cada aviso tem destino (`MaestroQuadro.destinoDoAviso`):
+menção em card → o card na conversa; card passado para você (aviso novo, em
+`mudar`/`novo`) → o card; elogio → o card; tarefa antiga → o card ou o Quadro; lote →
+Aprovações; canal segue como era. **Armadilha:** o clique do sino é da camada v79,
+que corta a propagação na janela — o destino é lido no `pointerup`/Enter. 14 provas
+em `web/verificar/v305-o-sino-leva.mjs`.
 **Fechado (29 set, v304, NO AR) — o card completo.** Filtro de data em dois
 grupos (entrega da equipe · postagem), só o trabalho da casa conta na entrega;
 datas por fora com nome ("Entrega", "No ar"); trocar o cliente do card (sai do
