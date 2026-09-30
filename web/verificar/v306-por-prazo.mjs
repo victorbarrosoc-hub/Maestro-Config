@@ -113,6 +113,22 @@ console.log('\n  — 6. de volta a Colunas: o filtro de data de antes segue vale
   checa('6.3 limpar volta a "Qualquer data"', await pg.evaluate(() => MaestroQuadro.filtroPrazo === 'todos'));
 }
 
+console.log('\n  — 6b. v308: nas Colunas, ver todos em ordem de prazo —');
+{
+  const ordem = k => pg.evaluate(k => [...document.querySelectorAll(`#root .qdCol[data-qdcol="${k}"] .qdCard`)].map(c => c.dataset.qdkey.split('|')[1]), k);
+  const antes = await pg.evaluate(() => document.querySelectorAll('#root .qdCol .qdCard').length);
+  const op = await pg.evaluate(() => [...document.querySelectorAll('#root [data-qdprazo] optgroup')].map(g => g.label + ':' + g.children.length));
+  checa('6b.1 o campo Data tem o grupo "Ver todos, em ordem de prazo" com as duas ordens', op[0] === 'Ver todos, em ordem de prazo:2', op);
+  await pg.evaluate(() => { const f = S.pautas[CLIS()[0].id]; const a = f.find(p => p.id === 9004), b = f.find(p => p.id === 9001); a.ordem = 1; b.ordem = 2; render(); });
+  await pg.selectOption('#root [data-qdprazo]', 'ord-entrega'); await pg.waitForTimeout(120);
+  const af = await ordem('afazer'), n = await pg.evaluate(() => document.querySelectorAll('#root .qdCol .qdCard').length);
+  checa('6b.2 "por prazo de entrega": nenhum card some, e o atrasado sobe acima do de 40 dias', n === antes && af.indexOf('9001') < af.indexOf('9004'), { af, n, antes });
+  await pg.selectOption('#root [data-qdprazo]', 'ord-ar'); await pg.waitForTimeout(120);
+  const fz = await ordem('fazendo');
+  checa('6b.3 "pela data em que vai ao ar": o que vai ao ar amanhã antes do sem data', fz.indexOf('9008') < fz.indexOf('9002'), fz);
+  await pg.click('#root [data-qdlimpar]'); await pg.waitForTimeout(100);
+}
+
 console.log('\n  — 7. no celular —');
 {
   const m = await nav.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });

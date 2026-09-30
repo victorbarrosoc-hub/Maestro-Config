@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v307', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v308', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -545,7 +545,10 @@
   const PRAZOS = [['todos', 'Qualquer data'],
     ['atrasados', 'Entrega atrasada', 'Entrega'], ['hoje', 'Entrega hoje', 'Entrega'], ['semana', 'Entrega esta semana', 'Entrega'],
     ['proxima', 'Entrega na próxima semana', 'Entrega'], ['sem', 'Sem data de entrega', 'Entrega'],
-    ['pub-hoje', 'Vai ao ar hoje', 'Postagem'], ['pub-semana', 'Vai ao ar esta semana', 'Postagem'], ['pub-proxima', 'Vai ao ar na próxima semana', 'Postagem']];
+    ['pub-hoje', 'Vai ao ar hoje', 'Postagem'], ['pub-semana', 'Vai ao ar esta semana', 'Postagem'], ['pub-proxima', 'Vai ao ar na próxima semana', 'Postagem'],
+    /* v308 — "tem gente que gosta de visualizar o Quadro das colunas por prazo": não
+       filtra nada, só põe cada coluna em ordem de data (o mais urgente em cima) */
+    ['ord-entrega', 'Todos, por prazo de entrega', 'Ordem'], ['ord-ar', 'Todos, pela data em que vai ao ar', 'Ordem']];
   const EM_TRABALHO = ['pauta', 'afazer', 'fazendo', 'revisao'];
   /* a data como a ficha grava (2026-10-09); o que vier noutro jeito (09/10/2026) é lido também */
   function diaDe(v){
@@ -558,7 +561,7 @@
   Q.diaDe = diaDe;
   function passaPrazo(x, f){
     f = f || Q.filtroPrazo || 'todos';
-    if(f === 'todos') return true;
+    if(f === 'todos' || f.startsWith('ord-')) return true;
     const h = hoje(), ini = segunda(h);
     const naSemana = (d, n) => d >= soma(ini, 7 * n) && d <= soma(ini, 7 * n + 6);
     if(f.startsWith('pub-')){
@@ -641,9 +644,10 @@
         ${clientes().map(c => `<option value="${esc_(c.id)}" ${fcli === c.id ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}
       </select></label>`;
     const selData = v === 'prazo' ? '' : (() => { const base = semPrazoFiltro(); const fp = Q.filtroPrazo || 'todos';
-      const op = ([k, n]) => `<option value="${k}" ${fp === k ? 'selected' : ''}>${n}${k === 'todos' ? '' : ` (${base.filter(x => passaPrazo(x, k)).length})`}</option>`;
+      const op = ([k, n]) => `<option value="${k}" ${fp === k ? 'selected' : ''}>${n}${k === 'todos' || k.startsWith('ord-') ? '' : ` (${base.filter(x => passaPrazo(x, k)).length})`}</option>`;
+      const GR = { Entrega: 'Entrega da equipe', Postagem: 'Postagem (vai ao ar)', Ordem: 'Ver todos, em ordem de prazo' };
       return `<label class="qdFCampo${fp !== 'todos' ? ' ligado' : ''}"><span>Data</span><select class="qdSel${fp !== 'todos' ? ' ligado' : ''}" data-qdprazo="1" aria-label="Filtrar por data">${op(PRAZOS[0])}
-        ${['Entrega', 'Postagem'].map(g => `<optgroup label="${g === 'Entrega' ? 'Entrega da equipe' : 'Postagem (vai ao ar)'}">${PRAZOS.filter(x => x[2] === g).map(op).join('')}</optgroup>`).join('')}</select></label>`; })();
+        ${['Ordem', 'Entrega', 'Postagem'].map(g => `<optgroup label="${GR[g]}">${PRAZOS.filter(x => x[2] === g).map(op).join('')}</optgroup>`).join('')}</select></label>`; })();
     const nl = filtrosLigados();
     const seg = (k, t, i) => `<button type="button" role="tab" aria-selected="${v === k}" class="${v === k ? 'on' : ''}" data-qdvista="${k}">${ic_(i, 13)}<span>${t}</span></button>`;
     return `<div class="qdVerBar">
@@ -702,7 +706,7 @@
     itens.forEach(x => porCol[x.col].push(x));
     Object.values(porCol).forEach(l => l.sort((a, b) => chaveOrdem(a.p) - chaveOrdem(b.p)));
     /* com o filtro de prazo ligado, o mais urgente em cima */
-    if((Q.filtroPrazo || 'todos') !== 'todos'){ const pub = String(Q.filtroPrazo).startsWith('pub-');
+    if((Q.filtroPrazo || 'todos') !== 'todos'){ const pub = String(Q.filtroPrazo).startsWith('pub-') || Q.filtroPrazo === 'ord-ar';
       Object.values(porCol).forEach(l => l.sort((a, b) => pub
         ? (diaDe(a.p.data) || '9999').localeCompare(diaDe(b.p.data) || '9999') || String(a.p.hora || '99').localeCompare(String(b.p.hora || '99'))
         : (diaDe(a.p.prazo) || '9999').localeCompare(diaDe(b.p.prazo) || '9999') || String(a.p.prazoHora || '99').localeCompare(String(b.p.prazoHora || '99')))); }

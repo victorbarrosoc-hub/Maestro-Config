@@ -100,7 +100,7 @@ console.log('\n  — o filtro de prazo —');
     render(); });
   const vis = () => pg.evaluate(() => [...document.querySelectorAll('#root .qdCard')].filter(x => x.getClientRects().length).map(x => (x.querySelector('.qdTit') || x).textContent.trim()));
   const opcoes = await pg.evaluate(() => [...document.querySelectorAll('#root [data-qdprazo] option')].map(o => o.textContent));
-  checa('3.1 o filtro está no Quadro, em dois grupos (entrega · postagem), com a conta de cada opção', opcoes.length === 9 && /Entrega atrasada \(2\)/.test(opcoes.join()) && /Entrega hoje \(1\)/.test(opcoes.join()) && /Vai ao ar hoje \(1\)/.test(opcoes.join()), opcoes);
+  checa('3.1 o filtro está no Quadro, em dois grupos (entrega · postagem), com a conta de cada opção', opcoes.length === 11 && /Entrega atrasada \(2\)/.test(opcoes.join()) && /Entrega hoje \(1\)/.test(opcoes.join()) && /Vai ao ar hoje \(1\)/.test(opcoes.join()), opcoes);
   await pg.selectOption('#root [data-qdprazo]', 'atrasados'); await pg.waitForTimeout(150);
   let v = await vis();
   checa('3.2 "Entrega atrasada": o que passou do prazo e ainda é da casa (Revisão conta; o que já foi ao cliente ou saiu, não)', v.length === 2 && v.some(t => /Atrasado A/.test(t)) && v.some(t => /Na revisão atrasado F/.test(t)), v);

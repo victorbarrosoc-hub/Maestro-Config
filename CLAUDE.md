@@ -349,6 +349,10 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (30 set, v308, NO AR) — as colunas em ordem de prazo.** "Tem gente
+que gosta de visualizar o Quadro das colunas por prazo." No campo Data:
+"Todos, por prazo de entrega" / "Todos, pela data em que vai ao ar" (`ord-*`
+em `PRAZOS`) — não filtra, só ordena cada coluna. Provas 6b na v306.
 **Fechado (30 set, v307, NO AR) — cada um abre no seu.** Quem não é
 administrador abre o Quadro em "Por prazo" com "Só os meus"; administrador, em
 Colunas com todos. A escolha da pessoa fica no aparelho

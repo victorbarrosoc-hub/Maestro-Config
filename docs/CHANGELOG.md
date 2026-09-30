@@ -1,11 +1,25 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.122
+Version: 0.5.123
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.123 — 2026-09-30
+
+**Status:** No ar.
+
+### v308 — as colunas em ordem de prazo
+
+Pedido do founder (com print do campo Data): "Bota aqui por prazo também, pq
+tem gente que gosta de visualizar o Quadro das colunas por prazo." O campo
+Data das Colunas ganha, no topo, o grupo "Ver todos, em ordem de prazo":
+"Todos, por prazo de entrega" e "Todos, pela data em que vai ao ar". Não
+esconde card nenhum — só põe cada coluna em ordem (o mais urgente em cima,
+sem data no fim). Provas 6b.1–6b.3 em `web/verificar/v306-por-prazo.mjs`
+(33 no total); v290 3.1 conta 11 opções.
 
 ## 0.5.122 — 2026-09-30
 
