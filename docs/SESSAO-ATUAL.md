@@ -81,6 +81,15 @@ de colunas ao arrastar, Minha lista como o dia da pessoa.
 
 ## Em andamento
 
+- **BANCO ENCHENDO (30/set):** saude-1 no banco de produção: 208 MB de 500 MB,
+  não está só leitura, 18 conexões, nenhuma presa. `pauta_historico` = 179 MB
+  desde 26/set (~45 MB/dia → trava em ~7 dias). Pronto para o founder rodar:
+  `docs/ENGINEERING/saude-2-aparar-o-historico.sql` (afina as cópias: uma por
+  hora >24 h, uma por dia >7 dias; resumos ficam todos; gravador a cada 60 min;
+  tarefa do Ensaio sumida não é mais perigo) e DEPOIS, sozinho,
+  `vacuum full public.pauta_historico;`. 12 provas em `saude-2-teste.sql`.
+  Conferir depois com a saude-1.
+
 - Achado do ensaio (não consertado, sem pedido): o código do Ensaio antigo, sem
   tela desde a v277, ainda cria "tarefas" escondidas no estado da agência para
   cada card (`sincronizarJobs`). É gravação à toa no documento da equipe (onde
