@@ -81,14 +81,12 @@ de colunas ao arrastar, Minha lista como o dia da pessoa.
 
 ## Em andamento
 
-- **BANCO ENCHENDO (30/set):** saude-1 no banco de produção: 208 MB de 500 MB,
-  não está só leitura, 18 conexões, nenhuma presa. `pauta_historico` = 179 MB
-  desde 26/set (~45 MB/dia → trava em ~7 dias). Pronto para o founder rodar:
-  `docs/ENGINEERING/saude-2-aparar-o-historico.sql` (afina as cópias: uma por
-  hora >24 h, uma por dia >7 dias; resumos ficam todos; gravador a cada 60 min;
-  tarefa do Ensaio sumida não é mais perigo) e DEPOIS, sozinho,
-  `vacuum full public.pauta_historico;`. 12 provas em `saude-2-teste.sql`.
-  Conferir depois com a saude-1.
+- **BANCO ENCHENDO (30/set) — saude-2 APLICADA em produção em 30/set:** cópias
+  742 → 529 (as das últimas 24 h ficam; a faxina afina depois), 4941 gravações
+  mantidas, gravador novo "sim". Gravações em 24 h: `__estado__` 2065 (!),
+  n0 409, `__config__` 249, demais ~40. O `__estado__` é o código antigo do
+  Ensaio (repositor) + lembretes: pedir ao founder para desligar o repositor.
+  Falta: `vacuum full public.pauta_historico;` (sozinho) e a saude-1 amanhã.
 
 - Achado do ensaio (não consertado, sem pedido): o código do Ensaio antigo, sem
   tela desde a v277, ainda cria "tarefas" escondidas no estado da agência para
