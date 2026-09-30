@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v305', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v306', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -499,7 +499,7 @@
   const iconeRede = (k, cls) => `<span class="qdRede ${cls || ''}" style="--pc:${REDE[k][0]}" title="${esc_(nomeRede(k))}" aria-label="${esc_(nomeRede(k))}"><svg viewBox="0 0 24 24" aria-hidden="true">${REDE[k][1]}</svg></span>`;
   const redesDoCard = p => { const l = platsDe(p); return l.length ? `<span class="qdRedes">${l.map(k => iconeRede(k)).join('')}</span>` : ''; };
   Q.platsDe = platsDe;
-  function cartao(x){
+  function cartao(x, comCol){
     const { cli, p, col } = x;
     const key = cli + '|' + p.id;
     const ck = Array.isArray(p.check) ? p.check : [];
@@ -517,6 +517,7 @@
       ${p.ajustePendente ? `<div class="qdAjuste">Ajuste pedido pelo cliente</div>` : ''}
       ${col === 'revisao' && revisores().length ? `<div class="qdRevisa"><span>Revisa</span>${revisores().slice(0, 3).map(x => avPes(x.id, 'qdAvP mini')).join('')}<em>${esc_(revisores().slice(0, 2).map(x => String(x.n).split(/\s+/)[0]).join(', '))}${revisores().length > 2 ? '…' : ''}</em></div>` : ''}
       <div class="qdMeta">
+        ${comCol ? `<span class="qdChip qdDot qdNaCol" style="--qdc:${COL[col].c}" title="Coluna">${esc_(cli === AG && col === 'publicado' ? 'Feito' : COL[col].n)}</span>` : ''}
         ${chipPrazo(p, col)}
         ${p.data && cli !== AG ? `<span class="qdChip qdData pub" title="Vai ao ar em">${ic_('cal', 11)}<em>No ar</em> ${esc_(ddmm(p.data))}${p.hora ? ' ' + esc_(p.hora) : ''}</span>` : ''}
         ${ck.length ? `<span class="qdChip ${feitos === ck.length ? 'ok' : ''}" title="Checklist">${ic_('checkc', 11)}${feitos}/${ck.length}</span>` : ''}
@@ -581,6 +582,98 @@
       && (Q.filtroPessoa === 'todos' || (Q.filtroPessoa === 'ninguem' ? !x.p.resp : x.p.resp === Q.filtroPessoa)));
   }
   function filtrados(){ return semPrazoFiltro().filter(x => passaPrazo(x)); }
+
+  /* v306 — "Quero na aba Quadro o filtro por cards tenha Por prazo também… acho
+     que pode organizar melhor esses filtros de visualização dos cards."
+     Duas maneiras de VER (Colunas · Por prazo) e, separado, o que FILTRA
+     (pessoa, cliente, data), numa barra só, com "Limpar" quando algo está
+     ligado. A escolha da vista fica no aparelho. */
+  const VISTA_CHAVE = 'maestro-quadro-vista-v1';
+  function vistaQd(){
+    if(!Q.vistaQd){ let v = null; try{ v = localStorage.getItem(VISTA_CHAVE); }catch(e){}
+      Q.vistaQd = v === 'prazo' ? 'prazo' : 'colunas'; }
+    return Q.vistaQd;
+  }
+  function mudarVista(v){ Q.vistaQd = v === 'prazo' ? 'prazo' : 'colunas'; try{ localStorage.setItem(VISTA_CHAVE, Q.vistaQd); }catch(e){} }
+  const baseDoPrazo = () => (Q.prazoBase === 'ar' ? 'ar' : 'entrega');
+  function filtrosLigados(){
+    let n = 0;
+    if(Q.filtroPessoa && Q.filtroPessoa !== 'todos') n++;
+    if(Q.filtroCli && Q.filtroCli !== 'todos') n++;
+    if(vistaQd() === 'colunas' && (Q.filtroPrazo || 'todos') !== 'todos') n++;
+    return n;
+  }
+  function barraFiltros(){
+    const v = vistaQd(), fpes = Q.filtroPessoa || 'todos', fcli = Q.filtroCli || 'todos';
+    const pes = pessoas(), mim = eu();
+    const selPes = `<label class="qdFCampo${fpes !== 'todos' ? ' ligado' : ''}"><span>Pessoa</span>
+      <select class="qdSel" data-qdfpes="1" aria-label="Filtrar por pessoa">
+        <option value="todos">Todas</option>
+        ${mim && pessoa(mim) ? `<option value="${esc_(mim)}" ${fpes === mim ? 'selected' : ''}>Só os meus</option>` : ''}
+        <option value="ninguem" ${fpes === 'ninguem' ? 'selected' : ''}>Sem responsável</option>
+        <optgroup label="Equipe">${pes.filter(x => x.id !== mim).map(x => `<option value="${esc_(x.id)}" ${fpes === x.id ? 'selected' : ''}>${esc_(x.n)}</option>`).join('')}</optgroup>
+      </select></label>`;
+    const selCliF = `<label class="qdFCampo${fcli !== 'todos' ? ' ligado' : ''}"><span>Cliente</span>
+      <select class="qdSel" data-qdfc="1" aria-label="Filtrar por cliente">
+        <option value="todos">Todos</option>
+        <option value="${AG}" ${fcli === AG ? 'selected' : ''}>Agência</option>
+        ${clientes().map(c => `<option value="${esc_(c.id)}" ${fcli === c.id ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}
+      </select></label>`;
+    const selData = v === 'prazo' ? '' : (() => { const base = semPrazoFiltro(); const fp = Q.filtroPrazo || 'todos';
+      const op = ([k, n]) => `<option value="${k}" ${fp === k ? 'selected' : ''}>${n}${k === 'todos' ? '' : ` (${base.filter(x => passaPrazo(x, k)).length})`}</option>`;
+      return `<label class="qdFCampo${fp !== 'todos' ? ' ligado' : ''}"><span>Data</span><select class="qdSel${fp !== 'todos' ? ' ligado' : ''}" data-qdprazo="1" aria-label="Filtrar por data">${op(PRAZOS[0])}
+        ${['Entrega', 'Postagem'].map(g => `<optgroup label="${g === 'Entrega' ? 'Entrega da equipe' : 'Postagem (vai ao ar)'}">${PRAZOS.filter(x => x[2] === g).map(op).join('')}</optgroup>`).join('')}</select></label>`; })();
+    const nl = filtrosLigados();
+    const seg = (k, t, i) => `<button type="button" role="tab" aria-selected="${v === k}" class="${v === k ? 'on' : ''}" data-qdvista="${k}">${ic_(i, 13)}<span>${t}</span></button>`;
+    return `<div class="qdVerBar">
+      <div class="qdVista" role="tablist" aria-label="Como ver os cards">${seg('colunas', 'Colunas', 'kanban')}${seg('prazo', 'Por prazo', 'clock')}</div>
+      <div class="qdFiltros" role="group" aria-label="Filtros">${selPes}${selCliF}${selData}
+        ${nl ? `<button type="button" class="qdLimpar" data-qdlimpar="1">Limpar filtros <span>${nl}</span></button>` : ''}</div>
+    </div>`;
+  }
+  /* A vista "Por prazo": os mesmos cards (com os mesmos filtros), em faixas de
+     tempo. Por padrão fala da ENTREGA da equipe (só o que ainda é trabalho da
+     casa); "Vai ao ar" agrupa pela data de postagem o que ainda não foi ao ar. */
+  function gruposPrazo(itens, ar){
+    const h = hoje(), am = soma(h, 1), ini = segunda(h), fimSem = soma(ini, 6), fimProx = soma(ini, 13);
+    const G = [['atrasados', ar ? 'Passou da data' : 'Atrasados'], ['hoje', 'Hoje'], ['amanha', 'Amanhã'], ['semana', 'Ainda esta semana'],
+      ['proxima', 'Próxima semana'], ['depois', 'Mais para a frente'], ['sem', ar ? 'Sem data de postagem' : 'Sem prazo']].map(([k, n]) => ({ k, n, l: [] }));
+    const g = Object.fromEntries(G.map(x => [x.k, x.l]));
+    const dia = x => diaDe(ar ? x.p.data : x.p.prazo), hora = x => String((ar ? x.p.hora : x.p.prazoHora) || '99');
+    for(const x of itens){
+      const d = dia(x);
+      if(!d) g.sem.push(x);
+      else if(d < h) g.atrasados.push(x);
+      else if(d === h) g.hoje.push(x);
+      else if(d === am) g.amanha.push(x);
+      else if(d <= fimSem) g.semana.push(x);
+      else if(d <= fimProx) g.proxima.push(x);
+      else g.depois.push(x);
+    }
+    G.forEach(x => x.l.sort((a, b) => (dia(a) || '9999').localeCompare(dia(b) || '9999') || hora(a).localeCompare(hora(b))
+      || (b.p.importante ? 1 : 0) - (a.p.importante ? 1 : 0) || chaveOrdem(a.p) - chaveOrdem(b.p)));
+    return G;
+  }
+  Q.gruposPrazo = gruposPrazo;
+  function vistaPorPrazo(){
+    const ar = baseDoPrazo() === 'ar';
+    const base = semPrazoFiltro();
+    const itens = ar ? base.filter(x => x.cli !== AG && x.col !== 'publicado') : base.filter(x => EM_TRABALHO.includes(x.col));
+    const fora = base.length - itens.length;
+    const G = gruposPrazo(itens, ar);
+    const sub = `<div class="qdPzBase" role="tablist" aria-label="Qual data">
+      <button type="button" role="tab" class="${!ar ? 'on' : ''}" aria-selected="${!ar}" data-qdpzbase="entrega">Entrega da equipe</button>
+      <button type="button" role="tab" class="${ar ? 'on' : ''}" aria-selected="${ar}" data-qdpzbase="ar">Vai ao ar</button>
+      <span class="qdMut">${itens.length} ${itens.length === 1 ? 'card' : 'cards'}${fora ? ` · ${fora} ${ar ? 'já no ar ou da agência' : 'já saíram da equipe'}` : ''}</span></div>`;
+    const secoes = G.filter(x => x.l.length).map(x => { const k = 'pz-' + x.k, ver = quantosVer(k), resta = x.l.length - ver;
+      return `<section class="qdPzSec qdPz-${x.k}" data-qdpz="${x.k}">
+        <header class="qdPzHd"><b>${x.n}</b><span>${x.l.length}</span></header>
+        <div class="qdPzGrade">${x.l.slice(0, ver).map(y => cartao(y, true)).join('')}</div>
+        ${resta > 0 ? `<button type="button" class="qdMais" data-qdmais="${k}">Mostrar mais ${Math.min(LIMITE, resta)} <span>· ${resta} ${resta === 1 ? 'escondido' : 'escondidos'}</span></button>` : ''}
+        ${ver > LIMITE ? `<button type="button" class="qdMenos" data-qdmenos="${k}">Mostrar só 10</button>` : ''}
+      </section>`; }).join('');
+    return `${sub}<div class="qdPorPrazo">${secoes || `<p class="qdVazio qdPzVazio">${ar ? 'Nenhum card esperando para ir ao ar' : 'Nada por fazer'}${filtrosLigados() ? ' com esses filtros' : ''}.</p>`}</div>`;
+  }
   function vistaQuadro(){
     const itens = filtrados();
     const porCol = Object.fromEntries(COLS.map(([k]) => [k, []]));
@@ -593,21 +686,8 @@
         : (diaDe(a.p.prazo) || '9999').localeCompare(diaDe(b.p.prazo) || '9999') || String(a.p.prazoHora || '99').localeCompare(String(b.p.prazoHora || '99')))); }
     /* v290 — o que já foi ao ar: o mais recente primeiro (são esses que se procuram) */
     porCol.publicado.sort((a, b) => String(b.p.data || '').localeCompare(String(a.p.data || '')) || ((b.p.feitoEm || b.p.mod || 0) - (a.p.feitoEm || a.p.mod || 0)));
-    const pes = pessoas();
-    const filtroP = `<div class="qdFiltros" role="group" aria-label="Filtrar por pessoa">
-      <button type="button" class="qdPil ${Q.filtroPessoa === 'todos' ? 'on' : ''}" data-qdfp="todos">Todos</button>
-      <button type="button" class="qdPil ${Q.filtroPessoa === 'ninguem' ? 'on' : ''}" data-qdfp="ninguem">Sem responsável</button>
-      ${pes.map(x => `<button type="button" class="qdPil ${Q.filtroPessoa === x.id ? 'on' : ''}" data-qdfp="${esc_(x.id)}">${avPes(x.id, 'qdAvP mini')}${esc_(String(x.n).split(/\s+/)[0])}</button>`).join('')}
-      <select class="qdSel" data-qdfc="1" aria-label="Filtrar por cliente">
-        <option value="todos">Todos os clientes</option>
-        <option value="${AG}" ${Q.filtroCli === AG ? 'selected' : ''}>Agência</option>
-        ${clientes().map(c => `<option value="${esc_(c.id)}" ${Q.filtroCli === c.id ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}
-      </select>
-      ${(() => { const base = semPrazoFiltro(); const fp = Q.filtroPrazo || 'todos';
-        const op = ([k, n]) => `<option value="${k}" ${fp === k ? 'selected' : ''}>${n}${k === 'todos' ? '' : ` (${base.filter(x => passaPrazo(x, k)).length})`}</option>`;
-        return `<select class="qdSel${fp !== 'todos' ? ' ligado' : ''}" data-qdprazo="1" aria-label="Filtrar por data">${op(PRAZOS[0])}
-          ${['Entrega', 'Postagem'].map(g => `<optgroup label="${g === 'Entrega' ? 'Entrega da equipe' : 'Postagem (vai ao ar)'}">${PRAZOS.filter(x => x[2] === g).map(op).join('')}</optgroup>`).join('')}</select>`; })()}
-    </div>`;
+    const filtroP = barraFiltros();
+    if(vistaQd() === 'prazo') return filtroP + vistaPorPrazo();
     const entrou = Q.entrada; Q.entrada = null;
     /* v290 — "a página vai descer até o infinito": 10 cards por coluna, e
        "Mostrar mais 10"; e a coluna recolhe (no computador). */
@@ -1893,7 +1973,7 @@
     }
     const px = e.target.closest('[data-qdprox]');
     if(px){ e.stopPropagation(); executar(px.dataset.qdprox, px.dataset.qdacao, px); return; }
-    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome],[data-qdmais],[data-qdmenos],[data-qdrecolhe],[data-qdfmt],[data-qdpilar],[data-qdrefx],[data-qdfaba],[data-qdcalvista],[data-qdsemcal]');
+    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome],[data-qdmais],[data-qdmenos],[data-qdrecolhe],[data-qdfmt],[data-qdpilar],[data-qdrefx],[data-qdfaba],[data-qdcalvista],[data-qdsemcal],[data-qdvista],[data-qdpzbase],[data-qdlimpar]');
     if(!e.target.closest('#qdPop')) document.getElementById('qdPop')?.remove();
     const rc = !alvo && e.target.closest && e.target.closest('#root .qdCol.recolhida');
     if(rc){ alternarRecolhida(rc.dataset.qdcol); render(); return; }
@@ -1901,6 +1981,9 @@
     const d = alvo.dataset;
     if(d.qdabaid){ Q.aba = d.qdabaid; try{ localStorage.setItem('maestro-quadro-aba', Q.aba); }catch(x){} fecharFolha(); render(); window.scrollTo(0, 0); return; }
     if(d.qdfp){ Q.filtroPessoa = d.qdfp; render(); return; }
+    if(d.qdvista){ mudarVista(d.qdvista); if(Q.verMais) Q.verMais = {}; render(); return; }
+    if(d.qdpzbase){ Q.prazoBase = d.qdpzbase; if(Q.verMais) Q.verMais = {}; render(); return; }
+    if(d.qdlimpar){ Q.filtroPessoa = 'todos'; Q.filtroCli = 'todos'; if(vistaQd() === 'colunas') Q.filtroPrazo = 'todos'; if(Q.verMais) Q.verMais = {}; render(); return; }
     if(d.qdsemcal !== undefined){ Q.semCal = d.qdsemcal === '0' ? 0 : (Q.semCal || 0) + (+d.qdsemcal); render(); return; }
     if(d.qdcalvista){ Q.calVista = d.qdcalvista; try{ localStorage.setItem('maestro-quadro-calvista', Q.calVista); }catch(x){} render(); return; }
     if(d.qdmais){ Q.verMais = Q.verMais || {}; Q.verMais[d.qdmais] = quantosVer(d.qdmais) + LIMITE; render(); return; }
@@ -1998,6 +2081,7 @@
     if(c.matches && c.matches('#qdFolha [data-qf]')){ gravarCampo(c, true); return; }
     if(c.matches && c.matches('#qdFolha [data-qfbool]') && Q.folha){ const [cli, id] = Q.folha.split('|'); mudar(cli, id, { [c.dataset.qfbool]: c.checked || null }); redesenharPagina(); return; }
     if(c.dataset && c.dataset.qdfc){ Q.filtroCli = c.value; render(); return; }
+    if(c.dataset && c.dataset.qdfpes){ Q.filtroPessoa = c.value; if(Q.verMais) Q.verMais = {}; render(); return; }
     if(c.dataset && c.dataset.qdprazo){ Q.filtroPrazo = c.value; if(Q.verMais) Q.verMais = {}; render(); return; }
     if(c.dataset && c.dataset.qdpessoa){ Q.pessoa = c.value; render(); return; }
   }, true);
@@ -2281,12 +2365,12 @@
   Q.irColuna = irColuna;
   document.addEventListener('touchstart', e => {
     DZ.ativo = false;
-    if(!umaColunaPorVez() || Q.aba !== 'quadro' || e.touches.length !== 1) return;
+    if(!umaColunaPorVez() || Q.aba !== 'quadro' || vistaQd() !== 'colunas' || e.touches.length !== 1) return;
     /* vale em qualquer lugar da tela do Quadro — inclusive o espaço vazio de
        uma coluna sem card —, menos nas fileiras que já rolam para o lado */
     const alvo = e.target.closest && e.target.closest('#root');
     if(!alvo || !document.querySelector('#root .qdPagina[data-qdaba="quadro"]')) return;
-    if(e.target.closest('input, textarea, select, .qdAddForm, .qdFiltros, .qdAbasCol, .qdAbas, .tabbar, .ctx, #qdFolha')) return;
+    if(e.target.closest('input, textarea, select, .qdAddForm, .qdVerBar, .qdPzBase, .qdAbasCol, .qdAbas, .tabbar, .ctx, #qdFolha')) return;
     DZ.x = e.touches[0].clientX; DZ.y = e.touches[0].clientY; DZ.t = Date.now(); DZ.ativo = true;
   }, { passive: true, capture: true });
   document.addEventListener('touchend', e => {
@@ -2411,6 +2495,30 @@
   .qdSel{ font:inherit; font-size:13px; color:var(--tx, #fff); background:var(--sup, rgba(255,255,255,.06)); border:0; border-radius:999px; padding:7px 12px; min-height:32px }
   .qdMut{ color:var(--mut, #999); font-size:13px }
   .qdFiltros{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin:0 0 14px }
+  .qdVerBar{ display:flex; gap:10px 14px; flex-wrap:wrap; align-items:center; margin:0 0 14px }
+  .qdVerBar .qdFiltros{ margin:0 }
+  .qdVista, .qdPzBase{ display:inline-flex; gap:2px; padding:3px; border-radius:999px; background:var(--sup, rgba(255,255,255,.06)) }
+  .qdVista button, .qdPzBase button{ display:inline-flex; align-items:center; gap:6px; border:0; background:transparent; color:var(--mut, #999); font:inherit; font-size:13px; padding:6px 13px; border-radius:999px; cursor:pointer; min-height:30px; white-space:nowrap }
+  .qdVista button.on, .qdPzBase button.on{ background:var(--tx, #fff); color:var(--bg, #111); font-weight:600 }
+  .qdFCampo{ display:inline-flex; align-items:center; gap:0; border-radius:999px; background:var(--sup, rgba(255,255,255,.06)); padding-left:12px; flex:none }
+  .qdFCampo > span{ font-size:12px; color:var(--mut, #999) }
+  .qdFCampo .qdSel{ background:transparent; padding-left:6px; max-width:210px; font-weight:500 }
+  .qdFCampo.ligado{ background:var(--latao, #FFC857) }
+  .qdFCampo.ligado > span, .qdFCampo.ligado .qdSel{ color:#1a1a1a }
+  .qdFCampo .qdSel.ligado{ background:transparent !important }
+  .qdLimpar{ border:0; background:transparent; color:var(--tx, #fff); font:inherit; font-size:13px; text-decoration:underline; text-underline-offset:3px; padding:6px 8px; cursor:pointer; min-height:32px; white-space:nowrap }
+  .qdLimpar span{ display:inline-grid; place-items:center; min-width:18px; height:18px; border-radius:9px; background:var(--sup2, rgba(255,255,255,.14)); font-size:11px; text-decoration:none; margin-left:3px }
+  .qdPzBase{ margin:0 0 16px; align-items:center }
+  .qdPzBase .qdMut{ padding:0 10px 0 8px; font-size:12.5px }
+  .qdPorPrazo{ display:flex; flex-direction:column; gap:22px; padding-bottom:24px }
+  .qdPzHd{ display:flex; align-items:baseline; gap:8px; margin:0 0 10px; font-size:15px }
+  .qdPzHd span{ color:var(--mut, #999); font-size:13px }
+  .qdPz-atrasados .qdPzHd b{ color:var(--danger, #E5484D) }
+  .qdPzGrade{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px; align-items:start }
+  .qdPzGrade .qdCard{ margin:0 }
+  .qdPorPrazo .qdMais, .qdPorPrazo .qdMenos{ max-width:320px }
+  .qdNaCol{ display:inline-flex; align-items:center; gap:5px }
+  .qdPzVazio{ padding:30px 4px; font-size:14px }
   .qdAvC, .qdAvP{ width:20px; height:20px; border-radius:50%; display:inline-grid; place-items:center; font-size:9px; font-weight:700; flex:none; overflow:hidden; background:var(--sup2, #333); color:var(--tx, #fff) }
   .qdAvC img, .qdAvP img{ width:100%; height:100%; object-fit:cover }
   .qdAvC.mini, .qdAvP.mini{ width:18px; height:18px; font-size:8.5px }
@@ -2747,6 +2855,15 @@
     .qdBtGho[data-qdlixeira] span{ display:none }
     .qdAbas button{ padding:7px 11px; font-size:13px }
     .qdFiltros{ flex-wrap:nowrap; overflow-x:auto; margin:0 -16px 10px; padding:0 16px; scrollbar-width:none }
+    .qdVerBar{ gap:8px; margin-bottom:10px }
+    .qdVerBar .qdVista{ width:100%; }
+    .qdVerBar .qdVista button{ flex:1; justify-content:center }
+    .qdVerBar .qdFiltros{ width:calc(100% + 32px); margin:0 -16px }
+    .qdFCampo .qdSel{ max-width:150px }
+    .qdPzBase{ display:flex; flex-wrap:wrap; border-radius:16px }
+    .qdPzBase button{ flex:1; justify-content:center }
+    .qdPzBase .qdMut{ flex-basis:100%; padding:4px 10px 3px }
+    .qdPzGrade{ grid-template-columns:1fr }
     .qdFiltros::-webkit-scrollbar{ display:none }
     .qdAbasCol{ display:flex; gap:6px; overflow-x:auto; margin:0 -16px 12px; padding:0 16px; scrollbar-width:none; position:sticky; top:var(--v274topo, 0px); z-index:5; background:var(--bg, #1c1c1f); padding-top:6px; padding-bottom:6px }
     .qdAbasCol::-webkit-scrollbar{ display:none }

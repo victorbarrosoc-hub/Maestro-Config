@@ -1,11 +1,36 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.120
+Version: 0.5.121
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.121 — 2026-09-30
+
+**Status:** No ar.
+
+### v306 — o Quadro por prazo, e os filtros arrumados
+
+Pedido do founder: "Quero na aba Quadro, o filtro por cards tenha Por Prazo
+também, acho que pode organizar melhor esses filtros de visualização dos cards."
+
+- A barra do Quadro separa COMO ver (Colunas · Por prazo) do que FILTRA
+  (Pessoa, Cliente, Data — um campo com nome cada, no lugar da fileira de
+  pílulas de pessoas). Pessoa tem "Só os meus" e "Sem responsável". Campo
+  ligado fica amarelo e aparece "Limpar filtros N".
+- **Por prazo:** os mesmos cards, com os mesmos filtros, em faixas —
+  Atrasados, Hoje, Amanhã, Ainda esta semana, Próxima semana, Mais para a
+  frente, Sem prazo. Por padrão pela ENTREGA da equipe (só o que ainda é
+  trabalho da casa: Pauta, A fazer, Fazendo, Revisão); "Vai ao ar" agrupa
+  pela data de postagem o que ainda não foi ao ar. Cada card diz a coluna em
+  que está e mantém o botão do próximo passo; dentro da faixa, a hora ordena.
+  10 por faixa, com "Mostrar mais". A escolha da vista fica no aparelho
+  (`maestro-quadro-vista-v1`). No celular: uma coluna de cards, e deslizar
+  para o lado só troca coluna na vista Colunas.
+- 26 provas em `web/verificar/v306-por-prazo.mjs`; v277 (121), v289, v290,
+  v291, v297, v304 e v305 verdes.
 
 ## 0.5.120 — 2026-09-30
 

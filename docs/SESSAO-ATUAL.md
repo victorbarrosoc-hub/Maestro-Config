@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 29 set 2026 (v305 no ar)
+Última atualização: 30 set 2026 (v306 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -20,7 +20,10 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v305 (30 set) — o sino leva ao lugar: tocar no aviso abre o card da menção (na
+v306 (30 set) — o Quadro por prazo: "Colunas · Por prazo" e filtros com nome
+(Pessoa, Cliente, Data, Limpar). Por prazo agrupa pela entrega da equipe ou por
+"Vai ao ar". 26 provas em `web/verificar/v306-por-prazo.mjs`.
+Antes, v305 (30 set) — o sino leva ao lugar: tocar no aviso abre o card da menção (na
 conversa), o card passado para você, o card elogiado; lote → Aprovações; aviso novo
 quando um card passa a ser de alguém. 14 provas em `web/verificar/v305-o-sino-leva.mjs`.
 Antes, v304 (29 set) — o card completo: filtro de data (entrega · postagem), datas com

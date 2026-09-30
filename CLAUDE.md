@@ -349,6 +349,14 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (30 set, v306, NO AR) — o Quadro por prazo.** "Quero na aba Quadro,
+o filtro por cards tenha Por Prazo também… organizar melhor esses filtros." A
+barra separa COMO ver (Colunas · Por prazo) do que FILTRA (Pessoa com "Só os
+meus", Cliente, Data; "Limpar filtros N"). Por prazo = faixas Atrasados → Sem
+prazo pela entrega (só trabalho da casa) ou "Vai ao ar" (postagem); o card
+mostra a coluna. Vista guardada em `maestro-quadro-vista-v1`. **Armadilha:**
+`.qdBarra` já era a barra de progresso da Minha lista — a barra nova é
+`.qdVerBar`. 26 provas em `web/verificar/v306-por-prazo.mjs`.
 **Fechado (30 set, v305, NO AR) — o sino leva ao lugar.** "Quando clicar na
 notificação, abra o local." Cada aviso tem destino (`MaestroQuadro.destinoDoAviso`):
 menção em card → o card na conversa; card passado para você (aviso novo, em
