@@ -1,11 +1,32 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.125
+Version: 0.5.126
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.126 — 2026-10-01
+
+**Status:** No ar.
+
+### v311 — digitar sem pular
+
+"No mobile, toda vez que digita alguma coisa na caixa de texto dentro do card,
+scrolla pra o começo do texto. É pra ficar no lugar que eu tô digitando."
+(founder, 1/out, com print da Legenda longa).
+
+- A caixa de texto da ficha crescia sozinha a cada letra: encolhia para
+  `auto` e voltava, e no Safari do iPhone isso zera a rolagem de dentro da
+  caixa (que tinha teto de 420px) — o texto voltava ao começo.
+- `ajustarAltura` (web/quadro/quadro.js) guarda e devolve a rolagem da caixa e
+  da folha; no celular a caixa não tem teto (cresce com o texto; quem rola é a
+  folha — nunca uma rolagem dentro da outra). No computador o teto fica.
+- 7 provas em `web/verificar/v311-digitar-no-lugar.mjs` (celular e computador,
+  digitando no meio de uma legenda de 40 linhas). O Chrome do teste não zera a
+  rolagem como o Safari; a prova 1.3 pega a causa (caixa com rolagem própria no
+  celular) — falha na v310.
 
 ## 0.5.125 — 2026-09-30
 

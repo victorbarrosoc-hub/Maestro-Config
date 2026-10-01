@@ -349,6 +349,11 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (1 out, v311, NO AR) — digitar sem pular.** "No mobile, toda vez que
+digita na caixa de texto do card, scrolla pra o começo do texto." O auto-crescer
+da caixa (`ajustarAltura`) encolhia e crescia a cada letra, e o Safari zera a
+rolagem de dentro. Agora guarda e devolve as rolagens, e no celular a caixa não
+tem teto. 7 provas em `web/verificar/v311-digitar-no-lugar.mjs`.
 **Fechado (30 set, v310, NO AR) — o Ensaio desligado.** "Pode desligar o
 ensaio." O repositor (`sincronizarJobs`) e as camadas v273/v276 mexiam nas
 tarefas escondidas a cada desenho: 2.065 gravações do `__estado__` por dia em

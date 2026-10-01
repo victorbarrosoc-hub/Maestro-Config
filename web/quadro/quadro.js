@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v310', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v311', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -1638,7 +1638,22 @@
      inteiro: sem isso, o primeiro campo gravado depois de trocar o tipo ou
      pôr um trecho redesenhava tudo e tirava o cursor de quem digitava. */
   const assinaturaFolha = (cli, p) => JSON.stringify([colabsDe(p), p.check || [], materiais(cli, p.id).map(m => (m && (m.url || m.nome)) || '').join('|'), !!p.ajustePendente, linhas(p, 'tcs'), linhas(p, 'telas'), p.plats || [], tipoDaFolha(p), ehStory(p), fmtsDe(p), p.pilar || '', refsDoCard(cli, p.id).length]);
-  function ajustarAltura(t){ if(!t.offsetParent && !t.classList.contains('qdFTit')) return; t.style.height = 'auto'; t.style.height = Math.min(t.classList.contains('qdFTit') ? 160 : 420, t.scrollHeight + 2) + 'px'; }
+  /* v311 — "no mobile, toda vez que digita na caixa de texto dentro do card, scrolla pra o
+     começo do texto". Para medir, a caixa encolhia ('auto') e crescia de novo: nesse
+     instante o navegador zera a rolagem de DENTRO da caixa (que tinha teto de 420px) e a
+     folha pula. Agora a rolagem da caixa e a da folha são guardadas e devolvidas, só se
+     mexe quando a altura muda, e no celular a caixa não tem teto (cresce com o texto e
+     quem rola é a folha — nunca uma rolagem dentro da outra). */
+  function ajustarAltura(t){
+    if(!t.offsetParent && !t.classList.contains('qdFTit')) return;
+    const folha = t.closest('.qdFolhaIn'), rolF = folha ? folha.scrollTop : 0, rolT = t.scrollTop, antes = t.style.height;
+    const teto = t.classList.contains('qdFTit') ? 160 : (umaColunaPorVez() ? 100000 : 420);
+    t.style.height = 'auto';
+    const nova = Math.min(teto, t.scrollHeight + 2) + 'px';
+    t.style.height = nova;
+    if(nova === antes || t.scrollTop !== rolT) t.scrollTop = rolT;
+    if(folha && folha.scrollTop !== rolF) folha.scrollTop = rolF;
+  }
   function salvoAgora(txt){ const s = document.getElementById('qdFSalvo'); if(s){ s.textContent = txt; s.classList.toggle('salvando', txt !== 'Tudo salvo'); } }
   const valorDoCampo = (p, cli, k) => k === 'tema' ? tema(p, cli) : pegar(p, k);
   function atualizarCampos(el, cli, p){
