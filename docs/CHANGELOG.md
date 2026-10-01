@@ -1,11 +1,30 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.126
+Version: 0.5.127
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.127 — 2026-10-01
+
+**Status:** No ar.
+
+### v312 — a tela do story
+
+"Bugado e sumiu o texto que tava na aba Texto" (founder, 1/out, print das
+Telas do story com o texto numa coluna de uma letra).
+
+- A linha de cada tela do story tem quatro peças desde a v304 (T1, Copiar,
+  texto, ×) e a grade tinha três colunas: o texto caía na coluna de 28px. Com
+  a v311 (caixa sem teto no celular) virou uma letra por linha, 1.061px de
+  altura. Grade de quatro colunas. Prova 3.1 em `v311-digitar-no-lugar.mjs`
+  (falha na v311 com 28px de largura).
+- O texto sumido: `docs/ENGINEERING/card-1-texto-que-sumiu.sql` (só leitura)
+  lista, dos últimos 3 dias, toda vez que texto, legenda, objetivo ou telas de
+  um card ficaram menores ou vazios, com quem, quando e o texto de antes
+  (`cards_historico` guarda antes/depois de cada campo).
 
 ## 0.5.126 — 2026-10-01
 

@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v311', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v312', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -2870,7 +2870,10 @@
   .qdFPlats i{ display:inline-block; width:8px; height:8px; border-radius:50% }
   .qdFTc{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) 52px 28px; gap:6px; align-items:center; margin:6px 0 }
   .qdFTc + .qdPil, .qdFTela + .qdPil{ margin-top:4px }
-  .qdFTela{ display:grid; grid-template-columns:26px minmax(0, 1fr) 28px; gap:6px; align-items:start; margin:0 0 6px }
+  /* v312 — a linha da tela tem QUATRO peças (T1, Copiar, texto, ×) desde a v304; a grade era de três, e o
+     texto caía na coluna de 28px — no celular, uma letra por linha. Cada peça tem a sua coluna agora. */
+  .qdFTela{ display:grid; grid-template-columns:26px auto minmax(0, 1fr) 28px; gap:6px; align-items:start; margin:0 0 6px }
+  .qdFTela .qdCopiar{ margin-top:6px }
   .qdFTela b{ font-size:11px; color:var(--mut, #999); padding-top:10px }
   .qdFChk{ display:flex; gap:8px; align-items:center; font-size:13px; margin-top:12px }
   .qdFBloco h4{ margin:0 0 7px; font-size:13px; font-weight:600; display:flex; gap:8px; align-items:center }

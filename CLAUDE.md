@@ -349,6 +349,10 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (1 out, v312, NO AR) — a tela do story.** A linha da tela do story
+tinha 4 peças numa grade de 3 colunas; o texto caía na de 28px (uma letra por
+linha). Grade de 4. Para o "sumiu o texto": `card-1-texto-que-sumiu.sql` (só
+leitura, antes/depois por campo em `cards_historico`). Prova 3.1 na v311.
 **Fechado (1 out, v311, NO AR) — digitar sem pular.** "No mobile, toda vez que
 digita na caixa de texto do card, scrolla pra o começo do texto." O auto-crescer
 da caixa (`ajustarAltura`) encolhia e crescia a cada letra, e o Safari zera a

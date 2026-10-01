@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 30 set 2026 (v311 no ar)
+Última atualização: 30 set 2026 (v312 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -20,7 +20,11 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v311 (1 out) — no celular, digitar na caixa de texto da ficha não volta mais ao
+v312 (1 out) — a caixa da tela do story volta a ter largura (estava numa
+coluna de 28px). "Sumiu o texto que tava na aba Texto": consulta só de leitura
+`docs/ENGINEERING/card-1-texto-que-sumiu.sql` entregue ao founder — com o
+resultado, devolver o texto (o antes está em `cards_historico`).
+Antes, v311 (1 out) — no celular, digitar na caixa de texto da ficha não volta mais ao
 começo do texto (a caixa cresce com o texto; as rolagens ficam onde estavam).
 Antes, v310 (30 set) — o Ensaio antigo desligado (autorizado: "Pode desligar o
 ensaio"): o documento da agência deixa de ser regravado a cada desenho de tela.

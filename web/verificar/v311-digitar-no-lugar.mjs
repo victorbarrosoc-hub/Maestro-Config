@@ -66,6 +66,17 @@ console.log('\n  — 2. no computador (a caixa tem teto e rola por dentro) —')
   checa('2.3 e a folha também fica onde estava', Math.abs(r.depois.f - r.antes.f) < 40, r);
   await ctx.close();
 }
-checa('3.1 nenhum erro de página', erros.length === 0, erros);
+console.log('\n  — 3. v312: a tela do story tem largura (no celular virava uma letra por linha) —');
+{
+  const { ctx, pg } = await abrir(390);
+  const r = await pg.evaluate(() => { const c = CLIS()[0];
+    S.pautas[c.id].push({ id: 9102, t: c.nome + ' · Story · Teste', fmt: 'Story', fase: 'criado', st: 'DRAFT', telas: ['O que aparece na tela 1, com uma frase de tamanho normal'] });
+    MaestroQuadro.abrirFolha(c.id + '|9102');
+    const t = document.querySelector('#qdFolha [data-qf="telas.0"]'); const b = t && t.getBoundingClientRect();
+    return b ? { w: Math.round(b.width), h: Math.round(b.height), folha: Math.round(document.querySelector('#qdFolha .qdFolhaIn').getBoundingClientRect().width) } : null; });
+  checa('3.1 a caixa da tela 1 ocupa a linha (mais de 60% da folha) e não vira uma coluna de letras', r && r.w > r.folha * 0.6 && r.h < 160, r);
+  await ctx.close();
+}
+checa('3.9 nenhum erro de página', erros.length === 0, erros);
 console.log(`\n  ${ok} ok · ${falhou} falharam`);
 await nav.close(); srv.close(); process.exit(falhou ? 1 : 0);
