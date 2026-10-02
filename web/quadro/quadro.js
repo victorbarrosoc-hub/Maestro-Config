@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v315', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v316', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -3173,6 +3173,7 @@
   #qdSoltar.mouse div{ grid-template-columns:repeat(8, 1fr) }
   #qdSoltar.mouse span{ padding:16px 4px }
   @keyframes qdSobe{ from{ opacity:0; transform:translate(-50%, 12px) } to{ opacity:1; transform:translate(-50%, 0) } }
+  .qdFAjuste p{ white-space:pre-line }
   /* v315 — a Agenda da pessoa (lembretes com horário), um dia por linha */
   .qdAgDica{ margin:-4px 2px 10px; font-size:12.5px }
   .qdAgNovo{ margin-left:auto }

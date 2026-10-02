@@ -20,6 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
+v316 (2 out) — link do cliente: decidir peça a peça (miniaturas no topo, peça grande, aprovar/pedir por tela) e conferência antes de enviar; pedido vai como uma linha por tela.
+
 v315 (2 out) — Minha lista → aba Agenda: lembretes com horário (das/até), semana na horizontal, só a própria pessoa vê; não vira card.
 
 v314 (2 out) — o histórico diz QUEM: o app manda o nome escolhido em toda gravação. **`historico-1-quem-de-verdade.sql` APLICADO em produção em 2/out 10h01** ("link do cliente" / "Anna Clara Ávila", como esperado). **Conferido no caminho de verdade 2/out 10h04:** "Victor Barroso · ejup.mkt@gmail.com".

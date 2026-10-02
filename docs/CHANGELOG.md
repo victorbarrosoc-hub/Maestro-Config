@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.130
+Version: 0.5.131
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.131 — 2 out · v316 · o cliente decide peça a peça
+
+- No link: peças no topo com estado, peça grande, aprovar/pedir por tela, conferência antes de enviar, pedido do texto/legenda à parte. Mesmo pedido de sempre (uma linha por tela). `web/cliente/decidir.js`; 22 + 4 provas.
 
 ## 0.5.130 — 2 out · v315 · a agenda dos lembretes
 

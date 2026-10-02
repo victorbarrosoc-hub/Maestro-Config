@@ -349,6 +349,24 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (2 out, v316, NO AR) — o cliente decide peça a peça.** "Uma
+visualização final antes de liberar as alterações… se for carrossel ele vê as
+considerações em cada peça… selecione a peça, veja em visualização grande e dê a
+consideração ou aprove… mais intuitivo… as peças lá em cima." No link, na
+publicação (não no passo do texto): miniaturas numeradas no topo com ✓/✎, a
+peça grande embaixo (setas, "2 / 3"), "Aprovar esta tela" / "Pedir alteração
+nesta" (o campo abre já com o cursor; a próxima peça que falta abre sozinha).
+Com pedido, o rodapé vira "Revisar e enviar · N": a conferência mostra tela a
+tela o que vai, campo opcional do texto/legenda, "Enviar". O botão de baixo
+virou "Pedir mudança no texto ou legenda". Aprovar tudo (coração/deslizar) com
+pedido guardado leva à conferência. Rascunho no aparelho
+(`maestro-decidir-v1`, por card e volta). **Vai pela porta de sempre**: UM
+pedido "Tela 2 — …" por linha — sem SQL novo; a ficha da agência mostra em
+linhas (`.qdFAjuste p{white-space:pre-line}`). Mora em
+`web/cliente/decidir.js` (carregado pela `tempo-real.js`). 22 provas em
+`web/verificar/v316-peca-a-peca.mjs`, 4 em `v316-pelo-link.mjs` (o link
+`?aprovar=` até a porta). A fase que o pedido grava (`texto_ok`) é a mesma do
+"Pedir alteração" antigo.
 **Fechado (2 out, v315, NO AR) — a agenda dos lembretes.** "Quero conseguir
 colocar horário e ver um cronograma horizontal da semana, separado da minha
 lista que não são cards… onde só eu como usuário consigo ver." O lembrete
