@@ -364,7 +364,8 @@ conferência de 2/out avisou "3 esvaziaram texto, 8 tiraram mídia (n0)", com
 e-mail é só texto (Equipe, Lembretes, Últimas 24 h), e o corpo traz "Onde
 foi:" com cliente, card, o que sumiu, quem e a hora (do `cards_historico`).
 O founder roda de novo o `alarme-1-conferencia-diaria.sql`; o selo
-"conferência diária" depende de reimplantar a Edge Function `enviar-avisos`.
+"conferência diária" (linha `alarme` em `ACENTO`) foi colado e reimplantado
+na Edge Function `enviar-avisos` pelo founder em 2/out.
 Para ver e devolver: `card-2-o-que-sumiu.sql` (só leitura, 3 dias, com
 "ainda falta"). Provas 7.1–7.4 em `alarme-1-teste.sql`.
 **Fechado (2 out, v313, NO AR) — o assunto do trecho.** Cada trecho do corte
