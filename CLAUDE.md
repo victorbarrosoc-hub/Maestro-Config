@@ -349,6 +349,11 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (2 out, v313, NO AR) — o assunto do trecho.** Cada trecho do corte
+tem "Assunto do trecho" abaixo dos tempos (`corte.tcs.N.tema`); o cliente o vê
+no link. **Armadilha (minha, da v306):** o filtro se chamava `.qdFCampo`, o
+mesmo nome dos campos da ficha, que herdaram a pílula; agora `.qdFiltroC`.
+Provas 4.0–4.2 na v311, 1b na v230.
 **Fechado (1 out, v312, NO AR) — a tela do story.** A linha da tela do story
 tinha 4 peças numa grade de 3 colunas; o texto caía na de 28px (uma letra por
 linha). Grade de 4. Para o "sumiu o texto": `card-1-texto-que-sumiu.sql` (só

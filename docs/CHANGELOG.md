@@ -1,11 +1,34 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.127
+Version: 0.5.128
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.128 — 2026-10-02
+
+**Status:** No ar.
+
+### v313 — o assunto do trecho, e os campos da ficha sem pílula
+
+"Ajeitar isso em anexo e COLOCAR ASSUNTO DO TRECHO DO CORTE NO CARD — TEMA DO
+TRECHO, ABAIXO DE TIME CODE" (founder, 2/out, print das telas do story).
+
+- Cada trecho do corte ganha "Assunto do trecho" logo abaixo dos tempos
+  (`corte.tcs.N.tema`, gravado pelo mesmo caminho dos tempos). O cliente vê o
+  assunto embaixo de cada trecho no link (`.clTCTema`, por `textContent`), e a
+  janela de ver o card também.
+- **Defeito meu, achado no retrato:** a v306 chamou o campo do filtro de
+  `.qdFCampo` — o mesmo nome dos campos da ficha —, e eles herdaram o fundo e a
+  borda de pílula (o redondo atrás de "Episódio", "Trechos" e "Interação /
+  sticker" do print). Agora o filtro é `.qdFiltroC`.
+- O print era de 1/out 07:46, antes da v312; a caixa da tela do story já está
+  consertada no ar.
+- Provas: 4.0–4.2 em `v311-digitar-no-lugar.mjs` (4.0 falha na v312 com
+  `999px`), 1b em `v230-o-cliente-ve-o-corte.mjs` (28 no total); v277, v291,
+  v304 e v306 verdes.
 
 ## 0.5.127 — 2026-10-01
 

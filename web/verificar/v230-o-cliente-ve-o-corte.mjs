@@ -96,6 +96,20 @@ console.log('\n1. o corte de podcast chega ao cliente — o defeito do print');
      'com um rótulo que diz para que serve', r.rotulos);
 }
 
+console.log('\n1b. v313: o assunto de cada trecho, embaixo do tempo dele');
+{
+  await semear({ corte: { ep: 'EJUPcast #018',
+    tcs: [{ de: '00:41:12', ate: '00:43:02', ordem: 2, tema: 'Herança <b>digital</b>' },
+          { de: '00:12:30', ate: '00:14:05', ordem: 1, tema: 'Inventário em 3 passos' }] } });
+  await verCliente(); await pag.waitForTimeout(350);
+  const r = await pag.evaluate(() => [...document.querySelectorAll('.clCorte .clTCs > *')].map(x => [x.className, x.textContent.replace(/\s+/g, ' ').trim()]));
+  ok(r.length === 4 && /00:12:30/.test(r[0][1]) && r[1][0] === 'clTCTema' && r[1][1] === 'Inventário em 3 passos'
+     && /00:41:12/.test(r[2][1]) && r[3][1] === 'Herança <b>digital</b>',
+     'cada assunto logo abaixo do seu trecho, na ordem da edição, e como texto (sem virar HTML)', r);
+  const larg = await pag.evaluate(() => { const t = document.querySelector('.clCorte .clTCTema'), f = t.parentElement; return t.getBoundingClientRect().width / f.getBoundingClientRect().width; });
+  ok(larg > 0.9, 'o assunto ocupa a linha inteira (não fica espremido ao lado do tempo)', larg);
+}
+
 console.log('\n2. identidade primeiro: o corte vem antes da legenda');
 {
   const r = await ler();

@@ -77,6 +77,25 @@ console.log('\n  — 3. v312: a tela do story tem largura (no celular virava uma
   checa('3.1 a caixa da tela 1 ocupa a linha (mais de 60% da folha) e não vira uma coluna de letras', r && r.w > r.folha * 0.6 && r.h < 160, r);
   await ctx.close();
 }
+console.log('\n  — 4. v313: o assunto do trecho do corte, embaixo do tempo —');
+{
+  const { ctx, pg } = await abrir(390);
+  await pg.evaluate(() => { const c = CLIS()[0];
+    S.pautas[c.id].push({ id: 9103, t: c.nome + ' · Reels · Corte', fmt: 'Reels', fase: 'criado', st: 'DRAFT', corte: { ep: 'EJUPcast #18', tcs: [{ de: '00:12:30', ate: '00:14:05', ordem: 1 }] } });
+    MaestroQuadro.abrirFolha(c.id + '|9103'); });
+  await pg.waitForTimeout(300);
+  const pos = await pg.evaluate(() => { const a = document.querySelector('#qdFolha [data-qf="corte.tcs.0.ate"]'), t = document.querySelector('#qdFolha [data-qf="corte.tcs.0.tema"]');
+    return t ? { abaixo: t.getBoundingClientRect().top >= a.getBoundingClientRect().bottom, larg: Math.round(t.getBoundingClientRect().width), ph: t.placeholder } : null; });
+  checa('4.1 cada trecho tem o campo "Assunto do trecho" logo abaixo dos tempos, na largura da linha', pos && pos.abaixo && pos.larg > 280 && /Assunto do trecho/.test(pos.ph), pos);
+  const pil = await pg.evaluate(() => [...document.querySelectorAll('#qdFolha .qdFCampo')].map(e => { const cs = getComputedStyle(e); return [cs.backgroundColor, cs.borderTopLeftRadius]; })
+    .filter(([bg, r]) => !/rgba\(0, 0, 0, 0\)|transparent/.test(bg) || parseFloat(r) > 20));
+  checa('4.0 os campos da ficha não herdam o formato de pílula dos filtros (fundo e borda redonda da v306)', pil.length === 0, pil);
+  await pg.fill('#qdFolha [data-qf="corte.tcs.0.tema"]', 'Inventário em 3 passos');
+  await pg.waitForTimeout(1100);
+  const g = await pg.evaluate(() => { const c = CLIS()[0]; const p = S.pautas[c.id].find(x => x.id === 9103); return p && p.corte && p.corte.tcs; });
+  checa('4.2 o assunto fica gravado no trecho, sem mexer nos tempos', g && g[0].tema === 'Inventário em 3 passos' && g[0].de === '00:12:30' && g[0].ate === '00:14:05', g);
+  await ctx.close();
+}
 checa('3.9 nenhum erro de página', erros.length === 0, erros);
 console.log(`\n  ${ok} ok · ${falhou} falharam`);
 await nav.close(); srv.close(); process.exit(falhou ? 1 : 0);

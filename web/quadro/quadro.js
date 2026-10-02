@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v312', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v313', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -630,14 +630,14 @@
   function barraFiltros(){
     const v = vistaQd(), fpes = Q.filtroPessoa || 'todos', fcli = Q.filtroCli || 'todos';
     const pes = pessoas(), mim = eu();
-    const selPes = `<label class="qdFCampo${fpes !== 'todos' ? ' ligado' : ''}"><span>Pessoa</span>
+    const selPes = `<label class="qdFiltroC${fpes !== 'todos' ? ' ligado' : ''}"><span>Pessoa</span>
       <select class="qdSel" data-qdfpes="1" aria-label="Filtrar por pessoa">
         <option value="todos">Todas</option>
         ${mim && pessoa(mim) ? `<option value="${esc_(mim)}" ${fpes === mim ? 'selected' : ''}>Só os meus</option>` : ''}
         <option value="ninguem" ${fpes === 'ninguem' ? 'selected' : ''}>Sem responsável</option>
         <optgroup label="Equipe">${pes.filter(x => x.id !== mim).map(x => `<option value="${esc_(x.id)}" ${fpes === x.id ? 'selected' : ''}>${esc_(x.n)}</option>`).join('')}</optgroup>
       </select></label>`;
-    const selCliF = `<label class="qdFCampo${fcli !== 'todos' ? ' ligado' : ''}"><span>Cliente</span>
+    const selCliF = `<label class="qdFiltroC${fcli !== 'todos' ? ' ligado' : ''}"><span>Cliente</span>
       <select class="qdSel" data-qdfc="1" aria-label="Filtrar por cliente">
         <option value="todos">Todos</option>
         <option value="${AG}" ${fcli === AG ? 'selected' : ''}>Agência</option>
@@ -646,7 +646,7 @@
     const selData = v === 'prazo' ? '' : (() => { const base = semPrazoFiltro(); const fp = Q.filtroPrazo || 'todos';
       const op = ([k, n]) => `<option value="${k}" ${fp === k ? 'selected' : ''}>${n}${k === 'todos' || k.startsWith('ord-') ? '' : ` (${base.filter(x => passaPrazo(x, k)).length})`}</option>`;
       const GR = { Entrega: 'Entrega da equipe', Postagem: 'Postagem (vai ao ar)', Ordem: 'Ver todos, em ordem de prazo' };
-      return `<label class="qdFCampo${fp !== 'todos' ? ' ligado' : ''}"><span>Data</span><select class="qdSel${fp !== 'todos' ? ' ligado' : ''}" data-qdprazo="1" aria-label="Filtrar por data">${op(PRAZOS[0])}
+      return `<label class="qdFiltroC${fp !== 'todos' ? ' ligado' : ''}"><span>Data</span><select class="qdSel${fp !== 'todos' ? ' ligado' : ''}" data-qdprazo="1" aria-label="Filtrar por data">${op(PRAZOS[0])}
         ${['Ordem', 'Entrega', 'Postagem'].map(g => `<optgroup label="${GR[g]}">${PRAZOS.filter(x => x[2] === g).map(op).join('')}</optgroup>`).join('')}</select></label>`; })();
     const nl = filtrosLigados();
     const seg = (k, t, i) => `<button type="button" role="tab" aria-selected="${v === k}" class="${v === k ? 'on' : ''}" data-qdvista="${k}">${ic_(i, 13)}<span>${t}</span></button>`;
@@ -1239,7 +1239,8 @@
         + area('roteiro.des', 'Desenvolvimento', 'O argumento, cena a cena.', 4) + area('roteiro.cta', 'CTA do vídeo', 'O que a pessoa faz ao terminar de assistir.') : ''}
       ${tipo === 'corte' ? `<label class="qdFCampo">Episódio<input class="qdIn" data-qf="corte.ep" value="${esc_(ct.ep || '')}" placeholder="Ex.: EJUPcast #12"></label>
         <div class="qdFCampo">Trechos — a ordem diz ao editor como juntar
-        ${tcs.map((tc, i) => `<div class="qdFTc"><input class="qdIn" data-qf="corte.tcs.${i}.de" value="${esc_(tc.de || '')}" placeholder="início 00:12:30" inputmode="numeric"><input class="qdIn" data-qf="corte.tcs.${i}.ate" value="${esc_(tc.ate || '')}" placeholder="fim 00:14:05" inputmode="numeric"><input class="qdIn qdFOrd" data-qf="corte.tcs.${i}.ordem" value="${esc_(String(tc.ordem == null ? i + 1 : tc.ordem))}" inputmode="numeric" aria-label="Ordem na edição"><button type="button" class="qdX" data-qdtcx="${i}" aria-label="Tirar trecho">×</button></div>`).join('')}
+        ${tcs.map((tc, i) => `<div class="qdFTcBox"><div class="qdFTc"><input class="qdIn" data-qf="corte.tcs.${i}.de" value="${esc_(tc.de || '')}" placeholder="início 00:12:30" inputmode="numeric"><input class="qdIn" data-qf="corte.tcs.${i}.ate" value="${esc_(tc.ate || '')}" placeholder="fim 00:14:05" inputmode="numeric"><input class="qdIn qdFOrd" data-qf="corte.tcs.${i}.ordem" value="${esc_(String(tc.ordem == null ? i + 1 : tc.ordem))}" inputmode="numeric" aria-label="Ordem na edição"><button type="button" class="qdX" data-qdtcx="${i}" aria-label="Tirar trecho">×</button></div>
+          ${/* v313 — "colocar assunto do trecho do corte no card, tema do trecho, abaixo do time code" */''}<input class="qdIn qdFTcTema" data-qf="corte.tcs.${i}.tema" value="${esc_(tc.tema || '')}" placeholder="Assunto do trecho — do que ele fala" aria-label="Assunto do trecho ${i + 1}"></div>`).join('')}
         <button type="button" class="qdPil" data-qdtcmais="1">+ trecho</button></div>` : ''}
     </div>
     ${ehStory(p) ? `<div class="qdFBloco"><h4>Telas do story <span>${guardadas(p, 'telas') || ''}</span></h4>
@@ -2550,12 +2551,13 @@
   .qdVista, .qdPzBase{ display:inline-flex; gap:2px; padding:3px; border-radius:999px; background:var(--sup, rgba(255,255,255,.06)) }
   .qdVista button, .qdPzBase button{ display:inline-flex; align-items:center; gap:6px; border:0; background:transparent; color:var(--mut, #999); font:inherit; font-size:13px; padding:6px 13px; border-radius:999px; cursor:pointer; min-height:30px; white-space:nowrap }
   .qdVista button.on, .qdPzBase button.on{ background:var(--tx, #fff); color:var(--bg, #111); font-weight:600 }
-  .qdFCampo{ display:inline-flex; align-items:center; gap:0; border-radius:999px; background:var(--sup, rgba(255,255,255,.06)); padding-left:12px; flex:none }
-  .qdFCampo > span{ font-size:12px; color:var(--mut, #999) }
-  .qdFCampo .qdSel{ background:transparent; padding-left:6px; max-width:210px; font-weight:500 }
-  .qdFCampo.ligado{ background:var(--latao, #FFC857) }
-  .qdFCampo.ligado > span, .qdFCampo.ligado .qdSel{ color:#1a1a1a }
-  .qdFCampo .qdSel.ligado{ background:transparent !important }
+  /* v313 — era .qdFCampo, o mesmo nome dos campos da ficha: o formato de pílula vazava para eles */
+  .qdFiltroC{ display:inline-flex; align-items:center; gap:0; border-radius:999px; background:var(--sup, rgba(255,255,255,.06)); padding-left:12px; flex:none }
+  .qdFiltroC > span{ font-size:12px; color:var(--mut, #999) }
+  .qdFiltroC .qdSel{ background:transparent; padding-left:6px; max-width:210px; font-weight:500 }
+  .qdFiltroC.ligado{ background:var(--latao, #FFC857) }
+  .qdFiltroC.ligado > span, .qdFiltroC.ligado .qdSel{ color:#1a1a1a }
+  .qdFiltroC .qdSel.ligado{ background:transparent !important }
   .qdLimpar{ border:0; background:transparent; color:var(--tx, #fff); font:inherit; font-size:13px; text-decoration:underline; text-underline-offset:3px; padding:6px 8px; cursor:pointer; min-height:32px; white-space:nowrap }
   .qdLimpar span{ display:inline-grid; place-items:center; min-width:18px; height:18px; border-radius:9px; background:var(--sup2, rgba(255,255,255,.14)); font-size:11px; text-decoration:none; margin-left:3px }
   .qdPzBase{ margin:0 0 16px; align-items:center }
@@ -2869,7 +2871,10 @@
   .qdFTipos, .qdFPlats{ display:flex; flex-wrap:wrap; gap:6px }
   .qdFPlats i{ display:inline-block; width:8px; height:8px; border-radius:50% }
   .qdFTc{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) 52px 28px; gap:6px; align-items:center; margin:6px 0 }
-  .qdFTc + .qdPil, .qdFTela + .qdPil{ margin-top:4px }
+  .qdFTcBox{ margin:6px 0 10px; padding:0 0 10px; border-bottom:1px solid var(--linha, rgba(255,255,255,.07)) }
+  .qdFTcBox .qdFTc{ margin:0 0 6px }
+  .qdFTcTema{ width:100%; box-sizing:border-box }
+  .qdFTc + .qdPil, .qdFTcBox + .qdPil, .qdFTela + .qdPil{ margin-top:4px }
   /* v312 — a linha da tela tem QUATRO peças (T1, Copiar, texto, ×) desde a v304; a grade era de três, e o
      texto caía na coluna de 28px — no celular, uma letra por linha. Cada peça tem a sua coluna agora. */
   .qdFTela{ display:grid; grid-template-columns:26px auto minmax(0, 1fr) 28px; gap:6px; align-items:start; margin:0 0 6px }
@@ -2912,7 +2917,7 @@
     .qdVerBar .qdVista{ width:100%; }
     .qdVerBar .qdVista button{ flex:1; justify-content:center }
     .qdVerBar .qdFiltros{ width:calc(100% + 32px); margin:0 -16px }
-    .qdFCampo .qdSel{ max-width:150px }
+    .qdFiltroC .qdSel{ max-width:150px }
     .qdPzBase{ display:flex; flex-wrap:wrap; border-radius:16px }
     .qdPzBase button{ flex:1; justify-content:center }
     .qdPzBase .qdMut{ flex-basis:100%; padding:4px 10px 3px }

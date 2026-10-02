@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 30 set 2026 (v312 no ar)
+Última atualização: 30 set 2026 (v313 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -20,7 +20,10 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
-v312 (1 out) — a caixa da tela do story volta a ter largura (estava numa
+v313 (2 out) — "Assunto do trecho" abaixo dos tempos de cada trecho do corte (e
+o cliente vê); os campos da ficha perderam o fundo de pílula que vazou dos
+filtros da v306.
+Antes, v312 (1 out) — a caixa da tela do story volta a ter largura (estava numa
 coluna de 28px). "Sumiu o texto que tava na aba Texto": consulta só de leitura
 `docs/ENGINEERING/card-1-texto-que-sumiu.sql` entregue ao founder — com o
 resultado, devolver o texto (o antes está em `cards_historico`).

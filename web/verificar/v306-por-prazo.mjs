@@ -46,7 +46,7 @@ const B = await montar(pg);
 console.log('\n  — 1. a barra: primeiro COMO ver, depois o que FILTRA —');
 {
   const r = await pg.evaluate(() => ({ vista: [...document.querySelectorAll('#root .qdVista [data-qdvista]')].map(b => b.textContent.trim() + (b.classList.contains('on') ? '*' : '')),
-    campos: [...document.querySelectorAll('#root .qdVerBar .qdFCampo > span')].map(s => s.textContent), pilulas: document.querySelectorAll('#root [data-qdfp]').length,
+    campos: [...document.querySelectorAll('#root .qdVerBar .qdFiltroC > span')].map(s => s.textContent), pilulas: document.querySelectorAll('#root [data-qdfp]').length,
     colunas: document.querySelectorAll('#root .qdCol').length, limpar: !!document.querySelector('#root [data-qdlimpar]') }));
   checa('1.1 "Colunas · Por prazo", e abre em Colunas', r.vista.join() === 'Colunas*,Por prazo', r);
   checa('1.2 os filtros têm nome: Pessoa, Cliente, Data (um campo cada, no lugar da fileira de pílulas)', r.campos.join() === 'Pessoa,Cliente,Data' && r.pilulas === 0, r);
@@ -83,7 +83,7 @@ console.log('\n  — 4. filtrar e limpar —');
 {
   await pg.selectOption('#root [data-qdfpes]', B.eu); await pg.waitForTimeout(150);
   const s = (await secoes(pg)).flatMap(x => x[1]);
-  const r = await pg.evaluate(() => ({ lig: document.querySelector('#root [data-qdfpes]').closest('.qdFCampo').classList.contains('ligado'),
+  const r = await pg.evaluate(() => ({ lig: document.querySelector('#root [data-qdfpes]').closest('.qdFiltroC').classList.contains('ligado'),
     limpar: document.querySelector('#root [data-qdlimpar]')?.textContent.replace(/\s+/g, ' ').trim(), op: document.querySelector('#root [data-qdfpes] option[value]:checked')?.textContent }));
   checa('4.1 "Só os meus" deixa só os cards da pessoa', B.igual || s.sort().join() === '9001,9002,9008', s);
   checa('4.2 o campo ligado fica amarelo, e aparece "Limpar filtros 1"', r.lig && r.limpar === 'Limpar filtros 1' && r.op === 'Só os meus', r);
