@@ -349,6 +349,19 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (2 out, v318, NO AR) — o link mais fluido, e o ponto grande na
+agência.** Quatro pedidos do founder numa leva: (1) "quando muda a imagem, ele
+fecha pra abrir" — a troca de tela no link guarda a altura da peça, reaproveita
+as miniaturas e a peça já vista (mesmo elemento), pré-carrega as telas e a nova
+entra esmaecendo; (2) "pode tirar isso do final da página" — saiu a fileira do
+coração/balão com a decisão aberta (o coração grande ainda pulsa ao aprovar);
+(3) "Revisar e enviar" fica NO ALTO das peças (embaixo não repete); (4) a
+conferência: a caixa do texto/legenda não vaza e os dois botões alinham; e na
+ficha da agência, tocar na tela do ajuste abre a peça grande com os pontos no
+lugar e o que o cliente escreveu em cada um. **Armadilha de prova:** `page.route`
+desliga o cache do navegador — a suíte da troca fluida manda o banco para uma
+porta morta em vez de interceptar. 13 provas em
+`web/verificar/v318-troca-fluida.mjs`, 3.3–3.4 na v317, v237 e v316 ajustadas.
 **Fechado (2 out, v317, NO AR) — o ponto na imagem.** "Quero" (a sugestão
 do comentário por ponto, como no Figma — Princípio "a arte aceita comentário
 por ponto"). No link, na peça grande (imagem): tocar marca um ponto numerado

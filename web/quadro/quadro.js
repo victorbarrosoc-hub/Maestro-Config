@@ -163,11 +163,14 @@
     const telas = {};
     txt.split('\n').forEach(l => {
       const m = /^(?:Tela (\d+)|A peça) · ponto (\d+)\b.*\{(\d{1,3}),(\d{1,3})\}\s*$/.exec(l);
-      if(m){ const t = m[1] ? +m[1] : 1; (telas[t] = telas[t] || []).push({ n: m[2], x: Math.min(100, +m[3]), y: Math.min(100, +m[4]) }); }
+      const dito = /—\s*(.*?)\s*\{\d{1,3},\d{1,3}\}\s*$/.exec(l);
+      if(m){ const t = m[1] ? +m[1] : 1; (telas[t] = telas[t] || []).push({ n: m[2], x: Math.min(100, +m[3]), y: Math.min(100, +m[4]), t: dito ? dito[1] : '' }); }
     });
+    /* v318 — "precisa abrir maior quando clicar… pra ver melhor aonde ficou a pontuação do cliente" */
+    Q.pinosDoPedido = Q.pinosDoPedido || {}; Q.pinosDoPedido[cli + '|' + p.id] = telas;
     const limpo = txt.replace(/\s*\{\d{1,3},\d{1,3}\}\s*$/gm, '');
     const fotos = Object.keys(telas).map(t => { const m = vis[+t - 1]; const u = m ? url_(m.tipo === 'imagem' ? m.url : m.capa) : '';
-      return u ? `<figure class="qdPinoFig"><div><img src="${esc_(u)}" alt="">${telas[t].map(q => `<i style="left:${q.x}%;top:${q.y}%">${esc_(q.n)}</i>`).join('')}</div><figcaption>${vis.length > 1 ? 'Tela ' + t : 'A peça'}</figcaption></figure>` : ''; }).join('');
+      return u ? `<figure class="qdPinoFig"><button type="button" data-qdpinover="${esc_(cli)}|${esc_(p.id)}|${t}" aria-label="Ver ${vis.length > 1 ? 'a tela ' + t : 'a peça'} grande, com os pontos"><img src="${esc_(u)}" alt="">${telas[t].map(q => `<i style="left:${q.x}%;top:${q.y}%">${esc_(q.n)}</i>`).join('')}<span class="qdPinoLupa">Ver grande</span></button><figcaption>${vis.length > 1 ? 'Tela ' + t : 'A peça'}</figcaption></figure>` : ''; }).join('');
     return `<p>${esc_(limpo)}${a.por ? ` <span class="qdMut">— ${esc_(a.por)}</span>` : ''}</p>${fotos ? `<div class="qdPinos">${fotos}</div>` : ''}`;
   }
   function capa(cli, id){
@@ -1229,7 +1232,10 @@
     Q.ver = { cli, id, i };
     const m = ms[i] || {};
     const u = url_(m.url || '');
-    const corpo = m.tipo === 'imagem' && (u || url_(m.capa || '')) ? `<img src="${u || url_(m.capa)}" alt="${esc_(m.nome || '')}">`
+    const pinos = Q.verPinos && Q.verPinos.cli === cli && String(Q.verPinos.id) === String(id) ? (Q.verPinos.telas[i + 1] || []) : [];
+    const corpo = m.tipo === 'imagem' && (u || url_(m.capa || '')) && pinos.length ? `<div class="qdVerPinos"><div class="qdVerFoto"><img src="${u || url_(m.capa)}" alt="${esc_(m.nome || '')}">${pinos.map(q => `<i style="left:${q.x}%;top:${q.y}%">${esc_(q.n)}</i>`).join('')}</div>
+        <ol class="qdVerLista">${pinos.map(q => `<li><i>${esc_(q.n)}</i><span>${esc_(q.t || '')}</span></li>`).join('')}</ol></div>`
+      : m.tipo === 'imagem' && (u || url_(m.capa || '')) ? `<img src="${u || url_(m.capa)}" alt="${esc_(m.nome || '')}">`
       : m.tipo === 'video' && u ? `<video src="${u}" ${url_(m.capa || m.poster || '') ? `poster="${url_(m.capa || m.poster)}"` : ''} controls playsinline preload="metadata"></video>`
       : `<div class="qdVerOutro"><p>${esc_(m.nome || (m.tipo === 'link' ? 'Link' : 'Arquivo'))}</p>${u ? `<a class="qdPil" href="${u}" target="_blank" rel="noopener">Abrir ${m.tipo === 'link' ? 'o link' : 'o arquivo'}</a>` : '<p class="qdMut">Ainda não subiu para a nuvem.</p>'}</div>`;
     let el = document.getElementById('qdVer');
@@ -1270,8 +1276,16 @@
     const [cli, id] = Q.folha.split('|');
     baixarDoCard(cli, id, b.dataset.qdbaixar);
   }, true);
-  function fecharVer(){ Q.ver = null; const el = document.getElementById('qdVer'); if(el) el.remove(); }
+  function fecharVer(){ Q.ver = null; Q.verPinos = null; const el = document.getElementById('qdVer'); if(el) el.remove(); }
   Q.verPeca = verPeca; Q.fecharVer = fecharVer;
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-qdpinover]'); if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    const [cli, id, t] = b.dataset.qdpinover.split('|');
+    const card = (Q.pinosDoPedido || {})[cli + '|' + id]; if(!card) return;
+    Q.verPinos = { cli, id, telas: card };
+    verPeca(cli, id, (+t || 1) - 1);
+  }, true);
   document.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('#qdVer [data-qdverfechar], #qdVer [data-qdverir]');
     if(!b || !Q.ver) return;
@@ -3191,7 +3205,16 @@
   .qdFAjuste p{ white-space:pre-line }
   .qdPinos{ display:flex; gap:10px; flex-wrap:wrap; margin:4px 0 10px }
   .qdPinoFig{ margin:0 }
-  .qdPinoFig div{ position:relative; line-height:0 }
+  .qdPinoFig button{ position:relative; display:block; line-height:0; padding:0; border:0; background:none; cursor:zoom-in; border-radius:8px }
+  .qdPinoLupa{ position:absolute; right:6px; bottom:6px; line-height:1; font-size:11px; padding:4px 8px; border-radius:999px; background:rgba(8,9,11,.72); color:#fff }
+  .qdVerPinos{ display:flex; gap:18px; align-items:flex-start; justify-content:center; max-width:100% }
+  .qdVerFoto{ position:relative; line-height:0; flex:0 1 auto; min-width:0 }
+  .qdVerFoto img{ max-height:calc(92dvh - 80px) !important }
+  .qdVerFoto i{ position:absolute; transform:translate(-50%, -50%); width:30px; height:30px; border-radius:50%; background:#E2683C; color:#fff; border:2px solid #fff; font:600 14px/26px system-ui, sans-serif; text-align:center; font-style:normal; box-shadow:0 2px 8px rgba(0,0,0,.5) }
+  .qdVerLista{ list-style:none; margin:0; padding:14px; width:260px; flex:none; background:#1D1E22; border-radius:12px; color:#fff; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; max-height:calc(92dvh - 80px); overflow:auto }
+  .qdVerLista li{ display:flex; gap:9px; font-size:14px; line-height:1.4 }
+  .qdVerLista i{ flex:none; width:22px; height:22px; border-radius:50%; background:#E2683C; color:#fff; font:600 12px/22px system-ui, sans-serif; text-align:center; font-style:normal }
+  @media (max-width:760px){ .qdVerPinos{ flex-direction:column; align-items:center } .qdVerLista{ width:auto; align-self:stretch } .qdVerFoto img{ max-height:62dvh !important } }
   .qdPinoFig img{ width:150px; height:auto; border-radius:8px; display:block }
   .qdPinoFig i{ position:absolute; transform:translate(-50%, -50%); width:20px; height:20px; border-radius:50%; background:#E2683C; color:#fff; border:2px solid #fff; font:600 11px/16px system-ui, sans-serif; text-align:center; font-style:normal; box-shadow:0 1px 4px rgba(0,0,0,.4) }
   .qdPinoFig figcaption{ font-size:11.5px; color:var(--mut, #999); margin-top:4px }

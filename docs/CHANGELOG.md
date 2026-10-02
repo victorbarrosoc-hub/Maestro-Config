@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.132
+Version: 0.5.133
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.133 — 2 out · v318 · o link mais fluido, e o ponto grande na agência
+
+- Link: trocar de tela sem "fechar para abrir" (altura guardada, imagens reaproveitadas e pré-carregadas, entrada esmaecendo); sem a fileira do coração no rodapé; "Revisar e enviar" no alto; conferência enquadrada. Agência: a tela do ajuste abre grande com os pontos e o texto de cada um. 13 provas em `web/verificar/v318-troca-fluida.mjs`.
 
 ## 0.5.132 — 2 out · v317 · o ponto na imagem
 

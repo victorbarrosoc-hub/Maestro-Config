@@ -89,6 +89,18 @@ r = await pg.evaluate(() => { const b = document.querySelector('#qdFolha .qdFAju
 if(process.env.OUT){ await pg.evaluate(() => document.querySelector('#qdFolha .qdFAjuste').scrollIntoView()); await pg.screenshot({ path: process.env.OUT + '/v317-agencia.png' }); }
 checa('3.1 o pedido aparece em texto limpo (sem os números da posição)', r && /ponto 1 \(no alto, à esquerda\) — Este logo está cortado no canto/.test(r.txt) && !/\{/.test(r.txt), r);
 checa('3.2 e a Tela 1 aparece com o ponto 1 desenhado no mesmo lugar', r && r.n === 1 && r.cap === 'Tela 1' && Math.abs(r.px - 25) <= 3, r);
+/* v318 — "precisa abrir maior quando clicar… pra ver melhor aonde ficou localizado a pontuação do cliente" */
+await pg.evaluate(() => document.querySelector('#qdFolha .qdPinoFig button').scrollIntoView({ block: 'center' }));
+await pg.click('#qdFolha .qdPinoFig button'); await pg.waitForTimeout(500);
+if(process.env.OUT) await pg.screenshot({ path: process.env.OUT + '/v318-agencia-grande.png' });
+r = await pg.evaluate(() => { const v = document.getElementById('qdVer'); if(!v) return null; const i = v.querySelector('.qdVerFoto i'), im = v.querySelector('.qdVerFoto img');
+  const bi = i && i.getBoundingClientRect(), bm = im && im.getBoundingClientRect(), mini = document.querySelector('#qdFolha .qdPinoFig img').getBoundingClientRect();
+  return { n: v.querySelectorAll('.qdVerFoto i').length, larg: bm ? Math.round(bm.width) : 0, mini: Math.round(mini.width), lista: [...v.querySelectorAll('.qdVerLista li')].map(x => x.textContent.trim()),
+    px: bi && bm ? Math.round((bi.left + bi.width / 2 - bm.left) / bm.width * 100) : -1, py: bi && bm ? Math.round((bi.top + bi.height / 2 - bm.top) / bm.height * 100) : -1 }; });
+checa('3.3 tocar na tela do ajuste abre a peça GRANDE com o ponto no mesmo lugar e o que o cliente escreveu ao lado', r && r.n === 1 && r.larg > r.mini * 1.8 && Math.abs(r.px - 25) <= 3 && Math.abs(r.py - 20) <= 3 && /^1\s*Este logo está cortado no canto$/.test(r.lista[0] || ''), r);
+await pg.keyboard.press('Escape'); await pg.waitForTimeout(200);
+await pg.evaluate(() => { const x = document.querySelector('#qdVer [data-qdverfechar]'); if(x) x.click(); }); await pg.waitForTimeout(200);
+checa('3.4 fecha e a ficha continua aberta', await pg.evaluate(() => !document.getElementById('qdVer') && !!document.querySelector('#qdFolha .qdFAjuste')));
 checa('4.1 nenhum erro na página', erros.length === 0, erros);
 await nav.close(); srv.close();
 console.log(`\n  ${ok} ok · ${falhou} falharam\n`); process.exit(falhou ? 1 : 0);
