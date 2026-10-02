@@ -357,7 +357,7 @@ entrando?" (cabeçalho `x-maestro-pessoa`, em `tempo-real.js`), e
 `maestro_cards_quem()` anota "Gabi Domingues · ejup.mkt@gmail.com". Só
 informa: não dá permissão. Link do cliente e arquivos não levam nome. SQL:
 `docs/ENGINEERING/historico-1-quem-de-verdade.sql` (8 provas em
-`historico-1-teste.sql`); app: 8 provas em `web/verificar/v314-quem-grava.mjs`. **SQL APLICADO em produção em 2/out 10h01.**
+`historico-1-teste.sql`); app: 8 provas em `web/verificar/v314-quem-grava.mjs`. **SQL APLICADO em produção em 2/out 10h01; conferido 10h04: "Victor Barroso · ejup.mkt@gmail.com".**
 **Fechado (2 out, sem versão de app) — o alarme diz onde.** O e-mail da
 conferência de 2/out avisou "3 esvaziaram texto, 8 tiraram mídia (n0)", com
 "NUMEROS [object Object]" e o selo errado "PARA APROVAR". Agora a ficha do
