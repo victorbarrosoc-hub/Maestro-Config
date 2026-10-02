@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.131
+Version: 0.5.132
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.132 — 2 out · v317 · o ponto na imagem
+
+- Comentário por ponto na peça (link do cliente), pontos desenhados na ficha da agência. Mesmo pedido de sempre, uma linha por ponto com `{x,y}`. 12 provas em `web/verificar/v317-o-ponto.mjs`.
 
 ## 0.5.131 — 2 out · v316 · o cliente decide peça a peça
 

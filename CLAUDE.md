@@ -349,6 +349,17 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (2 out, v317, NO AR) — o ponto na imagem.** "Quero" (a sugestão
+do comentário por ponto, como no Figma — Princípio "a arte aceita comentário
+por ponto"). No link, na peça grande (imagem): tocar marca um ponto numerado
+ali e abre "Ponto N (no alto, à esquerda) — o que mudar aqui?"; tocar no
+ponto reabre para mudar ou "Tirar este ponto". A conferência desenha os pontos
+na miniatura. Vai pela porta de sempre, uma linha por ponto:
+"Tela 2 · ponto 1 (no alto, à esquerda) — … {32,18}" — o `{x,y}` (em % da
+peça) é onde a ficha da agência desenha o número em cima da tela certa
+(`pedidoDoCliente` em `quadro.js`), e o texto aparece limpo, sem ele. Vídeo
+não leva ponto (só o pedido escrito). 12 provas em
+`web/verificar/v317-o-ponto.mjs` (posição medida nos dois lados).
 **Fechado (2 out, v316, NO AR) — o cliente decide peça a peça.** "Uma
 visualização final antes de liberar as alterações… se for carrossel ele vê as
 considerações em cada peça… selecione a peça, veja em visualização grande e dê a

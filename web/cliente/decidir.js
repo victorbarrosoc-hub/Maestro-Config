@@ -24,7 +24,7 @@
   'use strict';
   if(window.MaestroDecidir) return;
   if(typeof S === 'undefined' || typeof clCard !== 'function' || typeof decidirCard !== 'function') return;
-  const M = window.MaestroDecidir = { versao: 'v316' };
+  const M = window.MaestroDecidir = { versao: 'v317' };
   const CHAVE = 'maestro-decidir-v1';
   const e_ = s => (typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
   const url_ = u => (typeof urlSegura === 'function' ? urlSegura(u) : (/^(https?:|blob:|data:image\/)/.test(String(u || '')) ? String(u) : ''));
@@ -40,6 +40,7 @@
     let st = todos[k];
     /* rascunho de outra volta (a agência já mandou versão nova) não serve mais */
     if(!st || st.volta !== voltaDe(p)) st = todos[k] = { volta: voltaDe(p), sel: 0, ok: {}, notas: {}, geral: '' };
+    if(!st.pontos) st.pontos = {};
     return st;
   }
   const limpar = p => { delete todos[cliDe() + '|' + p.id]; guardar(); };
@@ -55,47 +56,70 @@
     const v = visuais(p);
     return v.length ? { p, v } : null;
   }
-  const nPedidos = st => Object.keys(st.notas).filter(i => String(st.notas[i] || '').trim()).length;
+  /* v317 — o ponto na imagem: { x, y } em % da peça, e o que mudar ali */
+  const pontosDe = (st, i) => (st.pontos[i] || []).filter(q => q && String(q.t || '').trim());
+  const temPedido = (st, i) => !!(String(st.notas[i] || '').trim() || pontosDe(st, i).length);
+  const nPedidos = st => { const ks = new Set([...Object.keys(st.notas), ...Object.keys(st.pontos)]); return [...ks].filter(i => temPedido(st, i)).length; };
+  const ondeFica = (x, y) => { const v = y < 34 ? 'no alto' : y > 66 ? 'embaixo' : 'no meio', h = x < 34 ? 'à esquerda' : x > 66 ? 'à direita' : 'no centro';
+    return v === 'no meio' && h === 'no centro' ? 'no centro' : `${v}, ${h}`; };
+  const pinosHtml = (st, i, ativo) => pontosDe(st, i).map((q, k) => `<button type="button" class="dcPino${ativo === k ? ' on' : ''}" data-dcpino="${k}" style="left:${q.x}%;top:${q.y}%" aria-label="Ponto ${k + 1}">${k + 1}</button>`).join('');
   const nEnvio = st => nPedidos(st) + (String(st.geral || '').trim() ? 1 : 0);
-  const decidida = (st, i) => !!(st.ok[i] || String(st.notas[i] || '').trim());
+  const decidida = (st, i) => !!(st.ok[i] || temPedido(st, i));
   const rotulo = (v, i) => v.length > 1 ? `Tela ${i + 1}` : 'A peça';
 
   function miniatura(m, i, st, v){
-    const tem = String(st.notas[i] || '').trim();
+    const tem = temPedido(st, i);
     const img = m.tipo === 'imagem' ? url_(m.url) : url_(m.poster || '');
     return `<button type="button" class="dcMini${i === st.sel ? ' on' : ''}${tem ? ' pede' : st.ok[i] ? ' ok' : ''}" data-dcsel="${i}" aria-pressed="${i === st.sel}" aria-label="${e_(rotulo(v, i))}${tem ? ', com pedido' : st.ok[i] ? ', aprovada' : ''}">
       ${img ? `<img src="${e_(img)}" alt="" loading="lazy">` : m.tipo === 'video' ? '<i class="dcPlay">▶</i>' : ''}
       <b>${i + 1}</b>${tem ? '<em>✎</em>' : st.ok[i] ? '<em>✓</em>' : ''}</button>`;
   }
-  function grande(m){
+  function grande(m, st, i){
     const u = url_(m.url);
     if(m.tipo === 'video') return `<video src="${e_(u)}" ${m.poster ? `poster="${e_(url_(m.poster))}"` : ''} controls playsinline preload="metadata"></video>`;
-    return `<img src="${e_(u)}" alt="">`;
+    const pn = st.pino && st.pino.i === i ? st.pino : null;
+    const novo = pn && pn.novo ? `<span class="dcPino novo" style="left:${pn.novo.x}%;top:${pn.novo.y}%">${pontosDe(st, i).length + 1}</span>` : '';
+    return `<div class="dcFoto" data-dcfoto="${i}"><img src="${e_(u)}" alt="" draggable="false">${pinosHtml(st, i, pn && pn.k != null ? pn.k : null)}${novo}</div>`;
   }
   function painel(p, v, st){
     const i = Math.min(st.sel, v.length - 1), m = v[i];
     const tem = String(st.notas[i] || '').trim();
+    const pts = pontosDe(st, i);
     const feitas = v.filter((_, j) => decidida(st, j)).length;
+    const pn = st.pino && st.pino.i === i ? st.pino : null;
     let acoes;
-    if(st.editando === i){
+    if(pn){
+      const q = pn.k != null ? pts[pn.k] : null;
+      const n = pn.k != null ? pn.k + 1 : pts.length + 1;
+      const onde = q ? ondeFica(q.x, q.y) : pn.novo ? ondeFica(pn.novo.x, pn.novo.y) : '';
+      acoes = `<div class="dcPede"><label for="dcPinoTx">Ponto ${n} <span class="dcOnde">${e_(onde)}</span> — o que mudar aqui?</label>
+        <textarea id="dcPinoTx" rows="2" placeholder="Ex.: este logo está cortado.">${e_(q ? q.t : '')}</textarea>
+        <div class="dcBts"><button type="button" class="clbtn chg" data-dcpinosalva="1">Guardar o ponto</button>
+          <button type="button" class="clbtn sec" data-dcpinofecha="1">${q ? 'Fechar' : 'Cancelar'}</button>
+          ${q ? `<button type="button" class="dcLink dcTiraPino" data-dcpinotira="${pn.k}">Tirar este ponto</button>` : ''}</div></div>`;
+    } else if(st.editando === i){
       acoes = `<div class="dcPede">
         <label for="dcNota">O que precisa mudar ${v.length > 1 ? `na tela ${i + 1}` : 'nesta peça'}?</label>
         <textarea id="dcNota" rows="3" placeholder="Escreva com suas palavras. Ex.: trocar a foto, o título está grande demais.">${e_(st.notas[i] || '')}</textarea>
         <div class="dcBts"><button type="button" class="clbtn chg" data-dcsalva="${i}">Guardar o pedido</button>
           <button type="button" class="clbtn sec" data-dccancela="1">Cancelar</button></div></div>`;
-    } else if(tem){
-      acoes = `<div class="dcNotaCx"><span>Seu pedido ${v.length > 1 ? `na tela ${i + 1}` : ''}</span><p>${e_(tem)}</p>
-        <div class="dcBtsL"><button type="button" data-dcedita="${i}">Mudar o pedido</button><button type="button" data-dctira="${i}">Tirar o pedido</button></div></div>`;
+    } else if(tem || pts.length){
+      acoes = `<div class="dcNotaCx"><span>Seu pedido ${v.length > 1 ? `na tela ${i + 1}` : ''}</span>
+        ${pts.map((q, k) => `<p class="dcPinoL"><button type="button" class="dcNum" data-dcpino="${k}">${k + 1}</button>${e_(q.t)}</p>`).join('')}
+        ${tem ? `<p>${e_(tem)}</p>` : ''}
+        <div class="dcBtsL"><button type="button" data-dcedita="${i}">${tem ? 'Mudar o pedido escrito' : 'Escrever um pedido geral'}</button><button type="button" data-dctira="${i}">Tirar tudo</button></div>
+        ${m.tipo === 'imagem' ? '<small class="dcDica">Toque na imagem para marcar outro ponto.</small>' : ''}</div>`;
     } else if(st.ok[i]){
       acoes = `<div class="dcOkCx">✓ ${v.length > 1 ? `Tela ${i + 1} aprovada` : 'Aprovada'} <button type="button" data-dcdesfaz="${i}">Desfazer</button></div>`;
     } else {
       acoes = `<div class="dcBts dois"><button type="button" class="clbtn" data-dcaprova="${i}">Aprovar ${v.length > 1 ? 'esta tela' : 'esta peça'}</button>
-        <button type="button" class="clbtn sec" data-dcpede="${i}">Pedir alteração ${v.length > 1 ? 'nesta' : ''}</button></div>`;
+        <button type="button" class="clbtn sec" data-dcpede="${i}">Pedir alteração ${v.length > 1 ? 'nesta' : ''}</button></div>
+        ${m.tipo === 'imagem' ? '<small class="dcDica">Ou toque no ponto exato da imagem para comentar ali.</small>' : ''}`;
     }
     return `<section class="dcPecas" aria-label="As peças">
       ${v.length > 1 ? `<div class="dcHd"><b>As peças</b><span>${feitas} de ${v.length} vistas · toque numa para ver grande</span></div>
       <div class="dcFila">${v.map((x, j) => miniatura(x, j, st, v)).join('')}</div>` : `<div class="dcHd"><b>A peça</b></div>`}
-      <div class="dcGrande${m.tipo === 'video' ? ' video' : ''}">${grande(m)}
+      <div class="dcGrande${m.tipo === 'video' ? ' video' : ''}">${grande(m, st, i)}
         ${v.length > 1 ? `<button type="button" class="dcSeta e" data-dcvai="-1" aria-label="Tela anterior" ${i === 0 ? 'disabled' : ''}>‹</button>
         <button type="button" class="dcSeta d" data-dcvai="1" aria-label="Próxima tela" ${i === v.length - 1 ? 'disabled' : ''}>›</button>
         <span class="dcConta">${i + 1} / ${v.length}</span>` : ''}</div>
@@ -104,13 +128,16 @@
   }
   function conferencia(p, v, st){
     const linhas = v.map((m, i) => {
-      const tem = String(st.notas[i] || '').trim();
+      const tem = String(st.notas[i] || '').trim(); const pts = pontosDe(st, i); const algo = tem || pts.length;
       const img = m.tipo === 'imagem' ? url_(m.url) : url_(m.poster || '');
-      return `<div class="dcLinha${tem ? ' pede' : ''}">
-        <button type="button" class="dcLinhaImg" data-dcvolta="${i}" aria-label="Ver ${e_(rotulo(v, i))}">${img ? `<img src="${e_(img)}" alt="">` : '<i class="dcPlay">▶</i>'}<b>${i + 1}</b></button>
+      return `<div class="dcLinha${algo ? ' pede' : ''}">
+        <button type="button" class="dcLinhaImg" data-dcvolta="${i}" aria-label="Ver ${e_(rotulo(v, i))}">${img ? `<img src="${e_(img)}" alt="">` : '<i class="dcPlay">▶</i>'}<b>${i + 1}</b>
+          ${pts.map((q, k) => `<i class="dcPinoMini" style="left:${q.x}%;top:${q.y}%">${k + 1}</i>`).join('')}</button>
         <div class="dcLinhaTx"><span>${e_(rotulo(v, i))}</span>
-          ${tem ? `<p>${e_(tem)}</p>` : `<p class="vai">${st.ok[i] ? '✓ Aprovada' : 'Sem pedido · vai como está'}</p>`}
-          <button type="button" class="dcLink" data-dcvolta="${i}">${tem ? 'Mudar' : 'Pedir alteração'}</button></div></div>`;
+          ${pts.map((q, k) => `<p class="dcPinoL"><i class="dcNum">${k + 1}</i>${e_(q.t)}</p>`).join('')}
+          ${tem ? `<p>${e_(tem)}</p>` : ''}
+          ${algo ? '' : `<p class="vai">${st.ok[i] ? '✓ Aprovada' : 'Sem pedido · vai como está'}</p>`}
+          <button type="button" class="dcLink" data-dcvolta="${i}">${algo ? 'Mudar' : 'Pedir alteração'}</button></div></div>`;
     }).join('');
     const n = nEnvio(st);
     return `<div class="clbody dcConf">
@@ -162,7 +189,7 @@
         : html.replace('<div class="decMain">', '<div class="decMain">' + painel(p, v, st));
       /* com pedido, o botão de baixo leva à conferência (aprovar tudo não apaga o pedido) */
       const n = nPedidos(st);
-      if(st.editando != null){
+      if(st.editando != null || st.pino){
         /* escrevendo o pedido de uma peça: nada de "aprovar tudo" por perto */
         html = trocarBloco(html, '<div class="clfoot', '') || html;
       } else if(n){
@@ -199,16 +226,33 @@
     else window.scrollTo(0, y);
   }
 
+  const focoPino = () => setTimeout(() => { const a = document.getElementById('dcPinoTx'); if(a){ a.focus(); a.setSelectionRange(a.value.length, a.value.length);
+    const r = a.getBoundingClientRect(); if(r.bottom > innerHeight - 20) window.scrollBy(0, r.bottom - innerHeight + 120); } }, 30);
   addEventListener('click', e => {
-    const t = e.target.closest && e.target.closest('[data-dctexto],[data-dcsel],[data-dcvai],[data-dcaprova],[data-dcpede],[data-dcsalva],[data-dccancela],[data-dcedita],[data-dctira],[data-dcdesfaz],[data-dcrevisa],[data-dcvolta],[data-dcenvia]');
+    const t = e.target.closest && e.target.closest('[data-dcfoto],[data-dcpino],[data-dcpinosalva],[data-dcpinofecha],[data-dcpinotira],[data-dctexto],[data-dcsel],[data-dcvai],[data-dcaprova],[data-dcpede],[data-dcsalva],[data-dccancela],[data-dcedita],[data-dctira],[data-dcdesfaz],[data-dcrevisa],[data-dcvolta],[data-dcenvia]');
     if(!t) return;
     const j = emJogo(); if(!j) return;
     e.preventDefault(); e.stopPropagation();
     const { p, v } = j; const st = estado(p); const d = t.dataset;
     const nota = () => { const a = document.getElementById('dcNota'); return a ? a.value : ''; };
-    if(d.dcsel !== undefined){ st.sel = +d.dcsel; st.editando = null; return redesenhar(true); }
-    if(d.dcvai !== undefined){ st.sel = Math.max(0, Math.min(v.length - 1, st.sel + (+d.dcvai))); st.editando = null; return redesenhar(false); }
-    if(d.dcaprova !== undefined){ const i = +d.dcaprova; st.ok[i] = true; delete st.notas[i]; st.editando = null;
+    if(d.dcpino !== undefined){ st.pino = { i: st.sel, k: +d.dcpino }; st.editando = null; redesenhar(false); return focoPino(); }
+    if(d.dcfoto !== undefined){
+      const img = t.querySelector('img'); if(!img) return; const r = img.getBoundingClientRect();
+      const x = Math.round(Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100))), y = Math.round(Math.max(0, Math.min(100, (e.clientY - r.top) / r.height * 100)));
+      st.pino = { i: +d.dcfoto, novo: { x, y } }; st.editando = null; delete st.ok[+d.dcfoto]; redesenhar(false); return focoPino();
+    }
+    if(d.dcpinosalva){
+      const a = document.getElementById('dcPinoTx'); const txt = (a ? a.value : '').trim(); const pn = st.pino; if(!pn) return;
+      if(txt.length < 2){ if(a){ a.focus(); a.classList.add('falta'); } return; }
+      const arr = st.pontos[pn.i] = (st.pontos[pn.i] || []).filter(q => q && String(q.t || '').trim());
+      if(pn.k != null && arr[pn.k]) arr[pn.k].t = txt.slice(0, 600); else if(pn.novo) arr.push({ x: pn.novo.x, y: pn.novo.y, t: txt.slice(0, 600) });
+      delete st.ok[pn.i]; st.pino = null; return redesenhar(false);
+    }
+    if(d.dcpinofecha){ st.pino = null; return redesenhar(false); }
+    if(d.dcpinotira !== undefined){ const arr = st.pontos[st.sel] || []; arr.splice(+d.dcpinotira, 1); st.pino = null; return redesenhar(false); }
+    if(d.dcsel !== undefined){ st.sel = +d.dcsel; st.editando = null; st.pino = null; return redesenhar(true); }
+    if(d.dcvai !== undefined){ st.pino = null; st.sel = Math.max(0, Math.min(v.length - 1, st.sel + (+d.dcvai))); st.editando = null; return redesenhar(false); }
+    if(d.dcaprova !== undefined){ const i = +d.dcaprova; st.ok[i] = true; delete st.notas[i]; delete st.pontos[i]; st.editando = null; st.pino = null;
       if(typeof som === 'function') try{ som('toque'); }catch(x){}
       st.sel = proxima(st, v, i); return redesenhar(true); }
     if(d.dcpede !== undefined || d.dcedita !== undefined){ st.editando = +(d.dcpede !== undefined ? d.dcpede : d.dcedita); st.sel = st.editando;
@@ -220,7 +264,7 @@
       st.sel = proxima(st, v, i); return redesenhar(true);
     }
     if(d.dccancela){ st.editando = null; return redesenhar(false); }
-    if(d.dctira !== undefined){ delete st.notas[+d.dctira]; return redesenhar(false); }
+    if(d.dctira !== undefined){ delete st.notas[+d.dctira]; delete st.pontos[+d.dctira]; st.pino = null; return redesenhar(false); }
     if(d.dcdesfaz !== undefined){ delete st.ok[+d.dcdesfaz]; return redesenhar(false); }
     if(d.dctexto){ st.revisando = true; st.querTexto = true; st.editando = null; guardar(); try{ render(); }catch(x){} window.scrollTo(0, 0);
       setTimeout(() => { const g = document.getElementById('dcGeral'); if(g) g.focus(); }, 30); return; }
@@ -233,7 +277,12 @@
     }
     if(d.dcenvia){
       const g = document.getElementById('dcGeral'); if(g) st.geral = g.value;
-      const linhas = v.map((_, i) => String(st.notas[i] || '').trim() ? `${rotulo(v, i)} — ${String(st.notas[i]).trim()}` : '').filter(Boolean);
+      /* uma linha por ponto ("Tela 2 · ponto 1 (no alto, à esquerda) — … {32,18}": o {x,y} é onde a agência desenha o ponto) e uma pelo pedido escrito */
+      const linhas = [];
+      v.forEach((_, i) => {
+        pontosDe(st, i).forEach((q, k) => linhas.push(`${rotulo(v, i)} · ponto ${k + 1} (${ondeFica(q.x, q.y)}) — ${String(q.t).trim().replace(/\s*\n\s*/g, ' ')} {${q.x},${q.y}}`));
+        if(String(st.notas[i] || '').trim()) linhas.push(`${rotulo(v, i)} — ${String(st.notas[i]).trim()}`);
+      });
       if(String(st.geral || '').trim()) linhas.push(`Texto/legenda — ${String(st.geral).trim()}`);
       if(!linhas.length){ st.revisando = false; return redesenhar(false); }
       if(S.pcTelas && S.pcTelas.clear) S.pcTelas.clear();
@@ -322,6 +371,19 @@
   .dcLinhaTx p{ margin:3px 0 4px; font-size:15px; line-height:1.4; color:var(--tx); white-space:pre-line; overflow-wrap:anywhere }
   .dcLinhaTx p.vai{ color:#2E9E6A; font-size:14px }
   .noteitem span{ white-space:pre-line }
+  .dcFoto{ position:relative; display:block; width:fit-content; max-width:100%; margin:0 auto; cursor:crosshair; line-height:0; touch-action:manipulation }
+  .dcGrande .dcFoto img{ width:auto !important; min-width:0 !important; max-width:100%; max-height:72vh; height:auto }
+  .dcFoto img{ user-select:none; -webkit-user-select:none; -webkit-touch-callout:none }
+  .dcPino{ position:absolute; transform:translate(-50%, -50%); width:28px; height:28px; border-radius:50%; border:2px solid #fff; background:#E2683C; color:#fff;
+    font:600 13px/1 system-ui, sans-serif; display:grid; place-items:center; box-shadow:0 2px 8px rgba(0,0,0,.45); cursor:pointer; padding:0; z-index:2 }
+  .dcPino.on, .dcPino.novo{ background:#FFC857; color:#17181C; animation:dcPulsa 1.2s ease-in-out infinite }
+  @keyframes dcPulsa{ 50%{ box-shadow:0 0 0 7px rgba(255,200,87,.35) } }
+  .dcOnde{ font-weight:400; color:var(--mut); font-size:12.5px }
+  .dcDica{ display:block; margin-top:8px; font-size:12.5px; color:var(--mut); text-align:center }
+  .dcPinoL{ display:flex; gap:8px; align-items:flex-start }
+  .dcNum{ flex:none; width:22px; height:22px; border-radius:50%; background:#E2683C; color:#fff; font:600 12px/22px system-ui, sans-serif; text-align:center; border:0; padding:0; font-style:normal; cursor:pointer }
+  .dcPinoMini{ position:absolute; transform:translate(-50%, -50%); width:16px; height:16px; border-radius:50%; background:#E2683C; color:#fff; border:1.5px solid #fff; font:600 9.5px/13px system-ui, sans-serif; text-align:center; font-style:normal }
+  .dcTiraPino{ align-self:center }
   @media (min-width:900px){ .dcMini{ width:76px } .dcGrande{ max-height:62vh } .dcGrande img, .dcGrande video{ max-height:62vh; width:auto; min-width:min(100%, 420px) } }
   `;
   document.head.appendChild(css);

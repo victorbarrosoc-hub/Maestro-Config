@@ -20,6 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
+v317 (2 out) — link do cliente: tocar no ponto exato da imagem e comentar ali (como no Figma); a ficha da agência desenha os pontos na peça.
+
 v316 (2 out) — link do cliente: decidir peça a peça (miniaturas no topo, peça grande, aprovar/pedir por tela) e conferência antes de enviar; pedido vai como uma linha por tela.
 
 v315 (2 out) — Minha lista → aba Agenda: lembretes com horário (das/até), semana na horizontal, só a própria pessoa vê; não vira card.

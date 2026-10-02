@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v316', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v317', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -154,6 +154,21 @@
 
   function materiais(cli, id){
     try{ return (S.mat && S.mat[cli + '|' + id]) || []; }catch(e){ return []; }
+  }
+  /* v317 — o pedido do cliente com os PONTOS na peça: a linha "Tela 2 · ponto 1 (…) — … {32,18}"
+     (web/cliente/decidir.js) vira texto limpo e um número desenhado em cima da tela certa */
+  function pedidoDoCliente(cli, p, a){
+    const txt = String(a.oque || '');
+    const vis = materiais(cli, p.id).filter(m => m && (m.tipo === 'imagem' || m.tipo === 'video'));
+    const telas = {};
+    txt.split('\n').forEach(l => {
+      const m = /^(?:Tela (\d+)|A peça) · ponto (\d+)\b.*\{(\d{1,3}),(\d{1,3})\}\s*$/.exec(l);
+      if(m){ const t = m[1] ? +m[1] : 1; (telas[t] = telas[t] || []).push({ n: m[2], x: Math.min(100, +m[3]), y: Math.min(100, +m[4]) }); }
+    });
+    const limpo = txt.replace(/\s*\{\d{1,3},\d{1,3}\}\s*$/gm, '');
+    const fotos = Object.keys(telas).map(t => { const m = vis[+t - 1]; const u = m ? url_(m.tipo === 'imagem' ? m.url : m.capa) : '';
+      return u ? `<figure class="qdPinoFig"><div><img src="${esc_(u)}" alt="">${telas[t].map(q => `<i style="left:${q.x}%;top:${q.y}%">${esc_(q.n)}</i>`).join('')}</div><figcaption>${vis.length > 1 ? 'Tela ' + t : 'A peça'}</figcaption></figure>` : ''; }).join('');
+    return `<p>${esc_(limpo)}${a.por ? ` <span class="qdMut">— ${esc_(a.por)}</span>` : ''}</p>${fotos ? `<div class="qdPinos">${fotos}</div>` : ''}`;
   }
   function capa(cli, id){
     const m = materiais(cli, id).find(x => x && (x.tipo === 'imagem' || x.capa) && (x.capa || x.url));
@@ -1650,7 +1665,7 @@
       <div class="qdFCols" role="group" aria-label="Coluna">${COLS.filter(([k]) => !ehAg || !['cliente', 'aprovado', 'agendado'].includes(k)).map(([k, n, c]) =>
         `<button type="button" class="qdFCol ${col === k ? 'on' : ''}" style="--qdc:${c}" data-qdfcol="${k}">${ehAg && k === 'publicado' ? 'Feito' : n}</button>`).join('')}</div>
       ${(() => { const b = blocoProximo(Q.folha, cli, p, col, 'qdProx qdFProx'); return b ? `<div class="qdFProxL"><span>Próximo passo</span>${b}</div>` : ''; })()}
-      ${p.ajustePendente ? `<div class="qdFAjuste"><b>O cliente pediu ajuste</b>${(Array.isArray(p.alteracoes) ? p.alteracoes : []).slice(-1).map(a => `<p>${esc_(a.oque || '')}${a.por ? ` <span class="qdMut">— ${esc_(a.por)}</span>` : ''}</p>`).join('')}
+      ${p.ajustePendente ? `<div class="qdFAjuste"><b>O cliente pediu ajuste</b>${(Array.isArray(p.alteracoes) ? p.alteracoes : []).slice(-1).map(a => pedidoDoCliente(cli, p, a)).join('')}
         <button type="button" class="qdPil" data-qdajok="1">Ajuste feito</button></div>` : ''}
       <div class="qdFDatas">
         <section class="qdFGrupo">
@@ -3174,6 +3189,12 @@
   #qdSoltar.mouse span{ padding:16px 4px }
   @keyframes qdSobe{ from{ opacity:0; transform:translate(-50%, 12px) } to{ opacity:1; transform:translate(-50%, 0) } }
   .qdFAjuste p{ white-space:pre-line }
+  .qdPinos{ display:flex; gap:10px; flex-wrap:wrap; margin:4px 0 10px }
+  .qdPinoFig{ margin:0 }
+  .qdPinoFig div{ position:relative; line-height:0 }
+  .qdPinoFig img{ width:150px; height:auto; border-radius:8px; display:block }
+  .qdPinoFig i{ position:absolute; transform:translate(-50%, -50%); width:20px; height:20px; border-radius:50%; background:#E2683C; color:#fff; border:2px solid #fff; font:600 11px/16px system-ui, sans-serif; text-align:center; font-style:normal; box-shadow:0 1px 4px rgba(0,0,0,.4) }
+  .qdPinoFig figcaption{ font-size:11.5px; color:var(--mut, #999); margin-top:4px }
   /* v315 — a Agenda da pessoa (lembretes com horário), um dia por linha */
   .qdAgDica{ margin:-4px 2px 10px; font-size:12.5px }
   .qdAgNovo{ margin-left:auto }
