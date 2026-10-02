@@ -22,7 +22,7 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 **2 out — RESOLVIDO pelo founder ("já resolvi"); o card-3 não precisa ser rodado.** Histórico: o texto do Story "Chamada, thumbnail, Título e Descrição do Ep." sumiu em 30/09 23:50 (login ejup.mkt) — `card-3-devolver-o-texto.sql` devolve só se ninguém escreveu depois. As mídias tiradas parecem trocas de versão (Gabi no Carrossel Ep. 19; vídeo errado no Reels Nicácio): conferir na parte 2.
 
-**Pendente com o founder (2 out):** rodar de novo o `alarme-1` (e-mail legível, com "Onde foi") e o `card-2-o-que-sumiu.sql` (só leitura) e mandar o print — com ele, devolver o texto e as mídias de n0. Opcional: reimplantar a Edge Function `enviar-avisos` (selo "conferência diária").
+**2 out: o founder rodou o `alarme-1` novo** (conferência ok: equipe 5, fotos 5, nada sumiu nas últimas 24 h). **Aberto:** o login ejup.mkt gravou às 23h50 de 30/09 sem ninguém usar — suspeita de aba/aparelho antigo gravando por cima; pedida a consulta das gravações desse login desde 29/09. (Antes:) rodar de novo o `alarme-1` (e-mail legível, com "Onde foi") e o `card-2-o-que-sumiu.sql` (só leitura) e mandar o print — com ele, devolver o texto e as mídias de n0. Opcional: reimplantar a Edge Function `enviar-avisos` (selo "conferência diária").
 
 v313 (2 out) — "Assunto do trecho" abaixo dos tempos de cada trecho do corte (e
 o cliente vê); os campos da ficha perderam o fundo de pílula que vazou dos
