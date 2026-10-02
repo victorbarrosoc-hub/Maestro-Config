@@ -100,4 +100,23 @@ select public.maestro_cards_ligar('maestro');
 update public.cards set apagado_em = now() where org = 'maestro' and cliente = 'cj' and id in (2, 3);
 select pg_temp.checa((select achados::text like '%tinha 10 cards ontem e hoje tem 1.%' from public.maestro_conferir(false) where org = 'maestro'), '6.1 com as tabelas ligadas, conta os cards vivos da tabela (o apagado não conta)');
 
+-- ---------------------------------------------------------------------
+-- 7. (2/out) o e-mail diz QUAIS cards, e a ficha é só texto
+-- ---------------------------------------------------------------------
+delete from public.avisos;
+update public.cards set dados = jsonb_set(dados, '{legenda}', '"uma legenda longa o bastante para contar como perda"') where org = 'maestro' and cliente = 'cj' and id = 1;
+select set_config('request.jwt.claims', '{"email":"anna@ejup.test"}', false);
+update public.cards set dados = jsonb_set(dados, '{legenda}', '""') where org = 'maestro' and cliente = 'cj' and id = 1;
+insert into public.card_midias(org, cliente, card_id, dados) values ('maestro', 'cj', 1, '{"tipo":"imagem","url":"https://x/9.jpg"}');
+update public.card_midias set apagado_em = now() where org = 'maestro' and cliente = 'cj' and card_id = 1;
+update public.pauta set dados = jsonb_set(dados, '{pauta,0,texto}', '""') where org = 'maestro' and cliente = 'cj';
+-- o aviso de hoje já saiu na seção 3: para provar o e-mail de novo, ontem vira anteontem no carimbo
+update public.avisos set chave = chave || ':velho';
+select public.maestro_conferir(true);
+create temp table a7 as select * from public.avisos where para_email = 'victor@ejup.test' order by id desc limit 1;
+select pg_temp.checa((select corpo like '%Onde foi:%' and corpo like '%cj · "card 1": apagou a legenda — anna@ejup.test%' from a7), '7.1 o e-mail diz qual card perdeu a legenda, quem e quando');
+select pg_temp.checa((select corpo like '%cj · "card 1": tirou mídia — anna@ejup.test%' from a7), '7.2 e qual card perdeu mídia');
+select pg_temp.checa((select bool_and(jsonb_typeof(v) = 'string') from a7, jsonb_each(a7.dados) e(k, v)), '7.3 a ficha do e-mail é só texto (nada de "[object Object]")');
+select pg_temp.checa((select dados ->> 'Equipe' like '2 pessoas, 1 com foto%' from a7), '7.4 a ficha diz a equipe por extenso');
+
 \echo 'TODAS AS PROVAS PASSARAM'

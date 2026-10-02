@@ -90,6 +90,7 @@ const ACENTO: Record<string, { cor: string; selo: string }> = {
   mencao:   { cor: "#5B8DEF", selo: "conversas" },
   tarefa:   { cor: "#5B8DEF", selo: "ensaio" },
   teste:    { cor: "#C8963A", selo: "primeiro e-mail" },
+  alarme:   { cor: "#F0784C", selo: "conferência diária" },
 };
 
 function carta(a: Record<string, any>) {
@@ -107,7 +108,7 @@ function carta(a: Record<string, any>) {
 
   /* os detalhes viajam em `dados` e viram uma ficha discreta */
   const fichas = Object.entries(a.dados || {})
-    .filter(([, v]) => v !== null && v !== undefined && String(v) !== "")
+    .filter(([, v]) => v !== null && v !== undefined && typeof v !== "object" && String(v) !== "")
     .slice(0, 6);
   /* tabela e não divs: é o que faz os valores alinharem numa coluna só,
      que é o que transforma três linhas soltas numa ficha */

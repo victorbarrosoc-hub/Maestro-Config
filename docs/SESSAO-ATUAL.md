@@ -20,6 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
+**Pendente com o founder (2 out):** rodar de novo o `alarme-1` (e-mail legível, com "Onde foi") e o `card-2-o-que-sumiu.sql` (só leitura) e mandar o print — com ele, devolver o texto e as mídias de n0. Opcional: reimplantar a Edge Function `enviar-avisos` (selo "conferência diária").
+
 v313 (2 out) — "Assunto do trecho" abaixo dos tempos de cada trecho do corte (e
 o cliente vê); os campos da ficha perderam o fundo de pílula que vazou dos
 filtros da v306.

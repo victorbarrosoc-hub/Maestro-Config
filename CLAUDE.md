@@ -349,6 +349,15 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (2 out, sem versão de app) — o alarme diz onde.** O e-mail da
+conferência de 2/out avisou "3 esvaziaram texto, 8 tiraram mídia (n0)", com
+"NUMEROS [object Object]" e o selo errado "PARA APROVAR". Agora a ficha do
+e-mail é só texto (Equipe, Lembretes, Últimas 24 h), e o corpo traz "Onde
+foi:" com cliente, card, o que sumiu, quem e a hora (do `cards_historico`).
+O founder roda de novo o `alarme-1-conferencia-diaria.sql`; o selo
+"conferência diária" depende de reimplantar a Edge Function `enviar-avisos`.
+Para ver e devolver: `card-2-o-que-sumiu.sql` (só leitura, 3 dias, com
+"ainda falta"). Provas 7.1–7.4 em `alarme-1-teste.sql`.
 **Fechado (2 out, v313, NO AR) — o assunto do trecho.** Cada trecho do corte
 tem "Assunto do trecho" abaixo dos tempos (`corte.tcs.N.tema`); o cliente o vê
 no link. **Armadilha (minha, da v306):** o filtro se chamava `.qdFCampo`, o

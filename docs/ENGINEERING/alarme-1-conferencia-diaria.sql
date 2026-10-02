@@ -56,11 +56,11 @@ declare
   ontem date := current_date - 1;
   cards_tabela boolean := to_regclass('public.cards') is not null;
   vivos int; antes int; ligada boolean;
-  lista text;
+  lista text; detalhe text; dados_mail jsonb;
   tem_org boolean := exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'avisos' and column_name = 'org');
 begin
   for o in select distinct p.org from public.pauta p loop
-    ach := '[]'::jsonb; num := '{}'::jsonb;
+    ach := '[]'::jsonb; num := '{}'::jsonb; detalhe := null;
 
     -- 1. o estado da agência e a equipe
     select p.dados into est from public.pauta p where p.org = o and p.cliente = '__estado__';
@@ -122,11 +122,50 @@ begin
       ach := ach || jsonb_build_array(format('Nas últimas 24 horas, %s gravação(ões) esvaziaram o texto de um card e %s tiraram mídia (%s). Pode ter sido de propósito; vale conferir.',
                                              h.esv, h.mid, coalesce(h.clis, '—')));
     end if;
+    -- (2/out) e QUAIS cards, quem e quando — sem isso o aviso diz "algo
+    -- sumiu" e ninguém sabe onde olhar. Vem do histórico por campo da
+    -- Etapa 1, que guarda o antes de cada campo (dá para devolver).
+    if to_regclass('public.cards_historico') is not null then
+      execute $q$
+        with ev as (
+          select h.cliente, h.card_id, h.quem, h.quando, 'tirou mídia' as oque
+            from public.cards_historico h
+           where h.org = $1 and h.quando > now() - interval '24 hours' and h.operacao = 'tirou_midia'
+          union all
+          select h.cliente, h.card_id, h.quem, h.quando,
+                 case k when 'texto' then 'apagou o texto' when 'legenda' then 'apagou a legenda'
+                        when 'objetivo' then 'apagou o briefing' when 'telas' then 'apagou as telas do story'
+                        when 'roteiro' then 'apagou o roteiro' else 'apagou os trechos do corte' end
+            from public.cards_historico h cross join lateral jsonb_object_keys(h.campos) k
+           where h.org = $1 and h.quando > now() - interval '24 hours' and h.operacao = 'update'
+             and k in ('texto', 'legenda', 'objetivo', 'telas', 'roteiro', 'corte')
+             and length(coalesce(h.campos -> k ->> 'depois', '')) < length(coalesce(h.campos -> k ->> 'antes', '')) - 20),
+        g as (
+          select ev.cliente, ev.card_id, ev.oque, count(*) as n, max(ev.quando) as q,
+                 string_agg(distinct coalesce(ev.quem, '?'), ', ') as quem
+            from ev group by 1, 2, 3 order by max(ev.quando) desc limit 12)
+        select string_agg(format('• %s · "%s": %s%s — %s, %s', g.cliente,
+                                 left(coalesce(nullif(c.dados ->> 't', ''), 'card ' || g.card_id), 50), g.oque,
+                                 case when g.n > 1 then ' (' || g.n || 'x)' else '' end, g.quem,
+                                 to_char(g.q at time zone 'America/Sao_Paulo', 'DD/MM HH24:MI')), E'\n' order by g.q desc)
+          from g left join public.cards c on c.org = $1 and c.cliente = g.cliente and c.id = g.card_id
+      $q$ into detalhe using o;
+    end if;
 
     -- anota e, se achou algo, avisa os administradores da equipe
     n_avisos := 0;
     if p_avisar and jsonb_array_length(ach) > 0 and to_regclass('public.avisos') is not null then
       lista := (select string_agg('• ' || x, E'\n') from jsonb_array_elements_text(ach) x);
+      if detalhe is not null then
+        lista := lista || E'\n\nOnde foi:\n' || detalhe;
+      end if;
+      -- a ficha do e-mail mostra cada par como "NOME  valor": só texto, nunca
+      -- objeto (antes ia o objeto dos números e o e-mail escrevia
+      -- "[object Object]")
+      dados_mail := jsonb_build_object(
+        'Equipe', format('%s pessoas, %s com foto (ontem: %s, %s)', eq_agora, foto_agora, coalesce(eq_ontem::text, '—'), coalesce(foto_ontem::text, '—')),
+        'Lembretes', format('%s (ontem: %s)', lb_agora, coalesce(lb_ontem::text, '—')),
+        'Últimas 24 h', format('%s esvaziaram texto · %s tiraram mídia · %s tiraram card', h.esv, h.mid, h.sum));
       for para in select distinct lower(e ->> 'mail') as mail, e ->> 'n' as nome
                     -- a equipe de agora; se foi ELA que sumiu, a de ontem (é quando mais importa avisar)
                     from jsonb_array_elements(case when eq_agora > 0 then est -> 's' -> 'equipe'
@@ -143,7 +182,7 @@ begin
                   'A conferência de hoje achou algo no banco',
                   'A Maestro confere o banco toda manhã contra a cópia de ontem. Hoje ela achou:' || E'\n\n' || lista || E'\n\n'
                   || 'Nada foi mudado. Não apague nenhum card: mande um print e a hora para quem cuida do sistema.',
-                  jsonb_build_object('org', o, 'achados', ach, 'numeros', num), o;
+                  dados_mail, o;
           n_avisos := n_avisos + 1;
         exception when unique_violation then null;   -- já avisado hoje
         end;
