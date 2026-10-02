@@ -36,7 +36,7 @@ await pg.evaluate(() => localStorage.removeItem('maestro-decidir-v1'));
 await semear(); await pg.waitForTimeout(300);
 const ver = () => pg.evaluate(() => ({ minis: [...document.querySelectorAll('.dcMini')].map(b => b.className.replace('dcMini', '').trim()),
   grande: !!document.querySelector('.dcGrande img'), conta: (document.querySelector('.dcConta') || {}).textContent || '',
-  antiga: document.querySelectorAll('.clbody .clArte').length, revisa: (document.querySelector('[data-dcrevisa]') || {}).textContent || '',
+  antiga: document.querySelectorAll('.clbody .clArte').length, revisa: (document.querySelector('[data-dcrevisa]') || {}).textContent || '', revisaNoTopo: !!document.querySelector('.dcPecas > .dcEnviaTopo [data-dcrevisa]') && !document.querySelector('.clfoot [data-dcrevisa]'),
   aprovaTudo: (document.querySelector('[data-claprova]') || {}).textContent || '', conf: !!document.querySelector('.dcConf') }));
 
 console.log('\n  — 1. as peças no topo, grandes ao tocar —');
@@ -60,7 +60,7 @@ checa('2.2 guardar marca a tela 2 com ✎ e a próxima que falta (tela 3) abre s
 await pg.click('[data-dcaprova="2"]'); await pg.waitForTimeout(200);
 r = await ver();
 checa('2.3 aprovar a tela 3 marca ✓ e volta para a que falta (tela 1)', /ok/.test(r.minis[2]) && /1 \/ 3/.test(r.conta), r);
-checa('2.4 com pedido, o botão de baixo vira "Revisar e enviar · 1 pedido"', /Revisar e enviar · 1 pedido/.test(r.revisa) && !r.aprovaTudo, r);
+checa('2.4 com pedido, "Revisar e enviar · 1 pedido" aparece NO ALTO das peças (v318) e embaixo não fica "aprovar tudo"', /Revisar e enviar · 1 pedido/.test(r.revisa) && !r.aprovaTudo && r.revisaNoTopo, r);
 
 console.log('\n  — 3. o rascunho não se perde ao fechar a página —');
 await pg.reload(); await pg.waitForFunction(() => window.MaestroDecidir, null, { timeout: 15000 }); await pg.waitForTimeout(400);

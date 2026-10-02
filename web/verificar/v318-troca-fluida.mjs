@@ -85,6 +85,20 @@ const p3 = await pg.evaluate(() => { const p = document.querySelector('.dcPino')
   return { x: Math.round((p.left + p.width / 2 - f.left) / f.width * 100), y: Math.round((p.top + p.height / 2 - f.top) / f.height * 100) }; });
 checa('3.1 ida e volta: o ponto da tela 2 segue no centro', Math.abs(p3.x - 50) <= 2 && Math.abs(p3.y - 50) <= 2, p3);
 
+console.log('\n  — 4. "Revisar e enviar" no alto, e a conferência enquadrada —');
+let t = await pg.evaluate(() => { const b = document.querySelector('.dcEnviaTopo [data-dcrevisa]'), f = document.querySelector('.dcGrande');
+  return { tx: b ? b.textContent : '', acima: b && f ? b.getBoundingClientRect().top < f.getBoundingClientRect().top : false, embaixo: !!document.querySelector('.clfoot [data-dcrevisa]') }; });
+checa('4.1 com pedido, "Revisar e enviar · 1 pedido" fica no alto, acima da peça, e só lá', /Revisar e enviar · 1 pedido/.test(t.tx) && t.acima && !t.embaixo, t);
+await pg.setViewportSize({ width: 1280, height: 900 }); await pg.waitForTimeout(200);
+await pg.click('.dcEnviaTopo [data-dcrevisa]'); await pg.waitForTimeout(300);
+await pg.fill('#dcGeral', 'Uma linha\nduas\ntrês\nquatro\ncinco'); await pg.waitForTimeout(100);
+if(process.env.OUT) await pg.screenshot({ path: process.env.OUT + '/v318-conf.png', fullPage: true });
+t = await pg.evaluate(() => { const c = document.querySelector('.dcConf .clcap').getBoundingClientRect(), a = document.getElementById('dcGeral').getBoundingClientRect();
+  const [b1, b2] = [...document.querySelectorAll('.dcFoot .clbtn')].map(b => b.getBoundingClientRect());
+  return { caixa: [Math.round(c.top), Math.round(c.bottom)], campo: [Math.round(a.top), Math.round(a.bottom)], b1: [Math.round(b1.top), Math.round(b1.height)], b2: [Math.round(b2.top), Math.round(b2.height)] }; });
+checa('4.2 o campo do texto/legenda fica DENTRO da caixa (não vaza por baixo)', t.campo[1] <= t.caixa[1] && t.campo[0] >= t.caixa[0], t);
+checa('4.3 "Enviar" e "Voltar às peças" lado a lado, mesma altura e mesma linha', t.b1[0] === t.b2[0] && t.b1[1] === t.b2[1], t);
+
 checa('sem erro de página', !erros.length, erros);
 console.log(`\n  ${ok} ok · ${falhou} falharam`);
 await nav.close(); srv.close(); process.exit(falhou ? 1 : 0);

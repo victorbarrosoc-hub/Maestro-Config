@@ -116,7 +116,11 @@
         <button type="button" class="clbtn sec" data-dcpede="${i}">Pedir alteração ${v.length > 1 ? 'nesta' : ''}</button></div>
         ${m.tipo === 'imagem' ? '<small class="dcDica">Ou toque no ponto exato da imagem para comentar ali.</small>' : ''}`;
     }
-    return `<section class="dcPecas" aria-label="As peças">
+    /* v318 — "o botão revisar e enviar… pode ficar lá em cima, fica mais fácil de ver onde envia e revisa" */
+    const n = nPedidos(st);
+    const topo = n && !pn && st.editando == null ? `<div class="dcEnviaTopo"><button type="button" class="clbtn chg" data-dcrevisa="${p.id}">Revisar e enviar · ${n} ${n === 1 ? 'pedido' : 'pedidos'}</button>
+      <span>${feitas < v.length ? `Faltam ${v.length - feitas} de ${v.length} telas, se quiser ver antes.` : 'Você confere tudo antes de a agência receber.'}</span></div>` : '';
+    return `<section class="dcPecas" aria-label="As peças">${topo}
       ${v.length > 1 ? `<div class="dcHd"><b>As peças</b><span>${feitas} de ${v.length} vistas · toque numa para ver grande</span></div>
       <div class="dcFila">${v.map((x, j) => miniatura(x, j, st, v)).join('')}</div>` : `<div class="dcHd"><b>A peça</b></div>`}
       <div class="dcGrande${m.tipo === 'video' ? ' video' : ''}">${grande(m, st, i)}
@@ -147,7 +151,7 @@
         <textarea id="dcGeral" rows="3" placeholder="Algo a mudar no texto que acompanha a publicação?">${e_(st.geral || '')}</textarea></div>
     </div>
     <div class="clfoot dcFoot"><button type="button" class="clbtn chg" data-dcenvia="${p.id}">${n > 1 ? `Enviar os ${n} pedidos para a agência` : 'Enviar o pedido para a agência'}</button>
-      <button type="button" class="clbtn sec" data-dcvolta="-1" style="margin-top:9px">Voltar às peças</button></div>`;
+      <button type="button" class="clbtn sec" data-dcvolta="-1">Voltar às peças</button></div>`;
   }
 
   /* onde termina o <div> que abre em `ini` (conta os <div> de dentro) */
@@ -193,8 +197,8 @@
         /* escrevendo o pedido de uma peça: nada de "aprovar tudo" por perto */
         html = trocarBloco(html, '<div class="clfoot', '') || html;
       } else if(n){
-        html = trocarBloco(html, '<div class="clfoot', `<div class="clfoot dcFoot"><button type="button" class="clbtn chg" data-dcrevisa="${p.id}">Revisar e enviar · ${n} ${n === 1 ? 'pedido' : 'pedidos'}</button>
-            <p class="dcNota">Você confere tudo antes de a agência receber.</p></div>`) || html;
+        /* o "Revisar e enviar" mora no alto (v318); embaixo não fica outro botão */
+        html = trocarBloco(html, '<div class="clfoot', '') || html;
       } else {
         if(v.length > 1) html = html.replace(/(data-claprova="[^"]*"[^>]*>)Aprovar a publicação/, '$1Aprovar todas as telas');
         /* o pedido de cada peça mora na peça; o de baixo fica para o texto */
@@ -388,7 +392,15 @@
   .dcOkCx{ display:flex; align-items:center; gap:12px; border-radius:14px; padding:12px 14px; background:rgba(46,158,106,.12); color:#2E9E6A; font-weight:600; font-size:14.5px }
   .dcFoot .dcNota{ margin:8px 0 0; text-align:center; font-size:12.5px; color:var(--mut) }
   .dcConf{ display:flex; flex-direction:column; gap:14px }
-  .dcConf .clcap{ max-height:none !important; overflow:visible !important }
+  .dcConf .clcap{ max-height:none !important; overflow:visible !important; flex:0 0 auto !important; min-height:0 }
+  .dcConf .clcap .caplbl{ display:flex; justify-content:space-between; gap:8px }
+  .dcFoot{ display:grid; grid-template-columns:1fr; gap:9px; align-items:stretch }
+  .clfoot.dcFoot .clbtn{ margin:0 !important; width:100%; height:52px !important; min-height:0 !important; padding-top:0 !important; padding-bottom:0 !important; display:flex; align-items:center; justify-content:center; box-sizing:border-box; border-radius:14px !important }
+  .dcFoot .dcNota{ grid-column:1/-1 }
+  @media (min-width:900px){ .dcFoot{ grid-template-columns:1fr 1fr } }
+  .dcEnviaTopo{ display:flex; flex-direction:column; gap:6px; padding:10px; border-radius:16px; background:rgba(226,104,60,.10); box-shadow:inset 0 0 0 1px rgba(226,104,60,.35) }
+  .dcEnviaTopo .clbtn{ margin:0 !important; width:100% }
+  .dcEnviaTopo span{ font-size:12.5px; color:var(--mut); text-align:center }
   .dcConfHd b{ display:block; font-size:21px; color:var(--tx); margin-bottom:4px }
   .dcConfHd span{ font-size:14px; color:var(--mut) }
   .dcLinhas{ display:flex; flex-direction:column; gap:8px }

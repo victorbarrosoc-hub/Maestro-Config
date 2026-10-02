@@ -84,8 +84,8 @@ checa('nada pulsou ao só ABRIR um aprovado', await pg.evaluate(() => !document.
 console.log('\n  — o balão —');
 await pg.evaluate(() => { const p = S.pauta.find(x => x.id === 1); porFase(p, 'texto_cli'); });
 await pg.evaluate(abrir, 1); await pg.waitForTimeout(200);
-await pg.click('[data-clbalao]'); await pg.waitForTimeout(200);
-checa('o balão abre o mesmo "Pedir alteração" (a caixa de escrever)', await pg.evaluate(() => S.pcPedindo === true && !!document.getElementById('altnota')));
+/* v318: a fileira saiu, o balão junto — o "Pedir alteração" de sempre continua */
+checa('sem o balão (v318), o botão "Pedir alteração" segue à vista', await pg.evaluate(() => !document.querySelector('[data-clbalao]') && !!document.querySelector('[data-clpedir]')));
 
 console.log('\n  — a grade do perfil —');
 await pg.evaluate(() => { S.route = 'clpauta'; render(); }); await pg.waitForTimeout(200);
