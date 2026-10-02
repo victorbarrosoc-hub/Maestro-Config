@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.129
+Version: 0.5.130
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.130 — 2 out · v315 · a agenda dos lembretes
+
+- Lembrete com começo e fim e janela de edição; aba Agenda na Minha lista (um dia por linha, horas na horizontal, só a própria pessoa). 17 provas em `web/verificar/v315-a-agenda.mjs`.
 
 ## 0.5.129 — 2 out · v314 · quem grava
 

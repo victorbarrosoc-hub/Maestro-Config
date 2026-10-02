@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v314', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v315', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -847,16 +847,91 @@
         ${(l.hora || atras || l.dia > h) ? `<div class="qdLinMeta">
           ${l.dia > h ? `<span>${ic_('cal', 11)}${esc_(rotuloDia(l.dia))}</span>` : ''}
           ${atras ? `<span class="atrasado">desde ${esc_(rotuloDia(l.dia))}</span>` : ''}
-          ${l.hora ? `<span>${ic_('clock', 11)}${esc_(l.hora)}</span>` : ''}
+          ${l.hora ? `<span>${ic_('clock', 11)}${esc_(l.hora)}${l.ate ? '–' + esc_(l.ate) : ''}</span>` : ''}
         </div>` : ''}
       </div>
       <div class="qdLemAc">
         ${!l.feito ? `${l.dia <= h ? `<button type="button" class="qdLemBt" data-qdlemadia="${esc_(l.id)}" title="Passar para amanhã">Amanhã</button>` : ''}
         <button type="button" class="qdLemBt" data-qdlemcard="${esc_(l.id)}" title="Levar para o Quadro como card">Virar card</button>` : ''}
+        <button type="button" class="qdLemBt" data-qdlemed="${esc_(l.id)}" title="Mudar o texto, o dia e o horário">${ic_('clock', 11)} Horário</button>
         <button type="button" class="qdLemBt x" data-qdlemx="${esc_(l.id)}" aria-label="Apagar lembrete">×</button>
       </div>
     </div>`;
   }
+  /* v315 — "Quero conseguir colocar horário e ver um cronograma horizontal da semana,
+     separado da minha lista que não são cards… um card da minha lista mesmo. Onde só eu
+     como usuário consigo ver." O lembrete ganha começo e fim (hora, ate); a aba Agenda
+     mostra a semana com um dia por linha e as horas correndo para o lado. Só aparece
+     para a própria pessoa (os lembretes de outro nunca são desenhados). */
+  const minDe = h => { const m = /^(\d{1,2}):(\d{2})$/.exec(String(h || '')); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+  const deMin = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  const fimDe = l => { const a = minDe(l.hora); if(a == null) return null; const b = minDe(l.ate); return b != null && b > a ? b : a + 30; };
+  const AG_PX = () => (typeof matchMedia === 'function' && matchMedia('(max-width:760px)').matches) ? 52 : 72;
+  function subAgenda(pid){
+    const ini = soma(segunda(hoje()), 7 * (Q.semAg || 0));
+    const dias = Array.from({ length: 7 }, (_, i) => soma(ini, i));
+    const h = hoje();
+    const meus = meusLembretes(pid);
+    const doDia = d => meus.filter(l => (l.feito ? diaDoL(l) : l.dia) === d);
+    let h0 = 7, h1 = 21;
+    dias.forEach(d => doDia(d).forEach(l => { const a = minDe(l.hora); if(a == null) return;
+      h0 = Math.min(h0, Math.floor(a / 60)); h1 = Math.max(h1, Math.ceil(fimDe(l) / 60)); }));
+    h1 = Math.min(24, Math.max(h1, h0 + 1));
+    const px = AG_PX(), larg = (h1 - h0) * px;
+    const agora = new Date(); const minAgora = agora.getHours() * 60 + agora.getMinutes();
+    const regua = Array.from({ length: h1 - h0 }, (_, i) => `<span style="left:${i * px}px">${String(h0 + i).padStart(2, '0')}h</span>`).join('');
+    const linhaDia = d => {
+      const dt = doISO(d);
+      const comHora = doDia(d).filter(l => minDe(l.hora) != null).sort((a, b) => minDe(a.hora) - minDe(b.hora));
+      const semHora = doDia(d).filter(l => minDe(l.hora) == null);
+      /* quem se sobrepõe desce uma faixa */
+      const fins = []; const pos = comHora.map(l => { const a = minDe(l.hora), b = fimDe(l);
+        let f = fins.findIndex(x => x <= a); if(f < 0){ f = fins.length; fins.push(b); } else fins[f] = b; return { l, a, b, f }; });
+      const faixas = Math.max(1, fins.length);
+      const blocos = pos.map(({ l, a, b, f }) => `<button type="button" class="qdAgBloco${l.feito ? ' feita' : ''}${l.imp ? ' imp' : ''}" data-qdlemed="${esc_(l.id)}"
+          style="left:${(a - h0 * 60) / 60 * px}px;width:${Math.max(30, (b - a) / 60 * px - 3)}px;top:${6 + f * 40}px" title="${esc_(l.t)} · ${esc_(l.hora)}–${esc_(deMin(b))}">
+          <b>${esc_(l.hora)}${l.ate ? '–' + esc_(l.ate) : ''}</b><span>${esc_(l.t)}</span></button>`).join('');
+      const linhaAgora = d === h && minAgora >= h0 * 60 && minAgora <= h1 * 60 ? `<i class="qdAgAgora" style="left:${(minAgora - h0 * 60) / 60 * px}px"></i>` : '';
+      return `<div class="qdAgLinha${d === h ? ' hoje' : ''}">
+        <div class="qdAgRot"><b>${DIAS3[dt.getDay()]}</b> ${ddmm(d)}${semHora.length ? `<button type="button" class="qdAgSem" data-qdagsem="${d}">${semHora.length} sem hora</button>` : ''}</div>
+        <div class="qdAgTrilho" data-qdagdia="${d}" data-qdagh0="${h0}" style="width:${larg}px;height:${12 + faixas * 40}px;background-size:${px}px 100%">${linhaAgora}${blocos}</div>
+      </div>`;
+    };
+    const semHoraTodos = dias.flatMap(d => doDia(d).filter(l => minDe(l.hora) == null).map(l => ({ d, l })));
+    return `<div class="qdSemNav"><button type="button" class="qdBtIc" data-qdsemag="-1" aria-label="Semana anterior">‹</button>
+        <b>${ddmm(dias[0])} – ${ddmm(dias[6])}</b><button type="button" class="qdBtIc" data-qdsemag="1" aria-label="Próxima semana">›</button>
+        ${Q.semAg ? `<button type="button" class="qdPil" data-qdsemag="0">esta semana</button>` : '<span class="qdMut">esta semana</span>'}
+        <button type="button" class="qdPil qdAgNovo" data-qdlemed="novo">+ Lembrete com horário</button></div>
+      <p class="qdMut qdAgDica">Só você vê. Toque num horário vazio para anotar ali; toque num lembrete para mudar o horário.</p>
+      <div class="qdLemAgenda"><div class="qdAgGrade" style="--qdagw:${larg}px">
+        <div class="qdAgLinha qdAgCab"><div class="qdAgRot"></div><div class="qdAgRegua" style="width:${larg}px">${regua}</div></div>
+        ${dias.map(linhaDia).join('')}
+      </div></div>
+      ${semHoraTodos.length ? `<h3 class="qdGrupo">Sem horário nesta semana <span>${semHoraTodos.length}</span></h3>
+        <div class="qdCaixa">${semHoraTodos.map(({ l }) => linhaLembrete(l)).join('')}</div>` : ''}`;
+  }
+  /* a janelinha do lembrete: texto, dia, das, até, importante */
+  function editorLembrete(id, pre){
+    const l = id && id !== 'novo' ? achaL(id) : null;
+    const v = l || Object.assign({ t: '', dia: hoje(), hora: '', ate: '', imp: false }, pre || {});
+    Q.lemEd = l ? l.id : 'novo';
+    S.modal = `<div class="modal"><div class="modalbox" role="dialog" aria-modal="true" aria-label="Lembrete">
+      <h3>${l ? 'Lembrete' : 'Novo lembrete'}</h3>
+      <form class="qdLemEd" data-qdlemform="1" autocomplete="off">
+        <label>O que é<textarea class="qdIn" name="t" rows="2" maxlength="300" placeholder="Ex.: editar o vídeo do concurso">${esc_(v.t || '')}</textarea></label>
+        <label>Dia<input class="qdIn" type="date" name="dia" value="${esc_(v.dia || hoje())}"></label>
+        <div class="qdFPar"><label>Das<input class="qdIn" type="time" name="hora" value="${esc_(v.hora || '')}"></label>
+          <label>Até<input class="qdIn" type="time" name="ate" value="${esc_(v.ate || '')}"></label></div>
+        <label class="qdLemImp"><input type="checkbox" name="imp" ${v.imp ? 'checked' : ''}> Importante</label>
+        <p class="qdMut qdLemPriv">Só você vê este lembrete. Ele não vai para o Quadro.</p>
+        <div class="modalrow">${l ? `<button type="button" class="b gho" data-qdlemx="${esc_(l.id)}" data-qdlemfecha="1">Apagar</button>` : ''}
+          <button type="button" class="b gho" data-modalno="1">Cancelar</button>
+          <button type="submit" class="b pri">Salvar</button></div>
+      </form></div></div>`;
+    try{ renderLayer(); }catch(x){}
+    setTimeout(() => { const t = document.querySelector('.qdLemEd textarea'); if(t && !l) t.focus(); }, 60);
+  }
+  Q.editorLembrete = editorLembrete;
   function subDia(pid, pend, souEu, paraRevisar){
     const h = hoje();
     let html = '';
@@ -917,13 +992,15 @@
     const subs = `<div class="qdSubs" role="tablist">
         <button type="button" class="${Q.sub === 'dia' ? 'on' : ''}" data-qdsub="dia">${ic_('checkc', 13)} Meu dia${hjL ? ` <span>${hjL}</span>` : ''}</button>
         <button type="button" class="${Q.sub === 'semana' ? 'on' : ''}" data-qdsub="semana">${ic_('cal', 13)} Semana</button>
+        ${souEu ? `<button type="button" class="${Q.sub === 'agenda' ? 'on' : ''}" data-qdsub="agenda">${ic_('clock', 13)} Agenda</button>` : ''}
         <button type="button" class="${emCards ? 'on' : ''}" data-qdsub="tarefas">${ic_('kanban', 13)} Meus cards <span>${pend.length}</span></button>
       </div>`;
     let corpo = '';
     const agrupar = `<div class="qdFiltros qdAgrupar"><span class="qdMut">Agrupar</span>
         <button type="button" class="qdPil ${Q.sub === 'tarefas' ? 'on' : ''}" data-qdsub="tarefas">por prazo</button>
         <button type="button" class="qdPil ${Q.sub === 'listas' ? 'on' : ''}" data-qdsub="listas">por cliente</button></div>`;
-    if(Q.sub === 'dia' || !['semana', 'tarefas', 'listas'].includes(Q.sub)) corpo = subDia(pid, pend, souEu, paraRevisar);
+    if(Q.sub === 'agenda' && souEu) corpo = subAgenda(pid);
+    else if(Q.sub === 'dia' || !['semana', 'tarefas', 'listas'].includes(Q.sub)) corpo = subDia(pid, pend, souEu, paraRevisar);
     else if(Q.sub === 'semana') corpo = subSemana(pid, pend, feitasSemana, souEu);
     else if(Q.sub === 'listas') corpo = agrupar + subListas(pend);
     else{
@@ -2150,10 +2227,42 @@
     document.querySelectorAll('#root .qdLem.aberta').forEach(x => x.classList.remove('aberta'));
     row.classList.toggle('aberta', ab);
   });
+  /* v315 — a Agenda: abrir o lembrete, tocar no horário vazio, trocar de semana */
+  document.addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-qdlemed],[data-qdagdia],[data-qdsemag],[data-qdagsem]');
+    if(!t || !t.closest('#root, .modal')) return;
+    const d = t.dataset;
+    if(d.qdsemag !== undefined){ e.preventDefault(); Q.semAg = d.qdsemag === '0' ? 0 : (Q.semAg || 0) + (+d.qdsemag); render(); return; }
+    if(d.qdagsem){ e.preventDefault(); editorLembrete('novo', { dia: d.qdagsem }); return; }
+    if(d.qdlemed){ e.preventDefault(); e.stopPropagation(); editorLembrete(d.qdlemed); return; }
+    if(d.qdagdia && e.target === t){
+      e.preventDefault();
+      const r = t.getBoundingClientRect(); const px = AG_PX();
+      const min = Math.max(0, Math.min(23 * 60 + 30, Math.floor(((e.clientX - r.left) / px * 60 + (+d.qdagh0) * 60) / 30) * 30));
+      editorLembrete('novo', { dia: d.qdagdia, hora: deMin(min), ate: deMin(Math.min(24 * 60 - 1, min + 60)) });
+    }
+  }, true);
+  document.addEventListener('submit', e => {
+    const f = e.target; if(!f.matches || !f.matches('[data-qdlemform]')) return;
+    e.preventDefault();
+    const me = eu(); if(!me) return;
+    const v = n => (f.elements[n] && f.elements[n].value || '').trim();
+    const t = v('t'); if(!t){ const ta = f.elements.t; if(ta) ta.focus(); return; }
+    let hora = minDe(v('hora')) != null ? v('hora') : '';
+    let ate = hora && minDe(v('ate')) != null && minDe(v('ate')) > minDe(hora) ? v('ate') : '';
+    const dia = /^\d{4}-\d{2}-\d{2}$/.test(v('dia')) ? v('dia') : hoje();
+    const campos = { t: t.slice(0, 300), dia, hora, ate, imp: !!(f.elements.imp && f.elements.imp.checked), mod: Date.now() };
+    const l = Q.lemEd && Q.lemEd !== 'novo' ? achaL(Q.lemEd) : null;
+    if(l) Object.assign(l, campos);
+    else lembretes().push(Object.assign({ id: novoIdL(), dono: me, feito: false, em: Date.now() }, campos));
+    Q.lemEd = null; S.modal = null;
+    try{ renderLayer(); }catch(x){}
+    render();
+  }, true);
   /* os lembretes: marcar, passar para amanhã, virar card, apagar */
   document.addEventListener('click', e => {
     const t = e.target.closest && e.target.closest('[data-qdlem],[data-qdlemadia],[data-qdlemcard],[data-qdlemx]');
-    if(!t || !t.closest('#root')) return;
+    if(!t || !t.closest('#root, .modal')) return;
     e.preventDefault(); e.stopPropagation();
     const d = t.dataset;
     const l = achaL(d.qdlem || d.qdlemadia || d.qdlemcard || d.qdlemx); if(!l) return;
@@ -2164,7 +2273,7 @@
       else { delete l.feitoEm; delete l.feitoDia; if(l.dia < hoje()) l.dia = hoje(); }
     }
     else if(d.qdlemadia !== undefined){ l.dia = soma(hoje(), 1); }
-    else if(d.qdlemx !== undefined){ l.fora = true; }
+    else if(d.qdlemx !== undefined){ l.fora = true; if(d.qdlemfecha){ Q.lemEd = null; S.modal = null; try{ renderLayer(); }catch(x){} } }
     else if(d.qdlemcard !== undefined){
       const id = l.id;
       novoPeloQuadro({ tema: l.t, col: 'afazer', campos: eu() ? { resp: eu() } : null,
@@ -3064,6 +3173,36 @@
   #qdSoltar.mouse div{ grid-template-columns:repeat(8, 1fr) }
   #qdSoltar.mouse span{ padding:16px 4px }
   @keyframes qdSobe{ from{ opacity:0; transform:translate(-50%, 12px) } to{ opacity:1; transform:translate(-50%, 0) } }
+  /* v315 — a Agenda da pessoa (lembretes com horário), um dia por linha */
+  .qdAgDica{ margin:-4px 2px 10px; font-size:12.5px }
+  .qdAgNovo{ margin-left:auto }
+  .qdLemAgenda{ overflow-x:auto; overscroll-behavior-x:contain; border-radius:16px; background:var(--sup, rgba(255,255,255,.04)); padding:4px 0 8px; -webkit-overflow-scrolling:touch }
+  .qdAgGrade{ min-width:calc(var(--qdagw) + 96px); position:relative }
+  .qdAgLinha{ display:flex; align-items:stretch; border-top:1px solid var(--qdl, rgba(255,255,255,.07)) }
+  .qdAgLinha.qdAgCab{ border-top:0 }
+  .qdAgRot{ position:sticky; left:0; z-index:2; flex:none; width:92px; padding:10px 8px 8px 12px; font-size:12.5px; color:var(--mut, #999); background:var(--bg, #1C1C1F); display:flex; flex-direction:column; gap:4px; box-sizing:border-box }
+  .qdAgRot b{ color:var(--tx, #fff); font-size:13.5px }
+  .qdAgLinha.hoje .qdAgRot b{ color:var(--brass, #FFC857) }
+  .qdAgSem{ align-self:flex-start; border:0; background:var(--sup2, rgba(255,255,255,.08)); color:var(--mut, #999); font:inherit; font-size:11px; padding:2px 7px; border-radius:999px; cursor:pointer }
+  .qdAgRegua{ position:relative; height:26px; flex:none }
+  .qdAgRegua span{ position:absolute; top:7px; transform:translateX(-50%); font-size:11px; color:var(--mut, #999) }
+  .qdAgRegua span:first-child{ transform:none; padding-left:2px }
+  .qdAgTrilho{ position:relative; flex:none; min-height:52px; cursor:copy; background-image:linear-gradient(to right, var(--qdl, rgba(255,255,255,.07)) 1px, transparent 1px) }
+  .qdAgLinha.hoje .qdAgTrilho{ background-color:color-mix(in srgb, var(--brass, #FFC857) 5%, transparent) }
+  .qdAgAgora{ position:absolute; top:0; bottom:0; width:2px; background:var(--coral, #FF6B5E); z-index:1; pointer-events:none }
+  .qdAgBloco{ position:absolute; height:36px; box-sizing:border-box; border:0; border-radius:9px; padding:3px 8px; text-align:left; cursor:pointer; overflow:hidden; display:flex; flex-direction:column; justify-content:center; font:inherit; color:#17181C; background:var(--brass, #FFC857); z-index:1 }
+  .qdAgBloco b{ font-size:10.5px; font-weight:600; opacity:.75; white-space:nowrap }
+  .qdAgBloco span{ font-size:12.5px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .qdAgBloco.imp{ box-shadow:inset 3px 0 0 #C2410C }
+  .qdAgBloco.feita{ background:var(--sup2, rgba(255,255,255,.1)); color:var(--mut, #999) }
+  .qdAgBloco.feita span{ text-decoration:line-through }
+  .qdLemEd{ display:flex; flex-direction:column; gap:10px }
+  .qdLemEd label{ display:flex; flex-direction:column; gap:5px; font-size:12.5px; color:var(--mut, #999) }
+  .qdLemEd .qdIn{ width:100%; box-sizing:border-box; background:var(--sup2, rgba(255,255,255,.08)) }
+  .qdLemEd textarea{ resize:vertical; font:inherit }
+  .qdLemEd .qdLemImp{ flex-direction:row; align-items:center; gap:8px; color:var(--tx, #fff) }
+  .qdLemPriv{ margin:0; font-size:12px }
+  @media (max-width:760px){ .qdSubs{ display:flex; max-width:100%; overflow-x:auto; scrollbar-width:none } .qdSubs::-webkit-scrollbar{ display:none } .qdSubs button{ white-space:nowrap; flex:none; padding:7px 11px } .qdAgRot{ width:74px; padding-left:8px } .qdAgGrade{ min-width:calc(var(--qdagw) + 78px) } .qdAgNovo{ margin-left:0 } .qdSemNav{ flex-wrap:wrap } }
   `;
   document.head.appendChild(st);
 

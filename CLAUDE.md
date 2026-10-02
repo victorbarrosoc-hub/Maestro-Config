@@ -349,6 +349,17 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (2 out, v315, NO AR) — a agenda dos lembretes.** "Quero conseguir
+colocar horário e ver um cronograma horizontal da semana, separado da minha
+lista que não são cards… onde só eu como usuário consigo ver." O lembrete
+ganha começo e fim (`hora`, `ate`; sem fim = 30 min) e uma janelinha (texto,
+dia, das, até, importante, Apagar) aberta por "Horário" na linha ou pelo
+bloco. Minha lista ganhou a aba **Agenda** (só para a própria pessoa): um dia
+por linha, horas correndo para o lado, nome do dia preso à esquerda, linha do
+agora, sobrepostos descem uma faixa, tocar no vazio cria ali, "N sem hora".
+Não vira card. **Armadilha:** `.qdAgenda` já existia (o Calendário a esconde
+no computador) — a nova é `.qdLemAgenda`. 17 provas em
+`web/verificar/v315-a-agenda.mjs`.
 **Fechado (2 out, v314, NO AR) — quem grava, de verdade.** "O login pra
 acessar a agência é o padrão que todos usam." O histórico só guardava a porta
 (`ejup.mkt`), então "ejup.mkt apagou o texto às 23h50" não dizia quem foi.

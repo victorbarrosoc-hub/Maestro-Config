@@ -37,7 +37,7 @@
 (function(){
   'use strict';
   if(window.MaestroEntrada2) return;
-  const E = window.MaestroEntrada2 = { versao: 'v314', fase: 'inicio', diario: [] };
+  const E = window.MaestroEntrada2 = { versao: 'v315', fase: 'inicio', diario: [] };
   const anota = (...x) => { E.diario.push([Math.round(performance.now()), ...x]); if(E.diario.length > 80) E.diario.shift(); };
 
   /* ---------------- quem está aqui ---------------- */

@@ -20,6 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
+v315 (2 out) — Minha lista → aba Agenda: lembretes com horário (das/até), semana na horizontal, só a própria pessoa vê; não vira card.
+
 v314 (2 out) — o histórico diz QUEM: o app manda o nome escolhido em toda gravação. **`historico-1-quem-de-verdade.sql` APLICADO em produção em 2/out 10h01** ("link do cliente" / "Anna Clara Ávila", como esperado). **Conferido no caminho de verdade 2/out 10h04:** "Victor Barroso · ejup.mkt@gmail.com".
 
 **2 out — RESOLVIDO pelo founder ("já resolvi"); o card-3 não precisa ser rodado.** Histórico: o texto do Story "Chamada, thumbnail, Título e Descrição do Ep." sumiu em 30/09 23:50 (login ejup.mkt) — `card-3-devolver-o-texto.sql` devolve só se ninguém escreveu depois. As mídias tiradas parecem trocas de versão (Gabi no Carrossel Ep. 19; vídeo errado no Reels Nicácio): conferir na parte 2.
