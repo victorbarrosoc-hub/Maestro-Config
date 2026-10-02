@@ -16060,7 +16060,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v317 · 2 out · o ponto na imagem';
+const VERSAO_PROTOTIPO = 'v318 · 2 out · sem a linha do coração';
 
 menuSheet = (function(orig){
   return function(){
@@ -42867,12 +42867,11 @@ button.clPost:active{ transform:scale(.98) }
     const f = p && typeof faseDe === 'function' ? faseDe(p) : null;
     const aprovado = !!p && ['texto_ok', 'aprovado', 'agendado', 'postado'].includes(f) && !p.ajustePendente;
     if(!aprova && !aprovado) return;       /* nada a curtir: nem decisão aberta, nem aprovado */
+    /* v318 — com a decisão aberta, a fileira saiu ("pode tirar isso do final da página"):
+       os botões já dizem o que fazer, e o coração grande segue pulsando ao aprovar */
+    if(aprova) return;
     const div = document.createElement('div'); div.className = 'clCurte';
-    if(aprova){
-      div.innerHTML = `<button type="button" class="coracao" data-clcurte="${aprova.dataset.claprova}" aria-label="Curtir e aprovar">${CORACAO}</button>`
-        + (pede ? `<button type="button" data-clbalao="1" aria-label="Pedir alteração">${BALAO}</button>` : '')
-        + `<span class="dica"><b>Curtiu?</b> O coração aprova — igual ao botão.</span>`;
-    } else {
+    {
       div.innerHTML = `<span class="fixo coracao on" aria-label="Você aprovou">${CORACAO}</span>`
         + `<span class="dica"><b>Você curtiu</b> — está aprovado.</span>`;
     }
@@ -48556,4 +48555,4 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
 render=(o=>function(){try{for(const t of(S.ensaio&&S.ensaio.tarefas)||[]){const e=A[t.id];if(sc(t)&&C.includes(t.col)&&e&&!C.includes(e)){t.col=e;toast('Sem card não passa do Do: estruture a pauta.')}A[t.id]=t.col}
 const g=S.chat&&(S.chat.canais||[]).find(c=>c.id==='geral');if(g&&g.msgs){let v=0;const n=g.msgs.filter(m=>!m||m.txt!==B||!v++);if(n.length<g.msgs.length)g.msgs=n}}catch(e){}
 const r=o.apply(this,arguments);try{document.querySelectorAll('.enCard[data-entar]').forEach(c=>{const t=S.ensaio.tarefas.find(x=>x.id==+c.dataset.entar),a=c.querySelector('.acoes');if(sc(t)&&C.includes(t.col)&&a&&!c.querySelector('.v272'))a.insertAdjacentHTML('beforebegin','<div class="cyEtapa v272"><span><b>Sem card.</b> O Check libera card — estruture a pauta.</span></div>')})}catch(e){}return r})(render)})();</script>
-<script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v317').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}else throw 0}).catch(()=>{window.__semQuadro=1;if(S.route==='producao')render()})</script>
+<script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v318').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}else throw 0}).catch(()=>{window.__semQuadro=1;if(S.route==='producao')render()})</script>

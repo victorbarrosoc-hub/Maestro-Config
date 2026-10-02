@@ -50,12 +50,14 @@ await pg.evaluate(MONTAR);
 console.log('\n  — o coração e o botão —');
 await pg.evaluate(abrir, 1); await pg.waitForTimeout(200);
 const antes = await pg.evaluate(LER, 1);
-checa('decisão aberta: coração, balão E botão Aprovar, os três à vista', antes.coracao && antes.balao && antes.botao, antes);
+/* v318 — o founder pediu para tirar a fileira do coração do fim da página: com a decisão aberta, só os botões */
+checa('decisão aberta: sem a fileira do coração (v318), só o botão Aprovar', !antes.coracao && !antes.balao && antes.botao
+  && await pg.evaluate(() => !document.querySelector('.clCurte') && !/Curtiu\?/.test(document.body.innerText)), antes);
 if(process.env.OUT) await pg.screenshot({ path: process.env.OUT + '/curtida-antes.png' });
-await pg.click('[data-clcurte]'); await pg.waitForTimeout(250);
+await pg.click('[data-claprova="1"]'); await pg.waitForTimeout(250);
 const pulso = await pg.evaluate(() => !!document.querySelector('.clCurtidaGrande'));
 const peloCoracao = await pg.evaluate(LER, 1);
-checa('o coração aprova: o texto foi para "texto aprovado"', peloCoracao.fase === 'texto_ok', peloCoracao);
+checa('o botão aprova: o texto foi para "texto aprovado"', peloCoracao.fase === 'texto_ok', peloCoracao);
 checa('o coração grande pulsou na aprovação', pulso === true);
 await pg.waitForTimeout(1100);
 checa('…e saiu da tela depois (não fica por cima de nada)', await pg.evaluate(() => !document.querySelector('.clCurtidaGrande')));
@@ -63,7 +65,7 @@ checa('…e saiu da tela depois (não fica por cima de nada)', await pg.evaluate
 await pg.evaluate(abrir, 2); await pg.waitForTimeout(200);
 await pg.click('[data-claprova="2"]'); await pg.waitForTimeout(300);
 const peloBotao = await pg.evaluate(LER, 2);
-checa('o botão Aprovar continua funcionando, com o MESMO resultado do coração', peloBotao.fase === peloCoracao.fase, { peloBotao, peloCoracao });
+checa('aprovar de novo dá o mesmo resultado', peloBotao.fase === peloCoracao.fase, { peloBotao, peloCoracao });
 
 console.log('\n  — onde o coração não pode estar —');
 await pg.evaluate(abrir, 3); await pg.waitForTimeout(200);

@@ -24,7 +24,7 @@
   'use strict';
   if(window.MaestroDecidir) return;
   if(typeof S === 'undefined' || typeof clCard !== 'function' || typeof decidirCard !== 'function') return;
-  const M = window.MaestroDecidir = { versao: 'v317' };
+  const M = window.MaestroDecidir = { versao: 'v318' };
   const CHAVE = 'maestro-decidir-v1';
   const e_ = s => (typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
   const url_ = u => (typeof urlSegura === 'function' ? urlSegura(u) : (/^(https?:|blob:|data:image\/)/.test(String(u || '')) ? String(u) : ''));
@@ -309,10 +309,41 @@
   });
 
   /* camadas antigas põem a tira das telas depois do desenho: aqui ela sai também */
+  /* v318 — trocar de tela sem "fechar para abrir": o redesenho refazia a peça grande e as
+     miniaturas do zero, e até a imagem nova chegar a caixa encolhia. Agora a caixa guarda a
+     altura de antes, as miniaturas são as MESMAS (mesmo endereço, mesmo elemento) e a peça
+     nova entra esmaecendo. Todas as telas descem antes, para a troca já achá-las prontas. */
+  const jaPedidas = new Set();
+  function preCarregar(v){
+    v.forEach(m => { const u = url_(m.tipo === 'imagem' ? m.url : m.poster); if(u && !jaPedidas.has(u)){ jaPedidas.add(u); const im = new Image(); im.decoding = 'async'; im.src = u; } });
+  }
   render = (function(orig){
     return function(){
+      let altura = 0, minis = null, grandeAntes = '', grandeEl = null;
+      try{
+        const g = document.querySelector('.dcGrande');
+        if(g){ altura = g.getBoundingClientRect().height; const gi = g.querySelector('img,video'); grandeAntes = gi ? gi.getAttribute('src') : ''; if(gi && gi.tagName === 'IMG' && gi.complete && gi.naturalWidth) grandeEl = gi; }
+        minis = new Map(); document.querySelectorAll('.dcMini img').forEach(im => minis.set(im.getAttribute('src'), im));
+      }catch(x){}
       const r = orig.apply(this, arguments);
-      try{ if(emJogo() && document.querySelector('.dcPecas')) document.querySelectorAll('.clbody .clArte, .clbody .clArteHd').forEach(x => x.remove()); }catch(x){}
+      try{
+        const j = emJogo();
+        if(j && document.querySelector('.dcPecas')){
+          document.querySelectorAll('.clbody .clArte, .clbody .clArteHd').forEach(x => x.remove());
+          preCarregar(j.v);
+          if(minis) document.querySelectorAll('.dcMini img').forEach(im => { const v = minis.get(im.getAttribute('src')); if(v && v !== im && v.complete){ minis.delete(im.getAttribute('src')); im.replaceWith(v); } });
+          /* a mesma peça redesenhada (um ponto guardado, uma seta): o MESMO elemento, já carregado */
+          const gn = document.querySelector('.dcGrande .dcFoto img');
+          if(gn && grandeEl && gn !== grandeEl && gn.getAttribute('src') === grandeAntes){ grandeEl.classList.remove('dcEntra'); grandeEl.style.opacity = ''; gn.replaceWith(grandeEl); }
+          const g = document.querySelector('.dcGrande'), gi = g && g.querySelector('img,video');
+          if(g && gi && gi.getAttribute('src') !== grandeAntes){
+            if(altura) g.style.minHeight = Math.round(altura) + 'px';
+            const solta = () => { gi.classList.add('dcEntra'); setTimeout(() => { g.style.minHeight = ''; }, 260); };
+            if(gi.tagName === 'IMG' && !gi.complete){ gi.style.opacity = '0'; gi.addEventListener('load', () => { gi.style.opacity = ''; }, { once: true }); gi.addEventListener('load', solta, { once: true }); gi.addEventListener('error', () => { g.style.minHeight = ''; }, { once: true }); }
+            else solta();
+          }
+        }
+      }catch(x){}
       return r;
     };
   })(render);
@@ -384,6 +415,8 @@
   .dcNum{ flex:none; width:22px; height:22px; border-radius:50%; background:#E2683C; color:#fff; font:600 12px/22px system-ui, sans-serif; text-align:center; border:0; padding:0; font-style:normal; cursor:pointer }
   .dcPinoMini{ position:absolute; transform:translate(-50%, -50%); width:16px; height:16px; border-radius:50%; background:#E2683C; color:#fff; border:1.5px solid #fff; font:600 9.5px/13px system-ui, sans-serif; text-align:center; font-style:normal }
   .dcTiraPino{ align-self:center }
+  .dcEntra{ animation:dcEntra .22s ease-out both }
+  @keyframes dcEntra{ from{ opacity:0 } to{ opacity:1 } }
   @media (min-width:900px){ .dcMini{ width:76px } .dcGrande{ max-height:62vh } .dcGrande img, .dcGrande video{ max-height:62vh; width:auto; min-width:min(100%, 420px) } }
   `;
   document.head.appendChild(css);
