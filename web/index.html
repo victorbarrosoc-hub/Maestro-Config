@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Maestro · gerado por web/montar.py em 2026-10-01 10:49 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
+<!-- Maestro · gerado por web/montar.py em 2026-10-02 01:52 · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Maestro — o sistema operacional para agências criativas</title>
@@ -12219,7 +12219,7 @@ function modalVer(id){
     ${p.corte && (p.corte.ep || (p.corte.tcs||[]).length) ? `<div class="vzBloco"><b>Corte de podcast</b>
       ${p.corte.ep?`<p style="margin-bottom:6px">${esc(p.corte.ep)}</p>`:''}
       ${(p.corte.tcs||[]).map(tc=>`<span class="vzTC"><span class="ord">${esc(String(tc.ordem??''))}</span>
-        ${esc(tc.de||'?')} → ${esc(tc.ate||'?')}</span>`).join('')}
+        ${esc(tc.de||'?')} → ${esc(tc.ate||'?')}</span>${tc.tema?`<p style="margin:2px 0 8px">${esc(tc.tema)}</p>`:''}`).join('')}
     </div>`:''}
     ${p.telas && p.telas.length ? `<div class="vzBloco"><b>Telas do story</b>
       ${p.telas.map((t,i)=>`<p style="margin-bottom:6px"><b style="color:var(--brass-300);font-family:var(--mono);font-size:11px">T${i+1}</b> ${esc(t)}</p>`).join('')}</div>`:''}
@@ -16128,7 +16128,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v312 · 1 out · a tela do story';
+const VERSAO_PROTOTIPO = 'v313 · 2 out · o assunto do trecho';
 
 menuSheet = (function(orig){
   return function(){
@@ -42325,6 +42325,7 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
    v230 · O QUE O CLIENTE DECIDE TEM DE ESTAR NA TELA DELE
    ================================================================== */
 .clTCs{ display:flex; flex-wrap:wrap; gap:7px; margin-top:9px }
+.clTCTema{ flex-basis:100%; font-size:13px; line-height:1.4; margin:-3px 0 4px 2px; opacity:.85 }
 .clTC{ display:inline-flex; align-items:center; gap:7px; font-family:var(--mono);
   font-size:12px; background:var(--soft,#F4F1EB); border:1px solid var(--line,#E7E2D9);
   border-radius:8px; padding:4px 9px; color:var(--tx,#17181C) }
@@ -42410,7 +42411,7 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
     const d = bloco(doc, 'Corte — qual trecho do episódio', 'clCorte');
     linha(doc, d, '', p.corte.ep);
     const tcs = (p.corte.tcs || [])
-      .filter(tc => txt(tc.de) || txt(tc.ate))
+      .filter(tc => txt(tc.de) || txt(tc.ate) || txt(tc.tema))
       /* a ordem é o que diz como o corte se monta; sem ela a lista é
          um amontoado de números */
       .sort((a, b) => (+a.ordem || 0) - (+b.ordem || 0));
@@ -42424,6 +42425,8 @@ html[data-tema="claro"] .cvEscreve input#cv-txt::placeholder{ color:#6E6A61 }
       s.appendChild(doc.createTextNode(
         (txt(tc.de) || '?') + ' → ' + (txt(tc.ate) || '?')));
       fila.appendChild(s);
+      /* v313 — o assunto do trecho, embaixo do tempo */
+      if(txt(tc.tema)){ const t = doc.createElement('div'); t.className = 'clTCTema'; t.textContent = txt(tc.tema); fila.appendChild(t); }
     });
     d.appendChild(fila);
     return d;
@@ -48621,4 +48624,4 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
 render=(o=>function(){try{for(const t of(S.ensaio&&S.ensaio.tarefas)||[]){const e=A[t.id];if(sc(t)&&C.includes(t.col)&&e&&!C.includes(e)){t.col=e;toast('Sem card não passa do Do: estruture a pauta.')}A[t.id]=t.col}
 const g=S.chat&&(S.chat.canais||[]).find(c=>c.id==='geral');if(g&&g.msgs){let v=0;const n=g.msgs.filter(m=>!m||m.txt!==B||!v++);if(n.length<g.msgs.length)g.msgs=n}}catch(e){}
 const r=o.apply(this,arguments);try{document.querySelectorAll('.enCard[data-entar]').forEach(c=>{const t=S.ensaio.tarefas.find(x=>x.id==+c.dataset.entar),a=c.querySelector('.acoes');if(sc(t)&&C.includes(t.col)&&a&&!c.querySelector('.v272'))a.insertAdjacentHTML('beforebegin','<div class="cyEtapa v272"><span><b>Sem card.</b> O Check libera card — estruture a pauta.</span></div>')})}catch(e){}return r})(render)})();</script>
-<script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v312').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}else throw 0}).catch(()=>{window.__semQuadro=1;if(S.route==='producao')render()})</script>
+<script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v313').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}else throw 0}).catch(()=>{window.__semQuadro=1;if(S.route==='producao')render()})</script>
