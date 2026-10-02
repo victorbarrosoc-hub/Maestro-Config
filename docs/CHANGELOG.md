@@ -1,11 +1,16 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.128
+Version: 0.5.129
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.129 — 2 out · v314 · quem grava
+
+- O histórico dos cards passa a anotar o nome escolhido em "Quem está entrando?" junto com o login ("Gabi Domingues · ejup.mkt@gmail.com"). App: cabeçalho `x-maestro-pessoa` em toda ida a `/rest/v1/`. Banco: `historico-1-quem-de-verdade.sql`.
+- O e-mail do alarme: ficha só com texto e "Onde foi:" com card, quem e hora.
 
 ## 0.5.128 — 2026-10-02
 

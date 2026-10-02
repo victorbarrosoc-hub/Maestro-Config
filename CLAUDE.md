@@ -349,6 +349,15 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (2 out, v314, NO AR) — quem grava, de verdade.** "O login pra
+acessar a agência é o padrão que todos usam." O histórico só guardava a porta
+(`ejup.mkt`), então "ejup.mkt apagou o texto às 23h50" não dizia quem foi.
+Agora toda ida ao banco (`/rest/v1/`) leva o nome escolhido em "Quem está
+entrando?" (cabeçalho `x-maestro-pessoa`, em `tempo-real.js`), e
+`maestro_cards_quem()` anota "Gabi Domingues · ejup.mkt@gmail.com". Só
+informa: não dá permissão. Link do cliente e arquivos não levam nome. SQL:
+`docs/ENGINEERING/historico-1-quem-de-verdade.sql` (8 provas em
+`historico-1-teste.sql`); app: 8 provas em `web/verificar/v314-quem-grava.mjs`.
 **Fechado (2 out, sem versão de app) — o alarme diz onde.** O e-mail da
 conferência de 2/out avisou "3 esvaziaram texto, 8 tiraram mídia (n0)", com
 "NUMEROS [object Object]" e o selo errado "PARA APROVAR". Agora a ficha do

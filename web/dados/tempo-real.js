@@ -83,7 +83,7 @@
 (function(){
   if(window.MaestroEntrada2 || window.__entradaPedida) return;
   window.__entradaPedida = true;
-  fetch('/web/entrada/entrada.js?v=v313').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/entrada/entrada.js?v=v314').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else window.__entrada = 1; })
     .catch(() => { window.__entrada = 1; });
 })();
@@ -168,12 +168,34 @@
 
   /* ---------------- 2. a linha `pauta` sem as chaves de card ---------------- */
   const _fetch = window.fetch;
+  /* (2/out) quem está gravando: o login da agência é a porta de todos, e o
+     histórico só sabia a porta ("ejup.mkt"). Toda ida ao banco leva o nome
+     escolhido em "Quem está entrando?"; o banco anota "Gabi · ejup.mkt@…"
+     (docs/ENGINEERING/historico-1-quem-de-verdade.sql). Só informa: não dá
+     nem tira permissão nenhuma. */
+  function pessoaAgora(){
+    try{
+      if(!S.usuario || S.usuario.tipo !== 'agencia') return '';
+      const m = (S.equipe || []).find(x => membroId(x) === S.usuario.id);
+      return String((m && (m.n || m.nome)) || '').slice(0, 60);
+    }catch(e){ return ''; }
+  }
+  window.MaestroPessoaAgora = pessoaAgora;
   window.fetch = async function(u, o){
     const url = String((u && u.url) || u || '');
     const met = String((o && o.method) || (u && u.method) || 'GET').toUpperCase();
     const ehPauta = url.startsWith(SB.url + '/rest/v1/pauta') && met === 'GET';
     if(ehPauta && !soLeitura()) await checar();
-    const r = await _fetch.apply(this, arguments);
+    const args = Array.prototype.slice.call(arguments);
+    if(typeof u === 'string' && SB.url && url.startsWith(SB.url + '/rest/v1/')){
+      const p = pessoaAgora();
+      if(p) try{
+        const h = new Headers((o && o.headers) || {});
+        h.set('x-maestro-pessoa', encodeURIComponent(p));
+        args[1] = Object.assign({}, o || {}, { headers: h });
+      }catch(e){}
+    }
+    const r = await _fetch.apply(this, args);
     if(!ehPauta || !D.ligado || !r.ok) return r;
     try{
       const txt = await r.clone().text();
@@ -1186,7 +1208,7 @@
 (function(){
   if(window.MaestroQuadro || window.__quadroPedido) return;
   window.__quadroPedido = true;
-  fetch('/web/quadro/quadro.js?v=v313').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/quadro/quadro.js?v=v314').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else throw 0; })
     /* v289: sem o Quadro, a rota fica em "Carregando o quadro…" — só em obra o Ensaio antigo vira bancada */
     .catch(() => { window.__semQuadro = 1; try{ if(S.route === 'producao') render(); }catch(e){} });
@@ -1196,7 +1218,7 @@
 (function(){
   if(window.MaestroDesign || window.__designPedido) return;
   window.__designPedido = true;
-  fetch('/web/design/design.js?v=v313').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/design/design.js?v=v314').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else window.__semTema = 1; })
     .catch(() => { window.__semTema = 1; });   /* v296: a abertura espera o tema; sem ele, não espera à toa */
 })();
@@ -1205,7 +1227,7 @@
 (function(){
   if(window.MaestroTema || window.__temaPedido) return;
   window.__temaPedido = true;
-  fetch('/web/tema/tema.js?v=v313').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/tema/tema.js?v=v314').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else window.__semTema = 1; })
     .catch(() => { window.__semTema = 1; });   /* v296: a abertura espera o tema; sem ele, não espera à toa */
 })();
