@@ -3326,7 +3326,7 @@
   render = function(){ const r = renderHoje.apply(this, arguments); try{ enfeitarHoje(); }catch(e){} return r; };
   const stHj = document.createElement('style'); stHj.id = 'v321-hoje';
   stHj.textContent = `
-  .qdHjCol{ display:inline-flex; align-items:center; gap:5px; font-weight:600; color:var(--tx, #F5F5F7) }
+  .qdHjCol{ display:inline-flex; align-items:center; gap:5px; font-weight:600; color:var(--ink-100, #F5F5F7) }
   .qdHjCol::before{ content:''; width:7px; height:7px; border-radius:50%; background:var(--qdc, #999); flex:none }
   .hjItem .qdHjCol{ flex:none; font-size:11.5px; padding:4px 9px; border-radius:999px; background:color-mix(in srgb, var(--qdc, #999) 16%, transparent) }
   .agCard small .qdHjCol{ font-size:11px }
