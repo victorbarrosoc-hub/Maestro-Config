@@ -18,7 +18,7 @@
 (function(){
   'use strict';
   if(window.MaestroPuxar) return;
-  const P = window.MaestroPuxar = { versao: 'v319', vezes: 0, ultimo: null };
+  const P = window.MaestroPuxar = { versao: 'v320', vezes: 0, ultimo: null };
 
   const celular = () => matchMedia('(pointer: coarse)').matches && innerWidth < 900;
   const LIMIAR = 72, MAX = 118;

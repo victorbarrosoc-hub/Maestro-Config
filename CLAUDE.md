@@ -349,6 +349,16 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (5 out, v320, NO AR) — o Hoje abre a ficha nova.** "Quando abro o card
+na agenda de Hoje, ele abre uma visualização antiga de card, quero uma visualização
+padrão nova." Todo "abrir o card" de fora do Quadro (`[data-hjabre]`: Agenda e Lista
+do Hoje, "Abrir o card"; `[data-ptedit]`: o card do Cronograma antigo) abre a MESMA
+ficha do Quadro, por cima da tela onde a pessoa está, sem trocar de aba (escuta na
+janela, em captura, antes dos handlers antigos; card não achado segue o caminho
+antigo). O "Link de visualização" (`?ver=`, para quem não tem conta) mudou da
+janela antiga para o topo da ficha (`data-qdverlink`, compartilhar no celular).
+O editor antigo segue no código (a v271 2b o abre direto). 13 provas em
+`web/verificar/v320-hoje-abre-a-ficha.mjs` (celular e computador).
 **Fechado (5 out, v319, NO AR) — puxar para atualizar.** "Consegue colocar um
 pull-to-refresh na plataforma, pra quando precisar atualizar a página pelo
 mobile?" No celular, com a tela no topo, puxar para baixo: o círculo desce com o

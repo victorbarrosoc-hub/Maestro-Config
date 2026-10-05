@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.134
+Version: 0.5.135
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.135 — 5 out · v320 · o Hoje abre a ficha nova
+
+- Agenda e Lista do Hoje (e todo "abrir o card" de fora do Quadro) abrem a ficha do Quadro por cima da tela, sem trocar de aba. "Link de visualização" passa para a ficha. 13 provas em `web/verificar/v320-hoje-abre-a-ficha.mjs`.
 
 ## 0.5.134 — 5 out · v319 · puxar para atualizar
 

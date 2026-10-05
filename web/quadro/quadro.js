@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v319', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v320', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -1470,6 +1470,28 @@
     })();
   }
   Q.abrirCard = abrirCard;
+  /* v320 — "quando abro o card na agenda de Hoje, ele abre uma visualização antiga de card".
+     Todo "abrir o card" de fora do Quadro (a Agenda e a Lista do Hoje, "Abrir o card", o card
+     do Cronograma antigo) abre a MESMA ficha do Quadro, por cima da tela onde a pessoa está —
+     sem trocar de aba. A janela de leitura antiga não é mais aberta por esses caminhos. */
+  window.addEventListener('click', e => {
+    if(!(S.usuario && S.usuario.tipo === 'agencia' && S.view === 'agency')) return;
+    const h = e.target.closest && e.target.closest('[data-hjabre],[data-ptedit]');
+    if(!h) return;
+    let cli, id;
+    if(h.dataset.hjabre){ [cli, id] = h.dataset.hjabre.split(':'); }
+    else {
+      /* os botões de dentro do card do Cronograma continuam deles */
+      if(e.target.closest('[data-ptfeito],[data-ptag],[data-mtabrir],[data-rfabrir],[data-ptrm],[data-stedit],[data-stsobe],[data-stdesce],[data-strm],[data-stadd]')) return;
+      if(document.getElementById('qdFolha') && h.closest('#qdFolha')) return;
+      try{ cli = cliAtual().id; }catch(x){ return; }
+      id = h.dataset.ptedit;
+    }
+    if(!cli || !id || !achar(cli, id)) return;   /* não achou: o caminho antigo segue */
+    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+    Q.folhaAba = 'conteudo';
+    abrirFolha(cli + '|' + id);
+  }, true);
   function lerLinkDoCard(){
     const m = /[#&]card=([^&]+)/.exec(location.hash || ''); if(!m) return;
     let key = ''; try{ key = decodeURIComponent(m[1]); }catch(e){ return; }
@@ -1670,6 +1692,7 @@
           : `<select class="qdSel qdFCliSel" data-qdfcli="1" aria-label="Cliente do card">${clientes().map(c => `<option value="${esc_(c.id)}" ${c.id === cli ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}</select>`}
         <span class="qdSp"></span>
         <button type="button" class="qdFLink" data-qdlink="1" title="Copiar o link deste card">${ic_('linkic', 13)}<span>Copiar link</span></button>
+        ${ehAg || typeof linkDeVer !== 'function' ? '' : `<button type="button" class="qdFLink" data-qdverlink="1" title="Um link só deste card, para quem não tem conta na Maestro">${ic_('enviar', 13)}<span>Link de visualização</span></button>`}
         <span class="qdFSalvo" id="qdFSalvo" aria-live="polite">Tudo salvo</span>
         <button type="button" class="qdFechar" data-qdfechar="1" aria-label="Fechar">×</button></div>
       <div class="qdFTitL">${!ehAg && segueOPadrao(p, cli) ? `<span class="qdFPre" data-qdfpre="1">${esc_(prefixo(cli, p))}</span>` : ''}<textarea class="qdFTit" data-qf="tema" rows="1" aria-label="Nome do card">${esc_(tema(p, cli))}</textarea></div>
@@ -2584,7 +2607,7 @@
   /* ---------------- nada de mensagem embaixo ---------------- */
   /* ---------------- v304: os toques do que é novo na ficha ---------------- */
   document.addEventListener('click', e => {
-    const t = e.target.closest && e.target.closest('#qdFolha [data-qdcopiar], #qdFolha [data-qdlink], #qdFolha [data-qdmatx], #qdFolha [data-qdmatsim], #qdFolha [data-qdmatnao], #qdFolha [data-qdcolabx], #qdFolha [data-qdmen], #qdFolha [data-qdmsgx]');
+    const t = e.target.closest && e.target.closest('#qdFolha [data-qdcopiar], #qdFolha [data-qdlink], #qdFolha [data-qdverlink], #qdFolha [data-qdmatx], #qdFolha [data-qdmatsim], #qdFolha [data-qdmatnao], #qdFolha [data-qdcolabx], #qdFolha [data-qdmen], #qdFolha [data-qdmsgx]');
     if(!t || !Q.folha) return;
     e.preventDefault(); e.stopPropagation();
     const key = Q.folha; const [cli, id] = key.split('|'); const d = t.dataset;
@@ -2595,6 +2618,15 @@
       return;
     }
     if(d.qdlink){ copiarTexto(linkDoCard(key)).then(ok => avisoNoBotao(t, ok ? 'Link copiado' : 'Não deu')); return; }
+    /* v320 — o "Link de visualização" da janela antiga, agora na ficha: quem abre vê só este card, sem conta */
+    if(d.qdverlink){
+      const p = achar(cli, id); if(!p || typeof linkDeVer !== 'function') return;
+      if(!p.verTok && typeof verTokenNovo === 'function') mudar(cli, id, { verTok: verTokenNovo() });
+      const url = linkDeVer(cli, p);
+      if(navigator.share && matchMedia('(pointer: coarse)').matches){ navigator.share({ title: p.t, url }).catch(() => copiarTexto(url).then(ok => avisoNoBotao(t, ok ? 'Link copiado' : 'Não deu'))); return; }
+      copiarTexto(url).then(ok => avisoNoBotao(t, ok ? 'Link copiado' : 'Não deu'));
+      return;
+    }
     if(d.qdmatx !== undefined){ Q.matApagar = { key, i: +d.qdmatx }; desenharFolha(true); return; }
     if(d.qdmatnao){ Q.matApagar = null; desenharFolha(true); return; }
     if(d.qdmatsim !== undefined){

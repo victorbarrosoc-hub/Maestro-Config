@@ -308,7 +308,8 @@ console.log('\n  — 2b. o editor aberto não apaga o que chegou enquanto ele es
 {
   /* Ana abre o card no editor DE VERDADE (o mesmo toque da tela) */
   await noAparelho(A, () => { S.route = 'clientedet'; S.cli = 'cj'; S.tab = 'pauta'; render();
-    const b = document.createElement('button'); b.dataset.ptedit = '601'; document.body.appendChild(b); b.click(); b.remove(); });
+    /* v320: o toque no card abre a ficha do Quadro; o editor antigo ainda existe e é provado aqui, aberto direto */
+    S.modal = modalVer(601); renderLayer(); });
   await A.pag.waitForTimeout(400);
   await noAparelho(A, () => { document.getElementById('entrarMaestro')?.remove(); document.querySelector('#layer [data-abreedit]').click(); });
   await A.pag.waitForTimeout(400);
