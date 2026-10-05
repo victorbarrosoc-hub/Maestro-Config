@@ -18,16 +18,16 @@
 (function(){
   'use strict';
   if(window.MaestroPuxar) return;
-  const P = window.MaestroPuxar = { versao: 'v321', vezes: 0, ultimo: null };
+  const P = window.MaestroPuxar = { versao: 'v322', vezes: 0, ultimo: null };
 
   const celular = () => matchMedia('(pointer: coarse)').matches && innerWidth < 900;
-  const LIMIAR = 72, MAX = 118;
+  const LIMIAR = 72, MAX = 150;
 
   /* ---------- o desenho ---------- */
   const css = document.createElement('style'); css.id = 'v319-puxar';
   css.textContent = `
   @media (pointer: coarse) and (max-width: 899px){ html, body{ overscroll-behavior-y: none } }
-  #mxPuxar{ position:fixed; left:50%; top:env(safe-area-inset-top, 0px); z-index:2147483000; pointer-events:none; display:flex; flex-direction:column; align-items:center; gap:8px;
+  #mxPuxar{ position:fixed; left:50%; top:0; z-index:2147483000; pointer-events:none; display:flex; flex-direction:row; align-items:center; gap:8px;
     transform:translate(-50%, -64px); opacity:0; will-change:transform, opacity }
   #mxPuxar.solto{ transition:transform .28s cubic-bezier(.2,.9,.3,1.2), opacity .2s ease }
   #mxPuxar .bola{ width:40px; height:40px; border-radius:50%; display:grid; place-items:center;
@@ -41,6 +41,7 @@
   #mxPuxar .dito{ font:500 12.5px/1.2 system-ui, -apple-system, sans-serif; padding:5px 11px; border-radius:999px; white-space:nowrap;
     background:var(--card, #27272B); color:var(--tx, #F5F5F7); box-shadow:0 4px 14px rgba(0,0,0,.22); opacity:0; transition:opacity .15s ease }
   #mxPuxar .dito.on{ opacity:1 }
+  #mxPuxar .dito:not(.on){ display:none }
   `;
   document.head.appendChild(css);
   const SETA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>';
@@ -53,15 +54,35 @@
     el.innerHTML = `<div class="bola">${SETA}</div><div class="dito"></div>`;
     document.body.appendChild(el); return el;
   };
+  /* v322 — "a tela pode acompanhar o movimento da puxada e quando soltar ela volta, num
+     movimento fluido". A tela (o miolo, embaixo da barra do topo) desce com o dedo, com
+     resistência; ao soltar, espera um pouco abaixo enquanto atualiza e volta com mola.
+     O círculo fica no vão que se abre. Quando a tela para, o deslocamento sai de vez
+     (um `transform` parado mudaria a referência de tudo o que é fixo lá dentro). */
+  const ESPERA = 64;
+  let tela = null, topoTela = 0, soltarTela = 0;
+  const telaAlvo = () => document.querySelector('#root main.main') || document.querySelector('#root .clframe') || document.querySelector('#root > *');
+  function moverTela(y, fluido){
+    if(!tela || !tela.isConnected) tela = telaAlvo();
+    const t = tela; if(!t) return;
+    clearTimeout(soltarTela);
+    t.style.willChange = 'transform';
+    t.style.transition = fluido ? 'transform .5s cubic-bezier(.2, 1.15, .35, 1)' : 'none';
+    t.style.transform = `translate3d(0, ${Math.round(y)}px, 0)`;
+    if(!y) soltarTela = setTimeout(() => { if(!g){ t.style.transform = ''; t.style.transition = ''; t.style.willChange = ''; } }, fluido ? 560 : 0);
+  }
+  P.moverTela = moverTela;
+  const yBola = d => Math.round(topoTela + d / 2 - 20);
   function mostrar(y, pronto){
     const e = ind(); e.classList.remove('solto', 'girando', 'feito');
     e.classList.toggle('pronto', !!pronto);
     e.querySelector('.bola').innerHTML = SETA;
     e.style.opacity = String(Math.min(1, y / 40));
-    e.style.transform = `translate(-50%, ${Math.round(y - 52)}px)`;
+    e.style.transform = `translate(-50%, ${yBola(y)}px) scale(${(0.6 + 0.4 * Math.min(1, y / LIMIAR)).toFixed(3)})`;
+    moverTela(y, false);
   }
   function dizer(txt){ const d = ind().querySelector('.dito'); d.textContent = txt || ''; d.classList.toggle('on', !!txt); }
-  function esconder(){ const e = ind(); e.classList.add('solto'); e.classList.remove('pronto'); e.style.transform = 'translate(-50%, -64px)'; e.style.opacity = '0'; dizer(''); }
+  function esconder(){ const e = ind(); e.classList.add('solto'); e.classList.remove('pronto'); e.style.transform = 'translate(-50%, -64px)'; e.style.opacity = '0'; dizer(''); moverTela(0, true); }
 
   /* ---------- quando o gesto vale ---------- */
   function podeComecar(alvo){
@@ -101,13 +122,15 @@
     const tempo = new Promise(r => setTimeout(() => r('lento'), 12000));
     const r = await Promise.race([Promise.allSettled(tarefas), tempo]);
     try{ render(); }catch(e){}
+    tela = null; moverTela(ESPERA, false);   /* o redesenho trocou a tela: a nova nasce no mesmo lugar */
     return r !== 'lento';
   }
   P.atualizar = async function(){
     P.vezes++; P.ultimo = Date.now();
     const e = ind(); e.classList.add('solto', 'girando'); e.classList.remove('pronto');
     e.querySelector('.bola').innerHTML = GIRO;
-    e.style.opacity = '1'; e.style.transform = `translate(-50%, ${Math.round(22)}px)`;
+    e.style.opacity = '1'; e.style.transform = `translate(-50%, ${yBola(ESPERA)}px)`;
+    moverTela(ESPERA, true);
     dizer('Atualizando…');
     const inicio = Date.now();
     if(typeof S !== 'undefined' && S.viaLink){ recarregar(); return 'link'; }
@@ -127,6 +150,7 @@
   addEventListener('touchstart', ev => {
     if(ocupado || ev.touches.length !== 1 || !podeComecar(ev.target)) { g = null; return; }
     const t = ev.touches[0]; g = { x: t.clientX, y: t.clientY, dist: 0, vale: null, pronto: false };
+    tela = telaAlvo(); try{ topoTela = Math.max(0, tela ? tela.getBoundingClientRect().top : 0); }catch(e){ topoTela = 0; }
   }, { passive: true });
   addEventListener('touchmove', ev => {
     if(!g || ev.touches.length !== 1) return;
@@ -138,7 +162,9 @@
       if(!g.vale){ g = null; return; }
     }
     if((window.scrollY || 0) > 0 || document.body.classList.contains('qdArrastandoToque')){ g = null; esconder(); return; }
-    g.dist = Math.min(MAX, Math.max(0, dy) * 0.55);
+    /* resistência: anda junto no começo, pesa depois do ponto */
+    const d = Math.max(0, dy) * 0.5;
+    g.dist = Math.min(MAX, d <= 90 ? d : 90 + (d - 90) * 0.3);
     const pronto = g.dist >= LIMIAR;
     if(pronto && !g.pronto){ try{ navigator.vibrate && navigator.vibrate(8); }catch(e){} }
     g.pronto = pronto;

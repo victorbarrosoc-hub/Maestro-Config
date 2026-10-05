@@ -349,6 +349,15 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (5 out, v322, NO AR) — a tela acompanha a puxada.** "No push to
+fresh, a tela pode acompanhar o movimento da puxada e quando soltar ela volta,
+num movimento fluido?" O miolo (`#root main.main`; no link, `.clframe`) desce
+com o dedo, com resistência depois do ponto (teto 150px); o círculo fica no vão,
+crescendo até o ponto. Ao soltar, a tela espera a 64px enquanto atualiza (o
+redesenho troca a tela — a nova nasce no mesmo lugar) e volta com mola; puxão
+curto volta sozinho. Parada, o deslocamento sai de vez (`transform` parado mudaria
+a referência do que é fixo lá dentro). Provas 1.1b–1.4b e 2.1b na
+`web/verificar/v319-puxar.mjs` (19 no total).
 **Fechado (5 out, v321, NO AR) — o Hoje mostra a peça e a etapa.** ("Ok" à
 sugestão.) Na Agenda e na Lista do Hoje cada card mostra a miniatura da peça e a
 coluna do Quadro com a cor dela (A fazer, Revisão, Agendado, Publicado); o "feito /

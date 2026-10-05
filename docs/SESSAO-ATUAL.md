@@ -20,6 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
+v322 (5 out) — puxar para atualizar: a tela acompanha o dedo e volta com mola.
+
 v321 (5 out) — Hoje: cada card com a miniatura da peça e a etapa do Quadro; os números do topo seguem o Quadro.
 
 v320 (5 out) — Hoje (Agenda e Lista) abre a ficha nova do Quadro por cima, sem trocar de aba; "Link de visualização" agora na ficha.

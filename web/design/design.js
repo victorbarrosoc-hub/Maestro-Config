@@ -16,7 +16,7 @@
    Mora à parte, como o Quadro, porque o protótipo está no teto. */
 (function(){
   if(window.MaestroDesign) return;
-  const D = window.MaestroDesign = { versao: 'v321', previas: {}, doc: null };
+  const D = window.MaestroDesign = { versao: 'v322', previas: {}, doc: null };
 
   const esc_ = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const novoId = p => (p || 'd') + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);

@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.136
+Version: 0.5.137
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.137 — 5 out · v322 · a tela acompanha a puxada
+
+- Puxar para atualizar: a tela desce com o dedo (com resistência), espera um pouco abaixo enquanto atualiza e volta com mola. Provas novas na `web/verificar/v319-puxar.mjs`.
 
 ## 0.5.136 — 5 out · v321 · o Hoje mostra a peça e a etapa
 
