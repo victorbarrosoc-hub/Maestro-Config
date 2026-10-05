@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.133
+Version: 0.5.134
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.134 — 5 out · v319 · puxar para atualizar
+
+- Celular: puxar a tela para baixo no topo busca no banco o que mudou e redesenha no lugar (sem pedir a chave de novo); recarrega só com versão nova (`web/versao.txt`) ou no link do cliente. `web/dados/puxar.js`; 15 provas em `web/verificar/v319-puxar.mjs`.
 
 ## 0.5.133 — 2 out · v318 · o link mais fluido, e o ponto grande na agência
 

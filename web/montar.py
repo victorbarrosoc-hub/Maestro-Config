@@ -95,4 +95,10 @@ s = ('<!doctype html>\n<!-- Maestro · gerado por web/montar.py em ' + carimbo +
      ' · nao edite este arquivo, edite docs/UX/prototipo-plataforma.html -->\n' + s)
 
 io.open(destino, 'w', encoding='utf-8').write(s)
+
+# v319 — a versão num arquivo de poucos bytes: o "puxar para atualizar" do celular
+# pergunta se há versão nova sem baixar os 3 MB da página
+_v = re.search(r"VERSAO_PROTOTIPO\s*=\s*'([^']+)'", s)
+if _v:
+    io.open(os.path.join(os.path.dirname(destino), 'versao.txt'), 'w', encoding='utf-8').write(_v.group(1) + '\n')
 print('web/index.html montado · %.1f MB · %s' % (len(s.encode()) / 1048576, carimbo))

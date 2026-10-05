@@ -349,6 +349,19 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (5 out, v319, NO AR) — puxar para atualizar.** "Consegue colocar um
+pull-to-refresh na plataforma, pra quando precisar atualizar a página pelo
+mobile?" No celular, com a tela no topo, puxar para baixo: o círculo desce com o
+dedo, a seta vira no ponto (toque leve no Android), e ao soltar diz "Atualizando…"
+→ "Atualizado". **Não recarrega a página** (recarregar pediria a chave de novo,
+v302): busca no banco cards, casa e pedidos e redesenha no lugar. Só recarrega
+quando há versão nova — perguntada a `web/versao.txt` (gerado pelo
+`web/montar.py`, poucos bytes) — e no link do cliente (sem chave). O puxar nativo
+sai (`overscroll-behavior-y:none`, só no celular); o gesto não nasce em janela por
+cima (ficha, peça em tela cheia), em lista rolada, em campo de texto, nem em
+arraste para o lado. Mora em `web/dados/puxar.js`. **Armadilha de prova:** o
+Chrome de teste volta o histórico com arraste horizontal — a suíte desliga isso só
+nela. 15 provas em `web/verificar/v319-puxar.mjs` (toques de verdade por CDP).
 **Fechado (2 out, v318, NO AR) — o link mais fluido, e o ponto grande na
 agência.** Quatro pedidos do founder numa leva: (1) "quando muda a imagem, ele
 fecha pra abrir" — a troca de tela no link guarda a altura da peça, reaproveita

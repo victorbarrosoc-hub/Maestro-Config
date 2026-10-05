@@ -20,6 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
+v319 (5 out) — celular: puxar para atualizar (busca no banco e redesenha no lugar; só recarrega com versão nova ou no link do cliente).
+
 v318 (2 out) — link: troca de tela fluida, sem a linha do coração, "Revisar e enviar" no alto, conferência enquadrada; agência: a tela do ajuste abre grande com os pontos. **Próximo combinado:** o "antes e depois" (o cliente confere a versão nova com os pontos da anterior).
 
 v317 (2 out) — link do cliente: tocar no ponto exato da imagem e comentar ali (como no Figma); a ficha da agência desenha os pontos na peça.
