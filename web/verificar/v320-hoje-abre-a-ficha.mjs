@@ -23,26 +23,41 @@ for(const [nome, vp] of [['celular', { viewport: { width: 390, height: 844 }, is
     S.usuario = { tipo: 'agencia', id: membroId(S.equipe[0]) }; S.skel = false; S.seen = { agency: true }; S.view = 'agency';
     const c = CLIS()[0]; const hoje = hojeISO();
     S.pautas[c.id] = [{ id: 7101, t: c.nome + ' · Reels · Vídeo de expectativa', fmt: 'Reels', fase: 'agendado', st: 'DRAFT', plats: ['ig'], data: hoje, hora: '14:00', legenda: 'Dia 9 de outubro, alguém vai abrir este envelope.', resp: membroId(S.equipe[0]) },
-                      { id: 7102, t: c.nome + ' · Post · Divulgação', fmt: 'Post', fase: 'criado', st: 'DRAFT', plats: ['ig'], data: hoje, hora: '18:30' }];
+                      { id: 7102, t: c.nome + ' · Post · Divulgação', fmt: 'Post', fase: 'criado', st: 'DRAFT', plats: ['ig'], data: hoje, hora: '18:30', feito: true },
+                      { id: 7103, t: c.nome + ' · Artigo · Ep. 19', fmt: 'Artigo', fase: 'postado', st: 'DRAFT', plats: ['site'], data: hoje, hora: '13:00' }];
+    S.mat[mChave(7101, c.id)] = [{ nome: 'capa.png', tipo: 'imagem', peso: 10, nuvem: true, url: location.origin + '/web/img/inexistente-capa.png' }];
     window.__copiado = null;
     try{ navigator.clipboard.writeText = t => { window.__copiado = t; return Promise.resolve(); }; }catch(x){}
     if(navigator.share) navigator.share = d => { window.__copiado = d.url; return Promise.resolve(); };
     S.route = 'dash'; S.hjVista = 'agenda'; S.hjCli = 'todos'; render(); return c.id; });
   await pg.waitForTimeout(300);
   const rota0 = await pg.evaluate(() => S.route);
+  /* v321 — a peça e a etapa de cada card */
+  let hj = await pg.evaluate(() => [...document.querySelectorAll('.agCard[data-hjabre]')].map(b => ({ id: b.dataset.hjabre.split(':')[1], col: (b.querySelector('.qdHjCol') || {}).textContent || '', mini: (b.querySelector('.qdHjMini') || { style: {} }).style.backgroundImage || '', feito: b.classList.contains('feito') })));
+  const H = id => hj.find(x => x.id === String(id)) || {};
+  checa('2.1 Agenda do Hoje: cada card diz a etapa do Quadro (Agendado, A fazer, Publicado)', H(7101).col === 'Agendado' && H(7102).col === 'A fazer' && H(7103).col === 'Publicado', hj);
+  checa('2.2 e mostra a miniatura da peça quando há imagem', /inexistente-capa\.png/.test(H(7101).mini) && !H(7102).mini, hj);
+  checa('2.3 "feito" (apagado) é estar Publicado — não o campo antigo', H(7103).feito && !H(7102).feito && !H(7101).feito, hj);
+  const nums = await pg.evaluate(() => [...document.querySelectorAll('.hjResumo .hjPill b')].map(b => +b.textContent));
+  checa('2.3b os números do topo seguem o Quadro: 3 saídas · 1 feita · 2 faltam · 1 agendada', nums.slice(0, 4).join() === '3,1,2,1', nums);
+  checa('2.3c e o card continua com o que tinha (a marca antiga não foi apagada nem gravada)', await pg.evaluate(c => { const p = S.pautas[c].find(x => x.id === 7102); return p.feito === true && p.st === 'DRAFT'; }, cli));
+  if(process.env.OUT) await pg.screenshot({ path: `${process.env.OUT}/v321-agenda-${nome}.png` });
   await pg.click('.agCard[data-hjabre$=":7101"]'); await pg.waitForTimeout(400);
   let r = await pg.evaluate(() => ({ folha: (document.getElementById('qdFolha') || {}).dataset?.qdfkey || null, modal: !!S.modal, velha: !!document.querySelector('[data-verlink]'), rota: S.route,
     tit: (document.querySelector('#qdFolha .qdFTit') || {}).value || '', leg: [...document.querySelectorAll('#qdFolha textarea')].some(t => /envelope/.test(t.value)) }));
   checa('1.1 tocar no card da Agenda do Hoje abre a ficha NOVA (a do Quadro), não a janela antiga', r.folha === cli + '|7101' && !r.modal && !r.velha, r);
   checa('1.2 a ficha mostra o card inteiro (nome e legenda)', /Vídeo de expectativa/.test(r.tit) && r.leg, r);
   checa('1.3 e o Hoje continua embaixo (não trocou de aba)', r.rota === rota0, { r, rota0 });
-  if(process.env.OUT) await pg.screenshot({ path: `${process.env.OUT}/v320-${nome}.png` });
+  
   await pg.click('#qdFolha [data-qdverlink]'); await pg.waitForTimeout(300);
   r = await pg.evaluate(c => ({ url: window.__copiado, tok: (S.pautas[c].find(p => p.id === 7101) || {}).verTok || null }), cli);
   checa('1.4 "Link de visualização" na ficha: gera o link só deste card (?ver=), como na janela antiga', r.tok && r.url && r.url.includes(`?ver=${encodeURIComponent(cli)}.7101.${r.tok}`), r);
   await pg.click('#qdFolha .qdFechar'); await pg.waitForTimeout(250);
   checa('1.5 fechar a ficha volta ao Hoje como estava', await pg.evaluate(() => !document.getElementById('qdFolha') && !!document.querySelector('.agCard')));
   await pg.evaluate(() => { S.hjVista = 'lista'; render(); }); await pg.waitForTimeout(250);
+  hj = await pg.evaluate(() => [...document.querySelectorAll('.hjItem[data-hjabre]')].map(b => ({ id: b.dataset.hjabre.split(':')[1], col: (b.querySelector('.qdHjCol') || {}).textContent || '', mini: !!b.querySelector('.qdHjMini'), velho: !!b.querySelector('.pill') })));
+  checa('2.4 Lista do Hoje: a etapa no lugar do "feito / falta", e a miniatura', H(7101).col === 'Agendado' && H(7101).mini && !hj.some(x => x.velho), hj);
+  if(process.env.OUT){ await pg.screenshot({ path: `${process.env.OUT}/v321-lista-${nome}.png` }); }
   await pg.click('.hjItem[data-hjabre$=":7102"]'); await pg.waitForTimeout(400);
   r = await pg.evaluate(() => ({ folha: (document.getElementById('qdFolha') || {}).dataset?.qdfkey || null, modal: !!S.modal }));
   checa('1.6 na Lista do Hoje também abre a ficha nova', r.folha === cli + '|7102' && !r.modal, r);

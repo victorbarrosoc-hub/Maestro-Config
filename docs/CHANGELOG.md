@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.135
+Version: 0.5.136
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.136 — 5 out · v321 · o Hoje mostra a peça e a etapa
+
+- Agenda e Lista do Hoje: miniatura da peça e a coluna do Quadro em cada card; os números do topo seguem a etapa do Quadro (Publicado = feito). Provas 2.1–2.4 em `web/verificar/v320-hoje-abre-a-ficha.mjs`.
 
 ## 0.5.135 — 5 out · v320 · o Hoje abre a ficha nova
 

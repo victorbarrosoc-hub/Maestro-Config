@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v320', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v321', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -3282,6 +3282,60 @@
   @media (max-width:760px){ .qdSubs{ display:flex; max-width:100%; overflow-x:auto; scrollbar-width:none } .qdSubs::-webkit-scrollbar{ display:none } .qdSubs button{ white-space:nowrap; flex:none; padding:7px 11px } .qdAgRot{ width:74px; padding-left:8px } .qdAgGrade{ min-width:calc(var(--qdagw) + 78px) } .qdAgNovo{ margin-left:0 } .qdSemNav{ flex-wrap:wrap } }
   `;
   document.head.appendChild(st);
+
+  /* v321 — o Hoje mostra a peça e a etapa de cada card ("Ok" à sugestão de 5/out): na Agenda
+     e na Lista, a miniatura da peça e a coluna do Quadro (Fazendo, Revisão, Agendado…) com a
+     cor dela. O "feito / falta" antigo lia um campo que o Quadro não usa; agora "feito" é
+     estar Publicado. Enfeita o que a tela antiga desenha, sem mexer nela. */
+  function enfeitarHoje(){
+    if(!(S.view === 'agency' && S.route === 'dash')) return;
+    document.querySelectorAll('#root .agCard[data-hjabre], #root .hjItem[data-hjabre]').forEach(b => {
+      const [cli, id] = String(b.dataset.hjabre).split(':'); const p = achar(cli, id); if(!p) return;
+      const col = COL[colunaDe(p)] || COL.pauta; const cp = capa(cli, p.id);
+      const sig = col.k + '|' + cp; if(b.dataset.qdhj === sig) return; b.dataset.qdhj = sig;
+      b.classList.toggle('feito', col.k === 'publicado');
+      b.style.setProperty('--qdc', col.c);
+      b.querySelectorAll('.qdHjCol, .qdHjMini').forEach(x => x.remove());
+      const et = document.createElement('span'); et.className = 'qdHjCol'; et.textContent = col.n;
+      let mini = null;
+      if(cp){ mini = document.createElement('span'); mini.className = 'qdHjMini'; mini.style.backgroundImage = `url('${cp.replace(/'/g, '%27')}')`; }
+      b.classList.toggle('qdHjComMini', !!mini);
+      if(b.classList.contains('agCard')){
+        const sm = b.querySelector('small'); if(sm){ sm.insertBefore(document.createTextNode(' · '), sm.firstChild); sm.insertBefore(et, sm.firstChild); }
+        if(mini) b.appendChild(mini);
+      } else {
+        const pil = b.querySelector('.pill'); if(pil) pil.replaceWith(et); else b.appendChild(et);
+        if(mini){ const t = b.querySelector('.t'); b.insertBefore(mini, t || null); }
+        /* a etapa já diz "Agendado": o "· agendado" da linha de baixo sai */
+        const sub = b.querySelector('.t > span'); if(sub) sub.textContent = sub.textContent.replace(/\s*·\s*agendado\b/, '');
+      }
+    });
+  }
+  Q.enfeitarHoje = enfeitarHoje;
+  /* os números do Hoje (feitas, faltam, agendadas, "1 feito") leem a etapa do Quadro, não o
+     campo antigo: o dia recebe CÓPIAS só para desenhar — nada disso volta ao card */
+  if(typeof itensDoDia === 'function') itensDoDia = (function(orig){
+    return function(){
+      const gs = orig.apply(this, arguments);
+      try{ return gs.map(g => Object.assign({}, g, { itens: g.itens.map(p => { const col = colunaDe(p);
+        return Object.assign({}, p, { feito: col === 'publicado', st: col === 'agendado' ? 'SCHEDULED' : (p.st === 'SCHEDULED' ? 'DRAFT' : p.st) }); }) })); }
+      catch(e){ return gs; }
+    };
+  })(itensDoDia);
+  const renderHoje = render;
+  render = function(){ const r = renderHoje.apply(this, arguments); try{ enfeitarHoje(); }catch(e){} return r; };
+  const stHj = document.createElement('style'); stHj.id = 'v321-hoje';
+  stHj.textContent = `
+  .qdHjCol{ display:inline-flex; align-items:center; gap:5px; font-weight:600; color:var(--tx, #F5F5F7) }
+  .qdHjCol::before{ content:''; width:7px; height:7px; border-radius:50%; background:var(--qdc, #999); flex:none }
+  .hjItem .qdHjCol{ flex:none; font-size:11.5px; padding:4px 9px; border-radius:999px; background:color-mix(in srgb, var(--qdc, #999) 16%, transparent) }
+  .agCard small .qdHjCol{ font-size:11px }
+  .agCard.qdHjComMini{ padding-right:58px }
+  .agCard .qdHjMini{ position:absolute; right:7px; top:7px; bottom:7px; width:42px; border-radius:7px; background:center/cover no-repeat var(--sup2, #333) }
+  .hjItem .qdHjMini{ flex:none; width:38px; height:48px; border-radius:7px; background:center/cover no-repeat var(--sup2, #333) }
+  @media (max-width:760px){ .hjItem{ gap:9px } .hjItem .qdHjMini{ width:30px; height:38px } .hjItem .ptResp > b{ display:none !important } .hjItem .qdHjCol{ padding:4px 8px } }
+  `;
+  document.head.appendChild(stHj);
 
   /* se a página já está aberta quando este arquivo chega, redesenha */
   try{ if(S.view === 'agency' && (S.route === 'producao' || S.route === 'pauta')) render(); }catch(e){}

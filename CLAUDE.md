@@ -349,6 +349,14 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (5 out, v321, NO AR) — o Hoje mostra a peça e a etapa.** ("Ok" à
+sugestão.) Na Agenda e na Lista do Hoje cada card mostra a miniatura da peça e a
+coluna do Quadro com a cor dela (A fazer, Revisão, Agendado, Publicado); o "feito /
+falta" antigo saiu. Os números do topo (feitas, faltam, agendadas) e o "1/3 feito"
+passam a ler a etapa do Quadro: `itensDoDia` devolve CÓPIAS só para desenhar
+(`feito` = Publicado, `st` = Agendado) — o card não é tocado (prova 2.3c). Mora em
+`web/quadro/quadro.js` (`enfeitarHoje`, que enfeita o que a tela antiga desenha).
+Provas 2.1–2.4 na `web/verificar/v320-hoje-abre-a-ficha.mjs` (25 no total).
 **Fechado (5 out, v320, NO AR) — o Hoje abre a ficha nova.** "Quando abro o card
 na agenda de Hoje, ele abre uma visualização antiga de card, quero uma visualização
 padrão nova." Todo "abrir o card" de fora do Quadro (`[data-hjabre]`: Agenda e Lista
