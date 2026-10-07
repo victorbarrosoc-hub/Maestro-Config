@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.137
+Version: 0.5.138
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.138 — 7 out · v323 · o documento abre no link
+
+- Link de visualização mostra PDF/arquivo da nuvem (prévia e "Abrir o arquivo"); arquivo que ficou só no aparelho sobe sozinho quando esse aparelho abre a Maestro; a ficha marca "não subiu". Consulta `docs/ENGINEERING/midia-1-o-arquivo-subiu.sql`. 11 provas em `web/verificar/v323-o-documento-abre.mjs`.
 
 ## 0.5.137 — 5 out · v322 · a tela acompanha a puxada
 

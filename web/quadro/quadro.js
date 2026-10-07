@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v322', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v323', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -1734,7 +1734,7 @@
           ${ms.length > 1 ? `<p class="qdFMatDica">A ordem daqui é a que o cliente vê. Toque numa peça para ver.</p>` : ''}
           <div class="qdFMat">${ms.map((m, i) => {
             const u = url_(m.tipo === 'imagem' ? (m.url || m.capa) : (m.capa || m.poster || ''));
-            return `<span class="qdFMatI"><button type="button" class="qdFMatVer" data-qdver="${i}" aria-label="Ver ${esc_(m.nome || 'a peça ' + (i + 1))}" title="${esc_(m.nome || '')}">${u ? `<img src="${u}" alt="" loading="lazy">` : `<i>${esc_(m.tipo === 'video' ? 'vídeo' : m.tipo === 'link' ? 'link' : 'arquivo')}</i>`}${m.tipo === 'video' ? `<b class="qdFMatPlay" aria-hidden="true">▶</b>` : ''}${ms.length > 1 ? `<em>${i + 1}</em>` : ''}</button>
+            return `<span class="qdFMatI"><button type="button" class="qdFMatVer" data-qdver="${i}" aria-label="Ver ${esc_(m.nome || 'a peça ' + (i + 1))}" title="${esc_(m.nome || '')}">${u ? `<img src="${u}" alt="" loading="lazy">` : `<i>${esc_(m.tipo === 'video' ? 'vídeo' : m.tipo === 'link' ? 'link' : 'arquivo')}</i>`}${m.tipo === 'video' ? `<b class="qdFMatPlay" aria-hidden="true">▶</b>` : ''}${ms.length > 1 ? `<em>${i + 1}</em>` : ''}${Q.naNuvem && !Q.naNuvem(m) ? `<b class="qdFMatSo" title="Ainda não subiu para a nuvem: só abre no aparelho de quem subiu. Sobe sozinho quando esse aparelho abrir a Maestro com internet.">não subiu</b>` : ''}</button>
               ${Q.matApagar && Q.matApagar.key === Q.folha && Q.matApagar.i === i
                 ? `<span class="qdFMatConf"><b>Apagar?</b><button type="button" data-qdmatsim="${i}">Sim</button><button type="button" data-qdmatnao="1">Não</button></span>`
                 : `<button type="button" class="qdFMatX" data-qdmatx="${i}" aria-label="Apagar ${esc_(m.nome || 'a peça ' + (i + 1))}" title="Apagar esta peça">×</button>`}
@@ -3312,6 +3312,46 @@
     });
   }
   Q.enfeitarHoje = enfeitarHoje;
+
+  /* v323 — "a peça não está abrindo no computador, só no celular… mostra que o documento só
+     está no celular de quem montou o card." Arquivo que não chegou à nuvem (a rede caiu na
+     hora, o app fechou no meio) ficava só no aparelho de quem subiu, para sempre. Agora,
+     sempre que esse aparelho abre a Maestro (e a cada minuto, com rede), o que está guardado
+     nele e ainda não subiu SOBE de novo — e o card passa a valer em qualquer aparelho. */
+  const naNuvem = m => !!(m && (m.tipo === 'link' || /^https?:/.test(String(m.url || ''))));
+  Q.naNuvem = naNuvem;
+  const subindo = new Set();
+  async function reenviarPendentes(){
+    if(!(S.usuario && S.usuario.tipo === 'agencia') || S.viaLink) return 0;
+    if(typeof subirNuvem !== 'function' || typeof idbLer !== 'function' || navigator.onLine === false) return 0;
+    if(typeof _sbLigado !== 'undefined' && !_sbLigado) return 0;
+    let n = 0;
+    for(const k of Object.keys(S.mat || {})){
+      const arr = S.mat[k]; if(!Array.isArray(arr)) continue;
+      const cli = k.split('|')[0];
+      for(const m of arr){
+        if(!m || naNuvem(m) || !m.chave || subindo.has(m.chave)) continue;
+        subindo.add(m.chave);
+        try{
+          const blob = await idbLer(m.chave);
+          if(!blob) continue;   /* o arquivo não está neste aparelho: quem tem é quem sobe */
+          const nome = typeof nomeSeguro === 'function' ? nomeSeguro(m.nome || blob.name || 'arquivo') : 'arquivo';
+          const caminho = m.caminhoNuvem || `mat/${k.replace('|', '/')}/${m.chave}_${nome}`;
+          const url = await subirNuvem(caminho, blob);
+          m.url = url; m.nuvem = true; m.caminhoNuvem = caminho; n++;
+          anota('reenviado', k, m.nome);
+          await salvar(cli);
+        }catch(e){ anota('reenvio-falhou', k, e && e.message); }
+        finally{ subindo.delete(m.chave); }
+      }
+    }
+    if(n){ try{ if(Q.folha) desenharFolha(true); redesenharPagina(); }catch(e){} }
+    return n;
+  }
+  Q.reenviarPendentes = reenviarPendentes;
+  setTimeout(() => { reenviarPendentes(); }, 4000);
+  setInterval(() => { if(document.visibilityState === 'visible') reenviarPendentes(); }, 60000);
+  addEventListener('online', () => setTimeout(reenviarPendentes, 1500));
   /* os números do Hoje (feitas, faltam, agendadas, "1 feito") leem a etapa do Quadro, não o
      campo antigo: o dia recebe CÓPIAS só para desenhar — nada disso volta ao card */
   if(typeof itensDoDia === 'function') itensDoDia = (function(orig){
@@ -3326,6 +3366,7 @@
   render = function(){ const r = renderHoje.apply(this, arguments); try{ enfeitarHoje(); }catch(e){} return r; };
   const stHj = document.createElement('style'); stHj.id = 'v321-hoje';
   stHj.textContent = `
+  .qdFMatSo{ position:absolute; left:4px; right:4px; bottom:4px; font:600 10px/1.2 system-ui, sans-serif; color:#fff; background:rgba(226,104,60,.92); border-radius:6px; padding:3px 4px; text-align:center }
   .qdHjCol{ display:inline-flex; align-items:center; gap:5px; font-weight:600; color:var(--ink-100, #F5F5F7) }
   .qdHjCol::before{ content:''; width:7px; height:7px; border-radius:50%; background:var(--qdc, #999); flex:none }
   .hjItem .qdHjCol{ flex:none; font-size:11.5px; padding:4px 9px; border-radius:999px; background:color-mix(in srgb, var(--qdc, #999) 16%, transparent) }

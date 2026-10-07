@@ -20,6 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
+v323 (7 out) — link do card mostra o documento (PDF) da nuvem; o que ficou só no aparelho sobe sozinho; ficha marca "não subiu". Pendente: founder rodar `midia-1-o-arquivo-subiu.sql` (só leitura) para ver se o PDF do card do Jarbas está na nuvem.
+
 v322 (5 out) — puxar para atualizar: a tela acompanha o dedo e volta com mola.
 
 v321 (5 out) — Hoje: cada card com a miniatura da peça e a etapa do Quadro; os números do topo seguem o Quadro.

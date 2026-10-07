@@ -349,6 +349,18 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (7 out, v323, NO AR) — o documento abre no link do card.** "Uma enviou o
+link do card pra outra, e a visualização do documento/peça não está abrindo no
+computador, só no celular… preciso visualizar tudo do link do card." A página do
+`?ver=` (`verFolhaHtml`) mostrava "a arte está no aparelho de quem montou o card"
+para TODO material que não fosse imagem ou vídeo — PDF na nuvem inclusive. Agora:
+documento na nuvem aparece com prévia (PDF) e "Abrir o arquivo"; o que não subiu diz
+"ainda não subiu para a nuvem — sobe sozinho…"; `blob:` nunca vira imagem quebrada.
+E o que ficou só no aparelho (rede caiu no upload) **sobe sozinho** quando esse
+aparelho abre a Maestro e a cada minuto (`MaestroQuadro.reenviarPendentes`, lê do
+IndexedDB e grava o card); a ficha marca "não subiu" na miniatura. Consulta só de
+leitura: `docs/ENGINEERING/midia-1-o-arquivo-subiu.sql` (o depósito aceita PDF? quais
+arquivos ficaram só no aparelho). 11 provas em `web/verificar/v323-o-documento-abre.mjs`.
 **Fechado (5 out, v322, NO AR) — a tela acompanha a puxada.** "No push to
 fresh, a tela pode acompanhar o movimento da puxada e quando soltar ela volta,
 num movimento fluido?" O miolo (`#root main.main`; no link, `.clframe`) desce

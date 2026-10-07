@@ -16060,7 +16060,7 @@ document.addEventListener('touchend', e => {
    idênticas. Um carimbo no rodapé do Menu resolve para sempre — uma
    batida no Menu e a resposta está lá.
    ================================================================== */
-const VERSAO_PROTOTIPO = 'v322 · 5 out · a tela acompanha a puxada';
+const VERSAO_PROTOTIPO = 'v323 · 7 out · o documento abre no link';
 
 menuSheet = (function(orig){
   return function(){
@@ -30070,6 +30070,14 @@ body.soVer .cltab{ display:none !important }
   background:var(--ink-850); border:1px solid var(--ink-800); display:grid; place-items:center }
 .vfArte img, .vfArte video{ width:100%; height:100%; object-fit:cover; display:block }
 .vfArte .semArte{ text-align:center; padding:14px; font-size:11.5px; line-height:1.45; color:var(--ink-500) }
+/* v323 — documento (PDF, arquivo, link) no link do card: abre em qualquer aparelho */
+.vfArte:has(.vfDoc){ grid-column:1/-1; aspect-ratio:auto }
+.vfDoc{ display:flex; flex-direction:column; width:100% }
+.vfDoc iframe{ width:100%; height:min(72vh, 760px); border:0; background:#fff; display:block }
+.vfDoc a{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px 15px; text-decoration:none; color:var(--ink-100); font-size:13.5px }
+.vfDoc a b{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.vfDoc a span{ flex:none; color:var(--brass-300, #FFC857); font-weight:600 }
+@media (max-width:760px){ .vfDoc iframe{ height:60vh } }
 .vfArte .semArte b{ display:block; color:var(--ink-300); font-size:12px; margin-bottom:3px }
 .vfPe{ max-width:760px; margin:18px auto 0; padding:0 20px; display:flex; gap:10px;
   align-items:center; flex-wrap:wrap; font-size:12px; color:var(--ink-500) }
@@ -30164,9 +30172,10 @@ function verFolhaHtml(c, p){
       ${vfBloco('CTA', p.cta ? par(p.cta) : '', p.cta ? 'cta' : '')}
       ${p.sticker ? vfBloco('Interação', par(p.sticker)) : ''}
       ${ms.length ? vfBloco(`Arte (${ms.length})`, `<div class="vfArtes">${ms.slice(0, 8).map(m => `<div class="vfArte">${
-        m.url && m.tipo === 'imagem' ? `<img src="${urlSegura(m.url)}" alt="${esc(m.nome || 'arte')}">`
-        : m.url && m.tipo === 'video' ? `<video src="${urlSegura(m.url)}" ${m.poster ? `poster="${urlSegura(m.poster)}"` : ''} controls playsinline preload="metadata"></video>`
-        : `<span class="semArte"><b>${esc(m.nome || 'arquivo')}</b>a arte está no aparelho de quem montou o card</span>`
+        /^https?:/.test(m.url || '') && m.tipo === 'imagem' ? `<img src="${urlSegura(m.url)}" alt="${esc(m.nome || 'arte')}">`
+        : /^https?:/.test(m.url || '') && m.tipo === 'video' ? `<video src="${urlSegura(m.url)}" ${m.poster ? `poster="${urlSegura(m.poster)}"` : ''} controls playsinline preload="metadata"></video>`
+        : m.url && /^https?:/.test(m.url) ? `<div class="vfDoc">${/\.pdf($|\?)/i.test(m.nome || m.url) ? `<iframe src="${urlSegura(m.url)}#view=FitH" title="${esc(m.nome || 'documento')}" loading="lazy"></iframe>` : ''}<a href="${urlSegura(m.url)}" target="_blank" rel="noopener"><b>${esc(m.nome || 'arquivo')}</b><span>Abrir ${m.tipo === 'link' ? 'o link' : 'o arquivo'} ↗</span></a></div>`
+        : `<span class="semArte"><b>${esc(m.nome || 'arquivo')}</b>ainda não subiu para a nuvem — sobe sozinho quando quem montou o card abrir a Maestro com internet</span>`
       }</div>`).join('')}</div>`) : ''}
     </div>
     <div class="vfPe">
@@ -48555,4 +48564,4 @@ background:var(--enc); color:var(--ink-100); flex:0 0 auto }
 render=(o=>function(){try{for(const t of(S.ensaio&&S.ensaio.tarefas)||[]){const e=A[t.id];if(sc(t)&&C.includes(t.col)&&e&&!C.includes(e)){t.col=e;toast('Sem card não passa do Do: estruture a pauta.')}A[t.id]=t.col}
 const g=S.chat&&(S.chat.canais||[]).find(c=>c.id==='geral');if(g&&g.msgs){let v=0;const n=g.msgs.filter(m=>!m||m.txt!==B||!v++);if(n.length<g.msgs.length)g.msgs=n}}catch(e){}
 const r=o.apply(this,arguments);try{document.querySelectorAll('.enCard[data-entar]').forEach(c=>{const t=S.ensaio.tarefas.find(x=>x.id==+c.dataset.entar),a=c.querySelector('.acoes');if(sc(t)&&C.includes(t.col)&&a&&!c.querySelector('.v272'))a.insertAdjacentHTML('beforebegin','<div class="cyEtapa v272"><span><b>Sem card.</b> O Check libera card — estruture a pauta.</span></div>')})}catch(e){}return r})(render)})();</script>
-<script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v322').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}else throw 0}).catch(()=>{window.__semQuadro=1;if(S.route==='producao')render()})</script>
+<script>/* v271: dados em tempo real (web/dados) */fetch('/web/dados/tempo-real.js?v=v323').then(r=>r.ok&&/javascript/.test(r.headers.get('content-type')||'')?r.text():'').then(t=>{if(t.startsWith('/*')){const e=document.createElement('script');e.textContent=t;document.head.appendChild(e)}else throw 0}).catch(()=>{window.__semQuadro=1;if(S.route==='producao')render()})</script>
