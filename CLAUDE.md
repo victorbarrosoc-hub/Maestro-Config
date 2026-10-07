@@ -349,6 +349,16 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (7 out, v324, NO AR) — foto do iPhone vira JPG.** ("ok" à sugestão.) O
+HEIC abre no iPhone/Mac mas não no Chrome do computador; no link do card virava só o
+nome. Agora `guardarArquivos` (embrulhado em `web/quadro/quadro.js`, vale para todo
+caminho de subir) converte HEIC em JPG antes de subir: o Safari converte sozinho
+(`createImageBitmap`); nos outros, o heic2any desce do jsdelivr só quando aparece um
+HEIC. Se a conversão falhar, a foto sobe como veio (nunca se perde). As HEIC que já
+estão na nuvem (5 do n0) viram JPG quando alguém da agência abre a Maestro
+(`converterHeicDaNuvem`); o endereço do original fica em `m.heicOriginal`. 10 provas
+em `web/verificar/v324-heic-vira-jpg.mjs`, com um HEIC de verdade
+(`web/verificar/fixtures/heic/foto.heic`) e a cor conferida pixel a pixel.
 **Fechado (7 out, v323, NO AR) — o documento abre no link do card.** "Uma enviou o
 link do card pra outra, e a visualização do documento/peça não está abrindo no
 computador, só no celular… preciso visualizar tudo do link do card." A página do

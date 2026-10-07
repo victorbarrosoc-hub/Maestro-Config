@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v323', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v324', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -3349,6 +3349,89 @@
     return n;
   }
   Q.reenviarPendentes = reenviarPendentes;
+
+  /* v324 — foto do iPhone (HEIC) vira JPG na hora de subir ("ok" à sugestão de 7/out). O HEIC
+     abre no iPhone e no Mac, mas o Chrome do computador não mostra — no link do card virava
+     só o nome do arquivo. Agora: o Safari converte sozinho; nos outros, a conversão desce do
+     jsdelivr só quando aparece um HEIC (1,3 MB, uma vez). Se nada conseguir converter, o
+     arquivo sobe como era (nunca se perde uma foto). E as fotos HEIC que já estão na nuvem
+     viram JPG quando alguém da agência abre a Maestro (o endereço do original fica guardado). */
+  const ehHeic = f => !!f && (/^image\/hei[cf]/i.test(f.type || '') || /\.hei[cf]$/i.test(f.name || f.nome || ''));
+  Q.ehHeic = ehHeic;
+  let libHeic = null;
+  const carregarHeic = () => libHeic || (libHeic = new Promise((ok, falha) => {
+    if(window.heic2any) return ok(window.heic2any);
+    const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+    sc.onload = () => window.heic2any ? ok(window.heic2any) : falha(new Error('sem heic2any'));
+    sc.onerror = () => { libHeic = null; falha(new Error('heic2any não desceu')); };
+    document.head.appendChild(sc);
+  }));
+  async function paraJpg(blob, nome){
+    const novoNome = String(nome || 'foto.heic').replace(/\.hei[cf]$/i, '') + '.jpg';
+    let jpg = null;
+    try{  /* o Safari (iPhone, Mac) lê HEIC sozinho */
+      const bmp = await createImageBitmap(blob);
+      const cv = document.createElement('canvas'); cv.width = bmp.width; cv.height = bmp.height;
+      cv.getContext('2d').drawImage(bmp, 0, 0);
+      jpg = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.9));
+    }catch(e){ jpg = null; }
+    if(!jpg){
+      const h = await carregarHeic();
+      const out = await h({ blob, toType: 'image/jpeg', quality: 0.9 });
+      jpg = Array.isArray(out) ? out[0] : out;
+    }
+    return new File([jpg], novoNome, { type: 'image/jpeg' });
+  }
+  Q.paraJpg = paraJpg;
+  if(typeof guardarArquivos === 'function') guardarArquivos = (function(orig){
+    return function(id, lista, cli){
+      const todos = [...(lista || [])];
+      const heics = todos.filter(ehHeic), outros = todos.filter(f => !ehHeic(f));
+      const n = outros.length ? orig.call(this, id, outros, cli) : 0;
+      if(heics.length){
+        const self = this;
+        Q.convertendo = (Q.convertendo || 0) + heics.length;
+        Promise.all(heics.map(f => paraJpg(f, f.name).catch(e => { anota('heic-falhou', f.name, e && e.message); return f; })))
+          .then(conv => {
+            Q.convertendo -= heics.length;
+            orig.call(self, id, conv, cli);
+            const dono = cli || (typeof donoDoCard === 'function' ? donoDoCard(id, cli) : null);
+            if(dono){ const p = achar(dono, id); if(p) p.mod = Date.now(); salvar(dono); }
+            try{ if(Q.folha) desenharFolha(true); redesenharPagina(); if(typeof render === 'function' && !Q.folha) render(); }catch(e){}
+          });
+      }
+      return n;
+    };
+  })(guardarArquivos);
+  /* as que já subiram em HEIC: baixa, converte, sobe o JPG e troca no card */
+  const convertidas = new Set();
+  async function converterHeicDaNuvem(){
+    if(!(S.usuario && S.usuario.tipo === 'agencia') || S.viaLink || typeof subirNuvem !== 'function' || navigator.onLine === false) return 0;
+    if(typeof _sbLigado !== 'undefined' && !_sbLigado) return 0;
+    let n = 0;
+    for(const k of Object.keys(S.mat || {})){
+      const arr = S.mat[k]; if(!Array.isArray(arr)) continue;
+      const cli = k.split('|')[0];
+      for(const m of arr){
+        if(!m || !ehHeic(m) || !naNuvem(m) || m.tipo === 'link' || convertidas.has(m.url)) continue;
+        convertidas.add(m.url);
+        try{
+          const r = await fetch(m.url); if(!r.ok) continue;
+          const jpg = await paraJpg(await r.blob(), m.nome);
+          const nome = typeof nomeSeguro === 'function' ? nomeSeguro(jpg.name) : 'foto.jpg';
+          const caminho = `mat/${k.replace('|', '/')}/${m.chave || ('mt' + Date.now())}_${nome}`;
+          const url = await subirNuvem(caminho, jpg);
+          m.heicOriginal = m.url; m.url = url; m.nome = jpg.name; m.tipo = 'imagem'; m.nuvem = true; m.caminhoNuvem = caminho; m.peso = jpg.size;
+          n++; anota('heic-convertida', k, m.nome);
+          await salvar(cli);
+        }catch(e){ anota('heic-nuvem-falhou', k, e && e.message); }
+      }
+    }
+    if(n){ try{ if(Q.folha) desenharFolha(true); redesenharPagina(); }catch(e){} }
+    return n;
+  }
+  Q.converterHeicDaNuvem = converterHeicDaNuvem;
+  setTimeout(() => { converterHeicDaNuvem(); }, 9000);
   setTimeout(() => { reenviarPendentes(); }, 4000);
   setInterval(() => { if(document.visibilityState === 'visible') reenviarPendentes(); }, 60000);
   addEventListener('online', () => setTimeout(reenviarPendentes, 1500));

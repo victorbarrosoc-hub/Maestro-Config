@@ -20,6 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
+v324 (7 out) — foto HEIC do iPhone vira JPG ao subir; as HEIC já na nuvem viram JPG quando a agência abre a Maestro. (v323 confirmada: o PDF do Jarbas estava na nuvem — era só a página do link.)
+
 v323 (7 out) — link do card mostra o documento (PDF) da nuvem; o que ficou só no aparelho sobe sozinho; ficha marca "não subiu". Pendente: founder rodar `midia-1-o-arquivo-subiu.sql` (só leitura) para ver se o PDF do card do Jarbas está na nuvem.
 
 v322 (5 out) — puxar para atualizar: a tela acompanha o dedo e volta com mola.

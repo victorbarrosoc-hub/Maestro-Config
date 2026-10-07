@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.138
+Version: 0.5.139
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.139 — 7 out · v324 · foto do iPhone vira JPG
+
+- HEIC vira JPG antes de subir (Safari nativo; heic2any nos outros, só quando precisa); HEIC já na nuvem é convertido quando a agência abre a Maestro; falhou, sobe como veio. 10 provas em `web/verificar/v324-heic-vira-jpg.mjs`.
 
 ## 0.5.138 — 7 out · v323 · o documento abre no link
 

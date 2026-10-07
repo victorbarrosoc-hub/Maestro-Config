@@ -24,7 +24,7 @@
   'use strict';
   if(window.MaestroDecidir) return;
   if(typeof S === 'undefined' || typeof clCard !== 'function' || typeof decidirCard !== 'function') return;
-  const M = window.MaestroDecidir = { versao: 'v323' };
+  const M = window.MaestroDecidir = { versao: 'v324' };
   const CHAVE = 'maestro-decidir-v1';
   const e_ = s => (typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
   const url_ = u => (typeof urlSegura === 'function' ? urlSegura(u) : (/^(https?:|blob:|data:image\/)/.test(String(u || '')) ? String(u) : ''));
