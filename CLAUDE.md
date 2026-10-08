@@ -349,6 +349,19 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (7 out, v325, NO AR) — a ficha não diz "apagado" à toa.** Print do
+founder (7/out 15:41): "Este card não está mais no quadro (foi apagado). Ele está
+na Lixeira." num card vivo. A ficha afirmava a exclusão no primeiro instante em que
+`achar(cli,id)` falhava — e o card some da memória da tela por outros motivos (mudou
+de cliente aqui ou em outro aparelho, a tela relendo o banco, número trocado). Agora
+(`folhaSemCard` em `web/quadro/quadro.js`): achou em outro cliente → segue (só com
+`trocouDe` ou número único > 1e11; o 14 de A nunca vira o 14 de B); está na Lixeira →
+"foi para a Lixeira hoje às HH:MM" com "Restaurar o card"; não achou → "Carregando o
+card…", pergunta ao banco (`MaestroDados.olhar`) e tenta 8 s, e só então "Não achei
+este card neste aparelho" (sem afirmar exclusão). Quando o card volta, a ficha se refaz
+inteira. `renumerar` (tempo-real) leva a ficha aberta ao número novo. Consulta só de
+leitura `docs/ENGINEERING/card-4-quem-apagou.sql` (quem mandou à lixeira, quando, e se
+está apagado agora). 9 provas em `web/verificar/v325-a-ficha-nao-afirma.mjs`.
 **Fechado (7 out, v324, NO AR) — foto do iPhone vira JPG.** ("ok" à sugestão.) O
 HEIC abre no iPhone/Mac mas não no Chrome do computador; no link do card virava só o
 nome. Agora `guardarArquivos` (embrulhado em `web/quadro/quadro.js`, vale para todo

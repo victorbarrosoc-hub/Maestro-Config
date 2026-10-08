@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.139
+Version: 0.5.140
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.140 — 7 out · v325 · a ficha não diz apagado à toa
+
+- A ficha só afirma "apagado" quando o card está na Lixeira (com hora e "Restaurar o card"); card que mudou de cliente é seguido; card que sumiu por um instante mostra "Carregando o card…" e volta sozinho. Consulta `docs/ENGINEERING/card-4-quem-apagou.sql`. 9 provas em `web/verificar/v325-a-ficha-nao-afirma.mjs`.
 
 ## 0.5.139 — 7 out · v324 · foto do iPhone vira JPG
 

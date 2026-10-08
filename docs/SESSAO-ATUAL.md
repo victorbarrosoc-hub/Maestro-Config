@@ -20,6 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
+v325 (7 out) — a ficha não diz "foi apagado" à toa: segue card que mudou de cliente, "Carregando o card…" quando some por um instante, e na Lixeira mostra quando e "Restaurar o card". Pendente: founder rodar `card-4-quem-apagou.sql` (só leitura) para ver se o card do print foi mesmo apagado.
+
 v324 (7 out) — foto HEIC do iPhone vira JPG ao subir; as HEIC já na nuvem viram JPG quando a agência abre a Maestro. (v323 confirmada: o PDF do Jarbas estava na nuvem — era só a página do link.)
 
 v323 (7 out) — link do card mostra o documento (PDF) da nuvem; o que ficou só no aparelho sobe sozinho; ficha marca "não subiu". Pendente: founder rodar `midia-1-o-arquivo-subiu.sql` (só leitura) para ver se o PDF do card do Jarbas está na nuvem.

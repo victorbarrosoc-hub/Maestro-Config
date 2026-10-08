@@ -83,7 +83,7 @@
 (function(){
   if(window.MaestroEntrada2 || window.__entradaPedida) return;
   window.__entradaPedida = true;
-  fetch('/web/entrada/entrada.js?v=v324').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/entrada/entrada.js?v=v325').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else window.__entrada = 1; })
     .catch(() => { window.__entrada = 1; });
 })();
@@ -527,6 +527,8 @@
       if(casa[kv]){ casa[kn] = casa[kv]; delete casa[kv]; }
     }
     try{ (S.ensaio && S.ensaio.tarefas || []).forEach(t => { if(t && t.cli === cli && +t.cardId === velho) t.cardId = novo; }); }catch(e){}
+    /* v325: a ficha aberta neste card segue o número novo */
+    try{ if(window.MaestroQuadro && MaestroQuadro.folha === cli + '|' + velho) MaestroQuadro.folha = cli + '|' + novo; }catch(e){}
     anota('renumerou', cli, velho, novo);
     return novo;
   }
@@ -1208,7 +1210,7 @@
 (function(){
   if(window.MaestroQuadro || window.__quadroPedido) return;
   window.__quadroPedido = true;
-  fetch('/web/quadro/quadro.js?v=v324').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/quadro/quadro.js?v=v325').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else throw 0; })
     /* v289: sem o Quadro, a rota fica em "Carregando o quadro…" — só em obra o Ensaio antigo vira bancada */
     .catch(() => { window.__semQuadro = 1; try{ if(S.route === 'producao') render(); }catch(e){} });
@@ -1218,7 +1220,7 @@
 (function(){
   if(window.MaestroDesign || window.__designPedido) return;
   window.__designPedido = true;
-  fetch('/web/design/design.js?v=v324').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/design/design.js?v=v325').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else window.__semTema = 1; })
     .catch(() => { window.__semTema = 1; });   /* v296: a abertura espera o tema; sem ele, não espera à toa */
 })();
@@ -1227,7 +1229,7 @@
 (function(){
   if(window.MaestroDecidir || window.__decidirPedido) return;
   window.__decidirPedido = true;
-  fetch('/web/cliente/decidir.js?v=v324').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/cliente/decidir.js?v=v325').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } })
     .catch(() => {});
 })();
@@ -1236,7 +1238,7 @@
 (function(){
   if(window.MaestroPuxar || window.__puxarPedido) return;
   window.__puxarPedido = true;
-  fetch('/web/dados/puxar.js?v=v324').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/dados/puxar.js?v=v325').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } })
     .catch(() => {});
 })();
@@ -1245,7 +1247,7 @@
 (function(){
   if(window.MaestroTema || window.__temaPedido) return;
   window.__temaPedido = true;
-  fetch('/web/tema/tema.js?v=v324').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
+  fetch('/web/tema/tema.js?v=v325').then(r => r.ok && /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '')
     .then(t => { if(t.startsWith('/*')){ const e = document.createElement('script'); e.textContent = t; document.head.appendChild(e); } else window.__semTema = 1; })
     .catch(() => { window.__semTema = 1; });   /* v296: a abertura espera o tema; sem ele, não espera à toa */
 })();

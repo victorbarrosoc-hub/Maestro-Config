@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v324', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v325', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -1202,7 +1202,7 @@
      sozinho, e o campo em que a pessoa está digitando nunca é
      sobrescrito — os outros se atualizam com o que chegou. */
   function abrirFolha(key){
-    Q.folha = key; Q.folhaApagar = false;
+    Q.folha = key; Q.folhaApagar = false; Q.sumiuEm = null;
     desenharFolha(true);
   }
   function fecharFolha(){
@@ -1666,12 +1666,68 @@
     ta.value = antes + ta.value.slice(pos); ta.focus(); ta.setSelectionRange(antes.length, antes.length);
     ta.closest('form').querySelector('.qdMenSug').hidden = true;
   }
+  /* v325 — "Este card não está mais no quadro (foi apagado)" aparecia com o card vivo. A ficha
+     afirmava a exclusão no primeiro instante em que não achava o card na memória da tela —
+     e ele some de lá por outros motivos: mudou de cliente (aqui ou em outro aparelho), a
+     tela está relendo o banco, o número dele foi trocado. Agora a ficha só afirma o que sabe:
+     · achou o card em outro cliente → segue para ele;
+     · está na Lixeira → diz quando foi e oferece "Restaurar o card";
+     · não achou nada → "Carregando o card…", pergunta ao banco e tenta por 8 s; só então
+       diz que não achou (sem afirmar que alguém apagou). */
+  function cardEmOutroCliente(id, cli){
+    for(const c of Object.keys(S.pautas || {})){
+      if(c === cli || !Array.isArray(S.pautas[c])) continue;
+      /* número curto (1, 14…) se repete entre clientes: só segue quando o card diz de onde veio, ou o número é único (os de agora) */
+      if(S.pautas[c].some(x => x && +x.id === +id && (x.trocouDe === cli || +id > 1e11))) return c;
+    }
+    return null;
+  }
+  function folhaSemCard(el, cli, id){
+    const chave = Q.folha;
+    const outro = cardEmOutroCliente(id, cli);
+    if(outro){ anota('folha-seguiu', cli, outro, id); Q.folha = outro + '|' + id; return desenharFolha(true); }
+    const lx = (typeof lixeiraDe === 'function' ? lixeiraDe(cli) : (S.lixeira && S.lixeira[cli])) || [];
+    const e = lx.find(x => x && x.item && +x.item.id === +id && !x.movidoPara);
+    let corpo;
+    if(e){
+      const q = new Date(e.quando || Date.now());
+      const hoje = new Date().toDateString() === q.toDateString();
+      const quando = (hoje ? 'hoje' : q.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })) + ' às ' + q.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      corpo = `<p class="qdNada"><b>Este card foi para a Lixeira</b> ${esc_(quando)}.</p>
+        <div class="qdNadaBts"><button type="button" class="qdPil" data-qdfrestaurar="${esc_(cli + '|' + id)}">Restaurar o card</button><button type="button" class="qdPil" data-qdfechar="1">Fechar</button></div>`;
+      Q.sumiuEm = null;
+    } else {
+      if(!Q.sumiuEm || Q.sumiuEm.k !== chave){
+        Q.sumiuEm = { k: chave, t: Date.now() };
+        anota('folha-sem-card', cli, id);
+        try{ if(window.MaestroDados && MaestroDados.ligado && MaestroDados.olhar) MaestroDados.olhar(); }catch(x){}
+      }
+      if(Date.now() - Q.sumiuEm.t < 8000){
+        corpo = `<p class="qdNada qdCarregando">Carregando o card…</p>`;
+        clearTimeout(Q.tmSumiu); Q.tmSumiu = setTimeout(() => { if(Q.folha === chave) desenharFolha(true); }, 700);
+      } else {
+        corpo = `<p class="qdNada"><b>Não achei este card neste aparelho.</b> Ele pode ter sido apagado ou mudado de cliente em outro aparelho.</p>
+          <div class="qdNadaBts"><button type="button" class="qdPil" data-qdlixeira="1">Abrir a Lixeira</button><button type="button" class="qdPil" data-qdfechar="1">Fechar</button></div>`;
+      }
+    }
+    el.dataset.qdfsem = '1'; el.dataset.qdfkey = chave;
+    el.innerHTML = `<div class="qdFolhaFundo" data-qdfechar="1"></div><div class="qdFolhaIn"><button type="button" class="qdFechar" data-qdfechar="1" aria-label="Fechar">×</button>${corpo}</div>`;
+  }
+  Q.folhaSemCard = folhaSemCard;
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('#qdFolha [data-qdfrestaurar]'); if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    const [c, i] = b.dataset.qdfrestaurar.split('|');
+    restaurar(c, i); Q.folha = c + '|' + i; desenharFolha(true); redesenharPagina();
+  }, true);
   function desenharFolha(inteira){
     if(!Q.folha) return;
     const [cli, id] = Q.folha.split('|');
     const p = achar(cli, id);
     let el = document.getElementById('qdFolha');
-    if(!p){ if(el){ el.innerHTML = `<div class="qdFolhaIn"><button type="button" class="qdFechar" data-qdfechar="1" aria-label="Fechar">×</button><p class="qdNada">Este card não está mais no quadro (foi apagado). Ele está na Lixeira.</p></div>`; } return; }
+    if(!p){ if(el) folhaSemCard(el, cli, id); return; }
+    Q.sumiuEm = null;
+    if(el && el.dataset.qdfsem){ delete el.dataset.qdfsem; inteira = true; }   /* o card voltou: a ficha inteira, de novo */
     if(el && !inteira){ atualizarCampos(el, cli, p); return; }
     /* v304 — "quando clica em alguma função, ele sobe o scroll pro começo do card…
        é pra permanecer". Redesenhar a ficha trocava o conteúdo inteiro e a rolagem
@@ -3450,6 +3506,9 @@
   const stHj = document.createElement('style'); stHj.id = 'v321-hoje';
   stHj.textContent = `
   .qdFMatSo{ position:absolute; left:4px; right:4px; bottom:4px; font:600 10px/1.2 system-ui, sans-serif; color:#fff; background:rgba(226,104,60,.92); border-radius:6px; padding:3px 4px; text-align:center }
+  .qdNadaBts{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px }
+  .qdCarregando{ animation:qdPulsaTx 1.2s ease-in-out infinite }
+  @keyframes qdPulsaTx{ 50%{ opacity:.45 } }
   .qdHjCol{ display:inline-flex; align-items:center; gap:5px; font-weight:600; color:var(--ink-100, #F5F5F7) }
   .qdHjCol::before{ content:''; width:7px; height:7px; border-radius:50%; background:var(--qdc, #999); flex:none }
   .hjItem .qdHjCol{ flex:none; font-size:11.5px; padding:4px 9px; border-radius:999px; background:color-mix(in srgb, var(--qdc, #999) 16%, transparent) }
