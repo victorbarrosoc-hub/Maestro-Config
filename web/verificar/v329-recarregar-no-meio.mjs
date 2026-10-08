@@ -381,7 +381,7 @@ SEM_REDE.add('A');
 await A.pag.evaluate(() => location.reload()).catch(() => {});
 await A.pag.waitForLoadState('load').catch(() => {});
 await entrar(A.pag, 'ana@ejup.com');
-await A.pag.waitForTimeout(1200);
+await ate(A, () => noAparelho(A, () => !!(window.MaestroDados && MaestroDados.estado().ligado)), 6000);
 const aoAbrir = await noAparelho(A, () => ({ ligado: MaestroDados.estado().ligado, carregou: !!MaestroDados.carregouEm, cards: (S.pautas.cj || []).length }));
 checa('6.1 abrindo sem rede, o aparelho segue usando as tabelas (lembra a última resposta certa) e mostra os cards guardados', aoAbrir.ligado === true && !aoAbrir.carregou && aoAbrir.cards >= 3, aoAbrir);
 for(let k = 1; k <= 2; k++){ await noAparelho(A, k => { MaestroQuadro.novo('cj', { tema: 'elevador ' + k }); render(); }, k); await A.pag.waitForTimeout(600); }
@@ -438,6 +438,20 @@ const nv = await noAparelho(A, () => ({ aviso: !!document.getElementById('dadosN
 checa('9.1 card guardado de cliente que não é da agência não vira "não salvo"', !nv.aviso && !nv.lista.includes('cliente-que-saiu'), nv);
 checa('9.2 e não é recriado no banco', +doBanco(`select count(*) from public.cards where cliente='cliente-que-saiu'`) === 0);
 await noAparelho(A, () => { delete S.pautas['cliente-que-saiu']; });
+
+console.log('\n  — 10. abriu sem rede e ficou assim: a tela diz que há mudanças esperando o banco —');
+SEM_REDE.add('A');
+await A.pag.evaluate(() => location.reload()).catch(() => {});
+await A.pag.waitForLoadState('load').catch(() => {});
+await entrar(A.pag, 'ana@ejup.com');
+await noAparelho(A, () => { MaestroQuadro.novo('cj', { tema: 'esperando o banco' }); render(); });
+const esp = await ate(A, () => noAparelho(A, () => /esperando o banco/i.test((document.querySelector('#dadosNaoSalvos .dnsPilula') || {}).textContent || '')), 45000);
+checa('10.1 sem conseguir ler o banco por 30 s, aparece "Mudanças esperando o banco"', esp >= 0, await noAparelho(A, () => ({ est: MaestroDados.estado(), pil: (document.querySelector('#dadosNaoSalvos') || {}).textContent || '' })));
+SEM_REDE.delete('A');
+const q10 = await ate(A, async () => +doBanco(`select count(*) from public.cards where org='maestro' and cliente='cj' and dados->>'t' like '%esperando o banco%'`) === 1, 20000);
+checa('10.2 a rede volta: o card sobe sozinho', q10 >= 0, q10);
+const some10 = await ate(A, () => noAparelho(A, () => !document.getElementById('dadosNaoSalvos')), 10000);
+checa('10.3 e o aviso some', some10 >= 0, some10);
 
 console.log('\n  — 3. nada a mais —');
 const fila = await noAparelho(A, () => { try{ return localStorage.getItem('maestro-dados1-fila:maestro'); }catch(e){ return 'x'; } });

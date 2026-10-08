@@ -1001,10 +1001,28 @@
     if(u && u.cli === x.cli && Date.now() - u.quando < 120000) return /^(criar|mudar|mídia):/.test(u.msg) ? 'o banco recusou (' + u.msg + ')' : 'sem conexão com o banco';
     return navigator.onLine === false ? 'este aparelho está sem internet' : 'ainda tentando enviar';
   }
-  let abertoAviso = false;
+  let abertoAviso = false, esperaDesde = 0;
+  /* a camada ligada mas sem conseguir LER o banco: o que se faz fica esperando aqui */
+  function esperandoLeitura(){
+    const ha = D.ligado && !D.carregouEm && !soLeitura() && Object.values(D.fila).some(Boolean);
+    if(!ha){ esperaDesde = 0; return false; }
+    if(!esperaDesde) esperaDesde = Date.now();
+    return Date.now() - esperaDesde > 30000;
+  }
   function desenharAviso(){
     let el = document.getElementById('dadosNaoSalvos');
     const l = naoSalvos();
+    if(!l.length && esperandoLeitura()){
+      if(!el){ el = document.createElement('div'); el.id = 'dadosNaoSalvos'; document.body.appendChild(el); }
+      const ult = [...(D.diario || [])].reverse().find(x => x[1] === 'carga-falhou' || x[1] === 'checar-sem-resposta');
+      el.innerHTML = `<button type="button" class="dnsPilula" data-dnsabre="1" aria-expanded="${abertoAviso}">⚠ Mudanças esperando o banco</button>
+        ${abertoAviso ? `<div class="dnsPainel" role="dialog" aria-label="Mudanças esperando o banco">
+          <b>A Maestro ainda não conseguiu ler o banco neste aparelho</b>
+          <p>O que você criou ou mudou está guardado aqui e sobe assim que ela conseguir. Não feche esta aba nem saia da conta.</p>
+          <div class="dnsBts"><button type="button" class="dnsTenta" data-dnstenta="1">Tentar de novo agora</button><button type="button" data-dnsfecha="1">Fechar</button></div>
+          <small class="dnsTec">${escH(VERSAO_DADOS)} · sem leitura${ult ? ' · ' + escH(ult.slice(1).join(' ')) : ''}</small></div>` : ''}`;
+      return;
+    }
     if(!l.length){ if(el) el.remove(); abertoAviso = false; return; }
     if(!el){ el = document.createElement('div'); el.id = 'dadosNaoSalvos'; document.body.appendChild(el); }
     const n = l.length;
@@ -1024,7 +1042,9 @@
     e.preventDefault(); e.stopPropagation();
     if(b.dataset.dnsabre) abertoAviso = !abertoAviso;
     else if(b.dataset.dnsfecha) abertoAviso = false;
-    else { const clis = [...new Set(naoSalvos().map(x => x.cli))]; clis.forEach(c => { D.fila[c] = true; enviar(c); }); b.textContent = 'Enviando…'; setTimeout(desenharAviso, 1500); return; }
+    else {
+      if(!D.carregouEm){ D.checado = null; iniciar(); b.textContent = 'Tentando…'; setTimeout(desenharAviso, 2500); return; }
+      const clis = [...new Set(naoSalvos().map(x => x.cli))]; clis.forEach(c => { D.fila[c] = true; enviar(c); }); b.textContent = 'Enviando…'; setTimeout(desenharAviso, 1500); return; }
     desenharAviso();
   }, true);
   let ultimoReenvio = 0;
