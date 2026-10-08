@@ -374,6 +374,27 @@ checa('5.2 os cards criados na queda chegam ao banco depois que a rede volta e o
 const naTela5 = await noAparelho(A, () => (S.pautas.cj || []).filter(p => /queda [12]$/.test(p.t)).length);
 checa('5.3 e reler o banco não os tira da tela', naTela5 === 2, naTela5);
 
+console.log('\n  — 6. ABRIR a página sem rede, trabalhar, e a rede voltar (o app aberto no elevador) —');
+SEM_REDE.add('A');
+await A.pag.evaluate(() => location.reload()).catch(() => {});
+await A.pag.waitForLoadState('load').catch(() => {});
+await entrar(A.pag, 'ana@ejup.com');
+await A.pag.waitForTimeout(1200);
+const aoAbrir = await noAparelho(A, () => ({ ligado: MaestroDados.estado().ligado, carregou: !!MaestroDados.carregouEm, cards: (S.pautas.cj || []).length }));
+checa('6.1 abrindo sem rede, o aparelho segue usando as tabelas (lembra a última resposta certa) e mostra os cards guardados', aoAbrir.ligado === true && !aoAbrir.carregou && aoAbrir.cards >= 3, aoAbrir);
+for(let k = 1; k <= 2; k++){ await noAparelho(A, k => { MaestroQuadro.novo('cj', { tema: 'elevador ' + k }); render(); }, k); await A.pag.waitForTimeout(600); }
+await noAparelho(A, () => { MaestroQuadro.mudar('cj', 601, { nota_a: 'escrito no elevador' }); render(); });
+await A.pag.waitForTimeout(2500);
+SEM_REDE.delete('A');
+const q6 = await ate(A, async () => +doBanco(`select count(*) from public.cards where org='maestro' and cliente='cj' and dados->>'t' ~ 'elevador [12]$' and apagado_em is null`) === 2
+  && (cardNoBanco(601) || { dados: {} }).dados.nota_a === 'escrito no elevador', 20000);
+checa('6.2 quando a rede volta, os cards criados e o texto escrito sem rede chegam ao banco sozinhos', q6 >= 0,
+  { banco: doBanco(`select coalesce(jsonb_agg(dados->>'t'), '[]') from public.cards where org='maestro' and cliente='cj' and dados->>'t' ~ 'elevador'`), nota: (cardNoBanco(601) || { dados: {} }).dados.nota_a, diario: await noAparelho(A, () => (MaestroDados.diario || []).slice(-10)) });
+const naTela6 = await noAparelho(A, () => ({ n: (S.pautas.cj || []).filter(p => /elevador [12]$/.test(p.t)).length, nota: ((S.pautas.cj || []).find(p => +p.id === 601) || {}).nota_a }));
+checa('6.3 e continuam na tela de quem fez', naTela6.n === 2 && naTela6.nota === 'escrito no elevador', naTela6);
+const noB6 = await ate(B, () => noAparelho(B, () => (S.pautas.cj || []).filter(p => /elevador [12]$/.test(p.t)).length === 2), 8000);
+checa('6.4 e chegam ao outro aparelho', noB6 >= 0, noB6);
+
 console.log('\n  — 3. nada a mais —');
 const fila = await noAparelho(A, () => { try{ return localStorage.getItem('maestro-dados1-fila:maestro'); }catch(e){ return 'x'; } });
 checa('3.1 com tudo no banco, a fila do "falta subir" fica vazia', !fila, fila && fila.slice(0, 200));

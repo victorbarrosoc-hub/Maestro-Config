@@ -129,6 +129,30 @@
   const k2 = (cli, id) => cli + '|' + id;
   const listaDe = (tipo, k) => { const casa = tipo === 'ref' ? (S.refs = S.refs || {}) : (S.mat = S.mat || {}); return casa[k] || (casa[k] = []); };
   const pautaDe = cli => { S.pautas = S.pautas || {}; return S.pautas[cli] || (S.pautas[cli] = []); };
+
+  /* v329 — ABRIR SEM REDE NÃO PERDE O QUE SE FAZ ATÉ ELA VOLTAR. O ensaio geral: a
+     Anna recarregou a página no meio de uma queda de rede (o app aberto no elevador).
+     Sem conseguir perguntar ao banco, a camada não ligava; o que ela fazia ia pelo
+     caminho antigo e, quando a rede voltava, a primeira leitura das tabelas refazia a
+     tela pelo banco e apagava tudo o que ainda não tinha subido. Agora: (1) o aparelho
+     lembra a última resposta certa ("esta agência usa as tabelas"); (2) guarda a foto
+     dos cards que tinha ao abrir — o que mudar depois dela é deste aparelho e vai para
+     a fila antes da primeira leitura; (3) a primeira leitura que falha tenta de novo. */
+  D.baseLocal = (() => {
+    try{
+      const o = {};
+      for(const [cli, arr] of Object.entries(S.pautas || {})){
+        if(!cli || cli.startsWith('__') || !Array.isArray(arr)) continue;
+        const m = new Map();
+        arr.forEach(p => { const id = numId(p && p.id); if(id) m.set(id, { dados: clone(p), versao: 0, remoto: {} }); });
+        o[cli] = m;
+      }
+      return o;
+    }catch(e){ return null; }
+  })();
+  const LIGADO = o => 'maestro-dados1-ligado:' + o;
+  const lembrarLigado = (o, v) => { try{ localStorage.setItem(LIGADO(o), v ? '1' : '0'); }catch(e){} };
+  const lembrado = o => { try{ return localStorage.getItem(LIGADO(o)) === '1'; }catch(e){ return false; } };
   const lixeiraDoCli = cli => { S.lixeira = S.lixeira || {}; return S.lixeira[cli] || (S.lixeira[cli] = []); };
   const clientes = () => { try{ return (typeof CLIS === 'function' ? CLIS() : []).map(c => c.id); }catch(e){ return []; } };
 
@@ -150,13 +174,14 @@
     /* a agência some por um instante enquanto o app pergunta de novo ao
        banco (MaestroAgencia.sondar): isso não é trocar de agência */
     if(!o) return D.ligado;
-    if(D.org && o !== D.org){ D.ligado = false; D.checado = null; D.carregouEm = null; D.srv = {}; D.base = {}; D.mid = {}; D.midBase = {}; D.lixBase = {}; D.ultimo = null; }
+    if(D.org && o !== D.org){ D.ligado = false; D.checado = null; D.carregouEm = null; D.srv = {}; D.base = {}; D.mid = {}; D.midBase = {}; D.lixBase = {}; D.ultimo = null; D.baseLocal = null; }
     if(D.checado && D.org === o) return D.checado;
     D.org = o;
     D.checado = (async () => {
       try{
         const l = await ler('maestro_cards_ligado', 'select=org');
         D.ligado = Array.isArray(l) && l.some(x => x && x.org === o);
+        lembrarLigado(o, D.ligado);
       }catch(e){
         /* v329 — REDE CAINDO NÃO É "A TABELA NÃO EXISTE". O ensaio geral (cinco
            aparelhos) mostrou: a pergunta feita durante uma queda de rede respondia
@@ -165,8 +190,13 @@
            e apagava da tela os cards criados nesse meio-tempo — que nunca subiram.
            Só "a tabela não existe" (404) desliga; sem resposta, fica como estava e
            a pergunta é refeita na próxima vez. */
-        if(e && e.status === 404) D.ligado = false;      // a tabela não existe ainda: o app de antes
-        else { anota('checar-sem-resposta', (e && (e.status || e.message)) || '?'); D.checado = null; return D.ligado; }
+        if(e && e.status === 404){ D.ligado = false; lembrarLigado(o, false); }      // a tabela não existe ainda: o app de antes
+        else {
+          anota('checar-sem-resposta', (e && (e.status || e.message)) || '?'); D.checado = null;
+          /* abriu sem rede: vale a última resposta certa deste aparelho */
+          if(!D.ligado && !D.carregouEm && lembrado(o)){ D.ligado = true; anota('ligado-de-memoria'); }
+          return D.ligado;
+        }
       }
       anota('ligado', D.ligado);
       return D.ligado;
@@ -324,7 +354,14 @@
     /* v329 — reler o banco não apaga o que ainda não subiu: antes de reconstruir a
        tela pelo banco, o que é só daqui (card novo, campo mudado) vai para a fila,
        e a fila volta por cima logo depois (reaplicar). */
-    if(D.carregouEm) for(const cli of Object.keys(D.base)){ try{ if(numClienteValido(cli)) anotarFila(cli); }catch(e){} }
+    if(D.carregouEm) for(const cli of Object.keys(D.base)){ try{ if(numClienteValido(cli)) anotarFila(cli, true); }catch(e){} }
+    else if(D.baseLocal) for(const cli of Object.keys(D.baseLocal)){
+      /* a primeira leitura: o que mudou desde que a página abriu é deste aparelho */
+      if(!numClienteValido(cli)) continue;
+      const b = D.base[cli]; D.base[cli] = D.baseLocal[cli];
+      try{ anotarFila(cli, true); }catch(e){}
+      finally{ if(b) D.base[cli] = b; else delete D.base[cli]; }
+    }
     const [cards, midias] = await Promise.all([
       ler('cards', 'select=cliente,id,dados,versao,posicao,apagado_em,varrido_em,atualizado_em&order=cliente,posicao'),
       ler('card_midias', 'select=id,cliente,card_id,tipo,dados,posicao,apagado_em,atualizado_em&order=posicao'),
@@ -344,7 +381,7 @@
       if(p) reaplicar(cli, p, antes);
     }
     anota('carregou', cards.length, midias.length);
-    D.carregouEm = Date.now();
+    D.carregouEm = Date.now(); D.baseLocal = null;
     return true;
   }
   D.carregar = carregar;
@@ -364,7 +401,7 @@
     }
     D.fila[cli] = true;
   }
-  function anotarFila(cli){
+  function anotarFila(cli, juntar){
     const f = lerFila(); const B = mapa(D.base, cli);
     const campos = {}, novos = [];
     for(const p of pautaDe(cli)){
@@ -377,6 +414,11 @@
         if(!igual(p[k], b.dados[k])) c[k] = p[k] === undefined ? null : clone(p[k]);
       });
       if(Object.keys(c).length) campos[id] = c;
+    }
+    /* v329: antes de reler o banco, junta com o que já estava na fila (nada se perde) */
+    if(juntar && f[cli]){
+      for(const [id, c] of Object.entries(f[cli].campos || {})) campos[id] = Object.assign({}, c, campos[id] || {});
+      for(const n of (f[cli].novos || [])) if(n && !novos.some(x => +x.id === +n.id)) novos.push(n);
     }
     if(Object.keys(campos).length || novos.length) f[cli] = { campos, novos }; else delete f[cli];
     gravarFila(f);
@@ -649,10 +691,14 @@
           for(const cli of Object.keys(D.fila)) if(D.fila[cli]) enviar(cli);
         }
       }catch(e){ anota('carga-falhou', e.message); }
-      finally{ iniciando = null; }
+      finally{ iniciando = null; if(D.ligado && !D.carregouEm) agendarCarga(); }
     })();
     return iniciando;
   }
+  /* v329: a primeira leitura das tabelas que falhou (sem rede) tenta de novo sozinha */
+  let tmCarga = 0;
+  function agendarCarga(){ clearTimeout(tmCarga); tmCarga = setTimeout(() => { if(D.ligado && !D.carregouEm) iniciar(); }, 5000); }
+  addEventListener('online', () => { if(D.ligado && !D.carregouEm) iniciar(); });
   D.iniciar = iniciar;
   if(typeof sbCarregar === 'function') sbCarregar = (function(orig){
     return async function(){

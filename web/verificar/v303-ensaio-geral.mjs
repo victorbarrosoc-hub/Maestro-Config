@@ -281,6 +281,17 @@ async function abrir(a){
   }, a.email);
   const t0 = Date.now();
   while(Date.now() - t0 < 8000){ if(await a.pag.evaluate(() => !!window.MaestroQuadro && !!(window.MaestroDados && MaestroDados.estado().ligado))) break; await a.pag.waitForTimeout(150); }
+  /* só da prova: cada chamada de gravação de card — quando saiu, quanto levou, como voltou */
+  await a.pag.evaluate(() => {
+    if(window.__instr) return; window.__instr = true; window.__rpcs = [];
+    const f = window.fetch;
+    window.fetch = function(u, o){
+      const url = String((u && u.url) || u || ''); const m = /rpc\/(maestro_(?:card|midia)_\w+)/.exec(url);
+      if(!m) return f.apply(this, arguments);
+      const e = { t: Date.now(), fn: m[1] }; window.__rpcs.push(e); if(window.__rpcs.length > 400) window.__rpcs.shift();
+      return f.apply(this, arguments).then(r => { e.st = r.status; e.ms = Date.now() - e.t; return r; }, err => { e.err = String(err).slice(0, 50); e.ms = Date.now() - e.t; throw err; });
+    };
+  });
 }
 
 /* ---------- o que cada pessoa faz ---------- */
@@ -399,8 +410,12 @@ console.log('\n  — 1. nenhum card se perdeu, nenhum nasceu duas vezes —');
   const titulos0 = cardsBanco.map(c => String(c.dados.t || ''));
   for(const [m, quem] of CRIADOS) if(!titulos0.some(t => t.split('·').pop().trim() === m || t.endsWith(m))) perdeu.add(quem);
   for(const a of AP.filter(a => perdeu.has(a.nome))){
-    const d = await a.pag.evaluate(() => { const D = window.MaestroDados || {}; return { diario: (D.diario || []).slice(-60), fila: (() => { try{ return localStorage.getItem('maestro-dados1-fila:maestro'); }catch(e){ return null; } })(),
-      estado: D.estado ? D.estado() : null, gravando: Object.keys(D.fila || {}).filter(k => D.fila[k]) }; });
+    const d = await a.pag.evaluate(() => { const D = window.MaestroDados || {}; const agora = Date.now();
+      return { diario: (D.diario || []).slice(-60), fila: (() => { try{ return localStorage.getItem('maestro-dados1-fila:maestro'); }catch(e){ return null; } })(),
+      estado: D.estado ? D.estado() : null, gravando: Object.keys(D.fila || {}).filter(k => D.fila[k]),
+      rpcs: (window.__rpcs || []).slice(-40).map(e => `${new Date(e.t).toISOString().slice(14, 23)} ${e.fn.replace('maestro_', '')} ${e.st || e.err || ('PENDENTE ' + Math.round((agora - e.t) / 1000) + 's')}${e.ms > 3000 ? ' (' + e.ms + 'ms)' : ''}`),
+      pendentes: (window.__rpcs || []).filter(e => !e.st && !e.err).length,
+      sincro: (window.Sincro && Sincro.relatorio) ? Sincro.relatorio() : null }; });
     console.log(`    [diagnóstico ${a.nome}]`, JSON.stringify(d).slice(0, 6000));
   }
 }
@@ -478,7 +493,8 @@ console.log('\n  — 6. o histórico: nenhuma gravação estragou o estado —')
   /* v310 — o Ensaio desligado: o documento da agência só é gravado quando alguém
      anota lembrete ou conversa. Antes, ~100 de 127 gravações eram o Ensaio antigo
      mexendo sozinho nas tarefas (2.065 por dia no banco de verdade). */
-  const teto = Math.round(LEMBRETES.size * 1.3) + 15;
+  /* (v329) cada página reaberta no meio relê e regrava o estado: conta no teto */
+  const teto = Math.round(LEMBRETES.size * 1.3) + 15 + 3 * recargas;
   checa(`6.3 o estado só é gravado quando alguém faz algo: ${total} gravações para ${LEMBRETES.size} lembretes (teto ${teto})`, total <= teto, { total, teto });
   const linhasRuins = umaLinha(`select count(*) from public.pauta where org='maestro' and cliente like '\\_\\_%' and cliente not in ('__estado__','__config__','__chat__','__pedidos__','__mandala__','__cerebro__','__estudio__') and cliente not like '\\_\\_redes\\_\\_%' and cliente not like '\\_\\_gestao\\_\\_%'`);
   checa('6.2 nenhuma linha estranha nasceu no banco', +linhasRuins === 0, umaLinha(`select string_agg(cliente, ',') from public.pauta where org='maestro'`));
