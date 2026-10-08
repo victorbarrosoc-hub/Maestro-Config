@@ -349,6 +349,22 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Pronto (8 out, v330, publicando após as provas) — a tela diz o que não salvou.** "Alguns cards que a
+Anna Clara criou sumiram" (computador dela). A `card-6` (o que foi criado desde as 15h)
+voltou vazia e a `card-7` (gravações por hora) mostrou o aparelho dela gravando mudanças
+(27 às 14h, 5 às 16h) e NENHUM card novo chegando ao banco no dia — os cards só existiam
+no aparelho, e a tela não dizia nada (o selo falava "sem rede" para qualquer falha). Em
+`web/dados/tempo-real.js`: (1) **recusa do banco não segura os outros** — o primeiro card
+recusado parava a fila do cliente inteiro; agora a recusa é anotada por card
+(`D.falhas`) e o resto sobe; (2) **aviso fixo "N cards não salvos"** depois de 20 s, com
+nome, cliente, há quanto tempo, motivo em português, "Tentar de novo agora" e uma linha
+técnica para print (`#dadosNaoSalvos`, `MaestroDados.naoSalvos()`); (3) reenvio sozinho a
+cada 15 s; (4) pedido que não volta desiste em 30 s (`comPrazo`); (5) cliente sem linha no
+banco (`sem_acesso`) ganha a linha e o card sobe (`garantirLinhaDoCliente`); (6) cópia
+guardada de cliente que não é da agência não vira "não salvo" nem é recriada. Provas 7–9
+em `web/verificar/v329-recarregar-no-meio.mjs` (31). Consultas só de leitura:
+`docs/ENGINEERING/card-6-o-que-sumiu-hoje.sql`, `card-7-gravacoes-por-hora.sql`.
+**Aberto:** a causa exata no computador da Anna — o aviso novo vai mostrar o motivo.
 **Fechado (8 out, v329, NO AR) — o ensaio geral sem perda: três defeitos de verdade.**
 O medo do founder ("os bugs vêm depois que todos começam a usar"). O ensaio de cinco
 aparelhos (`v303-ensaio-geral.mjs`) falhava de vez em quando; ganhou diário (quem,
