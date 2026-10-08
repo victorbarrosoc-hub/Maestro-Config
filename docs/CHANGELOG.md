@@ -9,7 +9,7 @@ Nunca apagar versões anteriores.
 
 ## 0.5.145 — 8 out · v330 · a tela diz o que não salvou
 
-- Card recusado pelo banco não segura os outros; aviso fixo "N cards não salvos" (nome, cliente, há quanto tempo, motivo, "Tentar de novo agora"); reenvio sozinho; pedido que não volta desiste em 30 s; cliente sem linha no banco ganha a linha; "Mudanças esperando o banco" quando o aparelho não consegue ler há 30 s; texto escrito num card criado sem rede não se perde na volta da rede (a fila manda o card antes das mudanças). Provas 7–11 em `web/verificar/v329-recarregar-no-meio.mjs` (35).
+- Card recusado pelo banco não segura os outros; aviso fixo "N cards não salvos" (nome, cliente, há quanto tempo, motivo, "Tentar de novo agora"); reenvio sozinho; pedido que não volta desiste em 30 s; cliente sem linha no banco ganha a linha; "Mudanças esperando o banco" quando o aparelho não consegue ler há 30 s; texto escrito num card criado sem rede não se perde na volta da rede (a fila manda o card antes das mudanças); texto escrito num card enquanto o banco o cria não se perde (a base é o que foi ao banco). Provas 7–12 em `web/verificar/v329-recarregar-no-meio.mjs` (36).
 
 ## 0.5.144 — 8 out · v329 · cinco pessoas ao mesmo tempo, nada se perde
 

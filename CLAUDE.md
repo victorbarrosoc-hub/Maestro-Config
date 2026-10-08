@@ -365,8 +365,11 @@ guardada de cliente que não é da agência não vira "não salvo" nem é recria
 que não consegue LER o banco há mais de 30 s mostra "Mudanças esperando o banco" (não sai
 da conta, não fecha a aba); (8) texto escrito num card criado sem rede, depois de
 recarregar, não se perde quando a rede volta (a fila manda o card antes das mudanças, e o
-card que vai é o mais novo — achado pelo ensaio geral, semente 306). Provas 7–11 em
-`web/verificar/v329-recarregar-no-meio.mjs` (35). Consultas só de leitura:
+card que vai é o mais novo — achado pelo ensaio geral, semente 306); (9) texto escrito num
+card ENQUANTO o banco o cria (resposta lenta) não se perde — a base do card criado era o
+card de depois da resposta, com o texto novo dentro, e ele nunca subia; agora é o que foi
+ao banco (prova 12.1, falha antes). Provas 7–12 em
+`web/verificar/v329-recarregar-no-meio.mjs` (36). Consultas só de leitura:
 `docs/ENGINEERING/card-6-o-que-sumiu-hoje.sql`, `card-7-gravacoes-por-hora.sql`.
 **Aberto:** a causa exata no computador da Anna — o aviso novo vai mostrar o motivo.
 **Fechado (8 out, v329, NO AR) — o ensaio geral sem perda: três defeitos de verdade.**
