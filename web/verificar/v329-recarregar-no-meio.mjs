@@ -453,6 +453,21 @@ checa('10.2 a rede volta: o card sobe sozinho', q10 >= 0, q10);
 const some10 = await ate(A, () => noAparelho(A, () => !document.getElementById('dadosNaoSalvos')), 10000);
 checa('10.3 e o aviso some', some10 >= 0, some10);
 
+console.log('\n  — 11. sem rede: cria um card, recarrega, escreve nele, e a rede volta —');
+SEM_REDE.add('A');
+await noAparelho(A, () => { window.__x11 = MaestroQuadro.novo('cj', { tema: 'criado sem rede 11' }).id; render(); });
+const id11 = await noAparelho(A, () => window.__x11);
+await A.pag.waitForTimeout(1500);
+await A.pag.evaluate(() => location.reload()).catch(() => {});
+await A.pag.waitForLoadState('load').catch(() => {});
+await entrar(A.pag, 'ana@ejup.com');
+await ate(A, () => noAparelho(A, id => (S.pautas.cj || []).some(p => +p.id === id), id11), 6000);
+await noAparelho(A, id => { MaestroQuadro.mudar('cj', id, { nota_a: 'escrito depois de recarregar' }); render(); }, id11);
+await A.pag.waitForTimeout(1500);
+SEM_REDE.delete('A');
+const q11 = await ate(A, async () => { const c = cardNoBanco(id11); return !!(c && c.dados && c.dados.nota_a === 'escrito depois de recarregar'); }, 20000);
+checa('11.1 o card chega ao banco COM o texto escrito depois da recarga', q11 >= 0, { banco: cardNoBanco(id11) && cardNoBanco(id11).dados, diario: await noAparelho(A, () => (MaestroDados.diario || []).slice(-6)) });
+
 console.log('\n  — 3. nada a mais —');
 const fila = await noAparelho(A, () => { try{ return localStorage.getItem('maestro-dados1-fila:maestro'); }catch(e){ return 'x'; } });
 checa('3.1 com tudo no banco, a fila do "falta subir" fica vazia', !fila, fila && fila.slice(0, 200));

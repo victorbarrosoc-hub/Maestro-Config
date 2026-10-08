@@ -396,12 +396,14 @@
   function gravarFila(f){ try{ if(Object.keys(f).length) localStorage.setItem(FILA(), JSON.stringify(f)); else localStorage.removeItem(FILA()); }catch(e){} }
   function reaplicar(cli, pend, antes){
     const arr = pautaDe(cli);
+    /* v330: primeiro os cards novos, DEPOIS os campos — campo escrito num card que ainda
+       não subiu (criado sem rede, página recarregada, texto escrito depois) cai nele */
+    for(const nov of (pend.novos || [])){
+      if(!arr.some(x => +x.id === +nov.id) && !mapa(D.srv, cli).has(+nov.id)) arr.push(nov);
+    }
     for(const [id, campos] of Object.entries(pend.campos || {})){
       const p = arr.find(x => +x.id === +id);
       if(p) Object.entries(campos).forEach(([k, v]) => { if(v === null) delete p[k]; else p[k] = v; });
-    }
-    for(const nov of (pend.novos || [])){
-      if(!arr.some(x => +x.id === +nov.id) && !mapa(D.srv, cli).has(+nov.id)) arr.push(nov);
     }
     D.fila[cli] = true;
   }
@@ -431,7 +433,9 @@
     for(const p of pautaDe(cli)){
       const id = numId(p.id); if(!id) continue;
       const b = B.get(id), s = agora.get(id);
-      if(!b){ if(!s) novos.push(clone(p)); continue; }
+      /* o banco não tem: é card novo, e vai como está AGORA (com tudo o que se escreveu nele) */
+      if(!s){ novos.push(clone(p)); continue; }
+      if(!b) continue;
       const c = {};
       new Set([...Object.keys(p), ...Object.keys(b.dados)]).forEach(k => {
         if(IGNORAR.has(k) || igual(p[k], b.dados[k])) return;
@@ -442,7 +446,7 @@
     }
     const v = f[cli] || { campos: {}, novos: [] };
     for(const [id, c] of Object.entries(campos)) v.campos[id] = Object.assign({}, v.campos[id] || {}, c);
-    for(const n of novos) if(!(v.novos || []).some(x => +x.id === +n.id)) (v.novos = v.novos || []).push(n);
+    v.novos = (v.novos || []).filter(x => x && !novos.some(n => +n.id === +x.id)).concat(novos);   /* o mais novo vence */
     if(Object.keys(v.campos || {}).length || (v.novos || []).length){ f[cli] = v; gravarFila(f); anota('fila-antes-de-reler', cli, Object.keys(campos).length, novos.length); }
   }
 
