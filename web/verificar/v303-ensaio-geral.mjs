@@ -87,6 +87,17 @@ function montarBanco(ligar){
     begin insert into teste_mudancas(tabela, tipo, registro) values (tg_table_name, tg_op, to_jsonb(new)); return null; end $f$;
     create trigger t_cards after insert or update on public.cards for each row execute function teste_registrar();
     create trigger t_midias after insert or update on public.card_midias for each row execute function teste_registrar();
+    /* só da prova: cada gravação do estado da agência, com quem e os lembretes que ficaram */
+    create table teste_estado(id bigserial primary key, quando timestamptz default clock_timestamp(), quem text, rev_antes text, rev text, lembretes jsonb);
+    create or replace function teste_estado_reg() returns trigger language plpgsql as $f$
+    begin
+      if new.cliente = '__estado__' then
+        insert into teste_estado(quem, rev_antes, rev, lembretes) values (
+          coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'email', '?'),
+          case when tg_op = 'UPDATE' then old.dados ->> 'rev' end, new.dados ->> 'rev',
+          (select coalesce(jsonb_agg(l ->> 't'), '[]') from jsonb_array_elements(coalesce(new.dados -> 's' -> 'lembretes', '[]')) l));
+      end if; return null; end $f$;
+    create trigger t_estado after insert or update on public.pauta for each row execute function teste_estado_reg();
   `);
   if(ligar) psql(`select public.maestro_cards_ligar('maestro');`);
 }
@@ -273,6 +284,13 @@ async function abrir(a){
 }
 
 /* ---------- o que cada pessoa faz ---------- */
+/* diário do ensaio: quando cada coisa aconteceu, para explicar o que faltar */
+const DIARIO = [];
+const nota = (quem, tipo, alvo) => DIARIO.push({ t: Date.now(), quem, tipo, alvo, semRede: SEM_REDE.has(quem) });
+const contexto = (quem, alvo) => { const e = DIARIO.find(x => x.alvo === alvo && x.quem === quem); if(!e) return null;
+  return { quando: new Date(e.t).toISOString().slice(11, 23), semRede: e.semRede,
+    depois: DIARIO.filter(x => x.quem === quem && x.t >= e.t && x.t - e.t < 15000 && x !== e && !['criar', 'escrever', 'lembrete'].includes(x.tipo)).map(x => `${x.tipo}+${((x.t - e.t) / 1000).toFixed(1)}s`),
+    outros: DIARIO.filter(x => x.quem !== quem && x.t >= e.t - 3000 && x.t - e.t < 20000 && !['criar', 'escrever', 'lembrete'].includes(x.tipo)).map(x => `${x.quem} ${x.tipo} ${((x.t - e.t) / 1000).toFixed(1)}s`) }; };
 const CRIADOS = new Map();         // marca → quem criou
 const ULTIMA = new Map();          // `${id}|${quem}` → último valor escrito no campo dessa pessoa
 const LEMBRETES = new Map();       // texto → dono
@@ -286,7 +304,7 @@ async function acao(a, k){
   const marca = `${a.nome}-${k}`;
   if(oQue === 'criar'){
     const ok = await a.pag.evaluate(m => { const p = MaestroQuadro.novo('cj', { tema: 'ens ' + m }); render(); return !!p; }, marca);
-    if(ok) CRIADOS.set('ens ' + marca, a.nome);
+    if(ok){ CRIADOS.set('ens ' + marca, a.nome); nota(a.nome, 'criar', 'ens ' + marca); }
   } else if(oQue === 'escrever' || oQue === 'mover' || oQue === 'rede'){
     const ids = await a.pag.evaluate(() => (S.pautas.cj || []).map(p => +p.id));
     if(!ids.length) return;
@@ -294,7 +312,7 @@ async function acao(a, k){
     if(oQue === 'escrever'){
       const v = `${marca}`;
       const ok = await a.pag.evaluate(([id, c, v]) => { const p = MaestroQuadro.mudar('cj', id, { [c]: v }); render(); return !!p; }, [id, campo(a), v]);
-      if(ok) ULTIMA.set(`${id}|${a.nome}`, v); else NAO_ACHOU.mudar++;
+      if(ok){ ULTIMA.set(`${id}|${a.nome}`, v); nota(a.nome, 'escrever', v); } else NAO_ACHOU.mudar++;
     } else if(oQue === 'mover'){
       const col = um(['pauta', 'afazer', 'fazendo', 'revisao', 'aprovado', 'agendado']);
       await a.pag.evaluate(([id, col]) => { MaestroQuadro.mover('cj', id, col); render(); }, [id, col]);
@@ -307,7 +325,7 @@ async function acao(a, k){
   } else if(oQue === 'lembrete'){
     const t = 'lem ' + marca;
     const ok = await a.pag.evaluate(t => { const me = S.usuario && S.usuario.id; if(!me) return null; MaestroQuadro.anotarLembrete(t, me); render(); return me; }, t);
-    if(ok) LEMBRETES.set(t, ok);
+    if(ok){ LEMBRETES.set(t, ok); nota(a.nome, 'lembrete', t); }
   } else {
     /* marca um lembrete MEU como feito (não apaga: o que se conta no fim é que ele existe) */
     await a.pag.evaluate(() => { const me = S.usuario && S.usuario.id;
@@ -339,7 +357,7 @@ async function pessoa(a, i){
     await a.pag.waitForTimeout(700 + Math.floor(acaso() * 1300));
     const r = acaso();
     if(r < .015){                                 // recarrega a página no meio do trabalho
-      recargas++; console.log(`    ${a.nome} recarregou a página`);
+      recargas++; console.log(`    ${a.nome} recarregou a página`); nota(a.nome, 'recarga', null);
       try{ await abrir(a); }catch(e){ ESTRAGOS.push(a.nome + ' recarga: ' + e.message.slice(0, 120)); }
     }
   }
@@ -347,8 +365,8 @@ async function pessoa(a, i){
 /* a rede cai de propósito: o Leo aos 30% por 10 s, a Anna aos 60% por 20 s
    (celular no elevador, Wi-Fi trocando para 4G) — e eles seguem trabalhando */
 for(const [nome, quando, dura] of [['Leo', .3, 10000], ['Anna', .6, 20000]])
-  setTimeout(() => { semRede++; SEM_REDE.add(nome); console.log(`    ${nome} perdeu a rede por ${dura / 1000} s`);
-    setTimeout(() => { SEM_REDE.delete(nome); console.log(`    ${nome} voltou`); }, dura); }, MIN * 60000 * quando);
+  setTimeout(() => { semRede++; SEM_REDE.add(nome); nota(nome, 'sem-rede', null); console.log(`    ${nome} perdeu a rede por ${dura / 1000} s`);
+    setTimeout(() => { SEM_REDE.delete(nome); nota(nome, 'voltou', null); console.log(`    ${nome} voltou`); }, dura); }, MIN * 60000 * quando);
 const relogio = setInterval(() => console.log(`    … ${Math.round((FIM - Date.now()) / 1000)}s · cards criados ${CRIADOS.size} · lembretes ${LEMBRETES.size} · escritas ${ULTIMA.size} · recargas ${recargas} · sem rede ${semRede}`), 30000);
 await Promise.all(AP.map((a, i) => pessoa(a, i)));
 clearInterval(relogio);
@@ -368,13 +386,24 @@ console.log('\n  — 1. nenhum card se perdeu, nenhum nasceu duas vezes —');
   const falta = [], dup = [];
   for(const m of CRIADOS.keys()){ const n = titulos.filter(t => t.includes(m + '') && (t.endsWith(m) || t.includes(m + ' ') || t.split('·').pop().trim() === m)).length;
     if(n === 0) falta.push(m); if(n > 1) dup.push(m); }
-  checa(`1.1 os ${CRIADOS.size} cards criados estão no banco`, !falta.length, falta.slice(0, 20));
+  checa(`1.1 os ${CRIADOS.size} cards criados estão no banco`, !falta.length, falta.slice(0, 20).map(m => ({ m, ...contexto(CRIADOS.get(m), m) })));
   checa('1.2 nenhum card criado aparece duas vezes', !dup.length, dup.slice(0, 20));
   const ids = cardsBanco.map(c => c.id);
   checa('1.3 nenhum número de card repetido', new Set(ids).size === ids.length);
   checa('1.4 os 12 cards de antes seguem lá', [...Array(12)].every((_, i) => ids.includes(700 + i)));
 }
 
+/* diagnóstico: o diário interno da camada de dados de quem perdeu algo */
+{
+  const perdeu = new Set();
+  const titulos0 = cardsBanco.map(c => String(c.dados.t || ''));
+  for(const [m, quem] of CRIADOS) if(!titulos0.some(t => t.split('·').pop().trim() === m || t.endsWith(m))) perdeu.add(quem);
+  for(const a of AP.filter(a => perdeu.has(a.nome))){
+    const d = await a.pag.evaluate(() => { const D = window.MaestroDados || {}; return { diario: (D.diario || []).slice(-60), fila: (() => { try{ return localStorage.getItem('maestro-dados1-fila:maestro'); }catch(e){ return null; } })(),
+      estado: D.estado ? D.estado() : null, gravando: Object.keys(D.fila || {}).filter(k => D.fila[k]) }; });
+    console.log(`    [diagnóstico ${a.nome}]`, JSON.stringify(d).slice(0, 6000));
+  }
+}
 console.log('\n  — 2. o que cada pessoa escreveu por último está no banco —');
 {
   const porId = new Map(cardsBanco.map(c => [c.id, c.dados]));
@@ -386,7 +415,7 @@ console.log('\n  — 2. o que cada pessoa escreveu por último está no banco �
     const achado = d['nota_' + quem.toLowerCase()];
     if(achado !== v) erradas.push({ id: +id, quem, esperado: v, banco: achado });
   }
-  checa(`2.1 as ${ULTIMA.size} últimas escritas (cada pessoa, cada card) estão no banco`, !erradas.length, { n: erradas.length, ex: erradas.slice(0, 8) });
+  checa(`2.1 as ${ULTIMA.size} últimas escritas (cada pessoa, cada card) estão no banco`, !erradas.length, { n: erradas.length, ex: erradas.slice(0, 8).map(e => ({ ...e, ...contexto(e.quem, e.esperado) })) });
 }
 
 console.log('\n  — 3. todas as telas mostram o que o banco tem —');
@@ -420,7 +449,16 @@ console.log('\n  — 5. nenhum lembrete se perdeu —');
   const lb = (estado.s && estado.s.lembretes) || [];
   const falta = [], donoErrado = [];
   for(const [t, dono] of LEMBRETES){ const l = lb.find(x => x && x.t === t); if(!l) falta.push(t); else if(l.dono !== dono) donoErrado.push(t); }
-  checa(`5.1 os ${LEMBRETES.size} lembretes anotados estão no banco`, !falta.length, { n: falta.length, ex: falta.slice(0, 10) });
+  if(falta.length){
+    const hist = JSON.parse(umaLinha(`select coalesce(jsonb_agg(jsonb_build_object('id', id, 'q', to_char(quando, 'HH24:MI:SS.MS'), 'quem', quem, 'ra', rev_antes, 'r', rev, 'l', lembretes) order by id), '[]')::text from teste_estado`) || '[]');
+    for(const t of falta){
+      const i1 = hist.findIndex(h => h.l.includes(t));
+      const i2 = i1 >= 0 ? hist.findIndex((h, j) => j > i1 && !h.l.includes(t)) : -1;
+      console.log(`    [quem tirou "${t}"] entrou: ${i1 >= 0 ? JSON.stringify({ q: hist[i1].q, quem: hist[i1].quem, r: hist[i1].r }) : 'NUNCA chegou ao banco'}` +
+        (i2 >= 0 ? ` · saiu: ${JSON.stringify({ q: hist[i2].q, quem: hist[i2].quem, ra: hist[i2].ra, r: hist[i2].r, n: hist[i2].l.length, antes: hist[i2 - 1].l.length })}` : ''));
+    }
+  }
+  checa(`5.1 os ${LEMBRETES.size} lembretes anotados estão no banco`, !falta.length, { n: falta.length, ex: falta.slice(0, 10).map(t => ({ t, ...contexto(t.replace(/^lem (\w+)-.*$/, '$1'), t) })) });
   checa('5.2 cada lembrete com o dono certo', !donoErrado.length, donoErrado.slice(0, 10));
   const telas = await Promise.all(AP.map(a => a.pag.evaluate(() => (S.lembretes || []).filter(l => l && String(l.t).startsWith('lem ')).length)));
   checa('5.3 as cinco telas têm todos os lembretes', telas.every(n => n === LEMBRETES.size), { telas, total: LEMBRETES.size });
