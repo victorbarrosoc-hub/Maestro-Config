@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.140
+Version: 0.5.141
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.141 — 8 out · v326 · trocar de cliente sem sumir
+
+- "Trocar o cliente" na ficha dá número novo ao card desde o começo: o banco não aceita o mesmo número duas vezes na agência, e o card era renumerado no caminho (a ficha, presa ao número velho, dizia "apagado"). Consulta `docs/ENGINEERING/card-5-para-onde-foi.sql` (só leitura). 9 provas em `web/verificar/v326-trocar-cliente-no-banco.mjs`, contra Postgres de verdade.
 
 ## 0.5.140 — 7 out · v325 · a ficha não diz apagado à toa
 

@@ -349,6 +349,18 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (8 out, v326, NO AR) — trocar de cliente sem sumir.** A consulta
+`card-4` (CSV do founder) mostrou a causa do "foi apagado" da v325: dez cards do
+Cortez Jurídico, 7/out 15:41–15:46, com "foi para a lixeira" + "apagado de vez" —
+era o "trocar o cliente" da ficha (`trocarCliente`), não exclusão. O clone ia ao
+cliente novo com o MESMO número; o banco recusa número repetido na agência inteira
+(`maestro_card_criar` → `id_existe`), o card era renumerado no meio do caminho e a
+ficha, presa ao número velho, dizia "apagado". Agora o clone nasce com número novo
+(`novoIdCard`), então ninguém renumera. Nenhum card se perdeu: estão no cliente
+novo, com número novo. Consulta só de leitura
+`docs/ENGINEERING/card-5-para-onde-foi.sql` (para onde foram e o que está na
+Lixeira agora). 9 provas contra um Postgres de verdade, dois aparelhos, em
+`web/verificar/v326-trocar-cliente-no-banco.mjs` (com o código da v325, a 1.6 falha).
 **Fechado (7 out, v325, NO AR) — a ficha não diz "apagado" à toa.** Print do
 founder (7/out 15:41): "Este card não está mais no quadro (foi apagado). Ele está
 na Lixeira." num card vivo. A ficha afirmava a exclusão no primeiro instante em que

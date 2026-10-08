@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v325', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v326', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -1410,7 +1410,12 @@
     const p = achar(cli, id); if(!p || !novoCli || novoCli === cli || cli === AG) return;
     const clone = JSON.parse(JSON.stringify(p));
     if(segueOPadrao(p, cli)) clone.t = titulo(novoCli, p.fmt || 'Post', tema(p, cli));
-    if(achar(novoCli, clone.id)) clone.id = Math.max(Date.now(), +clone.id + 1) + Math.floor(Math.random() * 997);
+    /* v326 — número NOVO sempre. O banco não aceita o mesmo número duas vezes na agência
+       (nem em clientes diferentes): com o número de antes, a gravação era recusada, o card
+       ganhava outro número no meio do caminho e a ficha, presa ao antigo, dizia "foi
+       apagado" (print do founder, 7/out 15:41 — o card estava vivo no cliente novo). */
+    clone.id = typeof novoIdCard === 'function' ? novoIdCard() : Math.max(Date.now(), +clone.id + 1) + Math.floor(Math.random() * 997);
+    if(achar(novoCli, clone.id) || +clone.id === +id) clone.id = Math.max(Date.now(), +clone.id + 1) + Math.floor(Math.random() * 997);
     clone.colab = colabsDe(p).filter(c => c.cli !== novoCli);
     if(!clone.colab.length) delete clone.colab;
     clone.mod = Date.now(); clone.trocouDe = cli;

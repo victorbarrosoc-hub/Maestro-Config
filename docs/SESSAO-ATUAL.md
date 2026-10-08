@@ -20,6 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
+v326 (8 out) — "trocar o cliente" na ficha: o card ganha número novo desde o começo (era o que fazia a ficha dizer "foi apagado"). O CSV da `card-4` do founder mostrou: dez cards do Cortez Jurídico, 7/out 15:41–15:46, mudaram de cliente — nenhum foi apagado. Os dois de 15:38 ("Ep. 2 - A sala" e "Carrossel · Ep. 2 - A Sala") foram mesmo para a Lixeira e podem ser restaurados. Pendente: founder rodar `card-5-para-onde-foi.sql` (só leitura) para ver em que cliente cada um está.
+
 v325 (7 out) — a ficha não diz "foi apagado" à toa: segue card que mudou de cliente, "Carregando o card…" quando some por um instante, e na Lixeira mostra quando e "Restaurar o card". Pendente: founder rodar `card-4-quem-apagou.sql` (só leitura) para ver se o card do print foi mesmo apagado.
 **Aberto (8 out) — o ensaio geral (`v303-ensaio-geral.mjs`, cinco navegadores, rede caindo) falha de vez em quando, IGUAL na v324 e na v325** (conferido rodando a v324 num worktree: 1 de 3 rodadas falhou em 1.1/2.1/6.3; na v325, 2 de 4 em 5.1/5.3/6.3). Ora card criado/última escrita da "Anna" não chega ao banco, ora 1–2 lembretes não chegam, ora 90 gravações do estado contra teto 89. Não é desta leva; investigar à parte se é tempo da prova (máquina lenta) ou perda de verdade sob concorrência.
 
