@@ -368,7 +368,8 @@ na fila antes de refazer a tela. (3) **lembrete apagado por quem recarregou** �
 versão do banco" era guardada antes da tela; recarregando no meio, a mescla lia o
 lembrete recebido como apagado ali (a Anna tirou o do Victor 7 s depois de recarregar).
 Agora a tela é guardada no mesmo instante que a base (`setItem` de `maestro-sincro-v2`)
-e ao sair/esconder a página. Ensaio geral depois: ver `docs/SESSAO-ATUAL.md`.
+e ao sair/esconder a página. **Depois: o ensaio geral passou 5 de 5 rodadas (sementes
+303–307, 26/26 cada)**, e as 17 suítes de dados e sincronização seguem verdes.
 **Fechado (8 out, v328, NO AR) — o antes e depois.** ("QUero", à sugestão da v317:
 "quando a agência mandar a versão nova da peça, mostrar ao cliente 'antes e depois'
 lado a lado, com os pontos que ele tinha marcado".) A agência guarda no card a imagem
