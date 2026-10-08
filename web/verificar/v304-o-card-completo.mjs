@@ -180,7 +180,19 @@ if(process.env.FOTO){ await pg.evaluate(() => { const i = document.querySelector
 console.log('\n  — 8. trocar o card de cliente —');
 {
   const antes = await pg.evaluate(k => (S.mat[k] || []).length, K);
-  await pg.selectOption('#qdFolha [data-qdfcli]', C3.id); await pg.waitForTimeout(400);
+  /* v327 — a caixa pergunta antes de mover */
+  await pg.selectOption('#qdFolha [data-qdfcli]', C3.id); await pg.waitForTimeout(250);
+  if(process.env.FOTO){ await pg.evaluate(() => { const i = document.querySelector('#qdFolha .qdFolhaIn'); i.scrollTop = 0; }); await pg.screenshot({ path: process.env.FOTO + '-troca.png' }); }
+  const pergunta = await pg.evaluate(([a, b]) => ({ txt: (document.querySelector('#qdFolha .qdFTroca') || {}).textContent || '',
+    aindaNoVelho: (S.pautas[a] || []).some(p => +p.id === 8001), noNovo: (S.pautas[b] || []).some(p => /Teaser$/.test(p.t)) }), [C1.id, C3.id]);
+  checa('8.0a escolher outro cliente PERGUNTA antes ("Mover este card para …?") e ainda não mexe no card',
+    pergunta.txt.includes('Mover este card para') && pergunta.txt.includes(C3.nome) && pergunta.aindaNoVelho && !pergunta.noNovo, pergunta);
+  await pg.click('#qdFolha [data-qdtrocanao]'); await pg.waitForTimeout(200);
+  const cancelou = await pg.evaluate(a => ({ conf: !!document.querySelector('#qdFolha .qdFTroca'), sel: document.querySelector('#qdFolha [data-qdfcli]').value,
+    noVelho: (S.pautas[a] || []).some(p => +p.id === 8001) }), C1.id);
+  checa('8.0b Cancelar: o card fica onde estava e a caixa volta ao cliente dele', !cancelou.conf && cancelou.sel === C1.id && cancelou.noVelho, cancelou);
+  await pg.selectOption('#qdFolha [data-qdfcli]', C3.id); await pg.waitForTimeout(150);
+  await pg.click('#qdFolha [data-qdtrocasim]'); await pg.waitForTimeout(400);
   const r = await pg.evaluate(([a, b]) => ({ noVelho: (S.pautas[a] || []).some(p => +p.id === 8001), lixoVelho: (S.lixeira[a] || []).some(e => e.item && +e.item.id === 8001),
     novo: (S.pautas[b] || []).find(p => /Teaser$/.test(p.t)), folha: MaestroQuadro.folha }), [C1.id, C3.id]);
   checa('8.1 o card sai do cliente antigo (sem ficar na lixeira dele)', !r.noVelho && !r.lixoVelho, r);
@@ -188,6 +200,9 @@ console.log('\n  — 8. trocar o card de cliente —');
   const mats = await pg.evaluate(([b, id]) => (S.mat[b + '|' + id] || []).length, [C3.id, r.novo && r.novo.id]);
   checa('8.3 as peças e a conversa vão junto; e o cliente que era a collab sai dela (não é collab consigo mesmo)', mats === antes && Object.keys(r.novo).filter(k => k.startsWith('cm_')).length === 2 && !r.novo.colab, { mats, antes, colab: r.novo.colab });
   checa('8.4 a ficha continua aberta, agora no card do novo cliente', r.folha === C3.id + '|' + r.novo.id, r.folha);
+  const veio = await pg.evaluate(() => (document.querySelector('#qdFolha .qdFVeio') || {}).textContent || '');
+  if(process.env.FOTO) await pg.screenshot({ path: process.env.FOTO + '-veio.png' });
+  checa('8.5 a ficha conta de onde o card veio ("Veio de … hoje às HH:MM")', veio.includes('Veio de ' + C1.nome) && /hoje às \d\d:\d\d/.test(veio), veio);
 }
 
 console.log('\n  — 9. criar com mais de um formato —');

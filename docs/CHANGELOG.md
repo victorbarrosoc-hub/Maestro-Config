@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.141
+Version: 0.5.142
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.142 — 8 out · v327 · mover de cliente pergunta antes
+
+- Trocar o cliente na ficha pede confirmação ("Mover este card para X?"); o card movido mostra "Veio de Y hoje às HH:MM"; o topo da ficha em duas linhas (o nome do cliente cabe e o × não sai da tela). Provas 8.0a, 8.0b e 8.5 em `web/verificar/v304-o-card-completo.mjs`.
 
 ## 0.5.141 — 8 out · v326 · trocar de cliente sem sumir
 

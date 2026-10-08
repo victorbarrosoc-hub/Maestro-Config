@@ -20,6 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
+v327 (8 out) — mover o card de cliente pergunta antes ("Mover para X?" / "Cancelar") e o card movido diz "Veio de Y hoje às HH:MM". Topo da ficha em duas linhas. Pendente: founder rodar a parte 1 da `card-5-para-onde-foi.sql` SOZINHA (o SQL Editor só mostra a última consulta) para confirmar onde estão os dez cards do Cortez de 7/out 15:41–15:46. A parte 2 já veio: 6 cards na Lixeira, todos restauráveis.
+
 v326 (8 out) — "trocar o cliente" na ficha: o card ganha número novo desde o começo (era o que fazia a ficha dizer "foi apagado"). O CSV da `card-4` do founder mostrou: dez cards do Cortez Jurídico, 7/out 15:41–15:46, mudaram de cliente — nenhum foi apagado. Os dois de 15:38 ("Ep. 2 - A sala" e "Carrossel · Ep. 2 - A Sala") foram mesmo para a Lixeira e podem ser restaurados. Pendente: founder rodar `card-5-para-onde-foi.sql` (só leitura) para ver em que cliente cada um está.
 
 v325 (7 out) — a ficha não diz "foi apagado" à toa: segue card que mudou de cliente, "Carregando o card…" quando some por um instante, e na Lixeira mostra quando e "Restaurar o card". Pendente: founder rodar `card-4-quem-apagou.sql` (só leitura) para ver se o card do print foi mesmo apagado.

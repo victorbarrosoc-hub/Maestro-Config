@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v326', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v327', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -1404,6 +1404,24 @@
       <form class="qdFColabIg" data-qdcolabig="1" autocomplete="off"><input type="text" class="qdIn" placeholder="+ @perfil do Instagram" aria-label="Collab com um perfil do Instagram" autocapitalize="off" spellcheck="false"></form>
     </div>`;
   }
+  /* v327 — trocar o cliente pergunta antes, e a ficha conta de onde o card veio.
+     Em 7/out dez cards mudaram de cliente sem ninguém perceber (a caixa troca no
+     primeiro toque) e pareceram apagados. */
+  function quandoCurto(ms){
+    const q = new Date(ms); if(isNaN(q)) return '';
+    const hoje = q.toDateString() === new Date().toDateString();
+    return (hoje ? 'hoje' : q.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })) + ' às ' + q.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+  function blocoTroca(cli, p){
+    const tr = Q.trocaCli && Q.trocaCli.key === Q.folha ? Q.trocaCli : null;
+    if(tr && tr.para && tr.para !== cli){
+      const n = materiais(cli, p.id).length;
+      return `<div class="qdFTroca" role="alertdialog" aria-label="Mudar o cliente do card"><p>Mover este card para <b>${esc_(cliente(tr.para).nome)}</b>? Ele sai de ${esc_(cliente(cli).nome)}${n ? ` e leva ${n === 1 ? 'a peça' : 'as ' + n + ' peças'}` : ''}.</p>
+        <span><button type="button" class="qdPil qdFTrocaSim" data-qdtrocasim="${esc_(tr.para)}">Mover para ${esc_(cliente(tr.para).nome)}</button><button type="button" class="qdPil" data-qdtrocanao="1">Cancelar</button></span></div>`;
+    }
+    if(p.trocouDe && p.trocouDe !== cli) return `<p class="qdFVeio">Veio de <b>${esc_(cliente(p.trocouDe).nome)}</b>${p.trocouEm ? ' ' + esc_(quandoCurto(p.trocouEm)) : ''}</p>`;
+    return '';
+  }
   /* --- trocar o card de cliente: nasce no novo (com as peças e as referências) e sai do antigo
      sem passar pela lixeira dele — é o mesmo card, mudou de casa --- */
   async function trocarCliente(cli, id, novoCli){
@@ -1418,7 +1436,7 @@
     if(achar(novoCli, clone.id) || +clone.id === +id) clone.id = Math.max(Date.now(), +clone.id + 1) + Math.floor(Math.random() * 997);
     clone.colab = colabsDe(p).filter(c => c.cli !== novoCli);
     if(!clone.colab.length) delete clone.colab;
-    clone.mod = Date.now(); clone.trocouDe = cli;
+    clone.mod = Date.now(); clone.trocouDe = cli; clone.trocouEm = Date.now();
     S.mat = S.mat || {}; S.refs = S.refs || {};
     const mats = materiais(cli, id), refs = refsDoCard(cli, id);
     if(mats.length) S.mat[novoCli + '|' + clone.id] = JSON.parse(JSON.stringify(mats));
@@ -1752,10 +1770,11 @@
       <div class="qdFTopo">${avCli(cli)}${ehAg ? `<span class="qdCli">${esc_(cliente(cli).nome)}</span>`
           : `<select class="qdSel qdFCliSel" data-qdfcli="1" aria-label="Cliente do card">${clientes().map(c => `<option value="${esc_(c.id)}" ${c.id === cli ? 'selected' : ''}>${esc_(c.nome)}</option>`).join('')}</select>`}
         <span class="qdSp"></span>
-        <button type="button" class="qdFLink" data-qdlink="1" title="Copiar o link deste card">${ic_('linkic', 13)}<span>Copiar link</span></button>
-        ${ehAg || typeof linkDeVer !== 'function' ? '' : `<button type="button" class="qdFLink" data-qdverlink="1" title="Um link só deste card, para quem não tem conta na Maestro">${ic_('enviar', 13)}<span>Link de visualização</span></button>`}
         <span class="qdFSalvo" id="qdFSalvo" aria-live="polite">Tudo salvo</span>
-        <button type="button" class="qdFechar" data-qdfechar="1" aria-label="Fechar">×</button></div>
+        <button type="button" class="qdFechar" data-qdfechar="1" aria-label="Fechar">×</button>
+        <span class="qdFTopoLinks"><button type="button" class="qdFLink" data-qdlink="1" title="Copiar o link deste card">${ic_('linkic', 13)}<span>Copiar link</span></button>
+        ${ehAg || typeof linkDeVer !== 'function' ? '' : `<button type="button" class="qdFLink" data-qdverlink="1" title="Um link só deste card, para quem não tem conta na Maestro">${ic_('enviar', 13)}<span>Link de visualização</span></button>`}</span></div>
+      ${blocoTroca(cli, p)}
       <div class="qdFTitL">${!ehAg && segueOPadrao(p, cli) ? `<span class="qdFPre" data-qdfpre="1">${esc_(prefixo(cli, p))}</span>` : ''}<textarea class="qdFTit" data-qf="tema" rows="1" aria-label="Nome do card">${esc_(tema(p, cli))}</textarea></div>
       ${ehAg || segueOPadrao(p, cli) ? '' : `<p class="qdFNome">Fora do padrão. <button type="button" class="qdPil" data-qdpadrao="1">Padronizar: ${esc_(titulo(cli, p.fmt || 'Post', limparTema(tema(p, cli), p.fmt)))}</button></p>`}
       ${ehAg ? '' : (() => { const on = new Set(platsDe(p));
@@ -2668,7 +2687,7 @@
   /* ---------------- nada de mensagem embaixo ---------------- */
   /* ---------------- v304: os toques do que é novo na ficha ---------------- */
   document.addEventListener('click', e => {
-    const t = e.target.closest && e.target.closest('#qdFolha [data-qdcopiar], #qdFolha [data-qdlink], #qdFolha [data-qdverlink], #qdFolha [data-qdmatx], #qdFolha [data-qdmatsim], #qdFolha [data-qdmatnao], #qdFolha [data-qdcolabx], #qdFolha [data-qdmen], #qdFolha [data-qdmsgx]');
+    const t = e.target.closest && e.target.closest('#qdFolha [data-qdcopiar], #qdFolha [data-qdlink], #qdFolha [data-qdverlink], #qdFolha [data-qdmatx], #qdFolha [data-qdmatsim], #qdFolha [data-qdmatnao], #qdFolha [data-qdcolabx], #qdFolha [data-qdmen], #qdFolha [data-qdmsgx], #qdFolha [data-qdtrocasim], #qdFolha [data-qdtrocanao]');
     if(!t || !Q.folha) return;
     e.preventDefault(); e.stopPropagation();
     const key = Q.folha; const [cli, id] = key.split('|'); const d = t.dataset;
@@ -2688,6 +2707,8 @@
       copiarTexto(url).then(ok => avisoNoBotao(t, ok ? 'Link copiado' : 'Não deu'));
       return;
     }
+    if(d.qdtrocanao){ Q.trocaCli = null; desenharFolha(true); return; }
+    if(d.qdtrocasim){ const para = d.qdtrocasim; Q.trocaCli = null; if(para !== cli) trocarCliente(cli, id, para); else desenharFolha(true); return; }
     if(d.qdmatx !== undefined){ Q.matApagar = { key, i: +d.qdmatx }; desenharFolha(true); return; }
     if(d.qdmatnao){ Q.matApagar = null; desenharFolha(true); return; }
     if(d.qdmatsim !== undefined){
@@ -2724,7 +2745,7 @@
   document.addEventListener('change', e => {
     const c = e.target; if(!Q.folha || !c.closest || !c.closest('#qdFolha')) return;
     const [cli, id] = Q.folha.split('|');
-    if(c.dataset.qdfcli){ e.stopPropagation(); const v = c.value; if(v && v !== cli) trocarCliente(cli, id, v); return; }
+    if(c.dataset.qdfcli){ e.stopPropagation(); const v = c.value; Q.trocaCli = v && v !== cli ? { key: Q.folha, para: v } : null; desenharFolha(true); return; }
     if(c.dataset.qdcolabcli){ e.stopPropagation(); const v = c.value; if(!v) return; const p = achar(cli, id); if(!p) return;
       const l = colabsDe(p); if(!l.some(x => x.cli === v)) mudar(cli, id, { colab: l.concat({ cli: v }) }); desenharFolha(true); redesenharPagina(); return; }
   }, true);
@@ -2991,7 +3012,15 @@
   #qdFolha{ position:fixed; inset:0; z-index:920; pointer-events:none }
   .qdFolhaFundo{ position:absolute; inset:0; background:rgba(0,0,0,.28); pointer-events:auto }
   .qdFolhaIn{ position:absolute; top:0; right:0; bottom:0; width:min(460px, 100vw); background:var(--bg, #1c1c1f); box-shadow:-10px 0 40px rgba(0,0,0,.35); overflow-y:auto; padding:16px 18px 40px; box-sizing:border-box; pointer-events:auto; overscroll-behavior:contain }
-  .qdFTopo{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--mut, #999) }
+  .qdFTopo{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:13px; color:var(--mut, #999) }
+  .qdFTopoLinks{ flex-basis:100%; display:flex; flex-wrap:wrap; gap:6px }
+  .qdFTopoLinks .qdFLink{ white-space:nowrap; margin-right:0 }
+  .qdFTroca{ margin:10px 0 2px; padding:10px 12px; border-radius:12px; background:color-mix(in srgb, var(--latao, #FFC857) 16%, transparent); display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; font-size:13px }
+  .qdFTroca p{ margin:0; flex:1 1 220px; color:var(--tx, inherit) }
+  .qdFTroca span{ display:flex; gap:6px; flex-wrap:wrap }
+  .qdFTroca .qdFTrocaSim{ background:var(--latao, #FFC857); color:#1C1C1F; font-weight:600 }
+  .qdFVeio{ margin:6px 0 0; font-size:12px; color:var(--mut, #999) }
+  .qdFVeio b{ font-weight:600; color:var(--tx, inherit) }
   .qdFechar{ border:0; background:var(--sup, rgba(255,255,255,.06)); color:var(--tx, #fff); width:34px; height:34px; border-radius:50%; font-size:20px; cursor:pointer }
   .qdFTit{ width:100%; box-sizing:border-box; border:0; background:transparent; color:var(--tx, #fff); font:inherit; font-size:21px; font-weight:600; line-height:1.25; resize:none; padding:8px 0; margin:6px 0 8px; outline:none; overflow:hidden }
   .qdFCols{ display:flex; flex-wrap:wrap; gap:5px; margin:0 0 14px }
@@ -3243,6 +3272,7 @@
   .qdFLink{ display:inline-flex; align-items:center; gap:5px; border:0; background:var(--sup2, rgba(255,255,255,.07)); color:inherit; font:inherit; font-size:12px; padding:6px 10px; border-radius:999px; cursor:pointer; margin-right:6px }
   .qdFLink.feito, .qdCopiar.feito{ color:#1C1C1F; background:var(--brass-500, #FFC857) }
   .qdFCliSel{ max-width:190px; font-weight:600 }
+  .qdFolhaIn .qdFCliSel{ min-width:min(150px, 38%); flex:0 1 auto }
   .qdCopiar{ display:inline-flex; align-items:center; gap:4px; border:0; background:none; color:var(--mut, #999); font:inherit; font-size:11px; font-weight:500; padding:2px 6px; border-radius:6px; cursor:pointer; margin-left:6px; vertical-align:middle; text-transform:none; letter-spacing:0 }
   .qdCopiar:hover{ color:inherit; background:var(--sup2, rgba(255,255,255,.07)) }
   .qdFCampoT{ display:flex; align-items:center; justify-content:space-between }

@@ -349,6 +349,15 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (8 out, v327, NO AR) — mover de cliente pergunta antes.** ("Pode executar
+o que achar melhor" à sugestão.) A caixa de cliente da ficha trocava o card no
+primeiro toque — foi assim que dez cards do Cortez mudaram de casa em 7/out sem
+ninguém notar. Agora escolher outro cliente abre "Mover este card para X? Ele sai de
+Y e leva as N peças" com "Mover para X" / "Cancelar" (`blocoTroca`, `Q.trocaCli`), e
+o card movido mostra "Veio de Y hoje às HH:MM" no topo da ficha (`trocouEm`). O topo
+da ficha virou duas linhas (cliente, "Tudo salvo" e × em cima; os dois links
+embaixo) — com o nome do cliente legível o × saía da tela. Provas 8.0a, 8.0b e 8.5
+na `web/verificar/v304-o-card-completo.mjs` (40).
 **Fechado (8 out, v326, NO AR) — trocar de cliente sem sumir.** A consulta
 `card-4` (CSV do founder) mostrou a causa do "foi apagado" da v325: dez cards do
 Cortez Jurídico, 7/out 15:41–15:46, com "foi para a lixeira" + "apagado de vez" —
