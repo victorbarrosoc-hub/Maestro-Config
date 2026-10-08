@@ -8,23 +8,28 @@
 --   parte 1 — cada card que veio de outro cliente: onde está agora,
 --             com que nome, e se está vivo;
 --   parte 2 — o que está na Lixeira AGORA (dá para restaurar pela tela).
--- Não muda nada. Rodar no SQL Editor do Supabase e mandar o print.
+-- Não muda nada. O SQL Editor do Supabase mostra só o resultado da ÚLTIMA
+-- consulta: rodar uma parte de cada vez (selecionar o trecho e Run).
 -- =====================================================================
 
--- parte 1 — os cards que mudaram de cliente
-select to_char(c.criado_em at time zone 'America/Sao_Paulo', 'DD/MM HH24:MI') as chegou_em,
-       c.dados ->> 'trocouDe' as veio_de,
-       c.cliente as esta_em,
-       left(coalesce(nullif(c.dados ->> 't', ''), 'card ' || c.id), 70) as card,
+-- parte 1 — onde cada card nasceu (pelo histórico): os que vieram de outro
+-- cliente e tudo o que nasceu em 7/out 15:35–15:50, com a situação de AGORA.
+select to_char(h.quando at time zone 'America/Sao_Paulo', 'DD/MM HH24:MI') as quando,
+       h.cliente as esta_em,
+       coalesce(h.campos -> 'criado' ->> 'trocouDe', '') as veio_de,
+       left(coalesce(nullif(c.dados ->> 't', ''), h.campos -> 'criado' ->> 't', 'card ' || h.card_id), 70) as card,
+       case when c.id is null then 'não existe'
+            when c.varrido_em is not null then 'apagado de vez'
+            when c.apagado_em is not null then 'na lixeira'
+            else 'vivo' end as situacao,
        coalesce(c.dados ->> 'fase', '') as fase,
-       case when c.apagado_em is null then 'vivo' else 'na lixeira' end as situacao,
-       coalesce(c.criado_por, '?') as quem,
-       c.id
-  from public.cards c
- where c.dados ? 'trocouDe'
-   and c.criado_em > now() - interval '7 days'
-   and c.varrido_em is null
- order by c.criado_em desc
+       h.card_id
+  from public.cards_historico h
+  left join public.cards c on c.org = h.org and c.cliente = h.cliente and c.id = h.card_id
+ where h.operacao = 'insert'
+   and h.quando > now() - interval '3 days'
+   and (h.campos -> 'criado' ? 'trocouDe' or h.quando between '2026-10-07 15:35-03' and '2026-10-07 15:50-03')
+ order by h.quando desc
  limit 80;
 
 -- parte 2 — o que está na Lixeira agora (não varrido)
