@@ -89,7 +89,7 @@ function montarBanco(ligar){
     create trigger t_midias after insert or update on public.card_midias for each row execute function teste_registrar();
     /* só da prova: cada gravação do estado da agência, com quem e os lembretes que ficaram */
     create table teste_estado(id bigserial primary key, quando timestamptz default clock_timestamp(), quem text, rev_antes text, rev text, lembretes jsonb);
-    create or replace function teste_estado_reg() returns trigger language plpgsql as $f$
+    create or replace function teste_estado_reg() returns trigger language plpgsql security definer set search_path = public as $f$
     begin
       if new.cliente = '__estado__' then
         insert into teste_estado(quem, rev_antes, rev, lembretes) values (

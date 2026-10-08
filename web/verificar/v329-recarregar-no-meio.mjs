@@ -288,8 +288,13 @@ checa('1.0 o lembrete do A está no banco', lembretesNoBanco().some(l => l.t ===
    depois do último desenho. Recarregar a ~150 ms cai exatamente entre as duas. */
 /* com cinco pessoas trabalhando, a tela é redesenhada o tempo todo (o que chega pelo ao vivo) */
 await noAparelho(B, () => { window.__rl = setInterval(() => { try{ render(); }catch(e){} }, 120); });
-await noAparelho(B, async () => { await Sincro.buscar(); window.__tinha = (S.lembretes || []).some(l => l.t === 'lem do A'); });
+await noAparelho(B, async () => { await Sincro.buscar(); window.__tinha = (S.lembretes || []).some(l => l.t === 'lem do A');
+  /* no MESMO instante em que a base foi guardada: a tela guardada já tem o lembrete? */
+  let g = null; try{ g = JSON.parse(localStorage.getItem('maestro-estado-v1') || 'null'); }catch(e){}
+  window.__guardadoJa = ((g && g.s && g.s.lembretes) || []).some(l => l.t === 'lem do A'); });
 const tinha = await noAparelho(B, () => window.__tinha);
+const guardadoJa = await noAparelho(B, () => window.__guardadoJa);
+checa('1.0b no mesmo instante em que guarda a "última versão do banco", o aparelho guarda a tela com o lembrete (nunca a base mais nova que a tela)', guardadoJa === true, guardadoJa);
 await B.pag.waitForTimeout(+(process.env.ESPERA || 150));
 if(process.env.DEPURAR) console.log('    [antes de recarregar]', JSON.stringify(await noAparelho(B, () => { let g = null; try{ g = JSON.parse(localStorage.getItem('maestro-estado-v1') || 'null'); }catch(e){}
   return { tela: (S.lembretes || []).map(l => l.t), guardado: ((g && g.s && g.s.lembretes) || []).map(l => l.t), quando: g && Date.now() - g.quando }; })));
@@ -352,6 +357,22 @@ checa('4.1 os 3 cards criados SEM rede e os 3 criados DEPOIS chegam ao banco', s
 checa('4.2 e a última escrita (depois 3) também', (cardNoBanco(603) || { dados: {} }).dados.nota_a === 'depois 3', (cardNoBanco(603) || { dados: {} }).dados.nota_a);
 const noB4 = await ate(B, () => noAparelho(B, () => (S.pautas.cj || []).filter(p => /(fora|depois) [123]$/.test(p.t)).length === 6), 8000);
 checa('4.3 o outro aparelho recebe os seis', noB4 >= 0, await noAparelho(B, () => (S.pautas.cj || []).filter(p => /(fora|depois) [123]$/.test(p.t)).map(p => p.t)));
+
+console.log('\n  — 5. a pergunta "a agência usa a tabela de cards?" feita no meio de uma queda —');
+SEM_REDE.add('A');
+await noAparelho(A, async () => { MaestroDados.checado = null; try{ await MaestroDados.checar(); }catch(e){} });
+const ligadoNaQueda = await noAparelho(A, () => MaestroDados.estado().ligado);
+checa('5.1 sem resposta do banco, o aparelho NÃO conclui que a tabela não existe (segue ligado)', ligadoNaQueda === true, ligadoNaQueda);
+for(let k = 1; k <= 2; k++){ await noAparelho(A, k => { MaestroQuadro.novo('cj', { tema: 'queda ' + k }); render(); }, k); await A.pag.waitForTimeout(700); }
+await A.pag.waitForTimeout(1500);
+SEM_REDE.delete('A');
+/* a rede volta e alguém relê o banco (o "Atualizar", o puxar para atualizar, a entrada) */
+await noAparelho(A, async () => { try{ await sbCarregar(); }catch(e){} render(); });
+const q5 = await ate(A, async () => +doBanco(`select count(*) from public.cards where org='maestro' and cliente='cj' and dados->>'t' ~ 'queda [12]$' and apagado_em is null`) === 2, 12000);
+checa('5.2 os cards criados na queda chegam ao banco depois que a rede volta e o banco é relido', q5 >= 0,
+  { banco: doBanco(`select coalesce(jsonb_agg(dados->>'t'), '[]') from public.cards where org='maestro' and cliente='cj' and dados->>'t' ~ 'queda'`), diario: await noAparelho(A, () => (MaestroDados.diario || []).slice(-10)) });
+const naTela5 = await noAparelho(A, () => (S.pautas.cj || []).filter(p => /queda [12]$/.test(p.t)).length);
+checa('5.3 e reler o banco não os tira da tela', naTela5 === 2, naTela5);
 
 console.log('\n  — 3. nada a mais —');
 const fila = await noAparelho(A, () => { try{ return localStorage.getItem('maestro-dados1-fila:maestro'); }catch(e){ return 'x'; } });

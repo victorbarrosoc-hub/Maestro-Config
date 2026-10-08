@@ -157,7 +157,17 @@
       try{
         const l = await ler('maestro_cards_ligado', 'select=org');
         D.ligado = Array.isArray(l) && l.some(x => x && x.org === o);
-      }catch(e){ D.ligado = false; }      // a tabela não existe ainda: o app de antes
+      }catch(e){
+        /* v329 — REDE CAINDO NÃO É "A TABELA NÃO EXISTE". O ensaio geral (cinco
+           aparelhos) mostrou: a pergunta feita durante uma queda de rede respondia
+           "não ligada", e a resposta ficava guardada. O aparelho passava a gravar
+           pelo caminho antigo, e quando a resposta certa voltava ele relia o banco
+           e apagava da tela os cards criados nesse meio-tempo — que nunca subiram.
+           Só "a tabela não existe" (404) desliga; sem resposta, fica como estava e
+           a pergunta é refeita na próxima vez. */
+        if(e && e.status === 404) D.ligado = false;      // a tabela não existe ainda: o app de antes
+        else { anota('checar-sem-resposta', (e && (e.status || e.message)) || '?'); D.checado = null; return D.ligado; }
+      }
       anota('ligado', D.ligado);
       return D.ligado;
     })();
@@ -165,6 +175,32 @@
   }
   D.checar = checar;
   D.ler = (t, q) => ler(t, q);
+
+  /* ---------------- v329 — a tela guardada nunca fica mais velha que a base ----------------
+     O ensaio geral perdia lembretes: o aparelho que acabava de RECEBER um lembrete guardava
+     na hora a "última versão do banco" (a base da mescla, `maestro-sincro-v2` + IndexedDB),
+     mas a tela só era guardada depois (300 ms após o último desenho, ou no pulso de 1,2 s).
+     Recarregando nesse meio-tempo, ao reabrir ele tinha a base COM o lembrete e a tela SEM
+     — e a mescla lia isso como "apaguei aqui", gravando a exclusão para todos (a prova:
+     `teste_estado`, a Anna tirou o lembrete do Victor 7 s depois de recarregar). Agora,
+     toda vez que a base é guardada, a tela é guardada ANTES, no mesmo instante; e sair
+     ou esconder a página guarda tudo. */
+  (function(){
+    try{
+      const st = Storage.prototype, orig = st.setItem; let dentro = false;
+      st.setItem = function(k, v){
+        if(!dentro && k === 'maestro-sincro-v2' && this === window.localStorage && typeof guardarTudo === 'function'){
+          dentro = true;
+          try{ guardarTudo(); }catch(e){}
+          finally{ dentro = false; }
+        }
+        return orig.apply(this, arguments);
+      };
+      const tudo = () => { try{ if(typeof guardarTudo === 'function') guardarTudo(); }catch(e){} try{ if(typeof salvarLocal === 'function') salvarLocal(); }catch(e){} };
+      addEventListener('pagehide', tudo);
+      document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') tudo(); });
+    }catch(e){}
+  })();
 
   /* ---------------- 2. a linha `pauta` sem as chaves de card ---------------- */
   const _fetch = window.fetch;
@@ -285,6 +321,10 @@
 
   async function carregar(){
     if(!(await checar())) return false;
+    /* v329 — reler o banco não apaga o que ainda não subiu: antes de reconstruir a
+       tela pelo banco, o que é só daqui (card novo, campo mudado) vai para a fila,
+       e a fila volta por cima logo depois (reaplicar). */
+    if(D.carregouEm) for(const cli of Object.keys(D.base)){ try{ if(numClienteValido(cli)) anotarFila(cli); }catch(e){} }
     const [cards, midias] = await Promise.all([
       ler('cards', 'select=cliente,id,dados,versao,posicao,apagado_em,varrido_em,atualizado_em&order=cliente,posicao'),
       ler('card_midias', 'select=id,cliente,card_id,tipo,dados,posicao,apagado_em,atualizado_em&order=posicao'),
