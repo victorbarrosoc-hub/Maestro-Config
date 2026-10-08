@@ -109,7 +109,7 @@ function comoPessoaCru(email, stmt){
     ${stmt}; commit;`;
 }
 const SEM_REDE = new Set();
-const SEGURAR = new Set(), SEGUROU = { n: 0 };
+const SEGURAR = new Set(), SEGUROU = { n: 0 }, RECUSAR = { on: false };
 const ESTAT = { rpc: 0, pautaEscrita: 0, porFn: {}, porLinha: {} };
 function ponte(email, opcoes = {}){
   return async route => {
@@ -127,6 +127,8 @@ function ponte(email, opcoes = {}){
       if(rpc && SEGURAR.has(opcoes.nome) && /^maestro_(card|midia)_/.test(rpc[1])){ SEGUROU.n++; await new Promise(r => setTimeout(r, 4000)); try{ await route.abort('timedout'); }catch(e){} return; }
       if(rpc){
         const fn = rpc[1], sig = ASSINATURAS[fn];
+        /* v330: o banco recusando um card de propósito (resposta com erro, como o de verdade faz) */
+        if(fn === 'maestro_card_criar' && RECUSAR.on){ try{ const c = JSON.parse(req.postData() || '{}'); if(/recusado/.test(String((c.p_dados || {}).t || ''))) return json(200, { ok: false, erro: 'teste_recusa' }); }catch(e){} }
         if(!sig) return json(404, { message: 'fn' });
         const corpo = JSON.parse(req.postData() || '{}');
         const args = Object.entries(corpo).filter(([k]) => sig[k]).map(([k, v]) => `${k} => ${valorSql(v, sig[k])}`).join(', ');
@@ -394,6 +396,48 @@ const naTela6 = await noAparelho(A, () => ({ n: (S.pautas.cj || []).filter(p => 
 checa('6.3 e continuam na tela de quem fez', naTela6.n === 2 && naTela6.nota === 'escrito no elevador', naTela6);
 const noB6 = await ate(B, () => noAparelho(B, () => (S.pautas.cj || []).filter(p => /elevador [12]$/.test(p.t)).length === 2), 8000);
 checa('6.4 e chegam ao outro aparelho', noB6 >= 0, noB6);
+
+console.log('\n  — 7. o banco recusa um card: os outros sobem, e a tela diz —');
+RECUSAR.on = true;
+await noAparelho(A, () => { MaestroQuadro.novo('cj', { tema: 'card recusado' }); render(); });
+await A.pag.waitForTimeout(400);
+await noAparelho(A, () => { MaestroQuadro.novo('cj', { tema: 'card seguinte ao barrado' }); render(); });
+await noAparelho(A, () => { MaestroQuadro.mudar('cj', 602, { nota_a: 'escrito depois do recusado' }); render(); });
+const q7 = await ate(A, async () => +doBanco(`select count(*) from public.cards where org='maestro' and cliente='cj' and dados->>'t' like '%card seguinte ao barrado%'`) === 1
+  && (cardNoBanco(602) || { dados: {} }).dados.nota_a === 'escrito depois do recusado', 10000);
+checa('7.1 um card recusado pelo banco NÃO segura os outros: o card seguinte e o texto escrito sobem', q7 >= 0, { diario: await noAparelho(A, () => (MaestroDados.diario || []).slice(-6)) });
+const av = await ate(A, () => noAparelho(A, () => !!document.querySelector('#dadosNaoSalvos .dnsPilula')), 30000);
+const pil = await noAparelho(A, () => (document.querySelector('#dadosNaoSalvos .dnsPilula') || {}).textContent || '');
+checa('7.2 passados 20 s, aparece o aviso fixo "1 card não salvo"', av >= 0 && /1 card não salvo/.test(pil), pil);
+await A.pag.click('#dadosNaoSalvos [data-dnsabre]'); await A.pag.waitForTimeout(200);
+const painel = await noAparelho(A, () => (document.querySelector('#dadosNaoSalvos .dnsPainel') || {}).textContent || '');
+if(process.env.OUT) await A.pag.screenshot({ path: process.env.OUT + '/v330-nao-salvos.png' });
+checa('7.3 o aviso diz qual card, de que cliente e o motivo ("o banco recusou")', /card recusado/.test(painel) && /criado/.test(painel) && /recusou \(teste_recusa\)/.test(painel) && /Não feche esta aba/.test(painel), painel.slice(0, 300));
+RECUSAR.on = false;
+await A.pag.click('#dadosNaoSalvos [data-dnstenta]');
+const q7b = await ate(A, async () => +doBanco(`select count(*) from public.cards where org='maestro' and cliente='cj' and dados->>'t' ~ 'card recusado$'`) === 1, 10000);
+checa('7.4 "Tentar de novo agora": o card sobe quando o banco aceita', q7b >= 0, q7b);
+const some = await ate(A, () => noAparelho(A, () => !document.getElementById('dadosNaoSalvos')), 8000);
+checa('7.5 e o aviso some sozinho', some >= 0, some);
+
+console.log('\n  — 8. cliente que o banco ainda não conhece (a linha dele não existe) —');
+/* um cliente do cadastro cuja linha não existe no banco (cliente novo que ainda não gravou nada) */
+const semLinha = await noAparelho(A, () => (CLIS() || []).map(c => c.id).find(id => id !== 'cj' && !(MaestroDados.srv[id] && MaestroDados.srv[id].size)) || null);
+if(semLinha) psql(`delete from public.pauta where org='maestro' and cliente='${semLinha}';`);
+const linhaAntes = semLinha ? umaLinha(`select count(*) from public.pauta where org='maestro' and cliente='${semLinha}'`) : 'x';
+if(semLinha && +linhaAntes === 0){
+  await noAparelho(A, cli => { MaestroQuadro.novo(cli, { tema: 'cliente sem linha' }); render(); }, semLinha);
+  const q8 = await ate(A, async () => +doBanco(`select count(*) from public.cards where org='maestro' and cliente='${semLinha}' and dados->>'t' like '%cliente sem linha%'`) === 1, 12000);
+  checa(`8.1 card de um cliente sem linha no banco (${semLinha}): a Maestro cria a linha e o card sobe`, q8 >= 0, { diario: await noAparelho(A, () => (MaestroDados.diario || []).slice(-6)) });
+} else checa('8.1 (preparo) achar um cliente do cadastro sem linha no banco', false, { semLinha, linhaAntes });
+
+console.log('\n  — 9. cópia guardada de um cliente que não é mais da casa —');
+await noAparelho(A, () => { S.pautas['cliente-que-saiu'] = [{ id: 999001, t: 'Card velho de cliente que saiu', fase: 'rascunho' }]; });
+await A.pag.waitForTimeout(25000);
+const nv = await noAparelho(A, () => ({ aviso: !!document.getElementById('dadosNaoSalvos'), lista: MaestroDados.naoSalvos().map(x => x.cli) }));
+checa('9.1 card guardado de cliente que não é da agência não vira "não salvo"', !nv.aviso && !nv.lista.includes('cliente-que-saiu'), nv);
+checa('9.2 e não é recriado no banco', +doBanco(`select count(*) from public.cards where cliente='cliente-que-saiu'`) === 0);
+await noAparelho(A, () => { delete S.pautas['cliente-que-saiu']; });
 
 console.log('\n  — 3. nada a mais —');
 const fila = await noAparelho(A, () => { try{ return localStorage.getItem('maestro-dados1-fila:maestro'); }catch(e){ return 'x'; } });

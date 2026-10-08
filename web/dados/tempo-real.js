@@ -156,13 +156,21 @@
   const lixeiraDoCli = cli => { S.lixeira = S.lixeira || {}; return S.lixeira[cli] || (S.lixeira[cli] = []); };
   const clientes = () => { try{ return (typeof CLIS === 'function' ? CLIS() : []).map(c => c.id); }catch(e){ return []; } };
 
+  /* v330: um pedido que nunca volta (rede trocando, Wi-Fi do escritório) não pode
+     segurar a fila de um cliente para sempre — 30 s e desiste; a fila tenta de novo */
+  async function comPrazo(url, op){
+    const ac = typeof AbortController === 'function' ? new AbortController() : null;
+    const t = ac ? setTimeout(() => ac.abort(), 30000) : 0;
+    try{ return await fetch(url, ac ? Object.assign({}, op, { signal: ac.signal }) : op); }
+    finally{ clearTimeout(t); }
+  }
   async function rpc(nome, args){
-    const r = await fetch(`${SB.url}/rest/v1/rpc/${nome}`, { method: 'POST', headers: cab(), body: JSON.stringify(args) });
+    const r = await comPrazo(`${SB.url}/rest/v1/rpc/${nome}`, { method: 'POST', headers: cab(), body: JSON.stringify(args) });
     if(!r.ok) throw Object.assign(new Error(`${nome}: ${r.status}`), { status: r.status });
     return r.json();
   }
   async function ler(tabela, consulta){
-    const r = await fetch(`${SB.url}/rest/v1/${tabela}?${consulta}`, { headers: cab() });
+    const r = await comPrazo(`${SB.url}/rest/v1/${tabela}?${consulta}`, { headers: cab() });
     if(!r.ok) throw Object.assign(new Error(`${tabela}: ${r.status}`), { status: r.status });
     return r.json();
   }
@@ -453,7 +461,9 @@
       try{ await enviarJa(cli); D.fila[cli] = false; anotarFila(cli); return true; }
       catch(e){
         anota('falhou', cli, e.message); anotarFila(cli); D.fila[cli] = true;
-        if(typeof sbSelo === 'function') sbSelo('erro', 'sem rede — o que você mudou fica aqui e sobe sozinho');
+        D.ultimaFalha = { cli, msg: String(e.message || e), quando: Date.now() };
+        const recusou = /^(criar|mudar|mídia):/.test(String(e.message || ''));
+        if(typeof sbSelo === 'function') sbSelo('erro', recusou ? 'o banco recusou um card — veja o aviso “não salvos”' : 'sem rede — o que você mudou fica aqui e sobe sozinho');
         agendarRetomada();
         return false;
       }
@@ -522,13 +532,21 @@
     if(varrer.length){ await rpc('maestro_card_varrer', { p_cliente: cli, p_ids: varrer }); varrer.forEach(id => { SRV.get(id).varrido = true; }); D.gravacoes++; }
     D.lixBase[cli] = new Set(naLixeira);
 
-    /* b. cards */
+    /* b. cards
+       v330: o banco RECUSAR um card (resposta com erro) não segura os outros —
+       antes, o primeiro card recusado parava a fila do cliente inteiro, e tudo
+       o que vinha depois dele nunca subia. A recusa fica anotada no card
+       (D.falhas, o aviso "não salvos" mostra) e a fila tenta de novo. Rede
+       caindo continua parando tudo (não adianta insistir card a card). */
+    const recusas = [];
     for(const p of arr.slice()){
       const id = numId(p.id); if(!id) continue;
       const s = SRV.get(id), b = B.get(id);
       if(!s){
         const dados = clone(p); delete dados.mod;
         let r = await rpc('maestro_card_criar', { p_cliente: cli, p_dados: dados, p_id: id });
+        /* o banco não reconhece o cliente (a linha dele ainda não existe lá): cria a linha e tenta uma vez */
+        if(r && r.erro === 'sem_acesso' && await garantirLinhaDoCliente(cli)) r = await rpc('maestro_card_criar', { p_cliente: cli, p_dados: dados, p_id: id });
         if(r && r.erro === 'id_existe'){
           /* v275: o número já existe. Se é DESTE cliente, o card não é novo —
              a tela só não o tinha lido ainda: busca e segue sem criar nada.
@@ -544,7 +562,8 @@
           if(meu) anota('numero-de-outro-card', cli, id);
           const novo = renumerar(cli, p); r = await rpc('maestro_card_criar', { p_cliente: cli, p_dados: Object.assign(dados, { id: novo }), p_id: novo });
         }
-        if(!r || !r.ok) throw new Error('criar: ' + ((r && r.erro) || '?'));
+        if(!r || !r.ok){ recusas.push('criar: ' + ((r && r.erro) || '?')); falhaCard(cli, +p.id, 'criar', (r && r.erro) || '?'); continue; }
+        delete D.falhas[k2(cli, +p.id)];
         const d = clone(p);
         SRV.set(+p.id, { dados: d, versao: r.versao || 1, posicao: null, apagado: false, varrido: false });
         B.set(+p.id, { dados: clone(d), versao: r.versao || 1, remoto: {} });
@@ -571,8 +590,9 @@
       D.gravacoes++;
       if(!r || !r.ok){
         if(r && r.erro === 'apagado'){ s.apagado = true; const i = arr.indexOf(p); if(i >= 0) arr.splice(i, 1); continue; }
-        throw new Error('mudar: ' + ((r && r.erro) || '?'));
+        recusas.push('mudar: ' + ((r && r.erro) || '?')); falhaCard(cli, id, 'mudar', (r && r.erro) || '?'); continue;
       }
+      delete D.falhas[k2(cli, id)];
       const conf = Object.keys(r.conflitos || {});
       const meus = {};
       conf.forEach(k => { meus[k] = p[k] === undefined ? null : clone(p[k]); const v = r.conflitos[k]; if(v === null || v === undefined) delete p[k]; else p[k] = clone(v); });
@@ -603,8 +623,31 @@
     for(const p of arr){
       const id = numId(p.id); if(!id) continue;
       const s = SRV.get(id); if(!s || s.apagado) continue;
-      await enviarMidias(cli, id);
+      try{ await enviarMidias(cli, id); }
+      catch(e){ if(!/^mídia:/.test(String(e.message || ''))) throw e; recusas.push(e.message); falhaCard(cli, id, 'midia', String(e.message).replace(/^mídia:\s*/, '')); }
     }
+    if(recusas.length) throw new Error(recusas[0]);
+  }
+  /* v330 — o que o banco recusou, por card (o aviso "não salvos" mostra o motivo) */
+  D.falhas = D.falhas || {};
+  function falhaCard(cli, id, onde, erro){
+    const k = k2(cli, id), f = D.falhas[k] || { desde: Date.now(), vezes: 0 };
+    f.onde = onde; f.erro = String(erro || '?'); f.quando = Date.now(); f.vezes++;
+    D.falhas[k] = f; anota('recusou', cli, id, onde, f.erro);
+  }
+  /* a linha do cliente no banco (é ela que diz ao banco que o cliente é desta agência) */
+  const linhaFeita = {};
+  async function garantirLinhaDoCliente(cli){
+    if(linhaFeita[cli] || !numClienteValido(cli) || typeof SB === 'undefined') return false;
+    if(cli !== 'agencia' && !clientes().includes(cli)) return false;
+    linhaFeita[cli] = true;
+    try{
+      const r = await comPrazo(`${SB.url}/rest/v1/pauta?on_conflict=cliente`, { method: 'POST',
+        headers: cab({ Prefer: 'resolution=ignore-duplicates,return=minimal' }),
+        body: JSON.stringify({ cliente: cli, dados: {}, atualizado_em: new Date().toISOString() }) });
+      anota('linha-do-cliente', cli, r.status);
+      return r.ok || r.status === 409;
+    }catch(e){ anota('linha-do-cliente-falhou', cli, e.message); linhaFeita[cli] = false; return false; }
   }
 
   async function rebuscar(cli, id){
@@ -911,6 +954,106 @@
 
   D.estado = () => ({ ligado: D.ligado, org: D.org, conectado: D.conectado, gravacoes: D.gravacoes,
     recebidas: D.recebidas, conflitos: D.conflitos, fila: Object.keys(D.fila).filter(k => D.fila[k]) });
+
+  /* ---------------- v330 — "não salvos": o que só existe neste aparelho ----------------
+     8/out: "alguns cards que a Anna Clara criou sumiram" — nenhum card criado naquele dia
+     chegou ao banco, e a tela dela não dizia nada (o selo falava em "sem rede" para
+     qualquer falha). Agora, card que passa de 20 s sem chegar ao banco aparece num aviso
+     fixo, com o nome, há quanto tempo, o motivo em português e "Tentar de novo agora";
+     e a cada 15 s o que ficou para trás é mandado de novo sozinho. */
+  D.pendDesde = {};
+  const MOTIVO = { sem_acesso: 'o banco não reconheceu o cliente deste card', id_existe: 'número de card repetido',
+    formato: 'número de card inválido', apagado: 'o card foi apagado em outro aparelho', nao_existe: 'o card não existe mais no banco',
+    card_nao_existe: 'a peça é de um card que o banco não tem', blob: 'o arquivo ainda não subiu para a nuvem' };
+  function naoSalvos(){
+    const fora = [];
+    if(!D.ligado || !D.carregouEm || soLeitura()) return fora;
+    const agora = Date.now(), vistos = new Set();
+    const daCasa = new Set([...clientes(), 'agencia']);
+    for(const cli of Object.keys(S.pautas || {})){
+      if(!numClienteValido(cli) || !Array.isArray(S.pautas[cli])) continue;
+      /* só clientes desta agência, que a carga já leu: cópia guardada de cliente que saiu não é "não salvo" */
+      if(!D.base[cli] || !(daCasa.has(cli) || (D.srv[cli] && D.srv[cli].size))) continue;
+      const SRV = mapa(D.srv, cli), B = mapa(D.base, cli);
+      for(const p of S.pautas[cli]){
+        const id = numId(p && p.id); if(!id) continue;
+        const s = SRV.get(id), b = B.get(id);
+        let tipo = null;
+        if(!s) tipo = 'novo';
+        else if(!s.apagado && b && [...new Set([...Object.keys(p), ...Object.keys(b.dados)])].some(k => !IGNORAR.has(k) && !igual(p[k], b.dados[k]))) tipo = 'mudanca';
+        const k = k2(cli, id);
+        if(!tipo){ delete D.pendDesde[k]; continue; }
+        vistos.add(k);
+        const desde = D.pendDesde[k] || (D.pendDesde[k] = agora);
+        if(agora - desde > 20000) fora.push({ cli, id, p, tipo, desde, falha: D.falhas[k] || null });
+      }
+    }
+    for(const k of Object.keys(D.pendDesde)) if(!vistos.has(k)) delete D.pendDesde[k];
+    return fora;
+  }
+  D.naoSalvos = naoSalvos;
+  const nomeCli = cli => { try{ if(cli === 'agencia') return 'Agência'; const c = (typeof CLIS === 'function' ? CLIS() : []).find(x => x.id === cli); return (c && c.nome) || cli; }catch(e){ return cli; } };
+  const escH = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const haQuanto = ms => { const m = Math.round(ms / 60000); return m < 1 ? 'há menos de 1 min' : m < 60 ? `há ${m} min` : `há ${Math.round(m / 60)} h`; };
+  function motivoDe(x){
+    if(x.falha) return MOTIVO[x.falha.erro] || ('o banco recusou (' + x.falha.erro + ')');
+    const u = D.ultimaFalha;
+    if(u && u.cli === x.cli && Date.now() - u.quando < 120000) return /^(criar|mudar|mídia):/.test(u.msg) ? 'o banco recusou (' + u.msg + ')' : 'sem conexão com o banco';
+    return navigator.onLine === false ? 'este aparelho está sem internet' : 'ainda tentando enviar';
+  }
+  let abertoAviso = false;
+  function desenharAviso(){
+    let el = document.getElementById('dadosNaoSalvos');
+    const l = naoSalvos();
+    if(!l.length){ if(el) el.remove(); abertoAviso = false; return; }
+    if(!el){ el = document.createElement('div'); el.id = 'dadosNaoSalvos'; document.body.appendChild(el); }
+    const n = l.length;
+    el.innerHTML = `<button type="button" class="dnsPilula" data-dnsabre="1" aria-expanded="${abertoAviso}">⚠ ${n === 1 ? '1 card não salvo' : n + ' cards não salvos'}</button>
+      ${abertoAviso ? `<div class="dnsPainel" role="dialog" aria-label="Cards não salvos">
+        <b>${n === 1 ? 'Este card ainda não está' : 'Estes cards ainda não estão'} no banco — só neste aparelho</b>
+        <ul>${l.slice(0, 20).map(x => `<li><span>${escH(x.p.t || 'Card sem nome')}</span><small>${escH(nomeCli(x.cli))} · ${x.tipo === 'novo' ? 'criado' : 'mudado'} ${haQuanto(Date.now() - x.desde)} · ${escH(motivoDe(x))}</small></li>`).join('')}</ul>
+        <p>Não feche esta aba nem saia da conta até ${n === 1 ? 'ele subir' : 'eles subirem'}. A Maestro tenta de novo sozinha.</p>
+        <div class="dnsBts"><button type="button" class="dnsTenta" data-dnstenta="1">Tentar de novo agora</button><button type="button" data-dnsfecha="1">Fechar</button></div>
+        <small class="dnsTec">${escH(VERSAO_DADOS)} · ${escH(l.map(x => x.falha ? x.falha.onde + ':' + x.falha.erro : x.tipo).filter((v, i, a) => a.indexOf(v) === i).join(', '))}${D.ultimaFalha ? ' · último: ' + escH(D.ultimaFalha.msg) : ''}</small>
+      </div>` : ''}`;
+  }
+  const VERSAO_DADOS = (() => { try{ return (typeof VERSAO_PROTOTIPO === 'string' ? VERSAO_PROTOTIPO.split(' · ')[0] : '') || 'dados'; }catch(e){ return 'dados'; } })();
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('#dadosNaoSalvos [data-dnsabre], #dadosNaoSalvos [data-dnsfecha], #dadosNaoSalvos [data-dnstenta]');
+    if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    if(b.dataset.dnsabre) abertoAviso = !abertoAviso;
+    else if(b.dataset.dnsfecha) abertoAviso = false;
+    else { const clis = [...new Set(naoSalvos().map(x => x.cli))]; clis.forEach(c => { D.fila[c] = true; enviar(c); }); b.textContent = 'Enviando…'; setTimeout(desenharAviso, 1500); return; }
+    desenharAviso();
+  }, true);
+  let ultimoReenvio = 0;
+  setInterval(() => {
+    try{
+      desenharAviso();
+      /* o que ficou para trás sobe sozinho, sem esperar ninguém mexer de novo */
+      if(Date.now() - ultimoReenvio > 15000){
+        const clis = [...new Set(naoSalvos().map(x => x.cli))];
+        if(clis.length){ ultimoReenvio = Date.now(); clis.forEach(c => { if(!gravando[c]) enviar(c); }); }
+      }
+    }catch(e){}
+  }, 3000);
+  const cssNS = document.createElement('style');
+  cssNS.textContent = `
+  #dadosNaoSalvos{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); z-index:9000; display:flex; flex-direction:column; align-items:flex-end; gap:8px; max-width:min(420px, calc(100vw - 32px)); font:14px/1.4 Inter, system-ui, sans-serif }
+  .dnsPilula{ border:0; border-radius:999px; padding:9px 16px; background:#E5484D; color:#fff; font:600 14px/1.2 Inter, system-ui, sans-serif; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,.3) }
+  .dnsPainel{ background:var(--sup, #27272B); color:var(--tx, #F2F2F2); border-radius:16px; padding:14px 16px; box-shadow:0 10px 30px rgba(0,0,0,.35); display:flex; flex-direction:column; gap:8px; max-height:60vh; overflow:auto }
+  html[data-tema="claro"] .dnsPainel{ background:#FFFFFF; color:#1C1C1F }
+  .dnsPainel ul{ margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px }
+  .dnsPainel li{ display:flex; flex-direction:column; gap:2px }
+  .dnsPainel li span{ font-weight:600; overflow-wrap:anywhere }
+  .dnsPainel small, .dnsPainel p{ color:var(--mut, #9A9AA0); font-size:12.5px; margin:0 }
+  .dnsBts{ display:flex; gap:8px; flex-wrap:wrap }
+  .dnsBts button{ border:0; border-radius:999px; padding:8px 14px; font:inherit; font-weight:600; cursor:pointer; background:var(--sup2, rgba(127,127,127,.18)); color:inherit }
+  .dnsBts .dnsTenta{ background:#FFC857; color:#1C1C1F }
+  .dnsTec{ font-family:ui-monospace, monospace; font-size:11px !important; opacity:.8 }
+  @media (max-width:760px){ #dadosNaoSalvos{ bottom:calc(84px + env(safe-area-inset-bottom, 0px)) } }`;
+  document.head.appendChild(cssNS);
 })();
 
 /* =====================================================================
