@@ -109,7 +109,7 @@ function comoPessoaCru(email, stmt){
     ${stmt}; commit;`;
 }
 const SEM_REDE = new Set();
-const SEGURAR = new Set(), SEGUROU = { n: 0 }, RECUSAR = { on: false };
+const SEGURAR = new Set(), SEGUROU = { n: 0 }, RECUSAR = { on: false }, DEVAGAR = { criar: 0 };
 const ESTAT = { rpc: 0, pautaEscrita: 0, porFn: {}, porLinha: {} };
 function ponte(email, opcoes = {}){
   return async route => {
@@ -130,6 +130,8 @@ function ponte(email, opcoes = {}){
         /* v330: o banco recusando um card de propósito (resposta com erro, como o de verdade faz) */
         if(fn === 'maestro_card_criar' && RECUSAR.on){ try{ const c = JSON.parse(req.postData() || '{}'); if(/recusado/.test(String((c.p_dados || {}).t || ''))) return json(200, { ok: false, erro: 'teste_recusa' }); }catch(e){} }
         if(!sig) return json(404, { message: 'fn' });
+        /* banco lento de propósito: o card é criado, mas a resposta demora */
+        if(fn === 'maestro_card_criar' && DEVAGAR.criar && opcoes.nome === 'A') await new Promise(r => setTimeout(r, DEVAGAR.criar));
         const corpo = JSON.parse(req.postData() || '{}');
         const args = Object.entries(corpo).filter(([k]) => sig[k]).map(([k, v]) => `${k} => ${valorSql(v, sig[k])}`).join(', ');
         ESTAT.rpc++; ESTAT.porFn[fn] = (ESTAT.porFn[fn] || 0) + 1;
@@ -467,6 +469,17 @@ await A.pag.waitForTimeout(1500);
 SEM_REDE.delete('A');
 const q11 = await ate(A, async () => { const c = cardNoBanco(id11); return !!(c && c.dados && c.dados.nota_a === 'escrito depois de recarregar'); }, 20000);
 checa('11.1 o card chega ao banco COM o texto escrito depois da recarga', q11 >= 0, { banco: cardNoBanco(id11) && cardNoBanco(id11).dados, diario: await noAparelho(A, () => (MaestroDados.diario || []).slice(-6)) });
+
+console.log('\n  — 12. escreve no card enquanto o banco ainda está criando ele —');
+DEVAGAR.criar = 1500;
+await noAparelho(A, () => { window.__x12 = MaestroQuadro.novo('cj', { tema: 'banco lento 12' }).id; render(); });
+const id12 = await noAparelho(A, () => window.__x12);
+await A.pag.waitForTimeout(500);                         // o pedido de criar já saiu e ainda não voltou
+await noAparelho(A, id => { MaestroQuadro.mudar('cj', id, { nota_a: 'escrito enquanto criava' }); render(); }, id12);
+await A.pag.waitForTimeout(2500);
+DEVAGAR.criar = 0;
+const q12 = await ate(A, async () => { const c = cardNoBanco(id12); return !!(c && c.dados && c.dados.nota_a === 'escrito enquanto criava'); }, 10000);
+checa('12.1 o texto escrito enquanto o banco criava o card chega ao banco', q12 >= 0, { banco: cardNoBanco(id12) && cardNoBanco(id12).dados, diario: await noAparelho(A, () => (MaestroDados.diario || []).slice(-6)) });
 
 console.log('\n  — 3. nada a mais —');
 const fila = await noAparelho(A, () => { try{ return localStorage.getItem('maestro-dados1-fila:maestro'); }catch(e){ return 'x'; } });

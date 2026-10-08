@@ -431,6 +431,21 @@ console.log('\n  — 2. o que cada pessoa escreveu por último está no banco �
     if(achado !== v) erradas.push({ id: +id, quem, esperado: v, banco: achado });
   }
   checa(`2.1 as ${ULTIMA.size} últimas escritas (cada pessoa, cada card) estão no banco`, !erradas.length, { n: erradas.length, ex: erradas.slice(0, 8).map(e => ({ ...e, ...contexto(e.quem, e.esperado) })) });
+  /* diagnóstico: o caminho da escrita perdida — o histórico do card no banco e o aparelho de quem escreveu */
+  for(const e of erradas.slice(0, 3)){
+    const hist = umaLinha(`select coalesce(jsonb_agg(jsonb_build_object('q', to_char(quando at time zone 'UTC', 'HH24:MI:SS.MS'), 'quem', split_part(coalesce(quem,''), ' ', 1), 'op', operacao,
+      'c', (select jsonb_object_agg(k, v) from jsonb_each(campos) as x(k, v) where k like 'nota_%' or k in ('t', 'id'))) order by id), '[]')::text
+      from public.cards_historico where org='maestro' and cliente='cj' and card_id=${+e.id}`);
+    console.log(`    [histórico do card ${e.id}]`, String(hist).slice(0, 4000));
+    const a = AP.find(x => x.nome === e.quem); if(!a) continue;
+    const d = await a.pag.evaluate(([id, c]) => { const D = window.MaestroDados || {}; const agora = Date.now();
+      const p = (S.pautas.cj || []).find(x => +x.id === id); const s = D.srv && D.srv.cj && D.srv.cj.get(id); const b = D.base && D.base.cj && D.base.cj.get(id);
+      return { tela: p ? p[c] : '(sem card)', srv: s ? [s.dados[c], s.versao, s.apagado] : null, base: b ? [b.dados[c], b.versao, Object.keys(b.remoto || {})] : null,
+        falhas: D.falhas, fila: (() => { try{ return localStorage.getItem('maestro-dados1-fila:maestro'); }catch(e){ return null; } })(),
+        diario: (D.diario || []).slice(-60).map(x => x.join(' ')),
+        rpcs: (window.__rpcs || []).slice(-30).map(e => `${new Date(e.t).toISOString().slice(14, 23)} ${e.fn.replace('maestro_', '')} ${e.st || e.err || ('PENDENTE ' + Math.round((agora - e.t) / 1000) + 's')}${e.ms > 1000 ? ' (' + e.ms + 'ms)' : ''}`) }; }, [+e.id, 'nota_' + e.quem.toLowerCase()]);
+    console.log(`    [aparelho de ${e.quem}]`, JSON.stringify(d).slice(0, 7000));
+  }
 }
 
 console.log('\n  — 3. todas as telas mostram o que o banco tem —');

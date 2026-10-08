@@ -568,7 +568,10 @@
         }
         if(!r || !r.ok){ recusas.push('criar: ' + ((r && r.erro) || '?')); falhaCard(cli, +p.id, 'criar', (r && r.erro) || '?'); continue; }
         delete D.falhas[k2(cli, +p.id)];
-        const d = clone(p);
+        /* v330: a base é o que FOI ao banco, não o card de agora — o que se escreveu
+           nele enquanto o banco criava (a resposta demora) fica como mudança e sobe
+           na volta seguinte. Antes a base pegava o texto novo e ele nunca subia. */
+        const d = clone(dados);
         SRV.set(+p.id, { dados: d, versao: r.versao || 1, posicao: null, apagado: false, varrido: false });
         B.set(+p.id, { dados: clone(d), versao: r.versao || 1, remoto: {} });
         D.gravacoes++;
