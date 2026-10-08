@@ -21,6 +21,7 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 ## No ar
 
 v325 (7 out) — a ficha não diz "foi apagado" à toa: segue card que mudou de cliente, "Carregando o card…" quando some por um instante, e na Lixeira mostra quando e "Restaurar o card". Pendente: founder rodar `card-4-quem-apagou.sql` (só leitura) para ver se o card do print foi mesmo apagado.
+**Aberto (8 out) — o ensaio geral (`v303-ensaio-geral.mjs`, cinco navegadores, rede caindo) falha de vez em quando, IGUAL na v324 e na v325** (conferido rodando a v324 num worktree: 1 de 3 rodadas falhou em 1.1/2.1/6.3; na v325, 2 de 4 em 5.1/5.3/6.3). Ora card criado/última escrita da "Anna" não chega ao banco, ora 1–2 lembretes não chegam, ora 90 gravações do estado contra teto 89. Não é desta leva; investigar à parte se é tempo da prova (máquina lenta) ou perda de verdade sob concorrência.
 
 v324 (7 out) — foto HEIC do iPhone vira JPG ao subir; as HEIC já na nuvem viram JPG quando a agência abre a Maestro. (v323 confirmada: o PDF do Jarbas estava na nuvem — era só a página do link.)
 
