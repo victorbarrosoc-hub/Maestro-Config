@@ -351,21 +351,17 @@
 
   async function carregar(){
     if(!(await checar())) return false;
-    /* v329 — reler o banco não apaga o que ainda não subiu: antes de reconstruir a
-       tela pelo banco, o que é só daqui (card novo, campo mudado) vai para a fila,
-       e a fila volta por cima logo depois (reaplicar). */
-    if(D.carregouEm) for(const cli of Object.keys(D.base)){ try{ if(numClienteValido(cli)) anotarFila(cli, true); }catch(e){} }
-    else if(D.baseLocal) for(const cli of Object.keys(D.baseLocal)){
-      /* a primeira leitura: o que mudou desde que a página abriu é deste aparelho */
-      if(!numClienteValido(cli)) continue;
-      const b = D.base[cli]; D.base[cli] = D.baseLocal[cli];
-      try{ anotarFila(cli, true); }catch(e){}
-      finally{ if(b) D.base[cli] = b; else delete D.base[cli]; }
-    }
     const [cards, midias] = await Promise.all([
       ler('cards', 'select=cliente,id,dados,versao,posicao,apagado_em,varrido_em,atualizado_em&order=cliente,posicao'),
       ler('card_midias', 'select=id,cliente,card_id,tipo,dados,posicao,apagado_em,atualizado_em&order=posicao'),
     ]);
+    /* v329 — reler o banco não apaga o que ainda não subiu: antes de refazer a tela
+       pelo banco, o que é só deste aparelho (card novo, campo mudado desde a última
+       leitura — ou, na primeira, desde que a página abriu) vai para a fila, que volta
+       por cima logo depois (reaplicar). */
+    { const agora = {}; cards.forEach(l => mapa(agora, l.cliente).set(+l.id, linhaCard(l)));
+      const bases = D.carregouEm ? D.base : (D.baseLocal || {});
+      for(const cli of Object.keys(bases)){ if(!numClienteValido(cli)) continue; try{ anotarDoAparelho(cli, bases[cli], mapa(agora, cli)); }catch(e){} } }
     D.srv = {}; D.mid = {};
     cards.forEach(l => { mapa(D.srv, l.cliente).set(+l.id, linhaCard(l)); marcarVisto(l.atualizado_em); });
     midias.forEach(l => { guardarMidia(l); marcarVisto(l.atualizado_em); });
@@ -401,7 +397,7 @@
     }
     D.fila[cli] = true;
   }
-  function anotarFila(cli, juntar){
+  function anotarFila(cli){
     const f = lerFila(); const B = mapa(D.base, cli);
     const campos = {}, novos = [];
     for(const p of pautaDe(cli)){
@@ -415,13 +411,31 @@
       });
       if(Object.keys(c).length) campos[id] = c;
     }
-    /* v329: antes de reler o banco, junta com o que já estava na fila (nada se perde) */
-    if(juntar && f[cli]){
-      for(const [id, c] of Object.entries(f[cli].campos || {})) campos[id] = Object.assign({}, c, campos[id] || {});
-      for(const n of (f[cli].novos || [])) if(n && !novos.some(x => +x.id === +n.id)) novos.push(n);
-    }
     if(Object.keys(campos).length || novos.length) f[cli] = { campos, novos }; else delete f[cli];
     gravarFila(f);
+  }
+  /* v329 — o que é só deste aparelho, comparado a uma base (a última leitura, ou a foto
+     de quando a página abriu), sem contar o que já é igual ao banco AGORA (o valor que
+     chegou por outro caminho não é mudança daqui). Junta com o que já estava na fila. */
+  function anotarDoAparelho(cli, B, agora){
+    if(!B) return;
+    const f = lerFila(); const campos = {}, novos = [];
+    for(const p of pautaDe(cli)){
+      const id = numId(p.id); if(!id) continue;
+      const b = B.get(id), s = agora.get(id);
+      if(!b){ if(!s) novos.push(clone(p)); continue; }
+      const c = {};
+      new Set([...Object.keys(p), ...Object.keys(b.dados)]).forEach(k => {
+        if(IGNORAR.has(k) || igual(p[k], b.dados[k])) return;
+        if(s && igual(p[k], s.dados[k])) return;
+        c[k] = p[k] === undefined ? null : clone(p[k]);
+      });
+      if(Object.keys(c).length) campos[id] = c;
+    }
+    const v = f[cli] || { campos: {}, novos: [] };
+    for(const [id, c] of Object.entries(campos)) v.campos[id] = Object.assign({}, v.campos[id] || {}, c);
+    for(const n of novos) if(!(v.novos || []).some(x => +x.id === +n.id)) (v.novos = v.novos || []).push(n);
+    if(Object.keys(v.campos || {}).length || (v.novos || []).length){ f[cli] = v; gravarFila(f); anota('fila-antes-de-reler', cli, Object.keys(campos).length, novos.length); }
   }
 
   /* ---------------- 4. gravar por campo ---------------- */
