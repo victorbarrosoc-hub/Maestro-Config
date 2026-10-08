@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.142
+Version: 0.5.143
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.143 — 8 out · v328 · o antes e depois
+
+- Na volta depois de um pedido com pontos, o link mostra em cada tela pedida o que o cliente pediu e, se a imagem mudou, Antes (com os pontos dele) | Agora lado a lado; a ficha da agência desenha os pontos na imagem que o cliente viu, com a nova ao lado. A agência guarda a imagem de antes no card (`antes`) antes de trocar a peça. Sem SQL novo. 20 provas em `web/verificar/v328-antes-e-depois.mjs`; 1.5 e 3.4 em `links-6-teste.sql`.
 
 ## 0.5.142 — 8 out · v327 · mover de cliente pergunta antes
 

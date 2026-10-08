@@ -27,7 +27,9 @@ insert into public.pauta(org, cliente, dados) values
    {"id":101,"t":"EJUP · Reels · Teaser","fase":"texto_cli","verTok":"tok1234567890","texto":"O texto do post","legenda":"A legenda","cta":"Salve",
     "roteiro":{"hook":"Você sabia?"},"data":"2026-10-13","plats":["ig"],"colab":[{"ig":"@parceiro"}],
     "obs":"cliente é chato, cuidado","pend":"falta a foto","check":[{"id":"k1","t":"revisar","ok":false}],"recursos":"luz",
-    "cm_a1":{"por":"victor","txt":"@Anna ajusta a capa","em":1},"cm_b2":{"por":"anna","txt":"ok","em":2}}],
+    "cm_a1":{"por":"victor","txt":"@Anna ajusta a capa","em":1},"cm_b2":{"por":"anna","txt":"ok","em":2},
+    "alteracoes":[{"por":"Dr. Marcos","quando":"07/10/2026","oque":"Tela 1 · ponto 1 (no alto, à esquerda) — logo cortado {25,20}","fase":"postagem","porLink":true}],
+    "antes":{"volta":1,"telas":{"1":"https://x/0.jpg"},"em":1}}],
    "mats":{"101":[{"tipo":"imagem","url":"https://x/1.jpg"}]}}');
 
 -- antes: vazava
@@ -42,6 +44,8 @@ select pg_temp.checa((select c ->> 'texto' = 'O texto do post' and c ->> 'legend
                              and c ->> 'data' = '2026-10-13' and c -> 'plats' = '["ig"]' and c ->> 't' = 'EJUP · Reels · Teaser'
                         from (select j -> 'dados' -> 'pauta' -> 0 as c from r) x), '1.3 o que o cliente vê hoje continua lá (nome, texto, legenda, CTA, roteiro, data, redes)');
 select pg_temp.checa((select j -> 'dados' -> 'mats' -> '101' -> 0 ->> 'url' = 'https://x/1.jpg' from r), '1.4 as peças continuam indo');
+select pg_temp.checa((select c -> 'antes' -> 'telas' ->> '1' = 'https://x/0.jpg' and (c -> 'antes' ->> 'volta')::int = 1 and c -> 'alteracoes' -> 0 ->> 'oque' like 'Tela 1 · ponto 1%{25,20}'
+                        from (select j -> 'dados' -> 'pauta' -> 0 as c from r) x), '1.5 (v328) o "antes" e o pedido de antes chegam ao link — é com eles que o cliente vê o antes e depois');
 
 create temp table rc as select public.maestro_link_card('n0', '101', 'tok1234567890') as j;
 select pg_temp.checa((select j::text not like '%cliente é chato%' and j::text not like '%ajusta a capa%' and j -> 'card' ->> 'texto' = 'O texto do post' from rc), '2.1 o link de um card só: sem o interno, com o texto');
@@ -51,6 +55,9 @@ select pg_temp.checa((select (j ->> 'ok')::boolean and j::text not like '%client
 select pg_temp.checa((select c ->> 'obs' = 'cliente é chato, cuidado' and c -> 'cm_a1' ->> 'txt' = '@Anna ajusta a capa'
                         from (select dados -> 'pauta' -> 0 as c from public.pauta where cliente = 'n0') x), '3.2 e no banco da agência nada foi apagado (a observação e a conversa estão lá)');
 select pg_temp.checa((select public.maestro_fase(dados -> 'pauta' -> 0) = 'texto_ok' from public.pauta where cliente = 'n0'), '3.3 a decisão continua valendo');
+select public.maestro_link_decidir('n0', 'k7x2m9p4q1w8e3r6t5y0', '101', 'texto_ok', 'Tela 1 — ainda cortado');
+select pg_temp.checa((select c -> 'antes' -> 'telas' ->> '1' = 'https://x/0.jpg' and jsonb_array_length(c -> 'alteracoes') = 2
+                        from (select dados -> 'pauta' -> 0 as c from public.pauta where cliente = 'n0') x), '3.4 (v328) um pedido novo pelo link não apaga o "antes" guardado (a volta 2 só não o usa)');
 
 \i docs/ENGINEERING/links-6-esconder-o-interno.sql
 select pg_temp.checa((select count(*) = 1 from regexp_matches(pg_get_functiondef('public.maestro_link_lote(text,text)'::regprocedure), 'maestro_pauta_publica', 'g')), '4.1 rodar de novo não empilha o filtro');

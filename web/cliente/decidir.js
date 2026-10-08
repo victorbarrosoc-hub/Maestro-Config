@@ -24,7 +24,7 @@
   'use strict';
   if(window.MaestroDecidir) return;
   if(typeof S === 'undefined' || typeof clCard !== 'function' || typeof decidirCard !== 'function') return;
-  const M = window.MaestroDecidir = { versao: 'v327' };
+  const M = window.MaestroDecidir = { versao: 'v328' };
   const CHAVE = 'maestro-decidir-v1';
   const e_ = s => (typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
   const url_ = u => (typeof urlSegura === 'function' ? urlSegura(u) : (/^(https?:|blob:|data:image\/)/.test(String(u || '')) ? String(u) : ''));
@@ -39,7 +39,11 @@
     const k = cliDe() + '|' + p.id;
     let st = todos[k];
     /* rascunho de outra volta (a agência já mandou versão nova) não serve mais */
-    if(!st || st.volta !== voltaDe(p)) st = todos[k] = { volta: voltaDe(p), sel: 0, ok: {}, notas: {}, geral: '' };
+    if(!st || st.volta !== voltaDe(p)){
+      /* v328 — na volta depois de um pedido, abre na primeira tela que o cliente pediu para mudar */
+      const ant = antesDe(p); const pedidas = ant ? Object.keys(ant.ped).map(Number).filter(n => n > 0) : [];
+      st = todos[k] = { volta: voltaDe(p), sel: pedidas.length ? Math.min(...pedidas) - 1 : 0, ok: {}, notas: {}, geral: '' };
+    }
     if(!st.pontos) st.pontos = {};
     return st;
   }
@@ -67,22 +71,58 @@
   const decidida = (st, i) => !!(st.ok[i] || temPedido(st, i));
   const rotulo = (v, i) => v.length > 1 ? `Tela ${i + 1}` : 'A peça';
 
-  function miniatura(m, i, st, v){
+  /* ---------- v328 — o antes e depois ----------
+     "Quando a agência mandar a versão nova da peça, mostrar ao cliente 'antes e depois'
+     lado a lado, com os pontos que ele tinha marcado" ("QUero", founder). A agência guarda
+     no card a imagem que o cliente viu em cada tela pedida (`p.antes`, só daquela volta);
+     aqui, cada tela pedida mostra o que ele pediu e, se a imagem mudou, Antes | Agora. */
+  function antesDe(p){
+    const a = p && p.antes, alts = Array.isArray(p && p.alteracoes) ? p.alteracoes : [];
+    if(!a || !a.telas || typeof a.telas !== 'object' || !alts.length || a.volta !== alts.length) return null;
+    const ped = {};
+    String((alts[alts.length - 1] || {}).oque || '').split('\n').forEach(l => {
+      let m = /^(?:Tela (\d+)|A peça) · ponto (\d+)\b.*?—\s*(.*?)\s*\{(\d{1,3}),(\d{1,3})\}\s*$/.exec(l);
+      if(m){ const n = m[1] ? +m[1] : 1; (ped[n] = ped[n] || { pontos: [], notas: [] }).pontos.push({ n: +m[2], t: m[3], x: Math.min(100, +m[4]), y: Math.min(100, +m[5]) }); return; }
+      m = /^(?:Tela (\d+)|A peça) — (.+)$/.exec(l);
+      if(m){ const n = m[1] ? +m[1] : 1; (ped[n] = ped[n] || { pontos: [], notas: [] }).notas.push(m[2]); }
+    });
+    return Object.keys(ped).length ? { telas: a.telas, ped } : null;
+  }
+  M.antesDe = antesDe;
+  const urlAntes = (ant, i) => ant && ant.telas ? url_(ant.telas[i + 1] || '') : '';
+  const trocouTela = (ant, m, i) => { const viu = urlAntes(ant, i), agora = m && m.tipo === 'imagem' ? url_(m.url) : ''; return !!(viu && agora && viu !== agora); };
+  const pinosAntes = (pd, cls) => pd.pontos.map(q => `<i class="${cls}" style="left:${q.x}%;top:${q.y}%">${q.n}</i>`).join('');
+  function blocoAntes(m, i, ant, st, v){
+    const pd = ant && ant.ped[i + 1]; if(!pd) return '';
+    const trocou = trocouTela(ant, m, i), vendo = st.verAntes === i;
+    return `<div class="dcAntes">
+      <div class="dcAntesHd"><b>Você pediu ${v.length > 1 ? 'nesta tela' : 'nesta peça'}</b>${trocou ? '<span>toque para comparar</span>' : ''}</div>
+      ${trocou ? `<div class="dcAntesPar">
+        <button type="button" class="dcAntesFig${vendo ? ' on' : ''}" data-dcantes="${i}" aria-pressed="${vendo}" aria-label="Ver a versão de antes, com os seus pontos"><span class="dcAntesFoto"><img src="${e_(urlAntes(ant, i))}" alt="" loading="lazy" onerror="this.closest('.dcAntesFig').classList.add('sem')">${pinosAntes(pd, 'dcPinoMini')}</span><em>Antes</em></button>
+        <button type="button" class="dcAntesFig${vendo ? '' : ' on'}" data-dcagora="${i}" aria-pressed="${!vendo}" aria-label="Ver a versão nova"><span class="dcAntesFoto"><img src="${e_(url_(m.url))}" alt="" loading="lazy"></span><em>Agora</em></button></div>` : ''}
+      ${pd.pontos.length ? `<ol class="dcAntesLista">${pd.pontos.map(q => `<li><i class="dcNum">${q.n}</i><span>${e_(q.t)}</span></li>`).join('')}</ol>` : ''}
+      ${pd.notas.map(t => `<p class="dcAntesNota">${e_(t)}</p>`).join('')}
+    </div>`;
+  }
+
+  function miniatura(m, i, st, v, ant){
     const tem = temPedido(st, i);
     const img = m.tipo === 'imagem' ? url_(m.url) : url_(m.poster || '');
     return `<button type="button" class="dcMini${i === st.sel ? ' on' : ''}${tem ? ' pede' : st.ok[i] ? ' ok' : ''}" data-dcsel="${i}" aria-pressed="${i === st.sel}" aria-label="${e_(rotulo(v, i))}${tem ? ', com pedido' : st.ok[i] ? ', aprovada' : ''}">
       ${img ? `<img src="${e_(img)}" alt="" loading="lazy">` : m.tipo === 'video' ? '<i class="dcPlay">▶</i>' : ''}
-      <b>${i + 1}</b>${tem ? '<em>✎</em>' : st.ok[i] ? '<em>✓</em>' : ''}</button>`;
+      <b>${i + 1}</b>${tem ? '<em>✎</em>' : st.ok[i] ? '<em>✓</em>' : ''}${ant && ant.ped[i + 1] ? '<i class="dcMiniVolta" title="Você pediu ajuste aqui">↺</i>' : ''}</button>`;
   }
-  function grande(m, st, i){
+  function grande(m, st, i, ant){
     const u = url_(m.url);
     if(m.tipo === 'video') return `<video src="${e_(u)}" ${m.poster ? `poster="${e_(url_(m.poster))}"` : ''} controls playsinline preload="metadata"></video>`;
+    if(st.verAntes === i && ant && ant.ped[i + 1] && urlAntes(ant, i)) return `<div class="dcFoto dcFotoAntes"><img src="${e_(urlAntes(ant, i))}" alt="" draggable="false">${pinosAntes(ant.ped[i + 1], 'dcPino')}<span class="dcAntesTag">Antes · o que você marcou</span></div>`;
     const pn = st.pino && st.pino.i === i ? st.pino : null;
     const novo = pn && pn.novo ? `<span class="dcPino novo" style="left:${pn.novo.x}%;top:${pn.novo.y}%">${pontosDe(st, i).length + 1}</span>` : '';
     return `<div class="dcFoto" data-dcfoto="${i}"><img src="${e_(u)}" alt="" draggable="false">${pinosHtml(st, i, pn && pn.k != null ? pn.k : null)}${novo}</div>`;
   }
   function painel(p, v, st){
     const i = Math.min(st.sel, v.length - 1), m = v[i];
+    const ant = antesDe(p);
     const tem = String(st.notas[i] || '').trim();
     const pts = pontosDe(st, i);
     const feitas = v.filter((_, j) => decidida(st, j)).length;
@@ -122,11 +162,13 @@
       <span>${feitas < v.length ? `Faltam ${v.length - feitas} de ${v.length} telas, se quiser ver antes.` : 'Você confere tudo antes de a agência receber.'}</span></div>` : '';
     return `<section class="dcPecas" aria-label="As peças">${topo}
       ${v.length > 1 ? `<div class="dcHd"><b>As peças</b><span>${feitas} de ${v.length} vistas · toque numa para ver grande</span></div>
-      <div class="dcFila">${v.map((x, j) => miniatura(x, j, st, v)).join('')}</div>` : `<div class="dcHd"><b>A peça</b></div>`}
-      <div class="dcGrande${m.tipo === 'video' ? ' video' : ''}">${grande(m, st, i)}
+      <div class="dcFila">${v.map((x, j) => miniatura(x, j, st, v, ant)).join('')}</div>` : `<div class="dcHd"><b>A peça</b></div>`}
+      ${ant ? `<p class="dcAntesAviso">Versão nova, feita a partir do seu pedido.${v.length > 1 ? ' As telas com ↺ mostram o que você pediu e como estava antes.' : ''}</p>` : ''}
+      <div class="dcGrande${m.tipo === 'video' ? ' video' : ''}">${grande(m, st, i, ant)}
         ${v.length > 1 ? `<button type="button" class="dcSeta e" data-dcvai="-1" aria-label="Tela anterior" ${i === 0 ? 'disabled' : ''}>‹</button>
         <button type="button" class="dcSeta d" data-dcvai="1" aria-label="Próxima tela" ${i === v.length - 1 ? 'disabled' : ''}>›</button>
         <span class="dcConta">${i + 1} / ${v.length}</span>` : ''}</div>
+      ${pn || st.editando === i ? '' : blocoAntes(m, i, ant, st, v)}
       ${acoes}
     </section>`;
   }
@@ -233,12 +275,15 @@
   const focoPino = () => setTimeout(() => { const a = document.getElementById('dcPinoTx'); if(a){ a.focus(); a.setSelectionRange(a.value.length, a.value.length);
     const r = a.getBoundingClientRect(); if(r.bottom > innerHeight - 20) window.scrollBy(0, r.bottom - innerHeight + 120); } }, 30);
   addEventListener('click', e => {
-    const t = e.target.closest && e.target.closest('[data-dcfoto],[data-dcpino],[data-dcpinosalva],[data-dcpinofecha],[data-dcpinotira],[data-dctexto],[data-dcsel],[data-dcvai],[data-dcaprova],[data-dcpede],[data-dcsalva],[data-dccancela],[data-dcedita],[data-dctira],[data-dcdesfaz],[data-dcrevisa],[data-dcvolta],[data-dcenvia]');
+    const t = e.target.closest && e.target.closest('[data-dcfoto],[data-dcpino],[data-dcpinosalva],[data-dcpinofecha],[data-dcpinotira],[data-dctexto],[data-dcsel],[data-dcvai],[data-dcaprova],[data-dcpede],[data-dcsalva],[data-dccancela],[data-dcedita],[data-dctira],[data-dcdesfaz],[data-dcrevisa],[data-dcvolta],[data-dcenvia],[data-dcantes],[data-dcagora]');
     if(!t) return;
     const j = emJogo(); if(!j) return;
     e.preventDefault(); e.stopPropagation();
     const { p, v } = j; const st = estado(p); const d = t.dataset;
     const nota = () => { const a = document.getElementById('dcNota'); return a ? a.value : ''; };
+    if(d.dcantes !== undefined){ st.verAntes = +d.dcantes; st.pino = null; st.editando = null; return redesenhar(false); }
+    st.verAntes = null;
+    if(d.dcagora !== undefined) return redesenhar(false);
     if(d.dcpino !== undefined){ st.pino = { i: st.sel, k: +d.dcpino }; st.editando = null; redesenhar(false); return focoPino(); }
     if(d.dcfoto !== undefined){
       const img = t.querySelector('img'); if(!img) return; const r = img.getBoundingClientRect();
@@ -309,7 +354,7 @@
     if(/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '')) return;
     const j = emJogo(); if(!j || j.v.length < 2) return; const st = estado(j.p);
     if(st.revisando) return;
-    st.sel = Math.max(0, Math.min(j.v.length - 1, st.sel + (e.key === 'ArrowRight' ? 1 : -1))); st.editando = null; redesenhar(false);
+    st.sel = Math.max(0, Math.min(j.v.length - 1, st.sel + (e.key === 'ArrowRight' ? 1 : -1))); st.editando = null; st.verAntes = null; redesenhar(false);
   });
 
   /* camadas antigas põem a tira das telas depois do desenho: aqui ela sai também */
@@ -427,6 +472,24 @@
   .dcNum{ flex:none; width:22px; height:22px; border-radius:50%; background:#E2683C; color:#fff; font:600 12px/22px system-ui, sans-serif; text-align:center; border:0; padding:0; font-style:normal; cursor:pointer }
   .dcPinoMini{ position:absolute; transform:translate(-50%, -50%); width:16px; height:16px; border-radius:50%; background:#E2683C; color:#fff; border:1.5px solid #fff; font:600 9.5px/13px system-ui, sans-serif; text-align:center; font-style:normal }
   .dcTiraPino{ align-self:center }
+  .dcMiniVolta{ position:absolute; right:4px; top:4px; width:18px; height:18px; border-radius:50%; background:rgba(8,9,11,.72); color:#FFC857; font:700 12px/18px system-ui, sans-serif; text-align:center; font-style:normal }
+  .dcAntesAviso{ margin:0; font-size:13px; line-height:1.4; color:var(--tx); padding:8px 12px; border-radius:12px; background:rgba(255,200,87,.14) }
+  .dcAntes{ display:flex; flex-direction:column; gap:8px; border-radius:14px; padding:12px; background:var(--card, rgba(127,127,127,.08)) }
+  .dcAntesHd{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; flex-wrap:wrap }
+  .dcAntesHd b{ font-size:14px; color:var(--tx) } .dcAntesHd span{ font-size:12px; color:var(--mut) }
+  .dcAntesPar{ display:grid; grid-template-columns:1fr 1fr; gap:8px }
+  .dcAntesFig{ display:flex; flex-direction:column; gap:4px; padding:4px; border-radius:12px; border:2px solid transparent; background:transparent; cursor:pointer; font:inherit; color:inherit }
+  .dcAntesFig.on{ border-color:var(--acc, #FFC857) }
+  .dcAntesFig em{ font-style:normal; font-size:12.5px; font-weight:600; color:var(--tx); text-align:center }
+  .dcAntesFoto{ position:relative; display:block; line-height:0; border-radius:8px; overflow:hidden; background:#0E0F12 }
+  .dcAntesFoto img{ display:block; width:100%; height:auto; max-height:34vh; object-fit:contain }
+  .dcAntesFig.sem .dcAntesFoto{ min-height:90px } .dcAntesFig.sem img{ visibility:hidden }
+  .dcAntesFig.sem .dcAntesFoto::after{ content:'A versão de antes não está mais guardada'; position:absolute; inset:0; display:grid; place-items:center; padding:8px; text-align:center; font-size:11.5px; line-height:1.3; color:#ccc }
+  .dcAntesLista{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px }
+  .dcAntesLista li{ display:flex; gap:8px; align-items:flex-start; font-size:14.5px; line-height:1.4; color:var(--tx) } .dcAntesLista li .dcNum{ cursor:default }
+  .dcAntesNota{ margin:0; font-size:14.5px; line-height:1.4; color:var(--tx); white-space:pre-line; overflow-wrap:anywhere }
+  .dcFotoAntes{ cursor:default } .dcFotoAntes .dcPino{ cursor:default; pointer-events:none }
+  .dcAntesTag{ position:absolute; left:10px; top:10px; padding:4px 10px; border-radius:999px; background:rgba(8,9,11,.75); color:#fff; font:600 12px/1.3 system-ui, sans-serif; line-height:1.3 }
   .dcEntra{ animation:dcEntra .22s ease-out both }
   @keyframes dcEntra{ from{ opacity:0 } to{ opacity:1 } }
   @media (min-width:900px){ .dcMini{ width:76px } .dcGrande{ max-height:62vh } .dcGrande img, .dcGrande video{ max-height:62vh; width:auto; min-width:min(100%, 420px) } }

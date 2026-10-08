@@ -38,7 +38,7 @@
   if(window.MaestroQuadro) return;
   if(typeof S === 'undefined' || typeof render !== 'function') return;
 
-  const Q = window.MaestroQuadro = { versao: 'v327', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
+  const Q = window.MaestroQuadro = { versao: 'v328', aba: null, pessoa: null, sub: 'dia', lista: 'todas',
     mes: null, semana: 0, filtroPessoa: 'todos', filtroCli: 'todos', folha: null, arrastando: null, pend: false,
     gravacoes: 0, diario: [] };
   const AG = 'agencia';
@@ -168,9 +168,15 @@
     });
     /* v318 — "precisa abrir maior quando clicar… pra ver melhor aonde ficou a pontuação do cliente" */
     Q.pinosDoPedido = Q.pinosDoPedido || {}; Q.pinosDoPedido[cli + '|' + p.id] = telas;
+    /* v328 — os pontos vão na imagem que o CLIENTE viu (guardada antes da troca); a nova, ao lado */
+    const ant = antesDoPedido(p, a);
+    Q.antesDoPedido = Q.antesDoPedido || {}; Q.antesDoPedido[cli + '|' + p.id] = ant;
     const limpo = txt.replace(/\s*\{\d{1,3},\d{1,3}\}\s*$/gm, '');
-    const fotos = Object.keys(telas).map(t => { const m = vis[+t - 1]; const u = m ? url_(m.tipo === 'imagem' ? m.url : m.capa) : '';
-      return u ? `<figure class="qdPinoFig"><button type="button" data-qdpinover="${esc_(cli)}|${esc_(p.id)}|${t}" aria-label="Ver ${vis.length > 1 ? 'a tela ' + t : 'a peça'} grande, com os pontos"><img src="${esc_(u)}" alt="">${telas[t].map(q => `<i style="left:${q.x}%;top:${q.y}%">${esc_(q.n)}</i>`).join('')}<span class="qdPinoLupa">Ver grande</span></button><figcaption>${vis.length > 1 ? 'Tela ' + t : 'A peça'}</figcaption></figure>` : ''; }).join('');
+    const fotos = Object.keys(telas).map(t => { const m = vis[+t - 1]; const agora = m ? url_(m.tipo === 'imagem' ? m.url : m.capa) : '';
+      const viu = ant[t] ? url_(ant[t]) : ''; const u = viu || agora; const trocou = !!(viu && agora && viu !== agora);
+      const nome = vis.length > 1 ? 'Tela ' + t : 'A peça';
+      return u ? `<figure class="qdPinoFig"><button type="button" data-qdpinover="${esc_(cli)}|${esc_(p.id)}|${t}" aria-label="Ver ${vis.length > 1 ? 'a tela ' + t : 'a peça'} grande, com os pontos"><img src="${esc_(u)}" alt="">${telas[t].map(q => `<i style="left:${q.x}%;top:${q.y}%">${esc_(q.n)}</i>`).join('')}<span class="qdPinoLupa">Ver grande</span></button><figcaption>${trocou ? nome + ' · antes' : nome}</figcaption></figure>`
+        + (trocou ? `<figure class="qdPinoFig agora"><button type="button" data-qdver="${+t - 1}" aria-label="Ver ${nome.toLowerCase()} como está agora"><img src="${esc_(agora)}" alt=""><span class="qdPinoLupa">Ver grande</span></button><figcaption>${nome} · agora</figcaption></figure>` : '') : ''; }).join('');
     return `<p>${esc_(limpo)}${a.por ? ` <span class="qdMut">— ${esc_(a.por)}</span>` : ''}</p>${fotos ? `<div class="qdPinos">${fotos}</div>` : ''}`;
   }
   function capa(cli, id){
@@ -178,6 +184,53 @@
     if(!m) return '';
     return url_(m.tipo === 'imagem' ? (m.url || m.capa) : m.capa) || '';
   }
+
+  /* ---------------- v328 — o antes e depois ----------------
+     Quando o cliente pede ajuste em telas da peça, a agência guarda no card a imagem
+     que ele viu em cada tela pedida (`p.antes = { volta, telas: { N: url } }`), ANTES de
+     alguém trocar a peça. Na volta, o link mostra a de antes, com os pontos dele, ao
+     lado da nova; e a ficha desenha os pontos na imagem certa. Quem guarda é o primeiro
+     aparelho da agência que vê o pedido (a cada 4 s, ao abrir a ficha, e antes de subir,
+     apagar ou reordenar peça). Só vale para a volta em que foi guardado. */
+  function telasPedidas(txt){
+    const n = new Set();
+    String(txt || '').split('\n').forEach(l => { const m = /^(?:Tela (\d+)|A peça)(?: · ponto \d+| — )/.exec(l); if(m) n.add(m[1] ? +m[1] : 1); });
+    return [...n];
+  }
+  function antesDoPedido(p, a){
+    const alts = Array.isArray(p.alteracoes) ? p.alteracoes : [];
+    const volta = a ? alts.indexOf(a) + 1 : alts.length;
+    return p.antes && p.antes.volta === volta && p.antes.telas && typeof p.antes.telas === 'object' ? p.antes.telas : {};
+  }
+  function fotografarAntes(cli, id){
+    if(!cli || cli === AG || S.viaLink || S.view === 'client') return false;
+    const p = achar(cli, id); if(!p) return false;
+    const alts = Array.isArray(p.alteracoes) ? p.alteracoes : []; if(!alts.length) return false;
+    if(p.antes && p.antes.volta === alts.length) return false;
+    /* o pedido ainda em aberto, e a peça ainda não voltou ao cliente (senão já é a nova) */
+    const f = faseDo(p);
+    if(!p.ajustePendente || f === 'post_cli' || f === 'texto_cli') return false;
+    const ns = telasPedidas((alts[alts.length - 1] || {}).oque); if(!ns.length) return false;
+    const vis = materiais(cli, p.id).filter(m => m && (m.tipo === 'imagem' || m.tipo === 'video'));
+    const telas = {};
+    ns.forEach(n => { const m = vis[n - 1]; const u = m && m.tipo === 'imagem' ? url_(m.url || '') : ''; if(/^https?:/i.test(u)) telas[n] = u; });
+    if(!Object.keys(telas).length) return false;
+    anota('antes', cli, p.id, alts.length, Object.keys(telas).join(','));
+    mudar(cli, p.id, { antes: { volta: alts.length, telas, em: Date.now() } });
+    return true;
+  }
+  Q.fotografarAntes = fotografarAntes;
+  function fotografarTodos(){
+    if(S.viaLink || S.view === 'client' || !S.pautas) return 0;
+    let n = 0;
+    for(const cli of Object.keys(S.pautas)){
+      if(cli === AG || cli.startsWith('__') || !Array.isArray(S.pautas[cli])) continue;
+      for(const p of S.pautas[cli]) if(p && p.ajustePendente && Array.isArray(p.alteracoes) && p.alteracoes.length && !(p.antes && p.antes.volta === p.alteracoes.length)) n += fotografarAntes(cli, p.id) ? 1 : 0;
+    }
+    return n;
+  }
+  Q.fotografarTodos = fotografarTodos;
+  setInterval(() => { try{ fotografarTodos(); }catch(e){} }, 4000);
 
   /* ---------------- gravar: o card, e só o card ---------------- */
   const agLinha = { feita: false, indo: null };
@@ -1216,12 +1269,14 @@
      se é vídeo preciso reproduzir." A ordem é a mesma lista (S.mat) que vai
      ao banco e ao link do cliente. */
   function moverMaterial(cli, id, i, d){
+    fotografarAntes(cli, id);
     const arr = materiais(cli, id); const j = i + d;
     if(!arr[i] || !arr[j]) return;
     [arr[i], arr[j]] = [arr[j], arr[i]];
     salvar(cli); desenharFolha(true); redesenharPagina();
   }
   function ordenarMaterialPorNome(cli, id){
+    fotografarAntes(cli, id);
     const arr = materiais(cli, id); if(arr.length < 2) return;
     arr.sort((a, b) => String((a && a.nome) || '').localeCompare(String((b && b.nome) || ''), 'pt-BR', { numeric: true, sensitivity: 'base' }));
     salvar(cli); desenharFolha(true); redesenharPagina();
@@ -1233,7 +1288,9 @@
     const m = ms[i] || {};
     const u = url_(m.url || '');
     const pinos = Q.verPinos && Q.verPinos.cli === cli && String(Q.verPinos.id) === String(id) ? (Q.verPinos.telas[i + 1] || []) : [];
-    const corpo = m.tipo === 'imagem' && (u || url_(m.capa || '')) && pinos.length ? `<div class="qdVerPinos"><div class="qdVerFoto"><img src="${u || url_(m.capa)}" alt="${esc_(m.nome || '')}">${pinos.map(q => `<i style="left:${q.x}%;top:${q.y}%">${esc_(q.n)}</i>`).join('')}</div>
+    const viu = pinos.length && Q.verPinos.antes && Q.verPinos.antes[i + 1] ? url_(Q.verPinos.antes[i + 1]) : '';
+    const trocou = !!(viu && viu !== (u || url_(m.capa || '')));
+    const corpo = m.tipo === 'imagem' && (u || url_(m.capa || '')) && pinos.length ? `<div class="qdVerPinos"><div class="qdVerFoto"><img src="${esc_(viu || u || url_(m.capa))}" alt="${esc_(m.nome || '')}">${pinos.map(q => `<i style="left:${q.x}%;top:${q.y}%">${esc_(q.n)}</i>`).join('')}${trocou ? '<span class="qdVerAntes">Antes · como o cliente viu</span>' : ''}</div>
         <ol class="qdVerLista">${pinos.map(q => `<li><i>${esc_(q.n)}</i><span>${esc_(q.t || '')}</span></li>`).join('')}</ol></div>`
       : m.tipo === 'imagem' && (u || url_(m.capa || '')) ? `<img src="${u || url_(m.capa)}" alt="${esc_(m.nome || '')}">`
       : m.tipo === 'video' && u ? `<video src="${u}" ${url_(m.capa || m.poster || '') ? `poster="${url_(m.capa || m.poster)}"` : ''} controls playsinline preload="metadata"></video>`
@@ -1283,7 +1340,7 @@
     e.preventDefault(); e.stopPropagation();
     const [cli, id, t] = b.dataset.qdpinover.split('|');
     const card = (Q.pinosDoPedido || {})[cli + '|' + id]; if(!card) return;
-    Q.verPinos = { cli, id, telas: card };
+    Q.verPinos = { cli, id, telas: card, antes: (Q.antesDoPedido || {})[cli + '|' + id] || {} };
     verPeca(cli, id, (+t || 1) - 1);
   }, true);
   document.addEventListener('click', e => {
@@ -1750,6 +1807,7 @@
     let el = document.getElementById('qdFolha');
     if(!p){ if(el) folhaSemCard(el, cli, id); return; }
     Q.sumiuEm = null;
+    try{ fotografarAntes(cli, id); }catch(e){}
     if(el && el.dataset.qdfsem){ delete el.dataset.qdfsem; inteira = true; }   /* o card voltou: a ficha inteira, de novo */
     if(el && !inteira){ atualizarCampos(el, cli, p); return; }
     /* v304 — "quando clica em alguma função, ele sobe o scroll pro começo do card…
@@ -2289,7 +2347,7 @@
       desenharFolha(true); redesenharPagina(); return; }
     if(d.qdpilar){ const p = achar(cli, id); if(!p) return; mudar(cli, id, { pilar: p.pilar === d.qdpilar ? null : d.qdpilar }); desenharFolha(true); redesenharPagina(); return; }
     if(d.qdrefx !== undefined){ const rs = refsDoCard(cli, id); rs.splice(+d.qdrefx, 1); salvar(cli); desenharFolha(true); return; }
-    if(d.qdver !== undefined){ verPeca(cli, id, +d.qdver); return; }
+    if(d.qdver !== undefined){ Q.verPinos = null; verPeca(cli, id, +d.qdver); return; }
     if(d.qdmv){ const [i, dd] = d.qdmv.split('|'); moverMaterial(cli, id, +i, +dd); return; }
     if(d.qdmatnome){ ordenarMaterialPorNome(cli, id); return; }
     if(d.qdplat){ const p = achar(cli, id); if(!p) return; const on = new Set(Array.isArray(p.plats) ? p.plats : []); on.has(d.qdplat) ? on.delete(d.qdplat) : on.add(d.qdplat);
@@ -2712,6 +2770,7 @@
     if(d.qdmatx !== undefined){ Q.matApagar = { key, i: +d.qdmatx }; desenharFolha(true); return; }
     if(d.qdmatnao){ Q.matApagar = null; desenharFolha(true); return; }
     if(d.qdmatsim !== undefined){
+      fotografarAntes(cli, id);
       const arr = materiais(cli, id); const i = +d.qdmatsim; Q.matApagar = null;
       if(arr[i]){ arr.splice(i, 1); mudar(cli, id, {}); salvar(cli); }
       desenharFolha(true); redesenharPagina(); return;
@@ -3341,6 +3400,8 @@
   .qdPinoFig img{ width:150px; height:auto; border-radius:8px; display:block }
   .qdPinoFig i{ position:absolute; transform:translate(-50%, -50%); width:20px; height:20px; border-radius:50%; background:#E2683C; color:#fff; border:2px solid #fff; font:600 11px/16px system-ui, sans-serif; text-align:center; font-style:normal; box-shadow:0 1px 4px rgba(0,0,0,.4) }
   .qdPinoFig figcaption{ font-size:11.5px; color:var(--mut, #999); margin-top:4px }
+  .qdPinoFig.agora figcaption{ color:var(--tx, #eee) }
+  .qdVerAntes{ position:absolute; left:10px; top:10px; padding:4px 10px; border-radius:999px; background:rgba(0,0,0,.72); color:#fff; font:600 12px/1.3 system-ui, sans-serif; pointer-events:none }
   /* v315 — a Agenda da pessoa (lembretes com horário), um dia por linha */
   .qdAgDica{ margin:-4px 2px 10px; font-size:12.5px }
   .qdAgNovo{ margin-left:auto }
@@ -3476,6 +3537,7 @@
   Q.paraJpg = paraJpg;
   if(typeof guardarArquivos === 'function') guardarArquivos = (function(orig){
     return function(id, lista, cli){
+      try{ const dono = cli || (typeof donoDoCard === 'function' ? donoDoCard(id, cli) : null); if(dono) fotografarAntes(dono, id); }catch(e){}
       const todos = [...(lista || [])];
       const heics = todos.filter(ehHeic), outros = todos.filter(f => !ehHeic(f));
       const n = outros.length ? orig.call(this, id, outros, cli) : 0;

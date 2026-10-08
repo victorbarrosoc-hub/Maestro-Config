@@ -20,6 +20,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 
 ## No ar
 
+v328 (8 out) — o antes e depois: na volta, o cliente vê em cada tela pedida o que pediu e Antes (com os pontos) | Agora lado a lado; a ficha da agência desenha os pontos na imagem que o cliente viu. Vale para pedidos feitos DEPOIS da v328 (o "antes" é guardado quando a agência vê o pedido, antes de trocar a peça). Falta o teste do founder com um cliente de verdade: pedir ajuste com ponto num carrossel, a agência trocar a tela e devolver.
+
 v327 (8 out) — mover o card de cliente pergunta antes ("Mover para X?" / "Cancelar") e o card movido diz "Veio de Y hoje às HH:MM". Topo da ficha em duas linhas. Pendente: founder rodar a parte 1 da `card-5-para-onde-foi.sql` SOZINHA (o SQL Editor só mostra a última consulta) para confirmar onde estão os dez cards do Cortez de 7/out 15:41–15:46. A parte 2 já veio: 6 cards na Lixeira, todos restauráveis.
 
 v326 (8 out) — "trocar o cliente" na ficha: o card ganha número novo desde o começo (era o que fazia a ficha dizer "foi apagado"). O CSV da `card-4` do founder mostrou: dez cards do Cortez Jurídico, 7/out 15:41–15:46, mudaram de cliente — nenhum foi apagado. Os dois de 15:38 ("Ep. 2 - A sala" e "Carrossel · Ep. 2 - A Sala") foram mesmo para a Lixeira e podem ser restaurados. Pendente: founder rodar `card-5-para-onde-foi.sql` (só leitura) para ver em que cliente cada um está.

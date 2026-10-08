@@ -349,6 +349,22 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (8 out, v328, NO AR) — o antes e depois.** ("QUero", à sugestão da v317:
+"quando a agência mandar a versão nova da peça, mostrar ao cliente 'antes e depois'
+lado a lado, com os pontos que ele tinha marcado".) A agência guarda no card a imagem
+que o cliente viu em cada tela pedida — `p.antes = { volta, telas: { N: url } }` —
+ANTES de alguém trocar a peça (`fotografarAntes` em `web/quadro/quadro.js`: a cada 4 s,
+ao abrir a ficha e antes de subir, apagar ou reordenar peça; só com o pedido em aberto e
+o card fora de "com o cliente", senão a imagem já seria a nova). No link
+(`web/cliente/decidir.js`, `antesDe`): aviso "Versão nova, feita a partir do seu
+pedido", ↺ nas telas pedidas, abre na primeira delas, e em cada uma "Você pediu nesta
+tela" com Antes (os pontos dele) | Agora lado a lado; tocar em Antes a mostra grande (ali
+não se marca ponto). Tela que não mudou mostra só o pedido. Na ficha da agência os pontos
+vão na imagem que o cliente viu ("Tela 1 · antes") e a nova fica ao lado ("· agora").
+Vale só na volta em que foi guardado. **Sem SQL novo:** `antes` é campo do card e passa
+pela porta (provas 1.5 e 3.4 em `links-6-teste.sql`). 20 provas em
+`web/verificar/v328-antes-e-depois.mjs` (celular, os dois lados, imagem que sumiu do
+depósito).
 **Fechado (8 out, v327, NO AR) — mover de cliente pergunta antes.** ("Pode executar
 o que achar melhor" à sugestão.) A caixa de cliente da ficha trocava o card no
 primeiro toque — foi assim que dez cards do Cortez mudaram de casa em 7/out sem
