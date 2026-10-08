@@ -349,6 +349,26 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (8 out, v329, NO AR) — o ensaio geral sem perda: três defeitos de verdade.**
+O medo do founder ("os bugs vêm depois que todos começam a usar"). O ensaio de cinco
+aparelhos (`v303-ensaio-geral.mjs`) falhava de vez em quando; ganhou diário (quem,
+quando, sem rede, recargas por perto), o diário da camada e o registro de cada chamada,
+e a tabela `teste_estado` (só da prova: cada gravação do estado, com quem). Achou três
+causas, todas em `web/dados/tempo-real.js`, cada uma provada antes e depois em
+`web/verificar/v329-recarregar-no-meio.mjs` (23 provas, dois aparelhos, banco de verdade):
+(1) **queda de rede lida como "a agência não usa tabelas"** — `checar()` guardava a
+resposta errada; o aparelho gravava pelo caminho antigo e, ao reler o banco, apagava da
+tela o que não tinha subido. Agora só 404 desliga; sem resposta, fica como estava.
+(2) **abrir a página sem rede** (o caso da Anna, recarregou no elevador) — a camada não
+ligava e a primeira leitura apagava o trabalho feito até a rede voltar. Agora o aparelho
+lembra a última resposta certa (`maestro-dados1-ligado:<org>`), tira a foto dos cards ao
+abrir (`D.baseLocal`: o que mudar depois vai para a fila antes da primeira leitura) e a
+primeira leitura que falha tenta de novo (5 s e no `online`). Reler o banco também anota
+na fila antes de refazer a tela. (3) **lembrete apagado por quem recarregou** — a "última
+versão do banco" era guardada antes da tela; recarregando no meio, a mescla lia o
+lembrete recebido como apagado ali (a Anna tirou o do Victor 7 s depois de recarregar).
+Agora a tela é guardada no mesmo instante que a base (`setItem` de `maestro-sincro-v2`)
+e ao sair/esconder a página. Ensaio geral depois: ver `docs/SESSAO-ATUAL.md`.
 **Fechado (8 out, v328, NO AR) — o antes e depois.** ("QUero", à sugestão da v317:
 "quando a agência mandar a versão nova da peça, mostrar ao cliente 'antes e depois'
 lado a lado, com os pontos que ele tinha marcado".) A agência guarda no card a imagem

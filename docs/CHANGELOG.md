@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.143
+Version: 0.5.144
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.144 — 8 out · v329 · cinco pessoas ao mesmo tempo, nada se perde
+
+- Camada de dados: queda de rede não desliga as tabelas de cards; abrir a página sem rede guarda o que se faz até ela voltar (resposta lembrada, foto dos cards ao abrir, primeira leitura que tenta de novo); reler o banco não apaga o que não subiu; a tela guardada nunca fica mais velha que a base da mescla (o lembrete não some quando alguém recarrega). 23 provas em `web/verificar/v329-recarregar-no-meio.mjs`; o ensaio geral ganhou diário e registro de cada gravação.
 
 ## 0.5.143 — 8 out · v328 · o antes e depois
 
