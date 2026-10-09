@@ -152,6 +152,7 @@
   /* o começo do nome, que o padrão monta sozinho: "EJUP · Post ·" */
   const prefixo = (cli, p) => { const t = String(p.t || ''); const tm = tema(p, cli); return t.endsWith(tm) ? t.slice(0, t.length - tm.length).trim() : `${cliente(cli).nome} · ${p.fmt || 'Post'} ·`; };
 
+  const naNuvemQ = m => Q.naNuvem ? Q.naNuvem(m) : true;
   function materiais(cli, id){
     try{ return (S.mat && S.mat[cli + '|' + id]) || []; }catch(e){ return []; }
   }
@@ -1259,7 +1260,7 @@
     desenharFolha(true);
   }
   function fecharFolha(){
-    Q.folha = null;
+    Q.folha = null; Q.matLink = false;
     const el = document.getElementById('qdFolha'); if(el) el.remove();
     document.body.classList.remove('qdFolhaAberta');
   }
@@ -1872,13 +1873,16 @@
           ${ms.length > 1 ? `<p class="qdFMatDica">A ordem daqui é a que o cliente vê. Toque numa peça para ver.</p>` : ''}
           <div class="qdFMat">${ms.map((m, i) => {
             const u = url_(m.tipo === 'imagem' ? (m.url || m.capa) : (m.capa || m.poster || ''));
-            return `<span class="qdFMatI"><button type="button" class="qdFMatVer" data-qdver="${i}" aria-label="Ver ${esc_(m.nome || 'a peça ' + (i + 1))}" title="${esc_(m.nome || '')}">${u ? `<img src="${u}" alt="" loading="lazy">` : `<i>${esc_(m.tipo === 'video' ? 'vídeo' : m.tipo === 'link' ? 'link' : 'arquivo')}</i>`}${m.tipo === 'video' ? `<b class="qdFMatPlay" aria-hidden="true">▶</b>` : ''}${ms.length > 1 ? `<em>${i + 1}</em>` : ''}${Q.naNuvem && !Q.naNuvem(m) ? `<b class="qdFMatSo" title="Ainda não subiu para a nuvem: só abre no aparelho de quem subiu. Sobe sozinho quando esse aparelho abrir a Maestro com internet.">não subiu</b>` : ''}</button>
+            return `<span class="qdFMatI"><button type="button" class="qdFMatVer" data-qdver="${i}" aria-label="Ver ${esc_(m.nome || 'a peça ' + (i + 1))}" title="${esc_(m.nome || '')}">${u ? `<img src="${u}" alt="" loading="lazy">` : `<i>${esc_(m.tipo === 'video' ? 'vídeo' : m.tipo === 'link' ? 'link' : 'arquivo')}</i>`}${m.tipo === 'video' ? `<b class="qdFMatPlay" aria-hidden="true">▶</b>` : ''}${ms.length > 1 ? `<em>${i + 1}</em>` : ''}${Q.naNuvem && !Q.naNuvem(m) ? (m.grande ? `<b class="qdFMatSo" title="${esc_(Q.mb(m.grande))} — o limite por arquivo é ${esc_(Q.mb(Q.limiteNuvem))}. Não sobe para a nuvem.">grande demais</b>` : `<b class="qdFMatSo" title="Ainda não subiu para a nuvem: só abre no aparelho de quem subiu. Sobe sozinho quando esse aparelho abrir a Maestro com internet.">não subiu</b>`) : ''}</button>
               ${Q.matApagar && Q.matApagar.key === Q.folha && Q.matApagar.i === i
                 ? `<span class="qdFMatConf"><b>Apagar?</b><button type="button" data-qdmatsim="${i}">Sim</button><button type="button" data-qdmatnao="1">Não</button></span>`
                 : `<button type="button" class="qdFMatX" data-qdmatx="${i}" aria-label="Apagar ${esc_(m.nome || 'a peça ' + (i + 1))}" title="Apagar esta peça">×</button>`}
               ${m.tipo !== 'link' ? `<button type="button" class="qdFMatBaixa" data-qdbaixar="${i}" aria-label="Baixar ${esc_(m.nome || 'a peça ' + (i + 1))}" title="Baixar">${ic_('baixar', 12) || '↓'}</button>` : ''}
               ${ms.length > 1 ? `<span class="qdFMatMv"><button type="button" data-qdmv="${i}|-1" aria-label="Uma posição antes" ${i === 0 ? 'disabled' : ''}>‹</button><button type="button" data-qdmv="${i}|1" aria-label="Uma posição depois" ${i === ms.length - 1 ? 'disabled' : ''}>›</button></span>` : ''}</span>`; }).join('')}</div>
-          <div class="qdFMatBts">${ms.filter(m => m.tipo !== 'link').length ? `<button type="button" class="qdPil" data-qdbaixar="todas">${ic_('baixar', 12)} ${ms.filter(m => m.tipo !== 'link').length > 1 ? `Baixar as ${ms.filter(m => m.tipo !== 'link').length}` : 'Baixar'}</button>` : ''}${ms.length > 1 ? `<button type="button" class="qdPil" data-qdmatnome="1">Ordenar por nome</button>` : ''}<button type="button" class="qdPil" data-qdsubir="1">${ic_('clipe', 12)} Subir material</button></div>
+          <div class="qdFMatBts">${ms.filter(m => m.tipo !== 'link').length ? `<button type="button" class="qdPil" data-qdbaixar="todas">${ic_('baixar', 12)} ${ms.filter(m => m.tipo !== 'link').length > 1 ? `Baixar as ${ms.filter(m => m.tipo !== 'link').length}` : 'Baixar'}</button>` : ''}${ms.length > 1 ? `<button type="button" class="qdPil" data-qdmatnome="1">Ordenar por nome</button>` : ''}<button type="button" class="qdPil" data-qdsubir="1">${ic_('clipe', 12)} Subir material</button>${(Q.matLink || ms.some(m => m && m.grande && !naNuvemQ(m))) ? '' : `<button type="button" class="qdPil" data-qdmatlinkabre="1">${ic_('linkic', 12)} Colar link</button>`}</div>
+          ${ms.filter(m => m && m.grande && !naNuvemQ(m)).map(m => `<div class="qdFMatGrande" role="status"><b>“${esc_(m.nome || 'Este arquivo')}” não sobe: tem ${esc_(Q.mb(m.grande))}, e o limite por arquivo é ${esc_(Q.mb(Q.limiteNuvem))}.</b>
+            <p>Exporte de novo com menos peso (em 1080p costuma ficar bem abaixo) e suba de novo, ou cole aqui embaixo o link do Drive ou do YouTube, que o cliente abre do mesmo jeito.</p></div>`).join('')}
+          ${(Q.matLink || ms.some(m => m && m.grande && !naNuvemQ(m))) ? `<form class="qdFCkNovo" data-qdmatlink="1" autocomplete="off"><input type="text" inputmode="url" class="qdIn" placeholder="+ colar link da peça (Drive, YouTube…)" aria-label="Link da peça"></form>` : ''}
           <input type="file" id="qdArquivo" multiple hidden></div>
           ${blocoRefs(cli, p)}`;
         return `<div class="qdFAbas" role="tablist" aria-label="Partes do card">${tab('conteudo', 'Conteúdo')}${tab('peca', 'Peça')}${tab('detalhes', 'Detalhes')}</div>
@@ -1905,7 +1909,7 @@
   /* o que, mudando, pede a ficha desenhada de novo. Guardada a cada desenho
      inteiro: sem isso, o primeiro campo gravado depois de trocar o tipo ou
      pôr um trecho redesenhava tudo e tirava o cursor de quem digitava. */
-  const assinaturaFolha = (cli, p) => JSON.stringify([colabsDe(p), p.check || [], materiais(cli, p.id).map(m => (m && (m.url || m.nome)) || '').join('|'), !!p.ajustePendente, linhas(p, 'tcs'), linhas(p, 'telas'), p.plats || [], tipoDaFolha(p), ehStory(p), fmtsDe(p), p.pilar || '', refsDoCard(cli, p.id).length]);
+  const assinaturaFolha = (cli, p) => JSON.stringify([colabsDe(p), p.check || [], materiais(cli, p.id).map(m => ((m && (m.url || m.nome)) || '') + (m && m.grande ? '#G' : '')).join('|'), !!Q.matLink, !!p.ajustePendente, linhas(p, 'tcs'), linhas(p, 'telas'), p.plats || [], tipoDaFolha(p), ehStory(p), fmtsDe(p), p.pilar || '', refsDoCard(cli, p.id).length]);
   /* v311 — "no mobile, toda vez que digita na caixa de texto dentro do card, scrolla pra o
      começo do texto". Para medir, a caixa encolhia ('auto') e crescia de novo: nesse
      instante o navegador zera a rolagem de DENTRO da caixa (que tinha teto de 420px) e a
@@ -2282,7 +2286,7 @@
     }
     const px = e.target.closest('[data-qdprox]');
     if(px){ e.stopPropagation(); executar(px.dataset.qdprox, px.dataset.qdacao, px); return; }
-    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome],[data-qdmais],[data-qdmenos],[data-qdrecolhe],[data-qdfmt],[data-qdpilar],[data-qdrefx],[data-qdfaba],[data-qdcalvista],[data-qdsemcal],[data-qdvista],[data-qdpzbase],[data-qdlimpar]');
+    const alvo = e.target.closest('[data-qdabaid],[data-qdfp],[data-qdsub],[data-qdlista],[data-qdsem],[data-qdmes],[data-qdadd],[data-qdaddfechar],[data-qdfeito],[data-qdresp],[data-qdpoppes],[data-qdabre],[data-qdfechar],[data-qdfcol],[data-qdck],[data-qdckx],[data-qdapagar],[data-qdapagarsim],[data-qdapagarnao],[data-qdsubir],[data-qdmatlinkabre],[data-qdeditor],[data-qdajok],[data-qdpadrao],[data-qdlixeira],[data-qdrestaurar],[data-qdcolmovel],[data-qdtipo],[data-qdplat],[data-qdtcmais],[data-qdtcx],[data-qdtelamais],[data-qdtelax],[data-qdver],[data-qdmv],[data-qdmatnome],[data-qdmais],[data-qdmenos],[data-qdrecolhe],[data-qdfmt],[data-qdpilar],[data-qdrefx],[data-qdfaba],[data-qdcalvista],[data-qdsemcal],[data-qdvista],[data-qdpzbase],[data-qdlimpar]');
     if(!e.target.closest('#qdPop')) document.getElementById('qdPop')?.remove();
     const rc = !alvo && e.target.closest && e.target.closest('#root .qdCol.recolhida');
     if(rc){ alternarRecolhida(rc.dataset.qdcol); render(); return; }
@@ -2368,6 +2372,7 @@
     if(d.qdpadrao){ const p = achar(cli, id); if(!p) return; mudar(cli, id, { t: titulo(cli, p.fmt || 'Post', limparTema(tema(p, cli), p.fmt)) }); desenharFolha(true); redesenharPagina(); return; }
     if(d.qdajok){ mudar(cli, id, { ajustePendente: null }); desenharFolha(true); redesenharPagina(); return; }
     if(d.qdsubir){ const i = document.getElementById('qdArquivo'); if(i){ i.value = ''; i.click(); } return; }
+    if(d.qdmatlinkabre){ Q.matLink = true; desenharFolha(true); const n = document.querySelector('#qdFolha [data-qdmatlink] input'); if(n) n.focus(); return; }
     if(d.qdeditor){
       /* o editor antigo (roteiro, corte, telas do story, plataformas) segue
          de pé para o que o card não mostra aqui */
@@ -2514,6 +2519,18 @@
       mudar(cli, id, { check: [...(p.check || []), { id: 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t: t.slice(0, 300), ok: false }] });
       desenharFolha(true); redesenharPagina();
       const n = document.querySelector('#qdFolha [data-qdcknovo] input'); if(n) n.focus();
+    }
+    if(f.matches('[data-qdmatlink]') && Q.folha){
+      e.preventDefault();
+      const i = f.querySelector('input'); let u = (i.value || '').trim(); if(!u) return;
+      if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+      if(!url_(u) || !/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(u)){ i.setCustomValidity('Isso não parece um link'); i.reportValidity(); return; }
+      const [cli, id] = Q.folha.split('|'); const k = cli + '|' + id;
+      S.mat = S.mat || {}; (S.mat[k] = S.mat[k] || []).push({ tipo: 'link', nome: u, url: u, peso: 0 });
+      const p = achar(cli, id); if(p) p.mod = Date.now();
+      Q.matLink = false; anota('peca-link', k);
+      salvar(cli); desenharFolha(true); redesenharPagina();
+      return;
     }
     if(f.matches('[data-qdrefnovo]') && Q.folha){
       e.preventDefault();
@@ -3472,32 +3489,54 @@
      nele e ainda não subiu SOBE de novo — e o card passa a valer em qualquer aparelho. */
   const naNuvem = m => !!(m && (m.tipo === 'link' || /^https?:/.test(String(m.url || ''))));
   Q.naNuvem = naNuvem;
+  /* v331 — "não sobe os vídeos, desde ontem" (9/out): o teaser tinha 64 MB e o depósito do
+     banco recusa arquivo acima de 50 MB (o teto por arquivo do plano grátis do Supabase).
+     A tela só dizia "não subiu", e o aparelho mandava os 64 MB de novo a cada minuto (7 vezes
+     em 9 minutos, no 4G também). Agora o que passa do limite nem sai do aparelho, a ficha diz
+     o tamanho, o limite e o que fazer, e o reenvio não insiste no que o banco recusa. */
+  Q.limiteNuvem = 50 * 1024 * 1024;
+  Q.mb = b => { const v = (+b || 0) / 1048576; return (v < 10 ? v.toFixed(1) : String(Math.round(v))).replace('.', ',') + '\u00a0MB'; };
+  const recusados = {};   /* chave → vezes que o banco recusou (4xx) nesta abertura */
+  if(typeof subirDepois === 'function') subirDepois = (function(orig){
+    return function(item, pasta, file){
+      if(item && file && file.size > Q.limiteNuvem){
+        item.grande = file.size; anota('grande-demais', item.nome || file.name, file.size);
+        setTimeout(() => { try{ if(Q.folha) desenharFolha(true); redesenharPagina(); }catch(e){} }, 0);
+        return;
+      }
+      if(item) delete item.grande;
+      return orig.apply(this, arguments);
+    };
+  })(subirDepois);
   const subindo = new Set();
   async function reenviarPendentes(){
     if(!(S.usuario && S.usuario.tipo === 'agencia') || S.viaLink) return 0;
     if(typeof subirNuvem !== 'function' || typeof idbLer !== 'function' || navigator.onLine === false) return 0;
     if(typeof _sbLigado !== 'undefined' && !_sbLigado) return 0;
-    let n = 0;
+    let n = 0, grandes = 0;
     for(const k of Object.keys(S.mat || {})){
       const arr = S.mat[k]; if(!Array.isArray(arr)) continue;
       const cli = k.split('|')[0];
       for(const m of arr){
         if(!m || naNuvem(m) || !m.chave || subindo.has(m.chave)) continue;
+        if(m.grande && m.grande > Q.limiteNuvem) continue;          /* não cabe: não adianta mandar */
+        if((recusados[m.chave] || 0) >= 2) continue;               /* o banco já recusou duas vezes */
         subindo.add(m.chave);
         try{
           const blob = await idbLer(m.chave);
           if(!blob) continue;   /* o arquivo não está neste aparelho: quem tem é quem sobe */
+          if(blob.size > Q.limiteNuvem){ m.grande = blob.size; grandes++; anota('grande-demais', k, m.nome, blob.size); continue; }
           const nome = typeof nomeSeguro === 'function' ? nomeSeguro(m.nome || blob.name || 'arquivo') : 'arquivo';
           const caminho = m.caminhoNuvem || `mat/${k.replace('|', '/')}/${m.chave}_${nome}`;
           const url = await subirNuvem(caminho, blob);
           m.url = url; m.nuvem = true; m.caminhoNuvem = caminho; n++;
           anota('reenviado', k, m.nome);
           await salvar(cli);
-        }catch(e){ anota('reenvio-falhou', k, e && e.message); }
+        }catch(e){ anota('reenvio-falhou', k, e && e.message); if(/\(4\d\d\)/.test(String(e && e.message))) recusados[m.chave] = (recusados[m.chave] || 0) + 1; }
         finally{ subindo.delete(m.chave); }
       }
     }
-    if(n){ try{ if(Q.folha) desenharFolha(true); redesenharPagina(); }catch(e){} }
+    if(n || grandes){ try{ if(Q.folha) desenharFolha(true); redesenharPagina(); }catch(e){} }
     return n;
   }
   Q.reenviarPendentes = reenviarPendentes;
@@ -3603,6 +3642,10 @@
   const stHj = document.createElement('style'); stHj.id = 'v321-hoje';
   stHj.textContent = `
   .qdFMatSo{ position:absolute; left:4px; right:4px; bottom:4px; font:600 10px/1.2 system-ui, sans-serif; color:#fff; background:rgba(226,104,60,.92); border-radius:6px; padding:3px 4px; text-align:center }
+  .qdFMatGrande{ margin-top:10px; padding:10px 12px; border-radius:12px; background:rgba(226,104,60,.14); border:1px solid rgba(226,104,60,.35) }
+  .qdFMatGrande b{ display:block; font-weight:600; overflow-wrap:anywhere }
+  .qdFMatGrande p{ margin:4px 0 0; font-size:13px; color:var(--ink-300, #A1A1A6) }
+  .qdFMatBts + .qdFMatGrande, .qdFMatGrande + form, .qdFMatBts + form{ margin-top:10px }
   .qdNadaBts{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px }
   .qdCarregando{ animation:qdPulsaTx 1.2s ease-in-out infinite }
   @keyframes qdPulsaTx{ 50%{ opacity:.45 } }
