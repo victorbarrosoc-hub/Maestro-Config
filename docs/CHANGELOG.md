@@ -1,11 +1,15 @@
 # CHANGELOG.md — Maestro
 
-Version: 0.5.145
+Version: 0.5.146
 
 Registro oficial da evolução da Maestro. Versionamento semântico (MAJOR.MINOR.PATCH).
 Nunca apagar versões anteriores.
 
 ---
+
+## 0.5.146 — 9 out · v331 · o vídeo grande diz o que é
+
+- Arquivo acima de 50 MB (limite por arquivo do plano grátis do Supabase) não sai do aparelho: a miniatura diz "grande demais", a aba Peça diz tamanho, limite e o que fazer; o reenvio automático não manda o grande e para depois de duas recusas do banco; a peça aceita link (Drive, YouTube). 16 provas em `web/verificar/v331-video-grande.mjs`.
 
 ## 0.5.145 — 8 out · v330 · a tela diz o que não salvou
 

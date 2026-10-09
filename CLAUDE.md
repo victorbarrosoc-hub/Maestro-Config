@@ -349,6 +349,20 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (9 out, v331, NO AR) — o vídeo grande diz o que é.** "Não sobe os vídeos, desde
+ontem tá com esse bug." Não era defeito da subida: o registro do depósito no Supabase (lido
+pelo conector, só leitura) mostrou o teaser "A Sala – Episódio 01" com 63.991.361 bytes e a
+resposta "The object exceeded the maximum allowed size" — o plano grátis aceita até 50 MB por
+arquivo; o corte de 27 MB da véspera subiu normal. O defeito era nosso em dois pontos: a
+ficha só dizia "não subiu", e o reenvio (v323) mandava os 64 MB de novo a cada minuto (7 vezes
+em 9 min, no 4G também). Em `web/quadro/quadro.js`: acima de `Q.limiteNuvem` (50 MB) o arquivo
+não sai do aparelho (`subirDepois` embrulhado, `m.grande`); a miniatura diz "grande demais"; a
+aba Peça diz nome, tamanho, limite e o que fazer; o reenvio mede o que estava guardado, não
+manda o grande e para depois de duas recusas do banco (4xx) por abertura; e a peça aceita LINK
+("Colar link" → `{tipo:'link'}`, vai ao banco e ao cliente como peça). **Para subir acima de
+50 MB** é o plano Pro do Supabase (limite por arquivo configurável e 100 GB de depósito, contra
+1 GB) — decisão do founder; ao subir o limite lá, trocar `Q.limiteNuvem`. 16 provas em
+`web/verificar/v331-video-grande.mjs` (9 falham no código antigo).
 **Fechado (8 out, v330, NO AR) — a tela diz o que não salvou.** "Alguns cards que a
 Anna Clara criou sumiram" (computador dela). A `card-6` (o que foi criado desde as 15h)
 voltou vazia e a `card-7` (gravações por hora) mostrou o aparelho dela gravando mudanças

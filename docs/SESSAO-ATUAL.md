@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 8 out 2026 (v330 no ar)
+Última atualização: 9 out 2026 (v331 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -19,6 +19,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 ```
 
 ## No ar
+
+v331 (9 out, **NO AR**) — "não sobe os vídeos, desde ontem": o teaser "A Sala – Episódio 01" tem 64 MB e o banco (plano grátis do Supabase) recusa arquivo acima de 50 MB — conferido no registro do depósito (o corte de 27 MB de 8/out subiu normal). Agora a ficha diz "grande demais" com tamanho, limite e o que fazer, o aparelho não reenvia os 64 MB a cada minuto, e a peça aceita link (Drive/YouTube). **Decisão do founder pendente:** plano Pro do Supabase (US$ 25/mês: limite por arquivo configurável, 100 GB de depósito contra 1 GB) — se ele assinar, subir o limite em Storage → Settings e trocar `Q.limiteNuvem` em `web/quadro/quadro.js`. Conector do Supabase ligado nesta sessão (usado só para ler o registro).
 
 v330 (8 out, **NO AR**) — "alguns cards que a Anna Clara criou sumiram" (computador dela): a card-7 mostrou mudanças dela chegando ao banco e NENHUM card novo no dia. Agora a tela avisa "N cards não salvos" com o motivo, um card recusado não segura os outros, reenvio sozinho, pedido preso desiste em 30 s, cliente sem linha no banco ganha a linha; sem conseguir ler o banco há 30 s, "Mudanças esperando o banco"; texto escrito num card criado sem rede não se perde na volta (ensaio semente 306); texto escrito enquanto o banco cria o card não se perde (prova 12.1). Ensaio geral depois do conserto: sementes 306, 307 e 308 com 26/26. **Aberto, visto uma vez:** um lembrete (caminho do estado, não dos cards) não chegou numa rodada com a máquina sobrecarregada por outras suítes ao mesmo tempo; sozinha, a mesma semente passou. **Pendente:** todos recarregarem a Maestro nos computadores (F5), principalmente a Anna; a Anna abrir a Maestro no computador dela (sem sair da conta / sem limpar o navegador) — se os cards ainda estiverem guardados lá, sobem sozinhos; se aparecer o aviso, print dele (diz o motivo). E o print do Logs → API Gateway com `maestro_card_criar`.
 
