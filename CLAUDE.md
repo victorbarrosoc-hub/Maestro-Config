@@ -349,6 +349,18 @@ outras viram a checklist. (3) No link, o cliente passa a ver todos os
 formatos e a interação (sticker, caixinha); o que é da casa (observação,
 pendência, recursos, checklist, referências) continua fora. 22 provas em
 `web/verificar/v291-criar-e-ficha.mjs`.
+**Fechado (14 out, sem versão de app) — o Quadro exportado para outra plataforma.** "Quero o
+método kanban usado na Maestro só que em outra plataforma, com a IDV da outra plataforma… me
+manda o código com o prompt." Em `docs/EXPORT/quadro-kanban/`: `quadro-kanban.html` (esqueleto
+de um arquivo só: as oito colunas e o próximo passo, Por prazo, filtros, dez por coluna,
+recolher, ficha que grava por campo, conversa por campo, lixeira com lápide, arrastar no
+computador e no celular, fila com "não salvos"; IDV só nos tokens do `:root`; banco trocável
+pelo objeto `Armazem`), `quadro-banco.sql` (Supabase: grava por campo com conflito por campo,
+histórico, RLS por organização), `PROMPT.md` (o método, as 12 lições de dados, o `Armazem`
+para Supabase e a lista de provas) e `QUADRO-PARA-COLAR.md` (tudo junto; refazer com
+`montar.sh`). 58 provas em `web/verificar/export-quadro-kanban.mjs` (achou: título da ficha
+encolhendo até sumir; duas abas se atropelando quando o armazém local guardava a lista
+inteira — virou uma chave por campo); 23 do banco em `web/verificar/export-quadro-banco.sh`.
 **Fechado (9 out, v331, NO AR) — o vídeo grande diz o que é.** "Não sobe os vídeos, desde
 ontem tá com esse bug." Não era defeito da subida: o registro do depósito no Supabase (lido
 pelo conector, só leitura) mostrou o teaser "A Sala – Episódio 01" com 63.991.361 bytes e a

@@ -4,7 +4,7 @@
 > continue daqui sem perder nada. Complementa o `CLAUDE.md` (estado do
 > produto) e o `docs/HANDOFF.md` (mapa do código).
 
-Última atualização: 9 out 2026 (v331 no ar)
+Última atualização: 14 out 2026 (Quadro exportado; v331 no ar)
 
 ## Como começar uma conversa nova (copie e cole)
 
@@ -19,6 +19,8 @@ arquivo, suba no GitHub e me dê o prompt para a próxima conversa.
 ```
 
 ## No ar
+
+14 out (sem versão de app) — **o Quadro exportado para outra plataforma.** Pedido do founder: "preciso que você me mande o código pra eu mandar pra outra conversa… implantar o esqueleto do sistema da aba Quadro… o método kanban usado na Maestro, com a IDV da outra plataforma". Entregue em `docs/EXPORT/quadro-kanban/` (`QUADRO-PARA-COLAR.md` é o arquivo único para mandar; `PROMPT.md`, `quadro-kanban.html`, `quadro-banco.sql`). 58 + 23 provas. Não mexe na Maestro. Pendente: saber do founder em qual plataforma entrou e se a outra conversa teve dúvida.
 
 v331 (9 out, **NO AR**) — "não sobe os vídeos, desde ontem": o teaser "A Sala – Episódio 01" tem 64 MB e o banco (plano grátis do Supabase) recusa arquivo acima de 50 MB — conferido no registro do depósito (o corte de 27 MB de 8/out subiu normal). Agora a ficha diz "grande demais" com tamanho, limite e o que fazer, o aparelho não reenvia os 64 MB a cada minuto, e a peça aceita link (Drive/YouTube). **Decisão do founder pendente:** plano Pro do Supabase (US$ 25/mês: limite por arquivo configurável, 100 GB de depósito contra 1 GB) — se ele assinar, subir o limite em Storage → Settings e trocar `Q.limiteNuvem` em `web/quadro/quadro.js`. Conector do Supabase ligado nesta sessão (usado só para ler o registro).
 
